@@ -555,6 +555,34 @@
     </div>
   </div>
 
+  <div id="resetScreen" class="screen">
+    <div class="container">
+      <div class="card">
+        <h2>Nouveau mot de passe</h2>
+        <p>Choisis un nouveau mot de passe sécurisé pour retrouver l’accès à ton compte.</p>
+
+        <label for="newPasswordInput">Nouveau mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe" />
+          <button class="toggle-password" type="button" onclick="togglePassword('newPasswordInput', this)">👁️</button>
+        </div>
+
+        <label for="confirmNewPasswordInput">Confirmer le nouveau mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="confirmNewPasswordInput" placeholder="Confirme le nouveau mot de passe" />
+          <button class="toggle-password" type="button" onclick="togglePassword('confirmNewPasswordInput', this)">👁️</button>
+        </div>
+
+        <div class="helper">
+          Minimum 8 caractères, 1 majuscule et 1 caractère spécial.
+        </div>
+
+        <button class="btn btn-primary" onclick="updatePassword()">Mettre à jour le mot de passe</button>
+        <div id="resetStatus" class="status"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="mapScreen">
     <div class="map-topbar">
       <div class="map-heading">ImmatConnect</div>
@@ -607,6 +635,7 @@
       document.getElementById("welcomeScreen").classList.remove("active");
       document.getElementById("authScreen").classList.remove("active");
       document.getElementById("profileScreen").classList.remove("active");
+      document.getElementById("resetScreen").classList.remove("active");
       document.getElementById("mapScreen").classList.remove("active");
 
       if (id === "mapScreen") {
@@ -710,11 +739,7 @@
         }
 
         if (!isStrongPassword(password)) {
-          setStatus(
-            "authStatus",
-            "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un caractère spécial.",
-            "error"
-          );
+          setStatus("authStatus", "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un caractère spécial.", "error");
           return;
         }
 
@@ -816,6 +841,38 @@
       }
 
       setStatus("authStatus", "Message de réinitialisation envoyé.", "success");
+    }
+
+    async function updatePassword() {
+      const password = document.getElementById("newPasswordInput").value;
+      const confirmPassword = document.getElementById("confirmNewPasswordInput").value;
+
+      if (!isStrongPassword(password)) {
+        setStatus("resetStatus", "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un caractère spécial.", "error");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setStatus("resetStatus", "La confirmation du mot de passe ne correspond pas.", "error");
+        return;
+      }
+
+      setStatus("resetStatus", "Mise à jour en cours...");
+
+      const { error } = await sb.auth.updateUser({
+        password
+      });
+
+      if (error) {
+        setStatus("resetStatus", error.message, "error");
+        return;
+      }
+
+      setStatus("resetStatus", "Mot de passe mis à jour avec succès.", "success");
+
+      setTimeout(async () => {
+        await continueAfterAuth();
+      }, 1000);
     }
 
     async function continueAfterAuth() {
@@ -1049,7 +1106,12 @@
       await continueAfterAuth();
     }
 
-    sb.auth.onAuthStateChange(async (_event, session) => {
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        showScreen("resetScreen");
+        return;
+      }
+
       if (session) {
         await continueAfterAuth();
       }
