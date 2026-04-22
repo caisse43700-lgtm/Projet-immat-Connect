@@ -4,7 +4,7 @@
   <title>ImmatConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet (carte gratuite) -->
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -16,14 +16,17 @@
       color: white;
       text-align: center;
     }
+
     h1 {
       padding: 15px;
       color: #38bdf8;
     }
+
     #map {
-      height: 80vh;
+      height: 500px;
       width: 100%;
     }
+
     button {
       margin: 10px;
       padding: 12px;
@@ -40,24 +43,24 @@
 
 <h1>ImmatConnect</h1>
 
-<button onclick="locateUser()">📍 Me localiser</button>
+<button onclick="locateUser()">Me localiser</button>
 
 <div id="map"></div>
 
 <script>
-  var map = L.map('map').setView([48.8566, 2.3522], 13); // Paris
+  var map = L.map('map').setView([48.8566, 2.3522], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
   function locateUser() {
-    map.locate({setView: true, maxZoom: 16});
+    map.locate({ setView: true, maxZoom: 16 });
   }
 
   map.on('locationfound', function(e) {
     L.marker(e.latlng).addTo(map)
-      .bindPopup("Tu es ici 📍")
+      .bindPopup("Tu es ici")
       .openPopup();
   });
 
