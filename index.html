@@ -55,18 +55,32 @@
   }).addTo(map);
 
   function locateUser() {
-    map.locate({ setView: true, maxZoom: 16 });
+    if (!navigator.geolocation) {
+      alert("Géolocalisation non supportée");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+
+        map.setView([lat, lng], 16);
+
+        L.marker([lat, lng]).addTo(map)
+          .bindPopup("Tu es ici")
+          .openPopup();
+      },
+      function(error) {
+        alert("Active la localisation dans les réglages iPhone");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   }
-
-  map.on('locationfound', function(e) {
-    L.marker(e.latlng).addTo(map)
-      .bindPopup("Tu es ici")
-      .openPopup();
-  });
-
-  map.on('locationerror', function() {
-    alert("Impossible de récupérer ta position");
-  });
 </script>
 
 </body>
