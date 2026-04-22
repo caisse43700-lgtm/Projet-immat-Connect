@@ -202,6 +202,10 @@
       text-align: left;
     }
 
+    .input-wrap {
+      position: relative;
+    }
+
     input, textarea {
       width: 100%;
       border: none;
@@ -211,6 +215,25 @@
       background: rgba(255,255,255,0.95);
       color: #111827;
       outline: none;
+    }
+
+    .input-wrap input {
+      padding-right: 54px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.08);
+      color: #111827;
+      font-size: 18px;
+      cursor: pointer;
     }
 
     textarea {
@@ -245,6 +268,22 @@
       color: #cddaf6;
       border: 2px solid rgba(255,255,255,0.10);
       margin-top: 10px;
+    }
+
+    .inline-links {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .text-link {
+      border: none;
+      background: transparent;
+      color: #9ec3ff;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0;
+      text-align: center;
     }
 
     .helper {
@@ -346,7 +385,7 @@
 
     #map {
       width: 100%;
-      height: calc(100vh - 360px);
+      height: calc(100vh - 390px);
       min-height: 320px;
     }
 
@@ -403,7 +442,6 @@
   </style>
 </head>
 <body>
-  <!-- ACCUEIL -->
   <div id="welcomeScreen" class="screen active">
     <div class="container hero">
       <div class="logo-box">🚗</div>
@@ -438,7 +476,6 @@
     </div>
   </div>
 
-  <!-- AUTH -->
   <div id="authScreen" class="screen">
     <div class="container">
       <div class="card">
@@ -453,12 +490,27 @@
         <label for="emailInput">Email</label>
         <input type="email" id="emailInput" placeholder="Ton email" />
 
+        <div id="signupPhoneWrap" class="hidden">
+          <label for="signupPhoneInput">Numéro de téléphone</label>
+          <input type="tel" id="signupPhoneInput" placeholder="Ex : 0612345678" />
+          <div class="note">
+            Votre numéro de téléphone est utilisé uniquement à des fins de sécurité et de vérification.
+            Il ne sera ni transmis, ni visible par les autres utilisateurs.
+          </div>
+        </div>
+
         <label for="passwordInput">Mot de passe</label>
-        <input type="password" id="passwordInput" placeholder="Ton mot de passe" />
+        <div class="input-wrap">
+          <input type="password" id="passwordInput" placeholder="Ton mot de passe" />
+          <button class="toggle-password" type="button" onclick="togglePassword('passwordInput', this)">👁️</button>
+        </div>
 
         <div id="confirmPasswordWrap" class="hidden">
           <label for="confirmPasswordInput">Confirmer le mot de passe</label>
-          <input type="password" id="confirmPasswordInput" placeholder="Confirme ton mot de passe" />
+          <div class="input-wrap">
+            <input type="password" id="confirmPasswordInput" placeholder="Confirme ton mot de passe" />
+            <button class="toggle-password" type="button" onclick="togglePassword('confirmPasswordInput', this)">👁️</button>
+          </div>
           <div class="helper">
             Minimum 8 caractères, 1 majuscule et 1 caractère spécial.
           </div>
@@ -467,12 +519,16 @@
         <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
         <button class="btn btn-secondary" onclick="backToWelcome()">Retour</button>
 
+        <div class="inline-links">
+          <button type="button" class="text-link" onclick="forgotPassword()">Mot de passe oublié ?</button>
+          <button type="button" id="resendBtn" class="text-link hidden" onclick="resendConfirmationEmail()">Renvoyer l’email de confirmation</button>
+        </div>
+
         <div id="authStatus" class="status"></div>
       </div>
     </div>
   </div>
 
-  <!-- PROFIL -->
   <div id="profileScreen" class="screen">
     <div class="container">
       <div class="card">
@@ -499,7 +555,6 @@
     </div>
   </div>
 
-  <!-- CARTE -->
   <div id="mapScreen">
     <div class="map-topbar">
       <div class="map-heading">ImmatConnect</div>
@@ -593,14 +648,18 @@
       const tabLogin = document.getElementById("tabLogin");
       const tabSignup = document.getElementById("tabSignup");
       const confirmWrap = document.getElementById("confirmPasswordWrap");
+      const signupPhoneWrap = document.getElementById("signupPhoneWrap");
+      const resendBtn = document.getElementById("resendBtn");
 
       if (mode === "signup") {
         title.textContent = "Créer un compte";
-        subtitle.textContent = "Crée ton compte avec ton email et un mot de passe sécurisé.";
+        subtitle.textContent = "Crée ton compte avec ton email, ton téléphone et un mot de passe sécurisé.";
         actionBtn.textContent = "Créer mon compte";
         tabSignup.classList.add("active");
         tabLogin.classList.remove("active");
         confirmWrap.classList.remove("hidden");
+        signupPhoneWrap.classList.remove("hidden");
+        resendBtn.classList.remove("hidden");
       } else {
         title.textContent = "Connexion";
         subtitle.textContent = "Connecte-toi avec ton email et ton mot de passe.";
@@ -608,6 +667,19 @@
         tabLogin.classList.add("active");
         tabSignup.classList.remove("active");
         confirmWrap.classList.add("hidden");
+        signupPhoneWrap.classList.add("hidden");
+        resendBtn.classList.add("hidden");
+      }
+    }
+
+    function togglePassword(inputId, button) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "🙈";
+      } else {
+        input.type = "password";
+        button.textContent = "👁️";
       }
     }
 
@@ -622,6 +694,7 @@
       const email = document.getElementById("emailInput").value.trim();
       const password = document.getElementById("passwordInput").value;
       const confirmPassword = document.getElementById("confirmPasswordInput")?.value || "";
+      const signupPhone = document.getElementById("signupPhoneInput")?.value.trim() || "";
 
       if (!email || !password) {
         setStatus("authStatus", "Remplis l’email et le mot de passe.", "error");
@@ -631,6 +704,11 @@
       setStatus("authStatus", "Chargement...");
 
       if (authMode === "signup") {
+        if (!signupPhone) {
+          setStatus("authStatus", "Ajoute aussi ton numéro de téléphone.", "error");
+          return;
+        }
+
         if (!isStrongPassword(password)) {
           setStatus(
             "authStatus",
@@ -645,7 +723,9 @@
           return;
         }
 
-        const { error } = await sb.auth.signUp({
+        localStorage.setItem("immatconnect_pending_phone", signupPhone);
+
+        const { data, error } = await sb.auth.signUp({
           email,
           password,
           options: {
@@ -655,6 +735,18 @@
 
         if (error) {
           setStatus("authStatus", error.message, "error");
+          return;
+        }
+
+        const user = data?.user || null;
+        const identities = user?.identities || [];
+
+        if (user && identities.length === 0) {
+          setStatus(
+            "authStatus",
+            "Un compte existe probablement déjà avec cet email. Essaie de te connecter, de réinitialiser ton mot de passe, ou renvoie l’email de confirmation.",
+            "error"
+          );
           return;
         }
 
@@ -678,6 +770,54 @@
       }
     }
 
+    async function resendConfirmationEmail() {
+      const email = document.getElementById("emailInput").value.trim();
+
+      if (!email) {
+        setStatus("authStatus", "Entre ton email pour renvoyer le message.", "error");
+        return;
+      }
+
+      setStatus("authStatus", "Envoi du message...");
+
+      const { error } = await sb.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: SITE_URL
+        }
+      });
+
+      if (error) {
+        setStatus("authStatus", error.message, "error");
+        return;
+      }
+
+      setStatus("authStatus", "Email de confirmation renvoyé.", "success");
+    }
+
+    async function forgotPassword() {
+      const email = document.getElementById("emailInput").value.trim();
+
+      if (!email) {
+        setStatus("authStatus", "Entre ton email pour réinitialiser le mot de passe.", "error");
+        return;
+      }
+
+      setStatus("authStatus", "Envoi du message de réinitialisation...");
+
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: SITE_URL
+      });
+
+      if (error) {
+        setStatus("authStatus", error.message, "error");
+        return;
+      }
+
+      setStatus("authStatus", "Message de réinitialisation envoyé.", "success");
+    }
+
     async function continueAfterAuth() {
       const { data: userData } = await sb.auth.getUser();
       const user = userData.user;
@@ -696,6 +836,10 @@
       if (profile) {
         openMap(profile);
       } else {
+        const pendingPhone = localStorage.getItem("immatconnect_pending_phone") || "";
+        if (pendingPhone && !document.getElementById("phoneInput").value) {
+          document.getElementById("phoneInput").value = pendingPhone;
+        }
         showScreen("profileScreen");
       }
     }
@@ -721,9 +865,9 @@
       const { error } = await sb.from("profiles").upsert({
         id: user.id,
         email: user.email,
-        pseudo: pseudo,
+        pseudo,
         owner_plate: ownerPlate,
-        phone: phone
+        phone
       });
 
       if (error) {
@@ -731,10 +875,12 @@
         return;
       }
 
+      localStorage.removeItem("immatconnect_pending_phone");
+
       setStatus("profileStatus", "Profil enregistré.", "success");
       openMap({
         email: user.email,
-        pseudo: pseudo,
+        pseudo,
         owner_plate: ownerPlate
       });
     }
@@ -843,7 +989,6 @@
 
       data.forEach(user => {
         if (typeof user.latitude !== "number" || typeof user.longitude !== "number") return;
-
         const marker = L.marker([user.latitude, user.longitude]).addTo(map);
         marker.bindPopup(user.user_name || "Utilisateur");
         otherMarkers.push(marker);
@@ -870,7 +1015,7 @@
       const { error } = await sb.from("requests").insert({
         user_id: user.id,
         target_plate: targetPlate,
-        message: message
+        message
       });
 
       if (error) {
@@ -904,7 +1049,7 @@
       await continueAfterAuth();
     }
 
-    sb.auth.onAuthStateChange(async (event, session) => {
+    sb.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         await continueAfterAuth();
       }
