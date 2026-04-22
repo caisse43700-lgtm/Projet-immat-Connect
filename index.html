@@ -3,36 +3,68 @@
 <head>
   <title>ImmatConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet (carte gratuite) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
   <style>
     body {
+      margin: 0;
       font-family: Arial;
       background: #0f172a;
       color: white;
       text-align: center;
-      padding: 40px;
     }
     h1 {
+      padding: 15px;
       color: #38bdf8;
     }
+    #map {
+      height: 80vh;
+      width: 100%;
+    }
     button {
-      padding: 15px 25px;
-      font-size: 18px;
-      border: none;
+      margin: 10px;
+      padding: 12px;
       border-radius: 10px;
+      border: none;
       background: #38bdf8;
       color: black;
-      margin-top: 20px;
+      font-size: 16px;
     }
   </style>
 </head>
+
 <body>
 
 <h1>ImmatConnect</h1>
-<p>Bienvenue sur ton application 🚀</p>
 
-<button onclick="alert('Fonction bientôt disponible')">
-  Commencer
-</button>
+<button onclick="locateUser()">📍 Me localiser</button>
+
+<div id="map"></div>
+
+<script>
+  var map = L.map('map').setView([48.8566, 2.3522], 13); // Paris
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  function locateUser() {
+    map.locate({setView: true, maxZoom: 16});
+  }
+
+  map.on('locationfound', function(e) {
+    L.marker(e.latlng).addTo(map)
+      .bindPopup("Tu es ici 📍")
+      .openPopup();
+  });
+
+  map.on('locationerror', function() {
+    alert("Impossible de récupérer ta position");
+  });
+</script>
 
 </body>
 </html>
