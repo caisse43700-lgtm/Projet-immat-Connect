@@ -4,6 +4,10 @@
   <title>ImmatConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -16,24 +20,27 @@
       text-align: center;
     }
 
-    h1 {
-      padding: 15px;
-      color: #38bdf8;
-    }
-
-    #map {
-      height: 500px;
-      width: 100%;
+    input {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: none;
+      width: 80%;
     }
 
     button {
-      margin: 10px;
       padding: 12px;
+      margin: 10px;
       border-radius: 10px;
       border: none;
       background: #38bdf8;
       color: black;
       font-size: 16px;
+    }
+
+    #map {
+      height: 500px;
+      display: none;
     }
   </style>
 </head>
@@ -42,53 +49,109 @@
 
 <h1>ImmatConnect</h1>
 
-<button onclick="locateUser()">Me localiser</button>
+<!-- LOGIN -->
+<div id="login">
+  <input type="email" id="email" placeholder="Ton email">
+  <br>
+  <button onclick="login()">Se connecter</button>
+</div>
 
+<!-- PROFIL -->
+<div id="profile" style="display:none;">
+  <input type="text" id="pseudo" placeholder="Pseudo">
+  <input type="text" id="plaque" placeholder="Plaque">
+  <br>
+  <button onclick="saveProfile()">Continuer</button>
+</div>
+
+<!-- MAP -->
 <div id="map"></div>
+<button onclick="locateUser()" style="display:none;" id="locateBtn">Me localiser</button>
 
 <script>
-  var map = L.map('map').setView([48.8566, 2.3522], 13);
+const supabase = window.supabase.createClient(
+  "https://vemgdkkbldgyvaisudkd.supabase.co",
+  "sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ"
+);
+
+// LOGIN EMAIL
+async function login() {
+  const email = document.getElementById("email").value;
+
+  await supabase.auth.signInWithOtp({
+    email: email
+  });
+
+  alert("Vérifie ton email pour te connecter !");
+}
+
+// CHECK SESSION
+supabase.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    showProfile();
+  }
+});
+
+// SHOW PROFILE
+function showProfile() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("profile").style.display = "block";
+}
+
+// SAVE PROFILE
+async function saveProfile() {
+  const user = (await supabase.auth.getUser()).data.user;
+
+  const pseudo = document.getElementById("pseudo").value;
+  const plaque = document.getElementById("plaque").value;
+
+  await supabase.from("profiles").insert({
+    id: user.id,
+    email: user.email,
+    pseudo: pseudo,
+    plaque: plaque
+  });
+
+  startMap();
+}
+
+// START MAP
+function startMap() {
+  document.getElementById("profile").style.display = "none";
+  document.getElementById("map").style.display = "block";
+  document.getElementById("locateBtn").style.display = "block";
+
+  window.map = L.map('map').setView([48.8566, 2.3522], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
+}
 
-  var marker = null;
+// GEOLOC
+function locateUser() {
+  map.locate({ setView: true, maxZoom: 16 });
+}
 
-  function locateUser() {
-    if (!navigator.geolocation) {
-      alert("La géolocalisation n'est pas disponible sur cet appareil.");
-      return;
-    }
+// LOCATION FOUND
+map?.on?.('locationfound', async function(e) {
+  L.marker(e.latlng).addTo(map)
+    .bindPopup("Tu es ici")
+    .openPopup();
 
-    navigator.geolocation.getCurrentPosition(
-      function(position) {
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
+  const user = (await supabase.auth.getUser()).data.user;
 
-        map.setView([lat, lng], 16);
+  await supabase.from("user_locations").insert({
+    user_name: user.email,
+    latitude: e.latlng.lat,
+    longitude: e.latlng.lng
+  });
+});
 
-        if (marker) {
-          map.removeLayer(marker);
-        }
-
-        marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup("Tu es ici").openPopup();
-      },
-      function(error) {
-        let message = "La localisation a échoué.";
-        if (error.code === 1) message = "Tu as refusé la localisation.";
-        if (error.code === 2) message = "Position introuvable.";
-        if (error.code === 3) message = "La localisation a pris trop de temps.";
-        alert(message);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
-      }
-    );
-  }
+// ERROR
+map?.on?.('locationerror', function() {
+  alert("Active la localisation dans Safari");
+});
 </script>
 
 </body>
