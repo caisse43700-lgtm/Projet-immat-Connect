@@ -21,7 +21,6 @@
       --border: rgba(255, 255, 255, 0.08);
       --danger: #ff7b7b;
       --success: #7cf2b0;
-      --white: #ffffff;
       --shadow: 0 14px 40px rgba(0,0,0,0.24);
     }
 
@@ -253,6 +252,7 @@
       color: #9ec3ff;
       font-size: 13px;
       line-height: 1.45;
+      text-align: left;
     }
 
     .note {
@@ -264,6 +264,7 @@
       color: #cfdaf2;
       font-size: 13px;
       line-height: 1.5;
+      text-align: left;
     }
 
     .status {
@@ -287,7 +288,6 @@
       display: none !important;
     }
 
-    /* MAP */
     #mapScreen {
       display: none;
       min-height: 100vh;
@@ -421,11 +421,11 @@
       <div class="features">
         <div class="feature">
           <div class="feature-icon">🪪</div>
-          <div class="feature-text">Votre plaque et votre profil sont liés à votre compte</div>
+          <div class="feature-text">Votre plaque et votre téléphone sont liés à votre compte</div>
         </div>
         <div class="feature">
           <div class="feature-icon">📍</div>
-          <div class="feature-text">Carte accessible après connexion</div>
+          <div class="feature-text">Carte accessible uniquement après connexion</div>
         </div>
         <div class="feature">
           <div class="feature-icon">🚨</div>
@@ -467,7 +467,7 @@
         <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
         <button class="btn btn-secondary" onclick="backToWelcome()">Retour</button>
 
-        <div class="status" id="authStatus"></div>
+        <div id="authStatus" class="status"></div>
       </div>
     </div>
   </div>
@@ -903,6 +903,12 @@
 
       await continueAfterAuth();
     }
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        await continueAfterAuth();
+      }
+    });
 
     checkSessionAndStart();
   </script>
