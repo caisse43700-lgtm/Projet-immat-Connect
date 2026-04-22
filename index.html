@@ -4,7 +4,6 @@
   <title>ImmatConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -54,9 +53,11 @@
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
+  var marker = null;
+
   function locateUser() {
     if (!navigator.geolocation) {
-      alert("Géolocalisation non supportée");
+      alert("La géolocalisation n'est pas disponible sur cet appareil.");
       return;
     }
 
@@ -67,16 +68,23 @@
 
         map.setView([lat, lng], 16);
 
-        L.marker([lat, lng]).addTo(map)
-          .bindPopup("Tu es ici")
-          .openPopup();
+        if (marker) {
+          map.removeLayer(marker);
+        }
+
+        marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup("Tu es ici").openPopup();
       },
       function(error) {
-        alert("Active la localisation dans les réglages iPhone");
+        let message = "La localisation a échoué.";
+        if (error.code === 1) message = "Tu as refusé la localisation.";
+        if (error.code === 2) message = "Position introuvable.";
+        if (error.code === 3) message = "La localisation a pris trop de temps.";
+        alert(message);
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       }
     );
