@@ -459,7 +459,7 @@
       <div class="features">
         <div class="feature">
           <div class="feature-icon">🪪</div>
-          <div class="feature-text">Votre plaque et votre téléphone sont liés à votre compte</div>
+          <div class="feature-text">Votre plaque, votre téléphone et votre email sont liés à votre compte</div>
         </div>
         <div class="feature">
           <div class="feature-icon">📍</div>
@@ -493,6 +493,10 @@
         <div id="signupPhoneWrap" class="hidden">
           <label for="signupPhoneInput">Numéro de téléphone</label>
           <input type="tel" id="signupPhoneInput" placeholder="Ex : 0612345678" />
+
+          <label for="signupPlateInput">Immatriculation de votre véhicule</label>
+          <input type="text" id="signupPlateInput" placeholder="Ex : AB-123-CD" />
+
           <div class="note">
             Votre numéro de téléphone est utilisé uniquement à des fins de sécurité et de vérification.
             Il ne sera ni transmis, ni visible par les autres utilisateurs.
@@ -682,7 +686,7 @@
 
       if (mode === "signup") {
         title.textContent = "Créer un compte";
-        subtitle.textContent = "Crée ton compte avec ton email, ton téléphone et un mot de passe sécurisé.";
+        subtitle.textContent = "Crée ton compte avec ton email, ton téléphone, ton immatriculation et un mot de passe sécurisé.";
         actionBtn.textContent = "Créer mon compte";
         tabSignup.classList.add("active");
         tabLogin.classList.remove("active");
@@ -724,6 +728,7 @@
       const password = document.getElementById("passwordInput").value;
       const confirmPassword = document.getElementById("confirmPasswordInput")?.value || "";
       const signupPhone = document.getElementById("signupPhoneInput")?.value.trim() || "";
+      const signupPlate = document.getElementById("signupPlateInput")?.value.trim().toUpperCase() || "";
 
       if (!email || !password) {
         setStatus("authStatus", "Remplis l’email et le mot de passe.", "error");
@@ -733,8 +738,8 @@
       setStatus("authStatus", "Chargement...");
 
       if (authMode === "signup") {
-        if (!signupPhone) {
-          setStatus("authStatus", "Ajoute aussi ton numéro de téléphone.", "error");
+        if (!signupPhone || !signupPlate) {
+          setStatus("authStatus", "Ajoute aussi le numéro de téléphone et l’immatriculation.", "error");
           return;
         }
 
@@ -749,6 +754,7 @@
         }
 
         localStorage.setItem("immatconnect_pending_phone", signupPhone);
+        localStorage.setItem("immatconnect_pending_plate", signupPlate);
 
         const { data, error } = await sb.auth.signUp({
           email,
@@ -814,6 +820,10 @@
       });
 
       if (error) {
+        if ((error.message || "").toLowerCase().includes("rate limit")) {
+          setStatus("authStatus", "Trop de demandes d’emails en peu de temps. Attends un moment avant de réessayer.", "error");
+          return;
+        }
         setStatus("authStatus", error.message, "error");
         return;
       }
@@ -836,6 +846,10 @@
       });
 
       if (error) {
+        if ((error.message || "").toLowerCase().includes("rate limit")) {
+          setStatus("authStatus", "Trop de demandes d’emails en peu de temps. Attends un moment avant de réessayer.", "error");
+          return;
+        }
         setStatus("authStatus", error.message, "error");
         return;
       }
@@ -894,8 +908,12 @@
         openMap(profile);
       } else {
         const pendingPhone = localStorage.getItem("immatconnect_pending_phone") || "";
+        const pendingPlate = localStorage.getItem("immatconnect_pending_plate") || "";
         if (pendingPhone && !document.getElementById("phoneInput").value) {
           document.getElementById("phoneInput").value = pendingPhone;
+        }
+        if (pendingPlate && !document.getElementById("ownerPlateInput").value) {
+          document.getElementById("ownerPlateInput").value = pendingPlate;
         }
         showScreen("profileScreen");
       }
@@ -933,6 +951,7 @@
       }
 
       localStorage.removeItem("immatconnect_pending_phone");
+      localStorage.removeItem("immatconnect_pending_plate");
 
       setStatus("profileStatus", "Profil enregistré.", "success");
       openMap({
