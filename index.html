@@ -5,31 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ImmatConnect</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
     :root {
-      --bg1: #071228;
-      --bg2: #020816;
-      --cyan: #21d4d4;
-      --cyan2: #33bdf2;
+      --bg-1: #071228;
+      --bg-2: #020816;
+      --primary: #23d6d6;
+      --primary-2: #38bdf8;
       --text: #eef4ff;
-      --muted: #8ea0c7;
-      --card: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
+      --muted: #9fb2d8;
+      --card: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ff7b7b;
+      --success: #7cf2b0;
     }
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Arial, sans-serif;
       background:
-        linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)),
         radial-gradient(circle at top, #0c274c 0%, #071228 35%, #020816 100%);
       color: var(--text);
       min-height: 100vh;
@@ -38,224 +40,290 @@
     .screen {
       display: none;
       min-height: 100vh;
-      padding: 28px 20px 36px;
+      padding: 24px 18px 36px;
     }
 
     .screen.active {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .container {
+      width: 100%;
       max-width: 430px;
       margin: 0 auto;
+    }
+
+    .hero {
+      text-align: center;
     }
 
     .logo-box {
       width: 96px;
       height: 96px;
-      margin: 18px auto 26px;
-      border-radius: 26px;
+      margin: 10px auto 24px;
+      border-radius: 28px;
       background: linear-gradient(135deg, #2df1c6, #24c7ff);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 44px;
-      box-shadow: 0 0 32px rgba(38, 224, 213, 0.28);
+      font-size: 42px;
+      box-shadow: 0 0 34px rgba(38, 224, 213, 0.28);
     }
 
-    .brand {
-      text-align: center;
-      margin-bottom: 8px;
-      line-height: 0.92;
-    }
-
-    .brand .top {
-      font-size: 46px;
+    .brand-top {
+      font-size: 42px;
       font-weight: 900;
       letter-spacing: 2px;
-      color: #f2f7ff;
+      line-height: 1;
     }
 
-    .brand .bottom {
-      font-size: 54px;
+    .brand-bottom {
+      font-size: 48px;
       font-weight: 300;
       letter-spacing: 6px;
-      color: #24e0d5;
+      line-height: 1;
+      color: var(--primary);
       margin-top: 6px;
     }
 
     .tagline {
-      text-align: center;
-      color: #2d477f;
-      letter-spacing: 4px;
-      font-size: 13px;
-      margin: 18px 0 44px;
+      margin: 16px 0 34px;
+      color: #45639e;
       text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: 12px;
     }
 
     .hero-title {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 900;
       line-height: 1.18;
-      margin: 0 0 20px;
+      margin: 0 0 16px;
+      text-align: center;
     }
 
-    .hero-sub {
-      font-size: 18px;
+    .hero-subtitle {
+      font-size: 17px;
       line-height: 1.6;
       color: var(--muted);
-      margin-bottom: 34px;
+      text-align: center;
+      margin: 0 0 28px;
     }
 
     .features {
       display: grid;
-      gap: 18px;
-      margin-bottom: 42px;
+      gap: 14px;
+      margin-bottom: 30px;
     }
 
     .feature {
       display: flex;
       align-items: center;
-      gap: 16px;
-      color: #cdd8f0;
-      font-size: 18px;
-      line-height: 1.4;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 18px;
+      text-align: left;
     }
 
     .feature-icon {
-      min-width: 58px;
-      height: 58px;
-      border-radius: 18px;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 48px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(20, 231, 210, 0.08);
-      border: 1px solid rgba(20, 231, 210, 0.16);
-      font-size: 28px;
-      box-shadow: 0 0 12px rgba(20, 231, 210, 0.08);
+      background: rgba(35, 214, 214, 0.1);
+      border: 1px solid rgba(35, 214, 214, 0.18);
+      font-size: 24px;
     }
 
-    .btn {
-      width: 100%;
-      border: none;
-      border-radius: 24px;
-      padding: 22px 20px;
-      font-size: 20px;
-      font-weight: 800;
-      cursor: pointer;
-      margin-bottom: 16px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(90deg, #2df1c6, #22c9ff);
-      color: #06111c;
-      box-shadow: 0 0 28px rgba(39, 220, 222, 0.28);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: #8ea0c7;
-      border: 2px solid rgba(255,255,255,0.1);
+    .feature-text {
+      color: #d7e3fb;
+      font-size: 16px;
+      line-height: 1.35;
     }
 
     .card {
+      width: 100%;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 22px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22);
     }
 
     .card h2 {
-      margin: 0 0 18px;
+      margin: 0 0 10px;
       font-size: 28px;
+      text-align: center;
     }
 
     .card p {
+      margin: 0 0 18px;
+      text-align: center;
       color: var(--muted);
       line-height: 1.5;
-      margin: 0 0 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.06);
+      color: #dbe7ff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(90deg, #2df1c6, #22c9ff);
+      color: #051019;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 8px;
+      font-size: 14px;
+      color: #cbd9f5;
+      text-align: left;
     }
 
     input {
       width: 100%;
       border: none;
       border-radius: 16px;
-      padding: 18px 16px;
-      margin-bottom: 14px;
-      font-size: 17px;
-      background: rgba(255,255,255,0.94);
+      padding: 16px 14px;
+      font-size: 16px;
+      background: rgba(255,255,255,0.95);
       color: #111827;
+      outline: none;
     }
 
-    .mini-link {
+    input::placeholder {
+      color: #7b8798;
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 18px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #2df1c6, #22c9ff);
+      color: #06111c;
+      box-shadow: 0 0 28px rgba(39, 220, 222, 0.24);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #cddaf6;
+      border: 2px solid rgba(255,255,255,0.10);
+      margin-top: 10px;
+    }
+
+    .helper {
+      margin-top: 14px;
       text-align: center;
       color: #9ec3ff;
-      font-size: 15px;
-      margin-top: 10px;
-      cursor: pointer;
+      font-size: 14px;
+      line-height: 1.45;
     }
 
     .status {
-      margin-top: 12px;
-      color: #a9d7ff;
-      line-height: 1.5;
-      min-height: 24px;
+      min-height: 22px;
+      margin-top: 14px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #b8c8e8;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: var(--success);
     }
 
     #mapScreen {
-      padding: 0;
+      display: none;
+      min-height: 100vh;
       background: #071228;
     }
 
+    #mapScreen.active {
+      display: block;
+    }
+
     .map-topbar {
-      padding: 16px 16px 10px;
+      padding: 16px 14px 12px;
       background: linear-gradient(180deg, #0b1834, #071228);
       position: sticky;
       top: 0;
       z-index: 1000;
     }
 
-    .map-title {
-      font-size: 30px;
+    .map-heading {
+      font-size: 28px;
       font-weight: 900;
       text-align: center;
-      margin: 8px 0 14px;
+      margin: 4px 0 8px;
     }
 
-    .map-user {
+    .map-subheading {
       text-align: center;
-      color: #9fb5d9;
-      font-size: 14px;
+      color: var(--muted);
+      font-size: 13px;
       margin-bottom: 12px;
+      word-break: break-word;
     }
 
     .map-actions {
       display: grid;
       gap: 10px;
-      padding: 0 14px 10px;
     }
 
     .small-btn {
       border: none;
       border-radius: 16px;
       padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
       background: linear-gradient(90deg, #2df1c6, #22c9ff);
       color: #051019;
-      font-size: 16px;
-      font-weight: 800;
     }
 
     .small-btn.alt {
       background: rgba(255,255,255,0.08);
-      color: #d8e4ff;
       border: 1px solid rgba(255,255,255,0.08);
+      color: #dbe7ff;
     }
 
     #map {
       width: 100%;
-      height: calc(100vh - 210px);
+      height: calc(100vh - 220px);
     }
 
     .hidden {
@@ -264,88 +332,112 @@
   </style>
 </head>
 <body>
+  <!-- ACCUEIL -->
   <div id="welcomeScreen" class="screen active">
-    <div class="container">
+    <div class="container hero">
       <div class="logo-box">🚗</div>
 
-      <div class="brand">
-        <div class="top">IMMAT</div>
-        <div class="bottom">CONNECT</div>
-      </div>
-
+      <div class="brand-top">IMMAT</div>
+      <div class="brand-bottom">CONNECT</div>
       <div class="tagline">La route, connectée</div>
 
       <h1 class="hero-title">Communiquez avec n’importe quel conducteur</h1>
-
-      <div class="hero-sub">
-        Signalez un problème, retrouvez un ami, faites une rencontre —
-        via son immatriculation.
+      <div class="hero-subtitle">
+        Signalez un problème, retrouvez un conducteur, échangez autour d’une plaque —
+        simplement et rapidement.
       </div>
 
       <div class="features">
         <div class="feature">
           <div class="feature-icon">⚠️</div>
-          <div>Signalez un problème véhicule</div>
+          <div class="feature-text">Signaler un problème lié à un véhicule</div>
         </div>
         <div class="feature">
-          <div class="feature-icon">🎙️</div>
-          <div>Saisie vocale ou manuelle</div>
+          <div class="feature-icon">📍</div>
+          <div class="feature-text">Voir les utilisateurs autour de vous</div>
         </div>
         <div class="feature">
           <div class="feature-icon">🔒</div>
-          <div>Anonymat total jusqu’à acceptation</div>
+          <div class="feature-text">Créer un compte et accéder à la carte ensuite</div>
         </div>
       </div>
 
-      <button class="btn btn-primary" onclick="openEmailForm('signup')">Créer un compte</button>
-      <button class="btn btn-secondary" onclick="openEmailForm('login')">J’ai déjà un compte</button>
+      <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
+      <button class="btn btn-secondary" onclick="goToAuth('login')">J’ai déjà un compte</button>
     </div>
   </div>
 
+  <!-- AUTH -->
   <div id="authScreen" class="screen">
     <div class="container">
       <div class="card">
         <h2 id="authTitle">Connexion</h2>
-        <p id="authText">Entre ton email pour recevoir un lien de connexion.</p>
+        <p id="authSubtitle">Connecte-toi avec ton email et ton mot de passe.</p>
+
+        <div class="tabs">
+          <button id="tabLogin" class="tab-btn active" onclick="setAuthMode('login')">Connexion</button>
+          <button id="tabSignup" class="tab-btn" onclick="setAuthMode('signup')">Inscription</button>
+        </div>
+
+        <label for="emailInput">Email</label>
         <input type="email" id="emailInput" placeholder="Ton email" />
-        <button class="btn btn-primary" onclick="sendMagicLink()" style="margin-bottom:0;">Continuer</button>
-        <div class="mini-link" onclick="goToWelcome()">Retour</div>
-        <div class="status" id="authStatus"></div>
+
+        <label for="passwordInput">Mot de passe</label>
+        <input type="password" id="passwordInput" placeholder="Ton mot de passe" />
+
+        <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
+        <button class="btn btn-secondary" onclick="backToWelcome()">Retour</button>
+
+        <div class="helper">
+          Lors de l’inscription, un email peut être envoyé pour confirmer l’adresse.
+        </div>
+
+        <div id="authStatus" class="status"></div>
       </div>
     </div>
   </div>
 
+  <!-- PROFIL -->
   <div id="profileScreen" class="screen">
     <div class="container">
       <div class="card">
         <h2>Compléter mon profil</h2>
         <p>Ajoute ton pseudo et ta plaque avant d’accéder à la carte.</p>
-        <input type="text" id="pseudoInput" placeholder="Pseudo" />
-        <input type="text" id="plaqueInput" placeholder="Plaque d’immatriculation" />
-        <button class="btn btn-primary" onclick="saveProfile()" style="margin-bottom:0;">Enregistrer</button>
-        <div class="status" id="profileStatus"></div>
+
+        <label for="pseudoInput">Pseudo</label>
+        <input type="text" id="pseudoInput" placeholder="Ton pseudo" />
+
+        <label for="plaqueInput">Plaque d’immatriculation</label>
+        <input type="text" id="plaqueInput" placeholder="Ex : AB-123-CD" />
+
+        <button class="btn btn-primary" onclick="saveProfile()">Enregistrer et continuer</button>
+        <div id="profileStatus" class="status"></div>
       </div>
     </div>
   </div>
 
-  <div id="mapScreen" class="screen">
+  <!-- CARTE -->
+  <div id="mapScreen">
     <div class="map-topbar">
-      <div class="map-title">ImmatConnect</div>
-      <div class="map-user" id="mapUserText"></div>
+      <div class="map-heading">ImmatConnect</div>
+      <div id="mapUserInfo" class="map-subheading"></div>
+
       <div class="map-actions">
         <button class="small-btn" onclick="locateUser()">Me localiser</button>
         <button class="small-btn alt" onclick="loadOtherUsers()">Voir les autres utilisateurs</button>
         <button class="small-btn alt" onclick="logout()">Se déconnecter</button>
       </div>
     </div>
+
     <div id="map"></div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://vemgdkkbldgyvaisudkd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ";
+    const SITE_URL = "https://caisse43700-lgtm.github.io/Projet-immat-Connect/";
 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let authMode = "login";
     let map = null;
@@ -353,70 +445,150 @@
     let otherMarkers = [];
 
     function showScreen(id) {
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
+      document.getElementById("welcomeScreen").classList.remove("active");
+      document.getElementById("authScreen").classList.remove("active");
+      document.getElementById("profileScreen").classList.remove("active");
+      document.getElementById("mapScreen").classList.remove("active");
+
+      if (id === "mapScreen") {
+        document.getElementById("mapScreen").classList.add("active");
+      } else {
+        document.getElementById(id).classList.add("active");
+      }
     }
 
-    function openEmailForm(mode) {
-      authMode = mode;
-      document.getElementById("authTitle").textContent =
-        mode === "signup" ? "Créer un compte" : "Se connecter";
-      document.getElementById("authText").textContent =
-        mode === "signup"
-          ? "Entre ton email pour recevoir un lien de création de compte."
-          : "Entre ton email pour recevoir un lien de connexion.";
-      document.getElementById("authStatus").textContent = "";
+    function setStatus(id, message, type = "") {
+      const el = document.getElementById(id);
+      el.textContent = message || "";
+      el.className = "status" + (type ? " " + type : "");
+    }
+
+    function goToAuth(mode) {
+      setAuthMode(mode);
       showScreen("authScreen");
+      setStatus("authStatus", "");
     }
 
-    function goToWelcome() {
+    function backToWelcome() {
       showScreen("welcomeScreen");
+      setStatus("authStatus", "");
     }
 
-    async function sendMagicLink() {
-      const email = document.getElementById("emailInput").value.trim();
-      const status = document.getElementById("authStatus");
+    function setAuthMode(mode) {
+      authMode = mode;
 
-      if (!email) {
-        status.textContent = "Entre ton email.";
+      const title = document.getElementById("authTitle");
+      const subtitle = document.getElementById("authSubtitle");
+      const actionBtn = document.getElementById("authActionBtn");
+      const tabLogin = document.getElementById("tabLogin");
+      const tabSignup = document.getElementById("tabSignup");
+
+      if (mode === "signup") {
+        title.textContent = "Créer un compte";
+        subtitle.textContent = "Crée ton compte avec ton email et ton mot de passe.";
+        actionBtn.textContent = "Créer mon compte";
+        tabSignup.classList.add("active");
+        tabLogin.classList.remove("active");
+      } else {
+        title.textContent = "Connexion";
+        subtitle.textContent = "Connecte-toi avec ton email et ton mot de passe.";
+        actionBtn.textContent = "Se connecter";
+        tabLogin.classList.add("active");
+        tabSignup.classList.remove("active");
+      }
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value;
+
+      if (!email || !password) {
+        setStatus("authStatus", "Remplis l’email et le mot de passe.", "error");
         return;
       }
 
-      status.textContent = "Envoi du lien...";
+      setStatus("authStatus", "Chargement...");
 
-      const { error } = await client.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.href
+      if (authMode === "signup") {
+        const { error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: SITE_URL
+          }
+        });
+
+        if (error) {
+          setStatus("authStatus", error.message, "error");
+          return;
         }
-      });
+
+        setStatus(
+          "authStatus",
+          "Compte créé. Vérifie ton email si une confirmation est demandée, puis reviens sur cette page pour te connecter.",
+          "success"
+        );
+      } else {
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          setStatus("authStatus", error.message, "error");
+          return;
+        }
+
+        await continueAfterAuth();
+      }
+    }
+
+    async function continueAfterAuth() {
+      const { data: userData } = await supabaseClient.auth.getUser();
+      const user = userData.user;
+
+      if (!user) {
+        showScreen("authScreen");
+        return;
+      }
+
+      const { data: profile, error } = await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
 
       if (error) {
-        status.textContent = "Erreur : " + error.message;
+        showScreen("profileScreen");
+        return;
+      }
+
+      if (profile) {
+        openMap(user.email, profile.pseudo, profile.plaque);
       } else {
-        status.textContent = "Vérifie ton email pour continuer.";
+        showScreen("profileScreen");
       }
     }
 
     async function saveProfile() {
       const pseudo = document.getElementById("pseudoInput").value.trim();
-      const plaque = document.getElementById("plaqueInput").value.trim();
-      const status = document.getElementById("profileStatus");
+      const plaque = document.getElementById("plaqueInput").value.trim().toUpperCase();
+      const statusId = "profileStatus";
 
       if (!pseudo || !plaque) {
-        status.textContent = "Remplis le pseudo et la plaque.";
+        setStatus(statusId, "Remplis le pseudo et la plaque.", "error");
         return;
       }
 
-      const { data: userData } = await client.auth.getUser();
+      const { data: userData } = await supabaseClient.auth.getUser();
       const user = userData.user;
 
       if (!user) {
-        status.textContent = "Utilisateur introuvable.";
+        setStatus(statusId, "Session introuvable. Reconnecte-toi.", "error");
         return;
       }
 
-      const { error } = await client.from("profiles").upsert({
+      const { error } = await supabaseClient.from("profiles").upsert({
         id: user.id,
         email: user.email,
         pseudo,
@@ -424,11 +596,12 @@
       });
 
       if (error) {
-        status.textContent = "Erreur : " + error.message;
+        setStatus(statusId, error.message, "error");
         return;
       }
 
-      openMap(user.email);
+      setStatus(statusId, "Profil enregistré.", "success");
+      openMap(user.email, pseudo, plaque);
     }
 
     function initMapIfNeeded() {
@@ -441,13 +614,15 @@
       }).addTo(map);
     }
 
-    function openMap(email) {
+    function openMap(email, pseudo = "", plaque = "") {
       showScreen("mapScreen");
-      document.getElementById("mapUserText").textContent = email || "";
+      document.getElementById("mapUserInfo").textContent =
+        [pseudo, plaque, email].filter(Boolean).join(" • ");
+
       setTimeout(() => {
         initMapIfNeeded();
         map.invalidateSize();
-      }, 200);
+      }, 250);
     }
 
     async function locateUser() {
@@ -472,18 +647,18 @@
           myMarker = L.marker([lat, lng]).addTo(map);
           myMarker.bindPopup("Tu es ici").openPopup();
 
-          const { data: userData } = await client.auth.getUser();
+          const { data: userData } = await supabaseClient.auth.getUser();
           const user = userData.user;
 
-          if (user) {
-            await client.from("user_locations").upsert({
-              id: user.id,
-              user_name: user.email,
-              latitude: lat,
-              longitude: lng,
-              updated_at: new Date().toISOString()
-            });
-          }
+          if (!user) return;
+
+          await supabaseClient.from("user_locations").upsert({
+            id: user.id,
+            user_name: user.email,
+            latitude: lat,
+            longitude: lng,
+            updated_at: new Date().toISOString()
+          });
         },
         function(error) {
           if (error.code === 1) alert("Tu as refusé la localisation.");
@@ -505,16 +680,23 @@
       otherMarkers.forEach(marker => map.removeLayer(marker));
       otherMarkers = [];
 
-      const { data, error } = await client
+      const { data, error } = await supabaseClient
         .from("user_locations")
         .select("*");
 
       if (error) {
-        alert("Erreur chargement utilisateurs");
+        alert("Erreur lors du chargement des utilisateurs.");
+        return;
+      }
+
+      if (!data || !data.length) {
+        alert("Aucun autre utilisateur localisé pour le moment.");
         return;
       }
 
       data.forEach(user => {
+        if (typeof user.latitude !== "number" || typeof user.longitude !== "number") return;
+
         const marker = L.marker([user.latitude, user.longitude]).addTo(map);
         marker.bindPopup(user.user_name || "Utilisateur");
         otherMarkers.push(marker);
@@ -522,12 +704,28 @@
     }
 
     async function logout() {
-      await client.auth.signOut();
-      location.reload();
+      await supabaseClient.auth.signOut();
+      location.href = SITE_URL;
+    }
+
+    async function handleEmailRedirectSession() {
+      const hash = window.location.hash || "";
+      if (!hash.includes("access_token")) return false;
+
+      const { error } = await supabaseClient.auth.exchangeCodeForSession(window.location.href);
+
+      if (error) {
+        return false;
+      }
+
+      history.replaceState({}, document.title, SITE_URL);
+      return true;
     }
 
     async function checkSessionAndStart() {
-      const { data: sessionData } = await client.auth.getSession();
+      await handleEmailRedirectSession();
+
+      const { data: sessionData } = await supabaseClient.auth.getSession();
       const session = sessionData.session;
 
       if (!session) {
@@ -535,25 +733,7 @@
         return;
       }
 
-      const { data: userData } = await client.auth.getUser();
-      const user = userData.user;
-
-      if (!user) {
-        showScreen("welcomeScreen");
-        return;
-      }
-
-      const { data: profile } = await client
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profile) {
-        openMap(user.email);
-      } else {
-        showScreen("profileScreen");
-      }
+      await continueAfterAuth();
     }
 
     checkSessionAndStart();
