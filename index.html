@@ -1,158 +1,562 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ImmatConnect</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
+    :root {
+      --bg1: #071228;
+      --bg2: #020816;
+      --cyan: #21d4d4;
+      --cyan2: #33bdf2;
+      --text: #eef4ff;
+      --muted: #8ea0c7;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
+      font-family: Arial, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)),
+        radial-gradient(circle at top, #0c274c 0%, #071228 35%, #020816 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 28px 20px 36px;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .container {
+      max-width: 430px;
+      margin: 0 auto;
+    }
+
+    .logo-box {
+      width: 96px;
+      height: 96px;
+      margin: 18px auto 26px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, #2df1c6, #24c7ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      box-shadow: 0 0 32px rgba(38, 224, 213, 0.28);
+    }
+
+    .brand {
       text-align: center;
+      margin-bottom: 8px;
+      line-height: 0.92;
+    }
+
+    .brand .top {
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #f2f7ff;
+    }
+
+    .brand .bottom {
+      font-size: 54px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      color: #24e0d5;
+      margin-top: 6px;
+    }
+
+    .tagline {
+      text-align: center;
+      color: #2d477f;
+      letter-spacing: 4px;
+      font-size: 13px;
+      margin: 18px 0 44px;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.18;
+      margin: 0 0 20px;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 34px;
+    }
+
+    .features {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 42px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: #cdd8f0;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .feature-icon {
+      min-width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20, 231, 210, 0.08);
+      border: 1px solid rgba(20, 231, 210, 0.16);
+      font-size: 28px;
+      box-shadow: 0 0 12px rgba(20, 231, 210, 0.08);
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 24px;
+      padding: 22px 20px;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #2df1c6, #22c9ff);
+      color: #06111c;
+      box-shadow: 0 0 28px rgba(39, 220, 222, 0.28);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #8ea0c7;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 22px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    }
+
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 28px;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0 0 18px;
     }
 
     input {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 8px;
+      width: 100%;
       border: none;
-      width: 80%;
+      border-radius: 16px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      font-size: 17px;
+      background: rgba(255,255,255,0.94);
+      color: #111827;
     }
 
-    button {
-      padding: 12px;
-      margin: 10px;
-      border-radius: 10px;
+    .mini-link {
+      text-align: center;
+      color: #9ec3ff;
+      font-size: 15px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #a9d7ff;
+      line-height: 1.5;
+      min-height: 24px;
+    }
+
+    #mapScreen {
+      padding: 0;
+      background: #071228;
+    }
+
+    .map-topbar {
+      padding: 16px 16px 10px;
+      background: linear-gradient(180deg, #0b1834, #071228);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .map-title {
+      font-size: 30px;
+      font-weight: 900;
+      text-align: center;
+      margin: 8px 0 14px;
+    }
+
+    .map-user {
+      text-align: center;
+      color: #9fb5d9;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .map-actions {
+      display: grid;
+      gap: 10px;
+      padding: 0 14px 10px;
+    }
+
+    .small-btn {
       border: none;
-      background: #38bdf8;
-      color: black;
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: linear-gradient(90deg, #2df1c6, #22c9ff);
+      color: #051019;
       font-size: 16px;
+      font-weight: 800;
+    }
+
+    .small-btn.alt {
+      background: rgba(255,255,255,0.08);
+      color: #d8e4ff;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     #map {
-      height: 500px;
-      display: none;
+      width: 100%;
+      height: calc(100vh - 210px);
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
-
 <body>
+  <div id="welcomeScreen" class="screen active">
+    <div class="container">
+      <div class="logo-box">🚗</div>
 
-<h1>ImmatConnect</h1>
+      <div class="brand">
+        <div class="top">IMMAT</div>
+        <div class="bottom">CONNECT</div>
+      </div>
 
-<!-- LOGIN -->
-<div id="login">
-  <input type="email" id="email" placeholder="Ton email">
-  <br>
-  <button onclick="login()">Se connecter</button>
-</div>
+      <div class="tagline">La route, connectée</div>
 
-<!-- PROFIL -->
-<div id="profile" style="display:none;">
-  <input type="text" id="pseudo" placeholder="Pseudo">
-  <input type="text" id="plaque" placeholder="Plaque">
-  <br>
-  <button onclick="saveProfile()">Continuer</button>
-</div>
+      <h1 class="hero-title">Communiquez avec n’importe quel conducteur</h1>
 
-<!-- MAP -->
-<div id="map"></div>
-<button onclick="locateUser()" style="display:none;" id="locateBtn">Me localiser</button>
+      <div class="hero-sub">
+        Signalez un problème, retrouvez un ami, faites une rencontre —
+        via son immatriculation.
+      </div>
 
-<script>
-const supabase = window.supabase.createClient(
-  "https://vemgdkkbldgyvaisudkd.supabase.co",
-  "sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ"
-);
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">⚠️</div>
+          <div>Signalez un problème véhicule</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎙️</div>
+          <div>Saisie vocale ou manuelle</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔒</div>
+          <div>Anonymat total jusqu’à acceptation</div>
+        </div>
+      </div>
 
-// LOGIN EMAIL
-async function login() {
-  const email = document.getElementById("email").value;
+      <button class="btn btn-primary" onclick="openEmailForm('signup')">Créer un compte</button>
+      <button class="btn btn-secondary" onclick="openEmailForm('login')">J’ai déjà un compte</button>
+    </div>
+  </div>
 
-  await supabase.auth.signInWithOtp({
-    email: email
-  });
+  <div id="authScreen" class="screen">
+    <div class="container">
+      <div class="card">
+        <h2 id="authTitle">Connexion</h2>
+        <p id="authText">Entre ton email pour recevoir un lien de connexion.</p>
+        <input type="email" id="emailInput" placeholder="Ton email" />
+        <button class="btn btn-primary" onclick="sendMagicLink()" style="margin-bottom:0;">Continuer</button>
+        <div class="mini-link" onclick="goToWelcome()">Retour</div>
+        <div class="status" id="authStatus"></div>
+      </div>
+    </div>
+  </div>
 
-  alert("Vérifie ton email pour te connecter !");
-}
+  <div id="profileScreen" class="screen">
+    <div class="container">
+      <div class="card">
+        <h2>Compléter mon profil</h2>
+        <p>Ajoute ton pseudo et ta plaque avant d’accéder à la carte.</p>
+        <input type="text" id="pseudoInput" placeholder="Pseudo" />
+        <input type="text" id="plaqueInput" placeholder="Plaque d’immatriculation" />
+        <button class="btn btn-primary" onclick="saveProfile()" style="margin-bottom:0;">Enregistrer</button>
+        <div class="status" id="profileStatus"></div>
+      </div>
+    </div>
+  </div>
 
-// CHECK SESSION
-supabase.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    showProfile();
-  }
-});
+  <div id="mapScreen" class="screen">
+    <div class="map-topbar">
+      <div class="map-title">ImmatConnect</div>
+      <div class="map-user" id="mapUserText"></div>
+      <div class="map-actions">
+        <button class="small-btn" onclick="locateUser()">Me localiser</button>
+        <button class="small-btn alt" onclick="loadOtherUsers()">Voir les autres utilisateurs</button>
+        <button class="small-btn alt" onclick="logout()">Se déconnecter</button>
+      </div>
+    </div>
+    <div id="map"></div>
+  </div>
 
-// SHOW PROFILE
-function showProfile() {
-  document.getElementById("login").style.display = "none";
-  document.getElementById("profile").style.display = "block";
-}
+  <script>
+    const SUPABASE_URL = "https://vemgdkkbldgyvaisudkd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ";
 
-// SAVE PROFILE
-async function saveProfile() {
-  const user = (await supabase.auth.getUser()).data.user;
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const pseudo = document.getElementById("pseudo").value;
-  const plaque = document.getElementById("plaque").value;
+    let authMode = "login";
+    let map = null;
+    let myMarker = null;
+    let otherMarkers = [];
 
-  await supabase.from("profiles").insert({
-    id: user.id,
-    email: user.email,
-    pseudo: pseudo,
-    plaque: plaque
-  });
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
 
-  startMap();
-}
+    function openEmailForm(mode) {
+      authMode = mode;
+      document.getElementById("authTitle").textContent =
+        mode === "signup" ? "Créer un compte" : "Se connecter";
+      document.getElementById("authText").textContent =
+        mode === "signup"
+          ? "Entre ton email pour recevoir un lien de création de compte."
+          : "Entre ton email pour recevoir un lien de connexion.";
+      document.getElementById("authStatus").textContent = "";
+      showScreen("authScreen");
+    }
 
-// START MAP
-function startMap() {
-  document.getElementById("profile").style.display = "none";
-  document.getElementById("map").style.display = "block";
-  document.getElementById("locateBtn").style.display = "block";
+    function goToWelcome() {
+      showScreen("welcomeScreen");
+    }
 
-  window.map = L.map('map').setView([48.8566, 2.3522], 13);
+    async function sendMagicLink() {
+      const email = document.getElementById("emailInput").value.trim();
+      const status = document.getElementById("authStatus");
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-}
+      if (!email) {
+        status.textContent = "Entre ton email.";
+        return;
+      }
 
-// GEOLOC
-function locateUser() {
-  map.locate({ setView: true, maxZoom: 16 });
-}
+      status.textContent = "Envoi du lien...";
 
-// LOCATION FOUND
-map?.on?.('locationfound', async function(e) {
-  L.marker(e.latlng).addTo(map)
-    .bindPopup("Tu es ici")
-    .openPopup();
+      const { error } = await client.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.href
+        }
+      });
 
-  const user = (await supabase.auth.getUser()).data.user;
+      if (error) {
+        status.textContent = "Erreur : " + error.message;
+      } else {
+        status.textContent = "Vérifie ton email pour continuer.";
+      }
+    }
 
-  await supabase.from("user_locations").insert({
-    user_name: user.email,
-    latitude: e.latlng.lat,
-    longitude: e.latlng.lng
-  });
-});
+    async function saveProfile() {
+      const pseudo = document.getElementById("pseudoInput").value.trim();
+      const plaque = document.getElementById("plaqueInput").value.trim();
+      const status = document.getElementById("profileStatus");
 
-// ERROR
-map?.on?.('locationerror', function() {
-  alert("Active la localisation dans Safari");
-});
-</script>
+      if (!pseudo || !plaque) {
+        status.textContent = "Remplis le pseudo et la plaque.";
+        return;
+      }
 
+      const { data: userData } = await client.auth.getUser();
+      const user = userData.user;
+
+      if (!user) {
+        status.textContent = "Utilisateur introuvable.";
+        return;
+      }
+
+      const { error } = await client.from("profiles").upsert({
+        id: user.id,
+        email: user.email,
+        pseudo,
+        plaque
+      });
+
+      if (error) {
+        status.textContent = "Erreur : " + error.message;
+        return;
+      }
+
+      openMap(user.email);
+    }
+
+    function initMapIfNeeded() {
+      if (map) return;
+
+      map = L.map("map").setView([48.8566, 2.3522], 13);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+      }).addTo(map);
+    }
+
+    function openMap(email) {
+      showScreen("mapScreen");
+      document.getElementById("mapUserText").textContent = email || "";
+      setTimeout(() => {
+        initMapIfNeeded();
+        map.invalidateSize();
+      }, 200);
+    }
+
+    async function locateUser() {
+      if (!navigator.geolocation) {
+        alert("La géolocalisation n'est pas disponible sur cet appareil.");
+        return;
+      }
+
+      initMapIfNeeded();
+
+      navigator.geolocation.getCurrentPosition(
+        async function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          map.setView([lat, lng], 16);
+
+          if (myMarker) {
+            map.removeLayer(myMarker);
+          }
+
+          myMarker = L.marker([lat, lng]).addTo(map);
+          myMarker.bindPopup("Tu es ici").openPopup();
+
+          const { data: userData } = await client.auth.getUser();
+          const user = userData.user;
+
+          if (user) {
+            await client.from("user_locations").upsert({
+              id: user.id,
+              user_name: user.email,
+              latitude: lat,
+              longitude: lng,
+              updated_at: new Date().toISOString()
+            });
+          }
+        },
+        function(error) {
+          if (error.code === 1) alert("Tu as refusé la localisation.");
+          else if (error.code === 2) alert("Position introuvable.");
+          else if (error.code === 3) alert("La localisation a pris trop de temps.");
+          else alert("La localisation a échoué.");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    async function loadOtherUsers() {
+      initMapIfNeeded();
+
+      otherMarkers.forEach(marker => map.removeLayer(marker));
+      otherMarkers = [];
+
+      const { data, error } = await client
+        .from("user_locations")
+        .select("*");
+
+      if (error) {
+        alert("Erreur chargement utilisateurs");
+        return;
+      }
+
+      data.forEach(user => {
+        const marker = L.marker([user.latitude, user.longitude]).addTo(map);
+        marker.bindPopup(user.user_name || "Utilisateur");
+        otherMarkers.push(marker);
+      });
+    }
+
+    async function logout() {
+      await client.auth.signOut();
+      location.reload();
+    }
+
+    async function checkSessionAndStart() {
+      const { data: sessionData } = await client.auth.getSession();
+      const session = sessionData.session;
+
+      if (!session) {
+        showScreen("welcomeScreen");
+        return;
+      }
+
+      const { data: userData } = await client.auth.getUser();
+      const user = userData.user;
+
+      if (!user) {
+        showScreen("welcomeScreen");
+        return;
+      }
+
+      const { data: profile } = await client
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        openMap(user.email);
+      } else {
+        showScreen("profileScreen");
+      }
+    }
+
+    checkSessionAndStart();
+  </script>
 </body>
 </html>
