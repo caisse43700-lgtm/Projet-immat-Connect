@@ -255,13 +255,13 @@
       font-weight: 800;
       cursor: pointer;
       margin-top: 18px;
-      transition: opacity 0.2s ease;
+      transition: opacity .2s ease;
     }
 
     .btn[disabled],
     .small-btn[disabled],
     .text-link[disabled] {
-      opacity: 0.6;
+      opacity: .6;
       cursor: not-allowed;
     }
 
@@ -323,22 +323,22 @@
       color: #b8c8e8;
     }
 
-    .status.error {
-      color: var(--danger);
-    }
+    .status.error { color: var(--danger); }
+    .status.success { color: var(--success); }
 
-    .status.success {
-      color: var(--success);
-    }
-
-    .field-error {
+    .field-error,
+    .field-valid,
+    .field-neutral {
       margin-top: 6px;
-      color: var(--danger);
       font-size: 12px;
       line-height: 1.3;
       text-align: left;
       min-height: 16px;
     }
+
+    .field-error { color: var(--danger); }
+    .field-valid { color: var(--success); }
+    .field-neutral { color: transparent; }
 
     .hidden {
       display: none !important;
@@ -462,7 +462,6 @@
   <div id="welcomeScreen" class="screen active">
     <div class="container hero">
       <div class="logo-box">🚗</div>
-
       <div class="brand-top">IMMAT</div>
       <div class="brand-bottom">CONNECT</div>
       <div class="tagline">La route, connectée</div>
@@ -506,16 +505,16 @@
 
         <label for="emailInput">Email</label>
         <input type="email" id="emailInput" placeholder="Ton email" autocomplete="email" />
-        <div id="emailError" class="field-error"></div>
+        <div id="emailError" class="field-neutral"></div>
 
         <div id="signupPhoneWrap" class="hidden">
           <label for="signupPhoneInput">Numéro de téléphone</label>
           <input type="tel" id="signupPhoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
-          <div id="signupPhoneError" class="field-error"></div>
+          <div id="signupPhoneError" class="field-neutral"></div>
 
           <label for="signupPlateInput">Immatriculation de votre véhicule</label>
           <input type="text" id="signupPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
-          <div id="signupPlateError" class="field-error"></div>
+          <div id="signupPlateError" class="field-neutral"></div>
 
           <div class="note">
             Votre numéro de téléphone est utilisé uniquement à des fins de sécurité et de vérification.
@@ -528,7 +527,7 @@
           <input type="password" id="passwordInput" placeholder="Ton mot de passe" autocomplete="current-password" />
           <button class="toggle-password" type="button" onclick="togglePassword('passwordInput', this)">👁️</button>
         </div>
-        <div id="passwordError" class="field-error"></div>
+        <div id="passwordError" class="field-neutral"></div>
 
         <div id="confirmPasswordWrap" class="hidden">
           <label for="confirmPasswordInput">Confirmer le mot de passe</label>
@@ -536,10 +535,8 @@
             <input type="password" id="confirmPasswordInput" placeholder="Confirme ton mot de passe" autocomplete="new-password" />
             <button class="toggle-password" type="button" onclick="togglePassword('confirmPasswordInput', this)">👁️</button>
           </div>
-          <div class="helper">
-            Minimum 8 caractères, 1 majuscule et 1 caractère spécial.
-          </div>
-          <div id="confirmPasswordError" class="field-error"></div>
+          <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
+          <div id="confirmPasswordError" class="field-neutral"></div>
         </div>
 
         <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
@@ -563,15 +560,15 @@
 
         <label for="pseudoInput">Pseudo</label>
         <input type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname" />
-        <div id="pseudoError" class="field-error"></div>
+        <div id="pseudoError" class="field-neutral"></div>
 
         <label for="ownerPlateInput">Immatriculation de votre véhicule</label>
         <input type="text" id="ownerPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
-        <div id="ownerPlateError" class="field-error"></div>
+        <div id="ownerPlateError" class="field-neutral"></div>
 
         <label for="phoneInput">Numéro de téléphone</label>
         <input type="tel" id="phoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
-        <div id="phoneError" class="field-error"></div>
+        <div id="phoneError" class="field-neutral"></div>
 
         <div class="note">
           Votre numéro de téléphone est demandé uniquement à des fins de sécurité et de vérification.
@@ -595,18 +592,16 @@
           <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe" autocomplete="new-password" />
           <button class="toggle-password" type="button" onclick="togglePassword('newPasswordInput', this)">👁️</button>
         </div>
-        <div id="newPasswordError" class="field-error"></div>
+        <div id="newPasswordError" class="field-neutral"></div>
 
         <label for="confirmNewPasswordInput">Confirmer le nouveau mot de passe</label>
         <div class="input-wrap">
           <input type="password" id="confirmNewPasswordInput" placeholder="Confirme le nouveau mot de passe" autocomplete="new-password" />
           <button class="toggle-password" type="button" onclick="togglePassword('confirmNewPasswordInput', this)">👁️</button>
         </div>
-        <div id="confirmNewPasswordError" class="field-error"></div>
+        <div id="confirmNewPasswordError" class="field-neutral"></div>
 
-        <div class="helper">
-          Minimum 8 caractères, 1 majuscule et 1 caractère spécial.
-        </div>
+        <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
 
         <button id="updatePasswordBtn" class="btn btn-primary" onclick="updatePassword()">Mettre à jour le mot de passe</button>
         <div id="resetStatus" class="status"></div>
@@ -638,11 +633,11 @@
 
         <label for="targetPlateInput">Immatriculation du véhicule concerné</label>
         <input type="text" id="targetPlateInput" placeholder="Ex : XY-456-ZT" autocomplete="off" />
-        <div id="targetPlateError" class="field-error"></div>
+        <div id="targetPlateError" class="field-neutral"></div>
 
         <label for="requestMessageInput">Message / signalement</label>
         <textarea id="requestMessageInput" placeholder="Ex : Vos phares sont allumés / véhicule gênant / besoin de vous contacter"></textarea>
-        <div id="requestMessageError" class="field-error"></div>
+        <div id="requestMessageError" class="field-neutral"></div>
 
         <button id="sendRequestBtn" class="btn btn-primary" onclick="sendRequest()" style="margin-top:14px;">Envoyer la demande</button>
         <div id="requestStatus" class="request-status"></div>
@@ -653,8 +648,6 @@
   </div>
 
   <script>
-    // Clé publique Supabase côté client. Elle est faite pour être utilisée dans le front.
-    // Les vraies protections doivent être gérées côté Supabase via Auth, RLS et policies.
     const SUPABASE_URL = "https://vemgdkkbldgyvaisudkd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ";
     const SITE_URL = "https://caisse43700-lgtm.github.io/Projet-immat-Connect/";
@@ -666,9 +659,8 @@
     let myMarker = null;
     let otherMarkers = [];
 
-    const PHONE_REGEX = /^(?:\+33|0)[1-9](?:[\s.-]?\d{2}){4}$/;
-    const PLATE_REGEX = /^[A-Z]{2}[- ]?\d{3}[- ]?[A-Z]{2}$/i;
-
+    const PHONE_REGEX = /^0\d{9}$/;
+    const PLATE_REGEX = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
     const SCREEN_IDS = ["welcomeScreen", "authScreen", "profileScreen", "resetScreen", "mapScreen"];
 
     function showScreen(id) {
@@ -687,13 +679,17 @@
       el.className = type ? "status " + type : "status";
     }
 
-    function setFieldError(id, message = "") {
+    function setValidationState(id, type = "neutral", message = "") {
       const el = document.getElementById(id);
-      if (el) el.textContent = message;
+      if (!el) return;
+      if (type === "error") el.className = "field-error";
+      else if (type === "valid") el.className = "field-valid";
+      else el.className = "field-neutral";
+      el.textContent = message;
     }
 
-    function clearFieldErrors(ids) {
-      ids.forEach(id => setFieldError(id, ""));
+    function clearValidationStates(ids) {
+      ids.forEach(id => setValidationState(id, "neutral", ""));
     }
 
     function setRequestStatus(message, ok = false) {
@@ -709,37 +705,36 @@
       btn.textContent = isLoading ? loadingText : idleText;
     }
 
-    function translateSupabaseError(message) {
+    function translateAuthError(message) {
       const m = (message || "").toLowerCase();
-
-      if (m.includes("invalid login credentials")) {
-        return "Email ou mot de passe incorrect.";
-      }
-      if (m.includes("email not confirmed")) {
-        return "Ton adresse email n’a pas encore été confirmée.";
-      }
-      if (m.includes("user already registered")) {
-        return "Un compte existe déjà avec cet email.";
-      }
-      if (m.includes("rate limit")) {
-        return "Trop de demandes en peu de temps. Attends un moment avant de réessayer.";
-      }
-      if (m.includes("password should")) {
-        return "Le mot de passe ne respecte pas les critères demandés.";
-      }
-      if (m.includes("network") || m.includes("fetch")) {
-        return "Problème de connexion réseau. Réessaie dans un instant.";
-      }
-
+      if (m.includes("invalid login credentials")) return "Email ou mot de passe incorrect.";
+      if (m.includes("email not confirmed")) return "Ton adresse email n’a pas encore été confirmée.";
+      if (m.includes("user already registered")) return "Un compte existe déjà avec cet email.";
+      if (m.includes("rate limit")) return "Trop de demandes en peu de temps. Attends un moment avant de réessayer.";
+      if (m.includes("password should")) return "Le mot de passe ne respecte pas les critères demandés.";
+      if (m.includes("network") || m.includes("fetch")) return "Problème de connexion réseau. Réessaie dans un instant.";
+      if (m.includes("invalid email")) return "Adresse email invalide.";
+      if (m.includes("same password")) return "Le nouveau mot de passe doit être différent de l’ancien.";
       return "Une erreur est survenue. Vérifie tes informations puis réessaie.";
     }
 
     function normalizePhone(phone) {
-      return phone.replace(/[.\s-]/g, "");
+      return phone.replace(/\D/g, "");
+    }
+
+    function formatPhoneLive(value) {
+      return value.replace(/\D/g, "").slice(0, 10);
     }
 
     function normalizePlate(plate) {
-      return plate.trim().toUpperCase().replace(/\s+/g, "-");
+      return plate.trim().toUpperCase();
+    }
+
+    function formatPlateLive(value) {
+      const chars = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+      if (chars.length <= 2) return chars;
+      if (chars.length <= 5) return `${chars.slice(0,2)}-${chars.slice(2)}`;
+      return `${chars.slice(0,2)}-${chars.slice(2,5)}-${chars.slice(5)}`;
     }
 
     function isValidPhone(phone) {
@@ -757,6 +752,62 @@
       return minLength && hasUppercase && hasSpecial;
     }
 
+    function validatePhoneField(inputId, errorId, required = true) {
+      const input = document.getElementById(inputId);
+      if (!input) return false;
+      input.value = formatPhoneLive(input.value);
+      const value = input.value.trim();
+
+      if (!value) {
+        setValidationState(errorId, "neutral", "");
+        return !required;
+      }
+
+      if (isValidPhone(value)) {
+        setValidationState(errorId, "valid", "Format valide");
+        return true;
+      }
+
+      setValidationState(errorId, "error", "Format attendu : 0612345678");
+      return false;
+    }
+
+    function validatePlateField(inputId, errorId, required = true) {
+      const input = document.getElementById(inputId);
+      if (!input) return false;
+      input.value = formatPlateLive(input.value);
+      const value = input.value.trim();
+
+      if (!value) {
+        setValidationState(errorId, "neutral", "");
+        return !required;
+      }
+
+      if (isValidPlate(value)) {
+        setValidationState(errorId, "valid", "Format valide");
+        return true;
+      }
+
+      setValidationState(errorId, "error", "Format attendu : AB-123-CD");
+      return false;
+    }
+
+    function bindRealtimeValidation() {
+      [["signupPhoneInput","signupPhoneError"],["phoneInput","phoneError"]].forEach(([inputId, errorId]) => {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener("input", () => validatePhoneField(inputId, errorId, true));
+        input.addEventListener("blur", () => validatePhoneField(inputId, errorId, true));
+      });
+
+      [["signupPlateInput","signupPlateError"],["ownerPlateInput","ownerPlateError"],["targetPlateInput","targetPlateError"]].forEach(([inputId, errorId]) => {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener("input", () => validatePlateField(inputId, errorId, true));
+        input.addEventListener("blur", () => validatePlateField(inputId, errorId, true));
+      });
+    }
+
     function resetAuthForm(keepEmail = true) {
       const email = document.getElementById("emailInput");
       const savedEmail = keepEmail ? email.value : "";
@@ -767,7 +818,7 @@
       document.getElementById("passwordInput").value = "";
       document.getElementById("confirmPasswordInput").value = "";
 
-      clearFieldErrors([
+      clearValidationStates([
         "emailError",
         "signupPhoneError",
         "signupPlateError",
@@ -785,7 +836,7 @@
 
     function backToWelcome() {
       setStatus("authStatus", "");
-      clearFieldErrors([
+      clearValidationStates([
         "emailError",
         "signupPhoneError",
         "signupPlateError",
@@ -797,28 +848,19 @@
 
     function setAuthMode(mode) {
       authMode = mode;
-
       const isSignup = mode === "signup";
-      const title = document.getElementById("authTitle");
-      const subtitle = document.getElementById("authSubtitle");
-      const actionBtn = document.getElementById("authActionBtn");
-      const tabLogin = document.getElementById("tabLogin");
-      const tabSignup = document.getElementById("tabSignup");
-      const confirmWrap = document.getElementById("confirmPasswordWrap");
-      const signupPhoneWrap = document.getElementById("signupPhoneWrap");
-      const resendBtn = document.getElementById("resendBtn");
 
-      title.textContent = isSignup ? "Créer un compte" : "Connexion";
-      subtitle.textContent = isSignup
+      document.getElementById("authTitle").textContent = isSignup ? "Créer un compte" : "Connexion";
+      document.getElementById("authSubtitle").textContent = isSignup
         ? "Crée ton compte avec ton email, ton téléphone, ton immatriculation et un mot de passe sécurisé."
         : "Connecte-toi avec ton email et ton mot de passe.";
-      actionBtn.textContent = isSignup ? "Créer mon compte" : "Se connecter";
+      document.getElementById("authActionBtn").textContent = isSignup ? "Créer mon compte" : "Se connecter";
 
-      tabSignup.classList.toggle("active", isSignup);
-      tabLogin.classList.toggle("active", !isSignup);
-      confirmWrap.classList.toggle("hidden", !isSignup);
-      signupPhoneWrap.classList.toggle("hidden", !isSignup);
-      resendBtn.classList.toggle("hidden", !isSignup);
+      document.getElementById("tabSignup").classList.toggle("active", isSignup);
+      document.getElementById("tabLogin").classList.toggle("active", !isSignup);
+      document.getElementById("confirmPasswordWrap").classList.toggle("hidden", !isSignup);
+      document.getElementById("signupPhoneWrap").classList.toggle("hidden", !isSignup);
+      document.getElementById("resendBtn").classList.toggle("hidden", !isSignup);
 
       resetAuthForm(true);
     }
@@ -826,14 +868,13 @@
     function togglePassword(inputId, button) {
       const input = document.getElementById(inputId);
       if (!input) return;
-
       const show = input.type === "password";
       input.type = show ? "text" : "password";
       button.textContent = show ? "🙈" : "👁️";
     }
 
     async function handleAuth() {
-      clearFieldErrors([
+      clearValidationStates([
         "emailError",
         "signupPhoneError",
         "signupPlateError",
@@ -846,12 +887,12 @@
       const password = document.getElementById("passwordInput").value;
 
       if (!email) {
-        setFieldError("emailError", "Entre ton email.");
+        setValidationState("emailError", "error", "Entre ton email.");
         return;
       }
 
       if (!password) {
-        setFieldError("passwordError", "Entre ton mot de passe.");
+        setValidationState("passwordError", "error", "Entre ton mot de passe.");
         return;
       }
 
@@ -866,38 +907,36 @@
           let hasError = false;
 
           if (!signupPhoneRaw) {
-            setFieldError("signupPhoneError", "Ajoute ton numéro de téléphone.");
+            setValidationState("signupPhoneError", "error", "Ajoute ton numéro de téléphone.");
             hasError = true;
-          } else if (!isValidPhone(signupPhoneRaw)) {
-            setFieldError("signupPhoneError", "Numéro invalide. Exemple : 0612345678");
+          } else if (!validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
             hasError = true;
           }
 
           if (!signupPlateRaw) {
-            setFieldError("signupPlateError", "Ajoute l’immatriculation.");
+            setValidationState("signupPlateError", "error", "Ajoute l’immatriculation.");
             hasError = true;
-          } else if (!isValidPlate(signupPlateRaw)) {
-            setFieldError("signupPlateError", "Format invalide. Exemple : AB-123-CD");
+          } else if (!validatePlateField("signupPlateInput", "signupPlateError", true)) {
             hasError = true;
           }
 
           if (!isStrongPassword(password)) {
-            setFieldError("passwordError", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
+            setValidationState("passwordError", "error", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
             hasError = true;
           }
 
           if (!confirmPassword) {
-            setFieldError("confirmPasswordError", "Confirme ton mot de passe.");
+            setValidationState("confirmPasswordError", "error", "Confirme ton mot de passe.");
             hasError = true;
           } else if (password !== confirmPassword) {
-            setFieldError("confirmPasswordError", "La confirmation ne correspond pas.");
+            setValidationState("confirmPasswordError", "error", "La confirmation ne correspond pas.");
             hasError = true;
           }
 
           if (hasError) return;
 
           const signupPhone = normalizePhone(signupPhoneRaw);
-          const signupPlate = normalizePlate(signupPlateRaw);
+          const signupPlate = normalizePlate(document.getElementById("signupPlateInput").value);
 
           localStorage.setItem("immatconnect_pending_phone", signupPhone);
           localStorage.setItem("immatconnect_pending_plate", signupPlate);
@@ -911,38 +950,24 @@
           });
 
           if (error) {
-            setStatus("authStatus", translateSupabaseError(error.message), "error");
+            setStatus("authStatus", translateAuthError(error.message), "error");
             return;
           }
 
           const user = data?.user || null;
           const identities = user?.identities || [];
-
           if (user && identities.length === 0) {
-            setStatus(
-              "authStatus",
-              "Un compte existe probablement déjà avec cet email. Essaie de te connecter, de réinitialiser ton mot de passe, ou de renvoyer l’email de confirmation.",
-              "error"
-            );
+            setStatus("authStatus", "Un compte existe probablement déjà avec cet email. Essaie de te connecter, de réinitialiser ton mot de passe, ou de renvoyer l’email de confirmation.", "error");
             return;
           }
 
-          setStatus(
-            "authStatus",
-            "Compte créé. Vérifie ton email pour confirmer ton inscription, puis reviens sur l’application pour te connecter.",
-            "success"
-          );
+          setStatus("authStatus", "Compte créé. Vérifie ton email pour confirmer ton inscription, puis reviens sur l’application pour te connecter.", "success");
         } else {
-          const { error } = await sb.auth.signInWithPassword({
-            email,
-            password
-          });
-
+          const { error } = await sb.auth.signInWithPassword({ email, password });
           if (error) {
-            setStatus("authStatus", translateSupabaseError(error.message), "error");
+            setStatus("authStatus", translateAuthError(error.message), "error");
             return;
           }
-
           await continueAfterAuth();
         }
       } finally {
@@ -955,7 +980,7 @@
       const email = document.getElementById("emailInput").value.trim();
 
       if (!email) {
-        setFieldError("emailError", "Entre ton email pour renvoyer le message.");
+        setValidationState("emailError", "error", "Entre ton email pour renvoyer le message.");
         return;
       }
 
@@ -965,13 +990,11 @@
         const { error } = await sb.auth.resend({
           type: "signup",
           email,
-          options: {
-            emailRedirectTo: SITE_URL
-          }
+          options: { emailRedirectTo: SITE_URL }
         });
 
         if (error) {
-          setStatus("authStatus", translateSupabaseError(error.message), "error");
+          setStatus("authStatus", translateAuthError(error.message), "error");
           return;
         }
 
@@ -986,7 +1009,7 @@
       const email = document.getElementById("emailInput").value.trim();
 
       if (!email) {
-        setFieldError("emailError", "Entre ton email pour réinitialiser le mot de passe.");
+        setValidationState("emailError", "error", "Entre ton email pour réinitialiser le mot de passe.");
         return;
       }
 
@@ -998,7 +1021,7 @@
         });
 
         if (error) {
-          setStatus("authStatus", translateSupabaseError(error.message), "error");
+          setStatus("authStatus", translateAuthError(error.message), "error");
           return;
         }
 
@@ -1009,7 +1032,7 @@
     }
 
     async function updatePassword() {
-      clearFieldErrors(["newPasswordError", "confirmNewPasswordError"]);
+      clearValidationStates(["newPasswordError", "confirmNewPasswordError"]);
       setStatus("resetStatus", "");
 
       const password = document.getElementById("newPasswordInput").value;
@@ -1018,15 +1041,15 @@
       let hasError = false;
 
       if (!isStrongPassword(password)) {
-        setFieldError("newPasswordError", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
+        setValidationState("newPasswordError", "error", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
         hasError = true;
       }
 
       if (!confirmPassword) {
-        setFieldError("confirmNewPasswordError", "Confirme le nouveau mot de passe.");
+        setValidationState("confirmNewPasswordError", "error", "Confirme le nouveau mot de passe.");
         hasError = true;
       } else if (password !== confirmPassword) {
-        setFieldError("confirmNewPasswordError", "La confirmation ne correspond pas.");
+        setValidationState("confirmNewPasswordError", "error", "La confirmation ne correspond pas.");
         hasError = true;
       }
 
@@ -1037,12 +1060,10 @@
       try {
         setStatus("resetStatus", "Mise à jour en cours...");
 
-        const { error } = await sb.auth.updateUser({
-          password
-        });
+        const { error } = await sb.auth.updateUser({ password });
 
         if (error) {
-          setStatus("resetStatus", translateSupabaseError(error.message), "error");
+          setStatus("resetStatus", translateAuthError(error.message), "error");
           return;
         }
 
@@ -1065,29 +1086,30 @@
         return;
       }
 
-      const { data: profile } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+      const { data: profile } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
       if (profile) {
         openMap(profile);
       } else {
         const pendingPhone = localStorage.getItem("immatconnect_pending_phone") || "";
         const pendingPlate = localStorage.getItem("immatconnect_pending_plate") || "";
+
         if (pendingPhone && !document.getElementById("phoneInput").value) {
           document.getElementById("phoneInput").value = pendingPhone;
+          validatePhoneField("phoneInput", "phoneError", true);
         }
+
         if (pendingPlate && !document.getElementById("ownerPlateInput").value) {
           document.getElementById("ownerPlateInput").value = pendingPlate;
+          validatePlateField("ownerPlateInput", "ownerPlateError", true);
         }
+
         showScreen("profileScreen");
       }
     }
 
     async function saveProfile() {
-      clearFieldErrors(["pseudoError", "ownerPlateError", "phoneError"]);
+      clearValidationStates(["pseudoError", "ownerPlateError", "phoneError"]);
       setStatus("profileStatus", "");
 
       const pseudo = document.getElementById("pseudoInput").value.trim();
@@ -1097,29 +1119,27 @@
       let hasError = false;
 
       if (!pseudo) {
-        setFieldError("pseudoError", "Ajoute ton pseudo.");
+        setValidationState("pseudoError", "error", "Ajoute ton pseudo.");
         hasError = true;
       }
 
       if (!ownerPlateRaw) {
-        setFieldError("ownerPlateError", "Ajoute l’immatriculation.");
+        setValidationState("ownerPlateError", "error", "Ajoute l’immatriculation.");
         hasError = true;
-      } else if (!isValidPlate(ownerPlateRaw)) {
-        setFieldError("ownerPlateError", "Format invalide. Exemple : AB-123-CD");
+      } else if (!validatePlateField("ownerPlateInput", "ownerPlateError", true)) {
         hasError = true;
       }
 
       if (!phoneRaw) {
-        setFieldError("phoneError", "Ajoute ton numéro de téléphone.");
+        setValidationState("phoneError", "error", "Ajoute ton numéro de téléphone.");
         hasError = true;
-      } else if (!isValidPhone(phoneRaw)) {
-        setFieldError("phoneError", "Numéro invalide. Exemple : 0612345678");
+      } else if (!validatePhoneField("phoneInput", "phoneError", true)) {
         hasError = true;
       }
 
       if (hasError) return;
 
-      const ownerPlate = normalizePlate(ownerPlateRaw);
+      const ownerPlate = normalizePlate(document.getElementById("ownerPlateInput").value);
       const phone = normalizePhone(phoneRaw);
 
       setLoading("saveProfileBtn", true, "Enregistrer et continuer");
@@ -1164,7 +1184,6 @@
       if (map) return;
 
       map = L.map("map").setView([48.8566, 2.3522], 13);
-
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap"
       }).addTo(map);
@@ -1173,12 +1192,7 @@
     function openMap(profile) {
       showScreen("mapScreen");
 
-      const info = [
-        profile?.pseudo || "",
-        profile?.owner_plate || "",
-        profile?.email || ""
-      ].filter(Boolean).join(" • ");
-
+      const info = [profile?.pseudo || "", profile?.owner_plate || "", profile?.email || ""].filter(Boolean).join(" • ");
       document.getElementById("mapUserInfo").textContent = info;
 
       setTimeout(() => {
@@ -1193,7 +1207,7 @@
         return;
       }
 
-      setLoading("locateBtn", true, "Me localiser", "Localisation...");
+      setLoading("locateBtn", true, "Me localiser", "Chargement...");
       initMapIfNeeded();
 
       navigator.geolocation.getCurrentPosition(
@@ -1203,10 +1217,7 @@
 
           map.flyTo([lat, lng], 16, { duration: 0.8 });
 
-          if (myMarker) {
-            map.removeLayer(myMarker);
-          }
-
+          if (myMarker) map.removeLayer(myMarker);
           myMarker = L.marker([lat, lng]).addTo(map);
           myMarker.bindPopup("Tu es ici").openPopup();
 
@@ -1252,9 +1263,7 @@
         const me = meData.user;
 
         let query = sb.from("user_locations").select("*");
-        if (me) {
-          query = query.neq("id", me.id);
-        }
+        if (me) query = query.neq("id", me.id);
 
         const { data, error } = await query;
 
@@ -1270,7 +1279,6 @@
 
         data.forEach(user => {
           if (typeof user.latitude !== "number" || typeof user.longitude !== "number") return;
-
           const marker = L.marker([user.latitude, user.longitude]).addTo(map);
           marker.bindPopup(user.user_name || "Utilisateur");
           otherMarkers.push(marker);
@@ -1281,8 +1289,7 @@
     }
 
     async function sendRequest() {
-      setFieldError("targetPlateError", "");
-      setFieldError("requestMessageError", "");
+      clearValidationStates(["targetPlateError", "requestMessageError"]);
       setRequestStatus("");
 
       const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
@@ -1291,23 +1298,22 @@
       let hasError = false;
 
       if (!targetPlateRaw) {
-        setFieldError("targetPlateError", "Ajoute l’immatriculation du véhicule concerné.");
+        setValidationState("targetPlateError", "error", "Ajoute l’immatriculation du véhicule concerné.");
         hasError = true;
-      } else if (!isValidPlate(targetPlateRaw)) {
-        setFieldError("targetPlateError", "Format invalide. Exemple : XY-456-ZT");
+      } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
         hasError = true;
       }
 
       if (!message) {
-        setFieldError("requestMessageError", "Ajoute un message.");
+        setValidationState("requestMessageError", "error", "Ajoute un message.");
         hasError = true;
       }
 
       if (hasError) return;
 
-      const targetPlate = normalizePlate(targetPlateRaw);
+      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
 
-      setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
+      setLoading("sendRequestBtn", true, "Envoyer la demande", "Chargement...");
 
       try {
         const { data: userData } = await sb.auth.getUser();
@@ -1331,6 +1337,8 @@
 
         document.getElementById("targetPlateInput").value = "";
         document.getElementById("requestMessageInput").value = "";
+        setValidationState("targetPlateError", "neutral", "");
+        setValidationState("requestMessageError", "neutral", "");
         setRequestStatus("Demande envoyée.", true);
       } finally {
         setLoading("sendRequestBtn", false, "Envoyer la demande");
@@ -1344,12 +1352,20 @@
     async function logout() {
       const confirmed = window.confirm("Veux-tu vraiment te déconnecter ?");
       if (!confirmed) return;
-
       await sb.auth.signOut();
       location.href = SITE_URL;
     }
 
     async function checkSessionAndStart() {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const fullUrl = `${search}${hash}`.toLowerCase();
+
+      if (fullUrl.includes("type=recovery")) {
+        showScreen("resetScreen");
+        return;
+      }
+
       const { data: sessionData } = await sb.auth.getSession();
       const session = sessionData.session;
 
@@ -1362,7 +1378,11 @@
     }
 
     sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const fullUrl = `${search}${hash}`.toLowerCase();
+
+      if (event === "PASSWORD_RECOVERY" || fullUrl.includes("type=recovery")) {
         showScreen("resetScreen");
         return;
       }
@@ -1372,6 +1392,7 @@
       }
     });
 
+    bindRealtimeValidation();
     checkSessionAndStart();
   </script>
 </body>
