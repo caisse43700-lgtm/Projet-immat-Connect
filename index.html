@@ -1036,17 +1036,39 @@
     // ─── Carte ───────────────────────────────────────────────────────────────
 
     function initMapIfNeeded() {
-      if (map) return;
-      map = L.map("map").setView([48.8566, 2.3522], 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
-    }
+  if (map) return;
+
+  // Vue France au départ
+  map = L.map("map").setView([46.603354, 1.888334], 6);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+}
 
     function openMap(profile) {
-      showScreen("mapScreen");
-      const info = [profile?.pseudo || "", profile?.owner_plate || "", profile?.email || ""].filter(Boolean).join(" • ");
-      document.getElementById("mapUserInfo").textContent = info;
-      setTimeout(() => { initMapIfNeeded(); map.invalidateSize(); }, 250);
-    }
+  showScreen("mapScreen");
+
+  const info = [
+    profile?.pseudo || "",
+    profile?.owner_plate || "",
+    profile?.email || ""
+  ].filter(Boolean).join(" • ");
+
+  document.getElementById("mapUserInfo").textContent = info;
+
+  setTimeout(() => {
+    initMapIfNeeded();
+    map.invalidateSize();
+
+    // 1. Affiche d’abord la France
+    map.setView([46.603354, 1.888334], 6);
+
+    // 2. Puis localise automatiquement l’utilisateur
+    setRequestStatus("Localisation en cours...");
+    locateUser();
+  }, 400);
+}
 
     async function locateUser() {
       if (!navigator.geolocation) { alert("La géolocalisation n'est pas disponible sur cet appareil."); return; }
@@ -1059,6 +1081,7 @@
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             map.flyTo([lat, lng], 16, { duration: 0.8 });
+            setRequestStatus("Position trouvée ✔", true);
             if (myMarker) map.removeLayer(myMarker);
             myMarker = L.marker([lat, lng]).addTo(map);
             myMarker.bindPopup("Tu es ici").openPopup();
