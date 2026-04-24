@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -6,6 +7,7 @@
   <title>ImmatConnect</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -446,6 +448,7 @@
       cursor:pointer;
     }
   </style>
+
 </head>
 
 <body>
@@ -456,33 +459,36 @@
       <div class="brand-bottom">CONNECT</div>
       <div class="tagline">La route, connectée</div>
 
-      <h1 class="hero-title">Communiquez avec n'importe quel conducteur</h1>
+```
+  <h1 class="hero-title">Communiquez avec n'importe quel conducteur</h1>
 
-      <div class="hero-subtitle">
-        Créez un compte, enregistrez votre véhicule, puis accédez à la carte
-        pour voir les autres utilisateurs et signaler un véhicule concerné.
-      </div>
+  <div class="hero-subtitle">
+    Créez un compte, enregistrez votre véhicule, puis accédez à la carte
+    pour voir les autres utilisateurs et signaler un véhicule concerné.
+  </div>
 
-      <div class="features">
-        <div class="feature">
-          <div class="feature-icon">🪪</div>
-          <div class="feature-text">Votre plaque, votre téléphone et votre email sont liés à votre compte</div>
-        </div>
-
-        <div class="feature">
-          <div class="feature-icon">📍</div>
-          <div class="feature-text">Carte accessible uniquement après connexion</div>
-        </div>
-
-        <div class="feature">
-          <div class="feature-icon">🚨</div>
-          <div class="feature-text">Accès rapide aux secours depuis la carte</div>
-        </div>
-      </div>
-
-      <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
-      <button class="btn btn-secondary" onclick="goToAuth('login')">J'ai déjà un compte</button>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🪪</div>
+      <div class="feature-text">Votre plaque, votre téléphone et votre email sont liés à votre compte</div>
     </div>
+
+    <div class="feature">
+      <div class="feature-icon">📍</div>
+      <div class="feature-text">Carte accessible uniquement après connexion</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-icon">🚨</div>
+      <div class="feature-text">Accès rapide aux secours depuis la carte</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
+  <button class="btn btn-secondary" onclick="goToAuth('login')">J'ai déjà un compte</button>
+</div>
+```
+
   </div>
 
   <div id="authScreen" class="screen">
@@ -491,58 +497,61 @@
         <h2 id="authTitle">Connexion</h2>
         <p id="authSubtitle">Connecte-toi avec ton email et ton mot de passe.</p>
 
-        <div class="tabs">
-          <button id="tabLogin" class="tab-btn active" onclick="setAuthMode('login')">Connexion</button>
-          <button id="tabSignup" class="tab-btn" onclick="setAuthMode('signup')">Inscription</button>
-        </div>
+```
+    <div class="tabs">
+      <button id="tabLogin" class="tab-btn active" onclick="setAuthMode('login')">Connexion</button>
+      <button id="tabSignup" class="tab-btn" onclick="setAuthMode('signup')">Inscription</button>
+    </div>
 
-        <label for="emailInput">Email</label>
-        <input type="email" id="emailInput" placeholder="Ton email" autocomplete="email" />
-        <div id="emailError" class="field-neutral"></div>
+    <label for="emailInput">Email</label>
+    <input type="email" id="emailInput" placeholder="Ton email" autocomplete="email" />
+    <div id="emailError" class="field-neutral"></div>
 
-        <div id="signupPhoneWrap" class="hidden">
-          <label for="signupPhoneInput">Numéro de téléphone</label>
-          <input type="tel" id="signupPhoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
-          <div id="signupPhoneError" class="field-neutral"></div>
+    <div id="signupPhoneWrap" class="hidden">
+      <label for="signupPhoneInput">Numéro de téléphone</label>
+      <input type="tel" id="signupPhoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
+      <div id="signupPhoneError" class="field-neutral"></div>
 
-          <label for="signupPlateInput">Immatriculation de votre véhicule</label>
-          <input type="text" id="signupPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
-          <div id="signupPlateError" class="field-neutral"></div>
+      <label for="signupPlateInput">Immatriculation de votre véhicule</label>
+      <input type="text" id="signupPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
+      <div id="signupPlateError" class="field-neutral"></div>
 
-          <div class="note">
-            Votre numéro de téléphone est utilisé uniquement à des fins de sécurité et de vérification.
-            Il ne sera ni transmis, ni visible par les autres utilisateurs.
-          </div>
-        </div>
-
-        <label for="passwordInput">Mot de passe</label>
-        <div class="input-wrap">
-          <input type="password" id="passwordInput" placeholder="Ton mot de passe" autocomplete="current-password" />
-          <button class="toggle-password" type="button" onclick="togglePassword('passwordInput', this)">👁️</button>
-        </div>
-        <div id="passwordError" class="field-neutral"></div>
-
-        <div id="confirmPasswordWrap" class="hidden">
-          <label for="confirmPasswordInput">Confirmer le mot de passe</label>
-          <div class="input-wrap">
-            <input type="password" id="confirmPasswordInput" placeholder="Confirme ton mot de passe" autocomplete="new-password" />
-            <button class="toggle-password" type="button" onclick="togglePassword('confirmPasswordInput', this)">👁️</button>
-          </div>
-          <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
-          <div id="confirmPasswordError" class="field-neutral"></div>
-        </div>
-
-        <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
-        <button class="btn btn-secondary" onclick="backToWelcome()">Retour</button>
-
-        <div class="inline-links">
-          <button type="button" class="text-link" id="forgotPasswordBtn" onclick="forgotPassword()">Mot de passe oublié ?</button>
-          <button type="button" id="resendBtn" class="text-link hidden" onclick="resendConfirmationEmail()">Renvoyer l'email de confirmation</button>
-        </div>
-
-        <div id="authStatus" class="status"></div>
+      <div class="note">
+        Votre numéro de téléphone est utilisé uniquement à des fins de sécurité et de vérification.
+        Il ne sera ni transmis, ni visible par les autres utilisateurs.
       </div>
     </div>
+
+    <label for="passwordInput">Mot de passe</label>
+    <div class="input-wrap">
+      <input type="password" id="passwordInput" placeholder="Ton mot de passe" autocomplete="current-password" />
+      <button class="toggle-password" type="button" onclick="togglePassword('passwordInput', this)">👁️</button>
+    </div>
+    <div id="passwordError" class="field-neutral"></div>
+
+    <div id="confirmPasswordWrap" class="hidden">
+      <label for="confirmPasswordInput">Confirmer le mot de passe</label>
+      <div class="input-wrap">
+        <input type="password" id="confirmPasswordInput" placeholder="Confirme ton mot de passe" autocomplete="new-password" />
+        <button class="toggle-password" type="button" onclick="togglePassword('confirmPasswordInput', this)">👁️</button>
+      </div>
+      <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
+      <div id="confirmPasswordError" class="field-neutral"></div>
+    </div>
+
+    <button id="authActionBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
+    <button class="btn btn-secondary" onclick="backToWelcome()">Retour</button>
+
+    <div class="inline-links">
+      <button type="button" class="text-link" id="forgotPasswordBtn" onclick="forgotPassword()">Mot de passe oublié ?</button>
+      <button type="button" id="resendBtn" class="text-link hidden" onclick="resendConfirmationEmail()">Renvoyer l'email de confirmation</button>
+    </div>
+
+    <div id="authStatus" class="status"></div>
+  </div>
+</div>
+```
+
   </div>
 
   <div id="profileScreen" class="screen">
@@ -551,27 +560,30 @@
         <h2>Compléter mon profil</h2>
         <p>Ajoute tes informations avant d'accéder à la carte.</p>
 
-        <label for="pseudoInput">Pseudo</label>
-        <input type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname" />
-        <div id="pseudoError" class="field-neutral"></div>
+```
+    <label for="pseudoInput">Pseudo</label>
+    <input type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname" />
+    <div id="pseudoError" class="field-neutral"></div>
 
-        <label for="ownerPlateInput">Immatriculation de votre véhicule</label>
-        <input type="text" id="ownerPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
-        <div id="ownerPlateError" class="field-neutral"></div>
+    <label for="ownerPlateInput">Immatriculation de votre véhicule</label>
+    <input type="text" id="ownerPlateInput" placeholder="Ex : AB-123-CD" autocomplete="off" />
+    <div id="ownerPlateError" class="field-neutral"></div>
 
-        <label for="phoneInput">Numéro de téléphone</label>
-        <input type="tel" id="phoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
-        <div id="phoneError" class="field-neutral"></div>
+    <label for="phoneInput">Numéro de téléphone</label>
+    <input type="tel" id="phoneInput" placeholder="Ex : 0612345678" autocomplete="tel" />
+    <div id="phoneError" class="field-neutral"></div>
 
-        <div class="note">
-          Votre numéro de téléphone est demandé uniquement à des fins de sécurité et de vérification.
-          Il ne sera ni transmis, ni visible par les autres utilisateurs.
-        </div>
-
-        <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">Enregistrer et continuer</button>
-        <div id="profileStatus" class="status"></div>
-      </div>
+    <div class="note">
+      Votre numéro de téléphone est demandé uniquement à des fins de sécurité et de vérification.
+      Il ne sera ni transmis, ni visible par les autres utilisateurs.
     </div>
+
+    <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">Enregistrer et continuer</button>
+    <div id="profileStatus" class="status"></div>
+  </div>
+</div>
+```
+
   </div>
 
   <div id="resetScreen" class="screen">
@@ -580,26 +592,29 @@
         <h2>Nouveau mot de passe</h2>
         <p>Choisis un nouveau mot de passe sécurisé pour retrouver l'accès à ton compte.</p>
 
-        <label for="newPasswordInput">Nouveau mot de passe</label>
-        <div class="input-wrap">
-          <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe" autocomplete="new-password" />
-          <button class="toggle-password" type="button" onclick="togglePassword('newPasswordInput', this)">👁️</button>
-        </div>
-        <div id="newPasswordError" class="field-neutral"></div>
-
-        <label for="confirmNewPasswordInput">Confirmer le nouveau mot de passe</label>
-        <div class="input-wrap">
-          <input type="password" id="confirmNewPasswordInput" placeholder="Confirme le nouveau mot de passe" autocomplete="new-password" />
-          <button class="toggle-password" type="button" onclick="togglePassword('confirmNewPasswordInput', this)">👁️</button>
-        </div>
-        <div id="confirmNewPasswordError" class="field-neutral"></div>
-
-        <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
-
-        <button id="updatePasswordBtn" class="btn btn-primary" onclick="updatePassword()">Mettre à jour le mot de passe</button>
-        <div id="resetStatus" class="status"></div>
-      </div>
+```
+    <label for="newPasswordInput">Nouveau mot de passe</label>
+    <div class="input-wrap">
+      <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe" autocomplete="new-password" />
+      <button class="toggle-password" type="button" onclick="togglePassword('newPasswordInput', this)">👁️</button>
     </div>
+    <div id="newPasswordError" class="field-neutral"></div>
+
+    <label for="confirmNewPasswordInput">Confirmer le nouveau mot de passe</label>
+    <div class="input-wrap">
+      <input type="password" id="confirmNewPasswordInput" placeholder="Confirme le nouveau mot de passe" autocomplete="new-password" />
+      <button class="toggle-password" type="button" onclick="togglePassword('confirmNewPasswordInput', this)">👁️</button>
+    </div>
+    <div id="confirmNewPasswordError" class="field-neutral"></div>
+
+    <div class="helper">Minimum 8 caractères, 1 majuscule et 1 caractère spécial.</div>
+
+    <button id="updatePasswordBtn" class="btn btn-primary" onclick="updatePassword()">Mettre à jour le mot de passe</button>
+    <div id="resetStatus" class="status"></div>
+  </div>
+</div>
+```
+
   </div>
 
   <div id="mapScreen" class="screen">
@@ -607,37 +622,40 @@
       <div class="map-heading">ImmatConnect</div>
       <div id="mapUserInfo" class="map-subheading"></div>
 
-      <div class="map-actions">
-        <button id="locateBtn" class="small-btn" onclick="locateUser()">Me localiser</button>
-        <button id="loadUsersBtn" class="small-btn alt" onclick="loadOtherUsers()">Voir les autres utilisateurs</button>
-        <button class="small-btn alt" onclick="logout()">Se déconnecter</button>
-      </div>
-    </div>
+```
+  <div class="map-actions">
+    <button id="locateBtn" class="small-btn" onclick="locateUser()">Me localiser</button>
+    <button id="loadUsersBtn" class="small-btn alt" onclick="loadOtherUsers()">Voir les autres utilisateurs</button>
+    <button class="small-btn alt" onclick="logout()">Se déconnecter</button>
+  </div>
+</div>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <div class="request-panel">
-      <div class="request-card">
-        <h3>Véhicule concerné</h3>
-        <p>
-          Cette partie sert à renseigner le véhicule que vous cherchez ou signalez.
-          Ce n'est pas la plaque de votre propre véhicule.
-        </p>
+<div class="request-panel">
+  <div class="request-card">
+    <h3>Véhicule concerné</h3>
+    <p>
+      Cette partie sert à renseigner le véhicule que vous cherchez ou signalez.
+      Ce n'est pas la plaque de votre propre véhicule.
+    </p>
 
-        <label for="targetPlateInput">Immatriculation du véhicule concerné</label>
-        <input type="text" id="targetPlateInput" placeholder="Ex : XY-456-ZT" autocomplete="off" />
-        <div id="targetPlateError" class="field-neutral"></div>
+    <label for="targetPlateInput">Immatriculation du véhicule concerné</label>
+    <input type="text" id="targetPlateInput" placeholder="Ex : XY-456-ZT" autocomplete="off" />
+    <div id="targetPlateError" class="field-neutral"></div>
 
-        <label for="requestMessageInput">Message / signalement</label>
-        <textarea id="requestMessageInput" placeholder="Ex : Vos phares sont allumés / véhicule gênant / besoin de vous contacter"></textarea>
-        <div id="requestMessageError" class="field-neutral"></div>
+    <label for="requestMessageInput">Message / signalement</label>
+    <textarea id="requestMessageInput" placeholder="Ex : Vos phares sont allumés / véhicule gênant / besoin de vous contacter"></textarea>
+    <div id="requestMessageError" class="field-neutral"></div>
 
-        <button id="sendRequestBtn" class="btn btn-primary" onclick="sendRequest()" style="margin-top:14px;">Envoyer la demande</button>
-        <div id="requestStatus" class="request-status"></div>
-      </div>
-    </div>
+    <button id="sendRequestBtn" class="btn btn-primary" onclick="sendRequest()" style="margin-top:14px;">Envoyer la demande</button>
+    <div id="requestStatus" class="request-status"></div>
+  </div>
+</div>
 
-    <button class="floating-emergency" onclick="callEmergency()" title="Contacter les secours">🚨</button>
+<button class="floating-emergency" onclick="callEmergency()" title="Contacter les secours">🚨</button>
+```
+
   </div>
 
   <script>
@@ -1158,13 +1176,18 @@
     function initMapIfNeeded() {
       if (map) return;
 
-      map = L.map("map").setView([46.603354, 1.888334], 6);
+      map = L.map("map", { zoomAnimation: true }).setView([46.603354, 1.888334], 6);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:"© OpenStreetMap"
       }).addTo(map);
     }
 
+    /* ──────────────────────────────────────────────
+       FIX : openMap n'appelle plus setView ni
+       initMapIfNeeded en double. On laisse locateUser
+       faire le flyTo après avoir obtenu la position.
+    ────────────────────────────────────────────── */
     function openMap(profile) {
       showScreen("mapScreen");
 
@@ -1176,12 +1199,11 @@
 
       document.getElementById("mapUserInfo").textContent = info;
 
+      // On attend que l'écran soit visible avant d'initialiser la carte
       setTimeout(() => {
         initMapIfNeeded();
         map.invalidateSize();
-
-        map.setView([46.603354, 1.888334], 6);
-
+        // Pas de setView ici — locateUser fera un flyTo dès la position obtenue
         setRequestStatus("Localisation en cours...");
         locateUser();
       }, 400);
@@ -1189,7 +1211,10 @@
 
     async function locateUser() {
       if (!navigator.geolocation) {
-        setRequestStatus("La géolocalisation n’est pas disponible sur cet appareil.");
+        // Fallback : afficher la France si la géoloc est indisponible
+        initMapIfNeeded();
+        map.setView([46.603354, 1.888334], 6);
+        setRequestStatus("La géolocalisation n'est pas disponible sur cet appareil.");
         alert("La géolocalisation n'est pas disponible sur cet appareil.");
         return;
       }
@@ -1203,11 +1228,11 @@
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            map.flyTo([lat, lng], 16, { duration:0.8 });
+            // flyTo remplace setView : une seule animation, pas de conflit
+            map.flyTo([lat, lng], 16, { duration: 1.2 });
             setRequestStatus("Position trouvée ✔", true);
 
             if (myMarker) map.removeLayer(myMarker);
-
             myMarker = L.marker([lat, lng]).addTo(map);
             myMarker.bindPopup("Tu es ici").openPopup();
 
@@ -1216,11 +1241,11 @@
 
             if (user) {
               await sb.from("user_locations").upsert({
-                id:user.id,
-                user_name:user.email,
-                latitude:lat,
-                longitude:lng,
-                updated_at:new Date().toISOString()
+                id: user.id,
+                user_name: user.email,
+                latitude: lat,
+                longitude: lng,
+                updated_at: new Date().toISOString()
               });
             }
           } finally {
@@ -1229,6 +1254,9 @@
         },
         function(error) {
           setLoading("locateBtn", false, "Me localiser");
+
+          // Fallback : vue France si la géoloc échoue
+          map.setView([46.603354, 1.888334], 6);
 
           if (error.code === 1) {
             setRequestStatus("Localisation refusée.");
@@ -1245,9 +1273,9 @@
           }
         },
         {
-          enableHighAccuracy:true,
-          timeout:15000,
-          maximumAge:0
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
         }
       );
     }
@@ -1280,7 +1308,6 @@
 
         data.forEach(user => {
           if (typeof user.latitude !== "number" || typeof user.longitude !== "number") return;
-
           const marker = L.marker([user.latitude, user.longitude]).addTo(map);
           marker.bindPopup(user.user_name || "Utilisateur");
           otherMarkers.push(marker);
@@ -1326,8 +1353,8 @@
         }
 
         const { error } = await sb.from("requests").insert({
-          user_id:user.id,
-          target_plate:targetPlate,
+          user_id: user.id,
+          target_plate: targetPlate,
           message
         });
 
@@ -1338,7 +1365,6 @@
 
         document.getElementById("targetPlateInput").value = "";
         document.getElementById("requestMessageInput").value = "";
-
         clearValidationStates(["targetPlateError","requestMessageError"]);
         setRequestStatus("Demande envoyée.", true);
       } finally {
@@ -1352,7 +1378,6 @@
 
     async function logout() {
       if (!window.confirm("Veux-tu vraiment te déconnecter ?")) return;
-
       await sb.auth.signOut();
       sessionHandled = false;
       location.href = SITE_URL;
@@ -1404,5 +1429,6 @@
     bindRealtimeValidation();
     checkSessionAndStart();
   </script>
+
 </body>
 </html>
