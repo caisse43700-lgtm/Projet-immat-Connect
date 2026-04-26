@@ -1114,37 +1114,71 @@
     }
 
     async function sendRequest() {
-      clearValidationStates(["targetPlateError", "requestMessageError"]);
-      setRequestStatus("");
+  clearValidationStates(["targetPlateError", "requestMessageError"]);
+  setRequestStatus("");
 
-      const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
-      const message = document.getElementById("requestMessageInput").value.trim();
-      let hasError = false;
+  const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
+  const message = document.getElementById("requestMessageInput").value.trim();
+  let hasError = false;
 
-      if (!targetPlateRaw) { setValidationState("targetPlateError", "error", "Ajoute l'immatriculation du véhicule concerné."); hasError = true; }
-      else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) { hasError = true; }
-      if (!message) { setValidationState("requestMessageError", "error", "Ajoute un message."); hasError = true; }
+  if (!targetPlateRaw) {
+    setValidationState("targetPlateError", "error", "Ajoute l'immatriculation du véhicule concerné.");
+    hasError = true;
+  } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
+    hasError = true;
+  }
 
-      if (hasError) return;
+  if (!message) {
+    setValidationState("requestMessageError", "error", "Ajoute un message.");
+    hasError = true;
+  }
 
-      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
-      setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
-      try {
-        const { data: userData } = await sb.auth.getUser();
-        const user = userData.user;
-        if (!user) { setRequestStatus("Tu dois être connecté."); return; }
+  if (hasError) return;
 
-        const { error } = await sb.from("requests").insert({ user_id: user.id, target_plate: targetPlate, message });
-        if (error) { setRequestStatus("Impossible d'envoyer la demande. Réessaie."); return; }
+  const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
+  setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
 
-        document.getElementById("targetPlateInput").value = "";
-        document.getElementById("requestMessageInput").value = "";
-        clearValidationStates(["targetPlateError", "requestMessageError"]);
-        setRequestStatus("Demande envoyée.", true);
-      } finally {
-        setLoading("sendRequestBtn", false, "Envoyer la demande");
-      }
+  try {
+    const { data: userData } = await sb.auth.getUser();
+    const user = userData.user;
+
+    if (!user) {
+      setRequestStatus("Tu dois être connecté.");
+      return;
     }
+
+    const { data: targetUser, error: targetError } = await sb
+      .from("profiles")
+      .select("id")
+      .eq("owner_plate", targetPlate)
+      .maybeSingle();
+
+    if (targetError || !targetUser) {
+      setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
+      return;
+    }
+
+    const { error } = await sb.from("messages").insert({
+      sender_id: user.id,
+      receiver_id: targetUser.id,
+      target_plate: targetPlate,
+      message: message
+    });
+
+    if (error) {
+      setRequestStatus("Erreur lors de l'envoi.");
+      return;
+    }
+
+    document.getElementById("targetPlateInput").value = "";
+    document.getElementById("requestMessageInput").value = "";
+    clearValidationStates(["targetPlateError", "requestMessageError"]);
+    setRequestStatus("Message envoyé ✔", true);
+
+  } finally {
+    setLoading("sendRequestBtn", false, "Envoyer la demande");
+  }
+}
 
     function callEmergency() {
       window.location.href = "tel:112";
