@@ -1382,37 +1382,46 @@
 
     if (me) currentUserId = me.id;
 
-    let query = sb.from("user_locations").select(`
-  id,
-  latitude,
-  longitude,
-  profiles (
-    pseudo,
-    owner_plate
-  )
-`);
+    let query = sb.from("user_locations").select("*");
 
     if (me) query = query.neq("id", me.id);
 
-    const { data, error } = await query;
+    const { data: locations, error: locationsError } = await query;
 
-    if (error) {
-      alert("Erreur lors du chargement des utilisateurs.");
+    if (locationsError) {
+      alert("Erreur lors du chargement des positions.");
       return;
     }
 
-    if (!data || !data.length) {
+    if (!locations || !locations.length) {
       alert("Aucun autre utilisateur localisé.");
       return;
     }
 
-    alert(data.length + " utilisateur(s) actif(s) sur la carte");
+    const ids = locations.map(user => user.id);
 
-    data.forEach(user => {
+    const { data: profiles, error: profilesError } = await sb
+      .from("profiles")
+      .select("id, pseudo, owner_plate")
+      .in("id", ids);
+
+    if (profilesError) {
+      alert("Erreur lors du chargement des profils.");
+      return;
+    }
+
+    alert(locations.length + " utilisateur(s) actif(s) sur la carte");
+
+    locations.forEach(user => {
       const lat = Number(user.latitude);
       const lng = Number(user.longitude);
 
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const profile = profiles.find(p => p.id === user.id);
+
+      const pseudo = profile && profile.pseudo ? profile.pseudo : "Utilisateur";
+      const plate = profile && profile.owner_plate ? profile.owner_plate : "";
 
       const marker = L.circleMarker([lat, lng], {
         radius: 8,
@@ -1422,13 +1431,14 @@
       }).addTo(map);
 
       marker.bindPopup(`
-  <b>${user.profiles?.pseudo || "Utilisateur"}</b><br/>
-  ${user.profiles?.owner_plate || ""}
-`);
+        <b>${pseudo}</b><br/>
+        ${plate}
+      `);
+
       otherMarkers.push(marker);
     });
 
-    } finally {
+  } finally {
     setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
   }
 }
