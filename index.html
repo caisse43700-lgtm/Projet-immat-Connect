@@ -1394,9 +1394,11 @@
         }
 
         if (!data || !data.length) {
-          alert("Aucun autre utilisateur localisé pour le moment.");
-          return;
-        }
+  alert("Aucun autre utilisateur localisé.");
+  return;
+}
+
+alert(data.length + " utilisateur(s) actif(s) sur la carte");
 
         data.forEach(user => {
           const lat = Number(user.latitude);
