@@ -1406,7 +1406,12 @@ alert(data.length + " utilisateur(s) actif(s) sur la carte");
 
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-          const marker = L.marker([lat, lng]).addTo(map);
+          const marker = L.circleMarker([lat, lng], {
+  radius: 8,
+  color: "green",
+  fillColor: "green",
+  fillOpacity: 1
+}).addTo(map);
           marker.bindPopup(user.user_name || "Utilisateur");
           otherMarkers.push(marker);
         });
