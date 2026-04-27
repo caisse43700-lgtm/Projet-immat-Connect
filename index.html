@@ -1382,7 +1382,15 @@
 
     if (me) currentUserId = me.id;
 
-    let query = sb.from("user_locations").select("*");
+    let query = sb.from("user_locations").select(`
+  id,
+  latitude,
+  longitude,
+  profiles (
+    pseudo,
+    owner_plate
+  )
+`);
 
     if (me) query = query.neq("id", me.id);
 
