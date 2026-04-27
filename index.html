@@ -1406,15 +1406,15 @@ alert(data.length + " utilisateur(s) actif(s) sur la carte");
 
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-          const marker = L.circleMarker([lat, lng], {
+const marker = L.circleMarker([lat, lng], {
   radius: 8,
   color: "green",
   fillColor: "green",
   fillOpacity: 1
 }).addTo(map);
-          marker.bindPopup(user.user_name || "Utilisateur");
-          otherMarkers.push(marker);
-        });
+
+marker.bindPopup(user.user_name || "Utilisateur");
+otherMarkers.push(marker);
       } finally {
         setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
       }
