@@ -1421,11 +1421,10 @@
         fillOpacity: 1
       }).addTo(map);
 
-      marker.bindPopup(
-  (user.profiles?.pseudo || "Utilisateur") +
-  " - " +
-  (user.profiles?.owner_plate || "")
-);
+      marker.bindPopup(`
+  <b>${user.profiles?.pseudo || "Utilisateur"}</b><br/>
+  ${user.profiles?.owner_plate || ""}
+`);
       otherMarkers.push(marker);
     });
 
