@@ -775,6 +775,29 @@
     let currentUserId = null;
     let messageInterval = null;
     let messageChannel = null;
+    let locationChannel = null;
+
+async function subscribeToLocations() {
+  if (locationChannel) {
+    await sb.removeChannel(locationChannel);
+    locationChannel = null;
+  }
+
+  locationChannel = sb
+    .channel("locations")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "user_locations"
+      },
+      payload => {
+        loadOtherUsers(); // 🔁 recharge automatiquement la carte
+      }
+    )
+    .subscribe();
+}
 
     const PHONE_REGEX = /^0\d{9}$/;
     const PLATE_REGEX = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
@@ -1321,6 +1344,7 @@
       }, 250);
 
       startMessages();
+      subscribeToLocations();
     }
 
     async function locateUser() {
