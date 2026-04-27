@@ -1189,7 +1189,7 @@
       currentUserId = user.id;
 
       const { data: profile, error } = await sb
-        .from("profils")
+        .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
