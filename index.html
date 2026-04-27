@@ -1421,7 +1421,11 @@
         fillOpacity: 1
       }).addTo(map);
 
-      marker.bindPopup(user.user_name || "Utilisateur");
+      marker.bindPopup(
+  (user.profiles?.pseudo || "Utilisateur") +
+  " - " +
+  (user.profiles?.owner_plate || "")
+);
       otherMarkers.push(marker);
     });
 
