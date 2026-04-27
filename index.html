@@ -1039,7 +1039,7 @@
       const user = data && data.user ? data.user : null;
 
       if (user) {
-        const { error: profileError } = await sb.from("Profils").upsert({
+        const { error: profileError } = await sb.from("profiles").upsert({
           id: user.id,
           email: email,
           pseudo: email.split("@")[0],
@@ -1189,7 +1189,7 @@
       currentUserId = user.id;
 
       const { data: profile, error } = await sb
-        .from("Profils")
+        .from("profils")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
