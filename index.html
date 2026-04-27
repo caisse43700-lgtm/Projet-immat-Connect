@@ -1266,7 +1266,7 @@
 
         currentUserId = user.id;
 
-        const { error } = await sb.from("Profils").upsert({
+        const { error } = await sb.from("profiles").upsert({
           id: user.id,
           email: user.email,
           pseudo: pseudo,
@@ -1468,7 +1468,7 @@
         currentUserId = user.id;
 
         const { data: targetUser, error: targetError } = await sb
-  .from("Profils")
+  .from("profiles")
   .select("id")
   .eq("owner_plate", targetPlate)
   .maybeSingle();
