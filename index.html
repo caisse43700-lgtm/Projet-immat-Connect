@@ -1462,10 +1462,10 @@
         currentUserId = user.id;
 
         const { data: targetUser, error: targetError } = await sb
-          .from("profiles")
-          .select("id")
-          .eq("owner_plate", targetPlate)
-          .maybeSingle();
+  .from("Profils")
+  .select("id")
+  .eq("owner_plate", targetPlate)
+  .maybeSingle();
 
         if (targetError || !targetUser || !targetUser.id) {
           setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
