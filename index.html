@@ -1370,51 +1370,57 @@
     }
 
     async function loadOtherUsers() {
-      setLoading("loadUsersBtn", true, "Voir les autres utilisateurs", "Chargement...");
-      initMapIfNeeded();
+  setLoading("loadUsersBtn", true, "Voir les autres utilisateurs", "Chargement...");
+  initMapIfNeeded();
 
-      otherMarkers.forEach(marker => map.removeLayer(marker));
-      otherMarkers = [];
+  otherMarkers.forEach(marker => map.removeLayer(marker));
+  otherMarkers = [];
 
-      try {
-        const { data: meData } = await sb.auth.getUser();
-        const me = meData.user;
+  try {
+    const { data: meData } = await sb.auth.getUser();
+    const me = meData.user;
 
-        if (me) currentUserId = me.id;
+    if (me) currentUserId = me.id;
 
-        let query = sb.from("user_locations").select("*");
+    let query = sb.from("user_locations").select("*");
 
-        if (me) query = query.neq("id", me.id);
+    if (me) query = query.neq("id", me.id);
 
-        const { data, error } = await query;
+    const { data, error } = await query;
 
-        if (error) {
-          alert("Erreur lors du chargement des utilisateurs.");
-          return;
-        }
+    if (error) {
+      alert("Erreur lors du chargement des utilisateurs.");
+      return;
+    }
 
-        if (!data || !data.length) {
-  alert("Aucun autre utilisateur localisé.");
-  return;
+    if (!data || !data.length) {
+      alert("Aucun autre utilisateur localisé.");
+      return;
+    }
+
+    alert(data.length + " utilisateur(s) actif(s) sur la carte");
+
+    data.forEach(user => {
+      const lat = Number(user.latitude);
+      const lng = Number(user.longitude);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 8,
+        color: "green",
+        fillColor: "green",
+        fillOpacity: 1
+      }).addTo(map);
+
+      marker.bindPopup(user.user_name || "Utilisateur");
+      otherMarkers.push(marker);
+    });
+
+  } finally {
+    setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
+  }
 }
-
-alert(data.length + " utilisateur(s) actif(s) sur la carte");
-
-        data.forEach(user => {
-          const lat = Number(user.latitude);
-          const lng = Number(user.longitude);
-
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-const marker = L.circleMarker([lat, lng], {
-  radius: 8,
-  color: "green",
-  fillColor: "green",
-  fillOpacity: 1
-}).addTo(map);
-
-marker.bindPopup(user.user_name || "Utilisateur");
-otherMarkers.push(marker);
       } finally {
         setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
       }
