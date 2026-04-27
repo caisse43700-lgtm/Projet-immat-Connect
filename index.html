@@ -1461,9 +1461,12 @@ async function subscribeToLocations() {
       }).addTo(map);
 
       marker.bindPopup(`
-        <b>${pseudo}</b><br/>
-        ${plate}
-      `);
+  <b>${pseudo}</b><br/>
+  ${plate}<br/>
+  <button onclick="selectVehicle('${plate}')">
+    Contacter ce véhicule
+  </button>
+`);
 
       otherMarkers.push(marker);
     });
@@ -1664,6 +1667,16 @@ async function subscribeToLocations() {
         .replace(/'/g, "&#039;");
     }
 
+    function selectVehicle(plate) {
+  // Remplit automatiquement le champ
+  document.getElementById("targetPlateInput").value = plate;
+
+  // Focus sur le message
+  document.getElementById("requestMessageInput").focus();
+
+  // Petit feedback visuel
+  alert("Véhicule sélectionné : " + plate);
+}
     function callEmergency() {
       window.location.href = "tel:112";
     }
