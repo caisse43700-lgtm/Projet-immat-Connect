@@ -1417,14 +1417,10 @@
       otherMarkers.push(marker);
     });
 
-  } finally {
+    } finally {
     setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
   }
 }
-      } finally {
-        setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
-      }
-    }
 
     async function sendRequest() {
       clearValidationStates(["targetPlateError", "requestMessageError"]);
