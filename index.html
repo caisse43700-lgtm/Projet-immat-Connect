@@ -1682,12 +1682,13 @@ const { data, error } = await query;
     function selectVehicle(plate) {
   selectedConversationPlate = normalizePlate(plate);
 
-  document.getElementById("targetPlateInput").value = plate;
+  document.getElementById("targetPlateInput").value = selectedConversationPlate;
   document.getElementById("requestMessageInput").focus();
 
-  setRequestStatus("Conversation ouverte avec : " + plate, true);
+  setRequestStatus("Conversation ouverte avec : " + selectedConversationPlate, true);
 
   loadMessages();
+}
 }
     function callEmergency() {
       window.location.href = "tel:112";
