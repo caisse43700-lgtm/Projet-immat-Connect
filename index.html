@@ -1461,9 +1461,9 @@ async function subscribeToLocations() {
       }).addTo(map);
 
       marker.bindPopup(`
-  <b>${pseudo}</b><br/>
-  ${plate}<br/>
-  <button onclick="selectVehicle('${plate}')">
+  <b>${escapeHtml(pseudo)}</b><br/>
+  ${escapeHtml(plate)}<br/>
+  <button onclick="selectVehicle('${escapeHtml(plate)}')">
     Contacter ce véhicule
   </button>
 `);
