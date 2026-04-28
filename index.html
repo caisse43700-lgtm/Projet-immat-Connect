@@ -1460,13 +1460,30 @@ async function subscribeToLocations() {
         fillOpacity: 1
       }).addTo(map);
 
-      marker.bindPopup(`
-  <b>${escapeHtml(pseudo)}</b><br/>
-  ${escapeHtml(plate)}<br/>
-  <button onclick="selectVehicle('${escapeHtml(plate)}')">
+      const safePlate = plate;
+const escapedPlate = escapeHtml(plate);
+const escapedPseudo = escapeHtml(pseudo);
+
+marker.bindPopup(`
+  <b>${escapedPseudo}</b><br/>
+  ${escapedPlate}<br/>
+  <button class="popup-contact-btn" data-plate="${safePlate}">
     Contacter ce véhicule
   </button>
 `);
+
+marker.on("popupopen", function() {
+  const popupEl = marker.getPopup().getElement();
+  if (!popupEl) return;
+
+  const btn = popupEl.querySelector(".popup-contact-btn");
+  if (!btn) return;
+
+  btn.onclick = function() {
+    selectVehicle(btn.dataset.plate);
+    marker.closePopup();
+  };
+});
 
       otherMarkers.push(marker);
 });
