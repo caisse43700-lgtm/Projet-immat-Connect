@@ -1609,15 +1609,14 @@ const hasPending = existingMessages && existingMessages.some(m =>
 if (autoContact && hasAccepted) {
   selectedConversationPlate = targetPlate;
   setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
-  return;
-}
-
-if (autoContact && hasAccepted) {
-  selectedConversationPlate = targetPlate;
-  setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
   loadMessages();
   return;
 }
+
+if (autoContact && hasPending) {
+  selectedConversationPlate = targetPlate;
+  setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+  return;
 }
 
     await sb.from("messages").insert({
