@@ -1622,11 +1622,10 @@ const { data, error } = await query;
 
   let buttons = "";
 
-  // 👉 Afficher boutons UNIQUEMENT si je suis le receveur ET status = pending
   if (!isSent && msg.status === "pending") {
     buttons = `
       <div style="margin-top:8px;">
-        <button onclick="acceptRequest('${msg.id}')" style="margin-right:6px;">✅ Accepter</button>
+        <button onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
         <button onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
       </div>
     `;
