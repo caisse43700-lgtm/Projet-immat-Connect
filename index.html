@@ -1535,12 +1535,12 @@ await subscribeToLocations();
 }
 
     // ───── ENVOI DEMANDE ─────
-async function sendRequest() {
+async function sendRequest(autoContact = false) {
   clearValidationStates(["targetPlateError","requestMessageError"]);
   setRequestStatus("");
 
   const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
-  const message = document.getElementById("requestMessageInput").value.trim();
+  let message = document.getElementById("requestMessageInput").value.trim();
 
   let hasError = false;
 
@@ -1551,7 +1551,7 @@ async function sendRequest() {
     hasError = true;
   }
 
-  if (!message) {
+  if (!message && !autoContact) {
     setValidationState("requestMessageError","error","Ajoute un message.");
     hasError = true;
   }
@@ -1559,6 +1559,10 @@ async function sendRequest() {
   if (hasError) return;
 
   const targetPlate = normalizePlate(targetPlateRaw);
+
+  if (autoContact && !message) {
+    message = "Un véhicule à proximité cherche à entrer en contact avec vous.";
+  }
 
   setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
 
@@ -1587,20 +1591,38 @@ async function sendRequest() {
       return;
     }
 
+    const { data: existingMessages } = await sb
+      .from("messages")
+      .select("*")
+      .eq("target_plate", targetPlate)
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`)
+      .order("created_at", { ascending: true });
+
+    const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
+    const hasPending = existingMessages && existingMessages.some(m =>
+      m.status === "pending" &&
+      m.sender_id === user.id &&
+      m.receiver_id === targetUser.id
+    );
+
+    if (autoContact && hasPending) {
+      selectedConversationPlate = targetPlate;
+      setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+      return;
+    }
+
     await sb.from("messages").insert({
       sender_id: user.id,
       receiver_id: targetUser.id,
       target_plate: targetPlate,
       message: message,
-      status: "pending"
+      status: hasAccepted ? "accepted" : "pending"
     });
 
     document.getElementById("requestMessageInput").value = "";
-
     selectedConversationPlate = targetPlate;
 
-    setRequestStatus("Demande envoyée ✔", true);
-
+    setRequestStatus(hasAccepted ? "Message envoyé ✔" : "Demande envoyée ✔", true);
     loadMessages();
 
   } finally {
@@ -1754,15 +1776,14 @@ async function rejectRequest(id) {
     )
     .subscribe();
 }
-    function selectVehicle(plate) {
+    async function selectVehicle(plate) {
   selectedConversationPlate = normalizePlate(plate);
 
   document.getElementById("targetPlateInput").value = selectedConversationPlate;
-  document.getElementById("requestMessageInput").focus();
+  setRequestStatus("Contact en cours avec : " + selectedConversationPlate, true);
 
-  setRequestStatus("Conversation ouverte avec : " + selectedConversationPlate, true);
-
-  loadMessages();
+  await sendRequest(true);
+  await loadMessages();
 }
 
 function callEmergency() {
