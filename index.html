@@ -1587,6 +1587,7 @@ let query = sb
   .limit(100);
 
 query = query.eq("target_plate", selectedConversationPlate);
+query = query.neq("status", "rejected");
 
 const { data, error } = await query;
 
@@ -1605,30 +1606,58 @@ const { data, error } = await query;
     }
 
     function buildMessageHtml(msg, myId) {
-      const isSent = msg.sender_id === myId;
+  const isSent = msg.sender_id === myId;
+  const plate = escapeHtml(msg.target_plate || "");
+  const text = escapeHtml(msg.message || "");
 
-      const dateStr = msg.created_at
-        ? new Date(msg.created_at).toLocaleString("fr-FR", {
-            day:"2-digit",
-            month:"2-digit",
-            hour:"2-digit",
-            minute:"2-digit"
-          })
-        : "";
+  const dateStr = msg.created_at
+    ? new Date(msg.created_at).toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : "";
 
-      const plate = escapeHtml(msg.target_plate || "");
-      const text = escapeHtml(msg.message || "");
-      const title = isSent
-  ? "Message envoyé vers " + plate
-  : "🚗 Un véhicule souhaite vous contacter";
+  if (!isSent && msg.status === "pending") {
+    return `
+      <div class="chat-msg received">
+        <div class="msg-plate">🚗 Demande de contact</div>
+        <div class="msg-text">
+          <b>Plaque concernée : ${plate}</b><br>${text}
+        </div>
+        <br>
+        <button onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
+        <button onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
+        <div class="msg-time">${dateStr}</div>
+      </div>
+    `;
+  }
 
-      return ''
-  + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
-  + '<div class="msg-plate">' + title + '</div>'
-  + '<div class="msg-text"><b>Plaque concernée : ' + plate + '</b><br>' + text + '</div>'
-  + '<div class="msg-time">' + dateStr + '</div>'
-  + '</div>';
-    }
+  if (isSent && msg.status === "pending") {
+    return `
+      <div class="chat-msg sent">
+        <div class="msg-plate">⏳ Demande envoyée vers ${plate}</div>
+        <div class="msg-text">${text}</div>
+        <div class="msg-time">${dateStr}</div>
+      </div>
+    `;
+  }
+
+  if (msg.status === "rejected") return "";
+
+  return `
+    <div class="chat-msg ${isSent ? "sent" : "received"}">
+      <div class="msg-plate">
+        ${isSent ? "Message envoyé vers " + plate : "🚗 Un véhicule souhaite vous contacter"}
+      </div>
+      <div class="msg-text">
+        <b>Plaque concernée : ${plate}</b><br>${text}
+      </div>
+      <div class="msg-time">${dateStr}</div>
+    </div>
+  `;
+}
 
     async function subscribeToMessages() {
       const { data: userData } = await sb.auth.getUser();
