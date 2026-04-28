@@ -1581,12 +1581,18 @@ async function subscribeToLocations() {
 
       currentUserId = user.id;
 
-      const { data, error } = await sb
-        .from("messages")
-        .select("*")
-        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-        .order("created_at", { ascending:true })
-        .limit(100);
+      let query = sb
+  .from("messages")
+  .select("*")
+  .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
+  .order("created_at", { ascending:true })
+  .limit(100);
+
+if (selectedConversationPlate) {
+  query = query.eq("target_plate", selectedConversationPlate);
+}
+
+const { data, error } = await query;
 
       if (error) {
         chatBox.innerHTML = '<div class="chat-empty">Erreur lors du chargement des messages.</div>';
@@ -1674,7 +1680,7 @@ async function subscribeToLocations() {
     }
 
     function selectVehicle(plate) {
-  selectedConversationPlate = plate;
+  selectedConversationPlate = normalizePlate(plate);
 
   document.getElementById("targetPlateInput").value = plate;
   document.getElementById("requestMessageInput").focus();
