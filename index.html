@@ -1352,7 +1352,7 @@
         map.invalidateSize();
       }, 250);
 
-      startMessages();
+      loadMessages();
     }
 
     async function locateUser() {
@@ -1479,6 +1479,10 @@ marker.bindPopup(`
     Contacter ce véhicule
   </button>
 `);
+
+marker.on("click", function() {
+  marker.openPopup();
+});
 
 marker.on("popupopen", function() {
   const popupEl = marker.getPopup().getElement();
