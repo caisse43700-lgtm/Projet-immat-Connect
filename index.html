@@ -1594,6 +1594,8 @@ let query = sb
   .order("created_at", { ascending: true })
   .limit(100);
 
+query = query.eq("target_plate", selectedConversationPlate);
+
 const { data, error } = await query;
 
       if (error) {
