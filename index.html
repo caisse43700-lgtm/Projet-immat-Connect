@@ -1599,17 +1599,24 @@ async function sendRequest(autoContact = false) {
       .order("created_at", { ascending: true });
 
     const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
-    const hasPending = existingMessages && existingMessages.some(m =>
-      m.status === "pending" &&
-      m.sender_id === user.id &&
-      m.receiver_id === targetUser.id
-    );
 
-    if (autoContact && hasPending) {
-      selectedConversationPlate = targetPlate;
-      setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
-      return;
-    }
+const hasPending = existingMessages && existingMessages.some(m =>
+  m.status === "pending" &&
+  m.sender_id === user.id &&
+  m.receiver_id === targetUser.id
+);
+
+if (autoContact && hasAccepted) {
+  selectedConversationPlate = targetPlate;
+  setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
+  return;
+}
+
+if (autoContact && hasPending) {
+  selectedConversationPlate = targetPlate;
+  setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+  return;
+}
 
     await sb.from("messages").insert({
       sender_id: user.id,
