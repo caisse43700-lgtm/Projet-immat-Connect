@@ -1345,7 +1345,6 @@ async function subscribeToLocations() {
       }, 250);
 
       startMessages();
-      subscribeToLocations();
     }
 
     async function locateUser() {
@@ -1470,9 +1469,11 @@ async function subscribeToLocations() {
 `);
 
       otherMarkers.push(marker);
-    });
+});
 
-  } finally {
+await subscribeToLocations();
+
+} finally {
     setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
   }
 }
