@@ -1637,22 +1637,6 @@ function buildMessageHtml(msg, myId) {
     </div>
   `;
 }
-
-  return `
-    <div class="chat-msg ${isSent ? "sent" : "received"}">
-      <div class="msg-plate">
-        ${isSent ? "Message envoyé" : "Demande reçue"}
-      </div>
-      <div class="msg-text">
-        <b>${msg.target_plate}</b><br>${msg.message}
-      </div>
-      ${buttons}
-      <div class="msg-time">${dateStr}</div>
-    </div>
-  `;
-}
-
-
 // ───── ACCEPTER ─────
 async function acceptRequest(id) {
   const { data: userData } = await sb.auth.getUser();
