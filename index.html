@@ -1607,6 +1607,47 @@ const { data, error } = await query;
 
     function buildMessageHtml(msg, myId) {
   const isSent = msg.sender_id === myId;
+
+  const dateStr = msg.created_at
+    ? new Date(msg.created_at).toLocaleString("fr-FR", {
+        day:"2-digit",
+        month:"2-digit",
+        hour:"2-digit",
+        minute:"2-digit"
+      })
+    : "";
+
+  const plate = escapeHtml(msg.target_plate || "");
+  const text = escapeHtml(msg.message || "");
+
+  let buttons = "";
+
+  // 👉 Afficher boutons UNIQUEMENT si je suis le receveur ET status = pending
+  if (!isSent && msg.status === "pending") {
+    buttons = `
+      <div style="margin-top:8px;">
+        <button onclick="acceptRequest('${msg.id}')" style="margin-right:6px;">✅ Accepter</button>
+        <button onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
+      </div>
+    `;
+  }
+
+  const title = isSent
+    ? "Message envoyé vers " + plate
+    : "🚗 Demande reçue";
+
+  return `
+    <div class="chat-msg ${isSent ? 'sent' : 'received'}">
+      <div class="msg-plate">${title}</div>
+      <div class="msg-text">
+        <b>Plaque concernée : ${plate}</b><br>${text}
+      </div>
+      ${buttons}
+      <div class="msg-time">${dateStr}</div>
+    </div>
+  `;
+}
+  const isSent = msg.sender_id === myId;
   const plate = escapeHtml(msg.target_plate || "");
   const text = escapeHtml(msg.message || "");
 
@@ -1689,8 +1730,10 @@ const { data, error } = await query;
             }
 
             if (msg.receiver_id === user.id) {
-              alert("🚗 Un véhicule (" + msg.target_plate + ") souhaite vous contacter");
-            }
+  selectedConversationPlate = normalizePlate(msg.target_plate);
+  setRequestStatus("🚗 Nouvelle demande reçue pour : " + msg.target_plate, true);
+  loadMessages();
+}
           }
         )
         .subscribe();
