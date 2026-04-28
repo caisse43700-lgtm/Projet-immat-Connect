@@ -1615,14 +1615,16 @@ async function subscribeToLocations() {
 
       const plate = escapeHtml(msg.target_plate || "");
       const text = escapeHtml(msg.message || "");
-      const title = isSent ? "Envoyé vers " + plate : "Reçu concernant " + plate;
+      const title = isSent
+  ? "Message envoyé vers " + plate
+  : "🚗 Un véhicule souhaite vous contacter";
 
       return ''
-        + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
-        + '<div class="msg-plate">' + title + '</div>'
-        + '<div class="msg-text">' + text + '</div>'
-        + '<div class="msg-time">' + dateStr + '</div>'
-        + '</div>';
+  + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
+  + '<div class="msg-plate">' + title + '</div>'
+  + '<div class="msg-text"><b>Plaque concernée : ' + plate + '</b><br>' + text + '</div>'
+  + '<div class="msg-time">' + dateStr + '</div>'
+  + '</div>';
     }
 
     async function subscribeToMessages() {
