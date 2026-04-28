@@ -1353,6 +1353,7 @@
       }, 250);
 
       loadMessages();
+subscribeToMessages();
     }
 
     async function locateUser() {
@@ -1595,18 +1596,18 @@ async function loadMessages() {
     return;
   }
 
-  if (!selectedConversationPlate) {
-    chatBox.innerHTML = '<div class="chat-empty">Sélectionne un véhicule.</div>';
-    return;
-  }
+  let query = sb
+  .from("messages")
+  .select("*")
+  .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+  .neq("status","rejected")
+  .order("created_at", { ascending: true });
 
-  const { data, error } = await sb
-    .from("messages")
-    .select("*")
-    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .eq("target_plate", selectedConversationPlate)
-    .neq("status","rejected")
-    .order("created_at", { ascending: true });
+if (selectedConversationPlate) {
+  query = query.eq("target_plate", selectedConversationPlate);
+}
+
+const { data, error } = await query;
 
   if (error) {
     chatBox.innerHTML = '<div class="chat-empty">Erreur.</div>';
@@ -1691,6 +1692,41 @@ async function rejectRequest(id) {
     .eq("receiver_id", user.id);
 
   loadMessages();
+}
+    async function subscribeToMessages() {
+  const { data: userData } = await sb.auth.getUser();
+  const user = userData.user;
+  if (!user) return;
+
+  if (messageChannel) {
+    await sb.removeChannel(messageChannel);
+    messageChannel = null;
+  }
+
+  messageChannel = sb
+    .channel("immatconnect_messages_" + user.id)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "messages"
+      },
+      payload => {
+        const msg = payload.new;
+        if (!msg) return;
+
+        if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+          if (msg.receiver_id === user.id && !selectedConversationPlate) {
+            selectedConversationPlate = normalizePlate(msg.target_plate);
+            document.getElementById("targetPlateInput").value = selectedConversationPlate;
+          }
+
+          loadMessages();
+        }
+      }
+    )
+    .subscribe();
 }
     function selectVehicle(plate) {
   selectedConversationPlate = normalizePlate(plate);
