@@ -1612,9 +1612,10 @@ if (autoContact && hasAccepted) {
   return;
 }
 
-if (autoContact && hasPending) {
+if (autoContact && hasAccepted) {
   selectedConversationPlate = targetPlate;
-  setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+  setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
+  loadMessages();
   return;
 }
 
