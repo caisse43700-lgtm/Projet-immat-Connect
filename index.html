@@ -1478,8 +1478,9 @@ await subscribeToLocations();
   }
 }
 
-    async function sendRequest() {
-  clearValidationStates(["targetPlateError", "requestMessageError"]);
+    // ───── ENVOI DEMANDE ─────
+async function sendRequest() {
+  clearValidationStates(["targetPlateError","requestMessageError"]);
   setRequestStatus("");
 
   const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
@@ -1488,14 +1489,14 @@ await subscribeToLocations();
   let hasError = false;
 
   if (!targetPlateRaw) {
-    setValidationState("targetPlateError", "error", "Ajoute l'immatriculation.");
+    setValidationState("targetPlateError","error","Ajoute l'immatriculation.");
     hasError = true;
-  } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
+  } else if (!validatePlateField("targetPlateInput","targetPlateError",true)) {
     hasError = true;
   }
 
   if (!message) {
-    setValidationState("requestMessageError", "error", "Ajoute un message.");
+    setValidationState("requestMessageError","error","Ajoute un message.");
     hasError = true;
   }
 
@@ -1521,7 +1522,7 @@ await subscribeToLocations();
       .maybeSingle();
 
     if (!targetUser) {
-      setRequestStatus("Aucun utilisateur trouvé.");
+      setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
       return;
     }
 
@@ -1540,6 +1541,8 @@ await subscribeToLocations();
 
     document.getElementById("requestMessageInput").value = "";
 
+    selectedConversationPlate = targetPlate;
+
     setRequestStatus("Demande envoyée ✔", true);
 
     loadMessages();
@@ -1549,163 +1552,105 @@ await subscribeToLocations();
   }
 }
 
-    async function startMessages() {
-      await loadMessages();
 
-      if (messageInterval) clearInterval(messageInterval);
+// ───── CHARGEMENT MESSAGES ─────
+async function loadMessages() {
+  const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return;
 
-      messageInterval = setInterval(loadMessages, 10000);
+  const { data: userData } = await sb.auth.getUser();
+  const user = userData.user;
 
-      await subscribeToMessages();
-    }
+  if (!user) {
+    chatBox.innerHTML = '<div class="chat-empty">Connecte-toi.</div>';
+    return;
+  }
 
-    async function loadMessages() {
-      const chatBox = document.getElementById("chatBox");
+  if (!selectedConversationPlate) {
+    chatBox.innerHTML = '<div class="chat-empty">Sélectionne un véhicule.</div>';
+    return;
+  }
 
-      if (!chatBox) return;
+  const { data, error } = await sb
+    .from("messages")
+    .select("*")
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .eq("target_plate", selectedConversationPlate)
+    .neq("status","rejected")
+    .order("created_at", { ascending: true });
 
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData.user;
+  if (error) {
+    chatBox.innerHTML = '<div class="chat-empty">Erreur.</div>';
+    return;
+  }
 
-      if (!user) {
-        chatBox.innerHTML = '<div class="chat-empty">Connecte-toi pour voir les messages.</div>';
-        return;
-      }
+  if (!data || !data.length) {
+    chatBox.innerHTML = '<div class="chat-empty">Aucun message.</div>';
+    return;
+  }
 
-      currentUserId = user.id;
-
-if (!selectedConversationPlate) {
-  chatBox.innerHTML = '<div class="chat-empty">Sélectionne un véhicule sur la carte pour ouvrir une conversation.</div>';
-  return;
+  chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-let query = sb
-  .from("messages")
-  .select("*")
-  .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-  .order("created_at", { ascending: true })
-  .limit(100);
 
-query = query.eq("target_plate", selectedConversationPlate);
-query = query.neq("status", "rejected");
-
-const { data, error } = await query;
-
-      if (error) {
-        chatBox.innerHTML = '<div class="chat-empty">Erreur lors du chargement des messages.</div>';
-        return;
-      }
-
-      if (!data || !data.length) {
-        chatBox.innerHTML = '<div class="chat-empty">Aucun message pour le moment.</div>';
-        return;
-      }
-
-      chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function buildMessageHtml(msg, myId) {
+// ───── AFFICHAGE MESSAGE ─────
+function buildMessageHtml(msg, myId) {
   const isSent = msg.sender_id === myId;
 
   const dateStr = msg.created_at
-    ? new Date(msg.created_at).toLocaleString("fr-FR", {
-        day:"2-digit",
-        month:"2-digit",
-        hour:"2-digit",
-        minute:"2-digit"
-      })
+    ? new Date(msg.created_at).toLocaleString("fr-FR")
     : "";
-
-  const plate = escapeHtml(msg.target_plate || "");
-  const text = escapeHtml(msg.message || "");
 
   let buttons = "";
 
-  if (!isSent && msg.status === "pending") {
+  if (!isSent && msg.receiver_id === myId && msg.status === "pending") {
     buttons = `
-  <div style="margin-top:8px;">
-    <button onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
-    <button onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
-  </div>
-`;
+      <div class="msg-actions">
+        <button class="btn-accept" onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
+        <button class="btn-reject" onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
+      </div>
+    `;
   }
 
-  const title = isSent
-    ? "Message envoyé vers " + plate
-    : "🚗 Demande reçue";
-
   return `
-    <div class="chat-msg ${isSent ? 'sent' : 'received'}">
-      <div class="msg-plate">${title}</div>
+    <div class="chat-msg ${isSent ? "sent" : "received"}">
+      <div class="msg-plate">
+        ${isSent ? "Message envoyé" : "Demande reçue"}
+      </div>
       <div class="msg-text">
-        <b>Plaque concernée : ${plate}</b><br>${text}
+        <b>${msg.target_plate}</b><br>${msg.message}
       </div>
       ${buttons}
       <div class="msg-time">${dateStr}</div>
     </div>
   `;
 }
-  
 
-    async function subscribeToMessages() {
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData.user;
 
-      if (!user) return;
-
-      currentUserId = user.id;
-
-      if (messageChannel) {
-        await sb.removeChannel(messageChannel);
-        messageChannel = null;
-      }
-
-            messageChannel = sb
-        .channel("immatconnect_messages_" + user.id)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages"
-          },
-          payload => {
-            const msg = payload.new;
-
-            if (msg.sender_id === user.id || msg.receiver_id === user.id) {
-              loadMessages();
-            }
-
-            if (msg.receiver_id === user.id) {
-  selectedConversationPlate = normalizePlate(msg.target_plate);
-  setRequestStatus("🚗 Nouvelle demande reçue pour : " + msg.target_plate, true);
-  loadMessages();
-}
-          }
-        )
-        .subscribe();
-    }
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+// ───── ACCEPTER ─────
 async function acceptRequest(id) {
+  const { data: userData } = await sb.auth.getUser();
+  const user = userData.user;
+
   await sb.from("messages")
     .update({ status: "accepted" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("receiver_id", user.id);
 
   loadMessages();
 }
 
+
+// ───── REFUSER ─────
 async function rejectRequest(id) {
+  const { data: userData } = await sb.auth.getUser();
+  const user = userData.user;
+
   await sb.from("messages")
     .update({ status: "rejected" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("receiver_id", user.id);
 
   loadMessages();
 }
