@@ -778,7 +778,15 @@
     let locationChannel = null;
     let selectedConversationPlate = null;
 
-async function subscribeToLocations() {
+    function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+    async function subscribeToLocations() {
   if (locationChannel) {
     await sb.removeChannel(locationChannel);
     locationChannel = null;
