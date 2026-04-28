@@ -1479,83 +1479,75 @@ await subscribeToLocations();
 }
 
     async function sendRequest() {
-      clearValidationStates(["targetPlateError", "requestMessageError"]);
-      setRequestStatus("");
+  clearValidationStates(["targetPlateError", "requestMessageError"]);
+  setRequestStatus("");
 
-      const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
-      const message = document.getElementById("requestMessageInput").value.trim();
+  const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
+  const message = document.getElementById("requestMessageInput").value.trim();
 
-      let hasError = false;
+  let hasError = false;
 
-      if (!targetPlateRaw) {
-        setValidationState("targetPlateError", "error", "Ajoute l'immatriculation du véhicule concerné.");
-        hasError = true;
-      } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
-        hasError = true;
-      }
+  if (!targetPlateRaw) {
+    setValidationState("targetPlateError", "error", "Ajoute l'immatriculation.");
+    hasError = true;
+  } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
+    hasError = true;
+  }
 
-      if (!message) {
-        setValidationState("requestMessageError", "error", "Ajoute un message.");
-        hasError = true;
-      }
+  if (!message) {
+    setValidationState("requestMessageError", "error", "Ajoute un message.");
+    hasError = true;
+  }
 
-      if (hasError) return;
+  if (hasError) return;
 
-      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
+  const targetPlate = normalizePlate(targetPlateRaw);
 
-      setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
+  setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
 
-      try {
-        const { data: userData } = await sb.auth.getUser();
-        const user = userData.user;
+  try {
+    const { data: userData } = await sb.auth.getUser();
+    const user = userData.user;
 
-        if (!user) {
-          setRequestStatus("Tu dois être connecté.");
-          return;
-        }
-
-        currentUserId = user.id;
-
-        const { data: targetUser, error: targetError } = await sb
-  .from("profiles")
-  .select("id")
-  .eq("owner_plate", targetPlate)
-  .maybeSingle();
-
-        if (targetError || !targetUser || !targetUser.id) {
-          setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
-          return;
-        }
-
-        if (targetUser.id === user.id) {
-          setRequestStatus("Tu ne peux pas t'envoyer un message à toi-même.");
-          return;
-        }
-
-        const { error } = await sb.from("messages").insert({
-          sender_id: user.id,
-          receiver_id: targetUser.id,
-          target_plate: targetPlate,
-          message: message
-        });
-
-        if (error) {
-          setRequestStatus("Erreur lors de l'envoi.");
-          return;
-        }
-
-        document.getElementById("targetPlateInput").value = "";
-        document.getElementById("requestMessageInput").value = "";
-
-        clearValidationStates(["targetPlateError", "requestMessageError"]);
-
-        setRequestStatus("Message envoyé ✔", true);
-
-        await loadMessages();
-      } finally {
-        setLoading("sendRequestBtn", false, "Envoyer la demande");
-      }
+    if (!user) {
+      setRequestStatus("Tu dois être connecté.");
+      return;
     }
+
+    const { data: targetUser } = await sb
+      .from("profiles")
+      .select("id")
+      .eq("owner_plate", targetPlate)
+      .maybeSingle();
+
+    if (!targetUser) {
+      setRequestStatus("Aucun utilisateur trouvé.");
+      return;
+    }
+
+    if (targetUser.id === user.id) {
+      setRequestStatus("Tu ne peux pas t'envoyer un message.");
+      return;
+    }
+
+    await sb.from("messages").insert({
+      sender_id: user.id,
+      receiver_id: targetUser.id,
+      target_plate: targetPlate,
+      message: message,
+      status: "pending"
+    });
+
+    document.getElementById("requestMessageInput").value = "";
+
+    setRequestStatus("Demande envoyée ✔", true);
+
+    loadMessages();
+
+  } finally {
+    setLoading("sendRequestBtn", false, "Envoyer la demande");
+  }
+}
 
     async function startMessages() {
       await loadMessages();
@@ -1682,7 +1674,21 @@ const { data, error } = await query;
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+async function acceptRequest(id) {
+  await sb.from("messages")
+    .update({ status: "accepted" })
+    .eq("id", id);
 
+  loadMessages();
+}
+
+async function rejectRequest(id) {
+  await sb.from("messages")
+    .update({ status: "rejected" })
+    .eq("id", id);
+
+  loadMessages();
+}
     function selectVehicle(plate) {
   selectedConversationPlate = normalizePlate(plate);
 
