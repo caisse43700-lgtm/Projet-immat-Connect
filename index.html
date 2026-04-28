@@ -1781,7 +1781,11 @@ function callEmergency() {
         await sb.removeChannel(messageChannel);
         messageChannel = null;
       }
-
+      
+      if (locationChannel) {
+  await sb.removeChannel(locationChannel);
+  locationChannel = null;
+}
       await sb.auth.signOut();
 
       sessionHandled = false;
