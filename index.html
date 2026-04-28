@@ -1618,6 +1618,7 @@ if (autoContact && hasAccepted) {
   loadMessages();
   return;
 }
+}
 
     await sb.from("messages").insert({
       sender_id: user.id,
