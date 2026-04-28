@@ -776,6 +776,7 @@
     let messageInterval = null;
     let messageChannel = null;
     let locationChannel = null;
+    let selectedConversationPlate = null;
 
 async function subscribeToLocations() {
   if (locationChannel) {
@@ -1650,16 +1651,19 @@ async function subscribeToLocations() {
             table:"messages"
           },
           payload => {
-            const msg = payload.new;
+  const msg = payload.new;
 
-            if (msg.sender_id === user.id || msg.receiver_id === user.id) {
-              loadMessages();
-            }
-          }
-        )
-        .subscribe();
-    }
+  // Recharge les messages si ça te concerne
+  if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+    loadMessages();
+  }
 
+  // Notification si tu reçois un message
+  if (msg.receiver_id === user.id) {
+  alert("🚗 Un véhicule souhaite vous contacter concernant : " + msg.target_plate);
+}
+}
+}
     function escapeHtml(str) {
       return String(str)
         .replace(/&/g, "&amp;")
@@ -1670,14 +1674,14 @@ async function subscribeToLocations() {
     }
 
     function selectVehicle(plate) {
-  // Remplit automatiquement le champ
-  document.getElementById("targetPlateInput").value = plate;
+  selectedConversationPlate = plate;
 
-  // Focus sur le message
+  document.getElementById("targetPlateInput").value = plate;
   document.getElementById("requestMessageInput").focus();
 
-  // Petit feedback visuel
-  alert("Véhicule sélectionné : " + plate);
+  setRequestStatus("Conversation ouverte avec : " + plate, true);
+
+  loadMessages();
 }
     function callEmergency() {
       window.location.href = "tel:112";
