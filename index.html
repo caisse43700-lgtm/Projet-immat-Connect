@@ -1599,12 +1599,21 @@ function buildMessageHtml(msg, myId) {
   const isSent = msg.sender_id === myId;
 
   const dateStr = msg.created_at
-    ? new Date(msg.created_at).toLocaleString("fr-FR")
+    ? new Date(msg.created_at).toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
     : "";
+
+  const plate = escapeHtml(msg.target_plate || "");
+  const text = escapeHtml(msg.message || "");
+  const status = msg.status || "accepted";
 
   let buttons = "";
 
-  if (!isSent && msg.receiver_id === myId && msg.status === "pending") {
+  if (!isSent && msg.receiver_id === myId && status === "pending") {
     buttons = `
       <div class="msg-actions">
         <button class="btn-accept" onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
@@ -1612,6 +1621,22 @@ function buildMessageHtml(msg, myId) {
       </div>
     `;
   }
+
+  const title = isSent
+    ? (status === "pending" ? "⏳ Demande envoyée vers " + plate : "Message envoyé vers " + plate)
+    : (status === "pending" ? "🚗 Demande de contact" : "🚗 Message reçu");
+
+  return `
+    <div class="chat-msg ${isSent ? "sent" : "received"}">
+      <div class="msg-plate">${title}</div>
+      <div class="msg-text">
+        <b>Plaque concernée : ${plate}</b><br>${text}
+      </div>
+      ${buttons}
+      <div class="msg-time">${dateStr}</div>
+    </div>
+  `;
+}
 
   return `
     <div class="chat-msg ${isSent ? "sent" : "received"}">
