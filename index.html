@@ -1542,21 +1542,7 @@ async function sendRequest(autoContact = false) {
   const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
   let message = document.getElementById("requestMessageInput").value.trim();
 
-  let hasError = false;
-
-  if (!targetPlateRaw) {
-    setValidationState("targetPlateError","error","Ajoute l'immatriculation.");
-    hasError = true;
-  } else if (!validatePlateField("targetPlateInput","targetPlateError",true)) {
-    hasError = true;
-  }
-
-  if (!message && !autoContact) {
-    setValidationState("requestMessageError","error","Ajoute un message.");
-    hasError = true;
-  }
-
-  if (hasError) return;
+  if (!targetPlateRaw || !validatePlateField("targetPlateInput","targetPlateError",true)) return;
 
   const targetPlate = normalizePlate(targetPlateRaw);
 
@@ -1564,12 +1550,16 @@ async function sendRequest(autoContact = false) {
     message = "Un véhicule à proximité cherche à entrer en contact avec vous.";
   }
 
+  if (!message) {
+    setValidationState("requestMessageError","error","Ajoute un message.");
+    return;
+  }
+
   setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
 
   try {
     const { data: userData } = await sb.auth.getUser();
     const user = userData.user;
-
     if (!user) {
       setRequestStatus("Tu dois être connecté.");
       return;
@@ -1595,29 +1585,24 @@ async function sendRequest(autoContact = false) {
       .from("messages")
       .select("*")
       .eq("target_plate", targetPlate)
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`)
-      .order("created_at", { ascending: true });
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
 
     const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
+    const hasPending = existingMessages && existingMessages.some(m => m.status === "pending");
 
-const hasPending = existingMessages && existingMessages.some(m =>
-  m.status === "pending" &&
-  m.sender_id === user.id &&
-  m.receiver_id === targetUser.id
-);
+    selectedConversationPlate = targetPlate;
 
-if (autoContact && hasAccepted) {
-  selectedConversationPlate = targetPlate;
-  setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
-  loadMessages();
-  return;
-}
+    if (autoContact && hasAccepted) {
+      setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
+      loadMessages();
+      return;
+    }
 
-if (autoContact && hasPending) {
-  selectedConversationPlate = targetPlate;
-  setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
-  return;
-}
+    if (autoContact && hasPending) {
+      setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+      loadMessages();
+      return;
+    }
 
     await sb.from("messages").insert({
       sender_id: user.id,
@@ -1628,7 +1613,6 @@ if (autoContact && hasPending) {
     });
 
     document.getElementById("requestMessageInput").value = "";
-    selectedConversationPlate = targetPlate;
 
     setRequestStatus(hasAccepted ? "Message envoyé ✔" : "Demande envoyée ✔", true);
     loadMessages();
