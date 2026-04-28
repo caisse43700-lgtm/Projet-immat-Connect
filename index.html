@@ -1582,16 +1582,17 @@ await subscribeToLocations();
 
       currentUserId = user.id;
 
-      let query = sb
+if (!selectedConversationPlate) {
+  chatBox.innerHTML = '<div class="chat-empty">Sélectionne un véhicule sur la carte pour ouvrir une conversation.</div>';
+  return;
+}
+
+let query = sb
   .from("messages")
   .select("*")
   .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-  .order("created_at", { ascending:true })
+  .order("created_at", { ascending: true })
   .limit(100);
-
-if (selectedConversationPlate) {
-  query = query.eq("target_plate", selectedConversationPlate);
-}
 
 const { data, error } = await query;
 
