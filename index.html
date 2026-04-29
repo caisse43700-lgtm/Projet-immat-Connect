@@ -1795,7 +1795,7 @@ async function rejectRequest(id) {
   selectedConversationPlate = normalizePlate(plate);
 
   document.getElementById("targetPlateInput").value = selectedConversationPlate;
-  setRequestStatus("Contact en cours avec : " + selectedConversationPlate, true);
+  setRequestStatus("Envoi de la demande de contact...", true);
 
   await sendRequest(true);
   await loadMessages();
