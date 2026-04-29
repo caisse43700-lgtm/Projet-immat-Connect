@@ -1874,38 +1874,42 @@ function callEmergency() {
       await continueAfterAuth();
     }
 
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        sessionHandled = false;
-        currentUserId = session && session.user ? session.user.id : null;
-        showScreen("resetScreen");
-        return;
-      }
+    sb.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    sessionHandled = false;
+    currentUserId = session && session.user ? session.user.id : null;
+    showScreen("resetScreen");
+    return;
+  }
 
-      if (event === "SIGNED_IN" && !sessionHandled && session) {
-        currentUserId = session.user.id;
-        sessionHandled = true;
-        await continueAfterAuth();
-        return;
-      }
+  if (event === "SIGNED_IN" && !sessionHandled && session) {
+    currentUserId = session.user.id;
+    sessionHandled = true;
 
-      if (event === "SIGNED_OUT") {
-        sessionHandled = false;
-        currentUserId = null;
+    setTimeout(() => {
+      continueAfterAuth();
+    }, 100);
 
-        if (messageInterval) {
-          clearInterval(messageInterval);
-          messageInterval = null;
-        }
+    return;
+  }
 
-        if (messageChannel) {
-          await sb.removeChannel(messageChannel);
-          messageChannel = null;
-        }
+  if (event === "SIGNED_OUT") {
+    sessionHandled = false;
+    currentUserId = null;
 
-        showScreen("welcomeScreen");
-      }
-    });
+    if (messageInterval) {
+      clearInterval(messageInterval);
+      messageInterval = null;
+    }
+
+    if (messageChannel) {
+      sb.removeChannel(messageChannel);
+      messageChannel = null;
+    }
+
+    showScreen("welcomeScreen");
+  }
+});
 function showNotification(message) {
   const notif = document.createElement("div");
 
