@@ -1219,46 +1219,38 @@ await continueAfterAuth();
     }
 
     async function continueAfterAuth() {
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData.user;
+  setStatus("authStatus", "Connexion réussie, chargement du profil...", "success");
 
-      if (!user) {
-        showScreen("authScreen");
-        return;
-      }
+  const { data: userData, error: userError } = await sb.auth.getUser();
 
-      currentUserId = user.id;
+  if (userError || !userData.user) {
+    setStatus("authStatus", "Session introuvable. Reconnecte-toi.", "error");
+    showScreen("authScreen");
+    return;
+  }
 
-      const { data: profile, error } = await sb
-  .from("profiles")
-  .select("*")
-  .eq("id", user.id)
-  .maybeSingle();
+  const user = userData.user;
+  currentUserId = user.id;
 
-      if (error) {
-        showScreen("profileScreen");
-        return;
-      }
+  const { data: profile, error } = await sb
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
 
-      if (profile) {
-        openMap(profile);
-      } else {
-        const pendingPhone = localStorage.getItem("immatconnect_pending_phone") || "";
-        const pendingPlate = localStorage.getItem("immatconnect_pending_plate") || "";
+  if (error) {
+    console.error(error);
+    setStatus("authStatus", "Profil introuvable ou accès refusé.", "error");
+    showScreen("profileScreen");
+    return;
+  }
 
-        if (pendingPhone && !document.getElementById("phoneInput").value) {
-          document.getElementById("phoneInput").value = pendingPhone;
-          validatePhoneField("phoneInput", "phoneError", true);
-        }
-
-        if (pendingPlate && !document.getElementById("ownerPlateInput").value) {
-          document.getElementById("ownerPlateInput").value = pendingPlate;
-          validatePlateField("ownerPlateInput", "ownerPlateError", true);
-        }
-
-        showScreen("profileScreen");
-      }
-    }
+  if (profile) {
+    openMap(profile);
+  } else {
+    showScreen("profileScreen");
+  }
+}
 
     async function saveProfile() {
       clearValidationStates(["pseudoError", "ownerPlateError", "phoneError"]);
