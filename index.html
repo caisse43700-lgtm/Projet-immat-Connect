@@ -1698,8 +1698,16 @@ function buildMessageHtml(msg, myId) {
   }
 
   const title = isSent
-    ? (status === "pending" ? "⏳ Demande envoyée vers " + plate : "Message envoyé vers " + plate)
-    : (status === "pending" ? "🚗 Demande de contact" : "🚗 Message reçu");
+  ? (status === "pending"
+      ? "⏳ Demande envoyée, en attente d'acceptation"
+      : text.includes("acceptée")
+        ? "✅ Demande acceptée"
+        : "Message envoyé vers " + plate)
+  : (status === "pending"
+      ? "🚗 Demande de contact"
+      : text.includes("acceptée")
+        ? "✅ Vous avez accepté la demande"
+        : "🚗 Message reçu");
 
   return `
     <div class="chat-msg ${isSent ? "sent" : "received"}">
@@ -1792,13 +1800,21 @@ async function rejectRequest(id) {
     .subscribe();
 }
     async function selectVehicle(plate) {
-  selectedConversationPlate = normalizePlate(plate);
+  const normalized = normalizePlate(plate);
 
-  document.getElementById("targetPlateInput").value = selectedConversationPlate;
-  setRequestStatus("Envoi de la demande de contact...", true);
+  selectedConversationPlate = normalized;
 
-  await sendRequest(true);
-  await loadMessages();
+  // 🔥 FORCER la valeur propre dans l’input
+  const input = document.getElementById("targetPlateInput");
+  input.value = normalized;
+
+  // 🔥 petit délai pour être sûr que le DOM est prêt
+  setTimeout(async () => {
+    setRequestStatus("Demande en cours d’envoi...", true);
+
+    await sendRequest(true);
+    await loadMessages();
+  }, 100);
 }
 
 function callEmergency() {
