@@ -1560,6 +1560,7 @@ async function sendRequest(autoContact = false) {
   try {
     const { data: userData } = await sb.auth.getUser();
     const user = userData.user;
+
     if (!user) {
       setRequestStatus("Tu dois être connecté.");
       return;
@@ -1588,11 +1589,7 @@ async function sendRequest(autoContact = false) {
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
 
     const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
-    const hasPending = existingMessages && existingMessages.some(m =>
-  m.status === "pending" &&
-  m.sender_id === user.id &&
-  m.receiver_id === targetUser.id
-);
+    const hasPending = existingMessages && existingMessages.some(m => m.status === "pending");
 
     selectedConversationPlate = targetPlate;
 
@@ -1618,7 +1615,11 @@ async function sendRequest(autoContact = false) {
 
     document.getElementById("requestMessageInput").value = "";
 
-    setRequestStatus(hasAccepted ? "Message envoyé ✔" : "Demande envoyée ✔", true);
+    setRequestStatus(
+      hasAccepted ? "Message envoyé ✔" : "Demande envoyée, en attente d'acceptation.",
+      true
+    );
+
     loadMessages();
 
   } finally {
@@ -1716,11 +1717,29 @@ async function acceptRequest(id) {
   const { data: userData } = await sb.auth.getUser();
   const user = userData.user;
 
+  const { data: acceptedMsg } = await sb
+    .from("messages")
+    .select("*")
+    .eq("id", id)
+    .eq("receiver_id", user.id)
+    .maybeSingle();
+
+  if (!acceptedMsg) return;
+
   await sb.from("messages")
     .update({ status: "accepted" })
     .eq("id", id)
     .eq("receiver_id", user.id);
 
+  await sb.from("messages").insert({
+    sender_id: user.id,
+    receiver_id: acceptedMsg.sender_id,
+    target_plate: acceptedMsg.target_plate,
+    message: "Votre demande de contact a été acceptée.",
+    status: "accepted"
+  });
+
+  setRequestStatus("Demande acceptée ✔", true);
   loadMessages();
 }
 
