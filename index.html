@@ -1666,8 +1666,8 @@ const { data, error } = await query;
 
   chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
   chatBox.scrollTop = chatBox.scrollHeight;
+  hideBadge();
 }
-
 
 // ───── AFFICHAGE MESSAGE ─────
 function buildMessageHtml(msg, myId) {
@@ -1806,6 +1806,7 @@ async function rejectRequest(id) {
   ) {
     showNotification("📩 Nouvelle demande de contact !");
     playNotificationSound();
+    showBadge();
   }
 
   loadMessages();
