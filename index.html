@@ -1025,12 +1025,19 @@
     }
 
     async function handleAuth() {
-  clearValidationStates(["emailError","signupPhoneError","signupPlateError","passwordError","confirmPasswordError"]);
+  clearValidationStates([
+    "emailError",
+    "signupPhoneError",
+    "signupPlateError",
+    "passwordError",
+    "confirmPasswordError"
+  ]);
   setStatus("authStatus", "");
 
   const email = document.getElementById("emailInput").value.trim();
   const password = document.getElementById("passwordInput").value;
 
+  // ───── VALIDATIONS AVANT LOADING ─────
   if (!email) {
     setValidationState("emailError", "error", "Entre ton email.");
     return;
@@ -1041,51 +1048,48 @@
     return;
   }
 
+  let hasError = false;
+
+  if (authMode === "signup") {
+    const confirmPassword = document.getElementById("confirmPasswordInput").value;
+    const signupPhoneRaw = document.getElementById("signupPhoneInput").value.trim();
+    const signupPlateRaw = document.getElementById("signupPlateInput").value.trim();
+
+    if (!signupPhoneRaw || !validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
+      setValidationState("signupPhoneError", "error", "Numéro invalide.");
+      hasError = true;
+    }
+
+    if (!signupPlateRaw || !validatePlateField("signupPlateInput", "signupPlateError", true)) {
+      setValidationState("signupPlateError", "error", "Plaque invalide.");
+      hasError = true;
+    }
+
+    if (!isStrongPassword(password)) {
+      setValidationState("passwordError", "error", "Mot de passe trop faible.");
+      hasError = true;
+    }
+
+    if (password !== confirmPassword) {
+      setValidationState("confirmPasswordError", "error", "Les mots de passe ne correspondent pas.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+  }
+
+  // ───── ICI SEULEMENT on bloque le bouton ─────
   const idleText = authMode === "signup" ? "Créer mon compte" : "Se connecter";
   setLoading("authActionBtn", true, idleText);
 
   try {
     if (authMode === "signup") {
-      const confirmPassword = document.getElementById("confirmPasswordInput").value;
-      const signupPhoneRaw = document.getElementById("signupPhoneInput").value.trim();
-      const signupPlateRaw = document.getElementById("signupPlateInput").value.trim();
-      let hasError = false;
-
-      if (!signupPhoneRaw) {
-        setValidationState("signupPhoneError", "error", "Ajoute ton numéro de téléphone.");
-        hasError = true;
-      } else if (!validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
-        hasError = true;
-      }
-
-      if (!signupPlateRaw) {
-        setValidationState("signupPlateError", "error", "Ajoute l'immatriculation.");
-        hasError = true;
-      } else if (!validatePlateField("signupPlateInput", "signupPlateError", true)) {
-        hasError = true;
-      }
-
-      if (!isStrongPassword(password)) {
-        setValidationState("passwordError", "error", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
-        hasError = true;
-      }
-
-      if (!confirmPassword) {
-        setValidationState("confirmPasswordError", "error", "Confirme ton mot de passe.");
-        hasError = true;
-      } else if (password !== confirmPassword) {
-        setValidationState("confirmPasswordError", "error", "La confirmation ne correspond pas.");
-        hasError = true;
-      }
-
-      if (hasError) return;
-
-      const signupPhone = normalizePhone(signupPhoneRaw);
-      const signupPlate = normalizePlate(signupPlateRaw);
+      const signupPhone = normalizePhone(document.getElementById("signupPhoneInput").value);
+      const signupPlate = normalizePlate(document.getElementById("signupPlateInput").value);
 
       const { data, error } = await sb.auth.signUp({
-        email: email,
-        password: password,
+        email,
+        password,
         options: { emailRedirectTo: SITE_URL }
       });
 
@@ -1094,29 +1098,22 @@
         return;
       }
 
-      const user = data && data.user ? data.user : null;
-
-      if (user) {
-        const { error: profileError } = await sb.from("profiles").upsert({
-          id: user.id,
-          email: email,
+      if (data.user) {
+        await sb.from("profiles").upsert({
+          id: data.user.id,
+          email,
           pseudo: email.split("@")[0],
           owner_plate: signupPlate,
           phone: signupPhone
         });
-
-        if (profileError) {
-          setStatus("authStatus", "Compte créé mais erreur profil.", "error");
-          return;
-        }
       }
 
-      setStatus("authStatus", "Compte créé ! Vérifie ton email puis connecte-toi.", "success");
+      setStatus("authStatus", "Compte créé ! Vérifie ton email.", "success");
 
     } else {
       const { data, error } = await sb.auth.signInWithPassword({
-        email: email,
-        password: password
+        email,
+        password
       });
 
       if (error) {
@@ -1124,10 +1121,14 @@
         return;
       }
 
-      if (data && data.user) currentUserId = data.user.id;
+      currentUserId = data.user.id;
       sessionHandled = true;
       await continueAfterAuth();
     }
+
+  } catch (e) {
+    console.error(e);
+    setStatus("authStatus", "Erreur inattendue.", "error");
   } finally {
     setLoading("authActionBtn", false, idleText);
   }
