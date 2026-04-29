@@ -1105,9 +1105,8 @@
 
       currentUserId = data.user.id;
 sessionHandled = true;
-setTimeout(() => {
-  continueAfterAuth();
-}, 100);
+setStatus("authStatus", "Connexion réussie.", "success");
+showScreen("profileScreen");
     }
 
   } catch (e) {
