@@ -1105,7 +1105,9 @@
 
       currentUserId = data.user.id;
 sessionHandled = true;
-await continueAfterAuth();
+setTimeout(() => {
+  continueAfterAuth();
+}, 100);
     }
 
   } catch (e) {
