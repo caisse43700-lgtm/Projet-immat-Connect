@@ -1788,6 +1788,28 @@ async function rejectRequest(id) {
         if (!msg) return;
 
         if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+
+  // 🔔 SI quelqu’un accepte ta demande
+  if (
+    msg.receiver_id === user.id &&
+    msg.message &&
+    msg.message.includes("acceptée")
+  ) {
+    showNotification("✅ Quelqu’un a accepté ta demande !");
+    playNotificationSound();
+  }
+
+  // 📩 SI nouvelle demande reçue
+  if (
+    msg.receiver_id === user.id &&
+    msg.status === "pending"
+  ) {
+    showNotification("📩 Nouvelle demande de contact !");
+    playNotificationSound();
+  }
+
+  loadMessages();
+}
           if (msg.receiver_id === user.id && !selectedConversationPlate) {
             selectedConversationPlate = normalizePlate(msg.target_plate);
             document.getElementById("targetPlateInput").value = selectedConversationPlate;
@@ -1904,7 +1926,34 @@ function callEmergency() {
         showScreen("welcomeScreen");
       }
     });
+function showNotification(message) {
+  const notif = document.createElement("div");
 
+  notif.textContent = message;
+
+  notif.style.position = "fixed";
+  notif.style.top = "20px";
+  notif.style.left = "50%";
+  notif.style.transform = "translateX(-50%)";
+  notif.style.background = "#23d6d6";
+  notif.style.color = "#051019";
+  notif.style.padding = "14px 18px";
+  notif.style.borderRadius = "14px";
+  notif.style.fontWeight = "bold";
+  notif.style.zIndex = "9999";
+  notif.style.boxShadow = "0 0 20px rgba(0,0,0,0.4)";
+
+  document.body.appendChild(notif);
+
+  setTimeout(() => {
+    notif.remove();
+  }, 3000);
+}
+
+function playNotificationSound() {
+  const audio = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3");
+  audio.play().catch(() => {});
+}
     bindRealtimeValidation();
     checkSessionAndStart();
   </script>
