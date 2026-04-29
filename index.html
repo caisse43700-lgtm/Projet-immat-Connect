@@ -774,7 +774,7 @@
 
         <div class="chat-header">
           <h3>💬 Messages <span id="msgBadge" style="display:none;color:red;">●</span></h3>
-          <button type="button" class="chat-refresh-btn" onclick="loadMessages()">↻ Actualiser</button>
+          <button type="button" class="chat-refresh-btn" onclick="loadMessages(); hideBadge();">↻ Actualiser</button>
         </div>
 
         <div id="chatBox">
@@ -1104,8 +1104,10 @@
       }
 
       currentUserId = data.user.id;
-      sessionHandled = true;
-      await continueAfterAuth();
+sessionHandled = true;
+
+setLoading("authActionBtn", false, "Se connecter");
+continueAfterAuth();
     }
 
   } catch (e) {
@@ -1621,7 +1623,7 @@ async function loadMessages() {
 
   if (!user) {
     chatBox.innerHTML = '<div class="chat-empty">Connecte-toi.</div>';
-    hideBadge();
+  
     return;
   }
 
@@ -1640,20 +1642,20 @@ async function loadMessages() {
 
   if (error) {
     chatBox.innerHTML = '<div class="chat-empty">Erreur.</div>';
-    hideBadge();
+    
     return;
   }
 
   if (!data || !data.length) {
     chatBox.innerHTML = '<div class="chat-empty">Aucun message.</div>';
-    hideBadge();
+    
     return;
   }
 
   chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  hideBadge(); // 🔥 FIX
+   // 🔥 FIX
 }
 
 // ───── AFFICHAGE MESSAGE ─────
