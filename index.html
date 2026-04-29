@@ -1808,8 +1808,6 @@ async function rejectRequest(id) {
     playNotificationSound();
     showBadge();
   }
-
-  loadMessages();
 }
           if (msg.receiver_id === user.id && !selectedConversationPlate) {
             selectedConversationPlate = normalizePlate(msg.target_plate);
