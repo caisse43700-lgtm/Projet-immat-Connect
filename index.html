@@ -1232,10 +1232,10 @@ continueAfterAuth();
       currentUserId = user.id;
 
       const { data: profile, error } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+  .from("profiles")
+  .select("*")
+  .eq("id", user.id)
+  .maybeSingle();
 
       if (error) {
         showScreen("profileScreen");
