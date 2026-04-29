@@ -1032,12 +1032,13 @@
     "passwordError",
     "confirmPasswordError"
   ]);
+
   setStatus("authStatus", "");
 
   const email = document.getElementById("emailInput").value.trim();
   const password = document.getElementById("passwordInput").value;
 
-  // ───── VALIDATIONS AVANT LOADING ─────
+  // 🔒 VALIDATIONS AVANT BLOQUAGE
   if (!email) {
     setValidationState("emailError", "error", "Entre ton email.");
     return;
@@ -1052,16 +1053,14 @@
 
   if (authMode === "signup") {
     const confirmPassword = document.getElementById("confirmPasswordInput").value;
-    const signupPhoneRaw = document.getElementById("signupPhoneInput").value.trim();
-    const signupPlateRaw = document.getElementById("signupPlateInput").value.trim();
+    const phone = document.getElementById("signupPhoneInput").value.trim();
+    const plate = document.getElementById("signupPlateInput").value.trim();
 
-    if (!signupPhoneRaw || !validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
-      setValidationState("signupPhoneError", "error", "Numéro invalide.");
+    if (!phone || !validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
       hasError = true;
     }
 
-    if (!signupPlateRaw || !validatePlateField("signupPlateInput", "signupPlateError", true)) {
-      setValidationState("signupPlateError", "error", "Plaque invalide.");
+    if (!plate || !validatePlateField("signupPlateInput", "signupPlateError", true)) {
       hasError = true;
     }
 
@@ -1075,18 +1074,14 @@
       hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) return; // 🚀 IMPORTANT
   }
 
-  // ───── ICI SEULEMENT on bloque le bouton ─────
   const idleText = authMode === "signup" ? "Créer mon compte" : "Se connecter";
-  setLoading("authActionBtn", true, idleText);
+  setLoading("authActionBtn", true, idleText, "Chargement...");
 
   try {
     if (authMode === "signup") {
-      const signupPhone = normalizePhone(document.getElementById("signupPhoneInput").value);
-      const signupPlate = normalizePlate(document.getElementById("signupPlateInput").value);
-
       const { data, error } = await sb.auth.signUp({
         email,
         password,
@@ -1098,23 +1093,10 @@
         return;
       }
 
-      if (data.user) {
-        await sb.from("profiles").upsert({
-          id: data.user.id,
-          email,
-          pseudo: email.split("@")[0],
-          owner_plate: signupPlate,
-          phone: signupPhone
-        });
-      }
-
       setStatus("authStatus", "Compte créé ! Vérifie ton email.", "success");
 
     } else {
-      const { data, error } = await sb.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
       if (error) {
         setStatus("authStatus", translateAuthError(error.message), "error");
@@ -1639,35 +1621,39 @@ async function loadMessages() {
 
   if (!user) {
     chatBox.innerHTML = '<div class="chat-empty">Connecte-toi.</div>';
+    hideBadge();
     return;
   }
 
   let query = sb
-  .from("messages")
-  .select("*")
-  .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-  .neq("status","rejected")
-  .order("created_at", { ascending: true });
+    .from("messages")
+    .select("*")
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .neq("status","rejected")
+    .order("created_at", { ascending: true });
 
-if (selectedConversationPlate) {
-  query = query.eq("target_plate", selectedConversationPlate);
-}
+  if (selectedConversationPlate) {
+    query = query.eq("target_plate", selectedConversationPlate);
+  }
 
-const { data, error } = await query;
+  const { data, error } = await query;
 
   if (error) {
     chatBox.innerHTML = '<div class="chat-empty">Erreur.</div>';
+    hideBadge();
     return;
   }
 
   if (!data || !data.length) {
     chatBox.innerHTML = '<div class="chat-empty">Aucun message.</div>';
+    hideBadge();
     return;
   }
 
   chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
   chatBox.scrollTop = chatBox.scrollHeight;
-  hideBadge();
+
+  hideBadge(); // 🔥 FIX
 }
 
 // ───── AFFICHAGE MESSAGE ─────
