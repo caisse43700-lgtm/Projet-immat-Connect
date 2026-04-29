@@ -1588,7 +1588,11 @@ async function sendRequest(autoContact = false) {
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
 
     const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
-    const hasPending = existingMessages && existingMessages.some(m => m.status === "pending");
+    const hasPending = existingMessages && existingMessages.some(m =>
+  m.status === "pending" &&
+  m.sender_id === user.id &&
+  m.receiver_id === targetUser.id
+);
 
     selectedConversationPlate = targetPlate;
 
