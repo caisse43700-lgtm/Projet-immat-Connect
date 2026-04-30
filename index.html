@@ -1106,7 +1106,9 @@
       currentUserId = data.user.id;
 sessionHandled = true;
 setStatus("authStatus", "Connexion réussie.", "success");
-continueAfterAuth();
+setTimeout(() => {
+  continueAfterAuth();
+}, 300);
     }
 
   } catch (e) {
