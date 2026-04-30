@@ -538,33 +538,7 @@
       margin-top:4px;
       text-align:right;
     }
-.msg-actions {
-  display:flex;
-  gap:8px;
-  margin-top:8px;
-}
 
-.btn-accept,
-.btn-reject {
-  border:none;
-  border-radius:10px;
-  padding:7px 12px;
-  font-weight:700;
-  cursor:pointer;
-  font-size:13px;
-}
-
-.btn-accept {
-  background:rgba(124,242,176,0.18);
-  color:#7cf2b0;
-  border:1px solid rgba(124,242,176,0.35);
-}
-
-.btn-reject {
-  background:rgba(255,123,123,0.15);
-  color:#ff7b7b;
-  border:1px solid rgba(255,123,123,0.30);
-}
     .floating-emergency {
       position:fixed;
       right:18px;
@@ -773,8 +747,8 @@
         <div id="requestStatus" class="request-status"></div>
 
         <div class="chat-header">
-          <h3>💬 Messages <span id="msgBadge" style="display:none;color:red;">●</span></h3>
-          <button type="button" class="chat-refresh-btn" onclick="loadMessages(); hideBadge();">↻ Actualiser</button>
+          <h3>💬 Messages</h3>
+          <button type="button" class="chat-refresh-btn" onclick="loadMessages()">↻ Actualiser</button>
         </div>
 
         <div id="chatBox">
@@ -802,17 +776,8 @@
     let messageInterval = null;
     let messageChannel = null;
     let locationChannel = null;
-    let selectedConversationPlate = null;
 
-    function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-    async function subscribeToLocations() {
+async function subscribeToLocations() {
   if (locationChannel) {
     await sb.removeChannel(locationChannel);
     locationChannel = null;
@@ -1025,20 +990,12 @@
     }
 
     async function handleAuth() {
-  clearValidationStates([
-    "emailError",
-    "signupPhoneError",
-    "signupPlateError",
-    "passwordError",
-    "confirmPasswordError"
-  ]);
-
+  clearValidationStates(["emailError","signupPhoneError","signupPlateError","passwordError","confirmPasswordError"]);
   setStatus("authStatus", "");
 
   const email = document.getElementById("emailInput").value.trim();
   const password = document.getElementById("passwordInput").value;
 
-  // 🔒 VALIDATIONS AVANT BLOQUAGE
   if (!email) {
     setValidationState("emailError", "error", "Entre ton email.");
     return;
@@ -1049,42 +1006,51 @@
     return;
   }
 
-  let hasError = false;
-
-  if (authMode === "signup") {
-    const confirmPassword = document.getElementById("confirmPasswordInput").value;
-    const phone = document.getElementById("signupPhoneInput").value.trim();
-    const plate = document.getElementById("signupPlateInput").value.trim();
-
-    if (!phone || !validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
-      hasError = true;
-    }
-
-    if (!plate || !validatePlateField("signupPlateInput", "signupPlateError", true)) {
-      hasError = true;
-    }
-
-    if (!isStrongPassword(password)) {
-      setValidationState("passwordError", "error", "Mot de passe trop faible.");
-      hasError = true;
-    }
-
-    if (password !== confirmPassword) {
-      setValidationState("confirmPasswordError", "error", "Les mots de passe ne correspondent pas.");
-      hasError = true;
-    }
-
-    if (hasError) return; // 🚀 IMPORTANT
-  }
-
   const idleText = authMode === "signup" ? "Créer mon compte" : "Se connecter";
-  setLoading("authActionBtn", true, idleText, "Chargement...");
+  setLoading("authActionBtn", true, idleText);
 
   try {
     if (authMode === "signup") {
+      const confirmPassword = document.getElementById("confirmPasswordInput").value;
+      const signupPhoneRaw = document.getElementById("signupPhoneInput").value.trim();
+      const signupPlateRaw = document.getElementById("signupPlateInput").value.trim();
+      let hasError = false;
+
+      if (!signupPhoneRaw) {
+        setValidationState("signupPhoneError", "error", "Ajoute ton numéro de téléphone.");
+        hasError = true;
+      } else if (!validatePhoneField("signupPhoneInput", "signupPhoneError", true)) {
+        hasError = true;
+      }
+
+      if (!signupPlateRaw) {
+        setValidationState("signupPlateError", "error", "Ajoute l'immatriculation.");
+        hasError = true;
+      } else if (!validatePlateField("signupPlateInput", "signupPlateError", true)) {
+        hasError = true;
+      }
+
+      if (!isStrongPassword(password)) {
+        setValidationState("passwordError", "error", "8 caractères minimum, 1 majuscule et 1 caractère spécial.");
+        hasError = true;
+      }
+
+      if (!confirmPassword) {
+        setValidationState("confirmPasswordError", "error", "Confirme ton mot de passe.");
+        hasError = true;
+      } else if (password !== confirmPassword) {
+        setValidationState("confirmPasswordError", "error", "La confirmation ne correspond pas.");
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      const signupPhone = normalizePhone(signupPhoneRaw);
+      const signupPlate = normalizePlate(signupPlateRaw);
+
       const { data, error } = await sb.auth.signUp({
-        email,
-        password,
+        email: email,
+        password: password,
         options: { emailRedirectTo: SITE_URL }
       });
 
@@ -1093,27 +1059,40 @@
         return;
       }
 
-      setStatus("authStatus", "Compte créé ! Vérifie ton email.", "success");
+      const user = data && data.user ? data.user : null;
+
+      if (user) {
+        const { error: profileError } = await sb.from("profiles").upsert({
+          id: user.id,
+          email: email,
+          pseudo: email.split("@")[0],
+          owner_plate: signupPlate,
+          phone: signupPhone
+        });
+
+        if (profileError) {
+          setStatus("authStatus", "Compte créé mais erreur profil.", "error");
+          return;
+        }
+      }
+
+      setStatus("authStatus", "Compte créé ! Vérifie ton email puis connecte-toi.", "success");
 
     } else {
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
 
       if (error) {
         setStatus("authStatus", translateAuthError(error.message), "error");
         return;
       }
 
-      currentUserId = data.user.id;
-sessionHandled = true;
-setStatus("authStatus", "Connexion réussie.", "success");
-setTimeout(() => {
-  continueAfterAuth();
-}, 300);
+      if (data && data.user) currentUserId = data.user.id;
+      sessionHandled = true;
+      await continueAfterAuth();
     }
-
-  } catch (e) {
-    console.error(e);
-    setStatus("authStatus", "Erreur inattendue.", "error");
   } finally {
     setLoading("authActionBtn", false, idleText);
   }
@@ -1222,38 +1201,46 @@ setTimeout(() => {
     }
 
     async function continueAfterAuth() {
-  setStatus("authStatus", "Connexion réussie, chargement du profil...", "success");
+      const { data: userData } = await sb.auth.getUser();
+      const user = userData.user;
 
-  const { data: userData, error: userError } = await sb.auth.getUser();
+      if (!user) {
+        showScreen("authScreen");
+        return;
+      }
 
-  if (userError || !userData.user) {
-    setStatus("authStatus", "Session introuvable. Reconnecte-toi.", "error");
-    showScreen("authScreen");
-    return;
-  }
+      currentUserId = user.id;
 
-  const user = userData.user;
-  currentUserId = user.id;
+      const { data: profile, error } = await sb
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
 
-  const { data: profile, error } = await sb
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+      if (error) {
+        showScreen("profileScreen");
+        return;
+      }
 
-  if (error) {
-    console.error(error);
-    setStatus("authStatus", "Profil introuvable ou accès refusé.", "error");
-    showScreen("profileScreen");
-    return;
-  }
+      if (profile) {
+        openMap(profile);
+      } else {
+        const pendingPhone = localStorage.getItem("immatconnect_pending_phone") || "";
+        const pendingPlate = localStorage.getItem("immatconnect_pending_plate") || "";
 
-  if (profile) {
-    openMap(profile);
-  } else {
-    showScreen("profileScreen");
-  }
-}
+        if (pendingPhone && !document.getElementById("phoneInput").value) {
+          document.getElementById("phoneInput").value = pendingPhone;
+          validatePhoneField("phoneInput", "phoneError", true);
+        }
+
+        if (pendingPlate && !document.getElementById("ownerPlateInput").value) {
+          document.getElementById("ownerPlateInput").value = pendingPlate;
+          validatePlateField("ownerPlateInput", "ownerPlateError", true);
+        }
+
+        showScreen("profileScreen");
+      }
+    }
 
     async function saveProfile() {
       clearValidationStates(["pseudoError", "ownerPlateError", "phoneError"]);
@@ -1356,8 +1343,8 @@ setTimeout(() => {
         map.invalidateSize();
       }, 250);
 
-      loadMessages();
-subscribeToMessages();
+      startMessages();
+      subscribeToLocations();
     }
 
     async function locateUser() {
@@ -1473,354 +1460,226 @@ subscribeToMessages();
         fillOpacity: 1
       }).addTo(map);
 
-      const safePlate = plate;
-const escapedPlate = escapeHtml(plate);
-const escapedPseudo = escapeHtml(pseudo);
-
-marker.bindPopup(`
-  <b>${escapedPseudo}</b><br/>
-  ${escapedPlate}<br/>
-  <button class="popup-contact-btn" data-plate="${safePlate}">
+      marker.bindPopup(`
+  <b>${pseudo}</b><br/>
+  ${plate}<br/>
+  <button onclick="selectVehicle('${plate}')">
     Contacter ce véhicule
   </button>
 `);
 
-marker.on("click", function() {
-  marker.openPopup();
-});
-
-marker.on("popupopen", function() {
-  const popupEl = marker.getPopup().getElement();
-  if (!popupEl) return;
-
-  const btn = popupEl.querySelector(".popup-contact-btn");
-  if (!btn) return;
-
-  btn.onclick = function() {
-    selectVehicle(btn.dataset.plate);
-    marker.closePopup();
-  };
-});
-
       otherMarkers.push(marker);
-});
+    });
 
-await subscribeToLocations();
-
-} finally {
+  } finally {
     setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
   }
 }
 
-    // ───── ENVOI DEMANDE ─────
-async function sendRequest(autoContact = false) {
-  clearValidationStates(["targetPlateError","requestMessageError"]);
-  setRequestStatus("");
+    async function sendRequest() {
+      clearValidationStates(["targetPlateError", "requestMessageError"]);
+      setRequestStatus("");
 
-  const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
-  let message = document.getElementById("requestMessageInput").value.trim();
+      const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
+      const message = document.getElementById("requestMessageInput").value.trim();
 
-  if (!targetPlateRaw || !validatePlateField("targetPlateInput","targetPlateError",true)) return;
+      let hasError = false;
 
-  const targetPlate = normalizePlate(targetPlateRaw);
-
-  if (autoContact && !message) {
-    message = "Un véhicule à proximité cherche à entrer en contact avec vous.";
-  }
-
-  if (!message) {
-    setValidationState("requestMessageError","error","Ajoute un message.");
-    return;
-  }
-
-  setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
-
-  try {
-    const { data: userData } = await sb.auth.getUser();
-    const user = userData.user;
-
-    if (!user) {
-      setRequestStatus("Tu dois être connecté.");
-      return;
-    }
-
-    const { data: targetUser } = await sb
-      .from("profiles")
-      .select("id")
-      .eq("owner_plate", targetPlate)
-      .maybeSingle();
-
-    if (!targetUser) {
-      setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
-      return;
-    }
-
-    if (targetUser.id === user.id) {
-      setRequestStatus("Tu ne peux pas t'envoyer un message.");
-      return;
-    }
-
-    const { data: existingMessages } = await sb
-      .from("messages")
-      .select("*")
-      .eq("target_plate", targetPlate)
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
-
-    const hasAccepted = existingMessages && existingMessages.some(m => m.status === "accepted");
-    const hasPending = existingMessages && existingMessages.some(m => m.status === "pending");
-
-    selectedConversationPlate = targetPlate;
-
-    if (autoContact && hasAccepted) {
-      setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
-      loadMessages();
-      return;
-    }
-
-    if (autoContact && hasPending) {
-      setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
-      loadMessages();
-      return;
-    }
-
-    await sb.from("messages").insert({
-      sender_id: user.id,
-      receiver_id: targetUser.id,
-      target_plate: targetPlate,
-      message: message,
-      status: hasAccepted ? "accepted" : "pending"
-    });
-
-    document.getElementById("requestMessageInput").value = "";
-
-    setRequestStatus(
-      hasAccepted ? "Message envoyé ✔" : "Demande envoyée, en attente d'acceptation.",
-      true
-    );
-
-    loadMessages();
-
-  } finally {
-    setLoading("sendRequestBtn", false, "Envoyer la demande");
-  }
-}
-
-
-// ───── CHARGEMENT MESSAGES ─────
-async function loadMessages() {
-  const chatBox = document.getElementById("chatBox");
-  if (!chatBox) return;
-
-  const { data: userData } = await sb.auth.getUser();
-  const user = userData.user;
-
-  if (!user) {
-    chatBox.innerHTML = '<div class="chat-empty">Connecte-toi.</div>';
-  
-    return;
-  }
-
-  let query = sb
-    .from("messages")
-    .select("*")
-    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .neq("status","rejected")
-    .order("created_at", { ascending: true });
-
-  if (selectedConversationPlate) {
-    query = query.eq("target_plate", selectedConversationPlate);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    chatBox.innerHTML = '<div class="chat-empty">Erreur.</div>';
-    
-    return;
-  }
-
-  if (!data || !data.length) {
-    chatBox.innerHTML = '<div class="chat-empty">Aucun message.</div>';
-    
-    return;
-  }
-
-  chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-   // 🔥 FIX
-}
-
-// ───── AFFICHAGE MESSAGE ─────
-function buildMessageHtml(msg, myId) {
-  const isSent = msg.sender_id === myId;
-
-  const dateStr = msg.created_at
-    ? new Date(msg.created_at).toLocaleString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit"
-      })
-    : "";
-
-  const plate = escapeHtml(msg.target_plate || "");
-  const text = escapeHtml(msg.message || "");
-  const status = msg.status || "accepted";
-
-  let buttons = "";
-
-  if (!isSent && msg.receiver_id === myId && status === "pending") {
-    buttons = `
-      <div class="msg-actions">
-        <button class="btn-accept" onclick="acceptRequest('${msg.id}')">✅ Accepter</button>
-        <button class="btn-reject" onclick="rejectRequest('${msg.id}')">❌ Refuser</button>
-      </div>
-    `;
-  }
-
-  const title = isSent
-  ? (status === "pending"
-      ? "⏳ Demande envoyée, en attente d'acceptation"
-      : text.includes("acceptée")
-        ? "✅ Demande acceptée"
-        : "Message envoyé vers " + plate)
-  : (status === "pending"
-      ? "🚗 Demande de contact"
-      : text.includes("acceptée")
-        ? "✅ Vous avez accepté la demande"
-        : "🚗 Message reçu");
-
-  return `
-    <div class="chat-msg ${isSent ? "sent" : "received"}">
-      <div class="msg-plate">${title}</div>
-      <div class="msg-text">
-        <b>Plaque concernée : ${plate}</b><br>${text}
-      </div>
-      ${buttons}
-      <div class="msg-time">${dateStr}</div>
-    </div>
-  `;
-}
-// ───── ACCEPTER ─────
-async function acceptRequest(id) {
-  const { data: userData } = await sb.auth.getUser();
-  const user = userData.user;
-
-  const { data: acceptedMsg } = await sb
-    .from("messages")
-    .select("*")
-    .eq("id", id)
-    .eq("receiver_id", user.id)
-    .maybeSingle();
-
-  if (!acceptedMsg) return;
-
-  await sb.from("messages")
-    .update({ status: "accepted" })
-    .eq("id", id)
-    .eq("receiver_id", user.id);
-
-  await sb.from("messages").insert({
-    sender_id: user.id,
-    receiver_id: acceptedMsg.sender_id,
-    target_plate: acceptedMsg.target_plate,
-    message: "Votre demande de contact a été acceptée.",
-    status: "accepted"
-  });
-
-  setRequestStatus("Demande acceptée ✔", true);
-  loadMessages();
-}
-
-
-// ───── REFUSER ─────
-async function rejectRequest(id) {
-  const { data: userData } = await sb.auth.getUser();
-  const user = userData.user;
-
-  await sb.from("messages")
-    .update({ status: "rejected" })
-    .eq("id", id)
-    .eq("receiver_id", user.id);
-
-  loadMessages();
-}
-    async function subscribeToMessages() {
-  const { data: userData } = await sb.auth.getUser();
-  const user = userData.user;
-  if (!user) return;
-
-  if (messageChannel) {
-    await sb.removeChannel(messageChannel);
-    messageChannel = null;
-  }
-
-  messageChannel = sb
-    .channel("immatconnect_messages_" + user.id)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "messages"
-      },
-      payload => {
-        const msg = payload.new;
-        if (!msg) return;
-
-        if (msg.sender_id === user.id || msg.receiver_id === user.id) {
-
-  // 🔔 SI quelqu’un accepte ta demande
-  if (
-    msg.receiver_id === user.id &&
-    msg.message &&
-    msg.message.includes("acceptée")
-  ) {
-    showNotification("✅ Quelqu’un a accepté ta demande !");
-    playNotificationSound();
-  }
-
-  // 📩 SI nouvelle demande reçue
-  if (
-    msg.receiver_id === user.id &&
-    msg.status === "pending"
-  ) {
-    showNotification("📩 Nouvelle demande de contact !");
-    playNotificationSound();
-    showBadge();
-  }
-}
-          if (msg.receiver_id === user.id && !selectedConversationPlate) {
-            selectedConversationPlate = normalizePlate(msg.target_plate);
-            document.getElementById("targetPlateInput").value = selectedConversationPlate;
-          }
-
-          loadMessages();
-        }
+      if (!targetPlateRaw) {
+        setValidationState("targetPlateError", "error", "Ajoute l'immatriculation du véhicule concerné.");
+        hasError = true;
+      } else if (!validatePlateField("targetPlateInput", "targetPlateError", true)) {
+        hasError = true;
       }
-    )
-    .subscribe();
+
+      if (!message) {
+        setValidationState("requestMessageError", "error", "Ajoute un message.");
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
+
+      setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
+
+      try {
+        const { data: userData } = await sb.auth.getUser();
+        const user = userData.user;
+
+        if (!user) {
+          setRequestStatus("Tu dois être connecté.");
+          return;
+        }
+
+        currentUserId = user.id;
+
+        const { data: targetUser, error: targetError } = await sb
+  .from("profiles")
+  .select("id")
+  .eq("owner_plate", targetPlate)
+  .maybeSingle();
+
+        if (targetError || !targetUser || !targetUser.id) {
+          setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
+          return;
+        }
+
+        if (targetUser.id === user.id) {
+          setRequestStatus("Tu ne peux pas t'envoyer un message à toi-même.");
+          return;
+        }
+
+        const { error } = await sb.from("messages").insert({
+          sender_id: user.id,
+          receiver_id: targetUser.id,
+          target_plate: targetPlate,
+          message: message
+        });
+
+        if (error) {
+          setRequestStatus("Erreur lors de l'envoi.");
+          return;
+        }
+
+        document.getElementById("targetPlateInput").value = "";
+        document.getElementById("requestMessageInput").value = "";
+
+        clearValidationStates(["targetPlateError", "requestMessageError"]);
+
+        setRequestStatus("Message envoyé ✔", true);
+
+        await loadMessages();
+      } finally {
+        setLoading("sendRequestBtn", false, "Envoyer la demande");
+      }
+    }
+
+    async function startMessages() {
+      await loadMessages();
+
+      if (messageInterval) clearInterval(messageInterval);
+
+      messageInterval = setInterval(loadMessages, 10000);
+
+      await subscribeToMessages();
+    }
+
+    async function loadMessages() {
+      const chatBox = document.getElementById("chatBox");
+
+      if (!chatBox) return;
+
+      const { data: userData } = await sb.auth.getUser();
+      const user = userData.user;
+
+      if (!user) {
+        chatBox.innerHTML = '<div class="chat-empty">Connecte-toi pour voir les messages.</div>';
+        return;
+      }
+
+      currentUserId = user.id;
+
+      const { data, error } = await sb
+        .from("messages")
+        .select("*")
+        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
+        .order("created_at", { ascending:true })
+        .limit(100);
+
+      if (error) {
+        chatBox.innerHTML = '<div class="chat-empty">Erreur lors du chargement des messages.</div>';
+        return;
+      }
+
+      if (!data || !data.length) {
+        chatBox.innerHTML = '<div class="chat-empty">Aucun message pour le moment.</div>';
+        return;
+      }
+
+      chatBox.innerHTML = data.map(msg => buildMessageHtml(msg, user.id)).join("");
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function buildMessageHtml(msg, myId) {
+      const isSent = msg.sender_id === myId;
+
+      const dateStr = msg.created_at
+        ? new Date(msg.created_at).toLocaleString("fr-FR", {
+            day:"2-digit",
+            month:"2-digit",
+            hour:"2-digit",
+            minute:"2-digit"
+          })
+        : "";
+
+      const plate = escapeHtml(msg.target_plate || "");
+      const text = escapeHtml(msg.message || "");
+      const title = isSent
+  ? "Message envoyé vers " + plate
+  : "🚗 Un véhicule souhaite vous contacter";
+
+      return ''
+  + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
+  + '<div class="msg-plate">' + title + '</div>'
+  + '<div class="msg-text"><b>Plaque concernée : ' + plate + '</b><br>' + text + '</div>'
+  + '<div class="msg-time">' + dateStr + '</div>'
+  + '</div>';
+    }
+
+    async function subscribeToMessages() {
+      const { data: userData } = await sb.auth.getUser();
+      const user = userData.user;
+
+      if (!user) return;
+
+      currentUserId = user.id;
+
+      if (messageChannel) {
+        await sb.removeChannel(messageChannel);
+        messageChannel = null;
+      }
+
+      messageChannel = sb
+        .channel("immatconnect_messages_" + user.id)
+        .on(
+          "postgres_changes",
+          {
+            event:"INSERT",
+            schema:"public",
+            table:"messages"
+          },
+          payload => {
+            const msg = payload.new;
+
+            if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+              loadMessages();
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function selectVehicle(plate) {
+  // Remplit automatiquement le champ
+  document.getElementById("targetPlateInput").value = plate;
+
+  // Focus sur le message
+  document.getElementById("requestMessageInput").focus();
+
+  // Petit feedback visuel
+  alert("Véhicule sélectionné : " + plate);
 }
-    async function selectVehicle(plate) {
-  const normalized = normalizePlate(plate);
-
-  selectedConversationPlate = normalized;
-
-  // 🔥 FORCER la valeur propre dans l’input
-  const input = document.getElementById("targetPlateInput");
-  input.value = normalized;
-
-  // 🔥 petit délai pour être sûr que le DOM est prêt
-  setTimeout(async () => {
-    setRequestStatus("Demande en cours d’envoi...", true);
-
-    await sendRequest(true);
-    await loadMessages();
-  }, 100);
-}
-
-function callEmergency() {
+    function callEmergency() {
       window.location.href = "tel:112";
     }
 
@@ -1836,11 +1695,7 @@ function callEmergency() {
         await sb.removeChannel(messageChannel);
         messageChannel = null;
       }
-      
-      if (locationChannel) {
-  await sb.removeChannel(locationChannel);
-  locationChannel = null;
-}
+
       await sb.auth.signOut();
 
       sessionHandled = false;
@@ -1875,83 +1730,41 @@ function callEmergency() {
       await continueAfterAuth();
     }
 
-    sb.auth.onAuthStateChange((event, session) => {
-  if (event === "PASSWORD_RECOVERY") {
-    sessionHandled = false;
-    currentUserId = session && session.user ? session.user.id : null;
-    showScreen("resetScreen");
-    return;
-  }
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        sessionHandled = false;
+        currentUserId = session && session.user ? session.user.id : null;
+        showScreen("resetScreen");
+        return;
+      }
 
-  if (event === "SIGNED_IN" && !sessionHandled && session) {
-    currentUserId = session.user.id;
-    sessionHandled = true;
+      if (event === "SIGNED_IN" && !sessionHandled && session) {
+        currentUserId = session.user.id;
+        sessionHandled = true;
+        await continueAfterAuth();
+        return;
+      }
 
-    setTimeout(() => {
-      continueAfterAuth();
-    }, 100);
+      if (event === "SIGNED_OUT") {
+        sessionHandled = false;
+        currentUserId = null;
 
-    return;
-  }
+        if (messageInterval) {
+          clearInterval(messageInterval);
+          messageInterval = null;
+        }
 
-  if (event === "SIGNED_OUT") {
-    sessionHandled = false;
-    currentUserId = null;
+        if (messageChannel) {
+          await sb.removeChannel(messageChannel);
+          messageChannel = null;
+        }
 
-    if (messageInterval) {
-      clearInterval(messageInterval);
-      messageInterval = null;
-    }
+        showScreen("welcomeScreen");
+      }
+    });
 
-    if (messageChannel) {
-      sb.removeChannel(messageChannel);
-      messageChannel = null;
-    }
-
-    showScreen("welcomeScreen");
-  }
-});
-function showNotification(message) {
-  const notif = document.createElement("div");
-
-  notif.textContent = message;
-
-  notif.style.position = "fixed";
-  notif.style.top = "20px";
-  notif.style.left = "50%";
-  notif.style.transform = "translateX(-50%)";
-  notif.style.background = "#23d6d6";
-  notif.style.color = "#051019";
-  notif.style.padding = "14px 18px";
-  notif.style.borderRadius = "14px";
-  notif.style.fontWeight = "bold";
-  notif.style.zIndex = "9999";
-  notif.style.boxShadow = "0 0 20px rgba(0,0,0,0.4)";
-
-  document.body.appendChild(notif);
-
-  setTimeout(() => {
-    notif.remove();
-  }, 3000);
-}
-
-function playNotificationSound() {
-  const audio = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3");
-  audio.play().catch(() => {});
-}
-
-function showBadge() {
-  const badge = document.getElementById("msgBadge");
-  if (badge) badge.style.display = "inline";
-}
-
-function hideBadge() {
-  const badge = document.getElementById("msgBadge");
-  if (badge) badge.style.display = "none";
-}
-
-bindRealtimeValidation();
-checkSessionAndStart();
-</script>
+    bindRealtimeValidation();
+    checkSessionAndStart();
+  </script>
 </body>
 </html>
