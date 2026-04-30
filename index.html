@@ -207,7 +207,8 @@
       position:relative;
     }
 
-    input, textarea {
+    input,
+    textarea {
       width:100%;
       border:none;
       border-radius:16px;
@@ -453,6 +454,7 @@
       min-height:20px;
       color:#b8c8e8;
       font-size:14px;
+      line-height:1.45;
     }
 
     .chat-header {
@@ -467,6 +469,13 @@
     .chat-header h3 {
       margin:0;
       font-size:20px;
+    }
+
+    #msgBadge {
+      display:none;
+      color:#ff4d4d;
+      font-size:18px;
+      vertical-align:middle;
     }
 
     .chat-refresh-btn {
@@ -539,6 +548,46 @@
       text-align:right;
     }
 
+    .msg-actions {
+      display:flex;
+      gap:8px;
+      margin-top:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn-accept,
+    .btn-reject {
+      border:none;
+      border-radius:10px;
+      padding:7px 12px;
+      font-weight:700;
+      cursor:pointer;
+      font-size:13px;
+    }
+
+    .btn-accept {
+      background:rgba(124,242,176,0.18);
+      color:#7cf2b0;
+      border:1px solid rgba(124,242,176,0.35);
+    }
+
+    .btn-reject {
+      background:rgba(255,123,123,0.15);
+      color:#ff7b7b;
+      border:1px solid rgba(255,123,123,0.30);
+    }
+
+    .popup-contact-btn {
+      margin-top:8px;
+      border:none;
+      border-radius:10px;
+      padding:8px 10px;
+      background:#23d6d6;
+      color:#051019;
+      font-weight:800;
+      cursor:pointer;
+    }
+
     .floating-emergency {
       position:fixed;
       right:18px;
@@ -555,11 +604,26 @@
       z-index:2000;
       cursor:pointer;
     }
+
+    .toast {
+      position:fixed;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      max-width:92%;
+      background:#23d6d6;
+      color:#051019;
+      padding:14px 18px;
+      border-radius:14px;
+      font-weight:800;
+      z-index:9999;
+      box-shadow:0 0 20px rgba(0,0,0,0.4);
+      text-align:center;
+    }
   </style>
 </head>
 
 <body>
-
   <div id="welcomeScreen" class="screen active">
     <div class="container hero">
       <div class="logo-box">🚗</div>
@@ -743,12 +807,12 @@
         <textarea id="requestMessageInput" placeholder="Ex : Vos phares sont allumés / véhicule gênant / besoin de vous contacter"></textarea>
         <div id="requestMessageError" class="field-neutral"></div>
 
-        <button id="sendRequestBtn" class="btn btn-primary" onclick="sendRequest()" style="margin-top:14px;">Envoyer la demande</button>
+        <button id="sendRequestBtn" class="btn btn-primary" onclick="sendRequest(false)" style="margin-top:14px;">Envoyer la demande</button>
         <div id="requestStatus" class="request-status"></div>
 
         <div class="chat-header">
-          <h3>💬 Messages</h3>
-          <button type="button" class="chat-refresh-btn" onclick="loadMessages()">↻ Actualiser</button>
+          <h3>💬 Messages <span id="msgBadge">●</span></h3>
+          <button type="button" class="chat-refresh-btn" onclick="loadMessages(); hideBadge();">↻ Actualiser</button>
         </div>
 
         <div id="chatBox">
@@ -776,28 +840,8 @@
     let messageInterval = null;
     let messageChannel = null;
     let locationChannel = null;
-
-async function subscribeToLocations() {
-  if (locationChannel) {
-    await sb.removeChannel(locationChannel);
-    locationChannel = null;
-  }
-
-  locationChannel = sb
-    .channel("locations")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "user_locations"
-      },
-      payload => {
-        loadOtherUsers(); // 🔁 recharge automatiquement la carte
-      }
-    )
-    .subscribe();
-}
+    let selectedConversationPlate = null;
+    let isLoadingOtherUsers = false;
 
     const PHONE_REGEX = /^0\d{9}$/;
     const PLATE_REGEX = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
@@ -808,6 +852,7 @@ async function subscribeToLocations() {
         const el = document.getElementById(screenId);
         if (el) el.classList.remove("active");
       });
+
       const target = document.getElementById(id);
       if (target) target.classList.add("active");
     }
@@ -815,6 +860,7 @@ async function subscribeToLocations() {
     function setStatus(id, message, type) {
       const el = document.getElementById(id);
       if (!el) return;
+
       el.textContent = message || "";
       el.className = type ? "status " + type : "status";
     }
@@ -822,9 +868,11 @@ async function subscribeToLocations() {
     function setValidationState(id, type, message) {
       const el = document.getElementById(id);
       if (!el) return;
+
       if (type === "error") el.className = "field-error";
       else if (type === "valid") el.className = "field-valid";
       else el.className = "field-neutral";
+
       el.textContent = message || "";
     }
 
@@ -835,6 +883,7 @@ async function subscribeToLocations() {
     function setRequestStatus(message, ok) {
       const el = document.getElementById("requestStatus");
       if (!el) return;
+
       el.textContent = message || "";
       el.style.color = ok ? "#7cf2b0" : "#b8c8e8";
     }
@@ -842,12 +891,14 @@ async function subscribeToLocations() {
     function setLoading(buttonId, isLoading, idleText, loadingText) {
       const btn = document.getElementById(buttonId);
       if (!btn) return;
+
       btn.disabled = isLoading;
       btn.textContent = isLoading ? (loadingText || "Chargement…") : idleText;
     }
 
     function translateAuthError(message) {
       const m = (message || "").toLowerCase();
+
       if (m.includes("invalid login credentials")) return "Email ou mot de passe incorrect.";
       if (m.includes("email not confirmed")) return "Ton adresse email n'a pas encore été confirmée. Vérifie ta boîte mail ou renvoie l'email de confirmation.";
       if (m.includes("user already registered")) return "Un compte existe déjà avec cet email.";
@@ -856,53 +907,69 @@ async function subscribeToLocations() {
       if (m.includes("network") || m.includes("fetch")) return "Problème de connexion réseau. Réessaie dans un instant.";
       if (m.includes("invalid email")) return "Adresse email invalide.";
       if (m.includes("same password")) return "Le nouveau mot de passe doit être différent de l'ancien.";
+
       return "Une erreur est survenue. Vérifie tes informations puis réessaie.";
     }
 
     function normalizePhone(phone) {
-      return phone.replace(/\D/g, "");
+      return String(phone || "").replace(/\D/g, "");
     }
 
     function formatPhoneLive(value) {
-      return value.replace(/\D/g, "").slice(0, 10);
+      return String(value || "").replace(/\D/g, "").slice(0, 10);
     }
 
     function normalizePlate(plate) {
-      return plate.trim().toUpperCase();
+      return String(plate || "").trim().toUpperCase();
     }
 
     function formatPlateLive(value) {
-      const chars = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+      const chars = String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+
       if (chars.length <= 2) return chars;
-      if (chars.length <= 5) return chars.slice(0,2) + "-" + chars.slice(2);
-      return chars.slice(0,2) + "-" + chars.slice(2,5) + "-" + chars.slice(5);
+      if (chars.length <= 5) return chars.slice(0, 2) + "-" + chars.slice(2);
+
+      return chars.slice(0, 2) + "-" + chars.slice(2, 5) + "-" + chars.slice(5);
     }
 
     function isValidPhone(phone) {
-      return PHONE_REGEX.test(phone.trim());
+      return PHONE_REGEX.test(String(phone || "").trim());
     }
 
     function isValidPlate(plate) {
-      return PLATE_REGEX.test(plate.trim());
+      return PLATE_REGEX.test(String(plate || "").trim());
     }
 
     function isStrongPassword(password) {
-      return password.length >= 8 && /[A-Z]/.test(password) && /[^A-Za-z0-9]/.test(password);
+      return String(password || "").length >= 8 && /[A-Z]/.test(password) && /[^A-Za-z0-9]/.test(password);
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     function validatePhoneField(inputId, errorId, required) {
       const input = document.getElementById(inputId);
       if (!input) return false;
+
       input.value = formatPhoneLive(input.value);
       const value = input.value.trim();
+
       if (!value) {
         setValidationState(errorId, "neutral", "");
         return !required;
       }
+
       if (isValidPhone(value)) {
         setValidationState(errorId, "valid", "Format valide");
         return true;
       }
+
       setValidationState(errorId, "error", "Format attendu : 0612345678");
       return false;
     }
@@ -910,44 +977,67 @@ async function subscribeToLocations() {
     function validatePlateField(inputId, errorId, required) {
       const input = document.getElementById(inputId);
       if (!input) return false;
+
       input.value = formatPlateLive(input.value);
       const value = input.value.trim();
+
       if (!value) {
         setValidationState(errorId, "neutral", "");
         return !required;
       }
+
       if (isValidPlate(value)) {
         setValidationState(errorId, "valid", "Format valide");
         return true;
       }
+
       setValidationState(errorId, "error", "Format attendu : AB-123-CD");
       return false;
     }
 
     function bindRealtimeValidation() {
-      [["signupPhoneInput","signupPhoneError"],["phoneInput","phoneError"]].forEach(([inputId, errorId]) => {
+      [
+        ["signupPhoneInput", "signupPhoneError"],
+        ["phoneInput", "phoneError"]
+      ].forEach(([inputId, errorId]) => {
         const input = document.getElementById(inputId);
         if (!input) return;
+
         input.addEventListener("input", () => validatePhoneField(inputId, errorId, true));
         input.addEventListener("blur", () => validatePhoneField(inputId, errorId, true));
       });
 
-      [["signupPlateInput","signupPlateError"],["ownerPlateInput","ownerPlateError"],["targetPlateInput","targetPlateError"]].forEach(([inputId, errorId]) => {
+      [
+        ["signupPlateInput", "signupPlateError"],
+        ["ownerPlateInput", "ownerPlateError"],
+        ["targetPlateInput", "targetPlateError"]
+      ].forEach(([inputId, errorId]) => {
         const input = document.getElementById(inputId);
         if (!input) return;
+
         input.addEventListener("input", () => validatePlateField(inputId, errorId, true));
         input.addEventListener("blur", () => validatePlateField(inputId, errorId, true));
       });
     }
 
     function resetAuthForm(keepEmail) {
-      const savedEmail = keepEmail ? document.getElementById("emailInput").value : "";
+      const emailInput = document.getElementById("emailInput");
+      const savedEmail = keepEmail && emailInput ? emailInput.value : "";
+
       document.getElementById("emailInput").value = savedEmail;
       document.getElementById("signupPhoneInput").value = "";
       document.getElementById("signupPlateInput").value = "";
       document.getElementById("passwordInput").value = "";
       document.getElementById("confirmPasswordInput").value = "";
-      clearValidationStates(["emailError","signupPhoneError","signupPlateError","passwordError","confirmPasswordError"]);
+
+      clearValidationStates([
+        "emailError",
+        "signupPhoneError",
+        "signupPlateError",
+        "passwordError",
+        "confirmPasswordError"
+      ]);
+
       setStatus("authStatus", "");
     }
 
@@ -958,13 +1048,21 @@ async function subscribeToLocations() {
 
     function backToWelcome() {
       setStatus("authStatus", "");
-      clearValidationStates(["emailError","signupPhoneError","signupPlateError","passwordError","confirmPasswordError"]);
+      clearValidationStates([
+        "emailError",
+        "signupPhoneError",
+        "signupPlateError",
+        "passwordError",
+        "confirmPasswordError"
+      ]);
+
       showScreen("welcomeScreen");
     }
 
     function setAuthMode(mode) {
-      authMode = mode;
-      const isSignup = mode === "signup";
+      authMode = mode === "signup" ? "signup" : "login";
+
+      const isSignup = authMode === "signup";
 
       document.getElementById("authTitle").textContent = isSignup ? "Créer un compte" : "Connexion";
       document.getElementById("authSubtitle").textContent = isSignup
@@ -984,36 +1082,58 @@ async function subscribeToLocations() {
     function togglePassword(inputId, button) {
       const input = document.getElementById(inputId);
       if (!input) return;
+
       const show = input.type === "password";
       input.type = show ? "text" : "password";
       button.textContent = show ? "🙈" : "👁️";
     }
 
     async function handleAuth() {
-  clearValidationStates(["emailError","signupPhoneError","signupPlateError","passwordError","confirmPasswordError"]);
-  setStatus("authStatus", "");
+      clearValidationStates([
+        "emailError",
+        "signupPhoneError",
+        "signupPlateError",
+        "passwordError",
+        "confirmPasswordError"
+      ]);
 
-  const email = document.getElementById("emailInput").value.trim();
-  const password = document.getElementById("passwordInput").value;
+      setStatus("authStatus", "");
 
-  if (!email) {
-    setValidationState("emailError", "error", "Entre ton email.");
-    return;
-  }
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value;
 
-  if (!password) {
-    setValidationState("passwordError", "error", "Entre ton mot de passe.");
-    return;
-  }
+      if (!email) {
+        setValidationState("emailError", "error", "Entre ton email.");
+        return;
+      }
 
-  const idleText = authMode === "signup" ? "Créer mon compte" : "Se connecter";
-  setLoading("authActionBtn", true, idleText);
+      if (!password) {
+        setValidationState("passwordError", "error", "Entre ton mot de passe.");
+        return;
+      }
 
-  try {
-    if (authMode === "signup") {
+      const idleText = authMode === "signup" ? "Créer mon compte" : "Se connecter";
+      setLoading("authActionBtn", true, idleText, "Chargement...");
+
+      try {
+        if (authMode === "signup") {
+          await signup(email, password);
+        } else {
+          await login(email, password);
+        }
+      } catch (e) {
+        console.error(e);
+        setStatus("authStatus", "Erreur inattendue. Réessaie.", "error");
+      } finally {
+        setLoading("authActionBtn", false, idleText);
+      }
+    }
+
+    async function signup(email, password) {
       const confirmPassword = document.getElementById("confirmPasswordInput").value;
       const signupPhoneRaw = document.getElementById("signupPhoneInput").value.trim();
       const signupPlateRaw = document.getElementById("signupPlateInput").value.trim();
+
       let hasError = false;
 
       if (!signupPhoneRaw) {
@@ -1048,10 +1168,15 @@ async function subscribeToLocations() {
       const signupPhone = normalizePhone(signupPhoneRaw);
       const signupPlate = normalizePlate(signupPlateRaw);
 
+      localStorage.setItem("immatconnect_pending_phone", signupPhone);
+      localStorage.setItem("immatconnect_pending_plate", signupPlate);
+
       const { data, error } = await sb.auth.signUp({
         email: email,
         password: password,
-        options: { emailRedirectTo: SITE_URL }
+        options: {
+          emailRedirectTo: SITE_URL
+        }
       });
 
       if (error) {
@@ -1071,14 +1196,16 @@ async function subscribeToLocations() {
         });
 
         if (profileError) {
-          setStatus("authStatus", "Compte créé mais erreur profil.", "error");
+          console.error(profileError);
+          setStatus("authStatus", "Compte créé mais erreur lors de la création du profil.", "error");
           return;
         }
       }
 
       setStatus("authStatus", "Compte créé ! Vérifie ton email puis connecte-toi.", "success");
+    }
 
-    } else {
+    async function login(email, password) {
       const { data, error } = await sb.auth.signInWithPassword({
         email: email,
         password: password
@@ -1090,13 +1217,12 @@ async function subscribeToLocations() {
       }
 
       if (data && data.user) currentUserId = data.user.id;
+
       sessionHandled = true;
+      setStatus("authStatus", "Connexion réussie.", "success");
+
       await continueAfterAuth();
     }
-  } finally {
-    setLoading("authActionBtn", false, idleText);
-  }
-}
 
     async function resendConfirmationEmail() {
       setStatus("authStatus", "");
@@ -1114,7 +1240,9 @@ async function subscribeToLocations() {
         const { error } = await sb.auth.resend({
           type: "signup",
           email: email,
-          options: { emailRedirectTo: SITE_URL }
+          options: {
+            emailRedirectTo: SITE_URL
+          }
         });
 
         if (error) {
@@ -1123,6 +1251,9 @@ async function subscribeToLocations() {
         }
 
         setStatus("authStatus", "Email de confirmation renvoyé.", "success");
+      } catch (e) {
+        console.error(e);
+        setStatus("authStatus", "Impossible de renvoyer l'email.", "error");
       } finally {
         setLoading("resendBtn", false, "Renvoyer l'email de confirmation");
       }
@@ -1141,7 +1272,9 @@ async function subscribeToLocations() {
       setLoading("forgotPasswordBtn", true, "Mot de passe oublié ?");
 
       try {
-        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: SITE_URL
+        });
 
         if (error) {
           setStatus("authStatus", translateAuthError(error.message), "error");
@@ -1149,6 +1282,9 @@ async function subscribeToLocations() {
         }
 
         setStatus("authStatus", "Email de réinitialisation envoyé. Clique sur le lien dans l'email pour choisir un nouveau mot de passe.", "success");
+      } catch (e) {
+        console.error(e);
+        setStatus("authStatus", "Impossible d'envoyer l'email de réinitialisation.", "error");
       } finally {
         setLoading("forgotPasswordBtn", false, "Mot de passe oublié ?");
       }
@@ -1160,6 +1296,7 @@ async function subscribeToLocations() {
 
       const password = document.getElementById("newPasswordInput").value;
       const confirmPassword = document.getElementById("confirmNewPasswordInput").value;
+
       let hasError = false;
 
       if (!isStrongPassword(password)) {
@@ -1182,7 +1319,9 @@ async function subscribeToLocations() {
       try {
         setStatus("resetStatus", "Mise à jour en cours...");
 
-        const { error } = await sb.auth.updateUser({ password: password });
+        const { error } = await sb.auth.updateUser({
+          password: password
+        });
 
         if (error) {
           setStatus("resetStatus", translateAuthError(error.message), "error");
@@ -1195,20 +1334,24 @@ async function subscribeToLocations() {
           sessionHandled = true;
           await continueAfterAuth();
         }, 1200);
+      } catch (e) {
+        console.error(e);
+        setStatus("resetStatus", "Impossible de mettre à jour le mot de passe.", "error");
       } finally {
         setLoading("updatePasswordBtn", false, "Mettre à jour le mot de passe");
       }
     }
 
     async function continueAfterAuth() {
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData.user;
+      const { data: userData, error: userError } = await sb.auth.getUser();
 
-      if (!user) {
+      if (userError || !userData || !userData.user) {
+        setStatus("authStatus", "Session introuvable. Reconnecte-toi.", "error");
         showScreen("authScreen");
         return;
       }
 
+      const user = userData.user;
       currentUserId = user.id;
 
       const { data: profile, error } = await sb
@@ -1218,6 +1361,7 @@ async function subscribeToLocations() {
         .maybeSingle();
 
       if (error) {
+        console.error(error);
         showScreen("profileScreen");
         return;
       }
@@ -1298,6 +1442,7 @@ async function subscribeToLocations() {
         });
 
         if (error) {
+          console.error(error);
           setStatus("profileStatus", "Impossible d'enregistrer le profil. Réessaie.", "error");
           return;
         }
@@ -1312,6 +1457,9 @@ async function subscribeToLocations() {
           pseudo: pseudo,
           owner_plate: ownerPlate
         });
+      } catch (e) {
+        console.error(e);
+        setStatus("profileStatus", "Erreur inattendue lors de l'enregistrement.", "error");
       } finally {
         setLoading("saveProfileBtn", false, "Enregistrer et continuer");
       }
@@ -1362,7 +1510,9 @@ async function subscribeToLocations() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            map.flyTo([lat, lng], 16, { duration: 0.8 });
+            map.flyTo([lat, lng], 16, {
+              duration: 0.8
+            });
 
             if (myMarker) map.removeLayer(myMarker);
 
@@ -1375,14 +1525,22 @@ async function subscribeToLocations() {
             if (user) {
               currentUserId = user.id;
 
-              await sb.from("user_locations").upsert({
+              const { error } = await sb.from("user_locations").upsert({
                 id: user.id,
                 user_name: user.email,
                 latitude: lat,
                 longitude: lng,
                 updated_at: new Date().toISOString()
               });
+
+              if (error) {
+                console.error(error);
+                alert("Position trouvée, mais impossible de l'enregistrer.");
+              }
             }
+          } catch (e) {
+            console.error(e);
+            alert("Erreur pendant la localisation.");
           } finally {
             setLoading("locateBtn", false, "Me localiser");
           }
@@ -1395,93 +1553,119 @@ async function subscribeToLocations() {
           else if (error.code === 3) alert("La localisation a pris trop de temps.");
           else alert("La localisation a échoué.");
         },
-        { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+        {
+          enableHighAccuracy:true,
+          timeout:15000,
+          maximumAge:0
+        }
       );
     }
 
     async function loadOtherUsers() {
-  setLoading("loadUsersBtn", true, "Voir les autres utilisateurs", "Chargement...");
-  initMapIfNeeded();
+      if (isLoadingOtherUsers) return;
 
-  otherMarkers.forEach(marker => map.removeLayer(marker));
-  otherMarkers = [];
+      isLoadingOtherUsers = true;
+      setLoading("loadUsersBtn", true, "Voir les autres utilisateurs", "Chargement...");
+      initMapIfNeeded();
 
-  try {
-    const { data: meData } = await sb.auth.getUser();
-    const me = meData.user;
+      otherMarkers.forEach(marker => map.removeLayer(marker));
+      otherMarkers = [];
 
-    if (me) currentUserId = me.id;
+      try {
+        const { data: meData } = await sb.auth.getUser();
+        const me = meData.user;
 
-    let query = sb.from("user_locations").select("*");
+        if (me) currentUserId = me.id;
 
-    if (me) query = query.neq("id", me.id);
+        let query = sb.from("user_locations").select("*");
 
-    const { data: locations, error: locationsError } = await query;
+        if (me) query = query.neq("id", me.id);
 
-    if (locationsError) {
-      alert("Erreur lors du chargement des utilisateurs.");
-      return;
+        const { data: locations, error: locationsError } = await query;
+
+        if (locationsError) {
+          console.error(locationsError);
+          alert("Erreur lors du chargement des utilisateurs.");
+          return;
+        }
+
+        if (!locations || !locations.length) {
+          alert("Aucun autre utilisateur localisé.");
+          return;
+        }
+
+        const ids = locations.map(user => user.id).filter(Boolean);
+
+        if (!ids.length) {
+          alert("Aucun autre utilisateur localisé.");
+          return;
+        }
+
+        const { data: profiles, error: profilesError } = await sb
+          .from("profiles")
+          .select("id, pseudo, owner_plate")
+          .in("id", ids);
+
+        if (profilesError) {
+          console.error(profilesError);
+          alert("Erreur lors du chargement des profils.");
+          return;
+        }
+
+        locations.forEach(userLocation => {
+          const lat = Number(userLocation.latitude);
+          const lng = Number(userLocation.longitude);
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const profile = (profiles || []).find(p => p.id === userLocation.id);
+
+          const pseudo = profile && profile.pseudo ? profile.pseudo : "Utilisateur";
+          const plate = profile && profile.owner_plate ? normalizePlate(profile.owner_plate) : "";
+
+          const marker = L.circleMarker([lat, lng], {
+            radius:8,
+            color:"green",
+            fillColor:"green",
+            fillOpacity:1
+          }).addTo(map);
+
+          const escapedPseudo = escapeHtml(pseudo);
+          const escapedPlate = escapeHtml(plate);
+
+          marker.bindPopup(
+            "<b>" + escapedPseudo + "</b><br/>" +
+            escapedPlate + "<br/>" +
+            '<button class="popup-contact-btn" data-plate="' + escapedPlate + '">Contacter ce véhicule</button>'
+          );
+
+          marker.on("popupopen", function() {
+            const popupEl = marker.getPopup().getElement();
+            if (!popupEl) return;
+
+            const btn = popupEl.querySelector(".popup-contact-btn");
+            if (!btn) return;
+
+            btn.onclick = function() {
+              selectVehicle(btn.getAttribute("data-plate"));
+              marker.closePopup();
+            };
+          });
+
+          otherMarkers.push(marker);
+        });
+      } finally {
+        isLoadingOtherUsers = false;
+        setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
+      }
     }
 
-    if (!locations || !locations.length) {
-      alert("Aucun autre utilisateur localisé.");
-      return;
-    }
-
-    const ids = locations.map(user => user.id);
-
-    const { data: profiles, error: profilesError } = await sb
-      .from("profiles")
-      .select("id, pseudo, owner_plate")
-      .in("id", ids);
-
-    if (profilesError) {
-      alert("Erreur lors du chargement des profils.");
-      return;
-    }
-
-    
-
-    locations.forEach(user => {
-      const lat = Number(user.latitude);
-      const lng = Number(user.longitude);
-
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-      const profile = profiles.find(p => p.id === user.id);
-
-      const pseudo = profile && profile.pseudo ? profile.pseudo : "Utilisateur";
-      const plate = profile && profile.owner_plate ? profile.owner_plate : "";
-
-      const marker = L.circleMarker([lat, lng], {
-        radius: 8,
-        color: "green",
-        fillColor: "green",
-        fillOpacity: 1
-      }).addTo(map);
-
-      marker.bindPopup(`
-  <b>${pseudo}</b><br/>
-  ${plate}<br/>
-  <button onclick="selectVehicle('${plate}')">
-    Contacter ce véhicule
-  </button>
-`);
-
-      otherMarkers.push(marker);
-    });
-
-  } finally {
-    setLoading("loadUsersBtn", false, "Voir les autres utilisateurs");
-  }
-}
-
-    async function sendRequest() {
+    async function sendRequest(autoContact) {
       clearValidationStates(["targetPlateError", "requestMessageError"]);
       setRequestStatus("");
 
       const targetPlateRaw = document.getElementById("targetPlateInput").value.trim();
-      const message = document.getElementById("requestMessageInput").value.trim();
+      let message = document.getElementById("requestMessageInput").value.trim();
 
       let hasError = false;
 
@@ -1492,14 +1676,18 @@ async function subscribeToLocations() {
         hasError = true;
       }
 
+      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
+
+      if (autoContact && !message) {
+        message = "Un véhicule à proximité cherche à entrer en contact avec vous.";
+      }
+
       if (!message) {
         setValidationState("requestMessageError", "error", "Ajoute un message.");
         hasError = true;
       }
 
       if (hasError) return;
-
-      const targetPlate = normalizePlate(document.getElementById("targetPlateInput").value);
 
       setLoading("sendRequestBtn", true, "Envoyer la demande", "Envoi...");
 
@@ -1515,10 +1703,10 @@ async function subscribeToLocations() {
         currentUserId = user.id;
 
         const { data: targetUser, error: targetError } = await sb
-  .from("profiles")
-  .select("id")
-  .eq("owner_plate", targetPlate)
-  .maybeSingle();
+          .from("profiles")
+          .select("id")
+          .eq("owner_plate", targetPlate)
+          .maybeSingle();
 
         if (targetError || !targetUser || !targetUser.id) {
           setRequestStatus("Aucun utilisateur trouvé avec cette plaque.");
@@ -1530,24 +1718,58 @@ async function subscribeToLocations() {
           return;
         }
 
+        selectedConversationPlate = targetPlate;
+
+        const { data: existingMessages, error: existingError } = await sb
+          .from("messages")
+          .select("*")
+          .eq("target_plate", targetPlate)
+          .or("and(sender_id.eq." + user.id + ",receiver_id.eq." + targetUser.id + "),and(sender_id.eq." + targetUser.id + ",receiver_id.eq." + user.id + ")");
+
+        if (existingError) {
+          console.error(existingError);
+        }
+
+        const existing = existingMessages || [];
+        const hasAccepted = existing.some(m => m.status === "accepted");
+        const hasPending = existing.some(m => m.status === "pending");
+
+        if (autoContact && hasAccepted) {
+          setRequestStatus("Conversation déjà acceptée avec : " + targetPlate, true);
+          await loadMessages();
+          return;
+        }
+
+        if (autoContact && hasPending) {
+          setRequestStatus("Demande déjà envoyée, en attente d'acceptation.", true);
+          await loadMessages();
+          return;
+        }
+
         const { error } = await sb.from("messages").insert({
-          sender_id: user.id,
-          receiver_id: targetUser.id,
-          target_plate: targetPlate,
-          message: message
+          sender_id:user.id,
+          receiver_id:targetUser.id,
+          target_plate:targetPlate,
+          message:message,
+          status:hasAccepted ? "accepted" : "pending"
         });
 
         if (error) {
+          console.error(error);
           setRequestStatus("Erreur lors de l'envoi.");
           return;
         }
 
-        document.getElementById("targetPlateInput").value = "";
         document.getElementById("requestMessageInput").value = "";
 
-        clearValidationStates(["targetPlateError", "requestMessageError"]);
+        if (!autoContact) {
+          clearValidationStates(["targetPlateError", "requestMessageError"]);
+        }
 
-        setRequestStatus("Message envoyé ✔", true);
+        setRequestStatus(
+          hasAccepted ? "Message envoyé ✔" : "Demande envoyée, en attente d'acceptation.",
+          true
+        );
 
         await loadMessages();
       } finally {
@@ -1580,14 +1802,24 @@ async function subscribeToLocations() {
 
       currentUserId = user.id;
 
-      const { data, error } = await sb
+      let query = sb
         .from("messages")
         .select("*")
         .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-        .order("created_at", { ascending:true })
+        .neq("status", "rejected")
+        .order("created_at", {
+          ascending:true
+        })
         .limit(100);
 
+      if (selectedConversationPlate) {
+        query = query.eq("target_plate", selectedConversationPlate);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
+        console.error(error);
         chatBox.innerHTML = '<div class="chat-empty">Erreur lors du chargement des messages.</div>';
         return;
       }
@@ -1603,6 +1835,7 @@ async function subscribeToLocations() {
 
     function buildMessageHtml(msg, myId) {
       const isSent = msg.sender_id === myId;
+      const status = msg.status || "accepted";
 
       const dateStr = msg.created_at
         ? new Date(msg.created_at).toLocaleString("fr-FR", {
@@ -1615,16 +1848,118 @@ async function subscribeToLocations() {
 
       const plate = escapeHtml(msg.target_plate || "");
       const text = escapeHtml(msg.message || "");
-      const title = isSent
-  ? "Message envoyé vers " + plate
-  : "🚗 Un véhicule souhaite vous contacter";
+
+      let buttons = "";
+
+      if (!isSent && msg.receiver_id === myId && status === "pending") {
+        buttons =
+          '<div class="msg-actions">' +
+            '<button class="btn-accept" onclick="acceptRequest(\'' + escapeHtml(msg.id) + '\')">✅ Accepter</button>' +
+            '<button class="btn-reject" onclick="rejectRequest(\'' + escapeHtml(msg.id) + '\')">❌ Refuser</button>' +
+          '</div>';
+      }
+
+      let title = "";
+
+      if (isSent) {
+        if (status === "pending") title = "⏳ Demande envoyée, en attente d'acceptation";
+        else if (text.toLowerCase().includes("acceptée")) title = "✅ Demande acceptée";
+        else title = "Message envoyé vers " + plate;
+      } else {
+        if (status === "pending") title = "🚗 Demande de contact";
+        else if (text.toLowerCase().includes("acceptée")) title = "✅ Vous avez accepté la demande";
+        else title = "🚗 Message reçu";
+      }
 
       return ''
-  + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
-  + '<div class="msg-plate">' + title + '</div>'
-  + '<div class="msg-text"><b>Plaque concernée : ' + plate + '</b><br>' + text + '</div>'
-  + '<div class="msg-time">' + dateStr + '</div>'
-  + '</div>';
+        + '<div class="chat-msg ' + (isSent ? 'sent' : 'received') + '">'
+        + '<div class="msg-plate">' + title + '</div>'
+        + '<div class="msg-text"><b>Plaque concernée : ' + plate + '</b><br>' + text + '</div>'
+        + buttons
+        + '<div class="msg-time">' + dateStr + '</div>'
+        + '</div>';
+    }
+
+    async function acceptRequest(id) {
+      try {
+        const { data: userData } = await sb.auth.getUser();
+        const user = userData.user;
+
+        if (!user) return;
+
+        const { data: acceptedMsg, error: selectError } = await sb
+          .from("messages")
+          .select("*")
+          .eq("id", id)
+          .eq("receiver_id", user.id)
+          .maybeSingle();
+
+        if (selectError || !acceptedMsg) {
+          console.error(selectError);
+          return;
+        }
+
+        const { error: updateError } = await sb
+          .from("messages")
+          .update({
+            status:"accepted"
+          })
+          .eq("id", id)
+          .eq("receiver_id", user.id);
+
+        if (updateError) {
+          console.error(updateError);
+          setRequestStatus("Impossible d'accepter la demande.");
+          return;
+        }
+
+        const { error: insertError } = await sb.from("messages").insert({
+          sender_id:user.id,
+          receiver_id:acceptedMsg.sender_id,
+          target_plate:acceptedMsg.target_plate,
+          message:"Votre demande de contact a été acceptée.",
+          status:"accepted"
+        });
+
+        if (insertError) {
+          console.error(insertError);
+        }
+
+        selectedConversationPlate = normalizePlate(acceptedMsg.target_plate);
+        document.getElementById("targetPlateInput").value = selectedConversationPlate;
+
+        setRequestStatus("Demande acceptée ✔", true);
+        await loadMessages();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function rejectRequest(id) {
+      try {
+        const { data: userData } = await sb.auth.getUser();
+        const user = userData.user;
+
+        if (!user) return;
+
+        const { error } = await sb
+          .from("messages")
+          .update({
+            status:"rejected"
+          })
+          .eq("id", id)
+          .eq("receiver_id", user.id);
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        setRequestStatus("Demande refusée.");
+        await loadMessages();
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     async function subscribeToMessages() {
@@ -1645,14 +1980,41 @@ async function subscribeToLocations() {
         .on(
           "postgres_changes",
           {
-            event:"INSERT",
+            event:"*",
             schema:"public",
             table:"messages"
           },
           payload => {
-            const msg = payload.new;
+            const msg = payload.new || payload.old;
+
+            if (!msg) return;
 
             if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+              if (
+                payload.eventType === "INSERT" &&
+                msg.receiver_id === user.id &&
+                msg.message &&
+                String(msg.message).includes("acceptée")
+              ) {
+                showNotification("✅ Quelqu'un a accepté ta demande !");
+                playNotificationSound();
+              }
+
+              if (
+                payload.eventType === "INSERT" &&
+                msg.receiver_id === user.id &&
+                msg.status === "pending"
+              ) {
+                showNotification("📩 Nouvelle demande de contact !");
+                playNotificationSound();
+                showBadge();
+              }
+
+              if (msg.receiver_id === user.id && !selectedConversationPlate && msg.target_plate) {
+                selectedConversationPlate = normalizePlate(msg.target_plate);
+                document.getElementById("targetPlateInput").value = selectedConversationPlate;
+              }
+
               loadMessages();
             }
           }
@@ -1660,25 +2022,48 @@ async function subscribeToLocations() {
         .subscribe();
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    async function subscribeToLocations() {
+      if (locationChannel) {
+        await sb.removeChannel(locationChannel);
+        locationChannel = null;
+      }
+
+      locationChannel = sb
+        .channel("immatconnect_locations")
+        .on(
+          "postgres_changes",
+          {
+            event:"*",
+            schema:"public",
+            table:"user_locations"
+          },
+          () => {
+            if (document.getElementById("mapScreen").classList.contains("active")) {
+              loadOtherUsers();
+            }
+          }
+        )
+        .subscribe();
     }
 
     function selectVehicle(plate) {
-  // Remplit automatiquement le champ
-  document.getElementById("targetPlateInput").value = plate;
+      const normalized = normalizePlate(plate);
 
-  // Focus sur le message
-  document.getElementById("requestMessageInput").focus();
+      if (!normalized) return;
 
-  // Petit feedback visuel
-  alert("Véhicule sélectionné : " + plate);
-}
+      selectedConversationPlate = normalized;
+
+      const plateInput = document.getElementById("targetPlateInput");
+      const messageInput = document.getElementById("requestMessageInput");
+
+      plateInput.value = normalized;
+      validatePlateField("targetPlateInput", "targetPlateError", true);
+
+      setRequestStatus("Véhicule sélectionné : " + normalized, true);
+
+      if (messageInput) messageInput.focus();
+    }
+
     function callEmergency() {
       window.location.href = "tel:112";
     }
@@ -1696,10 +2081,16 @@ async function subscribeToLocations() {
         messageChannel = null;
       }
 
+      if (locationChannel) {
+        await sb.removeChannel(locationChannel);
+        locationChannel = null;
+      }
+
       await sb.auth.signOut();
 
       sessionHandled = false;
       currentUserId = null;
+      selectedConversationPlate = null;
 
       location.href = SITE_URL;
     }
@@ -1707,6 +2098,7 @@ async function subscribeToLocations() {
     function isPasswordRecoveryUrl() {
       const hash = window.location.hash || "";
       const search = window.location.search || "";
+
       return (hash + search).toLowerCase().includes("type=recovery");
     }
 
@@ -1730,6 +2122,40 @@ async function subscribeToLocations() {
       await continueAfterAuth();
     }
 
+    function showNotification(message) {
+      const oldToast = document.querySelector(".toast");
+      if (oldToast) oldToast.remove();
+
+      const notif = document.createElement("div");
+      notif.className = "toast";
+      notif.textContent = message;
+
+      document.body.appendChild(notif);
+
+      setTimeout(() => {
+        notif.remove();
+      }, 3000);
+    }
+
+    function playNotificationSound() {
+      try {
+        const audio = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3");
+        audio.play().catch(() => {});
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showBadge() {
+      const badge = document.getElementById("msgBadge");
+      if (badge) badge.style.display = "inline";
+    }
+
+    function hideBadge() {
+      const badge = document.getElementById("msgBadge");
+      if (badge) badge.style.display = "none";
+    }
+
     sb.auth.onAuthStateChange(async (event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         sessionHandled = false;
@@ -1748,6 +2174,7 @@ async function subscribeToLocations() {
       if (event === "SIGNED_OUT") {
         sessionHandled = false;
         currentUserId = null;
+        selectedConversationPlate = null;
 
         if (messageInterval) {
           clearInterval(messageInterval);
@@ -1757,6 +2184,11 @@ async function subscribeToLocations() {
         if (messageChannel) {
           await sb.removeChannel(messageChannel);
           messageChannel = null;
+        }
+
+        if (locationChannel) {
+          await sb.removeChannel(locationChannel);
+          locationChannel = null;
         }
 
         showScreen("welcomeScreen");
