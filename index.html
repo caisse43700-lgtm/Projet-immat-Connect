@@ -3,1590 +3,1839 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>ImmatConnect</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
 <style>
+/* ─── RESET & TOKENS ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg0:#050c18;--bg1:#080f1d;--bg2:#0c1728;
-  --card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.075);--card3:rgba(255,255,255,0.11);
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --primary:#1ee8d4;--p2:#22c9ff;--pglow:rgba(30,232,212,0.2);--pdim:rgba(30,232,212,0.11);
-  --text:#e2edff;--muted:#657fa6;--dim:#253450;
-  --danger:#f87171;--dbg:rgba(248,113,113,0.11);
-  --success:#34d399;--sbg:rgba(52,211,153,0.11);
-  --warn:#fbbf24;--wbg:rgba(251,191,36,0.11);
-  --r0:8px;--r1:12px;--r2:16px;--r3:21px;--r4:26px;
-  --shadow:0 28px 72px rgba(0,0,0,0.65);
-  --t:0.16s cubic-bezier(.4,0,.2,1);
-  --fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+  --c-bg:#07090f;
+  --c-surface:#0d1117;
+  --c-surface2:#131822;
+  --c-border:rgba(255,255,255,0.07);
+  --c-border2:rgba(255,255,255,0.12);
+  --c-accent:#00e5c0;
+  --c-accent2:#0099ff;
+  --c-accent-dim:rgba(0,229,192,0.12);
+  --c-text:#f0f4ff;
+  --c-muted:#6b7a9a;
+  --c-muted2:#9baac8;
+  --c-danger:#ff4d6d;
+  --c-danger-dim:rgba(255,77,109,0.12);
+  --c-success:#00e5c0;
+  --c-success-dim:rgba(0,229,192,0.12);
+  --r-sm:12px;
+  --r-md:18px;
+  --r-lg:24px;
+  --r-xl:32px;
+  --shadow-card:0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.5);
+  --shadow-glow:0 0 40px rgba(0,229,192,0.15);
+  --transition:.18s cubic-bezier(.4,0,.2,1);
+  --font-display:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
 }
-*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html{height:100%}
-body{font-family:var(--fb);background:var(--bg0);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 80% 50% at 8% 0%,rgba(30,232,212,0.075) 0,transparent 58%),
-             radial-gradient(ellipse 55% 38% at 92% 92%,rgba(34,201,255,0.06) 0,transparent 58%)}
 
-/* SCREENS */
-.screen{display:none;min-height:100dvh;position:relative;z-index:1;flex-direction:column}
-.screen.active{display:flex}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--c-bg);
+  color:var(--c-text);
+  min-height:100vh;
+  min-height:100dvh;
+  overflow-x:hidden;
+  position:relative;
+}
 
-/* ANIMATIONS */
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pop{0%{transform:scale(.6)}65%{transform:scale(1.12)}100%{transform:scale(1)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes gps-ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.8);opacity:0}}
-@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* Ambient background effect */
+body::before{
+  content:'';
+  position:fixed;
+  top:-30%;left:-20%;
+  width:80vw;height:80vw;
+  background:radial-gradient(circle,rgba(0,229,192,0.04) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;
+  bottom:-20%;right:-20%;
+  width:60vw;height:60vw;
+  background:radial-gradient(circle,rgba(0,153,255,0.04) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
 
-/* ───── WELCOME ───── */
-#welcomeScreen{align-items:center;justify-content:flex-start;padding:44px 20px 64px}
-.w-inner{width:100%;max-width:420px;margin:0 auto}
-.logo-wrap{text-align:center;margin-bottom:40px;animation:fadeUp .5s ease both}
-.logo-box{width:88px;height:88px;margin:0 auto 18px;border-radius:26px;
-background:linear-gradient(135deg,#1bf5d0,#22c8ff);
-display:flex;align-items:center;justify-content:center;font-size:42px;
-box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 0 52px rgba(30,232,212,0.38)}
-.brand{font-family:var(–fd);font-size:32px;font-weight:900;letter-spacing:-1px}
-.brand em{font-style:normal;color:var(–primary)}
-.tagline{margin-top:8px;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(–dim)}
-.w-h1{font-family:var(–fd);font-size:25px;font-weight:800;line-height:1.22;
-margin-bottom:11px;animation:fadeUp .5s .08s ease both}
-.w-desc{font-size:14px;line-height:1.72;color:var(–muted);margin-bottom:26px;animation:fadeUp .5s .14s ease both}
-.features{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;animation:fadeUp .5s .19s ease both}
-.feat{display:flex;align-items:center;gap:13px;padding:12px 14px;
-background:var(–card);border:1px solid var(–border);border-radius:var(–r2);
-transition:background var(–t),border-color var(–t)}
-.feat:hover{background:var(–card2)}
-.feat-ico{width:38px;height:38px;flex-shrink:0;border-radius:var(–r0);
-background:var(–pdim);border:1px solid rgba(30,232,212,0.17);
-display:flex;align-items:center;justify-content:center;font-size:18px}
-.feat-txt{font-size:13.5px;line-height:1.5;color:#bfd3ef}
-.cta-stack{display:flex;flex-direction:column;gap:9px;animation:fadeUp .5s .24s ease both}
+/* ─── SCREENS ─────────────────────────────────────────── */
+.screen{display:none;position:relative;z-index:1;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
 
-/* ───── BUTTONS ───── */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;
-border-radius:var(–r2);padding:14px 18px;font-family:var(–fd);font-size:15px;font-weight:700;
-cursor:pointer;transition:opacity var(–t),transform var(–t),box-shadow var(–t);
-position:relative;overflow:hidden;letter-spacing:.15px;user-select:none}
-.btn:active:not(:disabled){transform:scale(.985)}
-.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
-.btn-primary{background:linear-gradient(90deg,#1bf5d0,#22c8ff);color:#021016;box-shadow:0 0 28px var(–pglow)}
-.btn-primary:hover:not(:disabled){opacity:.92;box-shadow:0 0 44px rgba(30,232,212,0.42)}
-.btn-ghost{background:var(–card);border:1px solid var(–border);color:var(–muted)}
-.btn-ghost:hover:not(:disabled){background:var(–card2);color:var(–text);border-color:var(–border2)}
-.btn-danger{background:var(–dbg);border:1px solid rgba(248,113,113,0.28);color:var(–danger)}
-.btn-success{background:var(–sbg);border:1px solid rgba(52,211,153,0.28);color:var(–success)}
-.btn-sm{padding:9px 13px;font-size:13px;border-radius:var(–r0);width:auto;min-width:0}
-.spinner{width:15px;height:15px;border:2px solid rgba(0,0,0,0.18);border-top-color:currentColor;
-border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
+/* ─── WELCOME SCREEN ──────────────────────────────────── */
+#welcomeScreen.active{
+  align-items:center;
+  justify-content:center;
+  padding:40px 24px 60px;
+}
 
-/* ───── FORM SCREENS ───── */
-#authScreen,#profileScreen,#resetScreen{align-items:center;justify-content:center;padding:24px 18px 48px}
-.form-wrap{width:100%;max-width:420px}
-.back-btn{display:flex;align-items:center;gap:6px;border:none;background:transparent;
-color:var(–muted);font-family:var(–fb);font-size:14px;cursor:pointer;
-padding:0;margin-bottom:16px;transition:color var(–t)}
-.back-btn:hover{color:var(–text)}
-.form-card{background:var(–card);border:1px solid var(–border);border-radius:var(–r4);
-padding:26px 22px;backdrop-filter:blur(24px);box-shadow:var(–shadow);animation:fadeUp .4s ease both}
-.form-title{font-family:var(–fd);font-size:23px;font-weight:800;margin-bottom:5px}
-.form-sub{font-size:13px;color:var(–muted);line-height:1.6;margin-bottom:20px}
+.welcome-inner{
+  width:100%;max-width:400px;
+  animation:fadeUp .6s ease both;
+}
 
-/* TABS */
-.tab-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;
-background:rgba(0,0,0,0.3);border-radius:12px;padding:4px;margin-bottom:18px}
-.tab-pill{border:none;border-radius:9px;padding:10px;font-family:var(–fd);
-font-size:14px;font-weight:700;cursor:pointer;
-background:transparent;color:var(–muted);transition:background var(–t),color var(–t)}
-.tab-pill.active{background:linear-gradient(90deg,#1bf5d0,#22c8ff);color:#021016}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
 
-/* FIELDS */
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11.5px;font-weight:600;color:#7a9ac2;
-margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase}
-.input-wrap{position:relative}
-input,textarea{width:100%;border:1.5px solid rgba(255,255,255,0.1);border-radius:var(–r2);
-padding:13px 14px;font-family:var(–fb);font-size:15px;
-background:rgba(255,255,255,0.93);color:#0d1a2e;outline:none;
-transition:border-color var(–t),box-shadow var(–t)}
-input:focus,textarea:focus{border-color:rgba(30,232,212,0.5);box-shadow:0 0 0 3px rgba(30,232,212,0.12);background:#fff}
-input::placeholder,textarea::placeholder{color:#8b9db5}
-textarea{min-height:90px;resize:vertical;padding:12px 14px}
-.input-wrap input{padding-right:50px}
-.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);
-width:34px;height:34px;border:none;border-radius:var(–r0);
-background:rgba(0,0,0,0.07);color:#2d4060;font-size:16px;cursor:pointer}
-.field-msg{min-height:18px;margin-top:5px;font-size:12px;line-height:1.3;text-align:left}
-.field-msg.error{color:var(–danger)}
-.field-msg.valid{color:var(–success)}
-.field-msg.neutral{color:transparent}
+.logo-area{
+  text-align:center;
+  margin-bottom:48px;
+}
 
-/* PLATE LIVE CHECK */
-.plate-status{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;min-height:20px}
-.plate-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.plate-dot.checking{background:var(–warn);animation:pulse 1s infinite}
-.plate-dot.found{background:var(–success)}
-.plate-dot.notfound{background:var(–danger)}
-.plate-dot.idle{background:var(–dim)}
+.logo-icon{
+  width:80px;height:80px;
+  margin:0 auto 20px;
+  border-radius:24px;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  box-shadow:var(--shadow-glow),0 8px 32px rgba(0,0,0,0.4);
+  position:relative;
+}
+.logo-icon::after{
+  content:'';position:absolute;inset:-2px;
+  border-radius:26px;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  z-index:-1;opacity:.3;filter:blur(12px);
+}
 
-/* NOTE */
-.note{padding:11px 13px;border-radius:var(–r1);background:rgba(255,255,255,0.04);
-border:1px solid var(–border);color:#baccec;font-size:12.5px;line-height:1.55;margin-top:10px}
+.brand{
+  font-family:var(--font-display);
+  font-weight:800;
+  letter-spacing:-.5px;
+}
+.brand-immat{font-size:14px;color:var(--c-muted2);letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
+.brand-connect{font-size:36px;color:var(--c-text)}
+.brand-dot{color:var(--c-accent)}
 
-/* STATUS */
-.status-msg{min-height:22px;margin-top:14px;text-align:center;font-size:13.5px;
-line-height:1.5;color:var(–muted);border-radius:var(–r0);padding:0 4px}
-.status-msg.error{color:var(–danger);background:var(–dbg);padding:10px 12px;border-radius:var(–r1)}
-.status-msg.success{color:var(–success);background:var(–sbg);padding:10px 12px;border-radius:var(–r1)}
+.welcome-tagline{
+  font-size:13px;
+  color:var(--c-muted);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-top:8px;
+}
 
-/* INLINE LINKS */
-.link-row{display:flex;flex-direction:column;gap:8px;margin-top:14px;align-items:center}
-.text-link{border:none;background:transparent;color:#5d8fd4;font-size:13px;
-cursor:pointer;padding:2px;font-family:var(–fb);transition:color var(–t)}
-.text-link:hover{color:var(–primary)}
+.welcome-title{
+  font-family:var(--font-display);
+  font-size:28px;
+  font-weight:700;
+  line-height:1.2;
+  margin-bottom:12px;
+  text-align:center;
+}
+.welcome-title em{
+  font-style:normal;
+  background:linear-gradient(90deg,var(--c-accent),var(--c-accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
 
-/* ───── MAP SCREEN ───── */
-#mapScreen{background:var(–bg0);padding:0;align-items:unset;justify-content:unset}
+.welcome-sub{
+  color:var(--c-muted2);
+  font-size:15px;
+  line-height:1.65;
+  text-align:center;
+  margin-bottom:36px;
+}
+
+.feature-list{
+  display:flex;flex-direction:column;gap:10px;
+  margin-bottom:36px;
+}
+
+.feature-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:var(--c-surface);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-md);
+  transition:var(--transition);
+}
+.feature-item:hover{border-color:var(--c-border2)}
+
+.fi-icon{
+  width:40px;height:40px;flex:0 0 40px;
+  border-radius:12px;
+  background:var(--c-accent-dim);
+  border:1px solid rgba(0,229,192,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+
+.fi-text{font-size:14px;color:var(--c-muted2);line-height:1.4}
+
+.btn-group{display:flex;flex-direction:column;gap:10px}
+
+/* ─── BUTTONS ─────────────────────────────────────────── */
+.btn{
+  width:100%;
+  border:none;border-radius:var(--r-md);
+  padding:16px 20px;
+  font-family:var(--font-body);
+  font-size:15px;font-weight:500;
+  cursor:pointer;
+  transition:var(--transition);
+  position:relative;overflow:hidden;
+}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  color:#050d15;
+  font-weight:700;
+  box-shadow:0 4px 24px rgba(0,229,192,0.25);
+}
+.btn-primary:hover:not(:disabled){
+  box-shadow:0 6px 32px rgba(0,229,192,0.4);
+  transform:translateY(-1px);
+}
+.btn-primary:active:not(:disabled){transform:translateY(0)}
+
+.btn-ghost{
+  background:transparent;
+  color:var(--c-muted2);
+  border:1px solid var(--c-border);
+}
+.btn-ghost:hover:not(:disabled){
+  border-color:var(--c-border2);
+  color:var(--c-text);
+  background:var(--c-surface);
+}
+
+.btn-danger{
+  background:var(--c-danger-dim);
+  color:var(--c-danger);
+  border:1px solid rgba(255,77,109,0.25);
+}
+.btn-danger:hover:not(:disabled){background:rgba(255,77,109,0.2)}
+
+/* ─── AUTH SCREEN ─────────────────────────────────────── */
+#authScreen.active{
+  align-items:center;
+  justify-content:center;
+  padding:32px 20px 48px;
+}
+
+.card{
+  width:100%;max-width:420px;
+  background:var(--c-surface);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-xl);
+  padding:28px 24px;
+  box-shadow:var(--shadow-card);
+  animation:fadeUp .5s ease both;
+}
+
+.card-header{margin-bottom:24px;text-align:center}
+.card-title{
+  font-family:var(--font-display);
+  font-size:26px;font-weight:700;
+  margin-bottom:6px;
+}
+.card-sub{font-size:14px;color:var(--c-muted2);line-height:1.5}
+
+/* Tabs */
+.tabs{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:6px;
+  background:var(--c-surface2);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-sm);
+  padding:4px;
+  margin-bottom:24px;
+}
+.tab-btn{
+  border:none;border-radius:9px;
+  padding:10px;
+  font-family:var(--font-body);
+  font-size:14px;font-weight:500;
+  cursor:pointer;
+  background:transparent;
+  color:var(--c-muted2);
+  transition:var(--transition);
+}
+.tab-btn.active{
+  background:var(--c-surface);
+  color:var(--c-text);
+  box-shadow:0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Fields */
+.field{margin-bottom:16px}
+.field-label{
+  display:block;
+  font-size:13px;
+  color:var(--c-muted2);
+  margin-bottom:8px;
+  font-weight:500;
+}
+.field-wrap{position:relative}
+.field-input{
+  width:100%;
+  background:var(--c-surface2);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-sm);
+  padding:14px 16px;
+  font-family:var(--font-body);
+  font-size:15px;
+  color:var(--c-text);
+  outline:none;
+  transition:border-color var(--transition);
+}
+.field-input::placeholder{color:var(--c-muted)}
+.field-input:focus{border-color:var(--c-accent)}
+.field-input.has-toggle{padding-right:52px}
+.field-input.is-error{border-color:var(--c-danger)}
+.field-input.is-valid{border-color:var(--c-success)}
+
+textarea.field-input{
+  min-height:90px;
+  resize:vertical;
+  line-height:1.5;
+}
+
+.field-toggle{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;
+  border:none;border-radius:8px;
+  background:transparent;
+  color:var(--c-muted);
+  font-size:16px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:color var(--transition);
+}
+.field-toggle:hover{color:var(--c-text)}
+
+.field-hint{
+  margin-top:6px;
+  font-size:12px;
+  min-height:16px;
+  line-height:1.4;
+}
+.field-hint.error{color:var(--c-danger)}
+.field-hint.success{color:var(--c-success)}
+.field-hint.info{color:var(--c-muted2)}
+
+.note-box{
+  margin:12px 0;
+  padding:12px 14px;
+  background:var(--c-surface2);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-sm);
+  font-size:13px;
+  color:var(--c-muted2);
+  line-height:1.5;
+}
+
+.divider{height:1px;background:var(--c-border);margin:20px 0}
+
+.auth-links{
+  display:flex;flex-direction:column;
+  align-items:center;gap:8px;
+  margin-top:16px;
+}
+.text-btn{
+  border:none;background:transparent;
+  color:var(--c-muted2);
+  font-size:13px;
+  cursor:pointer;
+  padding:4px 8px;
+  border-radius:6px;
+  transition:color var(--transition);
+}
+.text-btn:hover{color:var(--c-accent)}
+.text-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Status */
+.status-msg{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:var(--r-sm);
+  font-size:13px;line-height:1.5;
+  display:none;
+}
+.status-msg.visible{display:block}
+.status-msg.error{background:var(--c-danger-dim);color:var(--c-danger);border:1px solid rgba(255,77,109,0.2)}
+.status-msg.success{background:var(--c-success-dim);color:var(--c-success);border:1px solid rgba(0,229,192,0.2)}
+.status-msg.info{background:var(--c-surface2);color:var(--c-muted2);border:1px solid var(--c-border)}
+
+/* ─── PROFILE SCREEN ──────────────────────────────────── */
+#profileScreen.active{
+  align-items:center;
+  justify-content:center;
+  padding:32px 20px 48px;
+}
+
+/* ─── RESET SCREEN ────────────────────────────────────── */
+#resetScreen.active{
+  align-items:center;
+  justify-content:center;
+  padding:32px 20px 48px;
+}
+
+/* ─── MAP SCREEN ──────────────────────────────────────── */
+#mapScreen{padding:0}
 #mapScreen.active{display:flex;flex-direction:column}
 
-.map-topbar{padding:14px 14px 10px;background:linear-gradient(180deg,#0a1526 0%,rgba(8,15,29,0.98) 100%);
-position:sticky;top:0;z-index:1000;border-bottom:1px solid var(–border)}
-.map-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.map-brand{font-family:var(–fd);font-size:20px;font-weight:900}
-.map-brand em{font-style:normal;color:var(–primary)}
-.map-user-chip{display:flex;align-items:center;gap:7px;padding:6px 11px;
-background:var(–card);border:1px solid var(–border);border-radius:20px;
-font-size:12px;color:var(–muted);max-width:200px;overflow:hidden}
-.map-plate-badge{font-family:var(–fd);font-size:11px;font-weight:800;
-background:var(–pdim);border:1px solid rgba(30,232,212,0.25);
-color:var(–primary);padding:3px 8px;border-radius:6px;letter-spacing:.5px}
+.topbar{
+  padding:env(safe-area-inset-top, 16px) 20px 14px;
+  padding-top:max(env(safe-area-inset-top,0px),16px);
+  background:rgba(7,9,15,0.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--c-border);
+  position:sticky;top:0;z-index:1000;
+  flex:0 0 auto;
+}
 
-/* GPS STATUS BAR */
-.gps-bar{display:flex;align-items:center;gap:9px;padding:9px 12px;
-border-radius:var(–r1);font-size:12.5px;margin-bottom:10px;transition:all var(–t)}
-.gps-bar.acquiring{background:var(–wbg);border:1px solid rgba(251,191,36,0.22);color:var(–warn)}
-.gps-bar.active{background:var(–sbg);border:1px solid rgba(52,211,153,0.22);color:var(–success)}
-.gps-bar.parked{background:var(–pdim);border:1px solid rgba(30,232,212,0.22);color:var(–primary)}
-.gps-bar.error{background:var(–dbg);border:1px solid rgba(248,113,113,0.22);color:var(–danger)}
-.gps-bar.hidden{display:none}
-.gps-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:currentColor}
-.gps-dot.anim{animation:pulse 1.2s infinite}
+.topbar-inner{
+  display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+  max-width:600px;margin:0 auto;
+}
 
-/* MAP ACTIONS */
-.map-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.topbar-brand{
+  font-family:var(--font-display);
+  font-size:20px;font-weight:800;
+  letter-spacing:-.3px;
+  white-space:nowrap;
+}
+.topbar-brand span{color:var(--c-accent)}
 
-/* RADIUS SLIDER */
-.radius-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;
-background:var(–card);border:1px solid var(–border);border-radius:var(–r1)}
-.radius-label{font-size:12px;color:var(–muted);white-space:nowrap}
-.radius-val{font-family:var(–fd);font-size:12px;font-weight:700;color:var(–primary);
-white-space:nowrap;min-width:40px;text-align:right}
-input[type=range]{flex:1;height:4px;border-radius:2px;
-background:linear-gradient(90deg,var(–primary) var(–pct,50%),rgba(255,255,255,0.12) var(–pct,50%));
-border:none;padding:0;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;
-border-radius:50%;background:var(–primary);box-shadow:0 0 8px var(–pglow);cursor:pointer}
+.topbar-user{
+  font-size:12px;
+  color:var(--c-muted2);
+  line-height:1.3;
+  text-align:right;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.topbar-plate{
+  font-family:var(--font-display);
+  font-size:14px;
+  color:var(--c-accent);
+  font-weight:700;
+  display:block;
+}
 
-/* MAP CONTAINER */
-#map{flex:1;min-height:260px;width:100%}
+.topbar-actions{
+  display:flex;gap:8px;
+  padding:10px 20px 14px;
+  max-width:600px;margin:0 auto;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.topbar-actions::-webkit-scrollbar{display:none}
 
-/* LEAFLET OVERRIDES */
-.leaflet-popup-content-wrapper{background:rgba(8,15,29,0.96) !important;
-border:1px solid var(–border2) !important;border-radius:var(–r2) !important;
-box-shadow:var(–shadow) !important;backdrop-filter:blur(12px)}
-.leaflet-popup-content{color:var(–text) !important;font-family:var(–fb) !important;
-font-size:13px !important;margin:14px 16px !important}
-.leaflet-popup-tip{background:rgba(8,15,29,0.96) !important}
-.leaflet-popup-close-button{color:var(–muted) !important;font-size:18px !important}
-.popup-plate{font-family:var(–fd);font-size:15px;font-weight:800;
-color:var(–primary);margin-bottom:4px}
-.popup-pseudo{font-size:13px;color:var(–muted);margin-bottom:4px}
-.popup-freshness{font-size:11px;margin-bottom:10px}
-.popup-fresh-green{color:var(–success)}
-.popup-fresh-orange{color:var(–warn)}
-.popup-fresh-red{color:var(–danger)}
-.popup-contact{border:none;border-radius:var(–r0);padding:8px 13px;
-background:linear-gradient(90deg,#1bf5d0,#22c8ff);color:#021016;
-font-family:var(–fd);font-size:13px;font-weight:700;cursor:pointer;width:100%}
+.action-btn{
+  border:none;
+  border-radius:10px;
+  padding:9px 14px;
+  font-family:var(--font-body);
+  font-size:13px;font-weight:500;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:var(--transition);
+  display:flex;align-items:center;gap:6px;
+}
+.action-btn-primary{
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  color:#050d15;font-weight:700;
+}
+.action-btn-primary:hover{box-shadow:0 4px 16px rgba(0,229,192,0.3);transform:translateY(-1px)}
+.action-btn-ghost{
+  background:var(--c-surface2);
+  border:1px solid var(--c-border);
+  color:var(--c-muted2);
+}
+.action-btn-ghost:hover{border-color:var(--c-border2);color:var(--c-text)}
+.action-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* CUSTOM MARKERS */
-.cm-wrap{position:relative;display:flex;align-items:center;justify-content:center}
-.cm-ring{position:absolute;width:100%;height:100%;border-radius:50%;
-border:2px solid currentColor;opacity:.5;animation:gps-ring 2.2s ease-out infinite}
-.cm-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;
-box-shadow:0 2px 8px rgba(0,0,0,0.4)}
-.cm-arrow{position:absolute;top:-7px;left:50%;transform:translateX(-50%);
-width:0;height:0;border-left:5px solid transparent;
-border-right:5px solid transparent;border-bottom:8px solid currentColor}
+/* Map */
+#map{
+  flex:1 1 auto;
+  min-height:240px;
+  z-index:1;
+}
 
-/* PROXIMITY CIRCLE - styled via leaflet */
+/* Panel */
+.panel{
+  flex:0 0 auto;
+  background:var(--c-bg);
+  border-top:1px solid var(--c-border);
+  overflow-y:auto;
+  max-height:55vh;
+  padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 80px);
+}
 
-/* ───── PANEL ───── */
-.panel{padding:14px;background:var(–bg1);border-top:1px solid var(–border);overflow-y:auto;max-height:55dvh}
-.panel-inner{max-width:480px;margin:0 auto}
-.panel-tabs{display:flex;gap:6px;margin-bottom:14px}
-.panel-tab{flex:1;border:none;border-radius:var(–r0);padding:10px;
-font-family:var(–fd);font-size:13px;font-weight:700;cursor:pointer;
-background:var(–card);border:1px solid var(–border);color:var(–muted);
-transition:all var(–t);position:relative}
-.panel-tab.active{background:var(–pdim);border-color:rgba(30,232,212,0.28);color:var(–primary)}
-.panel-tab .badge{position:absolute;top:-5px;right:-5px;width:16px;height:16px;
-border-radius:50%;background:#f87171;color:#fff;font-size:10px;font-weight:800;
-display:none;align-items:center;justify-content:center}
-.panel-tab .badge.show{display:flex;animation:pop .3s ease both}
+.panel-inner{max-width:600px;margin:0 auto}
 
-/* SEND FORM */
-.send-form{background:var(–card);border:1px solid var(–border);
-border-radius:var(–r3);padding:16px;margin-bottom:14px}
-.send-form h3{font-family:var(–fd);font-size:17px;font-weight:800;margin-bottom:4px}
-.send-form p{font-size:12.5px;color:var(–muted);line-height:1.5;margin-bottom:14px}
+.section-title{
+  font-family:var(--font-display);
+  font-size:17px;font-weight:700;
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
 
-/* CONVERSATIONS LIST */
-#convList{display:flex;flex-direction:column;gap:8px}
-.conv-item{display:flex;align-items:center;gap:12px;padding:13px 14px;
-background:var(–card);border:1px solid var(–border);border-radius:var(–r2);
-cursor:pointer;transition:background var(–t),border-color var(–t)}
-.conv-item:hover{background:var(–card2);border-color:var(–border2)}
-.conv-item.active-conv{background:var(–pdim);border-color:rgba(30,232,212,0.3)}
-.conv-plate-badge{font-family:var(–fd);font-size:13px;font-weight:800;
-background:rgba(30,232,212,0.1);border:1px solid rgba(30,232,212,0.2);
-color:var(–primary);padding:5px 10px;border-radius:7px;white-space:nowrap}
-.conv-info{flex:1;min-width:0}
-.conv-last{font-size:12px;color:var(–muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.conv-time{font-size:11px;color:var(–dim);margin-top:2px}
-.conv-unread{width:8px;height:8px;border-radius:50%;background:var(–primary);flex-shrink:0}
-.conv-empty{text-align:center;color:var(–muted);font-size:13px;padding:22px 0}
+.compose-box{
+  background:var(--c-surface);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-lg);
+  padding:18px;
+  margin-bottom:20px;
+}
+.compose-desc{
+  font-size:13px;color:var(--c-muted2);
+  line-height:1.5;
+  margin-bottom:14px;
+}
+.compose-btn{
+  margin-top:12px;
+}
 
-/* CHAT VIEW */
-#chatView{display:none;flex-direction:column;gap:10px}
-#chatView.open{display:flex}
-.chat-back{display:flex;align-items:center;gap:7px;border:none;background:transparent;
-color:var(–muted);font-family:var(–fb);font-size:13px;cursor:pointer;
-padding:0;margin-bottom:12px;transition:color var(–t)}
-.chat-back:hover{color:var(–text)}
-.chat-header-plate{font-family:var(–fd);font-size:16px;font-weight:800;
-color:var(–primary);margin-bottom:12px}
+.request-status-row{
+  margin-top:12px;
+  font-size:13px;
+  color:var(--c-muted2);
+  min-height:18px;
+  display:flex;align-items:center;gap:6px;
+}
+.request-status-row.ok{color:var(--c-success)}
+.request-status-row.err{color:var(--c-danger)}
 
-#chatBox{display:flex;flex-direction:column;gap:9px;max-height:300px;
-overflow-y:auto;padding:2px}
-.chat-msg{padding:10px 13px;border-radius:var(–r2);font-size:13.5px;
-line-height:1.5;max-width:88%;word-break:break-word;animation:fadeIn .2s ease}
-.chat-msg.sent{align-self:flex-end;
-background:linear-gradient(135deg,rgba(30,232,212,0.17),rgba(34,201,255,0.11));
-border:1px solid rgba(30,232,212,0.25)}
-.chat-msg.received{align-self:flex-start;
-background:var(–card2);border:1px solid var(–border2)}
-.msg-label{font-size:11px;font-weight:600;color:var(–primary);margin-bottom:3px;
-text-transform:uppercase;letter-spacing:.4px}
-.msg-text{color:var(–text)}
-.msg-time{font-size:11px;color:var(–muted);margin-top:4px;text-align:right}
-.msg-actions{display:flex;gap:7px;margin-top:8px}
-.btn-accept{border:none;border-radius:var(–r0);padding:7px 11px;
-font-weight:700;cursor:pointer;font-size:12px;
-background:var(–sbg);color:var(–success);border:1px solid rgba(52,211,153,0.3)}
-.btn-reject{border:none;border-radius:var(–r0);padding:7px 11px;
-font-weight:700;cursor:pointer;font-size:12px;
-background:var(–dbg);color:var(–danger);border:1px solid rgba(248,113,113,0.28)}
-.chat-reply-row{display:flex;gap:8px;margin-top:10px}
-.chat-reply-row textarea{flex:1;min-height:48px;max-height:100px;padding:10px 12px;font-size:14px}
-.chat-empty{text-align:center;color:var(–muted);font-size:13px;padding:20px 0}
+/* Chat */
+.chat-header-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.badge{
+  display:none;
+  background:var(--c-danger);
+  color:#fff;
+  font-size:11px;font-weight:700;
+  border-radius:999px;
+  padding:2px 7px;
+  margin-left:6px;
+}
+.badge.visible{display:inline-block}
 
-/* DRAFT BADGE */
-.draft-badge{display:inline-block;font-size:11px;color:var(–warn);
-background:var(–wbg);padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle}
+.refresh-btn{
+  border:none;border-radius:8px;
+  padding:7px 10px;
+  background:var(--c-accent-dim);
+  border:1px solid rgba(0,229,192,0.2);
+  color:var(--c-accent);
+  font-size:14px;font-weight:700;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.refresh-btn:hover{background:rgba(0,229,192,0.18)}
 
-/* REQUEST STATUS */
-.req-status{min-height:20px;font-size:13px;margin-top:10px;color:var(–muted);
-line-height:1.45;transition:color var(–t)}
-.req-status.ok{color:var(–success)}
-.req-status.err{color:var(–danger)}
+#chatBox{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:280px;
+  overflow-y:auto;
+  padding:12px;
+  background:var(--c-surface);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-md);
+  scroll-behavior:smooth;
+}
+#chatBox::-webkit-scrollbar{width:4px}
+#chatBox::-webkit-scrollbar-track{background:transparent}
+#chatBox::-webkit-scrollbar-thumb{background:var(--c-border2);border-radius:4px}
 
-/* TOAST */
-.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);
-padding:12px 18px;border-radius:var(–r2);font-family:var(–fd);font-size:14px;font-weight:700;
-z-index:9999;box-shadow:var(–shadow);animation:toastIn .3s ease both;
-max-width:92%;text-align:center;pointer-events:none}
-.toast.info{background:linear-gradient(90deg,#1bf5d0,#22c8ff);color:#021016}
-.toast.warn{background:var(–wbg);border:1px solid rgba(251,191,36,0.4);color:var(–warn)}
-.toast.err{background:var(–dbg);border:1px solid rgba(248,113,113,0.4);color:var(–danger)}
+.chat-empty{
+  text-align:center;
+  color:var(--c-muted);
+  font-size:13px;
+  padding:24px 0;
+}
 
-/* EMERGENCY */
-.sos-btn{position:fixed;right:16px;bottom:20px;width:58px;height:58px;
-border-radius:50%;border:none;background:#dc2626;color:#fff;font-size:22px;
-box-shadow:0 0 0 3px rgba(220,38,38,0.28),0 0 22px rgba(220,38,38,0.5);
-z-index:2000;cursor:pointer;transition:transform var(–t),box-shadow var(–t)}
-.sos-btn:hover{transform:scale(1.08);box-shadow:0 0 0 4px rgba(220,38,38,0.35),0 0 30px rgba(220,38,38,0.6)}
-.sos-btn:active{transform:scale(.95)}
+.msg{
+  padding:10px 13px;
+  border-radius:14px;
+  font-size:13px;
+  line-height:1.5;
+  max-width:88%;
+  word-break:break-word;
+}
+.msg.sent{
+  align-self:flex-end;
+  background:rgba(0,229,192,0.1);
+  border:1px solid rgba(0,229,192,0.2);
+}
+.msg.received{
+  align-self:flex-start;
+  background:var(--c-surface2);
+  border:1px solid var(--c-border);
+}
+.msg-label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--c-accent);
+  letter-spacing:.4px;
+  margin-bottom:4px;
+}
+.msg-text{color:var(--c-text)}
+.msg-text b{color:var(--c-accent2)}
+.msg-time{
+  font-size:11px;
+  color:var(--c-muted);
+  margin-top:5px;
+  text-align:right;
+}
+.msg-actions{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin-top:8px;
+}
+.msg-action-btn{
+  border:none;border-radius:8px;
+  padding:6px 11px;
+  font-size:12px;font-weight:600;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.msg-action-btn.accept{
+  background:rgba(0,229,192,0.15);
+  color:var(--c-accent);
+  border:1px solid rgba(0,229,192,0.3);
+}
+.msg-action-btn.accept:hover{background:rgba(0,229,192,0.25)}
+.msg-action-btn.reject{
+  background:var(--c-danger-dim);
+  color:var(--c-danger);
+  border:1px solid rgba(255,77,109,0.25);
+}
+.msg-action-btn.reject:hover{background:rgba(255,77,109,0.2)}
 
-/* UTILS */
+/* Floating SOS */
+.sos-btn{
+  position:fixed;
+  right:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);
+  width:58px;height:58px;
+  border-radius:50%;border:none;
+  background:linear-gradient(135deg,#ff2d55,#c0002f);
+  color:#fff;
+  font-size:22px;
+  font-weight:900;
+  box-shadow:0 4px 20px rgba(255,45,85,0.5);
+  z-index:2000;cursor:pointer;
+  transition:var(--transition);
+  display:none;
+}
+.sos-btn:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(255,45,85,0.65)}
+.sos-btn.visible{display:flex;align-items:center;justify-content:center}
+
+/* Toast */
+.toast{
+  position:fixed;top:20px;left:50%;
+  transform:translateX(-50%) translateY(-80px);
+  max-width:90%;min-width:200px;
+  background:var(--c-surface);
+  border:1px solid var(--c-border2);
+  color:var(--c-text);
+  padding:12px 18px;
+  border-radius:var(--r-md);
+  font-size:14px;font-weight:500;
+  z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  text-align:center;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s ease;
+  opacity:0;
+}
+.toast.show{
+  transform:translateX(-50%) translateY(0);
+  opacity:1;
+}
+.toast.is-success{border-color:rgba(0,229,192,0.3);color:var(--c-accent)}
+.toast.is-error{border-color:rgba(255,77,109,0.3);color:var(--c-danger)}
+
+/* Popup leaflet override */
+.leaflet-popup-content-wrapper{
+  background:var(--c-surface) !important;
+  border:1px solid var(--c-border2) !important;
+  border-radius:14px !important;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5) !important;
+  color:var(--c-text) !important;
+}
+.leaflet-popup-tip{background:var(--c-surface) !important}
+.leaflet-popup-content{color:var(--c-text) !important;font-family:var(--font-body)}
+.popup-plate{
+  font-family:var(--font-display);
+  font-size:16px;font-weight:700;
+  color:var(--c-accent);
+  margin-bottom:4px;
+}
+.popup-pseudo{font-size:13px;color:var(--c-muted2);margin-bottom:10px}
+.popup-contact{
+  width:100%;border:none;border-radius:8px;
+  padding:9px 12px;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  color:#050d15;font-weight:700;font-size:13px;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.popup-contact:hover{opacity:.9}
+
+/* Hidden */
 .hidden{display:none !important}
-.divider{height:1px;background:var(–border);margin:14px 0}
+
+/* Separator */
+.sep{margin:20px 0;border:none;border-top:1px solid var(--c-border)}
 </style>
 
 </head>
+
 <body>
 
-<!-- ══════════════ WELCOME ══════════════ -->
+<!-- ═══ WELCOME ═══════════════════════════════════════ -->
 
 <div id="welcomeScreen" class="screen active">
-<div class="w-inner">
-  <div class="logo-wrap">
-    <div class="logo-box">🚗</div>
-    <div class="brand">Immat<em>Connect</em></div>
-    <div class="tagline">La route, connectée</div>
-  </div>
-  <h1 class="w-h1">Communiquez avec n'importe quel conducteur, en temps réel</h1>
-  <p class="w-desc">Créez un compte, autorisez la localisation dès la connexion, et soyez instantanément visible sur la carte de tous les utilisateurs.</p>
-  <div class="features">
-    <div class="feat"><div class="feat-ico">🪪</div><div class="feat-txt">Votre plaque est liée à votre compte — les autres vous identifient par elle</div></div>
-    <div class="feat"><div class="feat-ico">📍</div><div class="feat-txt">Position partagée automatiquement dès la connexion, en temps réel</div></div>
-    <div class="feat"><div class="feat-ico">💬</div><div class="feat-txt">Messagerie par plaque avec conversations séparées, comme iMessage</div></div>
-    <div class="feat"><div class="feat-ico">🚨</div><div class="feat-txt">Accès direct aux secours (112) depuis la carte</div></div>
-  </div>
-  <div class="cta-stack">
-    <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
-    <button class="btn btn-ghost" onclick="goToAuth('login')">J'ai déjà un compte</button>
-  </div>
-</div>
-</div>
-
-<!-- ══════════════ AUTH ══════════════ -->
-
-<div id="authScreen" class="screen">
-<div class="form-wrap">
-  <button class="back-btn" onclick="showScreen('welcomeScreen')">← Retour</button>
-  <div class="form-card">
-    <div class="form-title" id="authTitle">Connexion</div>
-    <div class="form-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
-    <div class="tab-row">
-      <button class="tab-pill active" id="tabLogin" onclick="setMode('login')">Connexion</button>
-      <button class="tab-pill" id="tabSignup" onclick="setMode('signup')">Inscription</button>
+  <div class="welcome-inner">
+    <div class="logo-area">
+      <div class="logo-icon">🚗</div>
+      <div class="brand">
+        <div class="brand-immat">Immat</div>
+        <div class="brand-connect">Connect<span class="brand-dot">.</span></div>
+      </div>
+      <div class="welcome-tagline">La route, connectée</div>
     </div>
 
 ```
-<div class="field">
-  <label>Email</label>
-  <input type="email" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
-  <div class="field-msg neutral" id="emailErr"></div>
+<h1 class="welcome-title">Communiquez avec <em>n'importe quel</em> conducteur</h1>
+<p class="welcome-sub">Enregistrez votre véhicule, localisez-vous sur la carte et échangez instantanément avec les conducteurs autour de vous.</p>
+
+<div class="feature-list">
+  <div class="feature-item">
+    <div class="fi-icon">🪪</div>
+    <div class="fi-text">Votre plaque est liée à votre compte de façon sécurisée</div>
+  </div>
+  <div class="feature-item">
+    <div class="fi-icon">📍</div>
+    <div class="fi-text">Carte en temps réel après connexion</div>
+  </div>
+  <div class="feature-item">
+    <div class="fi-icon">🚨</div>
+    <div class="fi-text">Accès rapide aux secours (112) depuis la carte</div>
+  </div>
 </div>
 
-<div id="signupExtra" class="hidden">
-  <div class="field">
-    <label>Téléphone</label>
-    <input type="tel" id="phoneSignup" placeholder="0612345678" autocomplete="tel" oninput="fmtPhone(this)" onblur="valPhone('phoneSignup','phoneSignupErr',true)"/>
-    <div class="field-msg neutral" id="phoneSignupErr"></div>
+<div class="btn-group">
+  <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
+  <button class="btn btn-ghost" onclick="goToAuth('login')">J'ai déjà un compte</button>
+</div>
+```
+
   </div>
-  <div class="field">
-    <label>Immatriculation de votre véhicule</label>
-    <input type="text" id="plateSignup" placeholder="AB-123-CD" autocomplete="off" oninput="fmtPlate(this)" onblur="valPlate('plateSignup','plateSignupErr',true)"/>
-    <div class="field-msg neutral" id="plateSignupErr"></div>
-  </div>
-  <div class="note">Votre téléphone est utilisé uniquement pour la sécurité, il ne sera jamais visible des autres utilisateurs.</div>
 </div>
 
-<div class="field">
-  <label>Mot de passe</label>
-  <div class="input-wrap">
-    <input type="password" id="pwInput" placeholder="Mot de passe" autocomplete="current-password"/>
-    <button class="eye-btn" onclick="toggleEye('pwInput',this)">👁</button>
-  </div>
-  <div class="field-msg neutral" id="pwErr"></div>
-</div>
+<!-- ═══ AUTH ══════════════════════════════════════════ -->
 
-<div id="confirmPwWrap" class="hidden">
-  <div class="field">
-    <label>Confirmer le mot de passe</label>
-    <div class="input-wrap">
-      <input type="password" id="pwConfirm" placeholder="Confirme ton mot de passe" autocomplete="new-password"/>
-      <button class="eye-btn" onclick="toggleEye('pwConfirm',this)">👁</button>
+<div id="authScreen" class="screen">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title" id="authTitle">Connexion</div>
+      <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-top:5px">Min 8 caractères, 1 majuscule, 1 caractère spécial</div>
-    <div class="field-msg neutral" id="pwConfirmErr"></div>
+
+```
+<div class="tabs">
+  <button id="tabLogin" class="tab-btn active" onclick="setAuthMode('login')">Connexion</button>
+  <button id="tabSignup" class="tab-btn" onclick="setAuthMode('signup')">Inscription</button>
+</div>
+
+<div class="field">
+  <label class="field-label" for="emailInput">Email</label>
+  <input class="field-input" type="email" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
+  <div class="field-hint" id="emailHint"></div>
+</div>
+
+<div id="signupPhoneWrap" class="hidden">
+  <div class="field">
+    <label class="field-label" for="signupPhoneInput">Téléphone</label>
+    <input class="field-input" type="tel" id="signupPhoneInput" placeholder="0612345678" autocomplete="tel"/>
+    <div class="field-hint" id="signupPhoneHint"></div>
+  </div>
+  <div class="field">
+    <label class="field-label" for="signupPlateInput">Immatriculation</label>
+    <input class="field-input" type="text" id="signupPlateInput" placeholder="AB-123-CD" autocomplete="off"/>
+    <div class="field-hint" id="signupPlateHint"></div>
+  </div>
+  <div class="note-box">🔒 Votre téléphone est utilisé à des fins de sécurité uniquement. Il ne sera jamais visible par d'autres utilisateurs.</div>
+</div>
+
+<div class="field">
+  <label class="field-label" for="passwordInput">Mot de passe</label>
+  <div class="field-wrap">
+    <input class="field-input has-toggle" type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password"/>
+    <button class="field-toggle" type="button" onclick="togglePwd('passwordInput',this)" aria-label="Afficher/masquer">👁</button>
+  </div>
+  <div class="field-hint" id="passwordHint"></div>
+</div>
+
+<div id="confirmWrap" class="hidden">
+  <div class="field">
+    <label class="field-label" for="confirmInput">Confirmer le mot de passe</label>
+    <div class="field-wrap">
+      <input class="field-input has-toggle" type="password" id="confirmInput" placeholder="••••••••" autocomplete="new-password"/>
+      <button class="field-toggle" type="button" onclick="togglePwd('confirmInput',this)" aria-label="Afficher/masquer">👁</button>
+    </div>
+    <div class="field-hint info" id="confirmHint">Min. 8 caractères, 1 majuscule, 1 caractère spécial</div>
   </div>
 </div>
 
-<button class="btn btn-primary" id="authBtn" onclick="handleAuth()" style="margin-top:8px">Se connecter</button>
-<div class="link-row">
-  <button class="text-link" id="forgotBtn" onclick="forgotPw()">Mot de passe oublié ?</button>
-  <button class="text-link hidden" id="resendBtn" onclick="resendConfirm()">Renvoyer l'email de confirmation</button>
+<button id="authBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
+<button class="btn btn-ghost" style="margin-top:10px" onclick="backToWelcome()">← Retour</button>
+
+<div class="auth-links">
+  <button class="text-btn" id="forgotBtn" onclick="forgotPassword()">Mot de passe oublié ?</button>
+  <button class="text-btn hidden" id="resendBtn" onclick="resendConfirmation()">Renvoyer l'email de confirmation</button>
 </div>
+
 <div class="status-msg" id="authStatus"></div>
 ```
 
   </div>
 </div>
-</div>
 
-<!-- ══════════════ PROFILE ══════════════ -->
+<!-- ═══ PROFILE ═══════════════════════════════════════ -->
 
 <div id="profileScreen" class="screen">
-<div class="form-wrap">
-  <div class="form-card">
-    <div class="form-title">Compléter mon profil</div>
-    <div class="form-sub">Ces informations sont nécessaires avant d'accéder à la carte.</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Mon profil</div>
+      <div class="card-sub">Quelques infos avant d'accéder à la carte.</div>
+    </div>
 
 ```
 <div class="field">
-  <label>Pseudo</label>
-  <input type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname"/>
-  <div class="field-msg neutral" id="pseudoErr"></div>
+  <label class="field-label" for="pseudoInput">Pseudo</label>
+  <input class="field-input" type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname"/>
+  <div class="field-hint" id="pseudoHint"></div>
 </div>
 <div class="field">
-  <label>Immatriculation</label>
-  <input type="text" id="plateProfile" placeholder="AB-123-CD" autocomplete="off" oninput="fmtPlate(this)" onblur="valPlate('plateProfile','plateProfileErr',true)"/>
-  <div class="field-msg neutral" id="plateProfileErr"></div>
+  <label class="field-label" for="profilePlateInput">Immatriculation</label>
+  <input class="field-input" type="text" id="profilePlateInput" placeholder="AB-123-CD" autocomplete="off"/>
+  <div class="field-hint" id="profilePlateHint"></div>
 </div>
 <div class="field">
-  <label>Téléphone</label>
-  <input type="tel" id="phoneProfile" placeholder="0612345678" autocomplete="tel" oninput="fmtPhone(this)" onblur="valPhone('phoneProfile','phoneProfileErr',true)"/>
-  <div class="field-msg neutral" id="phoneProfileErr"></div>
+  <label class="field-label" for="profilePhoneInput">Téléphone</label>
+  <input class="field-input" type="tel" id="profilePhoneInput" placeholder="0612345678" autocomplete="tel"/>
+  <div class="field-hint" id="profilePhoneHint"></div>
 </div>
-<div class="note">Votre téléphone est utilisé uniquement pour la sécurité.</div>
-<button class="btn btn-primary" id="saveProfileBtn" onclick="saveProfile()" style="margin-top:16px">Enregistrer et accéder à la carte</button>
+<div class="note-box">🔒 Votre téléphone est utilisé à des fins de sécurité uniquement. Il ne sera jamais visible par d'autres utilisateurs.</div>
+
+<button id="saveProfileBtn" class="btn btn-primary" style="margin-top:20px" onclick="saveProfile()">Enregistrer et continuer →</button>
 <div class="status-msg" id="profileStatus"></div>
 ```
 
   </div>
 </div>
-</div>
 
-<!-- ══════════════ RESET PASSWORD ══════════════ -->
+<!-- ═══ RESET PASSWORD ════════════════════════════════ -->
 
 <div id="resetScreen" class="screen">
-<div class="form-wrap">
-  <div class="form-card">
-    <div class="form-title">Nouveau mot de passe</div>
-    <div class="form-sub">Choisis un nouveau mot de passe sécurisé.</div>
-    <div class="field">
-      <label>Nouveau mot de passe</label>
-      <div class="input-wrap">
-        <input type="password" id="newPwInput" placeholder="Nouveau mot de passe" autocomplete="new-password"/>
-        <button class="eye-btn" onclick="toggleEye('newPwInput',this)">👁</button>
-      </div>
-      <div class="field-msg neutral" id="newPwErr"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Nouveau mot de passe</div>
+      <div class="card-sub">Choisis un mot de passe sécurisé pour ton compte.</div>
     </div>
-    <div class="field">
-      <label>Confirmer</label>
-      <div class="input-wrap">
-        <input type="password" id="newPwConfirm" placeholder="Confirme le mot de passe" autocomplete="new-password"/>
-        <button class="eye-btn" onclick="toggleEye('newPwConfirm',this)">👁</button>
-      </div>
-      <div class="field-msg neutral" id="newPwConfirmErr"></div>
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Min 8 caractères, 1 majuscule, 1 caractère spécial</div>
-    <button class="btn btn-primary" id="updatePwBtn" onclick="updatePw()">Mettre à jour</button>
-    <div class="status-msg" id="resetStatus"></div>
+
+```
+<div class="field">
+  <label class="field-label" for="newPwdInput">Nouveau mot de passe</label>
+  <div class="field-wrap">
+    <input class="field-input has-toggle" type="password" id="newPwdInput" placeholder="••••••••" autocomplete="new-password"/>
+    <button class="field-toggle" type="button" onclick="togglePwd('newPwdInput',this)">👁</button>
   </div>
+  <div class="field-hint" id="newPwdHint"></div>
 </div>
+<div class="field">
+  <label class="field-label" for="confirmNewPwdInput">Confirmer</label>
+  <div class="field-wrap">
+    <input class="field-input has-toggle" type="password" id="confirmNewPwdInput" placeholder="••••••••" autocomplete="new-password"/>
+    <button class="field-toggle" type="button" onclick="togglePwd('confirmNewPwdInput',this)">👁</button>
+  </div>
+  <div class="field-hint info" id="confirmNewPwdHint">Min. 8 caractères, 1 majuscule, 1 caractère spécial</div>
 </div>
 
-<!-- ══════════════ MAP ══════════════ -->
+<button id="updatePwdBtn" class="btn btn-primary" onclick="updatePassword()">Mettre à jour</button>
+<div class="status-msg" id="resetStatus"></div>
+```
+
+  </div>
+</div>
+
+<!-- ═══ MAP ═══════════════════════════════════════════ -->
 
 <div id="mapScreen" class="screen">
-  <!-- TOP BAR -->
-  <div class="map-topbar">
-    <div class="map-header">
-      <div class="map-brand">Immat<em>Connect</em></div>
-      <div id="mapUserChip" class="map-user-chip">
-        <span id="mapPseudo" style="color:var(--text);font-size:13px"></span>
-        <span id="mapPlateBadge" class="map-plate-badge"></span>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-brand">Immat<span>Connect</span></div>
+      <div class="topbar-user">
+        <span class="topbar-plate" id="topbarPlate"></span>
+        <span id="topbarEmail"></span>
       </div>
     </div>
-
-```
-<!-- GPS STATUS -->
-<div id="gpsBar" class="gps-bar acquiring">
-  <div class="gps-dot anim"></div>
-  <span id="gpsBarText">Acquisition du GPS…</span>
-</div>
-
-<!-- ACTIONS -->
-<div class="map-actions">
-  <button class="btn btn-ghost btn-sm" id="parkBtn" onclick="toggleParked()">🅿️ Me garer</button>
-  <button class="btn btn-ghost btn-sm" id="loadUsersBtn" onclick="loadOtherUsers()">👥 Voir tous</button>
-  <button class="btn btn-danger btn-sm" onclick="doLogout()">↩ Déco</button>
-</div>
-
-<!-- PROXIMITY RADIUS -->
-<div class="radius-row">
-  <span class="radius-label">🎯 Proximité</span>
-  <input type="range" id="radiusSlider" min="500" max="10000" step="500" value="2000" oninput="updateRadius(this.value)"/>
-  <span class="radius-val" id="radiusVal">2 km</span>
-</div>
-```
-
+    <div class="topbar-actions">
+      <button id="locateBtn" class="action-btn action-btn-primary" onclick="locateUser()">📍 Me localiser</button>
+      <button id="loadUsersBtn" class="action-btn action-btn-ghost" onclick="loadOtherUsers()">👥 Autres conducteurs</button>
+      <button class="action-btn action-btn-ghost" onclick="logout()">⏻ Déconnexion</button>
+    </div>
   </div>
 
-  <!-- MAP -->
+  <!-- Map -->
 
   <div id="map"></div>
 
-  <!-- PANEL -->
+  <!-- Panel -->
 
   <div class="panel">
     <div class="panel-inner">
 
 ```
-  <!-- PANEL TABS -->
-  <div class="panel-tabs">
-    <button class="panel-tab active" id="tabSend" onclick="switchPanel('send')">
-      ✉️ Envoyer
-    </button>
-    <button class="panel-tab" id="tabConvs" onclick="switchPanel('convs')">
-      💬 Conversations
-      <span class="badge" id="convBadge">0</span>
-    </button>
+  <div class="section-title">📨 Contacter un véhicule</div>
+  <div class="compose-box">
+    <p class="compose-desc">Renseignez la plaque du véhicule que vous souhaitez contacter ou signaler. Ce n'est <strong>pas</strong> votre plaque.</p>
+
+    <div class="field">
+      <label class="field-label" for="targetPlateInput">Plaque du véhicule concerné</label>
+      <input class="field-input" type="text" id="targetPlateInput" placeholder="XY-456-ZT" autocomplete="off"/>
+      <div class="field-hint" id="targetPlateHint"></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="msgInput">Message</label>
+      <textarea class="field-input" id="msgInput" placeholder="Ex : Vos phares sont allumés / besoin de vous contacter…"></textarea>
+      <div class="field-hint" id="msgHint"></div>
+    </div>
+    <button id="sendBtn" class="btn btn-primary compose-btn" onclick="sendRequest()">Envoyer →</button>
+    <div class="request-status-row" id="requestStatus"></div>
   </div>
 
-  <!-- SEND PANEL -->
-  <div id="sendPanel">
-    <div class="send-form">
-      <h3>Contacter un véhicule</h3>
-      <p>Renseignez la plaque du véhicule concerné (pas la vôtre) pour lui envoyer un message.</p>
-
-      <div class="field">
-        <label>Plaque du véhicule concerné</label>
-        <input type="text" id="targetPlate" placeholder="XY-456-ZT" autocomplete="off"
-          oninput="fmtPlate(this);debouncePlateCheck(this.value)"
-          onblur="valPlate('targetPlate','targetPlateErr',true)"/>
-        <div class="plate-status" id="plateCheckStatus">
-          <div class="plate-dot idle" id="plateDot"></div>
-          <span id="plateCheckText" style="color:var(--muted);font-size:12px">Entrez une plaque pour vérifier</span>
-        </div>
-        <div class="field-msg neutral" id="targetPlateErr"></div>
-      </div>
-
-      <div class="field">
-        <label>Message / signalement <span id="draftBadge" class="draft-badge hidden">Brouillon sauvegardé</span></label>
-        <textarea id="msgInput" placeholder="Ex : Vos phares sont allumés / Véhicule gênant / Besoin de vous contacter"
-          oninput="saveDraft()"></textarea>
-        <div class="field-msg neutral" id="msgErr"></div>
-      </div>
-
-      <button class="btn btn-primary" id="sendBtn" onclick="sendRequest()">Envoyer le message</button>
-      <div class="req-status" id="reqStatus"></div>
+  <div class="chat-header-row">
+    <div class="section-title">
+      💬 Messages
+      <span class="badge" id="msgBadge">●</span>
     </div>
+    <button class="refresh-btn" onclick="loadMessages();hideBadge()">↻</button>
   </div>
 
-  <!-- CONVERSATIONS PANEL -->
-  <div id="convsPanel" class="hidden">
-    <div id="convListWrap">
-      <div id="convList"><div class="conv-empty">Aucune conversation pour le moment.</div></div>
-    </div>
-
-    <!-- CHAT VIEW (inside a conversation) -->
-    <div id="chatView">
-      <button class="chat-back" onclick="closeChatView()">← Toutes les conversations</button>
-      <div class="chat-header-plate" id="chatViewPlate"></div>
-      <div id="chatBox"></div>
-      <div class="chat-reply-row" id="chatReplyRow">
-        <textarea id="replyInput" placeholder="Votre réponse…" oninput="autoResize(this)"></textarea>
-        <button class="btn btn-primary btn-sm" id="replyBtn" onclick="sendReply()">↑</button>
-      </div>
-      <div class="req-status" id="replyStatus"></div>
-    </div>
+  <div id="chatBox">
+    <div class="chat-empty">Aucun message pour le moment.</div>
   </div>
 
 </div>
 ```
 
   </div>
-
-  <!-- SOS -->
-
-<button class="sos-btn" onclick="window.location.href='tel:112'" title="Appeler les secours (112)">🚨</button>
-
 </div>
 
-<!-- ══════════════ SCRIPT ══════════════ -->
+<!-- SOS floating button (only on map) -->
+
+<button class="sos-btn" id="sosBtn" onclick="callEmergency()" title="Appeler les secours (112)">🚨</button>
+
+<!-- Toast container -->
+
+<div class="toast" id="toastEl"></div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════════════════ -->
 
 <script>
-/* ─── CONSTANTS ─── */
+/* ──────────────────────────────────────────────────────
+   CONFIG
+   ────────────────────────────────────────────────────── */
 const SUPABASE_URL  = "https://vemgdkkbldgyvaisudkd.supabase.co";
 const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI";
 const SITE_URL      = "https://caisse43700-lgtm.github.io/Projet-immat-Connect/";
-const PLATE_RE      = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
-const PHONE_RE      = /^0\d{9}$/;
-const FRESHNESS_ACTIVE  = 3 * 60 * 1000;   // < 3 min  => green
-const FRESHNESS_RECENT  = 15 * 60 * 1000;  // < 15 min => orange
-const DRAFT_KEY     = "ic_draft";
 
-/* ─── SUPABASE CLIENT ─── */
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ─── STATE ─── */
-let authMode        = "login";
-let map             = null;
-let myMarker        = null;
-let proximityCircle = null;
-let otherMarkersMap = {};          // uid -> leaflet marker
-let watchId         = null;
-let isParked        = false;
-let lastPos         = null;        // {lat, lng, heading}
-let currentUserId   = null;
-let currentProfile  = null;
-let msgChannel      = null;
-let locChannel      = null;
-let authHandled     = false;       // single-fire lock
-let activeChatPlate = null;        // plate currently open in chatView
-let allMessages     = [];          // local cache – source of truth for UI
-let proximityRadius = 2000;        // metres
-let plateCheckTimer = null;
+/* ──────────────────────────────────────────────────────
+   STATE (centralised)
+   ────────────────────────────────────────────────────── */
+const state = {
+  userId: null,
+  sessionHandled: false,
+  authMode: "login",
+  selectedPlate: null,
+  map: null,
+  myMarker: null,
+  otherMarkers: [],
+  watchId: null,         // geolocation watchPosition id
+  loadingUsers: false,
+  msgChannel: null,
+  locChannel: null,
+};
 
-/* ─────────────────────────────────────────────
-   SCREEN ROUTER
-───────────────────────────────────────────── */
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+/* ──────────────────────────────────────────────────────
+   REGEX / VALIDATORS
+   ────────────────────────────────────────────────────── */
+const RE_PHONE = /^0\d{9}$/;
+const RE_PLATE = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
+
+const isValidPhone = v => RE_PHONE.test(String(v||'').trim());
+const isValidPlate = v => RE_PLATE.test(String(v||'').trim());
+const isStrongPwd  = v => v.length >= 8 && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v);
+
+function normPhone(v){ return String(v||'').replace(/\D/g,''); }
+function normPlate(v){ return String(v||'').trim().toUpperCase(); }
+
+function fmtPhone(v){
+  return String(v||'').replace(/\D/g,'').slice(0,10);
+}
+function fmtPlate(v){
+  const c = String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+  if(c.length<=2) return c;
+  if(c.length<=5) return c.slice(0,2)+'-'+c.slice(2);
+  return c.slice(0,2)+'-'+c.slice(2,5)+'-'+c.slice(5);
+}
+
+function escHtml(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+/* ──────────────────────────────────────────────────────
+   FIELD HELPERS
+   ────────────────────────────────────────────────────── */
+function hint(id, type, msg){
   const el = document.getElementById(id);
-  if (el) el.classList.add("active");
+  if(!el) return;
+  el.className = 'field-hint' + (type ? ' '+type : '');
+  el.textContent = msg || '';
 }
+function clearHints(...ids){ ids.forEach(id => hint(id,'',' ')); }
 
-/* ─────────────────────────────────────────────
-   UTILS
-───────────────────────────────────────────── */
-const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const normPlate = s => String(s||"").trim().toUpperCase();
-const normPhone = s => String(s||"").replace(/\D/g,"");
-const isValidPlate = s => PLATE_RE.test(normPlate(s));
-const isValidPhone = s => PHONE_RE.test(String(s||"").trim());
-const isStrongPw   = s => s.length >= 8 && /[A-Z]/.test(s) && /[^A-Za-z0-9]/.test(s);
-
-function fmtPlate(input) {
-  const raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
-  if (raw.length <= 2)      input.value = raw;
-  else if (raw.length <= 5) input.value = raw.slice(0,2)+"-"+raw.slice(2);
-  else                      input.value = raw.slice(0,2)+"-"+raw.slice(2,5)+"-"+raw.slice(5);
-}
-function fmtPhone(input) {
-  input.value = input.value.replace(/\D/g,"").slice(0,10);
-}
-
-function setFieldMsg(id, type, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = "field-msg " + (type||"neutral");
-  el.textContent = msg||"";
-}
-
-function valPlate(inputId, errId, required) {
-  const v = normPlate(document.getElementById(inputId)?.value||"");
-  if (!v) { setFieldMsg(errId,"neutral",""); return !required; }
-  if (isValidPlate(v)) { setFieldMsg(errId,"valid","✓ Format valide"); return true; }
-  setFieldMsg(errId,"error","Format attendu : AB-123-CD"); return false;
-}
-function valPhone(inputId, errId, required) {
-  const v = (document.getElementById(inputId)?.value||"").trim();
-  if (!v) { setFieldMsg(errId,"neutral",""); return !required; }
-  if (isValidPhone(v)) { setFieldMsg(errId,"valid","✓ Format valide"); return true; }
-  setFieldMsg(errId,"error","Format attendu : 0612345678"); return false;
-}
-
-function setStatus(id, msg, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = msg||"";
-  el.className = "status-msg" + (type ? " "+type : "");
-}
-function setReqStatus(msg, ok) {
-  const el = document.getElementById("reqStatus");
-  if (!el) return;
-  el.textContent = msg||"";
-  el.className = "req-status" + (ok==null ? "" : ok ? " ok" : " err");
-}
-function setReplyStatus(msg, ok) {
-  const el = document.getElementById("replyStatus");
-  if (!el) return;
-  el.textContent = msg||"";
-  el.className = "req-status" + (ok==null ? "" : ok ? " ok" : " err");
-}
-
-function setLoading(btnId, loading, idleLabel, loadingLabel) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.disabled = loading;
-  if (loading) {
-    btn.dataset.idle = btn.textContent;
-    btn.innerHTML = `<div class="spinner"></div> ${loadingLabel||"Chargement…"}`;
-  } else {
-    btn.innerHTML = idleLabel || btn.dataset.idle || "Envoyer";
-  }
-}
-
-function translateErr(msg) {
-  const m = (msg||"").toLowerCase();
-  if (m.includes("invalid login credentials")) return "Email ou mot de passe incorrect.";
-  if (m.includes("email not confirmed"))       return "Email non confirmé. Vérifie ta boîte mail.";
-  if (m.includes("user already registered"))   return "Un compte existe déjà avec cet email.";
-  if (m.includes("rate limit"))                return "Trop de tentatives. Réessaie dans un moment.";
-  if (m.includes("same password"))             return "Le nouveau mot de passe doit être différent.";
-  if (m.includes("invalid email"))             return "Adresse email invalide.";
-  return "Une erreur est survenue. Vérifie tes informations et réessaie.";
-}
-
-function toast(msg, type="info", duration=3000) {
-  document.querySelectorAll(".toast").forEach(t => t.remove());
-  const t = document.createElement("div");
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), duration);
-}
-
-function autoResize(el) {
-  el.style.height = "auto";
-  el.style.height = Math.min(el.scrollHeight, 120) + "px";
-}
-
-/* ─── DRAFT ─── */
-function saveDraft() {
-  const v = document.getElementById("msgInput")?.value||"";
-  if (v.trim()) {
-    localStorage.setItem(DRAFT_KEY, v);
-    document.getElementById("draftBadge")?.classList.remove("hidden");
-  } else {
-    localStorage.removeItem(DRAFT_KEY);
-    document.getElementById("draftBadge")?.classList.add("hidden");
-  }
-}
-function loadDraft() {
-  const v = localStorage.getItem(DRAFT_KEY);
-  if (v) {
-    const el = document.getElementById("msgInput");
-    if (el) el.value = v;
-    document.getElementById("draftBadge")?.classList.remove("hidden");
-  }
-}
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
-  document.getElementById("draftBadge")?.classList.add("hidden");
-  const el = document.getElementById("msgInput");
-  if (el) el.value = "";
-}
-
-/* ─────────────────────────────────────────────
-   AUTH
-───────────────────────────────────────────── */
-function goToAuth(mode) { setMode(mode); showScreen("authScreen"); }
-
-function setMode(mode) {
-  authMode = mode;
-  const isS = mode === "signup";
-  document.getElementById("authTitle").textContent = isS ? "Créer un compte" : "Connexion";
-  document.getElementById("authSub").textContent   = isS
-    ? "Crée ton compte avec email, téléphone, immatriculation et un mot de passe sécurisé."
-    : "Connecte-toi avec ton email et ton mot de passe.";
-  document.getElementById("authBtn").textContent   = isS ? "Créer mon compte" : "Se connecter";
-  document.getElementById("tabSignup").classList.toggle("active", isS);
-  document.getElementById("tabLogin").classList.toggle("active", !isS);
-  document.getElementById("signupExtra").classList.toggle("hidden", !isS);
-  document.getElementById("confirmPwWrap").classList.toggle("hidden", !isS);
-  document.getElementById("resendBtn").classList.toggle("hidden", !isS);
-  // clear states
-  ["emailErr","phoneSignupErr","plateSignupErr","pwErr","pwConfirmErr"].forEach(id => setFieldMsg(id,"neutral",""));
-  setStatus("authStatus","");
-}
-
-function toggleEye(inputId, btn) {
+function fieldState(inputId, valid){
   const el = document.getElementById(inputId);
-  if (!el) return;
-  const show = el.type === "password";
-  el.type = show ? "text" : "password";
-  btn.textContent = show ? "🙈" : "👁";
+  if(!el) return;
+  el.classList.toggle('is-valid', valid===true);
+  el.classList.toggle('is-error', valid===false);
 }
 
-async function handleAuth() {
-  ["emailErr","phoneSignupErr","plateSignupErr","pwErr","pwConfirmErr"].forEach(id => setFieldMsg(id,"neutral",""));
-  setStatus("authStatus","");
-  const email = document.getElementById("emailInput").value.trim();
-  const pw    = document.getElementById("pwInput").value;
-  if (!email) { setFieldMsg("emailErr","error","Saisis ton email."); return; }
-  if (!pw)    { setFieldMsg("pwErr","error","Saisis ton mot de passe."); return; }
-  setLoading("authBtn", true, null, authMode==="signup" ? "Création…" : "Connexion…");
-  try {
-    if (authMode === "signup") await doSignup(email, pw);
-    else                       await doLogin(email, pw);
-  } catch(e) {
+function showStatus(id, msg, type){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg || '';
+  el.className = 'status-msg' + (type ? ' '+type : '') + (msg ? ' visible' : '');
+}
+function clearStatus(id){ showStatus(id,''); }
+
+/* ──────────────────────────────────────────────────────
+   TOAST
+   ────────────────────────────────────────────────────── */
+let toastTimer = null;
+function toast(msg, type=''){
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.className = 'toast' + (type ? ' is-'+type : '');
+  requestAnimationFrame(()=>{ el.classList.add('show'); });
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+}
+
+/* ──────────────────────────────────────────────────────
+   LOADING STATE
+   ────────────────────────────────────────────────────── */
+function setLoading(btnId, loading, idleLabel, loadLabel='Chargement…'){
+  const btn = document.getElementById(btnId);
+  if(!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? loadLabel : idleLabel;
+}
+
+/* ──────────────────────────────────────────────────────
+   ERROR TRANSLATION
+   ────────────────────────────────────────────────────── */
+function xlErr(msg){
+  const m = (msg||'').toLowerCase();
+  if(m.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if(m.includes('email not confirmed'))       return "Email non confirmé. Vérifie ta boîte mail.";
+  if(m.includes('user already registered'))   return 'Un compte existe déjà avec cet email.';
+  if(m.includes('rate limit'))               return 'Trop de tentatives. Attends un moment.';
+  if(m.includes('password should'))          return 'Le mot de passe ne respecte pas les critères.';
+  if(m.includes('same password'))            return 'Le nouveau mot de passe doit être différent.';
+  if(m.includes('network')||m.includes('fetch')) return 'Problème réseau. Vérifie ta connexion.';
+  return 'Une erreur est survenue. Réessaie.';
+}
+
+/* ──────────────────────────────────────────────────────
+   SCREEN NAVIGATION
+   ────────────────────────────────────────────────────── */
+const ALL_SCREENS = ['welcomeScreen','authScreen','profileScreen','resetScreen','mapScreen'];
+
+function showScreen(id){
+  ALL_SCREENS.forEach(s=>{
+    const el = document.getElementById(s);
+    if(el) el.classList.remove('active');
+  });
+  const target = document.getElementById(id);
+  if(target) target.classList.add('active');
+  document.getElementById('sosBtn').classList.toggle('visible', id==='mapScreen');
+}
+
+/* ──────────────────────────────────────────────────────
+   TOGGLE PASSWORD
+   ────────────────────────────────────────────────────── */
+function togglePwd(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const show = inp.type==='password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+}
+
+/* ──────────────────────────────────────────────────────
+   WELCOME
+   ────────────────────────────────────────────────────── */
+function goToAuth(mode){
+  setAuthMode(mode);
+  showScreen('authScreen');
+}
+
+function backToWelcome(){
+  showScreen('welcomeScreen');
+  clearStatus('authStatus');
+}
+
+/* ──────────────────────────────────────────────────────
+   AUTH MODE
+   ────────────────────────────────────────────────────── */
+function setAuthMode(mode){
+  state.authMode = mode==='signup' ? 'signup' : 'login';
+  const isSU = state.authMode==='signup';
+
+  document.getElementById('authTitle').textContent = isSU ? 'Créer un compte' : 'Connexion';
+  document.getElementById('authSub').textContent   = isSU
+    ? 'Crée ton compte avec email, téléphone, plaque et mot de passe sécurisé.'
+    : 'Connecte-toi avec ton email et ton mot de passe.';
+  document.getElementById('authBtn').textContent   = isSU ? 'Créer mon compte' : 'Se connecter';
+  document.getElementById('tabSignup').classList.toggle('active', isSU);
+  document.getElementById('tabLogin').classList.toggle('active', !isSU);
+  document.getElementById('signupPhoneWrap').classList.toggle('hidden', !isSU);
+  document.getElementById('confirmWrap').classList.toggle('hidden', !isSU);
+  document.getElementById('resendBtn').classList.toggle('hidden', !isSU);
+
+  clearStatus('authStatus');
+  clearHints('emailHint','signupPhoneHint','signupPlateHint','passwordHint','confirmHint');
+  ['emailInput','signupPhoneInput','signupPlateInput','passwordInput','confirmInput'].forEach(id=>{
+    fieldState(id, undefined);
+    const el = document.getElementById(id);
+    if(el) el.value='';
+  });
+}
+
+/* ──────────────────────────────────────────────────────
+   REALTIME FIELD VALIDATION
+   ────────────────────────────────────────────────────── */
+function bindValidation(){
+  // Phone fields
+  [['signupPhoneInput','signupPhoneHint'],['profilePhoneInput','profilePhoneHint']].forEach(([iId,hId])=>{
+    const el = document.getElementById(iId);
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      el.value = fmtPhone(el.value);
+      const v = el.value.trim();
+      if(!v){ fieldState(iId); hint(hId,'',''); return; }
+      const ok = isValidPhone(v);
+      fieldState(iId, ok);
+      hint(hId, ok?'success':'error', ok?'Format valide ✓':'Format attendu : 0612345678');
+    });
+  });
+
+  // Plate fields
+  [['signupPlateInput','signupPlateHint'],['profilePlateInput','profilePlateHint'],['targetPlateInput','targetPlateHint']].forEach(([iId,hId])=>{
+    const el = document.getElementById(iId);
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      el.value = fmtPlate(el.value);
+      const v = el.value.trim();
+      if(!v){ fieldState(iId); hint(hId,'',''); return; }
+      const ok = isValidPlate(v);
+      fieldState(iId, ok);
+      hint(hId, ok?'success':'error', ok?'Format valide ✓':'Format attendu : AB-123-CD');
+    });
+  });
+}
+
+/* ──────────────────────────────────────────────────────
+   HANDLE AUTH (dispatcher)
+   ────────────────────────────────────────────────────── */
+async function handleAuth(){
+  clearStatus('authStatus');
+  clearHints('emailHint','signupPhoneHint','signupPlateHint','passwordHint','confirmHint');
+
+  const email = document.getElementById('emailInput').value.trim();
+  const pwd   = document.getElementById('passwordInput').value;
+
+  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
+  if(!pwd)  { hint('passwordHint','error','Entre ton mot de passe.'); return; }
+
+  const idle = state.authMode==='signup' ? 'Créer mon compte' : 'Se connecter';
+  setLoading('authBtn', true, idle);
+
+  try{
+    if(state.authMode==='signup') await doSignup(email, pwd);
+    else                          await doLogin(email, pwd);
+  }catch(e){
     console.error(e);
-    setStatus("authStatus","Erreur inattendue. Réessaie.","error");
-  } finally {
-    setLoading("authBtn", false, authMode==="signup" ? "Créer mon compte" : "Se connecter");
+    showStatus('authStatus','Erreur inattendue. Réessaie.','error');
+  }finally{
+    setLoading('authBtn', false, idle);
   }
 }
 
-async function doSignup(email, pw) {
-  const phone  = document.getElementById("phoneSignup").value.trim();
-  const plate  = document.getElementById("plateSignup").value.trim();
-  const cpw    = document.getElementById("pwConfirm").value;
+/* ──────────────────────────────────────────────────────
+   SIGNUP
+   ────────────────────────────────────────────────────── */
+async function doSignup(email, pwd){
+  const phoneRaw = document.getElementById('signupPhoneInput').value.trim();
+  const plateRaw = document.getElementById('signupPlateInput').value.trim();
+  const confirm  = document.getElementById('confirmInput').value;
+
   let err = false;
-  if (!phone || !valPhone("phoneSignup","phoneSignupErr",true)) err = true;
-  if (!plate || !valPlate("plateSignup","plateSignupErr",true)) err = true;
-  if (!isStrongPw(pw)) { setFieldMsg("pwErr","error","8 car., 1 majuscule, 1 spécial minimum."); err = true; }
-  if (!cpw)            { setFieldMsg("pwConfirmErr","error","Confirme ton mot de passe."); err = true; }
-  else if (pw !== cpw) { setFieldMsg("pwConfirmErr","error","Les mots de passe ne correspondent pas."); err = true; }
-  if (err) return;
 
-  const nPlate = normPlate(plate);
-  const nPhone = normPhone(phone);
+  if(!phoneRaw){ hint('signupPhoneHint','error','Requis.'); err=true; }
+  else if(!isValidPhone(phoneRaw)){ hint('signupPhoneHint','error','Format : 0612345678'); err=true; }
 
-  const { data, error } = await sb.auth.signUp({ email, password: pw, options: { emailRedirectTo: SITE_URL }});
-  if (error) { setStatus("authStatus", translateErr(error.message), "error"); return; }
+  if(!plateRaw){ hint('signupPlateHint','error','Requis.'); err=true; }
+  else if(!isValidPlate(normPlate(plateRaw))){ hint('signupPlateHint','error','Format : AB-123-CD'); err=true; }
+
+  if(!isStrongPwd(pwd)){ hint('passwordHint','error','Min. 8 car., 1 maj., 1 spécial.'); err=true; }
+
+  if(!confirm)            { hint('confirmHint','error','Confirme ton mot de passe.'); err=true; }
+  else if(pwd!==confirm)  { hint('confirmHint','error','Les mots de passe ne correspondent pas.'); err=true; }
+
+  if(err) return;
+
+  const phone = normPhone(phoneRaw);
+  const plate = normPlate(plateRaw);
+
+  const { data, error } = await sb.auth.signUp({
+    email, password: pwd,
+    options:{ emailRedirectTo: SITE_URL }
+  });
+
+  if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
 
   const user = data?.user;
-  if (user) {
-    const { error: pe } = await sb.from("profiles").upsert({
-      id: user.id, email, pseudo: email.split("@")[0], owner_plate: nPlate, phone: nPhone
+  if(user){
+    await sb.from('profiles').upsert({
+      id: user.id,
+      email,
+      pseudo: email.split('@')[0],
+      owner_plate: plate,
+      phone
     });
-    if (pe) console.error("Profile upsert:", pe);
   }
-  setStatus("authStatus","Compte créé ! Vérifie ton email puis connecte-toi.","success");
+
+  showStatus('authStatus','✅ Compte créé ! Vérifie ton email puis connecte-toi.','success');
 }
 
-async function doLogin(email, pw) {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
-  if (error) { setStatus("authStatus", translateErr(error.message), "error"); return; }
-  currentUserId = data.user.id;
-  authHandled = true;
-  await afterAuth();
+/* ──────────────────────────────────────────────────────
+   LOGIN
+   ────────────────────────────────────────────────────── */
+async function doLogin(email, pwd){
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+
+  if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
+
+  state.userId = data?.user?.id;
+  state.sessionHandled = true;
+  showStatus('authStatus','Connexion réussie…','success');
+  await continueAfterAuth();
 }
 
-async function forgotPw() {
-  setStatus("authStatus","");
-  const email = document.getElementById("emailInput").value.trim();
-  if (!email) { setFieldMsg("emailErr","error","Saisis ton email."); return; }
-  setLoading("forgotBtn", true, null, "Envoi…");
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
-  setLoading("forgotBtn", false, "Mot de passe oublié ?");
-  if (error) { setStatus("authStatus", translateErr(error.message), "error"); return; }
-  setStatus("authStatus","Email de réinitialisation envoyé. Clique sur le lien reçu.","success");
+/* ──────────────────────────────────────────────────────
+   RESEND / FORGOT
+   ────────────────────────────────────────────────────── */
+async function resendConfirmation(){
+  const email = document.getElementById('emailInput').value.trim();
+  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
+  setLoading('resendBtn', true, 'Renvoyer l\'email de confirmation');
+  try{
+    const { error } = await sb.auth.resend({ type:'signup', email, options:{ emailRedirectTo: SITE_URL } });
+    if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
+    showStatus('authStatus','Email de confirmation renvoyé.','success');
+  }finally{
+    setLoading('resendBtn', false, 'Renvoyer l\'email de confirmation');
+  }
 }
 
-async function resendConfirm() {
-  setStatus("authStatus","");
-  const email = document.getElementById("emailInput").value.trim();
-  if (!email) { setFieldMsg("emailErr","error","Saisis ton email."); return; }
-  setLoading("resendBtn", true, null, "Envoi…");
-  const { error } = await sb.auth.resend({ type:"signup", email, options: { emailRedirectTo: SITE_URL }});
-  setLoading("resendBtn", false, "Renvoyer l'email de confirmation");
-  if (error) { setStatus("authStatus", translateErr(error.message), "error"); return; }
-  setStatus("authStatus","Email renvoyé !","success");
+async function forgotPassword(){
+  const email = document.getElementById('emailInput').value.trim();
+  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
+  setLoading('forgotBtn', true, 'Mot de passe oublié ?');
+  try{
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
+    if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
+    showStatus('authStatus','Email de réinitialisation envoyé. Consulte ta boîte mail.','success');
+  }finally{
+    setLoading('forgotBtn', false, 'Mot de passe oublié ?');
+  }
 }
 
-async function updatePw() {
-  ["newPwErr","newPwConfirmErr"].forEach(id => setFieldMsg(id,"neutral",""));
-  setStatus("resetStatus","");
-  const pw  = document.getElementById("newPwInput").value;
-  const cpw = document.getElementById("newPwConfirm").value;
+/* ──────────────────────────────────────────────────────
+   UPDATE PASSWORD (reset screen)
+   ────────────────────────────────────────────────────── */
+async function updatePassword(){
+  clearHints('newPwdHint','confirmNewPwdHint');
+  clearStatus('resetStatus');
+
+  const pwd     = document.getElementById('newPwdInput').value;
+  const confirm = document.getElementById('confirmNewPwdInput').value;
   let err = false;
-  if (!isStrongPw(pw))  { setFieldMsg("newPwErr","error","8 car., 1 majuscule, 1 spécial."); err=true; }
-  if (pw !== cpw)       { setFieldMsg("newPwConfirmErr","error","Les mots de passe ne correspondent pas."); err=true; }
-  if (err) return;
-  setLoading("updatePwBtn", true, null, "Mise à jour…");
-  const { error } = await sb.auth.updateUser({ password: pw });
-  setLoading("updatePwBtn", false, "Mettre à jour");
-  if (error) { setStatus("resetStatus", translateErr(error.message), "error"); return; }
-  setStatus("resetStatus","Mot de passe mis à jour !","success");
-  setTimeout(() => { authHandled = true; afterAuth(); }, 1200);
-}
 
-/* ─────────────────────────────────────────────
-   SESSION CONTINUITY
-───────────────────────────────────────────── */
-async function afterAuth() {
-  const { data: { user }, error } = await sb.auth.getUser();
-  if (error || !user) { showScreen("authScreen"); return; }
-  currentUserId = user.id;
+  if(!isStrongPwd(pwd)){ hint('newPwdHint','error','Min. 8 car., 1 maj., 1 spécial.'); err=true; }
+  if(!confirm)          { hint('confirmNewPwdHint','error','Confirme le mot de passe.'); err=true; }
+  else if(pwd!==confirm){ hint('confirmNewPwdHint','error','Les mots de passe ne correspondent pas.'); err=true; }
+  if(err) return;
 
-  const { data: profile } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  if (profile && profile.owner_plate && profile.phone) {
-    currentProfile = profile;
-    openMap();
-  } else {
-    // pre-fill from pending signup data
-    const pp = localStorage.getItem("ic_pending_phone") || "";
-    const pl = localStorage.getItem("ic_pending_plate") || "";
-    if (pp) { const el = document.getElementById("phoneProfile"); if(el && !el.value) el.value=pp; }
-    if (pl) { const el = document.getElementById("plateProfile"); if(el && !el.value) el.value=pl; }
-    showScreen("profileScreen");
+  setLoading('updatePwdBtn', true, 'Mettre à jour');
+  try{
+    const { error } = await sb.auth.updateUser({ password: pwd });
+    if(error){ showStatus('resetStatus', xlErr(error.message), 'error'); return; }
+    showStatus('resetStatus','✅ Mot de passe mis à jour !','success');
+    setTimeout(async()=>{ state.sessionHandled=true; await continueAfterAuth(); }, 1400);
+  }finally{
+    setLoading('updatePwdBtn', false, 'Mettre à jour');
   }
 }
 
-async function saveProfile() {
-  ["pseudoErr","plateProfileErr","phoneProfileErr"].forEach(id => setFieldMsg(id,"neutral",""));
-  setStatus("profileStatus","");
-  const pseudo = document.getElementById("pseudoInput").value.trim();
-  const plate  = document.getElementById("plateProfile").value.trim();
-  const phone  = document.getElementById("phoneProfile").value.trim();
+/* ──────────────────────────────────────────────────────
+   CONTINUE AFTER AUTH
+   ────────────────────────────────────────────────────── */
+async function continueAfterAuth(){
+  const { data: ud, error: ue } = await sb.auth.getUser();
+  if(ue || !ud?.user){ showStatus('authStatus','Session introuvable. Reconnecte-toi.','error'); showScreen('authScreen'); return; }
+
+  const user = ud.user;
+  state.userId = user.id;
+
+  const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if(pe){ console.error(pe); showScreen('profileScreen'); return; }
+
+  if(profile) openMap(profile, user.email);
+  else showScreen('profileScreen');
+}
+
+/* ──────────────────────────────────────────────────────
+   SAVE PROFILE
+   ────────────────────────────────────────────────────── */
+async function saveProfile(){
+  clearHints('pseudoHint','profilePlateHint','profilePhoneHint');
+  clearStatus('profileStatus');
+
+  const pseudo    = document.getElementById('pseudoInput').value.trim();
+  const plateRaw  = document.getElementById('profilePlateInput').value.trim();
+  const phoneRaw  = document.getElementById('profilePhoneInput').value.trim();
+
   let err = false;
-  if (!pseudo)                              { setFieldMsg("pseudoErr","error","Ajoute un pseudo."); err=true; }
-  if (!plate || !valPlate("plateProfile","plateProfileErr",true)) err=true;
-  if (!phone || !valPhone("phoneProfile","phoneProfileErr",true)) err=true;
-  if (err) return;
+  if(!pseudo)            { hint('pseudoHint','error','Requis.'); err=true; }
+  if(!plateRaw)          { hint('profilePlateHint','error','Requis.'); err=true; }
+  else if(!isValidPlate(normPlate(plateRaw))){ hint('profilePlateHint','error','Format : AB-123-CD'); err=true; }
+  if(!phoneRaw)          { hint('profilePhoneHint','error','Requis.'); err=true; }
+  else if(!isValidPhone(phoneRaw)){ hint('profilePhoneHint','error','Format : 0612345678'); err=true; }
+  if(err) return;
 
-  setLoading("saveProfileBtn", true, null, "Enregistrement…");
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) { setStatus("profileStatus","Session introuvable. Reconnecte-toi.","error"); setLoading("saveProfileBtn",false,"Enregistrer et accéder à la carte"); return; }
-  currentUserId = user.id;
-  const nPlate = normPlate(plate);
-  const nPhone = normPhone(phone);
-  const { error } = await sb.from("profiles").upsert({ id: user.id, email: user.email, pseudo, owner_plate: nPlate, phone: nPhone });
-  setLoading("saveProfileBtn", false, "Enregistrer et accéder à la carte");
-  if (error) { setStatus("profileStatus","Impossible d'enregistrer. Réessaie.","error"); return; }
-  localStorage.removeItem("ic_pending_phone");
-  localStorage.removeItem("ic_pending_plate");
-  currentProfile = { id: user.id, email: user.email, pseudo, owner_plate: nPlate, phone: nPhone };
-  openMap();
-}
+  setLoading('saveProfileBtn', true, 'Enregistrer et continuer →');
+  try{
+    const { data: ud } = await sb.auth.getUser();
+    const user = ud?.user;
+    if(!user){ showStatus('profileStatus','Session introuvable.','error'); return; }
+    state.userId = user.id;
 
-/* ─────────────────────────────────────────────
-   MAP INITIALIZATION
-───────────────────────────────────────────── */
-function openMap() {
-  showScreen("mapScreen");
-  // Update header chips
-  document.getElementById("mapPseudo").textContent   = currentProfile?.pseudo || "";
-  document.getElementById("mapPlateBadge").textContent = normPlate(currentProfile?.owner_plate || "");
+    const plate = normPlate(plateRaw);
+    const phone = normPhone(phoneRaw);
 
-  if (!map) {
-    map = L.map("map", { zoomControl: true }).setView([46.603354, 1.888334], 6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap", maxZoom: 19
-    }).addTo(map);
-  } else {
-    setTimeout(() => map.invalidateSize(), 300);
+    const { error } = await sb.from('profiles').upsert({ id:user.id, email:user.email, pseudo, owner_plate:plate, phone });
+    if(error){ console.error(error); showStatus('profileStatus','Erreur lors de l\'enregistrement.','error'); return; }
+
+    openMap({ email:user.email, pseudo, owner_plate:plate }, user.email);
+  }finally{
+    setLoading('saveProfileBtn', false, 'Enregistrer et continuer →');
   }
-
-  initRadiusSlider();
-  startGPS();          // ← AUTO GPS dès l'ouverture
-  loadOtherUsers();
-  subscribeLocations();
-  subscribeMessages();
-  loadAllMessages();
-  loadDraft();
 }
 
-/* ─────────────────────────────────────────────
-   GPS – AUTOMATIC & CONTINUOUS
-───────────────────────────────────────────── */
-function setGpsBar(state, text) {
-  const bar = document.getElementById("gpsBar");
-  const dot = bar?.querySelector(".gps-dot");
-  const txt = document.getElementById("gpsBarText");
-  if (!bar) return;
-  bar.className = "gps-bar " + state;
-  if (dot) dot.className = "gps-dot" + (state==="acquiring" ? " anim" : "");
-  if (txt) txt.textContent = text;
+/* ──────────────────────────────────────────────────────
+   OPEN MAP
+   ────────────────────────────────────────────────────── */
+function openMap(profile, email){
+  showScreen('mapScreen');
+
+  // Topbar info
+  document.getElementById('topbarPlate').textContent  = profile?.owner_plate || '';
+  document.getElementById('topbarEmail').textContent  = profile?.pseudo || email || '';
+
+  // Init map
+  setTimeout(()=>{
+    initMap();
+    state.map.invalidateSize();
+  }, 200);
+
+  startMessages();
+  subscribeToLocations();
 }
 
-function startGPS() {
-  if (!navigator.geolocation) {
-    setGpsBar("error","GPS non disponible sur cet appareil.");
-    return;
-  }
-  setGpsBar("acquiring","Acquisition du GPS…");
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+/* ──────────────────────────────────────────────────────
+   MAP INIT
+   ────────────────────────────────────────────────────── */
+function initMap(){
+  if(state.map) return;
+  state.map = L.map('map', { zoomControl:true }).setView([46.6,1.9], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap'
+  }).addTo(state.map);
+}
 
-  watchId = navigator.geolocation.watchPosition(
-    pos => onGpsSuccess(pos),
-    err => onGpsError(err),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+/* ──────────────────────────────────────────────────────
+   LOCATE USER (watchPosition for continuous updates)
+   ────────────────────────────────────────────────────── */
+async function locateUser(){
+  if(!navigator.geolocation){ toast('Géolocalisation non disponible.','error'); return; }
+
+  document.getElementById('locateBtn').disabled = true;
+  document.getElementById('locateBtn').textContent = '⌛ Localisation…';
+  initMap();
+
+  // Stop previous watch
+  if(state.watchId !== null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
+
+  state.watchId = navigator.geolocation.watchPosition(
+    async pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      // Re-enable button on first fix
+      document.getElementById('locateBtn').disabled = false;
+      document.getElementById('locateBtn').textContent = '📍 Me localiser';
+
+      state.map.flyTo([lat,lng], 16, { duration:0.8 });
+
+      if(state.myMarker) state.map.removeLayer(state.myMarker);
+      state.myMarker = L.marker([lat,lng]).addTo(state.map).bindPopup('Tu es ici').openPopup();
+
+      const { data:ud } = await sb.auth.getUser();
+      const user = ud?.user;
+      if(!user) return;
+      state.userId = user.id;
+
+      const { error } = await sb.from('user_locations').upsert({
+        id: user.id,
+        user_name: user.email,
+        latitude: lat,
+        longitude: lng,
+        updated_at: new Date().toISOString()
+      });
+      if(error) console.error('Location upsert:', error);
+    },
+    err => {
+      document.getElementById('locateBtn').disabled = false;
+      document.getElementById('locateBtn').textContent = '📍 Me localiser';
+      const msgs = { 1:'Tu as refusé la localisation.', 2:'Position introuvable.', 3:'Délai dépassé.' };
+      toast(msgs[err.code] || 'Erreur de localisation.','error');
+    },
+    { enableHighAccuracy:true, timeout:15000, maximumAge:5000 }
   );
 }
 
-async function onGpsSuccess(pos) {
-  const { latitude: lat, longitude: lng, heading } = pos.coords;
-  const prevLat = lastPos?.lat, prevLng = lastPos?.lng;
-  lastPos = { lat, lng, heading };
+/* ──────────────────────────────────────────────────────
+   LOAD OTHER USERS (single merged query)
+   ────────────────────────────────────────────────────── */
+async function loadOtherUsers(){
+  if(state.loadingUsers) return;
+  state.loadingUsers = true;
+  document.getElementById('loadUsersBtn').disabled = true;
+  document.getElementById('loadUsersBtn').textContent = '⌛ Chargement…';
+  initMap();
 
-  // Update or create MY marker
-  if (!myMarker) {
-    myMarker = L.marker([lat, lng], { icon: buildMyIcon() }).addTo(map);
-    map.flyTo([lat, lng], 15, { duration: 1 });
-  } else {
-    myMarker.setLatLng([lat, lng]);
-  }
+  // Clear old markers
+  state.otherMarkers.forEach(m => state.map.removeLayer(m));
+  state.otherMarkers = [];
 
-  // Update proximity circle
-  updateProximityCircle(lat, lng);
+  try{
+    const { data:ud } = await sb.auth.getUser();
+    const me = ud?.user;
+    if(me) state.userId = me.id;
 
-  // Compute bearing if we have two points
-  let bear = heading;
-  if (!bear && prevLat != null) bear = computeBearing(prevLat, prevLng, lat, lng);
-  if (bear != null) rotateMyMarker(bear);
+    // Merged query via foreign key relationship
+    let q = sb.from('user_locations').select('id, latitude, longitude, profiles(pseudo, owner_plate)');
+    if(me) q = q.neq('id', me.id);
 
-  if (isParked) return;  // Don't spam DB when parked
+    const { data: locs, error } = await q;
+    if(error){ console.error(error); toast('Erreur chargement conducteurs.','error'); return; }
 
-  setGpsBar("active", `Position active · ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    if(!locs?.length){ toast('Aucun autre conducteur localisé.'); return; }
 
-  // Save to Supabase (throttle: only if moved > 10 metres)
-  if (prevLat == null || haversine(prevLat, prevLng, lat, lng) > 10) {
-    await pushMyLocation(lat, lng);
-  }
-}
-
-function onGpsError(err) {
-  const msgs = { 1:"Localisation refusée. Active-la dans les paramètres.", 2:"Position introuvable.", 3:"Délai de localisation dépassé." };
-  setGpsBar("error", msgs[err.code] || "Erreur GPS.");
-}
-
-async function pushMyLocation(lat, lng) {
-  if (!currentUserId) return;
-  const { error } = await sb.from("user_locations").upsert({
-    id: currentUserId,
-    user_name: currentProfile?.email || "",
-    latitude: lat,
-    longitude: lng,
-    updated_at: new Date().toISOString()
-  });
-  if (error) console.error("pushMyLocation:", error);
-}
-
-/* ─────────────────────────────────────────────
-   PARKED MODE
-───────────────────────────────────────────── */
-function toggleParked() {
-  isParked = !isParked;
-  const btn = document.getElementById("parkBtn");
-  if (isParked) {
-    setGpsBar("parked","Mode garé — position fixe, batterie préservée");
-    if (btn) btn.textContent = "🚗 Reprendre";
-    // Push one last position
-    if (lastPos) pushMyLocation(lastPos.lat, lastPos.lng);
-  } else {
-    if (btn) btn.textContent = "🅿️ Me garer";
-    setGpsBar("acquiring","Reprise du GPS…");
-  }
-}
-
-/* ─────────────────────────────────────────────
-   MY MARKER ICON
-───────────────────────────────────────────── */
-function buildMyIcon() {
-  return L.divIcon({
-    html: `<div style="position:relative;width:20px;height:20px">
-      <div style="position:absolute;inset:0;border-radius:50%;border:2px solid #1ee8d4;opacity:.5;animation:gps-ring 2s ease-out infinite"></div>
-      <div style="width:20px;height:20px;border-radius:50%;background:#1ee8d4;border:3px solid #fff;box-shadow:0 0 10px rgba(30,232,212,0.6)"></div>
-    </div>`,
-    className: "", iconSize: [20, 20], iconAnchor: [10, 10]
-  });
-}
-function rotateMyMarker(bearing) {
-  if (!myMarker) return;
-  const el = myMarker.getElement();
-  if (el) el.style.transform = (el.style.transform||"").replace(/rotate\([^)]*\)/,"") + ` rotate(${bearing}deg)`;
-}
-
-/* ─────────────────────────────────────────────
-   PROXIMITY CIRCLE & RADIUS SLIDER
-───────────────────────────────────────────── */
-function initRadiusSlider() {
-  const slider = document.getElementById("radiusSlider");
-  if (!slider) return;
-  updateRadius(slider.value);
-}
-
-function updateRadius(val) {
-  proximityRadius = parseInt(val);
-  const km = proximityRadius >= 1000 ? (proximityRadius/1000).toFixed(proximityRadius%1000===0?0:1)+" km" : proximityRadius+" m";
-  const el = document.getElementById("radiusVal");
-  if (el) el.textContent = km;
-  // Update slider gradient
-  const slider = document.getElementById("radiusSlider");
-  if (slider) {
-    const pct = ((val - slider.min) / (slider.max - slider.min) * 100).toFixed(1);
-    slider.style.setProperty("--pct", pct+"%");
-  }
-  if (lastPos) updateProximityCircle(lastPos.lat, lastPos.lng);
-}
-
-function updateProximityCircle(lat, lng) {
-  if (!map) return;
-  if (proximityCircle) map.removeLayer(proximityCircle);
-  proximityCircle = L.circle([lat, lng], {
-    radius: proximityRadius,
-    color: "#1ee8d4", weight: 1.5,
-    fillColor: "#1ee8d4", fillOpacity: 0.05,
-    dashArray: "5,5"
-  }).addTo(map);
-}
-
-/* ─────────────────────────────────────────────
-   OTHER USERS – DIFF-BASED MARKERS
-───────────────────────────────────────────── */
-function freshnessInfo(updatedAt) {
-  const age = Date.now() - new Date(updatedAt).getTime();
-  if (age < FRESHNESS_ACTIVE) return { color:"#34d399", css:"popup-fresh-green", label:"Actif maintenant" };
-  if (age < FRESHNESS_RECENT) return { color:"#fbbf24", css:"popup-fresh-orange", label:`Vu il y a ${Math.round(age/60000)} min` };
-  const mins = Math.round(age/60000);
-  const label = mins < 60 ? `Vu il y a ${mins} min` : `Vu il y a ${Math.round(mins/60)}h`;
-  return { color:"#f87171", css:"popup-fresh-red", label };
-}
-
-function buildOtherIcon(color, bearing) {
-  const arrow = bearing != null
-    ? `<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(${bearing}deg);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid ${color}"></div>` : "";
-  return L.divIcon({
-    html: `<div style="position:relative;width:18px;height:18px">${arrow}
-      <div style="width:18px;height:18px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>
-    </div>`,
-    className: "", iconSize: [18, 18], iconAnchor: [9, 9]
-  });
-}
-
-async function loadOtherUsers() {
-  if (!map || !currentUserId) return;
-  const btn = document.getElementById("loadUsersBtn");
-  if (btn) btn.disabled = true;
-
-  try {
-    const { data: locs, error: le } = await sb.from("user_locations").select("*").neq("id", currentUserId);
-    if (le || !locs?.length) { if(btn) btn.disabled=false; return; }
-
-    const ids = locs.map(l => l.id);
-    const { data: profiles } = await sb.from("profiles").select("id,pseudo,owner_plate").in("id", ids);
-    const profileMap = {};
-    (profiles||[]).forEach(p => { profileMap[p.id] = p; });
-
-    const freshUids = new Set(locs.map(l => l.id));
-
-    // Remove stale markers
-    Object.keys(otherMarkersMap).forEach(uid => {
-      if (!freshUids.has(uid)) { map.removeLayer(otherMarkersMap[uid]); delete otherMarkersMap[uid]; }
-    });
-
-    // Add / update markers
     locs.forEach(loc => {
-      const lat = parseFloat(loc.latitude), lng = parseFloat(loc.longitude);
-      if (!isFinite(lat) || !isFinite(lng)) return;
-      const prof = profileMap[loc.id] || {};
-      const pseudo = prof.pseudo || "Utilisateur";
-      const plate  = normPlate(prof.owner_plate || "");
-      const fresh  = freshnessInfo(loc.updated_at);
+      const lat = Number(loc.latitude);
+      const lng = Number(loc.longitude);
+      if(!isFinite(lat)||!isFinite(lng)) return;
 
-      const icon = buildOtherIcon(fresh.color, null);
+      const profile = loc.profiles;
+      const pseudo  = profile?.pseudo || 'Conducteur';
+      const plate   = profile?.owner_plate ? normPlate(profile.owner_plate) : '';
 
-      if (otherMarkersMap[loc.id]) {
-        otherMarkersMap[loc.id].setLatLng([lat, lng]);
-        otherMarkersMap[loc.id].setIcon(icon);
-      } else {
-        const m = L.marker([lat, lng], { icon }).addTo(map);
-        m.bindPopup(buildPopupHtml(pseudo, plate, fresh, loc.id), { maxWidth: 220 });
-        m.on("popupopen", () => {
-          const btn = m.getPopup().getElement()?.querySelector(".popup-contact");
-          if (btn) btn.onclick = () => { selectVehicle(plate); m.closePopup(); };
-        });
-        otherMarkersMap[loc.id] = m;
-      }
+      const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:#00e5c0;border:3px solid rgba(0,229,192,0.4);box-shadow:0 0 10px rgba(0,229,192,0.6)"></div>`,
+        iconSize:[14,14], iconAnchor:[7,7], className:''
+      });
+
+      const marker = L.marker([lat,lng],{ icon }).addTo(state.map);
+
+      marker.bindPopup(`
+        <div class="popup-plate">${escHtml(plate)}</div>
+        <div class="popup-pseudo">${escHtml(pseudo)}</div>
+        <button class="popup-contact" data-plate="${escHtml(plate)}">Contacter ce véhicule</button>
+      `);
+
+      marker.on('popupopen', ()=>{
+        const popupEl = marker.getPopup().getElement();
+        if(!popupEl) return;
+        const btn = popupEl.querySelector('.popup-contact');
+        if(!btn) return;
+        btn.onclick = ()=>{ selectVehicle(btn.dataset.plate); marker.closePopup(); };
+      });
+
+      state.otherMarkers.push(marker);
     });
-  } finally {
-    if (btn) btn.disabled = false;
+
+    toast(`${locs.length} conducteur${locs.length>1?'s':''} affiché${locs.length>1?'s':''}.`,'success');
+  }finally{
+    state.loadingUsers = false;
+    document.getElementById('loadUsersBtn').disabled = false;
+    document.getElementById('loadUsersBtn').textContent = '👥 Autres conducteurs';
   }
 }
 
-function buildPopupHtml(pseudo, plate, fresh, uid) {
-  return `<div class="popup-plate">${esc(plate)}</div>
-    <div class="popup-pseudo">${esc(pseudo)}</div>
-    <div class="popup-freshness ${fresh.css}">⬤ ${fresh.label}</div>
-    <button class="popup-contact">💬 Contacter ce véhicule</button>`;
-}
-
-function selectVehicle(plate) {
+/* ──────────────────────────────────────────────────────
+   SELECT VEHICLE (from map popup)
+   ────────────────────────────────────────────────────── */
+function selectVehicle(plate){
   const p = normPlate(plate);
-  if (!p) return;
-  const el = document.getElementById("targetPlate");
-  if (el) { el.value = p; fmtPlate(el); valPlate("targetPlate","targetPlateErr",true); debouncePlateCheck(p); }
-  switchPanel("send");
-  setReqStatus(`Véhicule sélectionné : ${p}`, true);
-  document.getElementById("msgInput")?.focus();
+  if(!p) return;
+  state.selectedPlate = p;
+  const inp = document.getElementById('targetPlateInput');
+  inp.value = p;
+  fieldState('targetPlateInput', true);
+  hint('targetPlateHint','success','Véhicule sélectionné ✓');
+  document.getElementById('msgInput').focus();
+
+  // Scroll to compose panel
+  document.querySelector('.panel').scrollTo({ top:0, behavior:'smooth' });
 }
 
-/* ─────────────────────────────────────────────
-   REALTIME – LOCATIONS
-───────────────────────────────────────────── */
-function subscribeLocations() {
-  if (locChannel) { sb.removeChannel(locChannel); locChannel = null; }
-  locChannel = sb.channel("ic_locs")
-    .on("postgres_changes", { event:"*", schema:"public", table:"user_locations" }, () => {
-      if (document.getElementById("mapScreen").classList.contains("active")) loadOtherUsers();
-    }).subscribe();
-}
+/* ──────────────────────────────────────────────────────
+   SEND REQUEST
+   ────────────────────────────────────────────────────── */
+async function sendRequest(){
+  clearHints('targetPlateHint','msgHint');
+  setRequestStatus('');
 
-/* ─────────────────────────────────────────────
-   PLATE LIVE CHECK (innovation)
-───────────────────────────────────────────── */
-function debouncePlateCheck(raw) {
-  clearTimeout(plateCheckTimer);
-  const plate = normPlate(raw);
-  if (!isValidPlate(plate)) {
-    setPlateCheckUI("idle","Entrez une plaque valide pour vérifier","");
-    return;
-  }
-  setPlateCheckUI("checking","Vérification en cours…","");
-  plateCheckTimer = setTimeout(() => checkPlateExists(plate), 600);
-}
+  const plateRaw = document.getElementById('targetPlateInput').value.trim();
+  const msg      = document.getElementById('msgInput').value.trim();
 
-function setPlateCheckUI(state, text, extra) {
-  const dot  = document.getElementById("plateDot");
-  const txt  = document.getElementById("plateCheckText");
-  if (!dot || !txt) return;
-  dot.className = "plate-dot " + state;
-  txt.textContent = text + (extra ? " — " + extra : "");
-  txt.style.color = state==="found" ? "var(--success)" : state==="notfound" ? "var(--danger)" : state==="checking" ? "var(--warn)" : "var(--muted)";
-}
-
-async function checkPlateExists(plate) {
-  // Don't check your own plate
-  if (plate === normPlate(currentProfile?.owner_plate||"")) {
-    setPlateCheckUI("notfound","C'est votre propre plaque","");
-    return;
-  }
-  const { data, error } = await sb.from("profiles").select("id,pseudo").eq("owner_plate", plate).maybeSingle();
-  if (error) { setPlateCheckUI("idle","Erreur de vérification",""); return; }
-  if (data)  setPlateCheckUI("found",  `✓ Utilisateur enregistré sur ImmatConnect`, data.pseudo ? `${data.pseudo}` : "");
-  else       setPlateCheckUI("notfound","✗ Plaque non enregistrée","ce conducteur n'est pas encore membre");
-}
-
-/* ─────────────────────────────────────────────
-   MESSAGING
-───────────────────────────────────────────── */
-async function sendRequest() {
-  ["targetPlateErr","msgErr"].forEach(id => setFieldMsg(id,"neutral",""));
-  setReqStatus("");
-  const plate = normPlate(document.getElementById("targetPlate").value);
-  const msg   = document.getElementById("msgInput").value.trim();
   let err = false;
-  if (!plate || !valPlate("targetPlate","targetPlateErr",true))        err = true;
-  if (!msg)    { setFieldMsg("msgErr","error","Ajoute un message."); err = true; }
-  if (err) return;
+  if(!plateRaw)               { hint('targetPlateHint','error','Requis.'); err=true; }
+  else if(!isValidPlate(normPlate(plateRaw))){ hint('targetPlateHint','error','Format : AB-123-CD'); err=true; }
+  if(!msg)                    { hint('msgHint','error','Ajoute un message.'); err=true; }
+  if(err) return;
 
-  setLoading("sendBtn", true, null, "Envoi…");
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) { setReqStatus("Tu dois être connecté."); return; }
+  const plate = normPlate(plateRaw);
+  setLoading('sendBtn', true, 'Envoyer →', 'Envoi…');
 
-    if (plate === normPlate(currentProfile?.owner_plate||"")) {
-      setReqStatus("Tu ne peux pas t'écrire à toi-même.", false);
-      return;
-    }
+  try{
+    const { data:ud } = await sb.auth.getUser();
+    const user = ud?.user;
+    if(!user){ setRequestStatus('Tu dois être connecté.','err'); return; }
+    state.userId = user.id;
 
-    const { data: target, error: te } = await sb.from("profiles").select("id").eq("owner_plate", plate).maybeSingle();
-    if (te || !target) { setReqStatus("Aucun utilisateur trouvé avec cette plaque.", false); return; }
+    // Find target user
+    const { data:target, error:te } = await sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
+    if(te || !target?.id){ setRequestStatus('Aucun utilisateur trouvé avec cette plaque.','err'); return; }
+    if(target.id === user.id){ setRequestStatus('Tu ne peux pas t\'envoyer un message à toi-même.','err'); return; }
 
-    // Check for existing accepted conversation
-    const { data: existing } = await sb.from("messages").select("status")
-      .eq("target_plate", plate)
+    state.selectedPlate = plate;
+
+    // Check existing conversation
+    const { data: existing } = await sb.from('messages').select('status')
+      .eq('target_plate', plate)
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${target.id}),and(sender_id.eq.${target.id},receiver_id.eq.${user.id})`);
 
-    const hasAccepted = (existing||[]).some(m => m.status === "accepted");
+    const hasAccepted = (existing||[]).some(m=>m.status==='accepted');
+    const hasPending  = (existing||[]).some(m=>m.status==='pending');
 
-    const { error: ie } = await sb.from("messages").insert({
-      sender_id: user.id, receiver_id: target.id,
-      target_plate: plate, message: msg,
-      status: hasAccepted ? "accepted" : "pending"
+    if(hasPending && !hasAccepted){ setRequestStatus('Demande déjà envoyée, en attente.','ok'); await loadMessages(); return; }
+
+    const { error } = await sb.from('messages').insert({
+      sender_id: user.id,
+      receiver_id: target.id,
+      target_plate: plate,
+      message: msg,
+      status: hasAccepted ? 'accepted' : 'pending'
     });
 
-    if (ie) { setReqStatus("Erreur lors de l'envoi.", false); return; }
+    if(error){ console.error(error); setRequestStatus('Erreur lors de l\'envoi.','err'); return; }
 
-    clearDraft();
-    setReqStatus(hasAccepted ? "Message envoyé ✓" : "Demande envoyée — en attente d'acceptation.", true);
-    await loadAllMessages();
-  } finally {
-    setLoading("sendBtn", false, "Envoyer le message");
+    document.getElementById('msgInput').value = '';
+    clearHints('msgHint');
+    setRequestStatus(hasAccepted ? '✅ Message envoyé' : '⏳ Demande envoyée, en attente d\'acceptation','ok');
+    await loadMessages();
+  }finally{
+    setLoading('sendBtn', false, 'Envoyer →');
   }
 }
 
-async function sendReply() {
-  if (!activeChatPlate) return;
-  const txt = document.getElementById("replyInput").value.trim();
-  if (!txt) return;
-  setLoading("replyBtn", true, null, "↑");
-  setReplyStatus("");
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    // Find the other party for this conversation
-    const conv = allMessages.find(m => normPlate(m.target_plate) === activeChatPlate);
-    if (!conv) { setReplyStatus("Conversation introuvable.", false); return; }
-    const otherId = conv.sender_id === user.id ? conv.receiver_id : conv.sender_id;
-
-    const { error } = await sb.from("messages").insert({
-      sender_id: user.id, receiver_id: otherId,
-      target_plate: activeChatPlate, message: txt, status: "accepted"
-    });
-    if (error) { setReplyStatus("Erreur lors de l'envoi.", false); return; }
-    document.getElementById("replyInput").value = "";
-    await loadAllMessages();
-    renderChatView(activeChatPlate);
-  } finally {
-    setLoading("replyBtn", false, "↑");
-  }
+function setRequestStatus(msg, type=''){
+  const el = document.getElementById('requestStatus');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'request-status-row' + (type ? ' '+type : '');
 }
 
-/* ─── LOAD ALL MESSAGES (single fetch, local cache) ─── */
-async function loadAllMessages() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  const { data, error } = await sb.from("messages").select("*")
+/* ──────────────────────────────────────────────────────
+   MESSAGES
+   ────────────────────────────────────────────────────── */
+async function startMessages(){
+  await loadMessages();
+  await subscribeToMessages();
+}
+
+async function loadMessages(){
+  const box = document.getElementById('chatBox');
+  if(!box) return;
+
+  const { data:ud } = await sb.auth.getUser();
+  const user = ud?.user;
+  if(!user){ box.innerHTML='<div class="chat-empty">Connecte-toi pour voir les messages.</div>'; return; }
+  state.userId = user.id;
+
+  let q = sb.from('messages').select('*')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .neq("status","rejected")
-    .order("created_at", { ascending: true })
-    .limit(200);
-  if (error) { console.error("loadAllMessages:", error); return; }
-  allMessages = data || [];
-  renderConvList();
-  if (activeChatPlate) renderChatView(activeChatPlate);
-  updateConvBadge();
-}
+    .neq('status','rejected')
+    .order('created_at',{ ascending:true })
+    .limit(100);
 
-/* ─── CONVERSATIONS LIST ─── */
-function getConversations() {
-  const convMap = {};
-  allMessages.forEach(m => {
-    const plate = normPlate(m.target_plate);
-    if (!convMap[plate]) convMap[plate] = [];
-    convMap[plate].push(m);
-  });
-  return convMap;
-}
+  if(state.selectedPlate) q = q.eq('target_plate', state.selectedPlate);
 
-function renderConvList() {
-  const convMap = getConversations();
-  const plates  = Object.keys(convMap);
-  const list    = document.getElementById("convList");
-  if (!list) return;
-  if (!plates.length) {
-    list.innerHTML = '<div class="conv-empty">Aucune conversation pour le moment.</div>';
-    return;
-  }
-  list.innerHTML = plates.map(plate => {
-    const msgs = convMap[plate];
-    const last = msgs[msgs.length-1];
-    const unread = msgs.some(m => m.status==="pending" && m.receiver_id===currentUserId);
-    const timeStr = last.created_at ? new Date(last.created_at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
-    return `<div class="conv-item${activeChatPlate===plate ? " active-conv" : ""}" onclick="openChatView('${esc(plate)}')">
-      <div class="conv-plate-badge">${esc(plate)}</div>
-      <div class="conv-info">
-        <div class="conv-last">${esc(last.message||"")}</div>
-        <div class="conv-time">${timeStr}</div>
-      </div>
-      ${unread ? '<div class="conv-unread"></div>' : ''}
-    </div>`;
-  }).join("");
-}
+  const { data, error } = await q;
+  if(error){ console.error(error); box.innerHTML='<div class="chat-empty">Erreur de chargement.</div>'; return; }
+  if(!data?.length){ box.innerHTML='<div class="chat-empty">Aucun message pour le moment.</div>'; return; }
 
-function updateConvBadge() {
-  const unread = allMessages.filter(m => m.status==="pending" && m.receiver_id===currentUserId).length;
-  const badge  = document.getElementById("convBadge");
-  if (!badge) return;
-  if (unread > 0) { badge.textContent = unread; badge.classList.add("show"); }
-  else            { badge.textContent = "0"; badge.classList.remove("show"); }
-}
-
-/* ─── CHAT VIEW ─── */
-function openChatView(plate) {
-  activeChatPlate = plate;
-  document.getElementById("convListWrap").classList.add("hidden");
-  const cv = document.getElementById("chatView");
-  cv.style.display = "flex";
-  document.getElementById("chatViewPlate").textContent = plate;
-  renderChatView(plate);
-}
-
-function closeChatView() {
-  activeChatPlate = null;
-  document.getElementById("convListWrap").classList.remove("hidden");
-  const cv = document.getElementById("chatView");
-  cv.style.display = "none";
-  renderConvList();
-}
-
-function renderChatView(plate) {
-  const box = document.getElementById("chatBox");
-  if (!box) return;
-  const msgs = allMessages.filter(m => normPlate(m.target_plate) === plate);
-  if (!msgs.length) { box.innerHTML = '<div class="chat-empty">Aucun message.</div>'; return; }
-  box.innerHTML = msgs.map(m => buildMsgHtml(m)).join("");
+  box.innerHTML = data.map(m => buildMsgHtml(m, user.id)).join('');
   box.scrollTop = box.scrollHeight;
 }
 
-function buildMsgHtml(msg) {
-  const isSent  = msg.sender_id === currentUserId;
-  const isPending = msg.status === "pending";
-  const timeStr = msg.created_at
-    ? new Date(msg.created_at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
-  const label = isSent
-    ? (isPending ? "⏳ En attente d'acceptation" : "✓ Envoyé")
-    : (isPending ? "📩 Demande reçue" : "Reçu");
+function buildMsgHtml(msg, myId){
+  const isSent = msg.sender_id === myId;
+  const status = msg.status || 'accepted';
+  const plate  = escHtml(msg.target_plate || '');
+  const text   = escHtml(msg.message || '');
+  const time   = msg.created_at
+    ? new Date(msg.created_at).toLocaleString('fr-FR',{ day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+    : '';
 
-  let actions = "";
-  if (!isSent && isPending && msg.receiver_id === currentUserId) {
+  let label = '';
+  if(isSent){
+    if(status==='pending') label = '⏳ En attente d\'acceptation';
+    else label = '📤 Message envoyé → '+plate;
+  } else {
+    if(status==='pending') label = '📩 Demande de contact';
+    else label = '🚗 Message reçu';
+  }
+
+  let actions = '';
+  if(!isSent && msg.receiver_id===myId && status==='pending'){
     actions = `<div class="msg-actions">
-      <button class="btn-accept" onclick="acceptMsg('${esc(msg.id)}','${esc(normPlate(msg.target_plate))}','${esc(msg.sender_id)}')">✅ Accepter</button>
-      <button class="btn-reject" onclick="rejectMsg('${esc(msg.id)}')">❌ Refuser</button>
+      <button class="msg-action-btn accept" onclick="acceptRequest('${escHtml(msg.id)}')">✅ Accepter</button>
+      <button class="msg-action-btn reject" onclick="rejectRequest('${escHtml(msg.id)}')">❌ Refuser</button>
     </div>`;
   }
-  return `<div class="chat-msg ${isSent?"sent":"received"}">
-    <div class="msg-label">${esc(label)}</div>
-    <div class="msg-text">${esc(msg.message||"")}</div>
+
+  return `<div class="msg ${isSent?'sent':'received'}">
+    <div class="msg-label">${label}</div>
+    <div class="msg-text"><b>${plate}</b> — ${text}</div>
     ${actions}
-    <div class="msg-time">${timeStr}</div>
+    <div class="msg-time">${time}</div>
   </div>`;
 }
 
-async function acceptMsg(id, plate, senderId) {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  // Update status
-  await sb.from("messages").update({ status:"accepted" }).eq("id", id).eq("receiver_id", user.id);
-  // Send acceptance reply
-  await sb.from("messages").insert({
-    sender_id: user.id, receiver_id: senderId,
-    target_plate: plate, message: "Votre demande de contact a été acceptée.", status: "accepted"
-  });
-  toast("Demande acceptée ✓");
-  activeChatPlate = plate;
-  await loadAllMessages();
-  openChatView(plate);
+async function acceptRequest(id){
+  try{
+    const { data:ud } = await sb.auth.getUser();
+    const user = ud?.user; if(!user) return;
+
+    const { data:m, error:se } = await sb.from('messages').select('*').eq('id',id).eq('receiver_id',user.id).maybeSingle();
+    if(se||!m){ console.error(se); return; }
+
+    await sb.from('messages').update({ status:'accepted' }).eq('id',id).eq('receiver_id',user.id);
+    await sb.from('messages').insert({
+      sender_id:user.id, receiver_id:m.sender_id,
+      target_plate:m.target_plate,
+      message:'Votre demande de contact a été acceptée.',
+      status:'accepted'
+    });
+
+    state.selectedPlate = normPlate(m.target_plate);
+    document.getElementById('targetPlateInput').value = state.selectedPlate;
+    setRequestStatus('✅ Demande acceptée','ok');
+    await loadMessages();
+  }catch(e){ console.error(e); }
 }
 
-async function rejectMsg(id) {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  await sb.from("messages").update({ status:"rejected" }).eq("id", id).eq("receiver_id", user.id);
-  toast("Demande refusée.");
-  await loadAllMessages();
+async function rejectRequest(id){
+  try{
+    const { data:ud } = await sb.auth.getUser();
+    const user = ud?.user; if(!user) return;
+    await sb.from('messages').update({ status:'rejected' }).eq('id',id).eq('receiver_id',user.id);
+    setRequestStatus('Demande refusée.');
+    await loadMessages();
+  }catch(e){ console.error(e); }
 }
 
-/* ─── REALTIME MESSAGES ─── */
-function subscribeMessages() {
-  if (msgChannel) { sb.removeChannel(msgChannel); msgChannel = null; }
-  msgChannel = sb.channel(`ic_msgs_${currentUserId}`)
-    .on("postgres_changes",
-      { event:"INSERT", schema:"public", table:"messages", filter:`receiver_id=eq.${currentUserId}` },
-      async payload => {
-        const msg = payload.new;
-        if (!msg) return;
-        if (msg.status === "pending") {
-          toast("📩 Nouvelle demande de contact !", "info");
-          playBeep();
-        } else if (msg.status === "accepted" && (msg.message||"").includes("acceptée")) {
-          toast("✅ Demande acceptée !", "info");
+/* ──────────────────────────────────────────────────────
+   REALTIME SUBSCRIPTIONS
+   ────────────────────────────────────────────────────── */
+async function subscribeToMessages(){
+  const { data:ud } = await sb.auth.getUser();
+  const user = ud?.user; if(!user) return;
+  state.userId = user.id;
+
+  if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
+
+  state.msgChannel = sb.channel('ic_msgs_'+user.id)
+    .on('postgres_changes',{ event:'*', schema:'public', table:'messages' }, payload=>{
+      const msg = payload.new || payload.old;
+      if(!msg) return;
+      if(msg.sender_id!==user.id && msg.receiver_id!==user.id) return;
+
+      if(payload.eventType==='INSERT' && msg.receiver_id===user.id){
+        if(msg.status==='pending'){
+          toast('📩 Nouvelle demande de contact !','success');
+          showBadge();
+        } else if(msg.message?.includes('acceptée')){
+          toast('✅ Ta demande a été acceptée !','success');
         }
-        await loadAllMessages();
+        if(!state.selectedPlate && msg.target_plate){
+          state.selectedPlate = normPlate(msg.target_plate);
+          document.getElementById('targetPlateInput').value = state.selectedPlate;
+        }
       }
-    ).subscribe();
+      loadMessages();
+    })
+    .subscribe();
 }
 
-/* ─── PANEL SWITCH ─── */
-function switchPanel(panel) {
-  const isConvs = panel === "convs";
-  document.getElementById("sendPanel").classList.toggle("hidden", isConvs);
-  document.getElementById("convsPanel").classList.toggle("hidden", !isConvs);
-  document.getElementById("tabSend").classList.toggle("active", !isConvs);
-  document.getElementById("tabConvs").classList.toggle("active", isConvs);
-  if (isConvs) renderConvList();
+async function subscribeToLocations(){
+  if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
+
+  state.locChannel = sb.channel('ic_locs')
+    .on('postgres_changes',{ event:'*', schema:'public', table:'user_locations' }, ()=>{
+      if(document.getElementById('mapScreen').classList.contains('active')) loadOtherUsers();
+    })
+    .subscribe();
 }
 
-/* ─────────────────────────────────────────────
-   BEARING & HAVERSINE
-───────────────────────────────────────────── */
-function computeBearing(lat1, lng1, lat2, lng2) {
-  const toR = d => d * Math.PI / 180;
-  const dLng = toR(lng2 - lng1);
-  const la1  = toR(lat1), la2 = toR(lat2);
-  const y = Math.sin(dLng) * Math.cos(la2);
-  const x = Math.cos(la1)*Math.sin(la2) - Math.sin(la1)*Math.cos(la2)*Math.cos(dLng);
-  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
-}
-function haversine(lat1, lng1, lat2, lng2) {
-  const R = 6371000, toR = d => d*Math.PI/180;
-  const dLat = toR(lat2-lat1), dLng = toR(lng2-lng1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
+/* ──────────────────────────────────────────────────────
+   BADGE
+   ────────────────────────────────────────────────────── */
+function showBadge(){ document.getElementById('msgBadge').classList.add('visible'); }
+function hideBadge(){ document.getElementById('msgBadge').classList.remove('visible'); }
 
-/* ─────────────────────────────────────────────
-   NOTIFICATION SOUND
-───────────────────────────────────────────── */
-function playBeep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 880; osc.type = "sine";
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.start(); osc.stop(ctx.currentTime + 0.4);
-  } catch(e) {}
-}
-
-/* ─────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────
    LOGOUT
-───────────────────────────────────────────── */
-async function doLogout() {
-  if (!confirm("Se déconnecter ?")) return;
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-  if (msgChannel) { sb.removeChannel(msgChannel); msgChannel = null; }
-  if (locChannel) { sb.removeChannel(locChannel); locChannel = null; }
-  otherMarkersMap = {};
-  allMessages = [];
-  currentUserId = null;
-  currentProfile = null;
-  authHandled = false;
-  activeChatPlate = null;
+   ────────────────────────────────────────────────────── */
+async function logout(){
+  if(!confirm('Veux-tu vraiment te déconnecter ?')) return;
+
+  if(state.watchId!==null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
+  if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
+  if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
+
   await sb.auth.signOut();
-  showScreen("welcomeScreen");
+  state.userId=null; state.sessionHandled=false; state.selectedPlate=null;
+  location.href = SITE_URL;
 }
 
-/* ─────────────────────────────────────────────
-   SUPABASE AUTH STATE
-───────────────────────────────────────────── */
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === "PASSWORD_RECOVERY") {
-    authHandled = false;
-    showScreen("resetScreen");
+/* ──────────────────────────────────────────────────────
+   EMERGENCY
+   ────────────────────────────────────────────────────── */
+function callEmergency(){
+  if(confirm('Appeler le 112 (secours) ?')) window.location.href='tel:112';
+}
+
+/* ──────────────────────────────────────────────────────
+   SESSION BOOTSTRAP
+   ────────────────────────────────────────────────────── */
+function isRecoveryUrl(){
+  const s = (window.location.hash||'')+(window.location.search||'');
+  return s.toLowerCase().includes('type=recovery');
+}
+
+async function boot(){
+  if(isRecoveryUrl()){ showScreen('resetScreen'); return; }
+
+  const { data:sd } = await sb.auth.getSession();
+  const session = sd?.session;
+  if(!session){ showScreen('welcomeScreen'); return; }
+
+  state.userId = session.user.id;
+  state.sessionHandled = true;
+  await continueAfterAuth();
+}
+
+/* ──────────────────────────────────────────────────────
+   AUTH STATE CHANGE LISTENER
+   ────────────────────────────────────────────────────── */
+sb.auth.onAuthStateChange(async(event, session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    state.sessionHandled=false;
+    state.userId = session?.user?.id||null;
+    showScreen('resetScreen');
     return;
   }
-  if (event === "SIGNED_IN" && !authHandled && session) {
-    authHandled = true;
-    currentUserId = session.user.id;
-    await afterAuth();
+  if(event==='SIGNED_IN' && !state.sessionHandled && session){
+    state.userId = session.user.id;
+    state.sessionHandled = true;
+    await continueAfterAuth();
     return;
   }
-  if (event === "SIGNED_OUT") {
-    authHandled = false;
-    currentUserId = null;
-    showScreen("welcomeScreen");
+  if(event==='SIGNED_OUT'){
+    state.sessionHandled=false; state.userId=null; state.selectedPlate=null;
+    if(state.watchId!==null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
+    if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
+    if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
+    showScreen('welcomeScreen');
   }
 });
 
-/* ─────────────────────────────────────────────
-   BOOT
-───────────────────────────────────────────── */
-(async function boot() {
-  // Password recovery flow
-  const hash = (window.location.hash + window.location.search).toLowerCase();
-  if (hash.includes("type=recovery")) { showScreen("resetScreen"); return; }
-
-  // Restore session
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    authHandled = true;
-    currentUserId = session.user.id;
-    await afterAuth();
-  } else {
-    showScreen("welcomeScreen");
-  }
-})();
+/* ──────────────────────────────────────────────────────
+   INIT
+   ────────────────────────────────────────────────────── */
+bindValidation();
+boot();
 </script>
 
 </body>
