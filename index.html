@@ -521,9 +521,10 @@ const App={
   },
 
   async _login(email,pwd){
+    S.sessionDone=true;
     const{data,error}=await sb.auth.signInWithPassword({email,password:pwd});
-    if(error){setSt('authSt',xlErr(error.message),'err');return;}
-    S.uid=data?.user?.id;S.sessionDone=true;
+    if(error){S.sessionDone=false;setSt('authSt',xlErr(error.message),'err');return;}
+    S.uid=data?.user?.id;
     setSt('authSt','Connexion réussie…','ok');
     await App._afterAuth();
   },
@@ -946,8 +947,12 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 if(event===‘PASSWORD_RECOVERY’){
 S.sessionDone=false;S.uid=session?.user?.id||null;show(‘sr’);return;
 }
-if(event===‘SIGNED_IN’&&!S.sessionDone&&session){
-S.uid=session.user.id;S.sessionDone=true;await App._afterAuth();return;
+// SIGNED_IN: seulement si on n’est pas déjà en train de traiter
+// (évite le double appel quand _login() appelle déjà _afterAuth)
+if(event===‘SIGNED_IN’&&session){
+if(S.sessionDone)return; // déjà géré par _login ou boot
+S.uid=session.user.id;S.sessionDone=true;
+await App._afterAuth();return;
 }
 if(event===‘SIGNED_OUT’){
 S.sessionDone=false;S.uid=null;S.selPlate=null;
