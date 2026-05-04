@@ -491,12 +491,17 @@ const App={
     if(!email){hint('hEmail','err','Requis.');return;}
     if(!pwd){hint('hPwd','err','Requis.');return;}
     const idle=S.mode==='signup'?'Créer mon compte':'Se connecter';
-    sBtn('authBtn',true,idle);
+    const btn=document.getElementById('authBtn');
+    btn.disabled=true;btn.textContent=idle==='Se connecter'?'Connexion…':'Création…';
     try{
-      if(S.mode==='signup')await App._signup(email,pwd);
+      if(S.mode==='signup') await App._signup(email,pwd);
       else await App._login(email,pwd);
-    }catch(e){console.error(e);setSt('authSt','Erreur inattendue. Réessaie.','err');}
-    finally{sBtn('authBtn',false,idle);}
+    }catch(e){
+      console.error(e);
+      setSt('authSt','Erreur inattendue : '+String(e?.message||''),'err');
+    }finally{
+      btn.disabled=false;btn.textContent=idle;
+    }
   },
 
   async _signup(email,pwd){
@@ -521,11 +526,12 @@ const App={
   },
 
   async _login(email,pwd){
-    S.sessionDone=true;
     const{data,error}=await sb.auth.signInWithPassword({email,password:pwd});
-    if(error){S.sessionDone=false;setSt('authSt',xlErr(error.message),'err');return;}
-    S.uid=data?.user?.id;
-    setSt('authSt','Connexion réussie…','ok');
+    if(error){setSt('authSt',xlErr(error.message),'err');return;}
+    const user=data?.user;
+    if(!user){setSt('authSt','Aucun utilisateur retourné. Réessaie.','err');return;}
+    S.uid=user.id;
+    S.sessionDone=true;
     await App._afterAuth();
   },
 
@@ -943,22 +949,30 @@ sos(){if(confirm(‘Appeler le 112 (secours) ?’))window.location.href=‘tel:1
 };
 
 /* ── AUTH STATE ── */
-sb.auth.onAuthStateChange(async(event,session)=>{
+// Safari iOS: ne pas utiliser async/await directement dans onAuthStateChange
+// On délègue via setTimeout pour ne pas bloquer le callback Supabase
+sb.auth.onAuthStateChange((event,session)=>{
 if(event===‘PASSWORD_RECOVERY’){
-S.sessionDone=false;S.uid=session?.user?.id||null;show(‘sr’);return;
+S.sessionDone=false;
+S.uid=session?.user?.id||null;
+show(‘sr’);
+return;
 }
-// SIGNED_IN: seulement si on n’est pas déjà en train de traiter
-// (évite le double appel quand _login() appelle déjà _afterAuth)
 if(event===‘SIGNED_IN’&&session){
-if(S.sessionDone)return; // déjà géré par _login ou boot
-S.uid=session.user.id;S.sessionDone=true;
-await App._afterAuth();return;
+// Si _login ou boot gère déjà la session, on ignore
+if(S.sessionDone)return;
+S.uid=session.user.id;
+S.sessionDone=true;
+// setTimeout 0 évite le freeze async sur Safari iOS
+setTimeout(()=>App._afterAuth(),0);
+return;
 }
 if(event===‘SIGNED_OUT’){
 S.sessionDone=false;S.uid=null;S.selPlate=null;
 if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null;}
-if(S.chMsg){await sb.removeChannel(S.chMsg);S.chMsg=null;}
-if(S.chLoc){await sb.removeChannel(S.chLoc);S.chLoc=null;}
+// Nettoyage channels sans await pour Safari
+if(S.chMsg){try{sb.removeChannel(S.chMsg);}catch(e){}S.chMsg=null;}
+if(S.chLoc){try{sb.removeChannel(S.chLoc);}catch(e){}S.chLoc=null;}
 show(‘sw’);
 }
 });
@@ -967,10 +981,13 @@ show(‘sw’);
 async function boot(){
 const frag=(window.location.hash||’’)+(window.location.search||’’);
 if(frag.toLowerCase().includes(‘type=recovery’)){show(‘sr’);return;}
-const{data:sd}=await sb.auth.getSession();
+const{data:sd,error:se}=await sb.auth.getSession();
+if(se){console.error(‘boot getSession:’,se);show(‘sw’);return;}
 const session=sd?.session;
 if(!session){show(‘sw’);return;}
-S.uid=session.user.id;S.sessionDone=true;
+// Session existante au démarrage: on marque sessionDone pour bloquer onAuthStateChange
+S.uid=session.user.id;
+S.sessionDone=true;
 await App._afterAuth();
 }
 
