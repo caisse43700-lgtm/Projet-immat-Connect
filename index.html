@@ -162,6 +162,9 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .convbar::-webkit-scrollbar{display:none}
 .convpill{border:none;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--muted2);font-family:var(--fui);font-size:12px;font-weight:600;padding:7px 11px;white-space:nowrap;cursor:pointer}
 .convpill.on{background:var(--gdim);border-color:rgba(0,255,179,.25);color:var(--green)}
+.conv-title{margin:0 0 10px;padding:10px 12px;border-radius:var(--r12);background:var(--bg2);border:1px solid var(--line);font-size:13px;color:var(--muted2);line-height:1.45}
+.conv-title strong{color:var(--green);font-family:var(--fh);font-size:17px;letter-spacing:.8px}
+.plate-ref{display:inline-block;margin-bottom:6px;padding:3px 7px;border-radius:999px;background:var(--gdim);border:1px solid rgba(0,255,179,.18);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.5px}
 .mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .modalx{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
 .modalx.show{display:flex}
@@ -351,6 +354,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻ Actualiser</button>
       </div>
       <div id="convbar" class="convbar"></div>
+      <div id="convTitle" class="conv-title">Conversation : <strong>Toutes les plaques</strong></div>
       <div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div>
     </div>
   </div>
@@ -1314,12 +1318,16 @@ const App = {
     }
 
     S.selPlate = p;
+    S.conversationFilter = p;
 
     const el = document.getElementById('iTarget');
     el.value = p;
 
     mi('iTarget', true);
     hint('hTarget', 'ok', 'Véhicule sélectionné ✓');
+
+    App.updateConversationTitle();
+    App.loadMsgs();
 
     document.getElementById('iMsg').focus();
     document.querySelector('.panel').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1397,6 +1405,8 @@ const App = {
       }
 
       S.selPlate = plate;
+      S.conversationFilter = plate;
+      App.updateConversationTitle();
 
       const { data: ex1 } = await sb.from('messages').select('status').eq('sender_id', user.id).eq('receiver_id', target.id).eq('target_plate', plate);
       const { data: ex2 } = await sb.from('messages').select('status').eq('sender_id', target.id).eq('receiver_id', user.id).eq('target_plate', plate);
@@ -1428,7 +1438,7 @@ const App = {
       document.getElementById('iMsg').value = '';
       ch('hMsg');
 
-      setReq(hasAcc ? '✅ Message envoyé' : "⏳ Demande envoyée, en attente d'acceptation", 'ok');
+      setReq(hasAcc ? '✅ Message envoyé dans la conversation ' + plate : "⏳ Demande envoyée pour la plaque " + plate, 'ok');
       await App.loadMsgs();
     } finally {
       sBtn('sendBtn', false, 'Envoyer →');
@@ -1478,8 +1488,12 @@ const App = {
       rows = rows.filter(m => nPlate(m.target_plate) === S.conversationFilter);
     }
 
+    App.updateConversationTitle();
+
     if (!rows.length) {
-      box.innerHTML = '<div class="cempty">Aucun message pour le moment.</div>';
+      box.innerHTML = S.conversationFilter === 'all'
+        ? '<div class="cempty">Aucun message pour le moment.</div>'
+        : '<div class="cempty">Aucun message pour la plaque ' + esc(S.conversationFilter) + '.</div>';
       return;
     }
 
@@ -1494,14 +1508,33 @@ const App = {
     const plates = [...new Set((rows || []).map(m => nPlate(m.target_plate)).filter(Boolean))];
 
     bar.innerHTML =
-      '<button class="convpill ' + (S.conversationFilter === 'all' ? 'on' : '') + '" onclick="App.setConversation(\'all\')">Toutes</button>' +
+      '<button class="convpill ' + (S.conversationFilter === 'all' ? 'on' : '') + '" onclick="App.setConversation(\'all\')">Toutes les plaques</button>' +
       plates.map(p =>
-        '<button class="convpill ' + (S.conversationFilter === p ? 'on' : '') + '" onclick="App.setConversation(\'' + jsStr(p) + '\')">' + esc(p) + '</button>'
+        '<button class="convpill ' + (S.conversationFilter === p ? 'on' : '') + '" onclick="App.setConversation(\'' + jsStr(p) + '\')">🚗 ' + esc(p) + '</button>'
       ).join('');
+  },
+
+  updateConversationTitle() {
+    const el = document.getElementById('convTitle');
+    if (!el) return;
+
+    if (S.conversationFilter === 'all') {
+      el.innerHTML = 'Conversation : <strong>Toutes les plaques</strong><br><span>Chaque échange reste rattaché à sa plaque concernée.</span>';
+    } else {
+      el.innerHTML = 'Conversation avec la plaque : <strong>' + esc(S.conversationFilter) + '</strong><br><span>Tous les messages affichés ici concernent uniquement ce véhicule.</span>';
+    }
   },
 
   setConversation(p) {
     S.conversationFilter = p || 'all';
+    S.selPlate = S.conversationFilter === 'all' ? S.selPlate : S.conversationFilter;
+
+    if (S.conversationFilter !== 'all') {
+      const target = document.getElementById('iTarget');
+      if (target) target.value = S.conversationFilter;
+    }
+
+    App.updateConversationTitle();
     App.loadMsgs();
   },
 
@@ -1521,8 +1554,8 @@ const App = {
       : '';
 
     const lbl = sent
-      ? (status === 'pending' ? "⏳ En attente d'acceptation" : '📤 Envoyé → ' + plate)
-      : (status === 'pending' ? '📩 Demande de contact' : '🚗 Message reçu');
+      ? (status === 'pending' ? "⏳ Demande en attente — " + plate : '📤 Envoyé — ' + plate)
+      : (status === 'pending' ? '📩 Demande de contact — ' + plate : '🚗 Reçu — ' + plate);
 
     let acts = '';
 
@@ -1542,21 +1575,22 @@ const App = {
 
       rbox =
         '<div class="rbox">' +
-          '<textarea id="' + esc(tid) + '" placeholder="Votre réponse…" rows="2"></textarea>' +
-          '<button id="' + esc(bid) + '" class="rbox-btn" onclick="App._reply(\'' + jsStr(msg.id) + '\',\'' + jsStr(msg.sender_id) + '\',\'' + jsStr(msg.target_plate || '') + '\',\'' + jsStr(tid) + '\',\'' + jsStr(bid) + '\')">Répondre →</button>' +
+          '<textarea id="' + esc(tid) + '" placeholder="Réponse à la plaque ' + plate + '…" rows="2"></textarea>' +
+          '<button id="' + esc(bid) + '" class="rbox-btn" onclick="App._reply(\'' + jsStr(msg.id) + '\',\'' + jsStr(msg.sender_id) + '\',\'' + jsStr(msg.target_plate || '') + '\',\'' + jsStr(tid) + '\',\'' + jsStr(bid) + '\')">Répondre à ' + plate + ' →</button>' +
         '</div>';
     }
 
     const mini =
       '<div class="mini-actions">' +
-        '<button class="abtn2 rej" onclick="App.blockPlate(\'' + jsStr(plateRaw) + '\')">🚫 Bloquer</button>' +
-        '<button class="abtn2 rej" onclick="App.reportPlate(\'' + jsStr(plateRaw) + '\')">⚠️ Signaler</button>' +
+        '<button class="abtn2 rej" onclick="App.blockPlate(\'' + jsStr(plateRaw) + '\')">🚫 Bloquer ' + plate + '</button>' +
+        '<button class="abtn2 rej" onclick="App.reportPlate(\'' + jsStr(plateRaw) + '\')">⚠️ Signaler ' + plate + '</button>' +
       '</div>';
 
     return (
       '<div class="msg ' + (sent ? 'sent' : 'recv') + '">' +
+        '<div class="plate-ref">Plaque concernée : ' + plate + '</div>' +
         '<div class="mlbl ' + (sent ? '' : 'r') + '">' + lbl + '</div>' +
-        '<div class="mbody"><strong>' + plate + '</strong> — ' + text + '</div>' +
+        '<div class="mbody">' + text + '</div>' +
         acts +
         rbox +
         mini +
@@ -1582,15 +1616,18 @@ const App = {
         sender_id: user.id,
         receiver_id: senderId,
         target_plate: plate,
-        message: 'Votre demande de contact a été acceptée. Vous pouvez maintenant échanger.',
+        message: 'Votre demande de contact pour la plaque ' + nPlate(plate) + ' a été acceptée. Vous pouvez maintenant échanger.',
         status: 'accepted'
       });
 
       S.selPlate = nPlate(plate);
+      S.conversationFilter = S.selPlate;
       document.getElementById('iTarget').value = S.selPlate;
 
-      setReq('✅ Demande acceptée', 'ok');
-      toast('✅ Demande acceptée', 'ok');
+      App.updateConversationTitle();
+
+      setReq('✅ Demande acceptée pour ' + S.selPlate, 'ok');
+      toast('✅ Demande acceptée pour ' + S.selPlate, 'ok');
       beep();
 
       await App.loadMsgs();
@@ -1657,10 +1694,12 @@ const App = {
 
       if (!user) return;
 
+      const cleanPlate = nPlate(plate);
+
       const { error } = await sb.from('messages').insert({
         sender_id: user.id,
         receiver_id: receiverId,
-        target_plate: plate,
+        target_plate: cleanPlate,
         message: text,
         status: 'accepted'
       });
@@ -1671,8 +1710,11 @@ const App = {
         return;
       }
 
+      S.conversationFilter = cleanPlate;
+      App.updateConversationTitle();
+
       ta.value = '';
-      toast('✅ Réponse envoyée', 'ok');
+      toast('✅ Réponse envoyée à ' + cleanPlate, 'ok');
 
       await App.loadMsgs();
     } finally {
@@ -1691,7 +1733,10 @@ const App = {
     if (!S.blocked.includes(p)) S.blocked.push(p);
     safeLocalSet('ic_blocked', JSON.stringify(S.blocked));
 
+    if (S.conversationFilter === p) S.conversationFilter = 'all';
+
     toast('Plaque bloquée : ' + p, 'ok');
+    App.updateConversationTitle();
     App.loadMsgs();
     App.loadOthers();
   },
@@ -1701,7 +1746,7 @@ const App = {
     const p = nPlate(plate);
     if (!p) return;
 
-    const reason = prompt('Raison du signalement pour ' + p + ' :');
+    const reason = prompt('Raison du signalement pour la plaque ' + p + ' :');
     if (!reason) return;
 
     try {
@@ -1725,7 +1770,7 @@ const App = {
         return;
       }
 
-      toast('Signalement envoyé.', 'ok');
+      toast('Signalement envoyé pour ' + p + '.', 'ok');
     } catch (e) {
       console.error(e);
       toast('Erreur lors du signalement.', 'bad');
@@ -1755,15 +1800,16 @@ const App = {
         if (S.blocked.includes(nPlate(msg.target_plate))) return;
 
         if (payload.eventType === 'INSERT' && msg.receiver_id === user.id) {
+          const p = nPlate(msg.target_plate);
           if (msg.status === 'pending') {
-            toast('📩 Nouvelle demande de contact !', 'ok');
+            toast('📩 Nouvelle demande pour la plaque ' + p + ' !', 'ok');
             App.showBadge();
             beep();
           } else if (String(msg.message || '').includes('acceptée')) {
-            toast('✅ Ta demande a été acceptée !', 'ok');
+            toast('✅ Ta demande pour ' + p + ' a été acceptée !', 'ok');
             beep();
           } else {
-            toast('💬 Nouveau message reçu', 'ok');
+            toast('💬 Nouveau message pour ' + p, 'ok');
             App.showBadge();
             beep();
           }
@@ -1894,6 +1940,7 @@ async function boot() {
   if (r) r.value = String(S.radiusKm);
 
   App.refreshInvisibleBtn();
+  App.updateConversationTitle();
 
   if (!sb) {
     toast('Supabase non chargé. Vérifie ta connexion.', 'bad');
