@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
@@ -25,18 +24,13 @@
 }
 html{scroll-behavior:smooth}
 body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-
 .ga{position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,179,.05) 0%,transparent 65%);pointer-events:none;z-index:0}
 .gb{position:fixed;bottom:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(41,121,255,.06) 0%,transparent 65%);pointer-events:none;z-index:0}
-
 .screen{display:none;position:relative;z-index:1;min-height:100dvh}
 .screen.active{display:flex;flex-direction:column}
-
 @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-
-/* ── WELCOME ── */
 #sw.active{align-items:center;justify-content:center;padding:48px 20px 60px}
 .ww{width:100%;max-width:380px;animation:fadeUp .65s var(--ease) both}
 .logo-block{text-align:center;margin-bottom:48px}
@@ -54,8 +48,6 @@ body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:10
 .fi{width:36px;height:36px;flex:0 0 36px;border-radius:10px;background:var(--gdim);border:1px solid rgba(0,255,179,.15);display:flex;align-items:center;justify-content:center;font-size:16px}
 .ft{font-size:13px;color:var(--muted2)}
 .btn-stack{display:flex;flex-direction:column;gap:10px}
-
-/* ── BUTTONS ── */
 .btn{width:100%;padding:15px 20px;border:none;border-radius:var(--r12);font-family:var(--fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(--t) var(--ease)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
 .btn-p{background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700;box-shadow:0 4px 24px rgba(0,255,179,.22)}
@@ -63,8 +55,6 @@ body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:10
 .btn-g{background:transparent;color:var(--muted2);border:1px solid var(--line)}
 .btn-g:hover:not(:disabled){border-color:var(--line2);color:var(--text);background:var(--bg1)}
 .mt8{margin-top:8px}.mt12{margin-top:12px}
-
-/* ── CARD ── */
 #sa.active,#sp.active,#sr.active{align-items:center;justify-content:center;padding:28px 18px 52px}
 .card{width:100%;max-width:420px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r24);padding:28px 22px;box-shadow:0 40px 80px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.04) inset;animation:fadeUp .5s var(--ease) both}
 .card-ttl{font-family:var(--fh);font-size:28px;font-weight:700;margin-bottom:6px}
@@ -96,8 +86,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .lbtn{border:none;background:transparent;color:var(--muted2);font-size:12.5px;cursor:pointer;padding:5px 10px;border-radius:7px;font-family:var(--fui);transition:color var(--t)}
 .lbtn:hover{color:var(--green)}
 .lbtn:disabled{opacity:.4;cursor:not-allowed}
-
-/* ── MAP SCREEN ── */
 #sm{padding:0}
 #sm.active{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 .topbar{padding:max(env(safe-area-inset-top,0px),14px) 18px 0;background:rgba(8,11,18,.97);backdrop-filter:blur(24px);border-bottom:1px solid var(--line);flex:0 0 auto}
@@ -115,9 +103,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .abtn-g:hover:not(:disabled){box-shadow:0 4px 18px rgba(0,255,179,.3);transform:translateY(-1px)}
 .abtn-o{background:var(--bg2);border:1px solid var(--line);color:var(--muted2)}
 .abtn-o:hover:not(:disabled){border-color:var(--line2);color:var(--text)}
-
 #map{flex:1 1 0;min-height:0;z-index:1}
-
 .panel{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--line);overflow-y:auto;max-height:50vh;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 70px)}
 .panel-in{max-width:600px;margin:0 auto}
 .sec-h{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -148,7 +134,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .abtn2.acc:hover{background:var(--gmid)}
 .abtn2.rej{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.25)}
 .abtn2.rej:hover{background:rgba(255,59,92,.18)}
-
 .rbox{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 .rbox textarea{width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:var(--r8);padding:9px 12px;font-family:var(--fui);font-size:13px;color:var(--text);outline:none;resize:none;min-height:58px;transition:border-color var(--t);line-height:1.5}
 .rbox textarea:focus{border-color:rgba(0,255,179,.4)}
@@ -156,8 +141,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .rbox-btn{border:none;border-radius:var(--r8);padding:8px 14px;background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-family:var(--fui);font-size:13px;font-weight:700;cursor:pointer;align-self:flex-end;transition:opacity var(--t)}
 .rbox-btn:hover{opacity:.88}
 .rbox-btn:disabled{opacity:.45;cursor:not-allowed}
-
-/* ── SOS + TOAST ── */
 .sos{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom,0px)+18px);width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff2d55,#c0002f);color:#fff;font-size:22px;font-weight:900;box-shadow:0 4px 20px rgba(255,45,85,.5);z-index:2000;cursor:pointer;transition:all var(--t) var(--ease);display:none;align-items:center;justify-content:center}
 .sos.show{display:flex}
 .sos:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(255,45,85,.65)}
@@ -165,8 +148,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.ok{border-color:rgba(0,255,179,.3);color:var(--green)}
 .toast.bad{border-color:rgba(255,59,92,.3);color:var(--red)}
-
-/* Leaflet */
 .leaflet-popup-content-wrapper{background:var(--bg1)!important;border:1px solid var(--line2)!important;border-radius:14px!important;box-shadow:0 12px 40px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .leaflet-popup-tip{background:var(--bg1)!important}
 .leaflet-popup-content{color:var(--text)!important;font-family:var(--fui);margin:14px 16px!important}
@@ -176,12 +157,10 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .ppb:hover{opacity:.9}
 .hidden{display:none!important}
 </style>
-
 </head>
+
 <body>
 <div class="ga"></div><div class="gb"></div>
-
-<!-- WELCOME -->
 
 <div id="sw" class="screen active">
   <div class="ww">
@@ -195,7 +174,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div class="feat-grid">
       <div class="feat-pill"><div class="fi">🪪</div><div class="ft">Votre plaque liée à votre compte de façon sécurisée</div></div>
       <div class="feat-pill"><div class="fi">📍</div><div class="ft">Carte temps réel après connexion</div></div>
-      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Accès rapide aux secours (112) depuis la carte</div></div>
+      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Accès rapide aux secours 112 depuis la carte</div></div>
     </div>
     <div class="btn-stack">
       <button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button>
@@ -204,15 +183,13 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   </div>
 </div>
 
-<!-- AUTH -->
-
 <div id="sa" class="screen">
   <div class="card">
     <div class="card-ttl" id="authTitle">Connexion</div>
     <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
     <div class="tab-bar">
-      <button id="tabLogin"  class="tab on"  onclick="App.setMode('login')">Connexion</button>
-      <button id="tabSignup" class="tab"     onclick="App.setMode('signup')">Inscription</button>
+      <button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button>
+      <button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button>
     </div>
     <div class="field">
       <label class="lbl" for="iEmail">Email</label>
@@ -260,8 +237,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   </div>
 </div>
 
-<!-- PROFILE -->
-
 <div id="sp" class="screen">
   <div class="card">
     <div class="card-ttl">Mon profil</div>
@@ -286,8 +261,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div class="st" id="profileSt"></div>
   </div>
 </div>
-
-<!-- RESET PASSWORD -->
 
 <div id="sr" class="screen">
   <div class="card">
@@ -314,8 +287,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   </div>
 </div>
 
-<!-- MAP -->
-
 <div id="sm" class="screen">
   <div class="topbar">
     <div class="tb-r1">
@@ -326,9 +297,9 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
       </div>
     </div>
     <div class="astrip">
-      <button id="locBtn"    class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
+      <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
       <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
-      <button                class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
+      <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
     </div>
   </div>
 
@@ -338,7 +309,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div class="panel-in">
       <div class="sec-h">📨 Contacter un véhicule</div>
       <div class="ccard">
-        <p class="cdesc">Renseignez la plaque du véhicule à contacter (pas la vôtre).</p>
+        <p class="cdesc">Renseignez la plaque du véhicule à contacter, pas la vôtre.</p>
         <div class="field">
           <label class="lbl" for="iTarget">Plaque du véhicule</label>
           <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/>
@@ -353,20 +324,16 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         <div class="rrow" id="reqSt"></div>
       </div>
 
-```
-  <div class="mhdr">
-    <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
-    <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻ Actualiser</button>
-  </div>
-  <div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div>
-</div>
-```
-
+      <div class="mhdr">
+        <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
+        <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻ Actualiser</button>
+      </div>
+      <div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div>
+    </div>
   </div>
 </div>
 
 <button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
-
 <div class="toast" id="toastEl"></div>
 
 <script>
@@ -375,25 +342,31 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 const CFG = {
   url: 'https://vemgdkkbldgyvaisudkd.supabase.co',
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI',
-  site: 'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',
+  site: 'https://caisse43700-lgtm.github.io/Projet-immat-Connect/'
 };
+
 const sb = window.supabase.createClient(CFG.url, CFG.key);
 
 const S = {
-  uid: null, mode: 'login', sessionDone: false,
+  uid: null,
+  mode: 'login',
+  sessionDone: false,
   selPlate: null,
-  map: null, myMarker: null, otherMkrs: [],
-  watchId: null, firstFix: true,
+  map: null,
+  myMarker: null,
+  otherMkrs: [],
+  watchId: null,
+  firstFix: true,
   loadingOthers: false,
-  chMsg: null, chLoc: null,
+  chMsg: null,
+  chLoc: null
 };
 
-/* ── VALIDATORS ── */
 const RE_PH = /^0\d{9}$/;
 const RE_PL = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
 const vPhone = v => RE_PH.test(String(v || '').replace(/\s/g, ''));
 const vPlate = v => RE_PL.test(String(v || '').trim().toUpperCase());
-const sPwd   = v => v.length >= 8 && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v);
+const sPwd = v => String(v || '').length >= 8 && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v);
 const nPlate = v => String(v || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
 const nPhone = v => String(v || '').replace(/\D/g, '');
 
@@ -403,7 +376,11 @@ function fPlate(r) {
   if (s.length <= 5) return s.slice(0, 2) + '-' + s.slice(2);
   return s.slice(0, 2) + '-' + s.slice(2, 5) + '-' + s.slice(5);
 }
-function fPhone(r) { return String(r || '').replace(/\D/g, '').slice(0, 10); }
+
+function fPhone(r) {
+  return String(r || '').replace(/\D/g, '').slice(0, 10);
+}
+
 function esc(s) {
   return String(s || '')
     .replace(/&/g, '&amp;')
@@ -413,40 +390,51 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
-/* ── UI HELPERS ── */
+function jsStr(s) {
+  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+}
+
 function hint(id, t, m) {
   const e = document.getElementById(id);
   if (!e) return;
   e.className = 'hint' + (t ? ' ' + t : '');
   e.textContent = m || '';
 }
-function ch(...ids) { ids.forEach(id => hint(id, '', ' ')); }
+
+function ch(...ids) {
+  ids.forEach(id => hint(id, '', ''));
+}
+
 function mi(id, v) {
   const e = document.getElementById(id);
   if (!e) return;
   e.classList.toggle('ok', v === true);
   e.classList.toggle('err', v === false);
 }
+
 function setSt(id, m, t) {
   const e = document.getElementById(id);
   if (!e) return;
   e.textContent = m || '';
   e.className = 'st' + (t ? ' ' + t : '') + (m ? ' show' : '');
 }
+
 function sBtn(id, l, idle) {
   const e = document.getElementById(id);
   if (!e) return;
   e.disabled = l;
   e.textContent = l ? 'Chargement…' : idle;
 }
+
 function setReq(m, t) {
   const e = document.getElementById('reqSt');
   if (!e) return;
-  e.textContent = m;
+  e.textContent = m || '';
   e.className = 'rrow' + (t ? ' ' + t : '');
 }
 
 let _tt = null;
+
 function toast(m, t) {
   const e = document.getElementById('toastEl');
   if (!e) return;
@@ -460,16 +448,17 @@ function toast(m, t) {
 function xlErr(m) {
   const s = String(m || '').toLowerCase();
   if (s.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
-  if (s.includes('email not confirmed'))       return 'Email non confirmé. Vérifie ta boîte mail.';
-  if (s.includes('user already registered'))   return 'Un compte existe déjà avec cet email.';
-  if (s.includes('rate limit'))                return 'Trop de tentatives. Réessaie plus tard.';
-  if (s.includes('password should'))           return 'Le mot de passe ne respecte pas les critères.';
-  if (s.includes('same password'))             return 'Le nouveau mot de passe doit être différent.';
+  if (s.includes('email not confirmed')) return 'Email non confirmé. Vérifie ta boîte mail.';
+  if (s.includes('user already registered')) return 'Un compte existe déjà avec cet email.';
+  if (s.includes('rate limit')) return 'Trop de tentatives. Réessaie plus tard.';
+  if (s.includes('password should')) return 'Le mot de passe ne respecte pas les critères.';
+  if (s.includes('same password')) return 'Le nouveau mot de passe doit être différent.';
   if (s.includes('network') || s.includes('fetch')) return 'Erreur réseau. Vérifie ta connexion.';
   return 'Une erreur est survenue. Réessaie.';
 }
 
 const SCREENS = ['sw', 'sa', 'sp', 'sr', 'sm'];
+
 function show(id) {
   SCREENS.forEach(s => document.getElementById(s)?.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
@@ -491,19 +480,28 @@ function bindInputs() {
     e.addEventListener('input', () => {
       e.value = fPhone(e.value);
       const v = e.value.trim();
-      if (!v) { mi(i); hint(h, '', ''); return; }
+      if (!v) {
+        mi(i);
+        hint(h, '', '');
+        return;
+      }
       const ok = vPhone(v);
       mi(i, ok);
       hint(h, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : 0612345678');
     });
   });
+
   [['iPlate', 'hPlate'], ['iProPlate', 'hProPlate'], ['iTarget', 'hTarget']].forEach(([i, h]) => {
     const e = document.getElementById(i);
     if (!e) return;
     e.addEventListener('input', () => {
       e.value = fPlate(e.value);
       const v = e.value.trim();
-      if (!v) { mi(i); hint(h, '', ''); return; }
+      if (!v) {
+        mi(i);
+        hint(h, '', '');
+        return;
+      }
       const ok = vPlate(v);
       mi(i, ok);
       hint(h, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : AB-123-CD');
@@ -511,25 +509,33 @@ function bindInputs() {
   });
 }
 
-/* ══════════════════════════════════════ APP ════ */
 const App = {
+  goToAuth(m) {
+    App.setMode(m);
+    show('sa');
+  },
 
-  goToAuth(m) { App.setMode(m); show('sa'); },
-  backToWelcome() { show('sw'); setSt('authSt', ''); },
+  backToWelcome() {
+    show('sw');
+    setSt('authSt', '');
+  },
 
   setMode(m) {
     S.mode = m === 'signup' ? 'signup' : 'login';
     const su = S.mode === 'signup';
+
     document.getElementById('authTitle').textContent = su ? 'Créer un compte' : 'Connexion';
-    document.getElementById('authSub').textContent   = su ? 'Crée ton compte en quelques secondes.' : 'Connecte-toi avec ton email et mot de passe.';
-    document.getElementById('authBtn').textContent   = su ? 'Créer mon compte' : 'Se connecter';
+    document.getElementById('authSub').textContent = su ? 'Crée ton compte en quelques secondes.' : 'Connecte-toi avec ton email et mot de passe.';
+    document.getElementById('authBtn').textContent = su ? 'Créer mon compte' : 'Se connecter';
     document.getElementById('tabSignup').classList.toggle('on', su);
     document.getElementById('tabLogin').classList.toggle('on', !su);
     document.getElementById('suExtras').classList.toggle('hidden', !su);
     document.getElementById('confirmWrap').classList.toggle('hidden', !su);
     document.getElementById('resendBtn').classList.toggle('hidden', !su);
+
     setSt('authSt', '');
     ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm');
+
     ['iEmail', 'iPhone', 'iPlate', 'iPwd', 'iConfirm'].forEach(id => {
       mi(id, undefined);
       const e = document.getElementById(id);
@@ -540,22 +546,33 @@ const App = {
   async handleAuth() {
     setSt('authSt', '');
     ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm');
+
     const email = document.getElementById('iEmail').value.trim();
-    const pwd   = document.getElementById('iPwd').value;
-    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
-    if (!pwd)   { hint('hPwd',   'err', 'Requis.'); return; }
-    const btn  = document.getElementById('authBtn');
+    const pwd = document.getElementById('iPwd').value;
+
+    if (!email) {
+      hint('hEmail', 'err', 'Requis.');
+      return;
+    }
+
+    if (!pwd) {
+      hint('hPwd', 'err', 'Requis.');
+      return;
+    }
+
+    const btn = document.getElementById('authBtn');
     const idle = S.mode === 'signup' ? 'Créer mon compte' : 'Se connecter';
-    btn.disabled    = true;
+    btn.disabled = true;
     btn.textContent = S.mode === 'signup' ? 'Création…' : 'Connexion…';
+
     try {
       if (S.mode === 'signup') await App._signup(email, pwd);
-      else                     await App._login(email, pwd);
+      else await App._login(email, pwd);
     } catch (e) {
       console.error(e);
       setSt('authSt', 'Erreur inattendue : ' + String(e?.message || ''), 'err');
     } finally {
-      btn.disabled    = false;
+      btn.disabled = false;
       btn.textContent = idle;
     }
   },
@@ -563,45 +580,110 @@ const App = {
   async _signup(email, pwd) {
     const phoneRaw = document.getElementById('iPhone').value.trim();
     const plateRaw = document.getElementById('iPlate').value.trim();
-    const confirm  = document.getElementById('iConfirm').value;
+    const confirm = document.getElementById('iConfirm').value;
     let fail = false;
-    if (!phoneRaw)                        { hint('hPhone',   'err', 'Requis.');               fail = true; }
-    else if (!vPhone(phoneRaw))           { hint('hPhone',   'err', 'Format : 0612345678');   fail = true; }
-    if (!plateRaw)                        { hint('hPlate',   'err', 'Requis.');               fail = true; }
-    else if (!vPlate(nPlate(plateRaw)))   { hint('hPlate',   'err', 'Format : AB-123-CD');    fail = true; }
-    if (!sPwd(pwd))                       { hint('hPwd',     'err', 'Min. 8 car., 1 maj., 1 spécial.'); fail = true; }
-    if (!confirm)                         { hint('hConfirm', 'err', 'Requis.');               fail = true; }
-    else if (pwd !== confirm)             { hint('hConfirm', 'err', 'Les mots de passe ne correspondent pas.'); fail = true; }
+
+    if (!phoneRaw) {
+      hint('hPhone', 'err', 'Requis.');
+      fail = true;
+    } else if (!vPhone(phoneRaw)) {
+      hint('hPhone', 'err', 'Format : 0612345678');
+      fail = true;
+    }
+
+    if (!plateRaw) {
+      hint('hPlate', 'err', 'Requis.');
+      fail = true;
+    } else if (!vPlate(nPlate(plateRaw))) {
+      hint('hPlate', 'err', 'Format : AB-123-CD');
+      fail = true;
+    }
+
+    if (!sPwd(pwd)) {
+      hint('hPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.');
+      fail = true;
+    }
+
+    if (!confirm) {
+      hint('hConfirm', 'err', 'Requis.');
+      fail = true;
+    } else if (pwd !== confirm) {
+      hint('hConfirm', 'err', 'Les mots de passe ne correspondent pas.');
+      fail = true;
+    }
+
     if (fail) return;
 
     const phone = nPhone(phoneRaw);
     const plate = nPlate(plateRaw);
-    const { data, error } = await sb.auth.signUp({ email, password: pwd, options: { emailRedirectTo: CFG.site } });
-    if (error) { setSt('authSt', xlErr(error.message), 'err'); return; }
+
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pwd,
+      options: { emailRedirectTo: CFG.site }
+    });
+
+    if (error) {
+      setSt('authSt', xlErr(error.message), 'err');
+      return;
+    }
+
     const user = data?.user;
     if (user) {
-      await sb.from('profiles').upsert({ id: user.id, email, pseudo: email.split('@')[0], owner_plate: plate, phone });
+      await sb.from('profiles').upsert({
+        id: user.id,
+        email,
+        pseudo: email.split('@')[0],
+        owner_plate: plate,
+        phone
+      });
     }
+
     setSt('authSt', '✅ Compte créé ! Vérifie ton email puis connecte-toi.', 'ok');
   },
 
   async _login(email, pwd) {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
-    if (error) { setSt('authSt', xlErr(error.message), 'err'); return; }
+
+    if (error) {
+      setSt('authSt', xlErr(error.message), 'err');
+      return;
+    }
+
     const user = data?.user;
-    if (!user) { setSt('authSt', 'Aucun utilisateur retourné. Réessaie.', 'err'); return; }
-    S.uid         = user.id;
+
+    if (!user) {
+      setSt('authSt', 'Aucun utilisateur retourné. Réessaie.', 'err');
+      return;
+    }
+
+    S.uid = user.id;
     S.sessionDone = true;
     await App._afterAuth();
   },
 
   async resendConfirm() {
     const email = document.getElementById('iEmail').value.trim();
-    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
+
+    if (!email) {
+      hint('hEmail', 'err', 'Requis.');
+      return;
+    }
+
     sBtn('resendBtn', true, "Renvoyer l'email de confirmation");
+
     try {
-      const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: CFG.site } });
-      if (error) { setSt('authSt', xlErr(error.message), 'err'); return; }
+      const { error } = await sb.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: CFG.site }
+      });
+
+      if (error) {
+        setSt('authSt', xlErr(error.message), 'err');
+        return;
+      }
+
       setSt('authSt', 'Email de confirmation renvoyé.', 'ok');
     } finally {
       sBtn('resendBtn', false, "Renvoyer l'email de confirmation");
@@ -610,11 +692,24 @@ const App = {
 
   async forgotPwd() {
     const email = document.getElementById('iEmail').value.trim();
-    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
+
+    if (!email) {
+      hint('hEmail', 'err', 'Requis.');
+      return;
+    }
+
     sBtn('forgotBtn', true, 'Mot de passe oublié ?');
+
     try {
-      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: CFG.site });
-      if (error) { setSt('authSt', xlErr(error.message), 'err'); return; }
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: CFG.site
+      });
+
+      if (error) {
+        setSt('authSt', xlErr(error.message), 'err');
+        return;
+      }
+
       setSt('authSt', 'Email de réinitialisation envoyé.', 'ok');
     } finally {
       sBtn('forgotBtn', false, 'Mot de passe oublié ?');
@@ -624,19 +719,42 @@ const App = {
   async updatePwd() {
     ch('hNewPwd', 'hNewCfm');
     setSt('resetSt', '');
+
     const pwd = document.getElementById('iNewPwd').value;
     const cfm = document.getElementById('iNewCfm').value;
     let fail = false;
-    if (!sPwd(pwd))       { hint('hNewPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.'); fail = true; }
-    if (!cfm)             { hint('hNewCfm', 'err', 'Requis.');                          fail = true; }
-    else if (pwd !== cfm) { hint('hNewCfm', 'err', 'Les mots de passe ne correspondent pas.'); fail = true; }
+
+    if (!sPwd(pwd)) {
+      hint('hNewPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.');
+      fail = true;
+    }
+
+    if (!cfm) {
+      hint('hNewCfm', 'err', 'Requis.');
+      fail = true;
+    } else if (pwd !== cfm) {
+      hint('hNewCfm', 'err', 'Les mots de passe ne correspondent pas.');
+      fail = true;
+    }
+
     if (fail) return;
+
     sBtn('updPwdBtn', true, 'Mettre à jour');
+
     try {
       const { error } = await sb.auth.updateUser({ password: pwd });
-      if (error) { setSt('resetSt', xlErr(error.message), 'err'); return; }
+
+      if (error) {
+        setSt('resetSt', xlErr(error.message), 'err');
+        return;
+      }
+
       setSt('resetSt', '✅ Mot de passe mis à jour !', 'ok');
-      setTimeout(async () => { S.sessionDone = true; await App._afterAuth(); }, 1400);
+
+      setTimeout(async () => {
+        S.sessionDone = true;
+        await App._afterAuth();
+      }, 1400);
     } finally {
       sBtn('updPwdBtn', false, 'Mettre à jour');
     }
@@ -644,85 +762,147 @@ const App = {
 
   async _afterAuth() {
     const { data: ud, error: ue } = await sb.auth.getUser();
-    if (ue || !ud?.user) { setSt('authSt', 'Session introuvable. Reconnecte-toi.', 'err'); show('sa'); return; }
+
+    if (ue || !ud?.user) {
+      setSt('authSt', 'Session introuvable. Reconnecte-toi.', 'err');
+      show('sa');
+      return;
+    }
+
     const user = ud.user;
     S.uid = user.id;
+
     const { data: prof } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+
     if (prof) App._openMap(prof, user.email);
-    else      show('sp');
+    else show('sp');
   },
 
   async saveProfile() {
     ch('hPseudo', 'hProPlate', 'hProPhone');
     setSt('profileSt', '');
-    const pseudo    = document.getElementById('iPseudo').value.trim();
-    const plateRaw  = document.getElementById('iProPlate').value.trim();
-    const phoneRaw  = document.getElementById('iProPhone').value.trim();
+
+    const pseudo = document.getElementById('iPseudo').value.trim();
+    const plateRaw = document.getElementById('iProPlate').value.trim();
+    const phoneRaw = document.getElementById('iProPhone').value.trim();
+
     let fail = false;
-    if (!pseudo)                        { hint('hPseudo',   'err', 'Requis.');             fail = true; }
-    if (!plateRaw)                      { hint('hProPlate', 'err', 'Requis.');             fail = true; }
-    else if (!vPlate(nPlate(plateRaw))) { hint('hProPlate', 'err', 'Format : AB-123-CD'); fail = true; }
-    if (!phoneRaw)                      { hint('hProPhone', 'err', 'Requis.');             fail = true; }
-    else if (!vPhone(phoneRaw))         { hint('hProPhone', 'err', 'Format : 0612345678'); fail = true; }
+
+    if (!pseudo) {
+      hint('hPseudo', 'err', 'Requis.');
+      fail = true;
+    }
+
+    if (!plateRaw) {
+      hint('hProPlate', 'err', 'Requis.');
+      fail = true;
+    } else if (!vPlate(nPlate(plateRaw))) {
+      hint('hProPlate', 'err', 'Format : AB-123-CD');
+      fail = true;
+    }
+
+    if (!phoneRaw) {
+      hint('hProPhone', 'err', 'Requis.');
+      fail = true;
+    } else if (!vPhone(phoneRaw)) {
+      hint('hProPhone', 'err', 'Format : 0612345678');
+      fail = true;
+    }
+
     if (fail) return;
+
     sBtn('saveBtn', true, 'Enregistrer et continuer →');
+
     try {
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
-      if (!user) { setSt('profileSt', 'Session introuvable.', 'err'); return; }
+
+      if (!user) {
+        setSt('profileSt', 'Session introuvable.', 'err');
+        return;
+      }
+
       S.uid = user.id;
+
       const plate = nPlate(plateRaw);
       const phone = nPhone(phoneRaw);
-      const { error } = await sb.from('profiles').upsert({ id: user.id, email: user.email, pseudo, owner_plate: plate, phone });
-      if (error) { console.error(error); setSt('profileSt', "Erreur lors de l'enregistrement.", 'err'); return; }
+
+      const { error } = await sb.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        pseudo,
+        owner_plate: plate,
+        phone
+      });
+
+      if (error) {
+        console.error(error);
+        setSt('profileSt', "Erreur lors de l'enregistrement.", 'err');
+        return;
+      }
+
       App._openMap({ email: user.email, pseudo, owner_plate: plate }, user.email);
     } finally {
       sBtn('saveBtn', false, 'Enregistrer et continuer →');
     }
   },
 
-  /* ── OPEN MAP ── */
   _openMap(profile, email) {
     show('sm');
-    document.getElementById('tbPlate').textContent  = profile?.owner_plate || '';
+
+    document.getElementById('tbPlate').textContent = profile?.owner_plate || '';
     document.getElementById('tbPseudo').textContent = profile?.pseudo || email || '';
+
     setTimeout(() => {
       App._initMap();
       S.map.invalidateSize();
       App.locate();
     }, 300);
+
     App._startMsgs();
     App._subLocs();
   },
 
   _initMap() {
     if (S.map) return;
+
     S.map = L.map('map', {
-      zoomControl:        true,
-      zoomSnap:           0,
-      zoomDelta:          0.5,
+      zoomControl: true,
+      zoomSnap: 0,
+      zoomDelta: 0.5,
       wheelPxPerZoomLevel: 120,
-      preferCanvas:       true,
+      preferCanvas: true
     }).setView([46.6, 1.9], 6);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-      maxZoom: 19,
+      maxZoom: 19
     }).addTo(S.map);
   },
 
-  /* ── LOCATE ── */
   locate() {
-    if (!navigator.geolocation) { toast('Géolocalisation non disponible.', 'bad'); return; }
+    if (!navigator.geolocation) {
+      toast('Géolocalisation non disponible.', 'bad');
+      return;
+    }
+
     const btn = document.getElementById('locBtn');
-    btn.disabled    = true;
+    btn.disabled = true;
     btn.textContent = '⌛ Localisation…';
+
     App._initMap();
-    if (S.watchId !== null) { navigator.geolocation.clearWatch(S.watchId); S.watchId = null; S.firstFix = true; }
+
+    if (S.watchId !== null) {
+      navigator.geolocation.clearWatch(S.watchId);
+      S.watchId = null;
+      S.firstFix = true;
+    }
 
     S.watchId = navigator.geolocation.watchPosition(
       async pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
-        btn.disabled    = false;
+
+        btn.disabled = false;
         btn.textContent = '📍 Me localiser';
 
         if (S.firstFix) {
@@ -737,145 +917,228 @@ const App = {
 
         const { data: ud } = await sb.auth.getUser();
         const user = ud?.user;
+
         if (!user) return;
+
         S.uid = user.id;
+
         await sb.from('user_locations').upsert({
-          id:         user.id,
-          user_name:  user.email,
-          latitude:   lat,
-          longitude:  lng,
-          updated_at: new Date().toISOString(),
+          id: user.id,
+          user_name: user.email,
+          latitude: lat,
+          longitude: lng,
+          updated_at: new Date().toISOString()
         });
       },
       err => {
-        btn.disabled    = false;
+        btn.disabled = false;
         btn.textContent = '📍 Me localiser';
-        const msgs = { 1: 'Localisation refusée.', 2: 'Position introuvable.', 3: 'Délai dépassé.' };
+
+        const msgs = {
+          1: 'Localisation refusée.',
+          2: 'Position introuvable.',
+          3: 'Délai dépassé.'
+        };
+
         toast(msgs[err.code] || 'Erreur de géolocalisation.', 'bad');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
     );
   },
 
-  /* ── LOAD OTHERS ── */
   async loadOthers() {
     if (S.loadingOthers) return;
+
     S.loadingOthers = true;
+
     const btn = document.getElementById('othersBtn');
-    btn.disabled    = true;
+    btn.disabled = true;
     btn.textContent = '⌛ Chargement…';
+
     App._initMap();
+
     S.otherMkrs.forEach(m => S.map.removeLayer(m));
     S.otherMkrs = [];
+
     try {
       const { data: ud } = await sb.auth.getUser();
       const me = ud?.user;
+
       if (me) S.uid = me.id;
 
       let locQ = sb.from('user_locations').select('id,latitude,longitude');
       if (me) locQ = locQ.neq('id', me.id);
+
       const { data: locs, error: le } = await locQ;
-      if (le) { console.error('user_locations:', le); toast('Erreur positions : ' + le.message, 'bad'); return; }
-      if (!locs?.length) { toast('Aucun autre conducteur localisé.'); return; }
+
+      if (le) {
+        console.error('user_locations:', le);
+        toast('Erreur positions : ' + le.message, 'bad');
+        return;
+      }
+
+      if (!locs?.length) {
+        toast('Aucun autre conducteur localisé.');
+        return;
+      }
 
       const ids = locs.map(l => l.id);
       const { data: profiles, error: pe } = await sb.from('profiles').select('id,pseudo,owner_plate').in('id', ids);
+
       if (pe) console.warn('profiles fetch warn:', pe);
+
       const pMap = {};
       (profiles || []).forEach(p => pMap[p.id] = p);
 
       locs.forEach(loc => {
         const lat = Number(loc.latitude);
         const lng = Number(loc.longitude);
+
         if (!isFinite(lat) || !isFinite(lng)) return;
-        const prof   = pMap[loc.id] || {};
-        const pseudo = prof.pseudo      || 'Conducteur';
-        const plate  = prof.owner_plate ? nPlate(prof.owner_plate) : '';
+
+        const prof = pMap[loc.id] || {};
+        const pseudo = prof.pseudo || 'Conducteur';
+        const plate = prof.owner_plate ? nPlate(prof.owner_plate) : '';
 
         const icon = L.divIcon({
           html: '<div style="width:13px;height:13px;border-radius:50%;background:#00ffb3;border:3px solid rgba(0,255,179,.35);box-shadow:0 0 10px rgba(0,255,179,.55)"></div>',
-          iconSize: [13, 13], iconAnchor: [6, 6], className: '',
+          iconSize: [13, 13],
+          iconAnchor: [6, 6],
+          className: ''
         });
+
         const mkr = L.marker([lat, lng], { icon }).addTo(S.map);
+
         mkr.bindPopup(
           '<div class="pp">' + esc(plate) + '</div>' +
           '<div class="pps">' + esc(pseudo) + '</div>' +
           '<button class="ppb" data-plate="' + esc(plate) + '">Contacter ce véhicule</button>'
         );
+
         mkr.on('popupopen', () => {
           const pop = mkr.getPopup().getElement();
           if (!pop) return;
+
           const pb = pop.querySelector('.ppb');
           if (!pb) return;
-          pb.onclick = () => { App._selPlate(pb.dataset.plate); mkr.closePopup(); };
+
+          pb.onclick = () => {
+            App._selPlate(pb.dataset.plate);
+            mkr.closePopup();
+          };
         });
+
         S.otherMkrs.push(mkr);
       });
+
       toast(locs.length + ' conducteur' + (locs.length > 1 ? 's' : '') + ' affiché' + (locs.length > 1 ? 's' : '') + '.', 'ok');
     } finally {
       S.loadingOthers = false;
-      btn.disabled    = false;
+      btn.disabled = false;
       btn.textContent = '👥 Conducteurs';
     }
   },
 
   _selPlate(plate) {
     const p = nPlate(plate);
+
     if (!p) return;
+
     S.selPlate = p;
+
     const el = document.getElementById('iTarget');
     el.value = p;
+
     mi('iTarget', true);
     hint('hTarget', 'ok', 'Véhicule sélectionné ✓');
+
     document.getElementById('iMsg').focus();
     document.querySelector('.panel').scrollTo({ top: 0, behavior: 'smooth' });
   },
 
-  /* ── SEND MESSAGE ── */
   async sendMsg() {
     ch('hTarget', 'hMsg');
     setReq('', '');
+
     const plateRaw = document.getElementById('iTarget').value.trim();
-    const msg      = document.getElementById('iMsg').value.trim();
+    const msg = document.getElementById('iMsg').value.trim();
+
     let fail = false;
-    if (!plateRaw)                        { hint('hTarget', 'err', 'Requis.');             fail = true; }
-    else if (!vPlate(nPlate(plateRaw)))   { hint('hTarget', 'err', 'Format : AB-123-CD'); fail = true; }
-    if (!msg)                             { hint('hMsg',    'err', 'Ajoute un message.');  fail = true; }
+
+    if (!plateRaw) {
+      hint('hTarget', 'err', 'Requis.');
+      fail = true;
+    } else if (!vPlate(nPlate(plateRaw))) {
+      hint('hTarget', 'err', 'Format : AB-123-CD');
+      fail = true;
+    }
+
+    if (!msg) {
+      hint('hMsg', 'err', 'Ajoute un message.');
+      fail = true;
+    }
+
     if (fail) return;
 
     const plate = nPlate(plateRaw);
+
     sBtn('sendBtn', true, 'Envoyer →');
+
     try {
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
-      if (!user) { setReq('Tu dois être connecté.', 'err'); return; }
+
+      if (!user) {
+        setReq('Tu dois être connecté.', 'err');
+        return;
+      }
+
       S.uid = user.id;
 
       const { data: target, error: te } = await sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
-      if (te || !target?.id) { setReq('Aucun utilisateur trouvé avec cette plaque.', 'err'); return; }
-      if (target.id === user.id) { setReq('Tu ne peux pas t\'envoyer un message à toi-même.', 'err'); return; }
+
+      if (te || !target?.id) {
+        setReq('Aucun utilisateur trouvé avec cette plaque.', 'err');
+        return;
+      }
+
+      if (target.id === user.id) {
+        setReq("Tu ne peux pas t'envoyer un message à toi-même.", 'err');
+        return;
+      }
 
       S.selPlate = plate;
 
       const { data: ex1 } = await sb.from('messages').select('status').eq('sender_id', user.id).eq('receiver_id', target.id).eq('target_plate', plate);
       const { data: ex2 } = await sb.from('messages').select('status').eq('sender_id', target.id).eq('receiver_id', user.id).eq('target_plate', plate);
-      const rows   = [...(ex1 || []), ...(ex2 || [])];
-      const hasAcc  = rows.some(m => m.status === 'accepted');
+
+      const rows = [...(ex1 || []), ...(ex2 || [])];
+      const hasAcc = rows.some(m => m.status === 'accepted');
       const hasPend = rows.some(m => m.status === 'pending');
 
-      if (hasPend && !hasAcc) { setReq('Demande déjà envoyée, en attente de réponse.', 'ok'); await App.loadMsgs(); return; }
+      if (hasPend && !hasAcc) {
+        setReq('Demande déjà envoyée, en attente de réponse.', 'ok');
+        await App.loadMsgs();
+        return;
+      }
 
       const { error } = await sb.from('messages').insert({
-        sender_id:   user.id,
+        sender_id: user.id,
         receiver_id: target.id,
         target_plate: plate,
-        message:      msg,
-        status:       hasAcc ? 'accepted' : 'pending',
+        message: msg,
+        status: hasAcc ? 'accepted' : 'pending'
       });
-      if (error) { console.error(error); setReq("Erreur lors de l'envoi.", 'err'); return; }
+
+      if (error) {
+        console.error(error);
+        setReq("Erreur lors de l'envoi.", 'err');
+        return;
+      }
 
       document.getElementById('iMsg').value = '';
       ch('hMsg');
+
       setReq(hasAcc ? '✅ Message envoyé' : "⏳ Demande envoyée, en attente d'acceptation", 'ok');
       await App.loadMsgs();
     } finally {
@@ -883,8 +1146,6 @@ const App = {
     }
   },
 
-  /* ── MESSAGES ── */
-  // BUG FIX #1 : méthode normale (pas async generator)
   async _startMsgs() {
     await App.loadMsgs();
     await App._subMsgs();
@@ -892,10 +1153,17 @@ const App = {
 
   async loadMsgs() {
     const box = document.getElementById('chatBox');
+
     if (!box) return;
+
     const { data: ud } = await sb.auth.getUser();
     const user = ud?.user;
-    if (!user) { box.innerHTML = '<div class="cempty">Connecte-toi pour voir les messages.</div>'; return; }
+
+    if (!user) {
+      box.innerHTML = '<div class="cempty">Connecte-toi pour voir les messages.</div>';
+      return;
+    }
+
     S.uid = user.id;
 
     const { data, error } = await sb.from('messages')
@@ -905,218 +1173,345 @@ const App = {
       .order('created_at', { ascending: true })
       .limit(150);
 
-    if (error) { console.error(error); box.innerHTML = '<div class="cempty">Erreur de chargement.</div>'; return; }
-    if (!data?.length) { box.innerHTML = '<div class="cempty">Aucun message pour le moment.</div>'; return; }
+    if (error) {
+      console.error(error);
+      box.innerHTML = '<div class="cempty">Erreur de chargement.</div>';
+      return;
+    }
+
+    if (!data?.length) {
+      box.innerHTML = '<div class="cempty">Aucun message pour le moment.</div>';
+      return;
+    }
 
     box.innerHTML = data.map(m => App._buildMsg(m, user.id)).join('');
     box.scrollTop = box.scrollHeight;
   },
 
-  // BUG FIX #2 : template literal propre, sans blocs markdown parasites
   _buildMsg(msg, myId) {
-    const sent   = msg.sender_id === myId;
+    const sent = msg.sender_id === myId;
     const status = msg.status || 'accepted';
-    const plate  = esc(msg.target_plate || '');
-    const text   = esc(msg.message || '');
-    const time   = msg.created_at
-      ? new Date(msg.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    const plate = esc(msg.target_plate || '');
+    const text = esc(msg.message || '');
+    const time = msg.created_at
+      ? new Date(msg.created_at).toLocaleString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       : '';
 
     const lbl = sent
       ? (status === 'pending' ? "⏳ En attente d'acceptation" : '📤 Envoyé → ' + plate)
       : (status === 'pending' ? '📩 Demande de contact' : '🚗 Message reçu');
 
-    // Boutons accepter/refuser pour demandes reçues en attente
     let acts = '';
+
     if (!sent && msg.receiver_id === myId && status === 'pending') {
       acts =
         '<div class="macts">' +
-        '<button class="abtn2 acc" onclick="App._accept(\'' + esc(msg.id) + '\',\'' + esc(msg.sender_id) + '\',\'' + plate + '\')">✅ Accepter</button>' +
-        '<button class="abtn2 rej" onclick="App._reject(\'' + esc(msg.id) + '\')">❌ Refuser</button>' +
+          '<button class="abtn2 acc" onclick="App._accept(\'' + jsStr(msg.id) + '\',\'' + jsStr(msg.sender_id) + '\',\'' + jsStr(msg.target_plate || '') + '\')">✅ Accepter</button>' +
+          '<button class="abtn2 rej" onclick="App._reject(\'' + jsStr(msg.id) + '\')">❌ Refuser</button>' +
         '</div>';
     }
 
-    // Boîte de réponse pour messages reçus acceptés
     let rbox = '';
+
     if (!sent && status === 'accepted') {
-      const tid = 'ta_' + msg.id;
-      const bid = 'tb_' + msg.id;
-      const rid = esc(msg.sender_id);
+      const tid = 'ta_' + String(msg.id).replace(/[^a-zA-Z0-9_-]/g, '');
+      const bid = 'tb_' + String(msg.id).replace(/[^a-zA-Z0-9_-]/g, '');
+
       rbox =
         '<div class="rbox">' +
-        '<textarea id="' + tid + '" placeholder="Votre réponse…" rows="2"></textarea>' +
+          '<textarea id="' + esc(tid) + '" placeholder="Votre réponse…" rows="2"></textarea>' +
+          '<button id="' + esc(bid) + '" class="rbox-btn" onclick="App._reply(\'' + jsStr(msg.id) + '\',\'' + jsStr(msg.sender_id) + '\',\'' + jsStr(msg.target_plate || '') + '\',\'' + jsStr(tid) + '\',\'' + jsStr(bid) + '\')">Répondre →</button>' +
+        '</div>';
+    }
 
-```
-    '<button id="' + bid + '" class="rbox-btn" onclick="App._reply(\'' + esc(msg.id) + '\',\'' + rid + '\',\'' + plate + '\',\'' + tid + '\',\'' + bid + '\')">Répondre →</button>' +
-    '</div>';
-}
+    return (
+      '<div class="msg ' + (sent ? 'sent' : 'recv') + '">' +
+        '<div class="mlbl ' + (sent ? '' : 'r') + '">' + lbl + '</div>' +
+        '<div class="mbody"><strong>' + plate + '</strong> — ' + text + '</div>' +
+        acts +
+        rbox +
+        '<div class="mtime">' + esc(time) + '</div>' +
+      '</div>'
+    );
+  },
 
-return (
-  '<div class="msg ' + (sent ? 'sent' : 'recv') + '">' +
-  '<div class="mlbl ' + (sent ? '' : 'r') + '">' + lbl + '</div>' +
-  '<div class="mbody"><strong>' + plate + '</strong> — ' + text + '</div>' +
-  acts + rbox +
-  '<div class="mtime">' + time + '</div>' +
-  '</div>'
-);
-```
+  async _accept(id, senderId, plate) {
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user;
 
-},
+      if (!user) return;
 
-async _accept(id, senderId, plate) {
-try {
-const { data: ud } = await sb.auth.getUser();
-const user = ud?.user;
-if (!user) return;
-await sb.from(‘messages’).update({ status: ‘accepted’ }).eq(‘id’, id).eq(‘receiver_id’, user.id);
-await sb.from(‘messages’).insert({
-sender_id:   user.id,
-receiver_id: senderId,
-target_plate: plate,
-message:     ‘Votre demande de contact a été acceptée. Vous pouvez maintenant échanger.’,
-status:      ‘accepted’,
-});
-S.selPlate = nPlate(plate);
-document.getElementById(‘iTarget’).value = S.selPlate;
-setReq(‘✅ Demande acceptée’, ‘ok’);
-toast(‘✅ Demande acceptée’, ‘ok’);
-await App.loadMsgs();
-} catch (e) { console.error(e); }
-},
+      await sb.from('messages')
+        .update({ status: 'accepted' })
+        .eq('id', id)
+        .eq('receiver_id', user.id);
 
-async _reject(id) {
-try {
-const { data: ud } = await sb.auth.getUser();
-const user = ud?.user;
-if (!user) return;
-await sb.from(‘messages’).update({ status: ‘rejected’ }).eq(‘id’, id).eq(‘receiver_id’, user.id);
-setReq(‘Demande refusée.’, ‘’);
-toast(‘Demande refusée.’);
-await App.loadMsgs();
-} catch (e) { console.error(e); }
-},
+      await sb.from('messages').insert({
+        sender_id: user.id,
+        receiver_id: senderId,
+        target_plate: plate,
+        message: 'Votre demande de contact a été acceptée. Vous pouvez maintenant échanger.',
+        status: 'accepted'
+      });
 
-// BUG FIX #3 : var(–red) avec double tiret correct (était var(–red) avec tiret long)
-async _reply(msgId, receiverId, plate, taId, btnId) {
-const ta = document.getElementById(taId);
-if (!ta) return;
-const text = ta.value.trim();
-if (!text) {
-ta.style.borderColor = ‘var(–red)’; // double tiret correct
-setTimeout(() => ta.style.borderColor = ‘’, 1500);
-return;
-}
-const btn = document.getElementById(btnId);
-if (btn) { btn.disabled = true; btn.textContent = ‘Envoi…’; }
-try {
-const { data: ud } = await sb.auth.getUser();
-const user = ud?.user;
-if (!user) return;
-const { error } = await sb.from(‘messages’).insert({
-sender_id:   user.id,
-receiver_id: receiverId,
-target_plate: plate,
-message:      text,
-status:      ‘accepted’,
-});
-if (error) { console.error(error); toast(“Erreur envoi réponse.”, ‘bad’); return; }
-ta.value = ‘’;
-toast(‘✅ Réponse envoyée’, ‘ok’);
-await App.loadMsgs();
-} finally {
-if (btn) { btn.disabled = false; btn.textContent = ‘Répondre →’; }
-}
-},
+      S.selPlate = nPlate(plate);
+      document.getElementById('iTarget').value = S.selPlate;
 
-/* ── REALTIME ── */
-// BUG FIX #4 : méthode normale async (pas async generator *subMsgs)
-async *subMsgs() {
-const { data: ud } = await sb.auth.getUser();
-const user = ud?.user;
-if (!user) return;
-S.uid = user.id;
-if (S.chMsg) { await sb.removeChannel(S.chMsg); S.chMsg = null; }
-S.chMsg = sb.channel(’ic_msg*’ + user.id)
-.on(‘postgres_changes’, { event: ’*’, schema: ‘public’, table: ‘messages’ }, payload => {
-const msg = payload.new || payload.old;
-if (!msg) return;
-if (msg.sender_id !== user.id && msg.receiver_id !== user.id) return;
-if (payload.eventType === ‘INSERT’ && msg.receiver_id === user.id) {
-if (msg.status === ‘pending’) { toast(‘📩 Nouvelle demande de contact !’, ‘ok’); App.showBadge(); }
-else if (String(msg.message || ‘’).includes(‘acceptée’)) { toast(‘✅ Ta demande a été acceptée !’, ‘ok’); }
-}
-App.loadMsgs();
-})
-.subscribe();
-},
+      setReq('✅ Demande acceptée', 'ok');
+      toast('✅ Demande acceptée', 'ok');
 
-async _subLocs() {
-if (S.chLoc) { await sb.removeChannel(S.chLoc); S.chLoc = null; }
-S.chLoc = sb.channel(‘ic_loc’)
-.on(‘postgres_changes’, { event: ‘*’, schema: ‘public’, table: ‘user_locations’ }, () => {
-if (document.getElementById(‘sm’).classList.contains(‘active’)) App.loadOthers();
-})
-.subscribe();
-},
+      await App.loadMsgs();
+    } catch (e) {
+      console.error(e);
+      toast('Erreur lors de l’acceptation.', 'bad');
+    }
+  },
 
-showBadge() { document.getElementById(‘msgBadge’)?.classList.add(‘show’); },
-hideBadge() { document.getElementById(‘msgBadge’)?.classList.remove(‘show’); },
+  async _reject(id) {
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user;
 
-async logout() {
-if (!confirm(‘Veux-tu vraiment te déconnecter ?’)) return;
-if (S.watchId !== null) { navigator.geolocation.clearWatch(S.watchId); S.watchId = null; }
-if (S.chMsg) { await sb.removeChannel(S.chMsg); S.chMsg = null; }
-if (S.chLoc) { await sb.removeChannel(S.chLoc); S.chLoc = null; }
-await sb.auth.signOut();
-Object.assign(S, { uid: null, sessionDone: false, selPlate: null, myMarker: null, otherMkrs: [], map: null, firstFix: true });
-location.href = CFG.site;
-},
+      if (!user) return;
 
-sos() { if (confirm(‘Appeler le 112 (secours) ?’)) window.location.href = ‘tel:112’; },
+      await sb.from('messages')
+        .update({ status: 'rejected' })
+        .eq('id', id)
+        .eq('receiver_id', user.id);
+
+      setReq('Demande refusée.', '');
+      toast('Demande refusée.');
+
+      await App.loadMsgs();
+    } catch (e) {
+      console.error(e);
+      toast('Erreur lors du refus.', 'bad');
+    }
+  },
+
+  async _reply(msgId, receiverId, plate, taId, btnId) {
+    const ta = document.getElementById(taId);
+
+    if (!ta) return;
+
+    const text = ta.value.trim();
+
+    if (!text) {
+      ta.style.borderColor = 'var(--red)';
+      setTimeout(() => {
+        ta.style.borderColor = '';
+      }, 1500);
+      return;
+    }
+
+    const btn = document.getElementById(btnId);
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+    }
+
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user;
+
+      if (!user) return;
+
+      const { error } = await sb.from('messages').insert({
+        sender_id: user.id,
+        receiver_id: receiverId,
+        target_plate: plate,
+        message: text,
+        status: 'accepted'
+      });
+
+      if (error) {
+        console.error(error);
+        toast('Erreur envoi réponse.', 'bad');
+        return;
+      }
+
+      ta.value = '';
+      toast('✅ Réponse envoyée', 'ok');
+
+      await App.loadMsgs();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Répondre →';
+      }
+    }
+  },
+
+  async _subMsgs() {
+    const { data: ud } = await sb.auth.getUser();
+    const user = ud?.user;
+
+    if (!user) return;
+
+    S.uid = user.id;
+
+    if (S.chMsg) {
+      await sb.removeChannel(S.chMsg);
+      S.chMsg = null;
+    }
+
+    S.chMsg = sb.channel('ic_msg_' + user.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+        const msg = payload.new || payload.old;
+
+        if (!msg) return;
+        if (msg.sender_id !== user.id && msg.receiver_id !== user.id) return;
+
+        if (payload.eventType === 'INSERT' && msg.receiver_id === user.id) {
+          if (msg.status === 'pending') {
+            toast('📩 Nouvelle demande de contact !', 'ok');
+            App.showBadge();
+          } else if (String(msg.message || '').includes('acceptée')) {
+            toast('✅ Ta demande a été acceptée !', 'ok');
+          } else {
+            toast('💬 Nouveau message reçu', 'ok');
+            App.showBadge();
+          }
+        }
+
+        App.loadMsgs();
+      })
+      .subscribe();
+  },
+
+  async _subLocs() {
+    if (S.chLoc) {
+      await sb.removeChannel(S.chLoc);
+      S.chLoc = null;
+    }
+
+    S.chLoc = sb.channel('ic_loc')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_locations' }, () => {
+        if (document.getElementById('sm').classList.contains('active')) App.loadOthers();
+      })
+      .subscribe();
+  },
+
+  showBadge() {
+    document.getElementById('msgBadge')?.classList.add('show');
+  },
+
+  hideBadge() {
+    document.getElementById('msgBadge')?.classList.remove('show');
+  },
+
+  async logout() {
+    if (!confirm('Veux-tu vraiment te déconnecter ?')) return;
+
+    if (S.watchId !== null) {
+      navigator.geolocation.clearWatch(S.watchId);
+      S.watchId = null;
+    }
+
+    if (S.chMsg) {
+      await sb.removeChannel(S.chMsg);
+      S.chMsg = null;
+    }
+
+    if (S.chLoc) {
+      await sb.removeChannel(S.chLoc);
+      S.chLoc = null;
+    }
+
+    await sb.auth.signOut();
+
+    location.href = CFG.site;
+  },
+
+  sos() {
+    if (confirm('Appeler le 112, secours ?')) window.location.href = 'tel:112';
+  }
 };
 
-/* ── AUTH STATE ── */
 sb.auth.onAuthStateChange((event, session) => {
-if (event === ‘PASSWORD_RECOVERY’) {
-S.sessionDone = false;
-S.uid = session?.user?.id || null;
-show(‘sr’);
-return;
-}
-if (event === ‘SIGNED_IN’ && session) {
-if (S.sessionDone) return;
-S.uid         = session.user.id;
-S.sessionDone = true;
-setTimeout(() => App._afterAuth(), 0);
-return;
-}
-if (event === ‘SIGNED_OUT’) {
-S.sessionDone = false;
-S.uid         = null;
-S.selPlate    = null;
-if (S.watchId !== null) { navigator.geolocation.clearWatch(S.watchId); S.watchId = null; }
-if (S.chMsg) { try { sb.removeChannel(S.chMsg); } catch (e) {} S.chMsg = null; }
-if (S.chLoc) { try { sb.removeChannel(S.chLoc); } catch (e) {} S.chLoc = null; }
-show(‘sw’);
-}
+  if (event === 'PASSWORD_RECOVERY') {
+    S.sessionDone = false;
+    S.uid = session?.user?.id || null;
+    show('sr');
+    return;
+  }
+
+  if (event === 'SIGNED_IN' && session) {
+    if (S.sessionDone) return;
+
+    S.uid = session.user.id;
+    S.sessionDone = true;
+
+    setTimeout(() => App._afterAuth(), 0);
+    return;
+  }
+
+  if (event === 'SIGNED_OUT') {
+    S.sessionDone = false;
+    S.uid = null;
+    S.selPlate = null;
+
+    if (S.watchId !== null) {
+      navigator.geolocation.clearWatch(S.watchId);
+      S.watchId = null;
+    }
+
+    if (S.chMsg) {
+      try {
+        sb.removeChannel(S.chMsg);
+      } catch (e) {}
+      S.chMsg = null;
+    }
+
+    if (S.chLoc) {
+      try {
+        sb.removeChannel(S.chLoc);
+      } catch (e) {}
+      S.chLoc = null;
+    }
+
+    show('sw');
+  }
 });
 
-/* ── BOOT ── */
 async function boot() {
-const frag = (window.location.hash || ‘’) + (window.location.search || ‘’);
-if (frag.toLowerCase().includes(‘type=recovery’)) { show(‘sr’); return; }
-const { data: sd, error: se } = await sb.auth.getSession();
-if (se) { console.error(‘boot getSession:’, se); show(‘sw’); return; }
-const session = sd?.session;
-if (!session) { show(‘sw’); return; }
-S.uid         = session.user.id;
-S.sessionDone = true;
-await App._afterAuth();
+  const frag = (window.location.hash || '') + (window.location.search || '');
+
+  if (frag.toLowerCase().includes('type=recovery')) {
+    show('sr');
+    return;
+  }
+
+  const { data: sd, error: se } = await sb.auth.getSession();
+
+  if (se) {
+    console.error('boot getSession:', se);
+    show('sw');
+    return;
+  }
+
+  const session = sd?.session;
+
+  if (!session) {
+    show('sw');
+    return;
+  }
+
+  S.uid = session.user.id;
+  S.sessionDone = true;
+
+  await App._afterAuth();
 }
 
 bindInputs();
 boot();
 </script>
-
 </body>
 </html>
