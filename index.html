@@ -1,5 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>ImmatConnect — La route connectée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080b12;--bg1:#0e1420;--bg2:#141c2e;--bg3:#1a2438;
+  --line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.12);
+  --green:#00ffb3;--gdim:rgba(0,255,179,.08);--gmid:rgba(0,255,179,.18);
+  --blue:#2979ff;--red:#ff3b5c;--rdim:rgba(255,59,92,.1);
+  --text:#e8edf8;--muted:#5a6880;--muted2:#8898b8;
+  --fui:'Space Grotesk',sans-serif;--fh:'Barlow Condensed',sans-serif;
+  --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+  --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);--t:.18s;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.ga{position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,179,.05) 0%,transparent 65%);pointer-events:none;z-index:0}
+.gb{position:fixed;bottom:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(41,121,255,.06) 0%,transparent 65%);pointer-events:none;z-index:0}
+.screen{display:none;position:relative;z-index:1;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+#sw.active{align-items:center;justify-content:center;padding:48px 20px 60px}
+.ww{width:100%;max-width:380px;animation:fadeUp .65s var(--ease) both}
+.logo-block{text-align:center;margin-bottom:48px}
+.logo-ring{width:88px;height:88px;margin:0 auto 20px;border-radius:28px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;box-shadow:0 0 0 1px rgba(0,255,179,.3),0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(0,255,179,.12)}
+.logo-ring::after{content:'';position:absolute;inset:-1px;border-radius:29px;background:linear-gradient(135deg,var(--green),var(--blue));z-index:-1;opacity:.25;filter:blur(16px)}
+.brand-name{font-family:var(--fh);font-size:42px;font-weight:900;letter-spacing:-.5px;line-height:1}
+.brand-name .dot{color:var(--green)}
+.brand-tag{font-size:11px;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.w-h1{font-family:var(--fh);font-size:32px;font-weight:700;line-height:1.15;text-align:center;margin-bottom:14px}
+.w-h1 mark{background:linear-gradient(90deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal}
+.w-p{text-align:center;color:var(--muted2);font-size:14px;line-height:1.7;margin-bottom:32px}
+.feat-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:32px}
+.feat-pill{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r12);transition:border-color var(--t)}
+.feat-pill:hover{border-color:var(--line2)}
+.fi{width:36px;height:36px;flex:0 0 36px;border-radius:10px;background:var(--gdim);border:1px solid rgba(0,255,179,.15);display:flex;align-items:center;justify-content:center;font-size:16px}
+.ft{font-size:13px;color:var(--muted2)}
+.btn-stack{display:flex;flex-direction:column;gap:10px}
+.btn{width:100%;padding:15px 20px;border:none;border-radius:var(--r12);font-family:var(--fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(--t) var(--ease)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.btn-p{background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700;box-shadow:0 4px 24px rgba(0,255,179,.22)}
+.btn-p:hover:not(:disabled){box-shadow:0 6px 36px rgba(0,255,179,.38);transform:translateY(-1px)}
+.btn-g{background:transparent;color:var(--muted2);border:1px solid var(--line)}
+.btn-g:hover:not(:disabled){border-color:var(--line2);color:var(--text);background:var(--bg1)}
+.mt8{margin-top:8px}.mt12{margin-top:12px}
+#sa.active,#sp.active,#sr.active{align-items:center;justify-content:center;padding:28px 18px 52px}
+.card{width:100%;max-width:420px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r24);padding:28px 22px;box-shadow:0 40px 80px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.04) inset;animation:fadeUp .5s var(--ease) both}
+.card-ttl{font-family:var(--fh);font-size:28px;font-weight:700;margin-bottom:6px}
+.card-sub{font-size:13px;color:var(--muted2);line-height:1.55;margin-bottom:22px}
+.tab-bar{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:3px;margin-bottom:22px}
+.tab{padding:10px;border:none;border-radius:7px;font-family:var(--fui);font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--muted);transition:all var(--t) var(--ease)}
+.tab.on{background:var(--bg);color:var(--text);font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.field{margin-bottom:14px}
+.lbl{display:block;font-size:12px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.iw{position:relative}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:13px 15px;font-family:var(--fui);font-size:14px;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
+.inp::placeholder{color:var(--muted)}
+.inp:focus{border-color:rgba(0,255,179,.4);background:var(--bg3)}
+.inp.pr{padding-right:48px}
+.inp.err{border-color:var(--red)!important}
+.inp.ok{border-color:rgba(0,255,179,.5)!important}
+textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color var(--t)}
+.eye:hover{color:var(--text)}
+.hint{margin-top:5px;font-size:11.5px;min-height:15px;line-height:1.4;color:transparent;transition:color var(--t)}
+.hint.err{color:var(--red)}.hint.ok{color:var(--green)}.hint.info{color:var(--muted2)}
+.ibox{margin:10px 0;padding:11px 13px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);font-size:12.5px;color:var(--muted2);line-height:1.55}
+.st{margin-top:12px;padding:11px 14px;border-radius:var(--r8);font-size:13px;line-height:1.5;display:none}
+.st.show{display:block}
+.st.err{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.2)}
+.st.ok{background:var(--gdim);color:var(--green);border:1px solid rgba(0,255,179,.2)}
+.st.info{background:var(--bg2);color:var(--muted2);border:1px solid var(--line)}
+.aux{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px}
+.lbtn{border:none;background:transparent;color:var(--muted2);font-size:12.5px;cursor:pointer;padding:5px 10px;border-radius:7px;font-family:var(--fui);transition:color var(--t)}
+.lbtn:hover{color:var(--green)}
+.lbtn:disabled{opacity:.4;cursor:not-allowed}
+#sm{padding:0}
+#sm.active{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+.topbar{padding:max(env(safe-area-inset-top,0px),14px) 18px 0;background:rgba(8,11,18,.97);backdrop-filter:blur(24px);border-bottom:1px solid var(--line);flex:0 0 auto}
+.tb-r1{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.tb-brand{font-family:var(--fh);font-size:22px;font-weight:900;letter-spacing:-.2px}
+.tb-brand span{color:var(--green)}
+.tb-info{text-align:right;min-width:0}
+.tb-plate{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--green);letter-spacing:1px;display:block}
+.tb-pseudo{font-size:11.5px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.astrip{display:flex;gap:7px;padding:0 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.astrip::-webkit-scrollbar{display:none}
+.abtn{border:none;border-radius:var(--r8);padding:9px 13px;font-family:var(--fui);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all var(--t) var(--ease);display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.abtn:disabled{opacity:.45;cursor:not-allowed}
+.abtn-g{background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700}
+.abtn-g:hover:not(:disabled){box-shadow:0 4px 18px rgba(0,255,179,.3);transform:translateY(-1px)}
+.abtn-o{background:var(--bg2);border:1px solid var(--line);color:var(--muted2)}
+.abtn-o:hover:not(:disabled){border-color:var(--line2);color:var(--text)}
+#map{flex:1 1 0;min-height:0;z-index:1}
+.panel{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--line);overflow-y:auto;max-height:50vh;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 70px)}
+.panel-in{max-width:600px;margin:0 auto}
+.sec-h{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ccard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r16);padding:16px;margin-bottom:20px}
+.cdesc{font-size:12.5px;color:var(--muted2);line-height:1.6;margin-bottom:14px}
+.rrow{margin-top:10px;font-size:12.5px;color:var(--muted2);min-height:16px;display:flex;align-items:center;gap:5px;transition:color var(--t)}
+.rrow.ok{color:var(--green)}.rrow.err{color:var(--red)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.badge{display:none;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:2px 6px;margin-left:5px;animation:pulse 1.5s infinite}
+.badge.show{display:inline-block}
+.rbtn{border:none;border-radius:var(--r8);padding:7px 11px;background:var(--gdim);border:1px solid rgba(0,255,179,.15);color:var(--green);font-family:var(--fui);font-size:13px;font-weight:700;cursor:pointer;transition:background var(--t)}
+.rbtn:hover{background:var(--gmid)}
+#chatBox{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding:12px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r12);scroll-behavior:smooth}
+#chatBox::-webkit-scrollbar{width:3px}
+#chatBox::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.cempty{text-align:center;color:var(--muted);font-size:13px;padding:28px 0}
+.msg{padding:10px 13px;border-radius:13px;font-size:13px;line-height:1.5;max-width:90%;word-break:break-word;animation:msgIn .25s var(--ease) both}
+.msg.sent{align-self:flex-end;background:rgba(0,255,179,.07);border:1px solid rgba(0,255,179,.18)}
+.msg.recv{align-self:flex-start;background:var(--bg2);border:1px solid var(--line)}
+.mlbl{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px;color:var(--green)}
+.mlbl.r{color:var(--muted2)}
+.mbody{color:var(--text)}
+.mbody strong{color:var(--green);font-weight:600}
+.mtime{font-size:10px;color:var(--muted);margin-top:5px;text-align:right}
+.macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.abtn2{border:none;border-radius:var(--r8);padding:6px 11px;font-family:var(--fui);font-size:12px;font-weight:600;cursor:pointer;transition:background var(--t)}
+.abtn2.acc{background:var(--gdim);color:var(--green);border:1px solid rgba(0,255,179,.25)}
+.abtn2.acc:hover{background:var(--gmid)}
+.abtn2.rej{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.25)}
+.abtn2.rej:hover{background:rgba(255,59,92,.18)}
+.rbox{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.rbox textarea{width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:var(--r8);padding:9px 12px;font-family:var(--fui);font-size:13px;color:var(--text);outline:none;resize:none;min-height:58px;transition:border-color var(--t);line-height:1.5}
+.rbox textarea:focus{border-color:rgba(0,255,179,.4)}
+.rbox textarea::placeholder{color:var(--muted)}
+.rbox-btn{border:none;border-radius:var(--r8);padding:8px 14px;background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-family:var(--fui);font-size:13px;font-weight:700;cursor:pointer;align-self:flex-end;transition:opacity var(--t)}
+.rbox-btn:hover{opacity:.88}
+.rbox-btn:disabled{opacity:.45;cursor:not-allowed}
+.sos{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom,0px)+18px);width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff2d55,#c0002f);color:#fff;font-size:22px;font-weight:900;box-shadow:0 4px 20px rgba(255,45,85,.5);z-index:2000;cursor:pointer;transition:all var(--t) var(--ease);display:none;align-items:center;justify-content:center}
+.sos.show{display:flex}
+.sos:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(255,45,85,.65)}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-70px);max-width:88%;min-width:180px;background:var(--bg1);border:1px solid var(--line2);color:var(--text);padding:11px 18px;border-radius:var(--r12);font-size:13.5px;font-weight:500;z-index:9999;box-shadow:0 10px 40px rgba(0,0,0,.6);text-align:center;transition:transform .32s var(--spring),opacity .28s var(--ease);opacity:0;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(0,255,179,.3);color:var(--green)}
+.toast.bad{border-color:rgba(255,59,92,.3);color:var(--red)}
+.leaflet-popup-content-wrapper{background:var(--bg1)!important;border:1px solid var(--line2)!important;border-radius:14px!important;box-shadow:0 12px 40px rgba(0,0,0,.55)!important;color:var(--text)!important}
+.leaflet-popup-tip{background:var(--bg1)!important}
+.leaflet-popup-content{color:var(--text)!important;font-family:var(--fui);margin:14px 16px!important}
+.pp{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:3px}
+.pps{font-size:13px;color:var(--muted2);margin-bottom:12px}
+.ppb{width:100%;border:none;border-radius:var(--r8);padding:9px 12px;background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700;font-family:var(--fui);font-size:13px;cursor:pointer;transition:opacity var(--t)}
+.ppb:hover{opacity:.9}
+.hidden{display:none!important}
+.mini-select{background:var(--bg2);border:1px solid var(--line);color:var(--muted2);border-radius:var(--r8);padding:8px 10px;font-family:var(--fui);font-size:12.5px;outline:none;flex:0 0 auto}
+.mini-select:focus{border-color:rgba(0,255,179,.4)}
+.convbar{display:flex;gap:7px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+.convbar::-webkit-scrollbar{display:none}
+.convpill{border:none;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--muted2);font-family:var(--fui);font-size:12px;font-weight:600;padding:7px 11px;white-space:nowrap;cursor:pointer}
+.convpill.on{background:var(--gdim);border-color:rgba(0,255,179,.25);color:var(--green)}
+.mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.modalx{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
+.modalx.show{display:flex}
+.modal-card{width:100%;max-width:520px;max-height:82vh;overflow:auto;background:var(--bg1);border:1px solid var(--line2);border-radius:var(--r24);padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.modal-card h2{font-family:var(--fh);font-size:26px;margin-bottom:10px}
+.modal-card p,.modal-card li{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:8px}
+.modal-card ul{padding-left:18px;margin-bottom:14px}
+</style>
+</head>
+
+<body>
+<div class="ga"></div><div class="gb"></div>
+
+<div id="sw" class="screen active">
+  <div class="ww">
+    <div class="logo-block">
+      <div class="logo-ring">🚗</div>
+      <div class="brand-name">Immat<span class="dot">Connect</span></div>
+      <div class="brand-tag">La route, connectée</div>
+    </div>
+    <h1 class="w-h1">Parlez à <mark>n'importe quel</mark> conducteur</h1>
+    <p class="w-p">Liez votre plaque, apparaissez sur la carte en temps réel et envoyez un message à n'importe quel véhicule autour de vous.</p>
+    <div class="feat-grid">
+      <div class="feat-pill"><div class="fi">🪪</div><div class="ft">Votre plaque liée à votre compte de façon sécurisée</div></div>
+      <div class="feat-pill"><div class="fi">📍</div><div class="ft">Carte temps réel après connexion</div></div>
+      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Accès rapide aux secours 112 depuis la carte</div></div>
+    </div>
+    <div class="btn-stack">
+      <button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button>
+      <button class="btn btn-g" onclick="App.goToAuth('login')">J'ai déjà un compte</button>
+    </div>
+  </div>
+</div>
+
+<div id="sa" class="screen">
+  <div class="card">
+    <div class="card-ttl" id="authTitle">Connexion</div>
+    <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
+    <div class="tab-bar">
+      <button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button>
+      <button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iEmail">Email</label>
+      <input class="inp" type="email" id="iEmail" placeholder="ton@email.com" autocomplete="email"/>
+      <div class="hint" id="hEmail"></div>
+    </div>
+    <div id="suExtras" class="hidden">
+      <div class="field">
+        <label class="lbl" for="iPhone">Téléphone</label>
+        <input class="inp" type="tel" id="iPhone" placeholder="0612345678" autocomplete="tel"/>
+        <div class="hint" id="hPhone"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="iPlate">Immatriculation</label>
+        <input class="inp" type="text" id="iPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+        <div class="hint" id="hPlate"></div>
+      </div>
+      <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iPwd">Mot de passe</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iPwd" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iPwd',this)">👁</button>
+      </div>
+      <div class="hint" id="hPwd"></div>
+    </div>
+    <div id="confirmWrap" class="hidden">
+      <div class="field">
+        <label class="lbl" for="iConfirm">Confirmer le mot de passe</label>
+        <div class="iw">
+          <input class="inp pr" type="password" id="iConfirm" placeholder="••••••••" autocomplete="new-password"/>
+          <button class="eye" type="button" onclick="toggleEye('iConfirm',this)">👁</button>
+        </div>
+        <div class="hint info" id="hConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
+      </div>
+    </div>
+    <button id="authBtn" class="btn btn-p" onclick="App.handleAuth()">Se connecter</button>
+    <button class="btn btn-g mt8" onclick="App.backToWelcome()">← Retour</button>
+    <div class="aux">
+      <button class="lbtn" id="forgotBtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button>
+      <button class="lbtn hidden" id="resendBtn" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button>
+    </div>
+    <div class="st" id="authSt"></div>
+  </div>
+</div>
+
+<div id="sp" class="screen">
+  <div class="card">
+    <div class="card-ttl">Mon profil</div>
+    <div class="card-sub">Quelques infos avant d'accéder à la carte.</div>
+    <div class="field">
+      <label class="lbl" for="iPseudo">Pseudo</label>
+      <input class="inp" type="text" id="iPseudo" placeholder="Ton pseudo" autocomplete="nickname"/>
+      <div class="hint" id="hPseudo"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProPlate">Immatriculation</label>
+      <input class="inp" type="text" id="iProPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+      <div class="hint" id="hProPlate"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProPhone">Téléphone</label>
+      <input class="inp" type="tel" id="iProPhone" placeholder="0612345678" autocomplete="tel"/>
+      <div class="hint" id="hProPhone"></div>
+    </div>
+    <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
+    <button id="saveBtn" class="btn btn-p mt12" onclick="App.saveProfile()">Enregistrer et continuer →</button>
+    <div class="st" id="profileSt"></div>
+  </div>
+</div>
+
+<div id="sr" class="screen">
+  <div class="card">
+    <div class="card-ttl">Nouveau mot de passe</div>
+    <div class="card-sub">Choisis un mot de passe sécurisé.</div>
+    <div class="field">
+      <label class="lbl" for="iNewPwd">Nouveau mot de passe</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iNewPwd" placeholder="••••••••" autocomplete="new-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iNewPwd',this)">👁</button>
+      </div>
+      <div class="hint" id="hNewPwd"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iNewCfm">Confirmer</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iNewCfm" placeholder="••••••••" autocomplete="new-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iNewCfm',this)">👁</button>
+      </div>
+      <div class="hint info" id="hNewCfm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
+    </div>
+    <button id="updPwdBtn" class="btn btn-p" onclick="App.updatePwd()">Mettre à jour</button>
+    <div class="st" id="resetSt"></div>
+  </div>
+</div>
+
+<div id="sm" class="screen">
+  <div class="topbar">
+    <div class="tb-r1">
+      <div class="tb-brand">Immat<span>Connect</span></div>
+      <div class="tb-info">
+        <span class="tb-plate" id="tbPlate"></span>
+        <span class="tb-pseudo" id="tbPseudo"></span>
+      </div>
+    </div>
+    <div class="astrip">
+      <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
+      <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
+      <button id="invisBtn" class="abtn abtn-o" onclick="App.toggleInvisible()">👻 Invisible</button>
+      <select id="radiusSel" class="mini-select" onchange="App.setRadius(this.value)">
+        <option value="1">Rayon 1 km</option>
+        <option value="5">Rayon 5 km</option>
+        <option value="10">Rayon 10 km</option>
+        <option value="25">Rayon 25 km</option>
+      </select>
+      <button class="abtn abtn-o" onclick="App.openLegal()">⚖️ Confidentialité</button>
+      <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="panel">
+    <div class="panel-in">
+      <div class="sec-h">📨 Contacter un véhicule</div>
+      <div class="ccard">
+        <p class="cdesc">Renseignez la plaque du véhicule à contacter, pas la vôtre.</p>
+        <div class="field">
+          <label class="lbl" for="iTarget">Plaque du véhicule</label>
+          <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/>
+          <div class="hint" id="hTarget"></div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="iMsg">Message</label>
+          <textarea class="inp" id="iMsg" placeholder="Ex : Vos phares sont allumés…"></textarea>
+          <div class="hint" id="hMsg"></div>
+        </div>
+        <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer →</button>
+        <button id="clearMsgBtn" class="btn btn-g mt8" onclick="App.clearMsg()">Vider le message</button>
+        <div class="rrow" id="reqSt"></div>
+      </div>
+
+      <div class="mhdr">
+        <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
+        <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻ Actualiser</button>
+      </div>
+      <div id="convbar" class="convbar"></div>
+      <div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
+  <div class="modal-card">
+    <h2>Confidentialité & conditions</h2>
+    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
+    <ul>
+      <li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li>
+      <li>Votre position peut être masquée avec le mode invisible.</li>
+      <li>Les positions anciennes sont ignorées automatiquement.</li>
+      <li>Vous pouvez bloquer une plaque depuis les messages.</li>
+      <li>En cas d’urgence réelle, utilisez les services officiels de secours.</li>
+    </ul>
+    <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
+  </div>
+</div>
+
+<button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
+<div class="toast" id="toastEl"></div>
+
 <script>
 'use strict';
+
+window.onerror = function(msg, src, line) {
+  alert('Erreur JS : ' + msg + ' ligne ' + line);
+};
+
+function safeLocalGet(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : v;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function safeLocalSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {}
+}
+
+function safeJsonGet(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch (e) {
+    try { localStorage.removeItem(key); } catch (_) {}
+    return fallback;
+  }
+}
 
 const CFG = {
   url: 'https://vemgdkkbldgyvaisudkd.supabase.co',
@@ -10,7 +417,7 @@ const CFG = {
   maxMsgPerMinute: 5
 };
 
-const sb = window.supabase.createClient(CFG.url, CFG.key);
+const sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(CFG.url, CFG.key) : null;
 
 const S = {
   uid: null,
@@ -25,14 +432,13 @@ const S = {
   loadingOthers: false,
   chMsg: null,
   chLoc: null,
-  invisible: localStorage.getItem('ic_invisible') === '1',
-  radiusKm: Number(localStorage.getItem('ic_radius') || CFG.defaultRadiusKm),
+  invisible: safeLocalGet('ic_invisible', '0') === '1',
+  radiusKm: Number(safeLocalGet('ic_radius', CFG.defaultRadiusKm)) || CFG.defaultRadiusKm,
   myLat: null,
   myLng: null,
   msgClicks: [],
-  blocked: JSON.parse(localStorage.getItem('ic_blocked') || '[]'),
-  conversationFilter: 'all',
-  currentProfile: null
+  blocked: safeJsonGet('ic_blocked', []),
+  conversationFilter: 'all'
 };
 
 const RE_PH = /^0\d{9}$/;
@@ -64,7 +470,11 @@ function esc(s) {
 }
 
 function jsStr(s) {
-  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+  return String(s || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
 }
 
 function hint(id, t, m) {
@@ -143,6 +553,7 @@ function xlErr(m) {
   if (s.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
   if (s.includes('email not confirmed')) return 'Email non confirmé. Vérifie ta boîte mail.';
   if (s.includes('user already registered')) return 'Un compte existe déjà avec cet email.';
+  if (s.includes('duplicate') || s.includes('unique')) return 'Cette plaque est déjà utilisée.';
   if (s.includes('rate limit')) return 'Trop de tentatives. Réessaie plus tard.';
   if (s.includes('password should')) return 'Le mot de passe ne respecte pas les critères.';
   if (s.includes('same password')) return 'Le nouveau mot de passe doit être différent.';
@@ -231,96 +642,6 @@ function bindInputs() {
   });
 }
 
-function injectExtraUi() {
-  const css = document.createElement('style');
-  css.textContent = `
-    .privacy-row{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px}
-    .mini-select{background:var(--bg2);border:1px solid var(--line);color:var(--muted2);border-radius:var(--r8);padding:8px 10px;font-family:var(--fui);font-size:12.5px;outline:none}
-    .mini-select:focus{border-color:rgba(0,255,179,.4)}
-    .convbar{display:flex;gap:7px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
-    .convbar::-webkit-scrollbar{display:none}
-    .convpill{border:none;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--muted2);font-family:var(--fui);font-size:12px;font-weight:600;padding:7px 11px;white-space:nowrap;cursor:pointer}
-    .convpill.on{background:var(--gdim);border-color:rgba(0,255,179,.25);color:var(--green)}
-    .mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .mini-danger{background:var(--rdim)!important;color:var(--red)!important;border:1px solid rgba(255,59,92,.25)!important}
-    .modalx{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
-    .modalx.show{display:flex}
-    .modal-card{width:100%;max-width:520px;max-height:82vh;overflow:auto;background:var(--bg1);border:1px solid var(--line2);border-radius:var(--r24);padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
-    .modal-card h2{font-family:var(--fh);font-size:26px;margin-bottom:10px}
-    .modal-card p,.modal-card li{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:8px}
-    .modal-card ul{padding-left:18px;margin-bottom:14px}
-  `;
-  document.head.appendChild(css);
-
-  const astr = document.querySelector('.astrip');
-  if (astr && !document.getElementById('invisBtn')) {
-    astr.insertAdjacentHTML('beforeend', `
-      <button id="invisBtn" class="abtn abtn-o" onclick="App.toggleInvisible()">👻 Invisible</button>
-      <select id="radiusSel" class="mini-select" onchange="App.setRadius(this.value)">
-        <option value="1">Rayon 1 km</option>
-        <option value="5">Rayon 5 km</option>
-        <option value="10">Rayon 10 km</option>
-        <option value="25">Rayon 25 km</option>
-      </select>
-      <button class="abtn abtn-o" onclick="App.openLegal()">⚖️ Confidentialité</button>
-    `);
-  }
-
-  const sendBtn = document.getElementById('sendBtn');
-  if (sendBtn && !document.getElementById('clearMsgBtn')) {
-    sendBtn.insertAdjacentHTML('afterend', `<button id="clearMsgBtn" class="btn btn-g mt8" onclick="App.clearMsg()">Vider le message</button>`);
-  }
-
-  if (!document.getElementById('legalModal')) {
-    document.body.insertAdjacentHTML('beforeend', `
-      <div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
-        <div class="modal-card">
-          <h2>Confidentialité & conditions</h2>
-          <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
-          <ul>
-            <li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li>
-            <li>Votre position peut être masquée avec le mode invisible.</li>
-            <li>Les positions anciennes sont ignorées automatiquement.</li>
-            <li>Vous pouvez bloquer une plaque depuis les messages.</li>
-            <li>En cas d’urgence réelle, utilisez les services officiels de secours.</li>
-          </ul>
-          <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
-        </div>
-      </div>
-    `);
-  }
-
-  const r = document.getElementById('radiusSel');
-  if (r) r.value = String(S.radiusKm);
-
-  App.refreshInvisibleBtn();
-}
-
-function installPwa() {
-  try {
-    const manifest = {
-      name: 'ImmatConnect',
-      short_name: 'ImmatConnect',
-      start_url: CFG.site,
-      display: 'standalone',
-      background_color: '#080b12',
-      theme_color: '#00ffb3',
-      icons: []
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = url;
-    document.head.appendChild(link);
-
-    const meta = document.createElement('meta');
-    meta.name = 'theme-color';
-    meta.content = '#00ffb3';
-    document.head.appendChild(meta);
-  } catch (e) {}
-}
-
 const App = {
   goToAuth(m) {
     App.setMode(m);
@@ -355,7 +676,20 @@ const App = {
     });
   },
 
+  async plateAvailable(plate, selfId) {
+    if (!sb) return true;
+    const { data, error } = await sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
+    if (error) return true;
+    if (!data?.id) return true;
+    return data.id === selfId;
+  },
+
   async handleAuth() {
+    if (!sb) {
+      setSt('authSt', 'Supabase n’est pas chargé. Vérifie ta connexion.', 'err');
+      return;
+    }
+
     setSt('authSt', '');
     ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm');
 
@@ -387,13 +721,6 @@ const App = {
       btn.disabled = false;
       btn.textContent = idle;
     }
-  },
-
-  async plateAvailable(plate, selfId) {
-    const { data, error } = await sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
-    if (error) return true;
-    if (!data?.id) return true;
-    return data.id === selfId;
   },
 
   async _signup(email, pwd) {
@@ -488,6 +815,7 @@ const App = {
   },
 
   async resendConfirm() {
+    if (!sb) return;
     const email = document.getElementById('iEmail').value.trim();
 
     if (!email) {
@@ -516,6 +844,7 @@ const App = {
   },
 
   async forgotPwd() {
+    if (!sb) return;
     const email = document.getElementById('iEmail').value.trim();
 
     if (!email) {
@@ -542,6 +871,7 @@ const App = {
   },
 
   async updatePwd() {
+    if (!sb) return;
     ch('hNewPwd', 'hNewCfm');
     setSt('resetSt', '');
 
@@ -586,6 +916,11 @@ const App = {
   },
 
   async _afterAuth() {
+    if (!sb) {
+      show('sw');
+      return;
+    }
+
     const { data: ud, error: ue } = await sb.auth.getUser();
 
     if (ue || !ud?.user) {
@@ -604,6 +939,7 @@ const App = {
   },
 
   async saveProfile() {
+    if (!sb) return;
     ch('hPseudo', 'hProPlate', 'hProPhone');
     setSt('profileSt', '');
 
@@ -668,7 +1004,7 @@ const App = {
 
       if (error) {
         console.error(error);
-        setSt('profileSt', "Erreur lors de l'enregistrement.", 'err');
+        setSt('profileSt', xlErr(error.message), 'err');
         return;
       }
 
@@ -679,16 +1015,18 @@ const App = {
   },
 
   _openMap(profile, email) {
-    S.currentProfile = profile || {};
     show('sm');
-    injectExtraUi();
+    App.refreshInvisibleBtn();
+
+    const r = document.getElementById('radiusSel');
+    if (r) r.value = String(S.radiusKm);
 
     document.getElementById('tbPlate').textContent = profile?.owner_plate || '';
     document.getElementById('tbPseudo').textContent = profile?.pseudo || email || '';
 
     setTimeout(() => {
       App._initMap();
-      S.map.invalidateSize();
+      if (S.map) S.map.invalidateSize();
       if (!S.invisible) App.locate();
       else toast('Mode invisible activé : votre position n’est pas partagée.', 'ok');
     }, 300);
@@ -699,6 +1037,10 @@ const App = {
 
   _initMap() {
     if (S.map) return;
+    if (!window.L) {
+      toast('Carte non chargée. Vérifie ta connexion.', 'bad');
+      return;
+    }
 
     S.map = L.map('map', {
       zoomControl: true,
@@ -716,6 +1058,7 @@ const App = {
 
   async deleteMyLocation() {
     try {
+      if (!sb) return;
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
       if (!user) return;
@@ -727,7 +1070,7 @@ const App = {
 
   async toggleInvisible() {
     S.invisible = !S.invisible;
-    localStorage.setItem('ic_invisible', S.invisible ? '1' : '0');
+    safeLocalSet('ic_invisible', S.invisible ? '1' : '0');
     App.refreshInvisibleBtn();
 
     if (S.invisible) {
@@ -735,10 +1078,12 @@ const App = {
         navigator.geolocation.clearWatch(S.watchId);
         S.watchId = null;
       }
-      if (S.myMarker) {
+
+      if (S.myMarker && S.map) {
         S.map.removeLayer(S.myMarker);
         S.myMarker = null;
       }
+
       await App.deleteMyLocation();
       toast('Mode invisible activé. Votre position a été retirée.', 'ok');
     } else {
@@ -757,7 +1102,7 @@ const App = {
 
   setRadius(v) {
     S.radiusKm = Number(v) || CFG.defaultRadiusKm;
-    localStorage.setItem('ic_radius', String(S.radiusKm));
+    safeLocalSet('ic_radius', String(S.radiusKm));
     App.loadOthers();
   },
 
@@ -794,20 +1139,24 @@ const App = {
         btn.disabled = false;
         btn.textContent = '📍 Me localiser';
 
-        if (S.firstFix) {
-          S.map.flyTo([lat, lng], 16, { duration: 0.9 });
-          S.firstFix = false;
-        } else {
-          S.map.setView([lat, lng], S.map.getZoom(), { animate: false });
+        if (S.map) {
+          if (S.firstFix) {
+            S.map.flyTo([lat, lng], 16, { duration: 0.9 });
+            S.firstFix = false;
+          } else {
+            S.map.setView([lat, lng], S.map.getZoom(), { animate: false });
+          }
+
+          if (S.myMarker) S.map.removeLayer(S.myMarker);
+          S.myMarker = L.marker([lat, lng]).addTo(S.map).bindPopup('📍 Tu es ici').openPopup();
         }
 
-        if (S.myMarker) S.map.removeLayer(S.myMarker);
-        S.myMarker = L.marker([lat, lng]).addTo(S.map).bindPopup('📍 Tu es ici').openPopup();
+        if (!sb || S.invisible) return;
 
         const { data: ud } = await sb.auth.getUser();
         const user = ud?.user;
 
-        if (!user || S.invisible) return;
+        if (!user) return;
 
         S.uid = user.id;
 
@@ -836,6 +1185,7 @@ const App = {
   },
 
   async loadOthers() {
+    if (!sb) return;
     if (S.loadingOthers) return;
 
     S.loadingOthers = true;
@@ -846,8 +1196,10 @@ const App = {
 
     App._initMap();
 
-    S.otherMkrs.forEach(m => S.map.removeLayer(m));
-    S.otherMkrs = [];
+    if (S.map) {
+      S.otherMkrs.forEach(m => S.map.removeLayer(m));
+      S.otherMkrs = [];
+    }
 
     try {
       const { data: ud } = await sb.auth.getUser();
@@ -900,6 +1252,8 @@ const App = {
           dist = km(S.myLat, S.myLng, lat, lng);
           if (dist > S.radiusKm) return;
         }
+
+        if (!S.map) return;
 
         const icon = L.divIcon({
           html: '<div style="width:13px;height:13px;border-radius:50%;background:#00ffb3;border:3px solid rgba(0,255,179,.35);box-shadow:0 0 10px rgba(0,255,179,.55)"></div>',
@@ -979,6 +1333,7 @@ const App = {
   },
 
   async sendMsg() {
+    if (!sb) return;
     ch('hTarget', 'hMsg');
     setReq('', '');
 
@@ -1014,7 +1369,7 @@ const App = {
       return;
     }
 
-    if (!S.selPlate && !confirm('Envoyer une demande de contact à ' + plate + ' ?')) return;
+    if (S.selPlate !== plate && !confirm('Envoyer une demande de contact à ' + plate + ' ?')) return;
 
     sBtn('sendBtn', true, 'Envoyer →');
 
@@ -1086,6 +1441,7 @@ const App = {
   },
 
   async loadMsgs() {
+    if (!sb) return;
     const box = document.getElementById('chatBox');
 
     if (!box) return;
@@ -1132,14 +1488,8 @@ const App = {
   },
 
   renderConversations(rows) {
-    const chat = document.getElementById('chatBox');
-    if (!chat) return;
-
-    let bar = document.getElementById('convbar');
-    if (!bar) {
-      chat.insertAdjacentHTML('beforebegin', '<div id="convbar" class="convbar"></div>');
-      bar = document.getElementById('convbar');
-    }
+    const bar = document.getElementById('convbar');
+    if (!bar) return;
 
     const plates = [...new Set((rows || []).map(m => nPlate(m.target_plate)).filter(Boolean))];
 
@@ -1216,6 +1566,7 @@ const App = {
   },
 
   async _accept(id, senderId, plate) {
+    if (!sb) return;
     try {
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
@@ -1250,6 +1601,7 @@ const App = {
   },
 
   async _reject(id) {
+    if (!sb) return;
     try {
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
@@ -1272,6 +1624,7 @@ const App = {
   },
 
   async _reply(msgId, receiverId, plate, taId, btnId) {
+    if (!sb) return;
     const ta = document.getElementById(taId);
 
     if (!ta) return;
@@ -1336,7 +1689,7 @@ const App = {
     if (!confirm('Bloquer la plaque ' + p + ' ? Ses messages seront masqués sur cet appareil.')) return;
 
     if (!S.blocked.includes(p)) S.blocked.push(p);
-    localStorage.setItem('ic_blocked', JSON.stringify(S.blocked));
+    safeLocalSet('ic_blocked', JSON.stringify(S.blocked));
 
     toast('Plaque bloquée : ' + p, 'ok');
     App.loadMsgs();
@@ -1344,6 +1697,7 @@ const App = {
   },
 
   async reportPlate(plate) {
+    if (!sb) return;
     const p = nPlate(plate);
     if (!p) return;
 
@@ -1353,22 +1707,33 @@ const App = {
     try {
       const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
+      if (!user) {
+        toast('Tu dois être connecté pour signaler.', 'bad');
+        return;
+      }
 
-      await sb.from('reports').insert({
-        reporter_id: user?.id || null,
+      const { error } = await sb.from('reports').insert({
+        reporter_id: user.id,
         plate: p,
         reason: reason.slice(0, 500),
         created_at: new Date().toISOString()
       });
 
+      if (error) {
+        console.error(error);
+        toast('Erreur lors du signalement.', 'bad');
+        return;
+      }
+
       toast('Signalement envoyé.', 'ok');
     } catch (e) {
-      console.warn(e);
-      toast('Signalement enregistré localement. Crée une table reports pour l’enregistrer en base.', 'bad');
+      console.error(e);
+      toast('Erreur lors du signalement.', 'bad');
     }
   },
 
   async _subMsgs() {
+    if (!sb) return;
     const { data: ud } = await sb.auth.getUser();
     const user = ud?.user;
 
@@ -1410,6 +1775,8 @@ const App = {
   },
 
   async _subLocs() {
+    if (!sb) return;
+
     if (S.chLoc) {
       await sb.removeChannel(S.chLoc);
       S.chLoc = null;
@@ -1448,17 +1815,17 @@ const App = {
 
     await App.deleteMyLocation();
 
-    if (S.chMsg) {
+    if (sb && S.chMsg) {
       await sb.removeChannel(S.chMsg);
       S.chMsg = null;
     }
 
-    if (S.chLoc) {
+    if (sb && S.chLoc) {
       await sb.removeChannel(S.chLoc);
       S.chLoc = null;
     }
 
-    await sb.auth.signOut();
+    if (sb) await sb.auth.signOut();
 
     location.href = CFG.site;
   },
@@ -1472,55 +1839,67 @@ const App = {
   }
 };
 
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'PASSWORD_RECOVERY') {
-    S.sessionDone = false;
-    S.uid = session?.user?.id || null;
-    show('sr');
-    return;
-  }
-
-  if (event === 'SIGNED_IN' && session) {
-    if (S.sessionDone) return;
-
-    S.uid = session.user.id;
-    S.sessionDone = true;
-
-    setTimeout(() => App._afterAuth(), 0);
-    return;
-  }
-
-  if (event === 'SIGNED_OUT') {
-    S.sessionDone = false;
-    S.uid = null;
-    S.selPlate = null;
-
-    if (S.watchId !== null) {
-      navigator.geolocation.clearWatch(S.watchId);
-      S.watchId = null;
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      S.sessionDone = false;
+      S.uid = session?.user?.id || null;
+      show('sr');
+      return;
     }
 
-    if (S.chMsg) {
-      try {
-        sb.removeChannel(S.chMsg);
-      } catch (e) {}
-      S.chMsg = null;
+    if (event === 'SIGNED_IN' && session) {
+      if (S.sessionDone) return;
+
+      S.uid = session.user.id;
+      S.sessionDone = true;
+
+      setTimeout(() => App._afterAuth(), 0);
+      return;
     }
 
-    if (S.chLoc) {
-      try {
-        sb.removeChannel(S.chLoc);
-      } catch (e) {}
-      S.chLoc = null;
-    }
+    if (event === 'SIGNED_OUT') {
+      S.sessionDone = false;
+      S.uid = null;
+      S.selPlate = null;
 
-    show('sw');
-  }
-});
+      if (S.watchId !== null) {
+        navigator.geolocation.clearWatch(S.watchId);
+        S.watchId = null;
+      }
+
+      if (S.chMsg) {
+        try {
+          sb.removeChannel(S.chMsg);
+        } catch (e) {}
+        S.chMsg = null;
+      }
+
+      if (S.chLoc) {
+        try {
+          sb.removeChannel(S.chLoc);
+        } catch (e) {}
+        S.chLoc = null;
+      }
+
+      show('sw');
+    }
+  });
+}
 
 async function boot() {
-  installPwa();
-  injectExtraUi();
+  bindInputs();
+
+  const r = document.getElementById('radiusSel');
+  if (r) r.value = String(S.radiusKm);
+
+  App.refreshInvisibleBtn();
+
+  if (!sb) {
+    toast('Supabase non chargé. Vérifie ta connexion.', 'bad');
+    show('sw');
+    return;
+  }
 
   const frag = (window.location.hash || '') + (window.location.search || '');
 
@@ -1529,27 +1908,33 @@ async function boot() {
     return;
   }
 
-  const { data: sd, error: se } = await sb.auth.getSession();
+  try {
+    const { data: sd, error: se } = await sb.auth.getSession();
 
-  if (se) {
-    console.error('boot getSession:', se);
+    if (se) {
+      console.error('boot getSession:', se);
+      show('sw');
+      return;
+    }
+
+    const session = sd?.session;
+
+    if (!session) {
+      show('sw');
+      return;
+    }
+
+    S.uid = session.user.id;
+    S.sessionDone = true;
+
+    await App._afterAuth();
+  } catch (e) {
+    console.error(e);
     show('sw');
-    return;
   }
-
-  const session = sd?.session;
-
-  if (!session) {
-    show('sw');
-    return;
-  }
-
-  S.uid = session.user.id;
-  S.sessionDone = true;
-
-  await App._afterAuth();
 }
 
-bindInputs();
 boot();
 </script>
+</body>
+</html>
