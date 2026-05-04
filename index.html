@@ -4,904 +4,961 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>ImmatConnect</title>
+<title>ImmatConnect — La route connectée</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 
 <style>
-/* ─── RESET & TOKENS ─────────────────────────────────── */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --c-bg:#07090f;
-  --c-surface:#0d1117;
-  --c-surface2:#131822;
-  --c-border:rgba(255,255,255,0.07);
-  --c-border2:rgba(255,255,255,0.12);
-  --c-accent:#00e5c0;
-  --c-accent2:#0099ff;
-  --c-accent-dim:rgba(0,229,192,0.12);
-  --c-text:#f0f4ff;
-  --c-muted:#6b7a9a;
-  --c-muted2:#9baac8;
-  --c-danger:#ff4d6d;
-  --c-danger-dim:rgba(255,77,109,0.12);
-  --c-success:#00e5c0;
-  --c-success-dim:rgba(0,229,192,0.12);
-  --r-sm:12px;
-  --r-md:18px;
-  --r-lg:24px;
-  --r-xl:32px;
-  --shadow-card:0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.5);
-  --shadow-glow:0 0 40px rgba(0,229,192,0.15);
-  --transition:.18s cubic-bezier(.4,0,.2,1);
-  --font-display:'Syne',sans-serif;
-  --font-body:'DM Sans',sans-serif;
+/* ══════════════════════════════════════
+   DESIGN SYSTEM — TOKENS
+══════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html{scroll-behavior:smooth}
-body{
-  font-family:var(--font-body);
-  background:var(--c-bg);
-  color:var(--c-text);
-  min-height:100vh;
-  min-height:100dvh;
-  overflow-x:hidden;
-  position:relative;
+:root {
+  --bg:        #080b12;
+  --bg1:       #0e1420;
+  --bg2:       #141c2e;
+  --bg3:       #1a2438;
+  --line:      rgba(255,255,255,0.06);
+  --line2:     rgba(255,255,255,0.12);
+  --line3:     rgba(255,255,255,0.2);
+
+  --green:     #00ffb3;
+  --green-dim: rgba(0,255,179,0.08);
+  --green-mid: rgba(0,255,179,0.18);
+  --blue:      #2979ff;
+  --blue-dim:  rgba(41,121,255,0.1);
+  --amber:     #ffb300;
+  --red:       #ff3b5c;
+  --red-dim:   rgba(255,59,92,0.1);
+
+  --text:      #e8edf8;
+  --muted:     #5a6880;
+  --muted2:    #8898b8;
+
+  --font-ui:   'Space Grotesk', sans-serif;
+  --font-head: 'Barlow Condensed', sans-serif;
+
+  --r4:  4px;
+  --r8:  8px;
+  --r12: 12px;
+  --r16: 16px;
+  --r20: 20px;
+  --r24: 24px;
+
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
+  --t: .18s;
 }
 
-/* Ambient background effect */
-body::before{
-  content:'';
-  position:fixed;
-  top:-30%;left:-20%;
-  width:80vw;height:80vw;
-  background:radial-gradient(circle,rgba(0,229,192,0.04) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
-body::after{
-  content:'';
-  position:fixed;
-  bottom:-20%;right:-20%;
-  width:60vw;height:60vw;
-  background:radial-gradient(circle,rgba(0,153,255,0.04) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ─── SCREENS ─────────────────────────────────────────── */
-.screen{display:none;position:relative;z-index:1;min-height:100vh;min-height:100dvh}
-.screen.active{display:flex;flex-direction:column}
-
-/* ─── WELCOME SCREEN ──────────────────────────────────── */
-#welcomeScreen.active{
-  align-items:center;
-  justify-content:center;
-  padding:40px 24px 60px;
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .4;
 }
 
-.welcome-inner{
-  width:100%;max-width:400px;
-  animation:fadeUp .6s ease both;
+/* ── Ambient glows ── */
+.glow-tl {
+  position: fixed; top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,255,179,0.05) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+.glow-br {
+  position: fixed; bottom: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(41,121,255,0.06) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
 }
 
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(24px)}
-  to{opacity:1;transform:translateY(0)}
+/* ══════════════════════════════════════
+   SCREENS
+══════════════════════════════════════ */
+.screen {
+  display: none;
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════════════════
+   WELCOME SCREEN
+══════════════════════════════════════ */
+#s-welcome {
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px 60px;
 }
 
-.logo-area{
-  text-align:center;
-  margin-bottom:48px;
+.welcome-wrap {
+  width: 100%;
+  max-width: 380px;
+  animation: fadeSlide .7s var(--ease) both;
 }
 
-.logo-icon{
-  width:80px;height:80px;
-  margin:0 auto 20px;
-  border-radius:24px;
-  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;
-  box-shadow:var(--shadow-glow),0 8px 32px rgba(0,0,0,0.4);
-  position:relative;
-}
-.logo-icon::after{
-  content:'';position:absolute;inset:-2px;
-  border-radius:26px;
-  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
-  z-index:-1;opacity:.3;filter:blur(12px);
+@keyframes fadeSlide {
+  from { opacity:0; transform: translateY(32px); }
+  to   { opacity:1; transform: translateY(0); }
 }
 
-.brand{
-  font-family:var(--font-display);
-  font-weight:800;
-  letter-spacing:-.5px;
+/* Logo */
+.logo-block {
+  text-align: center;
+  margin-bottom: 52px;
 }
-.brand-immat{font-size:14px;color:var(--c-muted2);letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
-.brand-connect{font-size:36px;color:var(--c-text)}
-.brand-dot{color:var(--c-accent)}
-
-.welcome-tagline{
-  font-size:13px;
-  color:var(--c-muted);
-  letter-spacing:2px;
-  text-transform:uppercase;
-  margin-top:8px;
+.logo-ring {
+  width: 88px; height: 88px;
+  margin: 0 auto 22px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(0,255,179,0.3), 0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(0,255,179,0.12);
 }
-
-.welcome-title{
-  font-family:var(--font-display);
-  font-size:28px;
-  font-weight:700;
-  line-height:1.2;
-  margin-bottom:12px;
-  text-align:center;
-}
-.welcome-title em{
-  font-style:normal;
-  background:linear-gradient(90deg,var(--c-accent),var(--c-accent2));
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
+.logo-ring::after {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: 29px;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  z-index: -1; opacity: .25; filter: blur(16px);
 }
 
-.welcome-sub{
-  color:var(--c-muted2);
-  font-size:15px;
-  line-height:1.65;
-  text-align:center;
-  margin-bottom:36px;
+.brand-name {
+  font-family: var(--font-head);
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  line-height: 1;
+  color: var(--text);
+}
+.brand-name .dot { color: var(--green); }
+.brand-tag {
+  font-size: 11px;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 8px;
 }
 
-.feature-list{
-  display:flex;flex-direction:column;gap:10px;
-  margin-bottom:36px;
+.welcome-h1 {
+  font-family: var(--font-head);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.welcome-h1 mark {
+  background: linear-gradient(90deg, var(--green), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-style: normal;
 }
 
-.feature-item{
-  display:flex;align-items:center;gap:14px;
-  padding:14px 16px;
-  background:var(--c-surface);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-md);
-  transition:var(--transition);
-}
-.feature-item:hover{border-color:var(--c-border2)}
-
-.fi-icon{
-  width:40px;height:40px;flex:0 0 40px;
-  border-radius:12px;
-  background:var(--c-accent-dim);
-  border:1px solid rgba(0,229,192,0.2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;
+.welcome-p {
+  text-align: center;
+  color: var(--muted2);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 32px;
 }
 
-.fi-text{font-size:14px;color:var(--c-muted2);line-height:1.4}
+/* Feature pills */
+.feat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+.feat-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r12);
+  transition: border-color var(--t) var(--ease);
+}
+.feat-pill:hover { border-color: var(--line2); }
+.feat-icon {
+  width: 36px; height: 36px; flex: 0 0 36px;
+  border-radius: 10px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,255,179,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.feat-text { font-size: 13px; color: var(--muted2); }
 
-.btn-group{display:flex;flex-direction:column;gap:10px}
+.btn-stack { display: flex; flex-direction: column; gap: 10px; }
 
-/* ─── BUTTONS ─────────────────────────────────────────── */
-.btn{
-  width:100%;
-  border:none;border-radius:var(--r-md);
-  padding:16px 20px;
-  font-family:var(--font-body);
-  font-size:15px;font-weight:500;
-  cursor:pointer;
-  transition:var(--transition);
-  position:relative;overflow:hidden;
+/* ══════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════ */
+.btn {
+  width: 100%;
+  padding: 15px 20px;
+  border: none; border-radius: var(--r12);
+  font-family: var(--font-ui);
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t) var(--ease);
+  position: relative; overflow: hidden;
+  letter-spacing: .2px;
 }
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
 
-.btn-primary{
-  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
-  color:#050d15;
-  font-weight:700;
-  box-shadow:0 4px 24px rgba(0,229,192,0.25);
+.btn-prime {
+  background: linear-gradient(135deg, var(--green), #00d68f);
+  color: #06150f;
+  font-weight: 700;
+  box-shadow: 0 4px 24px rgba(0,255,179,0.22);
 }
-.btn-primary:hover:not(:disabled){
-  box-shadow:0 6px 32px rgba(0,229,192,0.4);
-  transform:translateY(-1px);
+.btn-prime:hover:not(:disabled) {
+  box-shadow: 0 6px 36px rgba(0,255,179,0.38);
+  transform: translateY(-1px);
 }
-.btn-primary:active:not(:disabled){transform:translateY(0)}
+.btn-prime:active:not(:disabled) { transform: translateY(0); }
 
-.btn-ghost{
-  background:transparent;
-  color:var(--c-muted2);
-  border:1px solid var(--c-border);
+.btn-ghost {
+  background: transparent;
+  color: var(--muted2);
+  border: 1px solid var(--line);
 }
-.btn-ghost:hover:not(:disabled){
-  border-color:var(--c-border2);
-  color:var(--c-text);
-  background:var(--c-surface);
-}
-
-.btn-danger{
-  background:var(--c-danger-dim);
-  color:var(--c-danger);
-  border:1px solid rgba(255,77,109,0.25);
-}
-.btn-danger:hover:not(:disabled){background:rgba(255,77,109,0.2)}
-
-/* ─── AUTH SCREEN ─────────────────────────────────────── */
-#authScreen.active{
-  align-items:center;
-  justify-content:center;
-  padding:32px 20px 48px;
-}
-
-.card{
-  width:100%;max-width:420px;
-  background:var(--c-surface);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-xl);
-  padding:28px 24px;
-  box-shadow:var(--shadow-card);
-  animation:fadeUp .5s ease both;
-}
-
-.card-header{margin-bottom:24px;text-align:center}
-.card-title{
-  font-family:var(--font-display);
-  font-size:26px;font-weight:700;
-  margin-bottom:6px;
-}
-.card-sub{font-size:14px;color:var(--c-muted2);line-height:1.5}
-
-/* Tabs */
-.tabs{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:6px;
-  background:var(--c-surface2);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-sm);
-  padding:4px;
-  margin-bottom:24px;
-}
-.tab-btn{
-  border:none;border-radius:9px;
-  padding:10px;
-  font-family:var(--font-body);
-  font-size:14px;font-weight:500;
-  cursor:pointer;
-  background:transparent;
-  color:var(--c-muted2);
-  transition:var(--transition);
-}
-.tab-btn.active{
-  background:var(--c-surface);
-  color:var(--c-text);
-  box-shadow:0 1px 4px rgba(0,0,0,0.3);
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--line2);
+  color: var(--text);
+  background: var(--bg1);
 }
 
-/* Fields */
-.field{margin-bottom:16px}
-.field-label{
-  display:block;
-  font-size:13px;
-  color:var(--c-muted2);
-  margin-bottom:8px;
-  font-weight:500;
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(255,59,92,0.2);
 }
-.field-wrap{position:relative}
-.field-input{
-  width:100%;
-  background:var(--c-surface2);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-sm);
-  padding:14px 16px;
-  font-family:var(--font-body);
-  font-size:15px;
-  color:var(--c-text);
-  outline:none;
-  transition:border-color var(--transition);
-}
-.field-input::placeholder{color:var(--c-muted)}
-.field-input:focus{border-color:var(--c-accent)}
-.field-input.has-toggle{padding-right:52px}
-.field-input.is-error{border-color:var(--c-danger)}
-.field-input.is-valid{border-color:var(--c-success)}
+.btn-danger:hover:not(:disabled) { background: rgba(255,59,92,0.18); }
 
-textarea.field-input{
-  min-height:90px;
-  resize:vertical;
-  line-height:1.5;
+/* ══════════════════════════════════════
+   AUTH SCREEN
+══════════════════════════════════════ */
+#s-auth {
+  align-items: center;
+  justify-content: center;
+  padding: 28px 18px 52px;
 }
 
-.field-toggle{
-  position:absolute;right:8px;top:50%;transform:translateY(-50%);
-  width:36px;height:36px;
-  border:none;border-radius:8px;
-  background:transparent;
-  color:var(--c-muted);
-  font-size:16px;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:color var(--transition);
-}
-.field-toggle:hover{color:var(--c-text)}
-
-.field-hint{
-  margin-top:6px;
-  font-size:12px;
-  min-height:16px;
-  line-height:1.4;
-}
-.field-hint.error{color:var(--c-danger)}
-.field-hint.success{color:var(--c-success)}
-.field-hint.info{color:var(--c-muted2)}
-
-.note-box{
-  margin:12px 0;
-  padding:12px 14px;
-  background:var(--c-surface2);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-sm);
-  font-size:13px;
-  color:var(--c-muted2);
-  line-height:1.5;
+.card {
+  width: 100%; max-width: 420px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r24);
+  padding: 28px 22px;
+  box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+  animation: fadeSlide .5s var(--ease) both;
 }
 
-.divider{height:1px;background:var(--c-border);margin:20px 0}
-
-.auth-links{
-  display:flex;flex-direction:column;
-  align-items:center;gap:8px;
-  margin-top:16px;
+.card-ttl {
+  font-family: var(--font-head);
+  font-size: 28px; font-weight: 700;
+  margin-bottom: 6px;
 }
-.text-btn{
-  border:none;background:transparent;
-  color:var(--c-muted2);
-  font-size:13px;
-  cursor:pointer;
-  padding:4px 8px;
-  border-radius:6px;
-  transition:color var(--transition);
-}
-.text-btn:hover{color:var(--c-accent)}
-.text-btn:disabled{opacity:.5;cursor:not-allowed}
-
-/* Status */
-.status-msg{
-  margin-top:14px;
-  padding:12px 14px;
-  border-radius:var(--r-sm);
-  font-size:13px;line-height:1.5;
-  display:none;
-}
-.status-msg.visible{display:block}
-.status-msg.error{background:var(--c-danger-dim);color:var(--c-danger);border:1px solid rgba(255,77,109,0.2)}
-.status-msg.success{background:var(--c-success-dim);color:var(--c-success);border:1px solid rgba(0,229,192,0.2)}
-.status-msg.info{background:var(--c-surface2);color:var(--c-muted2);border:1px solid var(--c-border)}
-
-/* ─── PROFILE SCREEN ──────────────────────────────────── */
-#profileScreen.active{
-  align-items:center;
-  justify-content:center;
-  padding:32px 20px 48px;
+.card-sub {
+  font-size: 13px; color: var(--muted2);
+  line-height: 1.55;
+  margin-bottom: 22px;
 }
 
-/* ─── RESET SCREEN ────────────────────────────────────── */
-#resetScreen.active{
-  align-items:center;
-  justify-content:center;
-  padding:32px 20px 48px;
+/* Tab switcher */
+.tab-bar {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  padding: 3px;
+  margin-bottom: 22px;
+}
+.tab {
+  padding: 10px;
+  border: none; border-radius: 7px;
+  font-family: var(--font-ui);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all var(--t) var(--ease);
+}
+.tab.on {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 6px rgba(0,0,0,.4);
 }
 
-/* ─── MAP SCREEN ──────────────────────────────────────── */
-#mapScreen{padding:0}
-#mapScreen.active{display:flex;flex-direction:column}
-
-.topbar{
-  padding:env(safe-area-inset-top, 16px) 20px 14px;
-  padding-top:max(env(safe-area-inset-top,0px),16px);
-  background:rgba(7,9,15,0.95);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--c-border);
-  position:sticky;top:0;z-index:1000;
-  flex:0 0 auto;
+/* Form fields */
+.field { margin-bottom: 14px; }
+.lbl {
+  display: block;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted2);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin-bottom: 7px;
 }
-
-.topbar-inner{
-  display:flex;align-items:center;
-  justify-content:space-between;gap:12px;
-  max-width:600px;margin:0 auto;
+.inp-wrap { position: relative; }
+.inp {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  padding: 13px 15px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
 }
+.inp::placeholder { color: var(--muted); }
+.inp:focus { border-color: rgba(0,255,179,0.4); background: var(--bg3); }
+.inp.pad-r { padding-right: 48px; }
+.inp.err { border-color: var(--red) !important; }
+.inp.ok  { border-color: rgba(0,255,179,.5) !important; }
 
-.topbar-brand{
-  font-family:var(--font-display);
-  font-size:20px;font-weight:800;
-  letter-spacing:-.3px;
-  white-space:nowrap;
-}
-.topbar-brand span{color:var(--c-accent)}
-
-.topbar-user{
-  font-size:12px;
-  color:var(--c-muted2);
-  line-height:1.3;
-  text-align:right;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.topbar-plate{
-  font-family:var(--font-display);
-  font-size:14px;
-  color:var(--c-accent);
-  font-weight:700;
-  display:block;
+textarea.inp {
+  min-height: 86px;
+  resize: vertical;
+  line-height: 1.55;
 }
 
-.topbar-actions{
-  display:flex;gap:8px;
-  padding:10px 20px 14px;
-  max-width:600px;margin:0 auto;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
+.eye-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px;
+  border: none; border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color var(--t);
 }
-.topbar-actions::-webkit-scrollbar{display:none}
+.eye-btn:hover { color: var(--text); }
 
-.action-btn{
-  border:none;
-  border-radius:10px;
-  padding:9px 14px;
-  font-family:var(--font-body);
-  font-size:13px;font-weight:500;
-  cursor:pointer;
-  white-space:nowrap;
-  transition:var(--transition);
-  display:flex;align-items:center;gap:6px;
+.hint {
+  margin-top: 5px;
+  font-size: 11.5px;
+  min-height: 15px;
+  line-height: 1.4;
+  color: transparent;
+  transition: color var(--t);
 }
-.action-btn-primary{
-  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
-  color:#050d15;font-weight:700;
-}
-.action-btn-primary:hover{box-shadow:0 4px 16px rgba(0,229,192,0.3);transform:translateY(-1px)}
-.action-btn-ghost{
-  background:var(--c-surface2);
-  border:1px solid var(--c-border);
-  color:var(--c-muted2);
-}
-.action-btn-ghost:hover{border-color:var(--c-border2);color:var(--c-text)}
-.action-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.hint.err  { color: var(--red); }
+.hint.ok   { color: var(--green); }
+.hint.info { color: var(--muted2); }
 
-/* Map */
-#map{
-  flex:1 1 auto;
-  min-height:240px;
-  z-index:1;
+.info-box {
+  margin: 10px 0;
+  padding: 11px 13px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  font-size: 12.5px;
+  color: var(--muted2);
+  line-height: 1.55;
+}
+
+.status {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border-radius: var(--r8);
+  font-size: 13px; line-height: 1.5;
+  display: none;
+}
+.status.show { display: block; }
+.status.err  { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,59,92,.2); }
+.status.ok   { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,255,179,.2); }
+.status.info { background: var(--bg2); color: var(--muted2); border: 1px solid var(--line); }
+
+.aux-links {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  margin-top: 14px;
+}
+.link-btn {
+  border: none; background: transparent;
+  color: var(--muted2); font-size: 12.5px;
+  cursor: pointer; padding: 5px 10px;
+  border-radius: 7px;
+  font-family: var(--font-ui);
+  transition: color var(--t);
+}
+.link-btn:hover { color: var(--green); }
+.link-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ══════════════════════════════════════
+   PROFILE SCREEN
+══════════════════════════════════════ */
+#s-profile {
+  align-items: center; justify-content: center;
+  padding: 28px 18px 52px;
+}
+
+/* ══════════════════════════════════════
+   RESET SCREEN
+══════════════════════════════════════ */
+#s-reset {
+  align-items: center; justify-content: center;
+  padding: 28px 18px 52px;
+}
+
+/* ══════════════════════════════════════
+   MAP SCREEN
+══════════════════════════════════════ */
+#s-map { padding: 0; }
+#s-map.active { display: flex; flex-direction: column; height: 100dvh; }
+
+/* Top bar */
+.topbar {
+  padding: max(env(safe-area-inset-top,0px),14px) 18px 0;
+  background: rgba(8,11,18,.96);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+  position: sticky; top: 0; z-index: 500;
+}
+.topbar-row1 {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+.tb-brand {
+  font-family: var(--font-head);
+  font-size: 22px; font-weight: 900;
+  letter-spacing: -.2px;
+}
+.tb-brand span { color: var(--green); }
+.tb-info {
+  text-align: right;
+  min-width: 0;
+}
+.tb-plate {
+  font-family: var(--font-head);
+  font-size: 16px; font-weight: 700;
+  color: var(--green);
+  letter-spacing: 1px;
+  display: block;
+}
+.tb-pseudo {
+  font-size: 11.5px; color: var(--muted2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 140px;
+}
+
+/* Action strip */
+.action-strip {
+  display: flex; gap: 7px;
+  padding: 0 0 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.action-strip::-webkit-scrollbar { display: none; }
+
+.abtn {
+  border: none; border-radius: var(--r8);
+  padding: 9px 13px;
+  font-family: var(--font-ui);
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--t) var(--ease);
+  display: flex; align-items: center; gap: 5px;
+  flex: 0 0 auto;
+}
+.abtn:disabled { opacity: .45; cursor: not-allowed; }
+.abtn-green {
+  background: linear-gradient(135deg, var(--green), #00d68f);
+  color: #06150f; font-weight: 700;
+}
+.abtn-green:hover:not(:disabled) {
+  box-shadow: 0 4px 18px rgba(0,255,179,0.3);
+  transform: translateY(-1px);
+}
+.abtn-ghost {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  color: var(--muted2);
+}
+.abtn-ghost:hover:not(:disabled) {
+  border-color: var(--line2);
+  color: var(--text);
+}
+
+/* Map container */
+#map {
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 1;
 }
 
 /* Panel */
-.panel{
-  flex:0 0 auto;
-  background:var(--c-bg);
-  border-top:1px solid var(--c-border);
-  overflow-y:auto;
-  max-height:55vh;
-  padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 80px);
+.panel {
+  flex: 0 0 auto;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  overflow-y: auto;
+  max-height: 52vh;
+  padding: 16px 16px calc(env(safe-area-inset-bottom,0px) + 72px);
+}
+.panel-inner { max-width: 600px; margin: 0 auto; }
+
+/* Section heading */
+.sec-h {
+  font-family: var(--font-head);
+  font-size: 16px; font-weight: 700;
+  letter-spacing: .5px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
 }
 
-.panel-inner{max-width:600px;margin:0 auto}
+/* Compose card */
+.compose-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r16);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.compose-desc {
+  font-size: 12.5px; color: var(--muted2);
+  line-height: 1.6; margin-bottom: 14px;
+}
+.req-row {
+  margin-top: 10px;
+  font-size: 12.5px; color: var(--muted2);
+  min-height: 16px;
+  display: flex; align-items: center; gap: 5px;
+  transition: color var(--t);
+}
+.req-row.ok  { color: var(--green); }
+.req-row.err { color: var(--red); }
 
-.section-title{
-  font-family:var(--font-display);
-  font-size:17px;font-weight:700;
-  margin-bottom:14px;
-  display:flex;align-items:center;gap:8px;
+/* Messages */
+.msg-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
+.badge {
+  display: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 6px;
+  margin-left: 5px;
+  animation: pulse 1.5s infinite;
+}
+.badge.show { display: inline-block; }
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .6; }
+}
+.refresh-btn {
+  border: none; border-radius: var(--r8);
+  padding: 7px 11px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,255,179,0.15);
+  color: var(--green);
+  font-family: var(--font-ui);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: background var(--t);
+}
+.refresh-btn:hover { background: var(--green-mid); }
 
-.compose-box{
-  background:var(--c-surface);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-lg);
-  padding:18px;
-  margin-bottom:20px;
+#chatBox {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r12);
+  scroll-behavior: smooth;
 }
-.compose-desc{
-  font-size:13px;color:var(--c-muted2);
-  line-height:1.5;
-  margin-bottom:14px;
-}
-.compose-btn{
-  margin-top:12px;
-}
+#chatBox::-webkit-scrollbar { width: 3px; }
+#chatBox::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
 
-.request-status-row{
-  margin-top:12px;
-  font-size:13px;
-  color:var(--c-muted2);
-  min-height:18px;
-  display:flex;align-items:center;gap:6px;
-}
-.request-status-row.ok{color:var(--c-success)}
-.request-status-row.err{color:var(--c-danger)}
-
-/* Chat */
-.chat-header-row{
-  display:flex;align-items:center;
-  justify-content:space-between;
-  margin-bottom:12px;
-}
-.badge{
-  display:none;
-  background:var(--c-danger);
-  color:#fff;
-  font-size:11px;font-weight:700;
-  border-radius:999px;
-  padding:2px 7px;
-  margin-left:6px;
-}
-.badge.visible{display:inline-block}
-
-.refresh-btn{
-  border:none;border-radius:8px;
-  padding:7px 10px;
-  background:var(--c-accent-dim);
-  border:1px solid rgba(0,229,192,0.2);
-  color:var(--c-accent);
-  font-size:14px;font-weight:700;
-  cursor:pointer;
-  transition:var(--transition);
-}
-.refresh-btn:hover{background:rgba(0,229,192,0.18)}
-
-#chatBox{
-  display:flex;flex-direction:column;gap:8px;
-  max-height:280px;
-  overflow-y:auto;
-  padding:12px;
-  background:var(--c-surface);
-  border:1px solid var(--c-border);
-  border-radius:var(--r-md);
-  scroll-behavior:smooth;
-}
-#chatBox::-webkit-scrollbar{width:4px}
-#chatBox::-webkit-scrollbar-track{background:transparent}
-#chatBox::-webkit-scrollbar-thumb{background:var(--c-border2);border-radius:4px}
-
-.chat-empty{
-  text-align:center;
-  color:var(--c-muted);
-  font-size:13px;
-  padding:24px 0;
+.chat-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 28px 0;
 }
 
-.msg{
-  padding:10px 13px;
-  border-radius:14px;
-  font-size:13px;
-  line-height:1.5;
-  max-width:88%;
-  word-break:break-word;
+/* Messages */
+.msg {
+  padding: 10px 13px;
+  border-radius: 13px;
+  font-size: 13px; line-height: 1.5;
+  max-width: 90%;
+  word-break: break-word;
+  animation: msgIn .25s var(--ease) both;
 }
-.msg.sent{
-  align-self:flex-end;
-  background:rgba(0,229,192,0.1);
-  border:1px solid rgba(0,229,192,0.2);
+@keyframes msgIn {
+  from { opacity:0; transform: translateY(6px); }
+  to   { opacity:1; transform: translateY(0); }
 }
-.msg.received{
-  align-self:flex-start;
-  background:var(--c-surface2);
-  border:1px solid var(--c-border);
+.msg.sent {
+  align-self: flex-end;
+  background: rgba(0,255,179,0.07);
+  border: 1px solid rgba(0,255,179,0.18);
 }
-.msg-label{
-  font-size:11px;
-  font-weight:600;
-  color:var(--c-accent);
-  letter-spacing:.4px;
-  margin-bottom:4px;
+.msg.recv {
+  align-self: flex-start;
+  background: var(--bg2);
+  border: 1px solid var(--line);
 }
-.msg-text{color:var(--c-text)}
-.msg-text b{color:var(--c-accent2)}
-.msg-time{
-  font-size:11px;
-  color:var(--c-muted);
-  margin-top:5px;
-  text-align:right;
+.msg-lbl {
+  font-size: 10.5px; font-weight: 700;
+  color: var(--green);
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
-.msg-actions{
-  display:flex;gap:6px;flex-wrap:wrap;
-  margin-top:8px;
+.msg-lbl.recv { color: var(--muted2); }
+.msg-body { color: var(--text); }
+.msg-body strong { color: var(--green); font-weight: 600; }
+.msg-time {
+  font-size: 10px; color: var(--muted);
+  margin-top: 5px; text-align: right;
 }
-.msg-action-btn{
-  border:none;border-radius:8px;
-  padding:6px 11px;
-  font-size:12px;font-weight:600;
-  cursor:pointer;
-  transition:var(--transition);
+.msg-acts {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 8px;
 }
-.msg-action-btn.accept{
-  background:rgba(0,229,192,0.15);
-  color:var(--c-accent);
-  border:1px solid rgba(0,229,192,0.3);
+.act-btn {
+  border: none; border-radius: var(--r8);
+  padding: 6px 11px;
+  font-family: var(--font-ui);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t);
 }
-.msg-action-btn.accept:hover{background:rgba(0,229,192,0.25)}
-.msg-action-btn.reject{
-  background:var(--c-danger-dim);
-  color:var(--c-danger);
-  border:1px solid rgba(255,77,109,0.25);
+.act-btn.accept {
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid rgba(0,255,179,0.25);
 }
-.msg-action-btn.reject:hover{background:rgba(255,77,109,0.2)}
+.act-btn.accept:hover { background: var(--green-mid); }
+.act-btn.reject {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(255,59,92,0.25);
+}
+.act-btn.reject:hover { background: rgba(255,59,92,0.18); }
 
-/* Floating SOS */
-.sos-btn{
-  position:fixed;
-  right:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);
-  width:58px;height:58px;
-  border-radius:50%;border:none;
-  background:linear-gradient(135deg,#ff2d55,#c0002f);
-  color:#fff;
-  font-size:22px;
-  font-weight:900;
-  box-shadow:0 4px 20px rgba(255,45,85,0.5);
-  z-index:2000;cursor:pointer;
-  transition:var(--transition);
-  display:none;
+/* ══════════════════════════════════════
+   SOS FLOATING BUTTON
+══════════════════════════════════════ */
+.sos-fab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 18px);
+  width: 56px; height: 56px;
+  border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #ff2d55, #c0002f);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  box-shadow: 0 4px 20px rgba(255,45,85,.5);
+  z-index: 2000; cursor: pointer;
+  transition: all var(--t) var(--ease);
+  display: none;
+  align-items: center; justify-content: center;
 }
-.sos-btn:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(255,45,85,0.65)}
-.sos-btn.visible{display:flex;align-items:center;justify-content:center}
+.sos-fab.show { display: flex; }
+.sos-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(255,45,85,.65); }
 
-/* Toast */
-.toast{
-  position:fixed;top:20px;left:50%;
-  transform:translateX(-50%) translateY(-80px);
-  max-width:90%;min-width:200px;
-  background:var(--c-surface);
-  border:1px solid var(--c-border2);
-  color:var(--c-text);
-  padding:12px 18px;
-  border-radius:var(--r-md);
-  font-size:14px;font-weight:500;
-  z-index:9999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  text-align:center;
-  transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s ease;
-  opacity:0;
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+.toast {
+  position: fixed;
+  top: 18px; left: 50%;
+  transform: translateX(-50%) translateY(-70px);
+  max-width: 88%; min-width: 180px;
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  color: var(--text);
+  padding: 11px 18px;
+  border-radius: var(--r12);
+  font-size: 13.5px; font-weight: 500;
+  z-index: 9999;
+  box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  text-align: center;
+  transition: transform .32s var(--spring), opacity .28s var(--ease);
+  opacity: 0;
+  pointer-events: none;
 }
-.toast.show{
-  transform:translateX(-50%) translateY(0);
-  opacity:1;
-}
-.toast.is-success{border-color:rgba(0,229,192,0.3);color:var(--c-accent)}
-.toast.is-error{border-color:rgba(255,77,109,0.3);color:var(--c-danger)}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.ok  { border-color: rgba(0,255,179,.3); color: var(--green); }
+.toast.bad { border-color: rgba(255,59,92,.3); color: var(--red); }
 
-/* Popup leaflet override */
-.leaflet-popup-content-wrapper{
-  background:var(--c-surface) !important;
-  border:1px solid var(--c-border2) !important;
-  border-radius:14px !important;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5) !important;
-  color:var(--c-text) !important;
+/* ══════════════════════════════════════
+   LEAFLET OVERRIDES
+══════════════════════════════════════ */
+.leaflet-popup-content-wrapper {
+  background: var(--bg1) !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,.55) !important;
+  color: var(--text) !important;
 }
-.leaflet-popup-tip{background:var(--c-surface) !important}
-.leaflet-popup-content{color:var(--c-text) !important;font-family:var(--font-body)}
-.popup-plate{
-  font-family:var(--font-display);
-  font-size:16px;font-weight:700;
-  color:var(--c-accent);
-  margin-bottom:4px;
+.leaflet-popup-tip { background: var(--bg1) !important; }
+.leaflet-popup-content {
+  color: var(--text) !important;
+  font-family: var(--font-ui);
+  margin: 14px 16px !important;
 }
-.popup-pseudo{font-size:13px;color:var(--c-muted2);margin-bottom:10px}
-.popup-contact{
-  width:100%;border:none;border-radius:8px;
-  padding:9px 12px;
-  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
-  color:#050d15;font-weight:700;font-size:13px;
-  cursor:pointer;
-  transition:var(--transition);
+.pop-plate {
+  font-family: var(--font-head);
+  font-size: 18px; font-weight: 700;
+  color: var(--green); letter-spacing: 1px;
+  margin-bottom: 3px;
 }
-.popup-contact:hover{opacity:.9}
+.pop-pseudo { font-size: 13px; color: var(--muted2); margin-bottom: 12px; }
+.pop-btn {
+  width: 100%; border: none; border-radius: var(--r8);
+  padding: 9px 12px;
+  background: linear-gradient(135deg, var(--green), #00d68f);
+  color: #06150f; font-weight: 700;
+  font-family: var(--font-ui);
+  font-size: 13px; cursor: pointer;
+  transition: opacity var(--t);
+}
+.pop-btn:hover { opacity: .9; }
 
-/* Hidden */
-.hidden{display:none !important}
-
-/* Separator */
-.sep{margin:20px 0;border:none;border-top:1px solid var(--c-border)}
+/* Utilities */
+.hidden { display: none !important; }
+.mt8  { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.divider { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 </style>
 
 </head>
-
 <body>
 
-<!-- ═══ WELCOME ═══════════════════════════════════════ -->
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
 
-<div id="welcomeScreen" class="screen active">
-  <div class="welcome-inner">
-    <div class="logo-area">
-      <div class="logo-icon">🚗</div>
-      <div class="brand">
-        <div class="brand-immat">Immat</div>
-        <div class="brand-connect">Connect<span class="brand-dot">.</span></div>
-      </div>
-      <div class="welcome-tagline">La route, connectée</div>
-    </div>
+<!-- ══════ WELCOME ══════════════════════════════ -->
+
+<div id="s-welcome" class="screen active">
+  <div class="welcome-wrap">
 
 ```
-<h1 class="welcome-title">Communiquez avec <em>n'importe quel</em> conducteur</h1>
-<p class="welcome-sub">Enregistrez votre véhicule, localisez-vous sur la carte et échangez instantanément avec les conducteurs autour de vous.</p>
-
-<div class="feature-list">
-  <div class="feature-item">
-    <div class="fi-icon">🪪</div>
-    <div class="fi-text">Votre plaque est liée à votre compte de façon sécurisée</div>
-  </div>
-  <div class="feature-item">
-    <div class="fi-icon">📍</div>
-    <div class="fi-text">Carte en temps réel après connexion</div>
-  </div>
-  <div class="feature-item">
-    <div class="fi-icon">🚨</div>
-    <div class="fi-text">Accès rapide aux secours (112) depuis la carte</div>
-  </div>
+<div class="logo-block">
+  <div class="logo-ring">🚗</div>
+  <div class="brand-name">Immat<span class="dot">Connect</span></div>
+  <div class="brand-tag">La route, connectée</div>
 </div>
 
-<div class="btn-group">
-  <button class="btn btn-primary" onclick="goToAuth('signup')">Créer un compte</button>
-  <button class="btn btn-ghost" onclick="goToAuth('login')">J'ai déjà un compte</button>
+<h1 class="welcome-h1">Parlez à <mark>n'importe quel</mark> conducteur</h1>
+<p class="welcome-p">Liez votre plaque à votre compte, apparaissez sur la carte en temps réel et envoyez un message à n'importe quel véhicule autour de vous.</p>
+
+<div class="feat-grid">
+  <div class="feat-pill"><div class="feat-icon">🪪</div><div class="feat-text">Votre plaque, liée à votre compte de façon sécurisée</div></div>
+  <div class="feat-pill"><div class="feat-icon">📍</div><div class="feat-text">Carte temps réel après connexion</div></div>
+  <div class="feat-pill"><div class="feat-icon">🚨</div><div class="feat-text">Accès rapide aux secours (112) depuis la carte</div></div>
+</div>
+
+<div class="btn-stack">
+  <button class="btn btn-prime" onclick="App.goToAuth('signup')">Créer un compte</button>
+  <button class="btn btn-ghost" onclick="App.goToAuth('login')">J'ai déjà un compte</button>
 </div>
 ```
 
   </div>
 </div>
 
-<!-- ═══ AUTH ══════════════════════════════════════════ -->
+<!-- ══════ AUTH ═════════════════════════════════ -->
 
-<div id="authScreen" class="screen">
+<div id="s-auth" class="screen">
   <div class="card">
-    <div class="card-header">
-      <div class="card-title" id="authTitle">Connexion</div>
-      <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
-    </div>
+    <div class="card-ttl" id="authTitle">Connexion</div>
+    <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
 
 ```
-<div class="tabs">
-  <button id="tabLogin" class="tab-btn active" onclick="setAuthMode('login')">Connexion</button>
-  <button id="tabSignup" class="tab-btn" onclick="setAuthMode('signup')">Inscription</button>
+<div class="tab-bar">
+  <button id="tabLogin"  class="tab on"  onclick="App.setMode('login')">Connexion</button>
+  <button id="tabSignup" class="tab"     onclick="App.setMode('signup')">Inscription</button>
 </div>
 
+<!-- Email -->
 <div class="field">
-  <label class="field-label" for="emailInput">Email</label>
-  <input class="field-input" type="email" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
-  <div class="field-hint" id="emailHint"></div>
+  <label class="lbl" for="iEmail">Email</label>
+  <input class="inp" type="email" id="iEmail" placeholder="ton@email.com" autocomplete="email"/>
+  <div class="hint" id="hEmail"></div>
 </div>
 
-<div id="signupPhoneWrap" class="hidden">
+<!-- Signup extras -->
+<div id="suExtras" class="hidden">
   <div class="field">
-    <label class="field-label" for="signupPhoneInput">Téléphone</label>
-    <input class="field-input" type="tel" id="signupPhoneInput" placeholder="0612345678" autocomplete="tel"/>
-    <div class="field-hint" id="signupPhoneHint"></div>
+    <label class="lbl" for="iPhone">Téléphone</label>
+    <input class="inp" type="tel" id="iPhone" placeholder="0612345678" autocomplete="tel"/>
+    <div class="hint" id="hPhone"></div>
   </div>
   <div class="field">
-    <label class="field-label" for="signupPlateInput">Immatriculation</label>
-    <input class="field-input" type="text" id="signupPlateInput" placeholder="AB-123-CD" autocomplete="off"/>
-    <div class="field-hint" id="signupPlateHint"></div>
+    <label class="lbl" for="iPlate">Immatriculation</label>
+    <input class="inp" type="text" id="iPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+    <div class="hint" id="hPlate"></div>
   </div>
-  <div class="note-box">🔒 Votre téléphone est utilisé à des fins de sécurité uniquement. Il ne sera jamais visible par d'autres utilisateurs.</div>
+  <div class="info-box">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
 </div>
 
+<!-- Password -->
 <div class="field">
-  <label class="field-label" for="passwordInput">Mot de passe</label>
-  <div class="field-wrap">
-    <input class="field-input has-toggle" type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password"/>
-    <button class="field-toggle" type="button" onclick="togglePwd('passwordInput',this)" aria-label="Afficher/masquer">👁</button>
+  <label class="lbl" for="iPwd">Mot de passe</label>
+  <div class="inp-wrap">
+    <input class="inp pad-r" type="password" id="iPwd" placeholder="••••••••" autocomplete="current-password"/>
+    <button class="eye-btn" type="button" onclick="toggleEye('iPwd',this)">👁</button>
   </div>
-  <div class="field-hint" id="passwordHint"></div>
+  <div class="hint" id="hPwd"></div>
 </div>
 
+<!-- Confirm -->
 <div id="confirmWrap" class="hidden">
   <div class="field">
-    <label class="field-label" for="confirmInput">Confirmer le mot de passe</label>
-    <div class="field-wrap">
-      <input class="field-input has-toggle" type="password" id="confirmInput" placeholder="••••••••" autocomplete="new-password"/>
-      <button class="field-toggle" type="button" onclick="togglePwd('confirmInput',this)" aria-label="Afficher/masquer">👁</button>
+    <label class="lbl" for="iConfirm">Confirmer le mot de passe</label>
+    <div class="inp-wrap">
+      <input class="inp pad-r" type="password" id="iConfirm" placeholder="••••••••" autocomplete="new-password"/>
+      <button class="eye-btn" type="button" onclick="toggleEye('iConfirm',this)">👁</button>
     </div>
-    <div class="field-hint info" id="confirmHint">Min. 8 caractères, 1 majuscule, 1 caractère spécial</div>
+    <div class="hint info" id="hConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
   </div>
 </div>
 
-<button id="authBtn" class="btn btn-primary" onclick="handleAuth()">Se connecter</button>
-<button class="btn btn-ghost" style="margin-top:10px" onclick="backToWelcome()">← Retour</button>
+<button id="authBtn" class="btn btn-prime" onclick="App.handleAuth()">Se connecter</button>
+<button class="btn btn-ghost mt8" onclick="App.backToWelcome()">← Retour</button>
 
-<div class="auth-links">
-  <button class="text-btn" id="forgotBtn" onclick="forgotPassword()">Mot de passe oublié ?</button>
-  <button class="text-btn hidden" id="resendBtn" onclick="resendConfirmation()">Renvoyer l'email de confirmation</button>
+<div class="aux-links">
+  <button class="link-btn" id="forgotBtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button>
+  <button class="link-btn hidden" id="resendBtn" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button>
 </div>
 
-<div class="status-msg" id="authStatus"></div>
+<div class="status" id="authStatus"></div>
 ```
 
   </div>
 </div>
 
-<!-- ═══ PROFILE ═══════════════════════════════════════ -->
+<!-- ══════ PROFILE ══════════════════════════════ -->
 
-<div id="profileScreen" class="screen">
+<div id="s-profile" class="screen">
   <div class="card">
-    <div class="card-header">
-      <div class="card-title">Mon profil</div>
-      <div class="card-sub">Quelques infos avant d'accéder à la carte.</div>
-    </div>
+    <div class="card-ttl">Mon profil</div>
+    <div class="card-sub">Quelques infos avant d'accéder à la carte.</div>
 
 ```
 <div class="field">
-  <label class="field-label" for="pseudoInput">Pseudo</label>
-  <input class="field-input" type="text" id="pseudoInput" placeholder="Ton pseudo" autocomplete="nickname"/>
-  <div class="field-hint" id="pseudoHint"></div>
+  <label class="lbl" for="iPseudo">Pseudo</label>
+  <input class="inp" type="text" id="iPseudo" placeholder="Ton pseudo" autocomplete="nickname"/>
+  <div class="hint" id="hPseudo"></div>
 </div>
 <div class="field">
-  <label class="field-label" for="profilePlateInput">Immatriculation</label>
-  <input class="field-input" type="text" id="profilePlateInput" placeholder="AB-123-CD" autocomplete="off"/>
-  <div class="field-hint" id="profilePlateHint"></div>
+  <label class="lbl" for="iProPlate">Immatriculation</label>
+  <input class="inp" type="text" id="iProPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+  <div class="hint" id="hProPlate"></div>
 </div>
 <div class="field">
-  <label class="field-label" for="profilePhoneInput">Téléphone</label>
-  <input class="field-input" type="tel" id="profilePhoneInput" placeholder="0612345678" autocomplete="tel"/>
-  <div class="field-hint" id="profilePhoneHint"></div>
+  <label class="lbl" for="iProPhone">Téléphone</label>
+  <input class="inp" type="tel" id="iProPhone" placeholder="0612345678" autocomplete="tel"/>
+  <div class="hint" id="hProPhone"></div>
 </div>
-<div class="note-box">🔒 Votre téléphone est utilisé à des fins de sécurité uniquement. Il ne sera jamais visible par d'autres utilisateurs.</div>
+<div class="info-box">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
 
-<button id="saveProfileBtn" class="btn btn-primary" style="margin-top:20px" onclick="saveProfile()">Enregistrer et continuer →</button>
-<div class="status-msg" id="profileStatus"></div>
+<button id="saveBtn" class="btn btn-prime mt12" onclick="App.saveProfile()">Enregistrer et continuer →</button>
+<div class="status" id="profileStatus"></div>
 ```
 
   </div>
 </div>
 
-<!-- ═══ RESET PASSWORD ════════════════════════════════ -->
+<!-- ══════ RESET PASSWORD ═══════════════════════ -->
 
-<div id="resetScreen" class="screen">
+<div id="s-reset" class="screen">
   <div class="card">
-    <div class="card-header">
-      <div class="card-title">Nouveau mot de passe</div>
-      <div class="card-sub">Choisis un mot de passe sécurisé pour ton compte.</div>
-    </div>
+    <div class="card-ttl">Nouveau mot de passe</div>
+    <div class="card-sub">Choisis un mot de passe sécurisé.</div>
 
 ```
 <div class="field">
-  <label class="field-label" for="newPwdInput">Nouveau mot de passe</label>
-  <div class="field-wrap">
-    <input class="field-input has-toggle" type="password" id="newPwdInput" placeholder="••••••••" autocomplete="new-password"/>
-    <button class="field-toggle" type="button" onclick="togglePwd('newPwdInput',this)">👁</button>
+  <label class="lbl" for="iNewPwd">Nouveau mot de passe</label>
+  <div class="inp-wrap">
+    <input class="inp pad-r" type="password" id="iNewPwd" placeholder="••••••••" autocomplete="new-password"/>
+    <button class="eye-btn" type="button" onclick="toggleEye('iNewPwd',this)">👁</button>
   </div>
-  <div class="field-hint" id="newPwdHint"></div>
+  <div class="hint" id="hNewPwd"></div>
 </div>
 <div class="field">
-  <label class="field-label" for="confirmNewPwdInput">Confirmer</label>
-  <div class="field-wrap">
-    <input class="field-input has-toggle" type="password" id="confirmNewPwdInput" placeholder="••••••••" autocomplete="new-password"/>
-    <button class="field-toggle" type="button" onclick="togglePwd('confirmNewPwdInput',this)">👁</button>
+  <label class="lbl" for="iNewConfirm">Confirmer</label>
+  <div class="inp-wrap">
+    <input class="inp pad-r" type="password" id="iNewConfirm" placeholder="••••••••" autocomplete="new-password"/>
+    <button class="eye-btn" type="button" onclick="toggleEye('iNewConfirm',this)">👁</button>
   </div>
-  <div class="field-hint info" id="confirmNewPwdHint">Min. 8 caractères, 1 majuscule, 1 caractère spécial</div>
+  <div class="hint info" id="hNewConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
 </div>
 
-<button id="updatePwdBtn" class="btn btn-primary" onclick="updatePassword()">Mettre à jour</button>
-<div class="status-msg" id="resetStatus"></div>
+<button id="updatePwdBtn" class="btn btn-prime" onclick="App.updatePwd()">Mettre à jour</button>
+<div class="status" id="resetStatus"></div>
 ```
 
   </div>
 </div>
 
-<!-- ═══ MAP ═══════════════════════════════════════════ -->
+<!-- ══════ MAP ══════════════════════════════════ -->
 
-<div id="mapScreen" class="screen">
-  <!-- Topbar -->
+<div id="s-map" class="screen">
+  <!-- Top bar -->
   <div class="topbar">
-    <div class="topbar-inner">
-      <div class="topbar-brand">Immat<span>Connect</span></div>
-      <div class="topbar-user">
-        <span class="topbar-plate" id="topbarPlate"></span>
-        <span id="topbarEmail"></span>
+    <div class="topbar-row1">
+      <div class="tb-brand">Immat<span>Connect</span></div>
+      <div class="tb-info">
+        <span class="tb-plate" id="tbPlate"></span>
+        <span class="tb-pseudo" id="tbPseudo"></span>
       </div>
     </div>
-    <div class="topbar-actions">
-      <button id="locateBtn" class="action-btn action-btn-primary" onclick="locateUser()">📍 Me localiser</button>
-      <button id="loadUsersBtn" class="action-btn action-btn-ghost" onclick="loadOtherUsers()">👥 Autres conducteurs</button>
-      <button class="action-btn action-btn-ghost" onclick="logout()">⏻ Déconnexion</button>
+    <div class="action-strip">
+      <button id="locBtn"      class="abtn abtn-green" onclick="App.locate()">📍 Me localiser</button>
+      <button id="othersBtn"   class="abtn abtn-ghost" onclick="App.loadOthers()">👥 Conducteurs</button>
+      <button                  class="abtn abtn-ghost" onclick="App.logout()">⏻ Déconnexion</button>
     </div>
   </div>
 
@@ -915,32 +972,30 @@ textarea.field-input{
     <div class="panel-inner">
 
 ```
-  <div class="section-title">📨 Contacter un véhicule</div>
-  <div class="compose-box">
-    <p class="compose-desc">Renseignez la plaque du véhicule que vous souhaitez contacter ou signaler. Ce n'est <strong>pas</strong> votre plaque.</p>
-
+  <div class="sec-h">📨 Contacter un véhicule</div>
+  <div class="compose-card">
+    <p class="compose-desc">Renseignez la plaque du véhicule à contacter (pas la vôtre).</p>
     <div class="field">
-      <label class="field-label" for="targetPlateInput">Plaque du véhicule concerné</label>
-      <input class="field-input" type="text" id="targetPlateInput" placeholder="XY-456-ZT" autocomplete="off"/>
-      <div class="field-hint" id="targetPlateHint"></div>
+      <label class="lbl" for="iTarget">Plaque du véhicule</label>
+      <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/>
+      <div class="hint" id="hTarget"></div>
     </div>
     <div class="field">
-      <label class="field-label" for="msgInput">Message</label>
-      <textarea class="field-input" id="msgInput" placeholder="Ex : Vos phares sont allumés / besoin de vous contacter…"></textarea>
-      <div class="field-hint" id="msgHint"></div>
+      <label class="lbl" for="iMsg">Message</label>
+      <textarea class="inp" id="iMsg" placeholder="Ex : Vos phares sont allumés…"></textarea>
+      <div class="hint" id="hMsg"></div>
     </div>
-    <button id="sendBtn" class="btn btn-primary compose-btn" onclick="sendRequest()">Envoyer →</button>
-    <div class="request-status-row" id="requestStatus"></div>
+    <button id="sendBtn" class="btn btn-prime" onclick="App.sendMsg()">Envoyer →</button>
+    <div class="req-row" id="reqStatus"></div>
   </div>
 
-  <div class="chat-header-row">
-    <div class="section-title">
+  <div class="msg-header">
+    <div class="sec-h">
       💬 Messages
       <span class="badge" id="msgBadge">●</span>
     </div>
-    <button class="refresh-btn" onclick="loadMessages();hideBadge()">↻</button>
+    <button class="refresh-btn" onclick="App.loadMsgs(); App.hideBadge()">↻</button>
   </div>
-
   <div id="chatBox">
     <div class="chat-empty">Aucun message pour le moment.</div>
   </div>
@@ -951,890 +1006,843 @@ textarea.field-input{
   </div>
 </div>
 
-<!-- SOS floating button (only on map) -->
+<!-- SOS FAB -->
 
-<button class="sos-btn" id="sosBtn" onclick="callEmergency()" title="Appeler les secours (112)">🚨</button>
+<button class="sos-fab" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
 
-<!-- Toast container -->
+<!-- Toast -->
 
 <div class="toast" id="toastEl"></div>
 
-<!-- ═══════════════ SCRIPTS ═══════════════════════════ -->
+<!-- ══════════════ SCRIPTS ══════════════════════ -->
 
 <script>
-/* ──────────────────────────────────────────────────────
+'use strict';
+
+/* ────────────────────────────────────────────────
    CONFIG
-   ────────────────────────────────────────────────────── */
-const SUPABASE_URL  = "https://vemgdkkbldgyvaisudkd.supabase.co";
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI";
-const SITE_URL      = "https://caisse43700-lgtm.github.io/Projet-immat-Connect/";
-
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* ──────────────────────────────────────────────────────
-   STATE (centralised)
-   ────────────────────────────────────────────────────── */
-const state = {
-  userId: null,
-  sessionHandled: false,
-  authMode: "login",
-  selectedPlate: null,
-  map: null,
-  myMarker: null,
-  otherMarkers: [],
-  watchId: null,         // geolocation watchPosition id
-  loadingUsers: false,
-  msgChannel: null,
-  locChannel: null,
+──────────────────────────────────────────────── */
+const CFG = {
+  url:  'https://vemgdkkbldgyvaisudkd.supabase.co',
+  key:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI',
+  site: 'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',
 };
 
-/* ──────────────────────────────────────────────────────
-   REGEX / VALIDATORS
-   ────────────────────────────────────────────────────── */
+const sb = window.supabase.createClient(CFG.url, CFG.key);
+
+/* ────────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────────── */
+const S = {
+  uid:         null,
+  mode:        'login',
+  sessionDone: false,
+  selPlate:    null,
+  map:         null,
+  myMarker:    null,
+  otherMkrs:   [],
+  watchId:     null,
+  loadingOthers: false,
+  chMsg:       null,
+  chLoc:       null,
+};
+
+/* ────────────────────────────────────────────────
+   VALIDATORS / FORMATTERS
+──────────────────────────────────────────────── */
 const RE_PHONE = /^0\d{9}$/;
 const RE_PLATE = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
 
-const isValidPhone = v => RE_PHONE.test(String(v||'').trim());
-const isValidPlate = v => RE_PLATE.test(String(v||'').trim());
-const isStrongPwd  = v => v.length >= 8 && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v);
+const validPhone = v => RE_PHONE.test(String(v||'').replace(/\s/g,''));
+const validPlate = v => RE_PLATE.test(String(v||'').trim().toUpperCase());
+const strongPwd  = v => v.length >= 8 && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v);
 
+function normPlate(v){
+  return String(v||'').trim().toUpperCase().replace(/\s/g,'');
+}
 function normPhone(v){ return String(v||'').replace(/\D/g,''); }
-function normPlate(v){ return String(v||'').trim().toUpperCase(); }
 
-function fmtPhone(v){
-  return String(v||'').replace(/\D/g,'').slice(0,10);
+function fmtPlate(raw){
+  const s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+  if(s.length <= 2) return s;
+  if(s.length <= 5) return s.slice(0,2)+'-'+s.slice(2);
+  return s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5);
 }
-function fmtPlate(v){
-  const c = String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
-  if(c.length<=2) return c;
-  if(c.length<=5) return c.slice(0,2)+'-'+c.slice(2);
-  return c.slice(0,2)+'-'+c.slice(2,5)+'-'+c.slice(5);
-}
-
-function escHtml(s){
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+function fmtPhone(raw){
+  return String(raw||'').replace(/\D/g,'').slice(0,10);
 }
 
-/* ──────────────────────────────────────────────────────
-   FIELD HELPERS
-   ────────────────────────────────────────────────────── */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ────────────────────────────────────────────────
+   UI HELPERS
+──────────────────────────────────────────────── */
 function hint(id, type, msg){
   const el = document.getElementById(id);
   if(!el) return;
-  el.className = 'field-hint' + (type ? ' '+type : '');
-  el.textContent = msg || '';
+  el.className = 'hint' + (type ? ' '+type : '');
+  el.textContent = msg||'';
 }
 function clearHints(...ids){ ids.forEach(id => hint(id,'',' ')); }
 
-function fieldState(inputId, valid){
-  const el = document.getElementById(inputId);
-  if(!el) return;
-  el.classList.toggle('is-valid', valid===true);
-  el.classList.toggle('is-error', valid===false);
-}
-
-function showStatus(id, msg, type){
+function markInp(id, valid){
   const el = document.getElementById(id);
   if(!el) return;
-  el.textContent = msg || '';
-  el.className = 'status-msg' + (type ? ' '+type : '') + (msg ? ' visible' : '');
+  el.classList.toggle('ok',  valid === true);
+  el.classList.toggle('err', valid === false);
 }
-function clearStatus(id){ showStatus(id,''); }
 
-/* ──────────────────────────────────────────────────────
+function setStatus(id, msg, type){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg||'';
+  el.className = 'status' + (type ? ' '+type : '') + (msg ? ' show' : '');
+}
+
+function setBtn(id, loading, idle, busy='Chargement…'){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.disabled = loading;
+  el.textContent = loading ? busy : idle;
+}
+
+/* ────────────────────────────────────────────────
    TOAST
-   ────────────────────────────────────────────────────── */
-let toastTimer = null;
+──────────────────────────────────────────────── */
+let _toastTimer = null;
 function toast(msg, type=''){
   const el = document.getElementById('toastEl');
+  if(!el) return;
   el.textContent = msg;
-  el.className = 'toast' + (type ? ' is-'+type : '');
-  requestAnimationFrame(()=>{ el.classList.add('show'); });
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+  el.className = 'toast' + (type ? ' '+type : '');
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
 
-/* ──────────────────────────────────────────────────────
-   LOADING STATE
-   ────────────────────────────────────────────────────── */
-function setLoading(btnId, loading, idleLabel, loadLabel='Chargement…'){
-  const btn = document.getElementById(btnId);
-  if(!btn) return;
-  btn.disabled = loading;
-  btn.textContent = loading ? loadLabel : idleLabel;
-}
-
-/* ──────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────
    ERROR TRANSLATION
-   ────────────────────────────────────────────────────── */
+──────────────────────────────────────────────── */
 function xlErr(msg){
-  const m = (msg||'').toLowerCase();
+  const m = String(msg||'').toLowerCase();
   if(m.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
-  if(m.includes('email not confirmed'))       return "Email non confirmé. Vérifie ta boîte mail.";
-  if(m.includes('user already registered'))   return 'Un compte existe déjà avec cet email.';
-  if(m.includes('rate limit'))               return 'Trop de tentatives. Attends un moment.';
-  if(m.includes('password should'))          return 'Le mot de passe ne respecte pas les critères.';
-  if(m.includes('same password'))            return 'Le nouveau mot de passe doit être différent.';
-  if(m.includes('network')||m.includes('fetch')) return 'Problème réseau. Vérifie ta connexion.';
+  if(m.includes('email not confirmed'))        return 'Email non confirmé. Vérifie ta boîte mail.';
+  if(m.includes('user already registered'))    return 'Un compte existe déjà avec cet email.';
+  if(m.includes('rate limit'))                 return 'Trop de tentatives. Réessaie plus tard.';
+  if(m.includes('password should'))            return 'Le mot de passe ne respecte pas les critères.';
+  if(m.includes('same password'))              return 'Le nouveau mot de passe doit être différent.';
+  if(m.includes('network')||m.includes('fetch')) return 'Erreur réseau. Vérifie ta connexion.';
   return 'Une erreur est survenue. Réessaie.';
 }
 
-/* ──────────────────────────────────────────────────────
-   SCREEN NAVIGATION
-   ────────────────────────────────────────────────────── */
-const ALL_SCREENS = ['welcomeScreen','authScreen','profileScreen','resetScreen','mapScreen'];
+/* ────────────────────────────────────────────────
+   SCREEN ROUTER
+──────────────────────────────────────────────── */
+const SCREENS = ['s-welcome','s-auth','s-profile','s-reset','s-map'];
 
-function showScreen(id){
-  ALL_SCREENS.forEach(s=>{
-    const el = document.getElementById(s);
-    if(el) el.classList.remove('active');
-  });
-  const target = document.getElementById(id);
-  if(target) target.classList.add('active');
-  document.getElementById('sosBtn').classList.toggle('visible', id==='mapScreen');
+function show(id){
+  SCREENS.forEach(s => document.getElementById(s)?.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  document.getElementById('sosFab').classList.toggle('show', id === 's-map');
 }
 
-/* ──────────────────────────────────────────────────────
-   TOGGLE PASSWORD
-   ────────────────────────────────────────────────────── */
-function togglePwd(inputId, btn){
-  const inp = document.getElementById(inputId);
-  if(!inp) return;
-  const show = inp.type==='password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁';
+/* ────────────────────────────────────────────────
+   TOGGLE PASSWORD EYE
+──────────────────────────────────────────────── */
+function toggleEye(inputId, btn){
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  const visible = el.type === 'password';
+  el.type = visible ? 'text' : 'password';
+  btn.textContent = visible ? '🙈' : '👁';
 }
 
-/* ──────────────────────────────────────────────────────
-   WELCOME
-   ────────────────────────────────────────────────────── */
-function goToAuth(mode){
-  setAuthMode(mode);
-  showScreen('authScreen');
-}
-
-function backToWelcome(){
-  showScreen('welcomeScreen');
-  clearStatus('authStatus');
-}
-
-/* ──────────────────────────────────────────────────────
-   AUTH MODE
-   ────────────────────────────────────────────────────── */
-function setAuthMode(mode){
-  state.authMode = mode==='signup' ? 'signup' : 'login';
-  const isSU = state.authMode==='signup';
-
-  document.getElementById('authTitle').textContent = isSU ? 'Créer un compte' : 'Connexion';
-  document.getElementById('authSub').textContent   = isSU
-    ? 'Crée ton compte avec email, téléphone, plaque et mot de passe sécurisé.'
-    : 'Connecte-toi avec ton email et ton mot de passe.';
-  document.getElementById('authBtn').textContent   = isSU ? 'Créer mon compte' : 'Se connecter';
-  document.getElementById('tabSignup').classList.toggle('active', isSU);
-  document.getElementById('tabLogin').classList.toggle('active', !isSU);
-  document.getElementById('signupPhoneWrap').classList.toggle('hidden', !isSU);
-  document.getElementById('confirmWrap').classList.toggle('hidden', !isSU);
-  document.getElementById('resendBtn').classList.toggle('hidden', !isSU);
-
-  clearStatus('authStatus');
-  clearHints('emailHint','signupPhoneHint','signupPlateHint','passwordHint','confirmHint');
-  ['emailInput','signupPhoneInput','signupPlateInput','passwordInput','confirmInput'].forEach(id=>{
-    fieldState(id, undefined);
-    const el = document.getElementById(id);
-    if(el) el.value='';
-  });
-}
-
-/* ──────────────────────────────────────────────────────
-   REALTIME FIELD VALIDATION
-   ────────────────────────────────────────────────────── */
-function bindValidation(){
-  // Phone fields
-  [['signupPhoneInput','signupPhoneHint'],['profilePhoneInput','profilePhoneHint']].forEach(([iId,hId])=>{
+/* ────────────────────────────────────────────────
+   LIVE INPUT FORMATTING
+──────────────────────────────────────────────── */
+function bindInputs(){
+  // Phone
+  [['iPhone','hPhone'],['iProPhone','hProPhone']].forEach(([iId,hId])=>{
     const el = document.getElementById(iId);
     if(!el) return;
-    el.addEventListener('input',()=>{
+    el.addEventListener('input',() => {
       el.value = fmtPhone(el.value);
       const v = el.value.trim();
-      if(!v){ fieldState(iId); hint(hId,'',''); return; }
-      const ok = isValidPhone(v);
-      fieldState(iId, ok);
-      hint(hId, ok?'success':'error', ok?'Format valide ✓':'Format attendu : 0612345678');
+      if(!v){ markInp(iId); hint(hId,'',''); return; }
+      const ok = validPhone(v);
+      markInp(iId, ok);
+      hint(hId, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : 0612345678');
     });
   });
 
-  // Plate fields
-  [['signupPlateInput','signupPlateHint'],['profilePlateInput','profilePlateHint'],['targetPlateInput','targetPlateHint']].forEach(([iId,hId])=>{
+  // Plate
+  [['iPlate','hPlate'],['iProPlate','hProPlate'],['iTarget','hTarget']].forEach(([iId,hId])=>{
     const el = document.getElementById(iId);
     if(!el) return;
-    el.addEventListener('input',()=>{
+    el.addEventListener('input',() => {
       el.value = fmtPlate(el.value);
       const v = el.value.trim();
-      if(!v){ fieldState(iId); hint(hId,'',''); return; }
-      const ok = isValidPlate(v);
-      fieldState(iId, ok);
-      hint(hId, ok?'success':'error', ok?'Format valide ✓':'Format attendu : AB-123-CD');
+      if(!v){ markInp(iId); hint(hId,'',''); return; }
+      const ok = validPlate(v);
+      markInp(iId, ok);
+      hint(hId, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : AB-123-CD');
     });
   });
 }
 
-/* ──────────────────────────────────────────────────────
-   HANDLE AUTH (dispatcher)
-   ────────────────────────────────────────────────────── */
-async function handleAuth(){
-  clearStatus('authStatus');
-  clearHints('emailHint','signupPhoneHint','signupPlateHint','passwordHint','confirmHint');
+/* ────────────────────────────────────────────────
+   APP NAMESPACE
+──────────────────────────────────────────────── */
+const App = {
 
-  const email = document.getElementById('emailInput').value.trim();
-  const pwd   = document.getElementById('passwordInput').value;
+  /* ── Navigation ── */
+  goToAuth(mode){
+    App.setMode(mode);
+    show('s-auth');
+  },
+  backToWelcome(){
+    show('s-welcome');
+    setStatus('authStatus','');
+  },
 
-  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
-  if(!pwd)  { hint('passwordHint','error','Entre ton mot de passe.'); return; }
+  /* ── Auth mode switch ── */
+  setMode(mode){
+    S.mode = mode === 'signup' ? 'signup' : 'login';
+    const su = S.mode === 'signup';
 
-  const idle = state.authMode==='signup' ? 'Créer mon compte' : 'Se connecter';
-  setLoading('authBtn', true, idle);
+    document.getElementById('authTitle').textContent = su ? 'Créer un compte' : 'Connexion';
+    document.getElementById('authSub').textContent   = su
+      ? 'Crée ton compte en quelques secondes.'
+      : 'Connecte-toi avec ton email et mot de passe.';
+    document.getElementById('authBtn').textContent   = su ? 'Créer mon compte' : 'Se connecter';
 
-  try{
-    if(state.authMode==='signup') await doSignup(email, pwd);
-    else                          await doLogin(email, pwd);
-  }catch(e){
-    console.error(e);
-    showStatus('authStatus','Erreur inattendue. Réessaie.','error');
-  }finally{
-    setLoading('authBtn', false, idle);
-  }
-}
+    document.getElementById('tabSignup').classList.toggle('on', su);
+    document.getElementById('tabLogin').classList.toggle('on', !su);
+    document.getElementById('suExtras').classList.toggle('hidden', !su);
+    document.getElementById('confirmWrap').classList.toggle('hidden', !su);
+    document.getElementById('resendBtn').classList.toggle('hidden', !su);
 
-/* ──────────────────────────────────────────────────────
-   SIGNUP
-   ────────────────────────────────────────────────────── */
-async function doSignup(email, pwd){
-  const phoneRaw = document.getElementById('signupPhoneInput').value.trim();
-  const plateRaw = document.getElementById('signupPlateInput').value.trim();
-  const confirm  = document.getElementById('confirmInput').value;
-
-  let err = false;
-
-  if(!phoneRaw){ hint('signupPhoneHint','error','Requis.'); err=true; }
-  else if(!isValidPhone(phoneRaw)){ hint('signupPhoneHint','error','Format : 0612345678'); err=true; }
-
-  if(!plateRaw){ hint('signupPlateHint','error','Requis.'); err=true; }
-  else if(!isValidPlate(normPlate(plateRaw))){ hint('signupPlateHint','error','Format : AB-123-CD'); err=true; }
-
-  if(!isStrongPwd(pwd)){ hint('passwordHint','error','Min. 8 car., 1 maj., 1 spécial.'); err=true; }
-
-  if(!confirm)            { hint('confirmHint','error','Confirme ton mot de passe.'); err=true; }
-  else if(pwd!==confirm)  { hint('confirmHint','error','Les mots de passe ne correspondent pas.'); err=true; }
-
-  if(err) return;
-
-  const phone = normPhone(phoneRaw);
-  const plate = normPlate(plateRaw);
-
-  const { data, error } = await sb.auth.signUp({
-    email, password: pwd,
-    options:{ emailRedirectTo: SITE_URL }
-  });
-
-  if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
-
-  const user = data?.user;
-  if(user){
-    await sb.from('profiles').upsert({
-      id: user.id,
-      email,
-      pseudo: email.split('@')[0],
-      owner_plate: plate,
-      phone
+    setStatus('authStatus','');
+    clearHints('hEmail','hPhone','hPlate','hPwd','hConfirm');
+    ['iEmail','iPhone','iPlate','iPwd','iConfirm'].forEach(id => {
+      markInp(id, undefined);
+      const el = document.getElementById(id);
+      if(el) el.value = '';
     });
-  }
+  },
 
-  showStatus('authStatus','✅ Compte créé ! Vérifie ton email puis connecte-toi.','success');
-}
+  /* ── Auth dispatcher ── */
+  async handleAuth(){
+    setStatus('authStatus','');
+    clearHints('hEmail','hPhone','hPlate','hPwd','hConfirm');
 
-/* ──────────────────────────────────────────────────────
-   LOGIN
-   ────────────────────────────────────────────────────── */
-async function doLogin(email, pwd){
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+    const email = document.getElementById('iEmail').value.trim();
+    const pwd   = document.getElementById('iPwd').value;
 
-  if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
+    if(!email){ hint('hEmail','err','Requis.'); return; }
+    if(!pwd)  { hint('hPwd','err','Requis.'); return; }
 
-  state.userId = data?.user?.id;
-  state.sessionHandled = true;
-  showStatus('authStatus','Connexion réussie…','success');
-  await continueAfterAuth();
-}
+    const idle = S.mode === 'signup' ? 'Créer mon compte' : 'Se connecter';
+    setBtn('authBtn', true, idle);
+    try {
+      if(S.mode === 'signup') await App._signup(email, pwd);
+      else                    await App._login(email, pwd);
+    } catch(e){
+      console.error(e);
+      setStatus('authStatus','Erreur inattendue. Réessaie.','err');
+    } finally {
+      setBtn('authBtn', false, idle);
+    }
+  },
 
-/* ──────────────────────────────────────────────────────
-   RESEND / FORGOT
-   ────────────────────────────────────────────────────── */
-async function resendConfirmation(){
-  const email = document.getElementById('emailInput').value.trim();
-  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
-  setLoading('resendBtn', true, 'Renvoyer l\'email de confirmation');
-  try{
-    const { error } = await sb.auth.resend({ type:'signup', email, options:{ emailRedirectTo: SITE_URL } });
-    if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
-    showStatus('authStatus','Email de confirmation renvoyé.','success');
-  }finally{
-    setLoading('resendBtn', false, 'Renvoyer l\'email de confirmation');
-  }
-}
+  /* ── Signup ── */
+  async _signup(email, pwd){
+    const phoneRaw = document.getElementById('iPhone').value.trim();
+    const plateRaw = document.getElementById('iPlate').value.trim();
+    const confirm  = document.getElementById('iConfirm').value;
 
-async function forgotPassword(){
-  const email = document.getElementById('emailInput').value.trim();
-  if(!email){ hint('emailHint','error','Entre ton email.'); return; }
-  setLoading('forgotBtn', true, 'Mot de passe oublié ?');
-  try{
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
-    if(error){ showStatus('authStatus', xlErr(error.message), 'error'); return; }
-    showStatus('authStatus','Email de réinitialisation envoyé. Consulte ta boîte mail.','success');
-  }finally{
-    setLoading('forgotBtn', false, 'Mot de passe oublié ?');
-  }
-}
+    let fail = false;
+    if(!phoneRaw)            { hint('hPhone','err','Requis.'); fail=true; }
+    else if(!validPhone(phoneRaw)){ hint('hPhone','err','Format : 0612345678'); fail=true; }
+    if(!plateRaw)            { hint('hPlate','err','Requis.'); fail=true; }
+    else if(!validPlate(normPlate(plateRaw))){ hint('hPlate','err','Format : AB-123-CD'); fail=true; }
+    if(!strongPwd(pwd))      { hint('hPwd','err','Min. 8 car., 1 maj., 1 spécial.'); fail=true; }
+    if(!confirm)             { hint('hConfirm','err','Requis.'); fail=true; }
+    else if(pwd !== confirm)  { hint('hConfirm','err','Les mots de passe ne correspondent pas.'); fail=true; }
+    if(fail) return;
 
-/* ──────────────────────────────────────────────────────
-   UPDATE PASSWORD (reset screen)
-   ────────────────────────────────────────────────────── */
-async function updatePassword(){
-  clearHints('newPwdHint','confirmNewPwdHint');
-  clearStatus('resetStatus');
+    const phone = normPhone(phoneRaw);
+    const plate = normPlate(plateRaw);
 
-  const pwd     = document.getElementById('newPwdInput').value;
-  const confirm = document.getElementById('confirmNewPwdInput').value;
-  let err = false;
+    const { data, error } = await sb.auth.signUp({
+      email, password: pwd,
+      options: { emailRedirectTo: CFG.site }
+    });
 
-  if(!isStrongPwd(pwd)){ hint('newPwdHint','error','Min. 8 car., 1 maj., 1 spécial.'); err=true; }
-  if(!confirm)          { hint('confirmNewPwdHint','error','Confirme le mot de passe.'); err=true; }
-  else if(pwd!==confirm){ hint('confirmNewPwdHint','error','Les mots de passe ne correspondent pas.'); err=true; }
-  if(err) return;
+    if(error){ setStatus('authStatus', xlErr(error.message), 'err'); return; }
 
-  setLoading('updatePwdBtn', true, 'Mettre à jour');
-  try{
-    const { error } = await sb.auth.updateUser({ password: pwd });
-    if(error){ showStatus('resetStatus', xlErr(error.message), 'error'); return; }
-    showStatus('resetStatus','✅ Mot de passe mis à jour !','success');
-    setTimeout(async()=>{ state.sessionHandled=true; await continueAfterAuth(); }, 1400);
-  }finally{
-    setLoading('updatePwdBtn', false, 'Mettre à jour');
-  }
-}
+    const user = data?.user;
+    if(user){
+      await sb.from('profiles').upsert({
+        id: user.id,
+        email,
+        pseudo: email.split('@')[0],
+        owner_plate: plate,
+        phone,
+      });
+    }
 
-/* ──────────────────────────────────────────────────────
-   CONTINUE AFTER AUTH
-   ────────────────────────────────────────────────────── */
-async function continueAfterAuth(){
-  const { data: ud, error: ue } = await sb.auth.getUser();
-  if(ue || !ud?.user){ showStatus('authStatus','Session introuvable. Reconnecte-toi.','error'); showScreen('authScreen'); return; }
+    setStatus('authStatus','✅ Compte créé ! Vérifie ton email puis connecte-toi.','ok');
+  },
 
-  const user = ud.user;
-  state.userId = user.id;
+  /* ── Login ── */
+  async _login(email, pwd){
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+    if(error){ setStatus('authStatus', xlErr(error.message), 'err'); return; }
 
-  const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-  if(pe){ console.error(pe); showScreen('profileScreen'); return; }
+    S.uid = data?.user?.id;
+    S.sessionDone = true;
+    setStatus('authStatus','Connexion réussie…','ok');
+    await App._afterAuth();
+  },
 
-  if(profile) openMap(profile, user.email);
-  else showScreen('profileScreen');
-}
+  /* ── Resend confirm ── */
+  async resendConfirm(){
+    const email = document.getElementById('iEmail').value.trim();
+    if(!email){ hint('hEmail','err','Requis.'); return; }
+    setBtn('resendBtn', true, 'Renvoyer l\'email de confirmation');
+    try {
+      const { error } = await sb.auth.resend({ type:'signup', email, options:{ emailRedirectTo: CFG.site } });
+      if(error){ setStatus('authStatus', xlErr(error.message), 'err'); return; }
+      setStatus('authStatus','Email de confirmation renvoyé. Vérifie ta boîte mail.','ok');
+    } finally {
+      setBtn('resendBtn', false, 'Renvoyer l\'email de confirmation');
+    }
+  },
 
-/* ──────────────────────────────────────────────────────
-   SAVE PROFILE
-   ────────────────────────────────────────────────────── */
-async function saveProfile(){
-  clearHints('pseudoHint','profilePlateHint','profilePhoneHint');
-  clearStatus('profileStatus');
+  /* ── Forgot password ── */
+  async forgotPwd(){
+    const email = document.getElementById('iEmail').value.trim();
+    if(!email){ hint('hEmail','err','Requis.'); return; }
+    setBtn('forgotBtn', true, 'Mot de passe oublié ?');
+    try {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: CFG.site });
+      if(error){ setStatus('authStatus', xlErr(error.message), 'err'); return; }
+      setStatus('authStatus','Email de réinitialisation envoyé. Vérifie ta boîte mail.','ok');
+    } finally {
+      setBtn('forgotBtn', false, 'Mot de passe oublié ?');
+    }
+  },
 
-  const pseudo    = document.getElementById('pseudoInput').value.trim();
-  const plateRaw  = document.getElementById('profilePlateInput').value.trim();
-  const phoneRaw  = document.getElementById('profilePhoneInput').value.trim();
+  /* ── Update password ── */
+  async updatePwd(){
+    clearHints('hNewPwd','hNewConfirm');
+    setStatus('resetStatus','');
 
-  let err = false;
-  if(!pseudo)            { hint('pseudoHint','error','Requis.'); err=true; }
-  if(!plateRaw)          { hint('profilePlateHint','error','Requis.'); err=true; }
-  else if(!isValidPlate(normPlate(plateRaw))){ hint('profilePlateHint','error','Format : AB-123-CD'); err=true; }
-  if(!phoneRaw)          { hint('profilePhoneHint','error','Requis.'); err=true; }
-  else if(!isValidPhone(phoneRaw)){ hint('profilePhoneHint','error','Format : 0612345678'); err=true; }
-  if(err) return;
+    const pwd     = document.getElementById('iNewPwd').value;
+    const confirm = document.getElementById('iNewConfirm').value;
+    let fail = false;
 
-  setLoading('saveProfileBtn', true, 'Enregistrer et continuer →');
-  try{
-    const { data: ud } = await sb.auth.getUser();
-    const user = ud?.user;
-    if(!user){ showStatus('profileStatus','Session introuvable.','error'); return; }
-    state.userId = user.id;
+    if(!strongPwd(pwd))      { hint('hNewPwd','err','Min. 8 car., 1 maj., 1 spécial.'); fail=true; }
+    if(!confirm)             { hint('hNewConfirm','err','Requis.'); fail=true; }
+    else if(pwd !== confirm)  { hint('hNewConfirm','err','Les mots de passe ne correspondent pas.'); fail=true; }
+    if(fail) return;
+
+    setBtn('updatePwdBtn', true, 'Mettre à jour');
+    try {
+      const { error } = await sb.auth.updateUser({ password: pwd });
+      if(error){ setStatus('resetStatus', xlErr(error.message), 'err'); return; }
+      setStatus('resetStatus','✅ Mot de passe mis à jour !','ok');
+      setTimeout(async () => { S.sessionDone = true; await App._afterAuth(); }, 1400);
+    } finally {
+      setBtn('updatePwdBtn', false, 'Mettre à jour');
+    }
+  },
+
+  /* ── After auth: check profile ── */
+  async _afterAuth(){
+    const { data: ud, error: ue } = await sb.auth.getUser();
+    if(ue || !ud?.user){
+      setStatus('authStatus','Session introuvable. Reconnecte-toi.','err');
+      show('s-auth');
+      return;
+    }
+    const user = ud.user;
+    S.uid = user.id;
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    if(profile) App._openMap(profile, user.email);
+    else show('s-profile');
+  },
+
+  /* ── Save profile ── */
+  async saveProfile(){
+    clearHints('hPseudo','hProPlate','hProPhone');
+    setStatus('profileStatus','');
+
+    const pseudo   = document.getElementById('iPseudo').value.trim();
+    const plateRaw = document.getElementById('iProPlate').value.trim();
+    const phoneRaw = document.getElementById('iProPhone').value.trim();
+
+    let fail = false;
+    if(!pseudo)              { hint('hPseudo','err','Requis.'); fail=true; }
+    if(!plateRaw)            { hint('hProPlate','err','Requis.'); fail=true; }
+    else if(!validPlate(normPlate(plateRaw))){ hint('hProPlate','err','Format : AB-123-CD'); fail=true; }
+    if(!phoneRaw)            { hint('hProPhone','err','Requis.'); fail=true; }
+    else if(!validPhone(phoneRaw)){ hint('hProPhone','err','Format : 0612345678'); fail=true; }
+    if(fail) return;
+
+    setBtn('saveBtn', true, 'Enregistrer et continuer →');
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user;
+      if(!user){ setStatus('profileStatus','Session introuvable.','err'); return; }
+      S.uid = user.id;
+
+      const plate = normPlate(plateRaw);
+      const phone = normPhone(phoneRaw);
+
+      const { error } = await sb.from('profiles').upsert({ id: user.id, email: user.email, pseudo, owner_plate: plate, phone });
+      if(error){ console.error(error); setStatus('profileStatus','Erreur lors de l\'enregistrement.','err'); return; }
+
+      App._openMap({ email: user.email, pseudo, owner_plate: plate }, user.email);
+    } finally {
+      setBtn('saveBtn', false, 'Enregistrer et continuer →');
+    }
+  },
+
+  /* ── Open map ── */
+  _openMap(profile, email){
+    show('s-map');
+    document.getElementById('tbPlate').textContent  = profile?.owner_plate || '';
+    document.getElementById('tbPseudo').textContent = profile?.pseudo || email || '';
+
+    setTimeout(() => {
+      App._initMap();
+      S.map.invalidateSize();
+    }, 200);
+
+    App._startMsgs();
+    App._subLocs();
+  },
+
+  /* ── Init Leaflet ── */
+  _initMap(){
+    if(S.map) return;
+    S.map = L.map('map', { zoomControl: true }).setView([46.6, 1.9], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(S.map);
+  },
+
+  /* ── Locate user ── */
+  locate(){
+    if(!navigator.geolocation){ toast('Géolocalisation non disponible.','bad'); return; }
+
+    const btn = document.getElementById('locBtn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Localisation…';
+    App._initMap();
+
+    if(S.watchId !== null){ navigator.geolocation.clearWatch(S.watchId); S.watchId = null; }
+
+    S.watchId = navigator.geolocation.watchPosition(
+      async pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+
+        btn.disabled = false;
+        btn.textContent = '📍 Me localiser';
+
+        S.map.flyTo([lat, lng], 16, { duration: 0.9 });
+
+        if(S.myMarker) S.map.removeLayer(S.myMarker);
+        S.myMarker = L.marker([lat, lng]).addTo(S.map).bindPopup('📍 Tu es ici').openPopup();
+
+        const { data: ud } = await sb.auth.getUser();
+        const user = ud?.user;
+        if(!user) return;
+        S.uid = user.id;
+
+        await sb.from('user_locations').upsert({
+          id: user.id,
+          user_name: user.email,
+          latitude: lat,
+          longitude: lng,
+          updated_at: new Date().toISOString(),
+        });
+      },
+      err => {
+        btn.disabled = false;
+        btn.textContent = '📍 Me localiser';
+        const msgs = { 1:'Localisation refusée.', 2:'Position introuvable.', 3:'Délai dépassé.' };
+        toast(msgs[err.code] || 'Erreur de géolocalisation.', 'bad');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    );
+  },
+
+  /* ── Load other users ── */
+  async loadOthers(){
+    if(S.loadingOthers) return;
+    S.loadingOthers = true;
+    const btn = document.getElementById('othersBtn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Chargement…';
+    App._initMap();
+
+    // Remove old markers
+    S.otherMkrs.forEach(m => S.map.removeLayer(m));
+    S.otherMkrs = [];
+
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const me = ud?.user;
+      if(me) S.uid = me.id;
+
+      let q = sb.from('user_locations').select('id, latitude, longitude, profiles(pseudo, owner_plate)');
+      if(me) q = q.neq('id', me.id);
+
+      const { data: locs, error } = await q;
+      if(error){ console.error(error); toast('Erreur chargement conducteurs.','bad'); return; }
+
+      if(!locs?.length){ toast('Aucun autre conducteur localisé.'); return; }
+
+      locs.forEach(loc => {
+        const lat = Number(loc.latitude);
+        const lng = Number(loc.longitude);
+        if(!isFinite(lat) || !isFinite(lng)) return;
+
+        const prof   = loc.profiles;
+        const pseudo = prof?.pseudo || 'Conducteur';
+        const plate  = prof?.owner_plate ? normPlate(prof.owner_plate) : '';
+
+        const icon = L.divIcon({
+          html: `<div style="width:13px;height:13px;border-radius:50%;background:#00ffb3;border:3px solid rgba(0,255,179,.35);box-shadow:0 0 10px rgba(0,255,179,.55)"></div>`,
+          iconSize:[13,13], iconAnchor:[6,6], className:'',
+        });
+
+        const mkr = L.marker([lat, lng], { icon }).addTo(S.map);
+
+        mkr.bindPopup(`
+          <div class="pop-plate">${esc(plate)}</div>
+          <div class="pop-pseudo">${esc(pseudo)}</div>
+          <button class="pop-btn" data-plate="${esc(plate)}">Contacter ce véhicule</button>
+        `);
+
+        mkr.on('popupopen', () => {
+          const popup = mkr.getPopup().getElement();
+          if(!popup) return;
+          const btn = popup.querySelector('.pop-btn');
+          if(!btn) return;
+          btn.onclick = () => { App._selectPlate(btn.dataset.plate); mkr.closePopup(); };
+        });
+
+        S.otherMkrs.push(mkr);
+      });
+
+      toast(`${locs.length} conducteur${locs.length > 1 ? 's' : ''} affiché${locs.length > 1 ? 's' : ''}.`, 'ok');
+    } finally {
+      S.loadingOthers = false;
+      btn.disabled = false;
+      btn.textContent = '👥 Conducteurs';
+    }
+  },
+
+  /* ── Select plate (from map) ── */
+  _selectPlate(plate){
+    const p = normPlate(plate);
+    if(!p) return;
+    S.selPlate = p;
+    const el = document.getElementById('iTarget');
+    el.value = p;
+    markInp('iTarget', true);
+    hint('hTarget','ok','Véhicule sélectionné ✓');
+    document.getElementById('iMsg').focus();
+    document.querySelector('.panel').scrollTo({ top:0, behavior:'smooth' });
+  },
+
+  /* ── Send message ── */
+  async sendMsg(){
+    clearHints('hTarget','hMsg');
+    App._setReq('','');
+
+    const plateRaw = document.getElementById('iTarget').value.trim();
+    const msg      = document.getElementById('iMsg').value.trim();
+
+    let fail = false;
+    if(!plateRaw)                         { hint('hTarget','err','Requis.'); fail=true; }
+    else if(!validPlate(normPlate(plateRaw))){ hint('hTarget','err','Format : AB-123-CD'); fail=true; }
+    if(!msg)                              { hint('hMsg','err','Ajoute un message.'); fail=true; }
+    if(fail) return;
 
     const plate = normPlate(plateRaw);
-    const phone = normPhone(phoneRaw);
+    setBtn('sendBtn', true, 'Envoyer →', 'Envoi…');
 
-    const { error } = await sb.from('profiles').upsert({ id:user.id, email:user.email, pseudo, owner_plate:plate, phone });
-    if(error){ console.error(error); showStatus('profileStatus','Erreur lors de l\'enregistrement.','error'); return; }
-
-    openMap({ email:user.email, pseudo, owner_plate:plate }, user.email);
-  }finally{
-    setLoading('saveProfileBtn', false, 'Enregistrer et continuer →');
-  }
-}
-
-/* ──────────────────────────────────────────────────────
-   OPEN MAP
-   ────────────────────────────────────────────────────── */
-function openMap(profile, email){
-  showScreen('mapScreen');
-
-  // Topbar info
-  document.getElementById('topbarPlate').textContent  = profile?.owner_plate || '';
-  document.getElementById('topbarEmail').textContent  = profile?.pseudo || email || '';
-
-  // Init map
-  setTimeout(()=>{
-    initMap();
-    state.map.invalidateSize();
-  }, 200);
-
-  startMessages();
-  subscribeToLocations();
-}
-
-/* ──────────────────────────────────────────────────────
-   MAP INIT
-   ────────────────────────────────────────────────────── */
-function initMap(){
-  if(state.map) return;
-  state.map = L.map('map', { zoomControl:true }).setView([46.6,1.9], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap'
-  }).addTo(state.map);
-}
-
-/* ──────────────────────────────────────────────────────
-   LOCATE USER (watchPosition for continuous updates)
-   ────────────────────────────────────────────────────── */
-async function locateUser(){
-  if(!navigator.geolocation){ toast('Géolocalisation non disponible.','error'); return; }
-
-  document.getElementById('locateBtn').disabled = true;
-  document.getElementById('locateBtn').textContent = '⌛ Localisation…';
-  initMap();
-
-  // Stop previous watch
-  if(state.watchId !== null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
-
-  state.watchId = navigator.geolocation.watchPosition(
-    async pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-
-      // Re-enable button on first fix
-      document.getElementById('locateBtn').disabled = false;
-      document.getElementById('locateBtn').textContent = '📍 Me localiser';
-
-      state.map.flyTo([lat,lng], 16, { duration:0.8 });
-
-      if(state.myMarker) state.map.removeLayer(state.myMarker);
-      state.myMarker = L.marker([lat,lng]).addTo(state.map).bindPopup('Tu es ici').openPopup();
-
-      const { data:ud } = await sb.auth.getUser();
+    try {
+      const { data: ud } = await sb.auth.getUser();
       const user = ud?.user;
-      if(!user) return;
-      state.userId = user.id;
+      if(!user){ App._setReq('Tu dois être connecté.','err'); return; }
+      S.uid = user.id;
 
-      const { error } = await sb.from('user_locations').upsert({
-        id: user.id,
-        user_name: user.email,
-        latitude: lat,
-        longitude: lng,
-        updated_at: new Date().toISOString()
-      });
-      if(error) console.error('Location upsert:', error);
-    },
-    err => {
-      document.getElementById('locateBtn').disabled = false;
-      document.getElementById('locateBtn').textContent = '📍 Me localiser';
-      const msgs = { 1:'Tu as refusé la localisation.', 2:'Position introuvable.', 3:'Délai dépassé.' };
-      toast(msgs[err.code] || 'Erreur de localisation.','error');
-    },
-    { enableHighAccuracy:true, timeout:15000, maximumAge:5000 }
-  );
-}
+      // Find target
+      const { data: target, error: te } = await sb.from('profiles')
+        .select('id')
+        .eq('owner_plate', plate)
+        .maybeSingle();
 
-/* ──────────────────────────────────────────────────────
-   LOAD OTHER USERS (single merged query)
-   ────────────────────────────────────────────────────── */
-async function loadOtherUsers(){
-  if(state.loadingUsers) return;
-  state.loadingUsers = true;
-  document.getElementById('loadUsersBtn').disabled = true;
-  document.getElementById('loadUsersBtn').textContent = '⌛ Chargement…';
-  initMap();
+      if(te || !target?.id){ App._setReq('Aucun utilisateur trouvé avec cette plaque.','err'); return; }
+      if(target.id === user.id){ App._setReq('Tu ne peux pas t\'envoyer un message à toi-même.','err'); return; }
 
-  // Clear old markers
-  state.otherMarkers.forEach(m => state.map.removeLayer(m));
-  state.otherMarkers = [];
+      S.selPlate = plate;
 
-  try{
-    const { data:ud } = await sb.auth.getUser();
-    const me = ud?.user;
-    if(me) state.userId = me.id;
+      // Check existing conversation
+      const { data: existing } = await sb.from('messages')
+        .select('status')
+        .eq('target_plate', plate)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${target.id}),and(sender_id.eq.${target.id},receiver_id.eq.${user.id})`);
 
-    // Merged query via foreign key relationship
-    let q = sb.from('user_locations').select('id, latitude, longitude, profiles(pseudo, owner_plate)');
-    if(me) q = q.neq('id', me.id);
+      const hasAccepted = (existing||[]).some(m => m.status === 'accepted');
+      const hasPending  = (existing||[]).some(m => m.status === 'pending');
 
-    const { data: locs, error } = await q;
-    if(error){ console.error(error); toast('Erreur chargement conducteurs.','error'); return; }
-
-    if(!locs?.length){ toast('Aucun autre conducteur localisé.'); return; }
-
-    locs.forEach(loc => {
-      const lat = Number(loc.latitude);
-      const lng = Number(loc.longitude);
-      if(!isFinite(lat)||!isFinite(lng)) return;
-
-      const profile = loc.profiles;
-      const pseudo  = profile?.pseudo || 'Conducteur';
-      const plate   = profile?.owner_plate ? normPlate(profile.owner_plate) : '';
-
-      const icon = L.divIcon({
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:#00e5c0;border:3px solid rgba(0,229,192,0.4);box-shadow:0 0 10px rgba(0,229,192,0.6)"></div>`,
-        iconSize:[14,14], iconAnchor:[7,7], className:''
-      });
-
-      const marker = L.marker([lat,lng],{ icon }).addTo(state.map);
-
-      marker.bindPopup(`
-        <div class="popup-plate">${escHtml(plate)}</div>
-        <div class="popup-pseudo">${escHtml(pseudo)}</div>
-        <button class="popup-contact" data-plate="${escHtml(plate)}">Contacter ce véhicule</button>
-      `);
-
-      marker.on('popupopen', ()=>{
-        const popupEl = marker.getPopup().getElement();
-        if(!popupEl) return;
-        const btn = popupEl.querySelector('.popup-contact');
-        if(!btn) return;
-        btn.onclick = ()=>{ selectVehicle(btn.dataset.plate); marker.closePopup(); };
-      });
-
-      state.otherMarkers.push(marker);
-    });
-
-    toast(`${locs.length} conducteur${locs.length>1?'s':''} affiché${locs.length>1?'s':''}.`,'success');
-  }finally{
-    state.loadingUsers = false;
-    document.getElementById('loadUsersBtn').disabled = false;
-    document.getElementById('loadUsersBtn').textContent = '👥 Autres conducteurs';
-  }
-}
-
-/* ──────────────────────────────────────────────────────
-   SELECT VEHICLE (from map popup)
-   ────────────────────────────────────────────────────── */
-function selectVehicle(plate){
-  const p = normPlate(plate);
-  if(!p) return;
-  state.selectedPlate = p;
-  const inp = document.getElementById('targetPlateInput');
-  inp.value = p;
-  fieldState('targetPlateInput', true);
-  hint('targetPlateHint','success','Véhicule sélectionné ✓');
-  document.getElementById('msgInput').focus();
-
-  // Scroll to compose panel
-  document.querySelector('.panel').scrollTo({ top:0, behavior:'smooth' });
-}
-
-/* ──────────────────────────────────────────────────────
-   SEND REQUEST
-   ────────────────────────────────────────────────────── */
-async function sendRequest(){
-  clearHints('targetPlateHint','msgHint');
-  setRequestStatus('');
-
-  const plateRaw = document.getElementById('targetPlateInput').value.trim();
-  const msg      = document.getElementById('msgInput').value.trim();
-
-  let err = false;
-  if(!plateRaw)               { hint('targetPlateHint','error','Requis.'); err=true; }
-  else if(!isValidPlate(normPlate(plateRaw))){ hint('targetPlateHint','error','Format : AB-123-CD'); err=true; }
-  if(!msg)                    { hint('msgHint','error','Ajoute un message.'); err=true; }
-  if(err) return;
-
-  const plate = normPlate(plateRaw);
-  setLoading('sendBtn', true, 'Envoyer →', 'Envoi…');
-
-  try{
-    const { data:ud } = await sb.auth.getUser();
-    const user = ud?.user;
-    if(!user){ setRequestStatus('Tu dois être connecté.','err'); return; }
-    state.userId = user.id;
-
-    // Find target user
-    const { data:target, error:te } = await sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
-    if(te || !target?.id){ setRequestStatus('Aucun utilisateur trouvé avec cette plaque.','err'); return; }
-    if(target.id === user.id){ setRequestStatus('Tu ne peux pas t\'envoyer un message à toi-même.','err'); return; }
-
-    state.selectedPlate = plate;
-
-    // Check existing conversation
-    const { data: existing } = await sb.from('messages').select('status')
-      .eq('target_plate', plate)
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${target.id}),and(sender_id.eq.${target.id},receiver_id.eq.${user.id})`);
-
-    const hasAccepted = (existing||[]).some(m=>m.status==='accepted');
-    const hasPending  = (existing||[]).some(m=>m.status==='pending');
-
-    if(hasPending && !hasAccepted){ setRequestStatus('Demande déjà envoyée, en attente.','ok'); await loadMessages(); return; }
-
-    const { error } = await sb.from('messages').insert({
-      sender_id: user.id,
-      receiver_id: target.id,
-      target_plate: plate,
-      message: msg,
-      status: hasAccepted ? 'accepted' : 'pending'
-    });
-
-    if(error){ console.error(error); setRequestStatus('Erreur lors de l\'envoi.','err'); return; }
-
-    document.getElementById('msgInput').value = '';
-    clearHints('msgHint');
-    setRequestStatus(hasAccepted ? '✅ Message envoyé' : '⏳ Demande envoyée, en attente d\'acceptation','ok');
-    await loadMessages();
-  }finally{
-    setLoading('sendBtn', false, 'Envoyer →');
-  }
-}
-
-function setRequestStatus(msg, type=''){
-  const el = document.getElementById('requestStatus');
-  if(!el) return;
-  el.textContent = msg;
-  el.className = 'request-status-row' + (type ? ' '+type : '');
-}
-
-/* ──────────────────────────────────────────────────────
-   MESSAGES
-   ────────────────────────────────────────────────────── */
-async function startMessages(){
-  await loadMessages();
-  await subscribeToMessages();
-}
-
-async function loadMessages(){
-  const box = document.getElementById('chatBox');
-  if(!box) return;
-
-  const { data:ud } = await sb.auth.getUser();
-  const user = ud?.user;
-  if(!user){ box.innerHTML='<div class="chat-empty">Connecte-toi pour voir les messages.</div>'; return; }
-  state.userId = user.id;
-
-  let q = sb.from('messages').select('*')
-    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .neq('status','rejected')
-    .order('created_at',{ ascending:true })
-    .limit(100);
-
-  if(state.selectedPlate) q = q.eq('target_plate', state.selectedPlate);
-
-  const { data, error } = await q;
-  if(error){ console.error(error); box.innerHTML='<div class="chat-empty">Erreur de chargement.</div>'; return; }
-  if(!data?.length){ box.innerHTML='<div class="chat-empty">Aucun message pour le moment.</div>'; return; }
-
-  box.innerHTML = data.map(m => buildMsgHtml(m, user.id)).join('');
-  box.scrollTop = box.scrollHeight;
-}
-
-function buildMsgHtml(msg, myId){
-  const isSent = msg.sender_id === myId;
-  const status = msg.status || 'accepted';
-  const plate  = escHtml(msg.target_plate || '');
-  const text   = escHtml(msg.message || '');
-  const time   = msg.created_at
-    ? new Date(msg.created_at).toLocaleString('fr-FR',{ day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
-    : '';
-
-  let label = '';
-  if(isSent){
-    if(status==='pending') label = '⏳ En attente d\'acceptation';
-    else label = '📤 Message envoyé → '+plate;
-  } else {
-    if(status==='pending') label = '📩 Demande de contact';
-    else label = '🚗 Message reçu';
-  }
-
-  let actions = '';
-  if(!isSent && msg.receiver_id===myId && status==='pending'){
-    actions = `<div class="msg-actions">
-      <button class="msg-action-btn accept" onclick="acceptRequest('${escHtml(msg.id)}')">✅ Accepter</button>
-      <button class="msg-action-btn reject" onclick="rejectRequest('${escHtml(msg.id)}')">❌ Refuser</button>
-    </div>`;
-  }
-
-  return `<div class="msg ${isSent?'sent':'received'}">
-    <div class="msg-label">${label}</div>
-    <div class="msg-text"><b>${plate}</b> — ${text}</div>
-    ${actions}
-    <div class="msg-time">${time}</div>
-  </div>`;
-}
-
-async function acceptRequest(id){
-  try{
-    const { data:ud } = await sb.auth.getUser();
-    const user = ud?.user; if(!user) return;
-
-    const { data:m, error:se } = await sb.from('messages').select('*').eq('id',id).eq('receiver_id',user.id).maybeSingle();
-    if(se||!m){ console.error(se); return; }
-
-    await sb.from('messages').update({ status:'accepted' }).eq('id',id).eq('receiver_id',user.id);
-    await sb.from('messages').insert({
-      sender_id:user.id, receiver_id:m.sender_id,
-      target_plate:m.target_plate,
-      message:'Votre demande de contact a été acceptée.',
-      status:'accepted'
-    });
-
-    state.selectedPlate = normPlate(m.target_plate);
-    document.getElementById('targetPlateInput').value = state.selectedPlate;
-    setRequestStatus('✅ Demande acceptée','ok');
-    await loadMessages();
-  }catch(e){ console.error(e); }
-}
-
-async function rejectRequest(id){
-  try{
-    const { data:ud } = await sb.auth.getUser();
-    const user = ud?.user; if(!user) return;
-    await sb.from('messages').update({ status:'rejected' }).eq('id',id).eq('receiver_id',user.id);
-    setRequestStatus('Demande refusée.');
-    await loadMessages();
-  }catch(e){ console.error(e); }
-}
-
-/* ──────────────────────────────────────────────────────
-   REALTIME SUBSCRIPTIONS
-   ────────────────────────────────────────────────────── */
-async function subscribeToMessages(){
-  const { data:ud } = await sb.auth.getUser();
-  const user = ud?.user; if(!user) return;
-  state.userId = user.id;
-
-  if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
-
-  state.msgChannel = sb.channel('ic_msgs_'+user.id)
-    .on('postgres_changes',{ event:'*', schema:'public', table:'messages' }, payload=>{
-      const msg = payload.new || payload.old;
-      if(!msg) return;
-      if(msg.sender_id!==user.id && msg.receiver_id!==user.id) return;
-
-      if(payload.eventType==='INSERT' && msg.receiver_id===user.id){
-        if(msg.status==='pending'){
-          toast('📩 Nouvelle demande de contact !','success');
-          showBadge();
-        } else if(msg.message?.includes('acceptée')){
-          toast('✅ Ta demande a été acceptée !','success');
-        }
-        if(!state.selectedPlate && msg.target_plate){
-          state.selectedPlate = normPlate(msg.target_plate);
-          document.getElementById('targetPlateInput').value = state.selectedPlate;
-        }
+      if(hasPending && !hasAccepted){
+        App._setReq('Demande déjà envoyée, en attente de réponse.','ok');
+        await App.loadMsgs();
+        return;
       }
-      loadMessages();
-    })
-    .subscribe();
-}
 
-async function subscribeToLocations(){
-  if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
+      const { error } = await sb.from('messages').insert({
+        sender_id:   user.id,
+        receiver_id: target.id,
+        target_plate: plate,
+        message: msg,
+        status: hasAccepted ? 'accepted' : 'pending',
+      });
 
-  state.locChannel = sb.channel('ic_locs')
-    .on('postgres_changes',{ event:'*', schema:'public', table:'user_locations' }, ()=>{
-      if(document.getElementById('mapScreen').classList.contains('active')) loadOtherUsers();
-    })
-    .subscribe();
-}
+      if(error){ console.error(error); App._setReq('Erreur lors de l\'envoi.','err'); return; }
 
-/* ──────────────────────────────────────────────────────
-   BADGE
-   ────────────────────────────────────────────────────── */
-function showBadge(){ document.getElementById('msgBadge').classList.add('visible'); }
-function hideBadge(){ document.getElementById('msgBadge').classList.remove('visible'); }
+      document.getElementById('iMsg').value = '';
+      clearHints('hMsg');
+      App._setReq(hasAccepted ? '✅ Message envoyé' : '⏳ Demande envoyée, en attente d\'acceptation', 'ok');
+      await App.loadMsgs();
+    } finally {
+      setBtn('sendBtn', false, 'Envoyer →');
+    }
+  },
 
-/* ──────────────────────────────────────────────────────
-   LOGOUT
-   ────────────────────────────────────────────────────── */
-async function logout(){
-  if(!confirm('Veux-tu vraiment te déconnecter ?')) return;
+  _setReq(msg, type){
+    const el = document.getElementById('reqStatus');
+    if(!el) return;
+    el.textContent = msg;
+    el.className = 'req-row' + (type ? ' '+type : '');
+  },
 
-  if(state.watchId!==null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
-  if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
-  if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
+  /* ── Messages ── */
+  async _startMsgs(){
+    await App.loadMsgs();
+    await App._subMsgs();
+  },
 
-  await sb.auth.signOut();
-  state.userId=null; state.sessionHandled=false; state.selectedPlate=null;
-  location.href = SITE_URL;
-}
+  async loadMsgs(){
+    const box = document.getElementById('chatBox');
+    if(!box) return;
 
-/* ──────────────────────────────────────────────────────
-   EMERGENCY
-   ────────────────────────────────────────────────────── */
-function callEmergency(){
-  if(confirm('Appeler le 112 (secours) ?')) window.location.href='tel:112';
-}
+    const { data: ud } = await sb.auth.getUser();
+    const user = ud?.user;
+    if(!user){
+      box.innerHTML = '<div class="chat-empty">Connecte-toi pour voir les messages.</div>';
+      return;
+    }
+    S.uid = user.id;
 
-/* ──────────────────────────────────────────────────────
-   SESSION BOOTSTRAP
-   ────────────────────────────────────────────────────── */
-function isRecoveryUrl(){
-  const s = (window.location.hash||'')+(window.location.search||'');
-  return s.toLowerCase().includes('type=recovery');
-}
+    let q = sb.from('messages')
+      .select('*')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .neq('status','rejected')
+      .order('created_at', { ascending: true })
+      .limit(100);
 
-async function boot(){
-  if(isRecoveryUrl()){ showScreen('resetScreen'); return; }
+    if(S.selPlate) q = q.eq('target_plate', S.selPlate);
 
-  const { data:sd } = await sb.auth.getSession();
-  const session = sd?.session;
-  if(!session){ showScreen('welcomeScreen'); return; }
+    const { data, error } = await q;
+    if(error){ console.error(error); box.innerHTML = '<div class="chat-empty">Erreur de chargement.</div>'; return; }
+    if(!data?.length){ box.innerHTML = '<div class="chat-empty">Aucun message pour le moment.</div>'; return; }
 
-  state.userId = session.user.id;
-  state.sessionHandled = true;
-  await continueAfterAuth();
-}
+    box.innerHTML = data.map(m => App._buildMsg(m, user.id)).join('');
+    box.scrollTop = box.scrollHeight;
+  },
 
-/* ──────────────────────────────────────────────────────
-   AUTH STATE CHANGE LISTENER
-   ────────────────────────────────────────────────────── */
-sb.auth.onAuthStateChange(async(event, session)=>{
-  if(event==='PASSWORD_RECOVERY'){
-    state.sessionHandled=false;
-    state.userId = session?.user?.id||null;
-    showScreen('resetScreen');
+  _buildMsg(msg, myId){
+    const sent   = msg.sender_id === myId;
+    const status = msg.status || 'accepted';
+    const plate  = esc(msg.target_plate || '');
+    const text   = esc(msg.message || '');
+    const time   = msg.created_at
+      ? new Date(msg.created_at).toLocaleString('fr-FR',{ day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+      : '';
+
+    let lbl = '';
+    if(sent)  lbl = status === 'pending' ? '⏳ En attente d\'acceptation' : `📤 Envoyé → ${plate}`;
+    else      lbl = status === 'pending' ? '📩 Demande de contact' : '🚗 Message reçu';
+
+    let acts = '';
+    if(!sent && msg.receiver_id === myId && status === 'pending'){
+      acts = `<div class="msg-acts">
+        <button class="act-btn accept" onclick="App._acceptMsg('${esc(msg.id)}')">✅ Accepter</button>
+        <button class="act-btn reject" onclick="App._rejectMsg('${esc(msg.id)}')">❌ Refuser</button>
+      </div>`;
+    }
+
+    return `<div class="msg ${sent ? 'sent' : 'recv'}">
+      <div class="msg-lbl ${sent ? '' : 'recv'}">${lbl}</div>
+      <div class="msg-body"><strong>${plate}</strong> — ${text}</div>
+      ${acts}
+      <div class="msg-time">${time}</div>
+    </div>`;
+  },
+
+  async _acceptMsg(id){
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user; if(!user) return;
+
+      const { data: m } = await sb.from('messages').select('*').eq('id', id).eq('receiver_id', user.id).maybeSingle();
+      if(!m) return;
+
+      await sb.from('messages').update({ status: 'accepted' }).eq('id', id).eq('receiver_id', user.id);
+      await sb.from('messages').insert({
+        sender_id:   user.id,
+        receiver_id: m.sender_id,
+        target_plate: m.target_plate,
+        message: 'Votre demande de contact a été acceptée.',
+        status: 'accepted',
+      });
+
+      S.selPlate = normPlate(m.target_plate);
+      document.getElementById('iTarget').value = S.selPlate;
+      App._setReq('✅ Demande acceptée','ok');
+      await App.loadMsgs();
+      toast('✅ Demande acceptée','ok');
+    } catch(e){ console.error(e); }
+  },
+
+  async _rejectMsg(id){
+    try {
+      const { data: ud } = await sb.auth.getUser();
+      const user = ud?.user; if(!user) return;
+      await sb.from('messages').update({ status: 'rejected' }).eq('id', id).eq('receiver_id', user.id);
+      App._setReq('Demande refusée.','');
+      await App.loadMsgs();
+    } catch(e){ console.error(e); }
+  },
+
+  /* ── Realtime: messages ── */
+  async _subMsgs(){
+    const { data: ud } = await sb.auth.getUser();
+    const user = ud?.user; if(!user) return;
+    S.uid = user.id;
+
+    if(S.chMsg){ await sb.removeChannel(S.chMsg); S.chMsg = null; }
+
+    S.chMsg = sb.channel('ic_msg_' + user.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+        const msg = payload.new || payload.old;
+        if(!msg) return;
+        if(msg.sender_id !== user.id && msg.receiver_id !== user.id) return;
+
+        if(payload.eventType === 'INSERT' && msg.receiver_id === user.id){
+          if(msg.status === 'pending'){
+            toast('📩 Nouvelle demande de contact !','ok');
+            App.showBadge();
+          } else if(String(msg.message||'').includes('acceptée')){
+            toast('✅ Ta demande a été acceptée !','ok');
+          }
+          if(!S.selPlate && msg.target_plate){
+            S.selPlate = normPlate(msg.target_plate);
+            document.getElementById('iTarget').value = S.selPlate;
+          }
+        }
+        App.loadMsgs();
+      })
+      .subscribe();
+  },
+
+  /* ── Realtime: locations ── */
+  async _subLocs(){
+    if(S.chLoc){ await sb.removeChannel(S.chLoc); S.chLoc = null; }
+
+    S.chLoc = sb.channel('ic_loc')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_locations' }, () => {
+        if(document.getElementById('s-map').classList.contains('active')) App.loadOthers();
+      })
+      .subscribe();
+  },
+
+  /* ── Badge ── */
+  showBadge(){ document.getElementById('msgBadge')?.classList.add('show'); },
+  hideBadge(){ document.getElementById('msgBadge')?.classList.remove('show'); },
+
+  /* ── Logout ── */
+  async logout(){
+    if(!confirm('Veux-tu vraiment te déconnecter ?')) return;
+
+    if(S.watchId !== null){ navigator.geolocation.clearWatch(S.watchId); S.watchId = null; }
+    if(S.chMsg){ await sb.removeChannel(S.chMsg); S.chMsg = null; }
+    if(S.chLoc){ await sb.removeChannel(S.chLoc); S.chLoc = null; }
+
+    await sb.auth.signOut();
+    Object.assign(S, { uid:null, sessionDone:false, selPlate:null, myMarker:null, otherMkrs:[], map:null });
+    location.href = CFG.site;
+  },
+
+  /* ── SOS ── */
+  sos(){
+    if(confirm('Appeler le 112 (secours) ?')) window.location.href = 'tel:112';
+  },
+};
+
+/* ────────────────────────────────────────────────
+   AUTH STATE LISTENER
+──────────────────────────────────────────────── */
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'PASSWORD_RECOVERY'){
+    S.sessionDone = false;
+    S.uid = session?.user?.id || null;
+    show('s-reset');
     return;
   }
-  if(event==='SIGNED_IN' && !state.sessionHandled && session){
-    state.userId = session.user.id;
-    state.sessionHandled = true;
-    await continueAfterAuth();
+  if(event === 'SIGNED_IN' && !S.sessionDone && session){
+    S.uid = session.user.id;
+    S.sessionDone = true;
+    await App._afterAuth();
     return;
   }
-  if(event==='SIGNED_OUT'){
-    state.sessionHandled=false; state.userId=null; state.selectedPlate=null;
-    if(state.watchId!==null){ navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
-    if(state.msgChannel){ await sb.removeChannel(state.msgChannel); state.msgChannel=null; }
-    if(state.locChannel){ await sb.removeChannel(state.locChannel); state.locChannel=null; }
-    showScreen('welcomeScreen');
+  if(event === 'SIGNED_OUT'){
+    S.sessionDone = false; S.uid = null; S.selPlate = null;
+    if(S.watchId !== null){ navigator.geolocation.clearWatch(S.watchId); S.watchId = null; }
+    if(S.chMsg){ await sb.removeChannel(S.chMsg); S.chMsg = null; }
+    if(S.chLoc){ await sb.removeChannel(S.chLoc); S.chLoc = null; }
+    show('s-welcome');
   }
 });
 
-/* ──────────────────────────────────────────────────────
-   INIT
-   ────────────────────────────────────────────────────── */
-bindValidation();
+/* ────────────────────────────────────────────────
+   BOOT
+──────────────────────────────────────────────── */
+async function boot(){
+  const frag = (window.location.hash || '') + (window.location.search || '');
+  if(frag.toLowerCase().includes('type=recovery')){ show('s-reset'); return; }
+
+  const { data: sd } = await sb.auth.getSession();
+  const session = sd?.session;
+  if(!session){ show('s-welcome'); return; }
+
+  S.uid = session.user.id;
+  S.sessionDone = true;
+  await App._afterAuth();
+}
+
+bindInputs();
 boot();
 </script>
 
