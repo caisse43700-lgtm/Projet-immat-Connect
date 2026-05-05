@@ -190,33 +190,42 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .alert-report{background:linear-gradient(135deg,#ff3b5c,#c0002f);color:white}
 .big-notif small,.alert-report small{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.85}
 #map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
-@media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:300px}}
-./* ===== FIX BARRE BAS (IMMOBILE) ===== */
+@media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:/* ===== BARRE ACTIONS FIXE EN BAS ===== */
+./* ===== BARRE ACTIONS FIXE EN BAS ===== */
 .map-actions{
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom,0px));
-  left: 0;
-  right: 0;
-  z-index: 2000;
+  position:fixed;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 58px);
+  left:0;
+  right:0;
+  z-index:2000;
 
   display:flex;
+  flex-direction:row;
   gap:8px;
   overflow-x:auto;
-  padding:10px;
+  overflow-y:hidden;
+  white-space:nowrap;
 
+  padding:10px;
   background:var(--bg);
   border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
 }
 
-/* ===== PLAQUE UTILISATEUR FIXE ===== */
-.user-strip{
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom,0px) + 60px);
-  left: 0;
-  right: 0;
-  z-index: 2000;
+.map-actions .abtn,
+.map-actions .mini-select{
+  flex:0 0 auto;
+}
 
-  padding:8px;
+/* ===== PLAQUE FIXE SOUS LES BOUTONS ===== */
+.user-strip{
+  position:fixed;
+  bottom:env(safe-area-inset-bottom,0px);
+  left:0;
+  right:0;
+  z-index:2001;
+
+  padding:12px 10px;
   text-align:center;
   font-size:15px;
 
@@ -224,9 +233,9 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   border-top:1px solid var(--line);
 }
 
-/* ===== ÉVITE QUE ÇA CACHE ===== */
+/* ===== ESPACE POUR NE RIEN CACHER ===== */
 .panel{
-  padding-bottom: 140px;
+  padding-bottom:180px;
 }
 </style>
 </head>
