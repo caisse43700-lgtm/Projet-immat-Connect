@@ -191,21 +191,42 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .big-notif small,.alert-report small{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.85}
 #map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
 @media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:300px}}
+./* ===== FIX BARRE BAS (IMMOBILE) ===== */
 .map-actions{
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom,0px));
+  left: 0;
+  right: 0;
+  z-index: 2000;
+
   display:flex;
   gap:8px;
   overflow-x:auto;
   padding:10px;
+
   background:var(--bg);
   border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);
 }
-.map-actions::-webkit-scrollbar{display:none;}
 
+/* ===== PLAQUE UTILISATEUR FIXE ===== */
 .user-strip{
-  padding:10px;
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 60px);
+  left: 0;
+  right: 0;
+  z-index: 2000;
+
+  padding:8px;
   text-align:center;
   font-size:15px;
+
+  background:var(--bg);
+  border-top:1px solid var(--line);
+}
+
+/* ===== ÉVITE QUE ÇA CACHE ===== */
+.panel{
+  padding-bottom: 140px;
 }
 </style>
 </head>
