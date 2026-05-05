@@ -380,7 +380,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
   <div id="map"></div>
 
-  <!-- BOUTONS SOUS LA CARTE -->
   <div class="map-actions">
     <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
     <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
@@ -399,66 +398,76 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
   </div>
 
-  <!-- PLAQUE + PSEUDO -->
   <div class="user-strip">
     <span id="tbPlate"></span>
     <span>•</span>
     <span id="tbPseudo"></span>
   </div>
 
-  <!-- PANEL -->
   <div class="panel">
     <div class="panel-in">
 
       <div class="sec-h">📨 Contacter un véhicule</div>
 
       <div class="ccard">
-        <p class="cdesc">Renseignez la plaque du véhicule à contacter, pas la vôtre.</p>
+        <p class="cdesc">Renseignez la plaque du véhicule à contacter.</p>
 
         <div class="field">
-          <label class="lbl" for="iTarget">Plaque du véhicule</label>
-          <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" maxlength="9"/>
-          <div class="hint" id="hTarget"></div>
+          <input class="inp" id="iTarget" placeholder="AB-123-CD">
         </div>
 
+        <!-- QUICK BUTTONS -->
         <div class="quick-wrap">
+
           <div class="quick-row">
             <div class="quick-title red">🔴 Urgence</div>
             <div class="quick-buttons">
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : fumée.')">Fumée</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : roue dangereuse.')">Roue</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : pièce détachée.')">Pièce</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 Fumée détectée')">Fumée</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 Roue dangereuse')">Roue</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 Pièce détachée')">Pièce</button>
             </div>
           </div>
 
           <div class="quick-row">
             <div class="quick-title orange">🟠 Important</div>
             <div class="quick-buttons">
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Pneu dégonflé.')">Pneu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Feu HS.')">Feu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Coffre mal fermé.')">Coffre</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Pneu dégonflé')">Pneu</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Feu HS')">Feu</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Coffre ouvert')">Coffre</button>
             </div>
           </div>
+
+          <!-- ⚠️ CELLE QUI MANQUAIT -->
+          <div class="quick-row">
+            <div class="quick-title green">🟢 Info</div>
+            <div class="quick-buttons">
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Trappe ouverte')">Trappe</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Feux allumés')">Feux</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vérifie ton véhicule')">Vérifier</button>
+            </div>
+          </div>
+
         </div>
 
-        <div class="field">
-          <label class="lbl" for="iMsg">Message</label>
-          <textarea class="inp" id="iMsg"></textarea>
-        </div>
+        <textarea class="inp" id="iMsg" placeholder="Message..."></textarea>
 
-        <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer →</button>
-        <button class="btn btn-g mt8" onclick="App.clearMsg()">Vider</button>
+        <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer</button>
 
-        <div class="rrow" id="reqSt"></div>
+        <div id="reqSt" class="rrow"></div>
       </div>
 
+      <!-- MESSAGES -->
       <div class="mhdr">
-        <div class="sec-h">💬 Messages</div>
-        <button class="rbtn" onclick="App.loadMsgs()">↻</button>
+        <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
+        <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻</button>
       </div>
+
+      <!-- ⚠️ CELA AVAIT DISPARU -->
+      <div id="convbar" class="convbar"></div>
+      <div id="convTitle" class="conv-title">Conversation : <strong>Toutes</strong></div>
 
       <div id="chatBox">
-        <div class="cempty">Aucun message pour le moment.</div>
+        <div class="cempty">Aucun message</div>
       </div>
 
     </div>
@@ -466,35 +475,17 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
 </div>
 
-<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
-  <div class="modal-card">
-    <h2>Confidentialité & conditions</h2>
-    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte, la couleur du véhicule et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
-    <ul>
-      <li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li>
-      <li>Votre position peut être masquée avec le mode invisible.</li>
-      <li>Les positions anciennes sont ignorées automatiquement.</li>
-      <li>Vous pouvez bloquer et débloquer une plaque depuis l’application.</li>
-      <li>En cas d’urgence réelle, utilisez les services officiels de secours.</li>
-    </ul>
-    <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
-  </div>
-</div>
+<!-- MODALS -->
+<div id="legalModal" class="modalx"></div>
+<div id="blockedModal" class="modalx"></div>
 
-<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
-  <div class="modal-card">
-    <h2>Plaques bloquées</h2>
-    <p>Les plaques bloquées sont masquées sur cet appareil. Vous pouvez les débloquer ici.</p>
-    <div id="blockedList" class="blocked-list"></div>
-    <button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button>
-  </div>
-</div>
-
-<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
+<!-- NOTIFS -->
+<div id="bigNotif" class="big-notif"></div>
 <div id="alertReport" class="alert-report"></div>
 
-<button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
-  
+<!-- SOS -->
+<button class="sos" id="sosFab" onclick="App.sos()">🚨</button>
+
 <div class="toast" id="toastEl"></div>
 
 <script>
