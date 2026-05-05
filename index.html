@@ -13,15 +13,11 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#080b12;--bg1:#0e1420;--bg2:#141c2e;--bg3:#1a2438;
-  --line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.12);
-  --green:#00ffb3;--gdim:rgba(0,255,179,.08);--gmid:rgba(0,255,179,.18);
-  --blue:#2979ff;--red:#ff3b5c;--rdim:rgba(255,59,92,.1);
-  --text:#e8edf8;--muted:#5a6880;--muted2:#8898b8;
-  --fui:'Space Grotesk',sans-serif;--fh:'Barlow Condensed',sans-serif;
-  --r8:8px;--r12:12px;--r16:16px;--r24:24px;
-  --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);--t:.18s;
-}
+--bg:#080b12;--bg1:#0e1420;--bg2:#141c2e;--bg3:#1a2438;--line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.12);
+--green:#00ffb3;--gdim:rgba(0,255,179,.08);--gmid:rgba(0,255,179,.18);--blue:#2979ff;--red:#ff3b5c;--rdim:rgba(255,59,92,.1);
+--text:#e8edf8;--muted:#5a6880;--muted2:#8898b8;--orange:#ff9f0a;--odim:rgba(255,159,10,.12);
+--fui:'Space Grotesk',sans-serif;--fh:'Barlow Condensed',sans-serif;--r8:8px;--r12:12px;--r16:16px;--r24:24px;
+--ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);--t:.18s}
 html{scroll-behavior:smooth}
 body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .ga{position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,179,.05) 0%,transparent 65%);pointer-events:none;z-index:0}
@@ -65,9 +61,9 @@ body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:10
 .field{margin-bottom:14px}
 .lbl{display:block;font-size:12px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
 .iw{position:relative}
-.inp{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:13px 15px;font-family:var(--fui);font-size:14px;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
+.inp,.sel{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:13px 15px;font-family:var(--fui);font-size:14px;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
 .inp::placeholder{color:var(--muted)}
-.inp:focus{border-color:rgba(0,255,179,.4);background:var(--bg3)}
+.inp:focus,.sel:focus{border-color:rgba(0,255,179,.4);background:var(--bg3)}
 .inp.pr{padding-right:48px}
 .inp.err{border-color:var(--red)!important}
 .inp.ok{border-color:rgba(0,255,179,.5)!important}
@@ -106,7 +102,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 #driveInfo{display:none;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(0,255,179,.08);border:1px solid rgba(0,255,179,.18);font-size:13px;color:var(--green);line-height:1.45}
 #driveInfo strong{font-family:var(--fh);font-size:18px;letter-spacing:.8px;color:var(--green)}
 #map{flex:1 1 0;min-height:0;z-index:1}
-.panel{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--line);overflow-y:auto;max-height:50vh;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 70px)}
+.panel{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--line);overflow-y:auto;max-height:54vh;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 70px)}
 .panel-in{max-width:600px;margin:0 auto}
 .sec-h{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .ccard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r16);padding:16px;margin-bottom:20px}
@@ -128,7 +124,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .mlbl{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px;color:var(--green)}
 .mlbl.r{color:var(--muted2)}
 .mbody{color:var(--text)}
-.mbody strong{color:var(--green);font-weight:600}
 .mtime{font-size:10px;color:var(--muted);margin-top:5px;text-align:right}
 .macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .abtn2{border:none;border-radius:var(--r8);padding:6px 11px;font-family:var(--fui);font-size:12px;font-weight:600;cursor:pointer;transition:background var(--t)}
@@ -153,7 +148,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .leaflet-popup-content-wrapper{background:var(--bg1)!important;border:1px solid var(--line2)!important;border-radius:14px!important;box-shadow:0 12px 40px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .leaflet-popup-tip{background:var(--bg1)!important}
 .leaflet-popup-content{color:var(--text)!important;font-family:var(--fui);margin:14px 16px!important}
-.pp{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:3px}
+.pp{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:3px;display:flex;align-items:center;gap:7px}
 .pps{font-size:13px;color:var(--muted2);margin-bottom:12px}
 .ppb{width:100%;border:none;border-radius:var(--r8);padding:9px 12px;background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700;font-family:var(--fui);font-size:13px;cursor:pointer;transition:opacity var(--t)}
 .ppb:hover{opacity:.9}
@@ -166,7 +161,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .convpill.on{background:var(--gdim);border-color:rgba(0,255,179,.25);color:var(--green)}
 .conv-title{margin:0 0 10px;padding:10px 12px;border-radius:var(--r12);background:var(--bg2);border:1px solid var(--line);font-size:13px;color:var(--muted2);line-height:1.45}
 .conv-title strong{color:var(--green);font-family:var(--fh);font-size:17px;letter-spacing:.8px}
-.plate-ref{display:inline-block;margin-bottom:6px;padding:3px 7px;border-radius:999px;background:var(--gdim);border:1px solid rgba(0,255,179,.18);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.5px}
+.plate-ref{display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;padding:3px 7px;border-radius:999px;background:var(--gdim);border:1px solid rgba(0,255,179,.18);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.5px}
 .mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .modalx{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
 .modalx.show{display:flex}
@@ -178,6 +173,17 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .blocked-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12)}
 .blocked-plate{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--green);letter-spacing:1px}
 .blocked-empty{padding:18px 12px;text-align:center;color:var(--muted2);font-size:13px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12)}
+.color-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid rgba(255,255,255,.45);box-shadow:0 0 8px rgba(255,255,255,.18);flex:0 0 14px}
+.vehicle-tag{display:inline-flex;align-items:center;gap:6px;color:var(--muted2);font-size:12px}
+.quick-wrap{margin:12px 0 14px;display:flex;flex-direction:column;gap:8px}
+.quick-row{border:1px solid var(--line);border-radius:var(--r12);padding:10px;background:var(--bg2)}
+.quick-title{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.quick-title.red{color:var(--red)}.quick-title.orange{color:var(--orange)}.quick-title.green{color:var(--green)}
+.quick-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.qbtn{border:none;border-radius:9px;padding:9px 6px;font-family:var(--fui);font-size:11.5px;font-weight:700;cursor:pointer;line-height:1.2}
+.qbtn.red{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.25)}
+.qbtn.orange{background:var(--odim);color:var(--orange);border:1px solid rgba(255,159,10,.25)}
+.qbtn.green{background:var(--gdim);color:var(--green);border:1px solid rgba(0,255,179,.25)}
 </style>
 </head>
 
@@ -196,7 +202,8 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div class="feat-grid">
       <div class="feat-pill"><div class="fi">🪪</div><div class="ft">Votre plaque liée à votre compte de façon sécurisée</div></div>
       <div class="feat-pill"><div class="fi">📍</div><div class="ft">Carte temps réel après connexion</div></div>
-      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Accès rapide aux secours 112 depuis la carte</div></div>
+      <div class="feat-pill"><div class="fi">🎨</div><div class="ft">Couleur du véhicule pour mieux repérer le bon conducteur</div></div>
+      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Messages rapides de sécurité routière</div></div>
     </div>
     <div class="btn-stack">
       <button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button>
@@ -228,6 +235,21 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         <label class="lbl" for="iPlate">Immatriculation</label>
         <input class="inp" type="text" id="iPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
         <div class="hint" id="hPlate"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="iColor">Couleur du véhicule</label>
+        <select class="sel" id="iColor">
+          <option value="">Choisir une couleur</option>
+          <option value="white">Blanc</option>
+          <option value="black">Noir</option>
+          <option value="gray">Gris</option>
+          <option value="blue">Bleu</option>
+          <option value="red">Rouge</option>
+          <option value="green">Vert</option>
+          <option value="yellow">Jaune / Orange</option>
+          <option value="other">Autre</option>
+        </select>
+        <div class="hint" id="hColor"></div>
       </div>
       <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
     </div>
@@ -277,6 +299,21 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
       <label class="lbl" for="iProPhone">Téléphone</label>
       <input class="inp" type="tel" id="iProPhone" placeholder="0612345678" autocomplete="tel"/>
       <div class="hint" id="hProPhone"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProColor">Couleur du véhicule</label>
+      <select class="sel" id="iProColor">
+        <option value="">Choisir une couleur</option>
+        <option value="white">Blanc</option>
+        <option value="black">Noir</option>
+        <option value="gray">Gris</option>
+        <option value="blue">Bleu</option>
+        <option value="red">Rouge</option>
+        <option value="green">Vert</option>
+        <option value="yellow">Jaune / Orange</option>
+        <option value="other">Autre</option>
+      </select>
+      <div class="hint" id="hProColor"></div>
     </div>
     <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
     <button id="saveBtn" class="btn btn-p mt12" onclick="App.saveProfile()">Enregistrer et continuer →</button>
@@ -348,6 +385,34 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
           <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/>
           <div class="hint" id="hTarget"></div>
         </div>
+
+        <div class="quick-wrap">
+          <div class="quick-row">
+            <div class="quick-title red">🔴 Urgence</div>
+            <div class="quick-buttons">
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : de la fumée ou une fuite est visible sur votre véhicule.')">Fumée / fuite</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble présenter un danger immédiat.')">Roue</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : un élément semble se détacher de votre véhicule.')">Pièce détachée</button>
+            </div>
+          </div>
+          <div class="quick-row">
+            <div class="quick-title orange">🟠 Important</div>
+            <div class="quick-buttons">
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne semble pas fonctionner.')">Feu HS</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Une porte ou le coffre semble mal fermé.')">Coffre / porte</button>
+            </div>
+          </div>
+          <div class="quick-row">
+            <div class="quick-title green">🟢 Info</div>
+            <div class="quick-buttons">
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Votre trappe à carburant semble ouverte.')">Trappe</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vos feux semblent être restés allumés.')">Feux allumés</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button>
+            </div>
+          </div>
+        </div>
+
         <div class="field">
           <label class="lbl" for="iMsg">Message</label>
           <textarea class="inp" id="iMsg" placeholder="Ex : Vos phares sont allumés…"></textarea>
@@ -372,7 +437,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 <div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
   <div class="modal-card">
     <h2>Confidentialité & conditions</h2>
-    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
+    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte, la couleur du véhicule et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
     <ul>
       <li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li>
       <li>Votre position peut être masquée avec le mode invisible.</li>
@@ -463,7 +528,8 @@ const S = {
   conversationFilter: 'all',
   driveMode: false,
   lastHeading: null,
-  frontVehicle: null
+  frontVehicle: null,
+  currentProfile: null
 };
 
 const RE_PH = /^0\d{9}$/;
@@ -486,20 +552,11 @@ function fPhone(r) {
 }
 
 function esc(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function jsStr(s) {
-  return String(s || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '');
+  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
 }
 
 function hint(id, t, m) {
@@ -566,10 +623,7 @@ function beep() {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    setTimeout(() => {
-      osc.stop();
-      ctx.close();
-    }, 120);
+    setTimeout(() => { osc.stop(); ctx.close(); }, 120);
   } catch (e) {}
 }
 
@@ -583,6 +637,7 @@ function xlErr(m) {
   if (s.includes('password should')) return 'Le mot de passe ne respecte pas les critères.';
   if (s.includes('same password')) return 'Le nouveau mot de passe doit être différent.';
   if (s.includes('network') || s.includes('fetch')) return 'Erreur réseau. Vérifie ta connexion.';
+  if (s.includes('vehicle_color')) return 'Colonne vehicle_color manquante. Ajoute-la dans SQL.';
   return 'Une erreur est survenue. Réessaie.';
 }
 
@@ -590,11 +645,7 @@ function km(aLat, aLng, bLat, bLng) {
   const R = 6371;
   const dLat = (bLat - aLat) * Math.PI / 180;
   const dLng = (bLng - aLng) * Math.PI / 180;
-  const x =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(aLat * Math.PI / 180) *
-    Math.cos(bLat * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * Math.PI / 180) * Math.cos(bLat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
@@ -613,6 +664,36 @@ function canSendNow() {
   if (S.msgClicks.length >= CFG.maxMsgPerMinute) return false;
   S.msgClicks.push(now);
   return true;
+}
+
+function colorLabel(c) {
+  return {
+    white:'Blanc',
+    black:'Noir',
+    gray:'Gris',
+    blue:'Bleu',
+    red:'Rouge',
+    green:'Vert',
+    yellow:'Jaune / Orange',
+    other:'Autre'
+  }[c || ''] || 'Couleur non renseignée';
+}
+
+function colorHex(c) {
+  return {
+    white:'#f5f5f5',
+    black:'#111111',
+    gray:'#8e8e93',
+    blue:'#2979ff',
+    red:'#ff3b5c',
+    green:'#00c853',
+    yellow:'#ffb300',
+    other:'#b388ff'
+  }[c || 'other'] || '#b388ff';
+}
+
+function colorDot(c) {
+  return '<span class="color-dot" style="background:' + esc(colorHex(c)) + '"></span>';
 }
 
 const SCREENS = ['sw', 'sa', 'sp', 'sr', 'sm'];
@@ -638,11 +719,7 @@ function bindInputs() {
     e.addEventListener('input', () => {
       e.value = fPhone(e.value);
       const v = e.value.trim();
-      if (!v) {
-        mi(i);
-        hint(h, '', '');
-        return;
-      }
+      if (!v) { mi(i); hint(h, '', ''); return; }
       const ok = vPhone(v);
       mi(i, ok);
       hint(h, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : 0612345678');
@@ -655,11 +732,7 @@ function bindInputs() {
     e.addEventListener('input', () => {
       e.value = fPlate(e.value);
       const v = e.value.trim();
-      if (!v) {
-        mi(i);
-        hint(h, '', '');
-        return;
-      }
+      if (!v) { mi(i); hint(h, '', ''); return; }
       const ok = vPlate(v);
       mi(i, ok);
       hint(h, ok ? 'ok' : 'err', ok ? '✓ Format valide' : 'Format attendu : AB-123-CD');
@@ -692,13 +765,16 @@ const App = {
     document.getElementById('resendBtn').classList.toggle('hidden', !su);
 
     setSt('authSt', '');
-    ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm');
+    ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm', 'hColor');
 
     ['iEmail', 'iPhone', 'iPlate', 'iPwd', 'iConfirm'].forEach(id => {
       mi(id, undefined);
       const e = document.getElementById(id);
       if (e) e.value = '';
     });
+
+    const c = document.getElementById('iColor');
+    if (c) c.value = '';
   },
 
   async plateAvailable(plate, selfId) {
@@ -709,6 +785,32 @@ const App = {
     return data.id === selfId;
   },
 
+  pendingProfile(email, plate, phone, color) {
+    safeLocalSet('ic_pending_profile', JSON.stringify({
+      email: email,
+      pseudo: email.split('@')[0],
+      owner_plate: plate,
+      phone: phone,
+      vehicle_color: color
+    }));
+  },
+
+  getPendingProfile(email) {
+    try {
+      const raw = safeLocalGet('ic_pending_profile', '');
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      if (!p || p.email !== email) return null;
+      return p;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  clearPendingProfile() {
+    try { localStorage.removeItem('ic_pending_profile'); } catch (e) {}
+  },
+
   async handleAuth() {
     if (!sb) {
       setSt('authSt', 'Supabase n’est pas chargé. Vérifie ta connexion.', 'err');
@@ -716,20 +818,13 @@ const App = {
     }
 
     setSt('authSt', '');
-    ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm');
+    ch('hEmail', 'hPhone', 'hPlate', 'hPwd', 'hConfirm', 'hColor');
 
     const email = document.getElementById('iEmail').value.trim();
     const pwd = document.getElementById('iPwd').value;
 
-    if (!email) {
-      hint('hEmail', 'err', 'Requis.');
-      return;
-    }
-
-    if (!pwd) {
-      hint('hPwd', 'err', 'Requis.');
-      return;
-    }
+    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
+    if (!pwd) { hint('hPwd', 'err', 'Requis.'); return; }
 
     const btn = document.getElementById('authBtn');
     const idle = S.mode === 'signup' ? 'Créer mon compte' : 'Se connecter';
@@ -751,37 +846,22 @@ const App = {
   async _signup(email, pwd) {
     const phoneRaw = document.getElementById('iPhone').value.trim();
     const plateRaw = document.getElementById('iPlate').value.trim();
+    const color = document.getElementById('iColor').value;
     const confirm = document.getElementById('iConfirm').value;
     let fail = false;
 
-    if (!phoneRaw) {
-      hint('hPhone', 'err', 'Requis.');
-      fail = true;
-    } else if (!vPhone(phoneRaw)) {
-      hint('hPhone', 'err', 'Format : 0612345678');
-      fail = true;
-    }
+    if (!phoneRaw) { hint('hPhone', 'err', 'Requis.'); fail = true; }
+    else if (!vPhone(phoneRaw)) { hint('hPhone', 'err', 'Format : 0612345678'); fail = true; }
 
-    if (!plateRaw) {
-      hint('hPlate', 'err', 'Requis.');
-      fail = true;
-    } else if (!vPlate(nPlate(plateRaw))) {
-      hint('hPlate', 'err', 'Format : AB-123-CD');
-      fail = true;
-    }
+    if (!plateRaw) { hint('hPlate', 'err', 'Requis.'); fail = true; }
+    else if (!vPlate(nPlate(plateRaw))) { hint('hPlate', 'err', 'Format : AB-123-CD'); fail = true; }
 
-    if (!sPwd(pwd)) {
-      hint('hPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.');
-      fail = true;
-    }
+    if (!color) { hint('hColor', 'err', 'Choisis la couleur du véhicule.'); fail = true; }
 
-    if (!confirm) {
-      hint('hConfirm', 'err', 'Requis.');
-      fail = true;
-    } else if (pwd !== confirm) {
-      hint('hConfirm', 'err', 'Les mots de passe ne correspondent pas.');
-      fail = true;
-    }
+    if (!sPwd(pwd)) { hint('hPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.'); fail = true; }
+
+    if (!confirm) { hint('hConfirm', 'err', 'Requis.'); fail = true; }
+    else if (pwd !== confirm) { hint('hConfirm', 'err', 'Les mots de passe ne correspondent pas.'); fail = true; }
 
     if (fail) return;
 
@@ -793,6 +873,8 @@ const App = {
       hint('hPlate', 'err', 'Cette plaque est déjà utilisée.');
       return;
     }
+
+    App.pendingProfile(email, plate, phone, color);
 
     const { data, error } = await sb.auth.signUp({
       email,
@@ -807,16 +889,19 @@ const App = {
 
     const user = data?.user;
     if (user) {
-      await sb.from('profiles').upsert({
+      const { error: pe } = await sb.from('profiles').upsert({
         id: user.id,
         email,
         pseudo: email.split('@')[0],
         owner_plate: plate,
-        phone
+        phone,
+        vehicle_color: color
       });
+
+      if (pe) console.warn('profile insert pending after signup:', pe);
     }
 
-    setSt('authSt', '✅ Compte créé ! Vérifie ton email puis connecte-toi.', 'ok');
+    setSt('authSt', '✅ Compte créé ! Vérifie ton email puis connecte-toi. Tes infos véhicule seront récupérées automatiquement.', 'ok');
   },
 
   async _login(email, pwd) {
@@ -843,10 +928,7 @@ const App = {
     if (!sb) return;
     const email = document.getElementById('iEmail').value.trim();
 
-    if (!email) {
-      hint('hEmail', 'err', 'Requis.');
-      return;
-    }
+    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
 
     sBtn('resendBtn', true, "Renvoyer l'email de confirmation");
 
@@ -872,17 +954,12 @@ const App = {
     if (!sb) return;
     const email = document.getElementById('iEmail').value.trim();
 
-    if (!email) {
-      hint('hEmail', 'err', 'Requis.');
-      return;
-    }
+    if (!email) { hint('hEmail', 'err', 'Requis.'); return; }
 
     sBtn('forgotBtn', true, 'Mot de passe oublié ?');
 
     try {
-      const { error } = await sb.auth.resetPasswordForEmail(email, {
-        redirectTo: CFG.site
-      });
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: CFG.site });
 
       if (error) {
         setSt('authSt', xlErr(error.message), 'err');
@@ -904,18 +981,9 @@ const App = {
     const cfm = document.getElementById('iNewCfm').value;
     let fail = false;
 
-    if (!sPwd(pwd)) {
-      hint('hNewPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.');
-      fail = true;
-    }
-
-    if (!cfm) {
-      hint('hNewCfm', 'err', 'Requis.');
-      fail = true;
-    } else if (pwd !== cfm) {
-      hint('hNewCfm', 'err', 'Les mots de passe ne correspondent pas.');
-      fail = true;
-    }
+    if (!sPwd(pwd)) { hint('hNewPwd', 'err', 'Min. 8 car., 1 maj., 1 spécial.'); fail = true; }
+    if (!cfm) { hint('hNewCfm', 'err', 'Requis.'); fail = true; }
+    else if (pwd !== cfm) { hint('hNewCfm', 'err', 'Les mots de passe ne correspondent pas.'); fail = true; }
 
     if (fail) return;
 
@@ -957,43 +1025,76 @@ const App = {
     const user = ud.user;
     S.uid = user.id;
 
-    const { data: prof } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    let { data: prof } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
 
-    if (prof) App._openMap(prof, user.email);
-    else show('sp');
+    if (!prof || !prof.owner_plate || !prof.phone || !prof.vehicle_color) {
+      const pending = App.getPendingProfile(user.email);
+
+      if (pending?.owner_plate && pending?.phone && pending?.vehicle_color) {
+        const { error: upErr } = await sb.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          pseudo: pending.pseudo || user.email.split('@')[0],
+          owner_plate: nPlate(pending.owner_plate),
+          phone: nPhone(pending.phone),
+          vehicle_color: pending.vehicle_color
+        });
+
+        if (!upErr) {
+          App.clearPendingProfile();
+          prof = {
+            id: user.id,
+            email: user.email,
+            pseudo: pending.pseudo || user.email.split('@')[0],
+            owner_plate: nPlate(pending.owner_plate),
+            phone: nPhone(pending.phone),
+            vehicle_color: pending.vehicle_color
+          };
+        }
+      }
+    }
+
+    if (prof && prof.owner_plate && prof.phone && prof.vehicle_color) {
+      App._openMap(prof, user.email);
+    } else {
+      App.prefillProfileFromPending(user.email);
+      show('sp');
+    }
+  },
+
+  prefillProfileFromPending(email) {
+    const pending = App.getPendingProfile(email);
+    if (!pending) return;
+
+    const pseudo = document.getElementById('iPseudo');
+    const plate = document.getElementById('iProPlate');
+    const phone = document.getElementById('iProPhone');
+    const color = document.getElementById('iProColor');
+
+    if (pseudo && pending.pseudo) pseudo.value = pending.pseudo;
+    if (plate && pending.owner_plate) plate.value = fPlate(pending.owner_plate);
+    if (phone && pending.phone) phone.value = fPhone(pending.phone);
+    if (color && pending.vehicle_color) color.value = pending.vehicle_color;
   },
 
   async saveProfile() {
     if (!sb) return;
-    ch('hPseudo', 'hProPlate', 'hProPhone');
+    ch('hPseudo', 'hProPlate', 'hProPhone', 'hProColor');
     setSt('profileSt', '');
 
     const pseudo = document.getElementById('iPseudo').value.trim();
     const plateRaw = document.getElementById('iProPlate').value.trim();
     const phoneRaw = document.getElementById('iProPhone').value.trim();
+    const color = document.getElementById('iProColor').value;
 
     let fail = false;
 
-    if (!pseudo) {
-      hint('hPseudo', 'err', 'Requis.');
-      fail = true;
-    }
-
-    if (!plateRaw) {
-      hint('hProPlate', 'err', 'Requis.');
-      fail = true;
-    } else if (!vPlate(nPlate(plateRaw))) {
-      hint('hProPlate', 'err', 'Format : AB-123-CD');
-      fail = true;
-    }
-
-    if (!phoneRaw) {
-      hint('hProPhone', 'err', 'Requis.');
-      fail = true;
-    } else if (!vPhone(phoneRaw)) {
-      hint('hProPhone', 'err', 'Format : 0612345678');
-      fail = true;
-    }
+    if (!pseudo) { hint('hPseudo', 'err', 'Requis.'); fail = true; }
+    if (!plateRaw) { hint('hProPlate', 'err', 'Requis.'); fail = true; }
+    else if (!vPlate(nPlate(plateRaw))) { hint('hProPlate', 'err', 'Format : AB-123-CD'); fail = true; }
+    if (!phoneRaw) { hint('hProPhone', 'err', 'Requis.'); fail = true; }
+    else if (!vPhone(phoneRaw)) { hint('hProPhone', 'err', 'Format : 0612345678'); fail = true; }
+    if (!color) { hint('hProColor', 'err', 'Choisis la couleur du véhicule.'); fail = true; }
 
     if (fail) return;
 
@@ -1024,7 +1125,8 @@ const App = {
         email: user.email,
         pseudo,
         owner_plate: plate,
-        phone
+        phone,
+        vehicle_color: color
       });
 
       if (error) {
@@ -1033,13 +1135,15 @@ const App = {
         return;
       }
 
-      App._openMap({ email: user.email, pseudo, owner_plate: plate }, user.email);
+      App.clearPendingProfile();
+      App._openMap({ email: user.email, pseudo, owner_plate: plate, phone, vehicle_color: color }, user.email);
     } finally {
       sBtn('saveBtn', false, 'Enregistrer et continuer →');
     }
   },
 
   _openMap(profile, email) {
+    S.currentProfile = profile || {};
     show('sm');
     App.refreshInvisibleBtn();
     App.refreshDriveBtn();
@@ -1047,8 +1151,8 @@ const App = {
     const r = document.getElementById('radiusSel');
     if (r) r.value = String(S.radiusKm);
 
-    document.getElementById('tbPlate').textContent = profile?.owner_plate || '';
-    document.getElementById('tbPseudo').textContent = profile?.pseudo || email || '';
+    document.getElementById('tbPlate').innerHTML = colorDot(profile?.vehicle_color) + ' ' + esc(profile?.owner_plate || '');
+    document.getElementById('tbPseudo').textContent = (profile?.pseudo || email || '') + ' · ' + colorLabel(profile?.vehicle_color);
 
     setTimeout(() => {
       App._initMap();
@@ -1155,9 +1259,7 @@ const App = {
 
     if (info) {
       info.style.display = S.driveMode ? 'block' : 'none';
-      if (S.driveMode) {
-        info.innerHTML = '🚘 Mode conduite activé — recherche du véhicule devant vous…';
-      }
+      if (S.driveMode) info.innerHTML = '🚘 Mode conduite activé — recherche du véhicule devant vous…';
     }
   },
 
@@ -1166,17 +1268,19 @@ const App = {
     if (!info || !S.driveMode) return;
 
     if (!candidates || !candidates.length) {
+      S.frontVehicle = null;
       info.innerHTML = '🚘 Aucun véhicule connecté juste devant vous.';
       return;
     }
 
     candidates.sort((a, b) => a.dist - b.dist);
     const best = candidates[0];
+    S.frontVehicle = best;
 
     info.innerHTML =
-      '🚘 Devant vous : <strong>' + esc(best.plate) + '</strong> — ' +
-      Math.round(best.dist * 1000) + ' m ' +
-      '<button style="margin-left:8px;border:none;border-radius:8px;padding:5px 9px;background:#00ffb3;color:#06150f;font-weight:700" onclick="App._selPlate(\'' + jsStr(best.plate) + '\')">Contacter</button>';
+      '🚘 Véhicule devant vous — ' + Math.round(best.dist * 1000) + ' m<br>' +
+      colorDot(best.color) + ' <strong>' + esc(best.plate) + '</strong> · ' + esc(colorLabel(best.color)) +
+      '<button style="margin-left:8px;border:none;border-radius:8px;padding:5px 9px;background:#00ffb3;color:#06150f;font-weight:700" onclick="App._selPlate(\'' + jsStr(best.plate) + '\')">Sélectionner</button>';
   },
 
   locate() {
@@ -1214,9 +1318,8 @@ const App = {
         btn.textContent = '📍 Me localiser';
 
         if (S.map) {
-          if (S.driveMode) {
-            S.map.setView([lat, lng], 18, { animate: false });
-          } else if (S.firstFix) {
+          if (S.driveMode) S.map.setView([lat, lng], 18, { animate: false });
+          else if (S.firstFix) {
             S.map.flyTo([lat, lng], 16, { duration: 0.9 });
             S.firstFix = false;
           } else {
@@ -1254,12 +1357,7 @@ const App = {
         btn.disabled = false;
         btn.textContent = '📍 Me localiser';
 
-        const msgs = {
-          1: 'Localisation refusée.',
-          2: 'Position introuvable.',
-          3: 'Délai dépassé.'
-        };
-
+        const msgs = { 1: 'Localisation refusée.', 2: 'Position introuvable.', 3: 'Délai dépassé.' };
         toast(msgs[err.code] || 'Erreur de géolocalisation.', 'bad');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
@@ -1309,7 +1407,7 @@ const App = {
       }
 
       const ids = locs.map(l => l.id);
-      const { data: profiles, error: pe } = await sb.from('profiles').select('id,pseudo,owner_plate').in('id', ids);
+      const { data: profiles, error: pe } = await sb.from('profiles').select('id,pseudo,owner_plate,vehicle_color').in('id', ids);
 
       if (pe) console.warn('profiles fetch warn:', pe);
 
@@ -1328,6 +1426,7 @@ const App = {
         const prof = pMap[loc.id] || {};
         const pseudo = prof.pseudo || 'Conducteur';
         const plate = prof.owner_plate ? nPlate(prof.owner_plate) : '';
+        const vcolor = prof.vehicle_color || 'other';
 
         if (plate && S.blocked.includes(plate)) return;
 
@@ -1338,15 +1437,15 @@ const App = {
         }
 
         if (S.driveMode && dist !== null && dist <= 0.3 && plate) {
-          frontCandidates.push({ plate, dist });
+          frontCandidates.push({ plate, color: vcolor, dist });
         }
 
         if (!S.map) return;
 
         const icon = L.divIcon({
-          html: '<div style="width:13px;height:13px;border-radius:50%;background:#00ffb3;border:3px solid rgba(0,255,179,.35);box-shadow:0 0 10px rgba(0,255,179,.55)"></div>',
-          iconSize: [13, 13],
-          iconAnchor: [6, 6],
+          html: '<div style="width:16px;height:16px;border-radius:50%;background:' + esc(colorHex(vcolor)) + ';border:3px solid rgba(0,255,179,.55);box-shadow:0 0 12px rgba(0,255,179,.55)"></div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
           className: ''
         });
 
@@ -1355,8 +1454,8 @@ const App = {
         const mkr = L.marker([lat, lng], { icon }).addTo(S.map);
 
         mkr.bindPopup(
-          '<div class="pp">' + esc(plate) + '</div>' +
-          '<div class="pps">' + esc(pseudo) + ' · ' + esc(relTime(loc.updated_at)) + '</div>' +
+          '<div class="pp">' + colorDot(vcolor) + esc(plate) + '</div>' +
+          '<div class="pps">' + esc(pseudo) + ' · ' + esc(colorLabel(vcolor)) + ' · ' + esc(relTime(loc.updated_at)) + '</div>' +
           distTxt +
           '<button class="ppb" data-plate="' + esc(plate) + '">Contacter ce véhicule</button>'
         );
@@ -1419,6 +1518,29 @@ const App = {
     document.querySelector('.panel').scrollTo({ top: 0, behavior: 'smooth' });
   },
 
+  quickMsg(text) {
+    const target = document.getElementById('iTarget');
+    const msg = document.getElementById('iMsg');
+
+    if (!target.value.trim() && S.frontVehicle?.plate) {
+      target.value = S.frontVehicle.plate;
+      S.selPlate = S.frontVehicle.plate;
+      S.conversationFilter = S.frontVehicle.plate;
+      mi('iTarget', true);
+      hint('hTarget', 'ok', 'Véhicule devant sélectionné ✓');
+      App.updateConversationTitle();
+    }
+
+    if (!target.value.trim()) {
+      toast('Sélectionne d’abord une plaque ou un véhicule devant.', 'bad');
+      return;
+    }
+
+    msg.value = text;
+    hint('hMsg', 'ok', 'Message rapide prêt à envoyer.');
+    msg.focus();
+  },
+
   clearMsg() {
     const m = document.getElementById('iMsg');
     if (m) m.value = '';
@@ -1441,18 +1563,10 @@ const App = {
 
     let fail = false;
 
-    if (!plateRaw) {
-      hint('hTarget', 'err', 'Requis.');
-      fail = true;
-    } else if (!vPlate(nPlate(plateRaw))) {
-      hint('hTarget', 'err', 'Format : AB-123-CD');
-      fail = true;
-    }
+    if (!plateRaw) { hint('hTarget', 'err', 'Requis.'); fail = true; }
+    else if (!vPlate(nPlate(plateRaw))) { hint('hTarget', 'err', 'Format : AB-123-CD'); fail = true; }
 
-    if (!msg) {
-      hint('hMsg', 'err', 'Ajoute un message.');
-      fail = true;
-    }
+    if (!msg) { hint('hMsg', 'err', 'Ajoute un message.'); fail = true; }
 
     if (fail) return;
 
@@ -1631,12 +1745,7 @@ const App = {
     const plate = esc(plateRaw);
     const text = esc(msg.message || '');
     const time = msg.created_at
-      ? new Date(msg.created_at).toLocaleString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+      ? new Date(msg.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
       : '';
 
     const lbl = sent
@@ -1677,9 +1786,7 @@ const App = {
         '<div class="plate-ref">Plaque concernée : ' + plate + '</div>' +
         '<div class="mlbl ' + (sent ? '' : 'r') + '">' + lbl + '</div>' +
         '<div class="mbody">' + text + '</div>' +
-        acts +
-        rbox +
-        mini +
+        acts + rbox + mini +
         '<div class="mtime">' + esc(time) + '</div>' +
       '</div>'
     );
@@ -1693,10 +1800,7 @@ const App = {
 
       if (!user) return;
 
-      await sb.from('messages')
-        .update({ status: 'accepted' })
-        .eq('id', id)
-        .eq('receiver_id', user.id);
+      await sb.from('messages').update({ status: 'accepted' }).eq('id', id).eq('receiver_id', user.id);
 
       await sb.from('messages').insert({
         sender_id: user.id,
@@ -1731,10 +1835,7 @@ const App = {
 
       if (!user) return;
 
-      await sb.from('messages')
-        .update({ status: 'rejected' })
-        .eq('id', id)
-        .eq('receiver_id', user.id);
+      await sb.from('messages').update({ status: 'rejected' }).eq('id', id).eq('receiver_id', user.id);
 
       setReq('Demande refusée.', '');
       toast('Demande refusée.');
@@ -1756,9 +1857,7 @@ const App = {
 
     if (!text) {
       ta.style.borderColor = 'var(--red)';
-      setTimeout(() => {
-        ta.style.borderColor = '';
-      }, 1500);
+      setTimeout(() => { ta.style.borderColor = ''; }, 1500);
       return;
     }
 
@@ -2041,16 +2140,12 @@ if (sb) {
       }
 
       if (S.chMsg) {
-        try {
-          sb.removeChannel(S.chMsg);
-        } catch (e) {}
+        try { sb.removeChannel(S.chMsg); } catch (e) {}
         S.chMsg = null;
       }
 
       if (S.chLoc) {
-        try {
-          sb.removeChannel(S.chLoc);
-        } catch (e) {}
+        try { sb.removeChannel(S.chLoc); } catch (e) {}
         S.chLoc = null;
       }
 
