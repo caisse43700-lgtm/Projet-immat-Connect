@@ -191,6 +191,22 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .big-notif small,.alert-report small{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.85}
 #map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
 @media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:300px}}
+.map-actions{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:10px;
+  background:var(--bg);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.map-actions::-webkit-scrollbar{display:none;}
+
+.user-strip{
+  padding:10px;
+  text-align:center;
+  font-size:15px;
+}
 </style>
 </head>
 
@@ -359,32 +375,31 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div class="tb-r1">
       <div class="tb-brand">Immat<span>Connect</span></div>
     </div>
-
-    <div class="astrip">
-      <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
-      <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
-      <button id="driveBtn" class="abtn abtn-o" onclick="App.toggleDriveMode()">🚘 Mode conduite</button>
-      <button id="invisBtn" class="abtn abtn-o" onclick="App.toggleInvisible()">👻 Invisible</button>
-
-      <select id="radiusSel" class="mini-select" onchange="App.setRadius(this.value)">
-        <option value="1">Rayon 1 km</option>
-        <option value="5">Rayon 5 km</option>
-        <option value="10">Rayon 10 km</option>
-        <option value="25">Rayon 25 km</option>
-      </select>
-
-      <button class="abtn abtn-o" onclick="App.openBlocked()">🚫 Bloqués</button>
-      <button class="abtn abtn-o" onclick="App.openLegal()">⚖️ Confidentialité</button>
-      <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
-    </div>
-
     <div id="driveInfo">🚘 Mode conduite activé — recherche du véhicule devant vous…</div>
   </div>
 
-  <!-- MAP -->
   <div id="map"></div>
 
-  <!-- ✅ PLAQUE + PSEUDO (SOUS LA CARTE) -->
+  <!-- BOUTONS SOUS LA CARTE -->
+  <div class="map-actions">
+    <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
+    <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
+    <button id="driveBtn" class="abtn abtn-o" onclick="App.toggleDriveMode()">🚘 Mode conduite</button>
+    <button id="invisBtn" class="abtn abtn-o" onclick="App.toggleInvisible()">👻 Invisible</button>
+
+    <select id="radiusSel" class="mini-select" onchange="App.setRadius(this.value)">
+      <option value="1">1 km</option>
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="25">25 km</option>
+    </select>
+
+    <button class="abtn abtn-o" onclick="App.openBlocked()">🚫 Bloqués</button>
+    <button class="abtn abtn-o" onclick="App.openLegal()">⚖️ Confidentialité</button>
+    <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
+  </div>
+
+  <!-- PLAQUE + PSEUDO -->
   <div class="user-strip">
     <span id="tbPlate"></span>
     <span>•</span>
@@ -406,13 +421,11 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
           <div class="hint" id="hTarget"></div>
         </div>
 
-        <!-- QUICK -->
         <div class="quick-wrap">
-
           <div class="quick-row">
             <div class="quick-title red">🔴 Urgence</div>
             <div class="quick-buttons">
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite détectée.')">Fumée</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : fumée.')">Fumée</button>
               <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : roue dangereuse.')">Roue</button>
               <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : pièce détachée.')">Pièce</button>
             </div>
@@ -426,16 +439,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
               <button class="qbtn orange" onclick="App.quickMsg('⚠️ Coffre mal fermé.')">Coffre</button>
             </div>
           </div>
-
-          <div class="quick-row">
-            <div class="quick-title green">🟢 Info</div>
-            <div class="quick-buttons">
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Trappe ouverte.')">Trappe</button>
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Feux allumés.')">Feux</button>
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vérifiez votre véhicule.')">Vérifier</button>
-            </div>
-          </div>
-
         </div>
 
         <div class="field">
@@ -444,19 +447,15 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         </div>
 
         <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer →</button>
-        <button id="clearMsgBtn" class="btn btn-g mt8" onclick="App.clearMsg()">Vider</button>
+        <button class="btn btn-g mt8" onclick="App.clearMsg()">Vider</button>
 
         <div class="rrow" id="reqSt"></div>
       </div>
 
-      <!-- MESSAGES -->
       <div class="mhdr">
-        <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
-        <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻</button>
+        <div class="sec-h">💬 Messages</div>
+        <button class="rbtn" onclick="App.loadMsgs()">↻</button>
       </div>
-
-      <div id="convbar"></div>
-      <div id="convTitle">Conversation : <strong>Toutes les plaques</strong></div>
 
       <div id="chatBox">
         <div class="cempty">Aucun message pour le moment.</div>
@@ -467,27 +466,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
 </div>
 
-<!-- ✅ MODALS + NOTIFS (OBLIGATOIRE) -->
-<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
-  <div class="modal-card">
-    <h2>Confidentialité & conditions</h2>
-    <p>ImmatConnect utilise votre plaque, votre compte et votre position pour connecter les conducteurs.</p>
-    <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
-  </div>
-</div>
-
-<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
-  <div class="modal-card">
-    <h2>Plaques bloquées</h2>
-    <div id="blockedList"></div>
-    <button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button>
-  </div>
-</div>
-
-<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
-<div id="alertReport" class="alert-report"></div>
-
-<button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
 <div class="toast" id="toastEl"></div>
 
 <script>
