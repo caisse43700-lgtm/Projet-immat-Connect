@@ -190,15 +190,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .alert-report{background:linear-gradient(135deg,#ff3b5c,#c0002f);color:white}
 .big-notif small,.alert-report small{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.85}
 #map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
-@media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:/* ===== BARRE ACTIONS FIXE EN BAS ===== */
-./* ===== BARRE ACTIONS FIXE EN BAS ===== */
-.#map{
-  flex:0 0 46vh;
-  height:46vh;
-  min-height:360px;
-  z-index:1;
-}
-
 @media(max-height:720px){
   #map{
     flex-basis:42vh;
@@ -207,66 +198,25 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   }
 }
 
-/* ===== BARRE ACTIONS FIXE EN BAS ===== */
-.map-actions{
-  position:fixed;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 58px);
-  left:0;
-  right:0;
-  z-index:2000;
-  display:flex;
-  flex-direction:row;
-  gap:8px;
-  overflow-x:auto;
-  overflow-y:hidden;
-  white-space:nowrap;
-  padding:10px;
-  background:var(--bg);
-  border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);
-}
-
-.map-actions::-webkit-scrollbar{display:none;}
-
-.map-actions .abtn,
-.map-actions .mini-select{
-  flex:0 0 auto;
-}
-
-/* ===== PLAQUE FIXE SOUS LES BOUTONS ===== */
-.user-strip{
-  position:fixed;
-  bottom:env(safe-area-inset-bottom,0px);
-  left:0;
-  right:0;
-  z-index:2001;
-  padding:12px 10px;
-  text-align:center;
-  font-size:15px;
-  background:var(--bg);
-  border-top:1px solid var(--line);
-}
-/* ===== FIX FINAL MOBILE : boutons en ligne + plaque visible ===== */
 .map-actions{
   position:fixed !important;
   left:0 !important;
   right:0 !important;
   bottom:calc(env(safe-area-inset-bottom,0px) + 58px) !important;
   z-index:3000 !important;
-
   display:flex !important;
   flex-direction:row !important;
   flex-wrap:nowrap !important;
-  align-items:center !important;
-
   gap:8px !important;
   overflow-x:auto !important;
   overflow-y:hidden !important;
   white-space:nowrap !important;
-
   padding:10px !important;
   background:var(--bg) !important;
+  border-top:1px solid var(--line) !important;
 }
+
+.map-actions::-webkit-scrollbar{display:none}
 
 .map-actions .abtn,
 .map-actions .mini-select{
@@ -280,19 +230,15 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   right:0 !important;
   bottom:env(safe-area-inset-bottom,0px) !important;
   z-index:3001 !important;
-
   background:var(--bg) !important;
   border-top:1px solid var(--line) !important;
   padding:12px 10px !important;
   text-align:center !important;
+  font-size:15px !important;
 }
 
 .panel{
   padding-bottom:190px !important;
-}
-/* ===== ESPACE POUR NE RIEN CACHER ===== */
-.panel{
-  padding-bottom:180px;
 }
 </style>
 </head>
