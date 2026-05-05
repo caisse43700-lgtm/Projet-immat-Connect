@@ -444,7 +444,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 </div>
 
 <!-- MODAL CONFIDENTIALITÉ -->
-<div id="legalModal" class="modalx">
+<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
   <div class="modal-card">
     <h2>Confidentialité</h2>
     <p>Vos données sont protégées :</p>
@@ -461,13 +461,13 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 <div id="blockedModal" class="modalx">
   <div class="modal-card">
     <h2>Plaques bloquées</h2>
-    <div id="blockedList" class="blocked-list"></div>
+    <div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
     <button class="btn btn-p" onclick="App.closeBlocked()">Fermer</button>
   </div>
 </div>
 
 <!-- NOTIFS -->
-<div id="bigNotif" class="big-notif"></div>
+<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
 <div id="alertReport" class="alert-report"></div>
 
 <!-- SOS -->
