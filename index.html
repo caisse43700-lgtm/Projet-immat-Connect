@@ -466,6 +466,35 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
 </div>
 
+<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
+  <div class="modal-card">
+    <h2>Confidentialité & conditions</h2>
+    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte, la couleur du véhicule et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
+    <ul>
+      <li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li>
+      <li>Votre position peut être masquée avec le mode invisible.</li>
+      <li>Les positions anciennes sont ignorées automatiquement.</li>
+      <li>Vous pouvez bloquer et débloquer une plaque depuis l’application.</li>
+      <li>En cas d’urgence réelle, utilisez les services officiels de secours.</li>
+    </ul>
+    <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
+  </div>
+</div>
+
+<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
+  <div class="modal-card">
+    <h2>Plaques bloquées</h2>
+    <p>Les plaques bloquées sont masquées sur cet appareil. Vous pouvez les débloquer ici.</p>
+    <div id="blockedList" class="blocked-list"></div>
+    <button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button>
+  </div>
+</div>
+
+<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
+<div id="alertReport" class="alert-report"></div>
+
+<button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
+  
 <div class="toast" id="toastEl"></div>
 
 <script>
