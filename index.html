@@ -384,7 +384,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   <!-- MAP -->
   <div id="map"></div>
 
-  <!-- ✅ TA PLAQUE + PSEUDO (SEULE VERSION) -->
+  <!-- ✅ PLAQUE + PSEUDO (SOUS LA CARTE) -->
   <div class="user-strip">
     <span id="tbPlate"></span>
     <span>•</span>
@@ -406,7 +406,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
           <div class="hint" id="hTarget"></div>
         </div>
 
-        <!-- QUICK MESSAGES -->
+        <!-- QUICK -->
         <div class="quick-wrap">
 
           <div class="quick-row">
@@ -466,6 +466,27 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   </div>
 
 </div>
+
+<!-- ✅ MODALS + NOTIFS (OBLIGATOIRE) -->
+<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
+  <div class="modal-card">
+    <h2>Confidentialité & conditions</h2>
+    <p>ImmatConnect utilise votre plaque, votre compte et votre position pour connecter les conducteurs.</p>
+    <button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button>
+  </div>
+</div>
+
+<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
+  <div class="modal-card">
+    <h2>Plaques bloquées</h2>
+    <div id="blockedList"></div>
+    <button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button>
+  </div>
+</div>
+
+<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
+<div id="alertReport" class="alert-report"></div>
+
 <button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
 <div class="toast" id="toastEl"></div>
 
