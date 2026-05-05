@@ -354,6 +354,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 </div>
 
 <div id="sm" class="screen">
+
   <div class="topbar">
     <div class="tb-r1">
       <div class="tb-brand">Immat<span>Connect</span></div>
@@ -380,15 +381,17 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <div id="driveInfo">🚘 Mode conduite activé — recherche du véhicule devant vous…</div>
   </div>
 
+  <!-- MAP -->
   <div id="map"></div>
 
-  <!-- ✅ NOUVEAU : plaque + pseudo sous la carte -->
+  <!-- ✅ TA PLAQUE + PSEUDO (SEULE VERSION) -->
   <div class="user-strip">
     <span id="tbPlate"></span>
     <span>•</span>
     <span id="tbPseudo"></span>
   </div>
 
+  <!-- PANEL -->
   <div class="panel">
     <div class="panel-in">
 
@@ -409,26 +412,26 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
           <div class="quick-row">
             <div class="quick-title red">🔴 Urgence</div>
             <div class="quick-buttons">
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : de la fumée ou une fuite est visible sur votre véhicule.')">Fumée / fuite</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble présenter un danger immédiat.')">Roue</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : un élément semble se détacher de votre véhicule.')">Pièce</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite détectée.')">Fumée</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : roue dangereuse.')">Roue</button>
+              <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : pièce détachée.')">Pièce</button>
             </div>
           </div>
 
           <div class="quick-row">
             <div class="quick-title orange">🟠 Important</div>
             <div class="quick-buttons">
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Un feu ne fonctionne pas.')">Feu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Porte ou coffre mal fermé.')">Coffre</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Pneu dégonflé.')">Pneu</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Feu HS.')">Feu</button>
+              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Coffre mal fermé.')">Coffre</button>
             </div>
           </div>
 
           <div class="quick-row">
             <div class="quick-title green">🟢 Info</div>
             <div class="quick-buttons">
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Trappe carburant ouverte.')">Trappe</button>
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Feux restés allumés.')">Feux</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Trappe ouverte.')">Trappe</button>
+              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Feux allumés.')">Feux</button>
               <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vérifiez votre véhicule.')">Vérifier</button>
             </div>
           </div>
@@ -446,6 +449,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         <div class="rrow" id="reqSt"></div>
       </div>
 
+      <!-- MESSAGES -->
       <div class="mhdr">
         <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
         <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻</button>
@@ -460,6 +464,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
     </div>
   </div>
+
 </div>
 <button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
 <div class="toast" id="toastEl"></div>
