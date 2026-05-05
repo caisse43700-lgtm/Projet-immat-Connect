@@ -192,25 +192,41 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 #map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
 @media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:/* ===== BARRE ACTIONS FIXE EN BAS ===== */
 ./* ===== BARRE ACTIONS FIXE EN BAS ===== */
+.#map{
+  flex:0 0 46vh;
+  height:46vh;
+  min-height:360px;
+  z-index:1;
+}
+
+@media(max-height:720px){
+  #map{
+    flex-basis:42vh;
+    height:42vh;
+    min-height:300px;
+  }
+}
+
+/* ===== BARRE ACTIONS FIXE EN BAS ===== */
 .map-actions{
   position:fixed;
   bottom:calc(env(safe-area-inset-bottom,0px) + 58px);
   left:0;
   right:0;
   z-index:2000;
-
   display:flex;
   flex-direction:row;
   gap:8px;
   overflow-x:auto;
   overflow-y:hidden;
   white-space:nowrap;
-
   padding:10px;
   background:var(--bg);
   border-top:1px solid var(--line);
   border-bottom:1px solid var(--line);
 }
+
+.map-actions::-webkit-scrollbar{display:none;}
 
 .map-actions .abtn,
 .map-actions .mini-select{
@@ -224,11 +240,9 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   left:0;
   right:0;
   z-index:2001;
-
   padding:12px 10px;
   text-align:center;
   font-size:15px;
-
   background:var(--bg);
   border-top:1px solid var(--line);
 }
