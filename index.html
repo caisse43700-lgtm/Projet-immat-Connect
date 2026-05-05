@@ -184,6 +184,13 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 .qbtn.red{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.25)}
 .qbtn.orange{background:var(--odim);color:var(--orange);border:1px solid rgba(255,159,10,.25)}
 .qbtn.green{background:var(--gdim);color:var(--green);border:1px solid rgba(0,255,179,.25)}
+.big-notif,.alert-report{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 14px);z-index:10000;border-radius:16px;padding:14px 16px;font-weight:800;box-shadow:0 16px 50px rgba(0,0,0,.45);transform:translateY(-130px);opacity:0;transition:.28s var(--spring);cursor:pointer}
+.big-notif.show,.alert-report.show{transform:translateY(0);opacity:1}
+.big-notif{background:linear-gradient(135deg,#00ffb3,#00d68f);color:#06150f}
+.alert-report{background:linear-gradient(135deg,#ff3b5c,#c0002f);color:white}
+.big-notif small,.alert-report small{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.85}
+#map{flex:0 0 46vh;height:46vh;min-height:360px;z-index:1}
+@media(max-height:720px){#map{flex-basis:42vh;height:42vh;min-height:300px}}
 </style>
 </head>
 
@@ -458,6 +465,8 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
   </div>
 </div>
 
+<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
+<div id="alertReport" class="alert-report"></div>
 <button class="sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button>
 <div class="toast" id="toastEl"></div>
 
@@ -519,6 +528,7 @@ const S = {
   loadingOthers: false,
   chMsg: null,
   chLoc: null,
+  chReports: null,
   invisible: safeLocalGet('ic_invisible', '0') === '1',
   radiusKm: Number(safeLocalGet('ic_radius', CFG.defaultRadiusKm)) || CFG.defaultRadiusKm,
   myLat: null,
@@ -531,6 +541,32 @@ const S = {
   frontVehicle: null,
   currentProfile: null
 };
+
+let audioUnlocked = false;
+let lastNotifPlate = null;
+
+document.addEventListener('click', () => {
+  if (audioUnlocked) return;
+
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    gain.gain.value = 0.0001;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.01);
+
+    setTimeout(() => ctx.close(), 50);
+    audioUnlocked = true;
+  } catch (e) {}
+}, { once:false });
 
 const RE_PH = /^0\d{9}$/;
 const RE_PL = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
@@ -612,18 +648,29 @@ function toast(m, t) {
 
 function beep() {
   try {
-    if ('vibrate' in navigator) navigator.vibrate([80, 40, 80]);
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
+    if ('vibrate' in navigator) navigator.vibrate([180, 90, 180]);
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+
+    const ctx = new Ctx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.frequency.value = 880;
-    gain.gain.value = 0.025;
+
+    osc.type = 'sine';
+    osc.frequency.value = 1050;
+
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
     osc.connect(gain);
     gain.connect(ctx.destination);
+
     osc.start();
-    setTimeout(() => { osc.stop(); ctx.close(); }, 120);
+    osc.stop(ctx.currentTime + 0.35);
+
+    setTimeout(() => ctx.close(), 500);
   } catch (e) {}
 }
 
@@ -741,6 +788,91 @@ function bindInputs() {
 }
 
 const App = {
+  _notifTimer: null,
+  _reportTimer: null,
+
+  showBigNotif(title, sub, plate) {
+    const n = document.getElementById('bigNotif');
+    if (!n) return;
+
+    lastNotifPlate = nPlate(plate || '');
+
+    n.innerHTML = esc(title) + '<small>' + esc(sub || 'Toucher pour ouvrir la conversation') + '</small>';
+    n.classList.add('show');
+
+    clearTimeout(App._notifTimer);
+    App._notifTimer = setTimeout(() => {
+      n.classList.remove('show');
+    }, 6500);
+  },
+
+  openNotifConversation() {
+    const n = document.getElementById('bigNotif');
+    if (n) n.classList.remove('show');
+
+    if (lastNotifPlate) {
+      App.setConversation(lastNotifPlate);
+
+      const target = document.getElementById('iTarget');
+      if (target) target.value = lastNotifPlate;
+
+      const panel = document.querySelector('.panel');
+      if (panel) panel.scrollTo({ top: panel.scrollHeight, behavior: 'smooth' });
+    }
+  },
+
+  showReportAlert(text) {
+    const n = document.getElementById('alertReport');
+    if (!n) return;
+
+    n.innerHTML = '⚠️ ' + esc(text) + '<small>Merci de vérifier votre véhicule et votre comportement sur la route.</small>';
+    n.classList.add('show');
+
+    beep();
+
+    clearTimeout(App._reportTimer);
+    App._reportTimer = setTimeout(() => {
+      n.classList.remove('show');
+    }, 8000);
+  },
+
+  async _subReports() {
+    if (!sb) return;
+
+    const { data: ud } = await sb.auth.getUser();
+    const user = ud?.user;
+    if (!user) return;
+
+    const { data: prof } = await sb
+      .from('profiles')
+      .select('owner_plate')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const myPlate = nPlate(prof?.owner_plate || '');
+    if (!myPlate) return;
+
+    if (S.chReports) {
+      await sb.removeChannel(S.chReports);
+      S.chReports = null;
+    }
+
+    S.chReports = sb.channel('ic_reports_' + user.id)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'reports'
+      }, payload => {
+        const r = payload.new;
+        if (!r) return;
+
+        if (nPlate(r.plate) === myPlate) {
+          App.showReportAlert('Une alerte a été signalée sur votre véhicule.');
+        }
+      })
+      .subscribe();
+  },
+
   goToAuth(m) {
     App.setMode(m);
     show('sa');
@@ -1163,6 +1295,7 @@ const App = {
 
     App._startMsgs();
     App._subLocs();
+    App._subReports();
   },
 
   _initMap() {
@@ -2028,13 +2161,16 @@ const App = {
           const p = nPlate(msg.target_plate);
           if (msg.status === 'pending') {
             toast('📩 Nouvelle demande pour la plaque ' + p + ' !', 'ok');
+            App.showBigNotif('📩 Nouvelle demande', 'Plaque ' + p + ' — toucher pour ouvrir', p);
             App.showBadge();
             beep();
           } else if (String(msg.message || '').includes('acceptée')) {
             toast('✅ Ta demande pour ' + p + ' a été acceptée !', 'ok');
+            App.showBigNotif('✅ Demande acceptée', 'Plaque ' + p + ' — toucher pour ouvrir', p);
             beep();
           } else {
             toast('💬 Nouveau message pour ' + p, 'ok');
+            App.showBigNotif('💬 Nouveau message', 'Plaque ' + p + ' — toucher pour ouvrir', p);
             App.showBadge();
             beep();
           }
@@ -2096,6 +2232,11 @@ const App = {
       S.chLoc = null;
     }
 
+    if (sb && S.chReports) {
+      await sb.removeChannel(S.chReports);
+      S.chReports = null;
+    }
+
     if (sb) await sb.auth.signOut();
 
     location.href = CFG.site;
@@ -2147,6 +2288,11 @@ if (sb) {
       if (S.chLoc) {
         try { sb.removeChannel(S.chLoc); } catch (e) {}
         S.chLoc = null;
+      }
+
+      if (S.chReports) {
+        try { sb.removeChannel(S.chReports); } catch (e) {}
+        S.chReports = null;
       }
 
       show('sw');
