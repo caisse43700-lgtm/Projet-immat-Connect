@@ -458,10 +458,10 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 </div>
 
 <!-- MODAL BLOQUÉS -->
-<div id="blockedModal" class="modalx">
+<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
   <div class="modal-card">
     <h2>Plaques bloquées</h2>
-    <div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
+    <div id="blockedList" class="blocked-list"></div>
     <button class="btn btn-p" onclick="App.closeBlocked()">Fermer</button>
   </div>
 </div>
