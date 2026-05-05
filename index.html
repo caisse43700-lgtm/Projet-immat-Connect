@@ -380,6 +380,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
   <div id="map"></div>
 
+  <!-- ACTIONS SOUS LA CARTE -->
   <div class="map-actions">
     <button id="locBtn" class="abtn abtn-g" onclick="App.locate()">📍 Me localiser</button>
     <button id="othersBtn" class="abtn abtn-o" onclick="App.loadOthers()">👥 Conducteurs</button>
@@ -398,6 +399,7 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
     <button class="abtn abtn-o" onclick="App.logout()">⏻ Déconnexion</button>
   </div>
 
+  <!-- PLAQUE + PSEUDO -->
   <div class="user-strip">
     <span id="tbPlate"></span>
     <span>•</span>
@@ -416,39 +418,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
           <input class="inp" id="iTarget" placeholder="AB-123-CD">
         </div>
 
-        <!-- QUICK BUTTONS -->
-        <div class="quick-wrap">
-
-          <div class="quick-row">
-            <div class="quick-title red">🔴 Urgence</div>
-            <div class="quick-buttons">
-              <button class="qbtn red" onclick="App.quickMsg('🚨 Fumée détectée')">Fumée</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 Roue dangereuse')">Roue</button>
-              <button class="qbtn red" onclick="App.quickMsg('🚨 Pièce détachée')">Pièce</button>
-            </div>
-          </div>
-
-          <div class="quick-row">
-            <div class="quick-title orange">🟠 Important</div>
-            <div class="quick-buttons">
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Pneu dégonflé')">Pneu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Feu HS')">Feu</button>
-              <button class="qbtn orange" onclick="App.quickMsg('⚠️ Coffre ouvert')">Coffre</button>
-            </div>
-          </div>
-
-          <!-- ⚠️ CELLE QUI MANQUAIT -->
-          <div class="quick-row">
-            <div class="quick-title green">🟢 Info</div>
-            <div class="quick-buttons">
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Trappe ouverte')">Trappe</button>
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Feux allumés')">Feux</button>
-              <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vérifie ton véhicule')">Vérifier</button>
-            </div>
-          </div>
-
-        </div>
-
         <textarea class="inp" id="iMsg" placeholder="Message..."></textarea>
 
         <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer</button>
@@ -462,7 +431,6 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
         <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻</button>
       </div>
 
-      <!-- ⚠️ CELA AVAIT DISPARU -->
       <div id="convbar" class="convbar"></div>
       <div id="convTitle" class="conv-title">Conversation : <strong>Toutes</strong></div>
 
@@ -475,9 +443,28 @@ textarea.inp{min-height:86px;resize:vertical;line-height:1.55}
 
 </div>
 
-<!-- MODALS -->
-<div id="legalModal" class="modalx"></div>
-<div id="blockedModal" class="modalx"></div>
+<!-- MODAL CONFIDENTIALITÉ -->
+<div id="legalModal" class="modalx">
+  <div class="modal-card">
+    <h2>Confidentialité</h2>
+    <p>Vos données sont protégées :</p>
+    <ul>
+      <li>Votre téléphone n'est jamais visible</li>
+      <li>Seule votre plaque est visible</li>
+      <li>Vous pouvez bloquer des utilisateurs</li>
+    </ul>
+    <button class="btn btn-p" onclick="App.closeLegal()">Fermer</button>
+  </div>
+</div>
+
+<!-- MODAL BLOQUÉS -->
+<div id="blockedModal" class="modalx">
+  <div class="modal-card">
+    <h2>Plaques bloquées</h2>
+    <div id="blockedList" class="blocked-list"></div>
+    <button class="btn btn-p" onclick="App.closeBlocked()">Fermer</button>
+  </div>
+</div>
 
 <!-- NOTIFS -->
 <div id="bigNotif" class="big-notif"></div>
