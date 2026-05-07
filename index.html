@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
@@ -10,39 +11,1657 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <style>
+/* ===================== RESET & ROOT ===================== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#080b12;--bg1:#0e1420;--bg2:#141c2e;--bg3:#1a2438;--line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.12);--green:#00ffb3;--gdim:rgba(0,255,179,.08);--gmid:rgba(0,255,179,.18);--blue:#2979ff;--red:#ff3b5c;--rdim:rgba(255,59,92,.1);--text:#e8edf8;--muted:#5a6880;--muted2:#8898b8;--orange:#ff9f0a;--odim:rgba(255,159,10,.12);--fui:'Space Grotesk',sans-serif;--fh:'Barlow Condensed',sans-serif;--r8:8px;--r12:12px;--r16:16px;--r24:24px;--ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);--t:.18s}
-html{scroll-behavior:smooth}body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}.ga{position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,179,.05) 0%,transparent 65%);pointer-events:none;z-index:0}.gb{position:fixed;bottom:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(41,121,255,.06) 0%,transparent 65%);pointer-events:none;z-index:0}.screen{display:none;position:relative;z-index:1;min-height:100dvh}.screen.active{display:flex;flex-direction:column}@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-#sw.active{align-items:center;justify-content:center;padding:48px 20px 60px}.ww{width:100%;max-width:380px;animation:fadeUp .65s var(--ease) both}.logo-block{text-align:center;margin-bottom:48px}.logo-ring{width:88px;height:88px;margin:0 auto 20px;border-radius:28px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;box-shadow:0 0 0 1px rgba(0,255,179,.3),0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(0,255,179,.12)}.logo-ring::after{content:'';position:absolute;inset:-1px;border-radius:29px;background:linear-gradient(135deg,var(--green),var(--blue));z-index:-1;opacity:.25;filter:blur(16px)}.brand-name{font-family:var(--fh);font-size:42px;font-weight:900;letter-spacing:-.5px;line-height:1}.brand-name .dot{color:var(--green)}.brand-tag{font-size:11px;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted);margin-top:8px}.w-h1{font-family:var(--fh);font-size:32px;font-weight:700;line-height:1.15;text-align:center;margin-bottom:14px}.w-h1 mark{background:linear-gradient(90deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal}.w-p{text-align:center;color:var(--muted2);font-size:14px;line-height:1.7;margin-bottom:32px}.feat-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:32px}.feat-pill{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r12);transition:border-color var(--t)}.feat-pill:hover{border-color:var(--line2)}.fi{width:36px;height:36px;flex:0 0 36px;border-radius:10px;background:var(--gdim);border:1px solid rgba(0,255,179,.15);display:flex;align-items:center;justify-content:center;font-size:16px}.ft{font-size:13px;color:var(--muted2)}.btn-stack{display:flex;flex-direction:column;gap:10px}.btn{width:100%;padding:15px 20px;border:none;border-radius:var(--r12);font-family:var(--fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(--t) var(--ease)}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}.btn-p{background:linear-gradient(135deg,var(--green),#00d68f);color:#06150f;font-weight:700;box-shadow:0 4px 24px rgba(0,255,179,.22)}.btn-p:hover:not(:disabled){box-shadow:0 6px 36px rgba(0,255,179,.38);transform:translateY(-1px)}.btn-g{background:transparent;color:var(--muted2);border:1px solid var(--line)}.btn-g:hover:not(:disabled){border-color:var(--line2);color:var(--text);background:var(--bg1)}.mt8{margin-top:8px}.mt12{margin-top:12px}
-#sa.active,#sp.active,#sr.active{align-items:center;justify-content:center;padding:28px 18px 52px}.card{width:100%;max-width:420px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r24);padding:28px 22px;box-shadow:0 40px 80px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.04) inset;animation:fadeUp .5s var(--ease) both}.card-ttl{font-family:var(--fh);font-size:28px;font-weight:700;margin-bottom:6px}.card-sub{font-size:13px;color:var(--muted2);line-height:1.55;margin-bottom:22px}.tab-bar{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:3px;margin-bottom:22px}.tab{padding:10px;border:none;border-radius:7px;font-family:var(--fui);font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--muted);transition:all var(--t) var(--ease)}.tab.on{background:var(--bg);color:var(--text);font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.4)}.field{margin-bottom:14px}.lbl{display:block;font-size:12px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}.iw{position:relative}.inp,.sel{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:13px 15px;font-family:var(--fui);font-size:14px;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}.inp::placeholder{color:var(--muted)}.inp:focus,.sel:focus{border-color:rgba(0,255,179,.4);background:var(--bg3)}.inp.pr{padding-right:48px}.inp.err{border-color:var(--red)!important}.inp.ok{border-color:rgba(0,255,179,.5)!important}textarea.inp{min-height:86px;resize:vertical;line-height:1.55}.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color var(--t)}.eye:hover{color:var(--text)}.hint{margin-top:5px;font-size:11.5px;min-height:15px;line-height:1.4;color:transparent;transition:color var(--t)}.hint.err{color:var(--red)}.hint.ok{color:var(--green)}.hint.info{color:var(--muted2)}.ibox{margin:10px 0;padding:11px 13px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);font-size:12.5px;color:var(--muted2);line-height:1.55}.st{margin-top:12px;padding:11px 14px;border-radius:var(--r8);font-size:13px;line-height:1.5;display:none}.st.show{display:block}.st.err{background:var(--rdim);color:var(--red);border:1px solid rgba(255,59,92,.2)}.st.ok{background:var(--gdim);color:var(--green);border:1px solid rgba(0,255,179,.2)}.st.info{background:var(--bg2);color:var(--muted2);border:1px solid var(--line)}.aux{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px}.lbtn{border:none;background:transparent;color:var(--muted2);font-size:12.5px;cursor:pointer;padding:5px 10px;border-radius:7px;font-family:var(--fui);transition:color var(--t)}.lbtn:hover{color:var(--green)}.lbtn:disabled{opacity:.4;cursor:not-allowed}.hidden{display:none!important}
-/* APP STYLE WAZE */
-#sm{padding:0;background:#eef1f4;color:#15171d}#sm.active{display:block;height:100dvh;overflow:hidden;position:relative}.map-shell{position:absolute;inset:0;z-index:1}#map{position:absolute;inset:0;width:100%;height:100%;z-index:1;background:#dce3ea}.map-dim{position:absolute;left:0;right:0;top:0;height:160px;z-index:600;background:linear-gradient(to bottom,rgba(255,255,255,.82),rgba(255,255,255,0));pointer-events:none}.map-top-brand{position:absolute;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.78);backdrop-filter:blur(16px);box-shadow:0 8px 28px rgba(40,54,70,.12);font-family:var(--fh);font-size:23px;font-weight:900;letter-spacing:-.2px;color:#15171d}.map-top-brand span{color:#00b979}.map-menu,.map-music,.map-report,.map-sos,.map-drive{position:absolute;z-index:1200;border:none;background:#fff;color:#121820;box-shadow:0 10px 32px rgba(28,40,55,.18);cursor:pointer;display:flex;align-items:center;justify-content:center}.map-menu{top:calc(env(safe-area-inset-top,0px) + 18px);left:18px;width:74px;height:74px;border-radius:22px;font-size:34px}.map-menu::after{content:'';position:absolute;width:12px;height:12px;right:14px;top:12px;background:#ff3b5c;border-radius:50%}.map-music{top:calc(env(safe-area-inset-top,0px) + 18px);right:18px;width:74px;height:74px;border-radius:50%;font-size:34px;background:#ff3cae;color:#fff}.map-drive{right:18px;top:calc(env(safe-area-inset-top,0px) + 104px);width:54px;height:54px;border-radius:50%;font-size:22px}.map-drive.on{background:#00ffb3}.map-report{right:22px;bottom:calc(env(safe-area-inset-bottom,0px) + 258px);width:96px;height:96px;border-radius:50%;font-size:44px;color:#171717}.map-sos{right:22px;bottom:calc(env(safe-area-inset-bottom,0px) + 370px);width:58px;height:58px;border-radius:50%;font-size:25px;background:linear-gradient(135deg,#ff2d55,#c0002f);color:white;display:none}.map-sos.show{display:flex}.speed-bubble{position:absolute;left:24px;bottom:calc(env(safe-area-inset-bottom,0px) + 258px);z-index:1000;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#404652,#161b24);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,.28);border:4px solid rgba(0,0,0,.08)}.speed-bubble strong{font-size:42px;line-height:.9}.speed-bubble span{font-size:15px;opacity:.9}.front-arrow{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 305px);transform:translateX(-50%);z-index:1000;width:86px;height:44px;border-radius:999px;background:rgba(41,121,255,.18);display:flex;align-items:center;justify-content:center}.front-arrow::before{content:'';width:54px;height:36px;background:#00bcd4;clip-path:polygon(50% 0%,100% 72%,75% 100%,50% 65%,25% 100%,0% 72%);filter:drop-shadow(0 3px 2px rgba(0,0,0,.25))}.alert-pill{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 258px);transform:translateX(-50%);z-index:1000;background:rgba(20,20,20,.82);color:white;padding:10px 18px;border-radius:999px;font-size:18px;line-height:1.1;box-shadow:0 8px 24px rgba(0,0,0,.24);white-space:nowrap;display:flex;gap:10px;align-items:center}.alert-pill .circle{width:38px;height:38px;border-radius:50%;background:#ffb25b;display:flex;align-items:center;justify-content:center}.alert-pill strong{font-size:20px}.bottom-sheet{position:absolute;left:0;right:0;bottom:0;z-index:1100;background:white;color:#15171d;border-radius:34px 34px 0 0;padding:16px 22px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -12px 40px rgba(0,0,0,.18);max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform .32s var(--spring)}.sheet-handle{width:74px;height:6px;border-radius:999px;background:#aab0ba;margin:0 auto 20px}.search-bar{height:74px;border-radius:32px;background:#f2f3f7;display:flex;align-items:center;gap:15px;padding:0 22px;font-size:23px;color:#818792;margin-bottom:20px}.search-bar b{margin-left:auto;font-size:28px;color:#171b22}.shortcut-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:26px}.shortcut-row button{height:70px;border-radius:22px;border:1px solid #d9dde5;background:#fff;color:#15171d;font-size:18px;font-weight:800;font-family:var(--fui);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.shortcut-row button:last-child{color:#0874e8}.section-title{color:#6b6f79;font-weight:700;margin:6px 0 14px;font-size:15px}.recent-item{display:flex;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid #eef0f4;font-size:18px}.recent-item .ri{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:24px}.recent-item strong{display:block}.recent-item span{display:block;color:#6b6f79;font-size:15px;margin-top:2px}.profile-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;padding:10px 12px;border-radius:18px;background:#f4f6f9}.profile-chip .who{min-width:0}.profile-chip .plate{font-family:var(--fh);font-size:20px;font-weight:800;color:#00a872;letter-spacing:1px}.profile-chip .pseudo{font-size:12px;color:#68717d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.profile-chip select{border:none;background:white;border-radius:12px;padding:9px 10px;font-family:var(--fui);font-weight:700;color:#48515d}.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}.small-action{border:none;border-radius:15px;background:#f4f6f9;color:#28313b;font-family:var(--fui);font-weight:800;padding:12px 8px;cursor:pointer}.small-action.primary{background:#00ffb3;color:#06150f}.small-action.danger{background:#ffe9ee;color:#d60035}.drive-info{display:none;margin:0 0 12px;padding:12px;border-radius:16px;background:#e9fff8;border:1px solid #b9f8e7;color:#007f61;font-size:13px;line-height:1.45}.drive-info strong{font-family:var(--fh);font-size:18px;letter-spacing:.8px;color:#008866}.contact-card{background:#f7f8fb;border:1px solid #e8ebf1;border-radius:22px;padding:14px;margin-bottom:18px}.contact-card .inp,.contact-card textarea.inp{background:#fff;color:#15171d;border:1px solid #dfe4ec}.contact-card .inp::placeholder{color:#9aa2ad}.contact-card .lbl{color:#6b7480}.quick-wrap{margin:12px 0 14px;display:flex;flex-direction:column;gap:8px}.quick-row{border:1px solid #e2e6ed;border-radius:16px;padding:10px;background:#fff}.quick-title{font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}.quick-title.red{color:var(--red)}.quick-title.orange{color:var(--orange)}.quick-title.green{color:#00a872}.quick-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.qbtn{border:none;border-radius:11px;padding:10px 6px;font-family:var(--fui);font-size:11.5px;font-weight:800;cursor:pointer;line-height:1.2}.qbtn.red{background:#ffe9ee;color:#d60035;border:1px solid #ffd0da}.qbtn.orange{background:#fff3df;color:#c97000;border:1px solid #ffe0ad}.qbtn.green{background:#e9fff8;color:#008d68;border:1px solid #c0f5e6}.messages-card{background:#f7f8fb;border:1px solid #e8ebf1;border-radius:22px;padding:14px;margin-bottom:20px}.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.sec-h{font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:.3px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#15171d}.badge{display:none;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:2px 6px;margin-left:5px;animation:pulse 1.5s infinite}.badge.show{display:inline-block}.rbtn{border:none;border-radius:12px;padding:9px 12px;background:#e9fff8;border:1px solid #c6f6e8;color:#008a66;font-family:var(--fui);font-size:13px;font-weight:800;cursor:pointer}.convbar{display:flex;gap:7px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}.convbar::-webkit-scrollbar,.bottom-sheet::-webkit-scrollbar{display:none}.convpill{border:none;border-radius:999px;background:#fff;border:1px solid #dfe4ec;color:#6b7480;font-family:var(--fui);font-size:12px;font-weight:800;padding:8px 12px;white-space:nowrap;cursor:pointer}.convpill.on{background:#e9fff8;border-color:#bff2e4;color:#008866}.conv-title{margin:0 0 10px;padding:10px 12px;border-radius:16px;background:#fff;border:1px solid #e0e4ec;font-size:13px;color:#6b7480;line-height:1.45}.conv-title strong{color:#00a872;font-family:var(--fh);font-size:18px;letter-spacing:.8px}#chatBox{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding:12px;background:#fff;border:1px solid #e0e4ec;border-radius:18px;scroll-behavior:smooth}.cempty{text-align:center;color:#8a93a0;font-size:13px;padding:28px 0}.msg{padding:10px 13px;border-radius:16px;font-size:13px;line-height:1.5;max-width:92%;word-break:break-word;animation:msgIn .25s var(--ease) both}.msg.sent{align-self:flex-end;background:#e9fff8;border:1px solid #bff2e4}.msg.recv{align-self:flex-start;background:#f2f4f8;border:1px solid #e0e4ec}.mlbl{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px;color:#008866}.mlbl.r{color:#6b7480}.mbody{color:#15171d}.mtime{font-size:10px;color:#8a93a0;margin-top:5px;text-align:right}.macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.abtn2{border:none;border-radius:10px;padding:7px 11px;font-family:var(--fui);font-size:12px;font-weight:800;cursor:pointer}.abtn2.acc{background:#e9fff8;color:#008866;border:1px solid #bff2e4}.abtn2.rej{background:#ffe9ee;color:#d60035;border:1px solid #ffd0da}.rbox{margin-top:10px;display:flex;flex-direction:column;gap:6px}.rbox textarea{width:100%;background:white;border:1px solid #dfe4ec;border-radius:12px;padding:9px 12px;font-family:var(--fui);font-size:13px;color:#15171d;outline:none;resize:none;min-height:58px;line-height:1.5}.rbox-btn{border:none;border-radius:12px;padding:9px 14px;background:#00ffb3;color:#06150f;font-family:var(--fui);font-size:13px;font-weight:900;cursor:pointer;align-self:flex-end}.plate-ref{display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 8px;border-radius:999px;background:#e9fff8;border:1px solid #bff2e4;color:#008866;font-size:11px;font-weight:800;letter-spacing:.5px}.mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.rrow{margin-top:10px;font-size:12.5px;color:#68717d;min-height:16px;display:flex;align-items:center;gap:5px}.rrow.ok{color:#008866}.rrow.err{color:#d60035}.color-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 8px rgba(0,0,0,.18);flex:0 0 14px}.modalx{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}.modalx.show{display:flex}.modal-card{width:100%;max-width:520px;max-height:82vh;overflow:auto;background:var(--bg1);border:1px solid var(--line2);border-radius:var(--r24);padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.7);color:var(--text)}.modal-card h2{font-family:var(--fh);font-size:26px;margin-bottom:10px}.modal-card p,.modal-card li{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:8px}.modal-card ul{padding-left:18px;margin-bottom:14px}.blocked-list{display:flex;flex-direction:column;gap:8px;margin:12px 0 16px}.blocked-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12)}.blocked-plate{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--green);letter-spacing:1px}.blocked-empty{padding:18px 12px;text-align:center;color:var(--muted2);font-size:13px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12)}.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%) translateY(-90px);max-width:88%;min-width:180px;background:#fff;border:1px solid #e0e4ec;color:#15171d;padding:12px 18px;border-radius:16px;font-size:13.5px;font-weight:700;z-index:9999;box-shadow:0 12px 40px rgba(0,0,0,.18);text-align:center;transition:transform .32s var(--spring),opacity .28s var(--ease);opacity:0;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast.ok{border-color:#bff2e4;color:#008866}.toast.bad{border-color:#ffd0da;color:#d60035}.big-notif,.alert-report{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 14px);z-index:10000;border-radius:18px;padding:14px 16px;font-weight:900;box-shadow:0 16px 50px rgba(0,0,0,.30);transform:translateY(-130px);opacity:0;transition:.28s var(--spring);cursor:pointer}.big-notif.show,.alert-report.show{transform:translateY(0);opacity:1}.big-notif{background:#00ffb3;color:#06150f}.alert-report{background:linear-gradient(135deg,#ff3b5c,#c0002f);color:white}.big-notif small,.alert-report small{display:block;font-size:12px;font-weight:700;margin-top:4px;opacity:.85}.leaflet-popup-content-wrapper{background:white!important;border:1px solid #e0e4ec!important;border-radius:16px!important;box-shadow:0 12px 40px rgba(0,0,0,.25)!important;color:#15171d!important}.leaflet-popup-tip{background:white!important}.leaflet-popup-content{color:#15171d!important;font-family:var(--fui);margin:14px 16px!important}.pp{font-family:var(--fh);font-size:20px;font-weight:800;color:#008866;letter-spacing:1px;margin-bottom:3px;display:flex;align-items:center;gap:7px}.pps{font-size:13px;color:#6b7480;margin-bottom:12px}.ppb{width:100%;border:none;border-radius:12px;padding:10px 12px;background:#00ffb3;color:#06150f;font-weight:900;font-family:var(--fui);font-size:13px;cursor:pointer}@media(max-width:420px){.bottom-sheet{padding-left:18px;padding-right:18px}.shortcut-row button{font-size:16px}.search-bar{font-size:21px}.alert-pill{font-size:15px}.alert-pill strong{font-size:17px}.map-report,.speed-bubble{width:88px;height:88px}.map-report{font-size:40px}.speed-bubble strong{font-size:38px}.quick-buttons{grid-template-columns:1fr 1fr 1fr}.qbtn{font-size:10.5px;padding:9px 4px}}
+:root{
+  --bg:#080b12;--bg1:#0e1420;--bg2:#141c2e;--bg3:#1a2438;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
+  --green:#00ffb3;--gdim:rgba(0,255,179,.08);--gmid:rgba(0,255,179,.18);
+  --blue:#2979ff;--red:#ff3b5c;--rdim:rgba(255,59,92,.1);
+  --text:#e8edf8;--muted:#5a6880;--muted2:#8898b8;
+  --orange:#ff9f0a;--odim:rgba(255,159,10,.12);
+  --fui:'Space Grotesk',sans-serif;--fh:'Barlow Condensed',sans-serif;
+  --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+  --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
+  --t:.18s;
+  /* NEW: shadow tokens */
+  --shadow-sm:0 2px 8px rgba(0,0,0,.35);
+  --shadow-md:0 8px 32px rgba(0,0,0,.45);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.55);
+  --shadow-green:0 0 24px rgba(0,255,179,.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fui);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ===================== AMBIENT GLOWS ===================== */
+.ga{position:fixed;top:-200px;left:-200px;width:700px;height:700px;background:radial-gradient(circle,rgba(0,255,179,.055) 0%,transparent 65%);pointer-events:none;z-index:0;animation:glowPulse 8s ease-in-out infinite}
+.gb{position:fixed;bottom:-200px;right:-200px;width:700px;height:700px;background:radial-gradient(circle,rgba(41,121,255,.065) 0%,transparent 65%);pointer-events:none;z-index:0;animation:glowPulse 10s ease-in-out infinite reverse}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.75}}
+
+/* ===================== SCREENS ===================== */
+.screen{display:none;position:relative;z-index:1;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ===================== ANIMATIONS ===================== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounceIn{0%{transform:scale(.8);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+
+/* ===================== WELCOME SCREEN ===================== */
+#sw.active{align-items:center;justify-content:center;padding:48px 20px 60px}
+.ww{width:100%;max-width:390px;animation:fadeUp .7s var(–ease) both}
+
+.logo-block{text-align:center;margin-bottom:52px}
+.logo-ring{
+width:96px;height:96px;margin:0 auto 22px;
+border-radius:28px;
+background:linear-gradient(135deg,var(–green),var(–blue));
+display:flex;align-items:center;justify-content:center;
+font-size:44px;position:relative;
+box-shadow:0 0 0 1px rgba(0,255,179,.35),var(–shadow-lg),0 0 60px rgba(0,255,179,.15);
+animation:bounceIn .8s var(–spring) both .1s;
+transition:transform .2s var(–spring);
+}
+.logo-ring:hover{transform:scale(1.05) rotate(-2deg)}
+.logo-ring::after{content:’’;position:absolute;inset:-1px;border-radius:29px;background:linear-gradient(135deg,var(–green),var(–blue));z-index:-1;opacity:.2;filter:blur(20px)}
+
+.brand-name{font-family:var(–fh);font-size:44px;font-weight:900;letter-spacing:-.5px;line-height:1}
+.brand-name .dot{color:var(–green)}
+.brand-tag{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(–muted);margin-top:10px}
+
+.w-h1{font-family:var(–fh);font-size:33px;font-weight:700;line-height:1.18;text-align:center;margin-bottom:14px}
+.w-h1 mark{background:linear-gradient(90deg,var(–green),var(–blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal}
+.w-p{text-align:center;color:var(–muted2);font-size:14px;line-height:1.75;margin-bottom:32px}
+
+.feat-grid{display:flex;flex-direction:column;gap:9px;margin-bottom:34px}
+.feat-pill{
+display:flex;align-items:center;gap:14px;padding:13px 16px;
+background:var(–bg1);border:1px solid var(–line);border-radius:var(–r12);
+transition:border-color var(–t),transform var(–t),box-shadow var(–t);
+cursor:default;
+}
+.feat-pill:hover{border-color:rgba(0,255,179,.25);transform:translateX(3px);box-shadow:var(–shadow-sm),inset 0 0 0 1px rgba(0,255,179,.08)}
+.fi{width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:var(–gdim);border:1px solid rgba(0,255,179,.18);display:flex;align-items:center;justify-content:center;font-size:17px;transition:transform .2s var(–spring)}
+.feat-pill:hover .fi{transform:scale(1.15) rotate(-5deg)}
+.ft{font-size:13px;color:var(–muted2);line-height:1.5}
+
+.btn-stack{display:flex;flex-direction:column;gap:10px}
+.btn{width:100%;padding:16px 20px;border:none;border-radius:var(–r12);font-family:var(–fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(–t) var(–ease);position:relative;overflow:hidden}
+.btn::after{content:’’;position:absolute;inset:0;background:rgba(255,255,255,0);transition:background var(–t)}
+.btn:active::after{background:rgba(255,255,255,.08)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important}
+
+.btn-p{background:linear-gradient(135deg,var(–green),#00d68f);color:#06150f;font-weight:700;box-shadow:0 4px 24px rgba(0,255,179,.25),0 1px 0 rgba(255,255,255,.2) inset}
+.btn-p:hover:not(:disabled){box-shadow:0 8px 40px rgba(0,255,179,.42);transform:translateY(-2px)}
+.btn-p:active:not(:disabled){transform:translateY(0);box-shadow:0 4px 16px rgba(0,255,179,.2)}
+
+.btn-g{background:var(–bg1);color:var(–muted2);border:1px solid var(–line2)}
+.btn-g:hover:not(:disabled){border-color:rgba(0,255,179,.3);color:var(–text);background:var(–bg2)}
+.btn-g:active:not(:disabled){background:var(–bg3)}
+
+.mt8{margin-top:8px}.mt12{margin-top:12px}
+
+/* ===================== AUTH / PROFILE / RESET CARDS ===================== */
+#sa.active,#sp.active,#sr.active{align-items:center;justify-content:center;padding:24px 18px 52px}
+.card{
+width:100%;max-width:430px;
+background:var(–bg1);
+border:1px solid var(–line2);
+border-radius:var(–r24);
+padding:28px 24px;
+box-shadow:var(–shadow-lg),0 1px 0 rgba(255,255,255,.04) inset;
+animation:fadeUp .5s var(–ease) both;
+}
+
+.card-ttl{font-family:var(–fh);font-size:30px;font-weight:700;margin-bottom:6px;letter-spacing:-.2px}
+.card-sub{font-size:13.5px;color:var(–muted2);line-height:1.6;margin-bottom:24px}
+
+/* — TABS (improved) — */
+.tab-bar{
+display:grid;grid-template-columns:1fr 1fr;gap:4px;
+background:var(–bg2);border:1px solid var(–line);border-radius:var(–r8);
+padding:3px;margin-bottom:24px;
+position:relative;
+}
+/* Sliding indicator */
+.tab-bar::before{
+content:’’;position:absolute;
+top:3px;bottom:3px;width:calc(50% - 3px);
+background:var(–bg);border-radius:6px;
+box-shadow:0 2px 8px rgba(0,0,0,.4);
+transition:transform .22s var(–spring);
+z-index:0;left:3px;
+}
+.tab-bar.on-signup::before{transform:translateX(calc(100% + 4px))}
+
+.tab{
+padding:11px;border:none;border-radius:7px;
+font-family:var(–fui);font-size:13px;font-weight:500;
+cursor:pointer;background:transparent;color:var(–muted);
+transition:color .2s;position:relative;z-index:1;
+}
+.tab.on{color:var(–text);font-weight:700}
+
+/* — FIELDS — */
+.field{margin-bottom:15px}
+.lbl{
+display:flex;align-items:center;gap:6px;
+font-size:11.5px;font-weight:700;color:var(–muted2);
+letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;
+}
+.lbl-icon{font-size:13px;opacity:.8}
+
+.iw{position:relative}
+.inp,.sel{
+width:100%;background:var(–bg2);
+border:1.5px solid var(–line);
+border-radius:var(–r8);
+padding:13px 15px;
+font-family:var(–fui);font-size:14px;color:var(–text);
+outline:none;
+transition:border-color .2s,background .2s,box-shadow .2s;
+-webkit-appearance:none;appearance:none;
+}
+.inp::placeholder{color:var(–muted)}
+.inp:focus,.sel:focus{
+border-color:rgba(0,255,179,.5);
+background:var(–bg3);
+box-shadow:0 0 0 3px rgba(0,255,179,.08);
+}
+.inp.pr{padding-right:50px}
+.inp.err{border-color:var(–red)!important;box-shadow:0 0 0 3px rgba(255,59,92,.08)!important}
+.inp.ok{border-color:rgba(0,255,179,.55)!important;box-shadow:0 0 0 3px rgba(0,255,179,.07)!important}
+textarea.inp{min-height:88px;resize:vertical;line-height:1.6}
+
+/* Custom select arrow */
+.sel-wrap{position:relative}
+.sel-wrap::after{
+content:‘▾’;position:absolute;right:13px;top:50%;transform:translateY(-50%);
+color:var(–muted);font-size:14px;pointer-events:none;
+transition:transform .2s var(–spring);
+}
+.sel-wrap:focus-within::after{transform:translateY(-50%) rotate(180deg);color:var(–green)}
+.sel{padding-right:36px;cursor:pointer}
+
+.eye{
+position:absolute;right:6px;top:50%;transform:translateY(-50%);
+width:36px;height:36px;border:none;border-radius:8px;
+background:transparent;color:var(–muted);font-size:16px;cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+transition:color var(–t),background var(–t);
+}
+.eye:hover{color:var(–text);background:rgba(255,255,255,.05)}
+
+.hint{margin-top:5px;font-size:11.5px;min-height:16px;line-height:1.5;color:transparent;transition:color .2s,transform .15s}
+.hint.err{color:var(–red)}
+.hint.ok{color:var(–green)}
+.hint.info{color:var(–muted2)}
+
+.ibox{
+margin:10px 0;padding:12px 14px;
+background:var(–bg2);border:1px solid var(–line);border-radius:var(–r8);
+font-size:12.5px;color:var(–muted2);line-height:1.6;
+}
+
+.st{margin-top:12px;padding:12px 14px;border-radius:var(–r8);font-size:13px;line-height:1.55;display:none}
+.st.show{display:block;animation:slideDown .2s var(–ease)}
+.st.err{background:var(–rdim);color:var(–red);border:1px solid rgba(255,59,92,.2)}
+.st.ok{background:var(–gdim);color:var(–green);border:1px solid rgba(0,255,179,.2)}
+.st.info{background:var(–bg2);color:var(–muted2);border:1px solid var(–line)}
+
+.aux{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px}
+.lbtn{
+border:none;background:transparent;color:var(–muted2);
+font-size:12.5px;cursor:pointer;padding:6px 12px;border-radius:8px;
+font-family:var(–fui);transition:color var(–t),background var(–t);
+}
+.lbtn:hover{color:var(–green);background:var(–gdim)}
+.lbtn:disabled{opacity:.38;cursor:not-allowed}
+
+.hidden{display:none!important}
+
+/* ===================== MAP SCREEN — WAZE STYLE ===================== */
+#sm{padding:0;background:#e8ecf1;color:#15171d}
+#sm.active{display:block;height:100dvh;overflow:hidden;position:relative}
+
+.map-shell{position:absolute;inset:0;z-index:1}
+#map{position:absolute;inset:0;width:100%;height:100%;z-index:1;background:#d8e0e8}
+.map-dim{
+position:absolute;left:0;right:0;top:0;height:180px;z-index:600;
+background:linear-gradient(to bottom,rgba(255,255,255,.85),rgba(255,255,255,0));
+pointer-events:none;
+}
+
+/* — TOP BRAND — */
+.map-top-brand{
+position:absolute;z-index:1000;
+top:calc(env(safe-area-inset-top,0px) + 18px);
+left:50%;transform:translateX(-50%);
+padding:9px 18px;border-radius:999px;
+background:rgba(255,255,255,.9);
+backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+box-shadow:0 8px 32px rgba(40,54,70,.14),0 1px 0 rgba(255,255,255,.8) inset;
+font-family:var(–fh);font-size:24px;font-weight:900;letter-spacing:-.2px;
+color:#15171d;white-space:nowrap;
+transition:opacity .2s;
+}
+.map-top-brand span{color:#00b979}
+
+/* — FAB BUTTONS (map overlays) — */
+.map-menu,.map-music,.map-report,.map-sos,.map-drive{
+position:absolute;z-index:1200;border:none;
+background:#fff;color:#121820;
+box-shadow:0 10px 36px rgba(28,40,55,.2),0 1px 0 rgba(255,255,255,.9) inset;
+cursor:pointer;display:flex;align-items:center;justify-content:center;
+transition:transform .18s var(–spring),box-shadow .18s;
+}
+.map-menu:hover,.map-music:hover,.map-report:hover,.map-drive:hover{
+transform:scale(1.07);
+box-shadow:0 14px 44px rgba(28,40,55,.28),0 1px 0 rgba(255,255,255,.9) inset;
+}
+.map-menu:active,.map-music:active,.map-report:active,.map-drive:active{transform:scale(.95)}
+
+.map-menu{
+top:calc(env(safe-area-inset-top,0px) + 20px);
+left:18px;width:76px;height:76px;border-radius:22px;font-size:32px;
+}
+/* Notification dot */
+.map-menu::after{
+content:’’;position:absolute;width:13px;height:13px;
+right:13px;top:11px;background:#ff3b5c;border-radius:50%;
+box-shadow:0 0 0 2px #fff;
+animation:pulse 2s infinite;
+}
+
+.map-music{
+top:calc(env(safe-area-inset-top,0px) + 20px);
+right:18px;width:76px;height:76px;border-radius:50%;
+font-size:32px;background:linear-gradient(135deg,#ff3cae,#c042ff);color:#fff;
+}
+
+.map-drive{
+right:18px;
+top:calc(env(safe-area-inset-top,0px) + 108px);
+width:56px;height:56px;border-radius:50%;font-size:22px;
+transition:transform .18s var(–spring),box-shadow .18s,background .25s;
+}
+.map-drive.on{background:linear-gradient(135deg,#00ffb3,#00d68f);box-shadow:0 8px 32px rgba(0,255,179,.4)!important}
+
+.map-report{
+right:22px;
+bottom:calc(env(safe-area-inset-bottom,0px) + 258px);
+width:100px;height:100px;border-radius:50%;font-size:46px;color:#171717;
+box-shadow:0 12px 40px rgba(28,40,55,.25),0 1px 0 rgba(255,255,255,.9) inset;
+}
+
+.map-sos{
+right:22px;
+bottom:calc(env(safe-area-inset-bottom,0px) + 375px);
+width:60px;height:60px;border-radius:50%;font-size:24px;
+background:linear-gradient(135deg,#ff2d55,#c0002f);
+color:white;display:none;
+box-shadow:0 8px 28px rgba(255,45,85,.45);
+}
+.map-sos.show{display:flex}
+.map-sos:hover{box-shadow:0 12px 40px rgba(255,45,85,.6)!important}
+
+/* — SPEED BUBBLE — */
+.speed-bubble{
+position:absolute;left:24px;
+bottom:calc(env(safe-area-inset-bottom,0px) + 258px);
+z-index:1000;width:100px;height:100px;border-radius:50%;
+background:radial-gradient(circle at 38% 32%,#444b59,#14181f);
+color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;
+box-shadow:0 12px 36px rgba(0,0,0,.35),0 0 0 3px rgba(255,255,255,.06) inset;
+}
+.speed-bubble strong{font-size:44px;line-height:.9;font-family:var(–fh);font-weight:900}
+.speed-bubble span{font-size:13px;opacity:.85;letter-spacing:.5px;font-weight:600;margin-top:2px}
+
+/* — FRONT ARROW — */
+.front-arrow{
+position:absolute;left:50%;
+bottom:calc(env(safe-area-inset-bottom,0px) + 310px);
+transform:translateX(-50%);z-index:1000;
+width:88px;height:46px;border-radius:999px;
+background:rgba(41,121,255,.15);
+display:flex;align-items:center;justify-content:center;
+}
+.front-arrow::before{
+content:’’;width:56px;height:38px;
+background:#00bcd4;
+clip-path:polygon(50% 0%,100% 72%,75% 100%,50% 65%,25% 100%,0% 72%);
+filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
+}
+
+/* — ALERT PILL — */
+.alert-pill{
+position:absolute;left:50%;
+bottom:calc(env(safe-area-inset-bottom,0px) + 258px);
+transform:translateX(-50%);z-index:1000;
+background:rgba(18,18,22,.88);color:white;
+padding:10px 20px;border-radius:999px;font-size:15px;
+box-shadow:0 8px 28px rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.07) inset;
+white-space:nowrap;display:flex;gap:12px;align-items:center;
+backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.alert-pill .circle{width:36px;height:36px;border-radius:50%;background:#ffb25b;display:flex;align-items:center;justify-content:center;font-size:18px}
+.alert-pill strong{font-size:16px;font-weight:700}
+
+/* ===================== BOTTOM SHEET ===================== */
+.bottom-sheet{
+position:absolute;left:0;right:0;bottom:0;
+z-index:1100;background:#f8f9fb;color:#15171d;
+border-radius:32px 32px 0 0;
+padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+box-shadow:0 -16px 52px rgba(0,0,0,.22),0 -1px 0 rgba(255,255,255,.6) inset;
+max-height:48vh;overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+transition:transform .32s var(–spring);
+overscroll-behavior:contain;
+scrollbar-width:none;
+}
+.bottom-sheet::-webkit-scrollbar{display:none}
+
+/* Handle pill */
+.sheet-handle{
+width:80px;height:5px;border-radius:999px;
+background:#c8cdd6;margin:0 auto 18px;
+cursor:grab;transition:background .15s,transform .15s;
+}
+.sheet-handle:hover{background:#a0a8b8;transform:scaleX(1.15)}
+
+/* — SEARCH BAR — */
+.search-bar{
+height:68px;border-radius:28px;
+background:#eef0f5;border:1.5px solid #dde0e8;
+display:flex;align-items:center;gap:14px;
+padding:0 20px;font-size:16px;color:#8a8f9c;
+margin-bottom:18px;cursor:text;
+transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.search-bar:hover{border-color:#c8ccd6;background:#eaecf2;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.search-bar b{margin-left:auto;font-size:26px;color:#181d28;opacity:.7}
+
+/* — PROFILE CHIP — */
+.profile-chip{
+display:flex;align-items:center;justify-content:space-between;gap:12px;
+margin-bottom:16px;padding:12px 14px;
+border-radius:20px;background:#fff;
+border:1.5px solid #e4e8f0;
+box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.profile-chip .who{min-width:0}
+.profile-chip .plate{font-family:var(–fh);font-size:22px;font-weight:900;color:#00a872;letter-spacing:1.5px;display:flex;align-items:center;gap:6px}
+.profile-chip .pseudo{font-size:12px;color:#7a818e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+
+/* Custom radius select in bottom sheet */
+.radius-select-wrap{position:relative;flex-shrink:0}
+.radius-select-wrap::after{content:‘▾’;position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;color:#7a818e;pointer-events:none;transition:transform .2s}
+.radius-select-wrap:focus-within::after{transform:translateY(-50%) rotate(180deg)}
+#radiusSel{
+appearance:none;-webkit-appearance:none;
+border:none;background:white;border:1.5px solid #e0e4ed;
+border-radius:14px;padding:9px 28px 9px 12px;
+font-family:var(–fui);font-weight:800;color:#38424e;
+font-size:13px;cursor:pointer;outline:none;
+transition:border-color .2s,box-shadow .2s;
+}
+#radiusSel:focus{border-color:#00b879;box-shadow:0 0 0 3px rgba(0,184,121,.12)}
+
+/* — SHORTCUT ROW — */
+.shortcut-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.shortcut-row button{
+height:66px;border-radius:18px;
+border:1.5px solid #dde2ea;background:#fff;
+color:#15171d;font-size:15px;font-weight:800;
+font-family:var(–fui);cursor:pointer;
+display:flex;align-items:center;justify-content:center;gap:7px;
+transition:transform .15s var(–spring),box-shadow .15s,border-color .15s,background .15s;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.shortcut-row button:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1);border-color:#c2c9d6}
+.shortcut-row button:active{transform:scale(.95)}
+.shortcut-row button:last-child{color:#0874e8;border-color:#d0e3ff;background:#f0f6ff}
+
+/* — SECTION TITLES — */
+.section-title{color:#777e8b;font-weight:800;margin:8px 0 14px;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase}
+
+/* — ACTIONS GRID — */
+.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.small-action{
+border:none;border-radius:16px;
+background:#f2f4f8;color:#28313b;
+font-family:var(–fui);font-weight:800;
+padding:13px 10px;cursor:pointer;font-size:13px;
+transition:transform .15s var(–spring),background .15s,box-shadow .15s;
+border:1.5px solid transparent;
+}
+.small-action:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.small-action:active{transform:scale(.95)}
+.small-action.primary{background:linear-gradient(135deg,#00ffb3,#00d9a0);color:#06150f;border:none;box-shadow:0 4px 16px rgba(0,255,179,.25)}
+.small-action.primary:hover{box-shadow:0 8px 28px rgba(0,255,179,.4)}
+.small-action.danger{background:#fff0f3;color:#d60035;border-color:#ffd6dd}
+.small-action.danger:hover{background:#ffe4ea;box-shadow:0 6px 16px rgba(214,0,53,.12)}
+
+/* — DRIVE INFO — */
+.drive-info{
+display:none;margin:0 0 14px;padding:14px;
+border-radius:18px;background:linear-gradient(135deg,#eafffb,#d6fff4);
+border:1.5px solid #b9f8e7;color:#007f61;
+font-size:13px;line-height:1.5;
+animation:slideDown .25s var(–ease);
+}
+.drive-info strong{font-family:var(–fh);font-size:19px;letter-spacing:.8px;color:#008866}
+
+/* — CONTACT CARD — */
+.contact-card{
+background:#fff;border:1.5px solid #e4e9f1;
+border-radius:22px;padding:16px;margin-bottom:16px;
+box-shadow:0 4px 16px rgba(0,0,0,.05);
+}
+.contact-card .inp,.contact-card textarea.inp{
+background:#f6f8fb;color:#15171d;border:1.5px solid #e2e7ef;
+}
+.contact-card .inp::placeholder{color:#9fa8b5}
+.contact-card .inp:focus,.contact-card textarea.inp:focus{
+background:#fff;border-color:#00b879;box-shadow:0 0 0 3px rgba(0,184,121,.1);
+}
+.contact-card .lbl{color:#6b7480}
+
+/* — QUICK MESSAGES — */
+.quick-wrap{margin:14px 0 16px;display:flex;flex-direction:column;gap:9px}
+.quick-row{
+border:1.5px solid #e4e8f0;border-radius:18px;
+padding:12px;background:#fff;
+transition:border-color .15s,box-shadow .15s;
+}
+.quick-row:hover{border-color:#d0d6e0;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+
+.quick-title{font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.quick-title.red{color:#d60035}
+.quick-title.orange{color:#c97000}
+.quick-title.green{color:#008866}
+
+.quick-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.qbtn{
+border:none;border-radius:12px;padding:10px 6px;
+font-family:var(–fui);font-size:11.5px;font-weight:800;
+cursor:pointer;line-height:1.25;text-align:center;
+transition:transform .13s var(–spring),box-shadow .13s;
+}
+.qbtn:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.12)}
+.qbtn:active{transform:scale(.93)}
+.qbtn.red{background:#ffe9ee;color:#d60035;border:1.5px solid #ffd0da}
+.qbtn.orange{background:#fff3df;color:#c97000;border:1.5px solid #ffe0ad}
+.qbtn.green{background:#e6fff5;color:#008d68;border:1.5px solid #b8f5e2}
+
+/* — SEND BUTTON in contact card — */
+.contact-card .btn-p{box-shadow:0 4px 20px rgba(0,255,179,.2)}
+
+/* — MESSAGES CARD — */
+.messages-card{
+background:#fff;border:1.5px solid #e4e9f1;
+border-radius:22px;padding:16px;margin-bottom:18px;
+box-shadow:0 4px 16px rgba(0,0,0,.05);
+}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-h{
+font-family:var(–fh);font-size:21px;font-weight:800;
+letter-spacing:.3px;display:flex;align-items:center;gap:8px;color:#15171d;
+}
+.badge{
+display:none;background:var(–red);color:#fff;
+font-size:10px;font-weight:700;border-radius:999px;padding:2px 7px;
+margin-left:3px;animation:pulse 1.5s infinite;
+}
+.badge.show{display:inline-block}
+
+.rbtn{
+border:none;border-radius:12px;padding:9px 14px;
+background:#eafff7;border:1.5px solid #c6f6e8;
+color:#008a66;font-family:var(–fui);font-size:13px;font-weight:800;
+cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;
+}
+.rbtn:hover{transform:rotate(-15deg) scale(1.08);background:#d8fff0}
+.rbtn:active{transform:scale(.95)}
+
+/* — CONVERSATION BAR — */
+.convbar{
+display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;
+scrollbar-width:none;
+-webkit-overflow-scrolling:touch;
+}
+.convbar::-webkit-scrollbar{display:none}
+.convpill{
+border:1.5px solid #dde3ed;border-radius:999px;
+background:#fff;color:#6b7480;
+font-family:var(–fui);font-size:12px;font-weight:800;
+padding:8px 14px;white-space:nowrap;cursor:pointer;
+transition:all .18s var(–spring);flex-shrink:0;
+}
+.convpill:hover{border-color:#b8c5d6;color:#2a3240;transform:translateY(-1px)}
+.convpill.on{background:linear-gradient(135deg,#e6fff5,#d4ffed);border-color:#9fedd6;color:#008866;box-shadow:0 4px 12px rgba(0,200,120,.15)}
+
+.conv-title{
+margin:0 0 12px;padding:10px 14px;border-radius:14px;
+background:#f4f6fa;border:1.5px solid #e4e8f0;
+font-size:13px;color:#6b7480;line-height:1.5;
+}
+.conv-title strong{color:#00a872;font-family:var(–fh);font-size:19px;letter-spacing:.8px}
+
+/* — CHAT BOX — */
+#chatBox{
+display:flex;flex-direction:column;gap:10px;
+max-height:300px;overflow-y:auto;padding:14px;
+background:#f8f9fb;border:1.5px solid #e4e8f0;
+border-radius:18px;scroll-behavior:smooth;
+scrollbar-width:thin;scrollbar-color:#d0d6e4 transparent;
+}
+#chatBox::-webkit-scrollbar{width:4px}
+#chatBox::-webkit-scrollbar-track{background:transparent}
+#chatBox::-webkit-scrollbar-thumb{background:#d0d6e4;border-radius:4px}
+
+.cempty{text-align:center;color:#8a93a0;font-size:13.5px;padding:30px 0;opacity:.8}
+
+.msg{
+padding:11px 14px;border-radius:18px;
+font-size:13px;line-height:1.55;max-width:94%;
+word-break:break-word;animation:msgIn .25s var(–ease) both;
+position:relative;
+}
+.msg.sent{
+align-self:flex-end;
+background:linear-gradient(135deg,#e6fff5,#d4ffed);
+border:1.5px solid #b8f0d8;
+}
+.msg.recv{
+align-self:flex-start;
+background:#fff;border:1.5px solid #e4e8f0;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.mlbl{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;color:#008866}
+.mlbl.r{color:#6b7480}
+.mbody{color:#15171d;font-size:13.5px}
+.mtime{font-size:10px;color:#8a93a0;margin-top:6px;text-align:right}
+
+.macts{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.abtn2{
+border:none;border-radius:11px;padding:8px 13px;
+font-family:var(–fui);font-size:12px;font-weight:800;cursor:pointer;
+transition:transform .13s var(–spring),box-shadow .13s;
+}
+.abtn2:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.abtn2:active{transform:scale(.95)}
+.abtn2.acc{background:#e6fff5;color:#008866;border:1.5px solid #b8f5e2}
+.abtn2.rej{background:#ffe9ee;color:#d60035;border:1.5px solid #ffd0da}
+
+.rbox{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.rbox textarea{
+width:100%;background:white;border:1.5px solid #dfe4ec;
+border-radius:13px;padding:10px 13px;
+font-family:var(–fui);font-size:13px;color:#15171d;
+outline:none;resize:none;min-height:60px;line-height:1.55;
+transition:border-color .2s,box-shadow .2s;
+}
+.rbox textarea:focus{border-color:#00b879;box-shadow:0 0 0 3px rgba(0,184,121,.1)}
+.rbox-btn{
+border:none;border-radius:12px;padding:10px 16px;
+background:linear-gradient(135deg,#00ffb3,#00d9a0);color:#06150f;
+font-family:var(–fui);font-size:13px;font-weight:900;cursor:pointer;
+align-self:flex-end;transition:transform .15s var(–spring),box-shadow .15s;
+box-shadow:0 4px 14px rgba(0,255,179,.22);
+}
+.rbox-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,255,179,.38)}
+
+.plate-ref{
+display:inline-flex;align-items:center;gap:6px;
+margin-bottom:7px;padding:4px 10px;
+border-radius:999px;background:#e6fff5;
+border:1.5px solid #b8f5e2;color:#008866;
+font-size:11px;font-weight:800;letter-spacing:.5px;
+}
+.mini-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+
+.rrow{margin-top:10px;font-size:12.5px;color:#68717d;min-height:16px;display:flex;align-items:center;gap:6px}
+.rrow.ok{color:#008866}
+.rrow.err{color:#d60035}
+
+/* — COLOR DOT — */
+.color-dot{
+width:14px;height:14px;border-radius:50%;display:inline-block;
+border:2px solid rgba(255,255,255,.9);
+box-shadow:0 0 6px rgba(0,0,0,.2);flex:0 0 14px;
+}
+
+/* ===================== MODALS ===================== */
+.modalx{
+position:fixed;inset:0;background:rgba(0,0,0,.75);
+z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;
+backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.modalx.show{display:flex;animation:fadeIn .2s var(–ease)}
+
+.modal-card{
+width:100%;max-width:520px;max-height:84vh;overflow:auto;
+background:var(–bg1);border:1px solid var(–line2);
+border-radius:var(–r24);padding:24px;
+box-shadow:var(–shadow-lg);color:var(–text);
+animation:fadeUp .28s var(–spring);
+}
+.modal-card h2{font-family:var(–fh);font-size:28px;margin-bottom:12px;letter-spacing:-.2px}
+.modal-card p,.modal-card li{font-size:13px;color:var(–muted2);line-height:1.65;margin-bottom:8px}
+.modal-card ul{padding-left:18px;margin-bottom:16px}
+
+.blocked-list{display:flex;flex-direction:column;gap:8px;margin:14px 0 18px}
+.blocked-row{
+display:flex;align-items:center;justify-content:space-between;gap:10px;
+padding:12px 14px;background:var(–bg2);border:1px solid var(–line);
+border-radius:var(–r12);transition:border-color var(–t);
+}
+.blocked-row:hover{border-color:var(–line2)}
+.blocked-plate{font-family:var(–fh);font-size:19px;font-weight:700;color:var(–green);letter-spacing:1.5px}
+.blocked-empty{padding:20px 14px;text-align:center;color:var(–muted2);font-size:13px;background:var(–bg2);border:1px solid var(–line);border-radius:var(–r12)}
+
+/* ===================== TOAST ===================== */
+.toast{
+position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);
+left:50%;transform:translateX(-50%) translateY(-100px);
+max-width:90%;min-width:190px;
+background:#fff;border:1.5px solid #e0e4ec;color:#15171d;
+padding:13px 20px;border-radius:18px;font-size:13.5px;font-weight:700;
+z-index:9999;box-shadow:0 16px 48px rgba(0,0,0,.22);text-align:center;
+transition:transform .32s var(–spring),opacity .25s var(–ease);
+opacity:0;pointer-events:none;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:#b8f5e2;color:#008866;background:#f0fff9}
+.toast.bad{border-color:#ffd0da;color:#d60035;background:#fff8f9}
+
+/* ===================== BIG NOTIFICATIONS ===================== */
+.big-notif,.alert-report{
+position:fixed;left:14px;right:14px;
+top:calc(env(safe-area-inset-top,0px) + 16px);
+z-index:10000;border-radius:20px;padding:16px 18px;
+font-weight:900;font-size:15px;
+box-shadow:0 20px 60px rgba(0,0,0,.35);
+transform:translateY(-140px);opacity:0;
+transition:.3s var(–spring);cursor:pointer;
+}
+.big-notif.show,.alert-report.show{transform:translateY(0);opacity:1}
+.big-notif{background:linear-gradient(135deg,#00ffb3,#00d9a0);color:#06150f}
+.alert-report{background:linear-gradient(135deg,#ff3b5c,#c0002f);color:white}
+.big-notif small,.alert-report small{display:block;font-size:12px;font-weight:700;margin-top:5px;opacity:.82}
+
+/* ===================== LEAFLET CUSTOMIZATION ===================== */
+.leaflet-popup-content-wrapper{
+background:white!important;border:1.5px solid #e0e4ec!important;
+border-radius:18px!important;box-shadow:0 14px 48px rgba(0,0,0,.22)!important;
+color:#15171d!important;
+}
+.leaflet-popup-tip{background:white!important}
+.leaflet-popup-content{color:#15171d!important;font-family:var(–fui);margin:16px 18px!important}
+.pp{font-family:var(–fh);font-size:21px;font-weight:900;color:#008866;letter-spacing:1px;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.pps{font-size:13px;color:#6b7480;margin-bottom:12px;line-height:1.5}
+.ppb{
+width:100%;border:none;border-radius:13px;padding:11px 14px;
+background:linear-gradient(135deg,#00ffb3,#00d9a0);color:#06150f;
+font-weight:900;font-family:var(–fui);font-size:13px;cursor:pointer;
+transition:transform .15s var(–spring),box-shadow .15s;
+box-shadow:0 4px 14px rgba(0,255,179,.22);
+}
+.ppb:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,255,179,.38)}
+
+/* ===================== RECENT ITEMS ===================== */
+.recent-item{
+display:flex;gap:16px;align-items:center;padding:14px 0;
+border-bottom:1px solid #eef0f6;font-size:16px;cursor:pointer;
+transition:background .15s;border-radius:8px;margin:0 -4px;padding:14px 4px;
+}
+.recent-item:hover{background:#f4f6fa}
+.recent-item .ri{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:12px;background:#f0f2f7;flex-shrink:0}
+.recent-item strong{display:block;font-size:14px;font-weight:700;color:#15171d}
+.recent-item span{display:block;color:#6b7480;font-size:12px;margin-top:2px}
+
+/* ===================== RESPONSIVE ===================== */
+@media(max-width:420px){
+.bottom-sheet{padding-left:16px;padding-right:16px}
+.shortcut-row button{font-size:14px;height:60px}
+.search-bar{font-size:15px;height:62px}
+.alert-pill{font-size:13px}
+.alert-pill strong{font-size:15px}
+.map-report,.speed-bubble{width:90px;height:90px}
+.map-report{font-size:42px}
+.speed-bubble strong{font-size:40px}
+.quick-buttons{grid-template-columns:1fr 1fr 1fr}
+.qbtn{font-size:10.5px;padding:9px 4px}
+.map-menu{width:68px;height:68px;font-size:28px}
+.map-music{width:68px;height:68px;font-size:28px}
+}
+
+/* ===================== LOADING SPINNER ===================== */
+.loader{
+display:inline-block;width:14px;height:14px;
+border:2px solid rgba(0,255,179,.3);
+border-top-color:var(–green);border-radius:50%;
+animation:spin .7s linear infinite;
+vertical-align:middle;margin-right:6px;
+}
+
+/* Smooth section reveal on sheet scroll */
+.bottom-sheet > *{
+animation:fadeUp .3s var(–ease) both;
+}
+
+/* Focus visible for accessibility */
+:focus-visible{outline:2px solid var(–green);outline-offset:2px}
+button:focus-visible{outline:2px solid #00a872;outline-offset:2px}
+
+/* Input autofill override */
+input:-webkit-autofill{
+-webkit-box-shadow:0 0 0 100px var(–bg3) inset;
+-webkit-text-fill-color:var(–text);
+}
+.contact-card input:-webkit-autofill{
+-webkit-box-shadow:0 0 0 100px #fff inset;
+-webkit-text-fill-color:#15171d;
+}
 </style>
+
 </head>
 <body>
 <div class="ga"></div><div class="gb"></div>
-<div id="sw" class="screen active"><div class="ww"><div class="logo-block"><div class="logo-ring">🚗</div><div class="brand-name">Immat<span class="dot">Connect</span></div><div class="brand-tag">La route, connectée</div></div><h1 class="w-h1">Parlez à <mark>n'importe quel</mark> conducteur</h1><p class="w-p">Liez votre plaque, apparaissez sur la carte en temps réel et envoyez un message à n'importe quel véhicule autour de vous.</p><div class="feat-grid"><div class="feat-pill"><div class="fi">🪪</div><div class="ft">Votre plaque liée à votre compte de façon sécurisée</div></div><div class="feat-pill"><div class="fi">📍</div><div class="ft">Carte temps réel après connexion</div></div><div class="feat-pill"><div class="fi">🎨</div><div class="ft">Couleur du véhicule pour mieux repérer le bon conducteur</div></div><div class="feat-pill"><div class="fi">🚨</div><div class="ft">Messages rapides de sécurité routière</div></div></div><div class="btn-stack"><button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button><button class="btn btn-g" onclick="App.goToAuth('login')">J'ai déjà un compte</button></div></div></div>
-<div id="sa" class="screen"><div class="card"><div class="card-ttl" id="authTitle">Connexion</div><div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div><div class="tab-bar"><button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button><button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="lbl" for="iEmail">Email</label><input class="inp" type="email" id="iEmail" placeholder="ton@email.com" autocomplete="email"/><div class="hint" id="hEmail"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="lbl" for="iPhone">Téléphone</label><input class="inp" type="tel" id="iPhone" placeholder="0612345678" autocomplete="tel"/><div class="hint" id="hPhone"></div></div><div class="field"><label class="lbl" for="iPlate">Immatriculation</label><input class="inp" type="text" id="iPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/><div class="hint" id="hPlate"></div></div><div class="field"><label class="lbl" for="iColor">Couleur du véhicule</label><select class="sel" id="iColor"><option value="">Choisir une couleur</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div class="hint" id="hColor"></div></div><div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div></div><div class="field"><label class="lbl" for="iPwd">Mot de passe</label><div class="iw"><input class="inp pr" type="password" id="iPwd" placeholder="••••••••" autocomplete="current-password"/><button class="eye" type="button" onclick="toggleEye('iPwd',this)">👁</button></div><div class="hint" id="hPwd"></div></div><div id="confirmWrap" class="hidden"><div class="field"><label class="lbl" for="iConfirm">Confirmer le mot de passe</label><div class="iw"><input class="inp pr" type="password" id="iConfirm" placeholder="••••••••" autocomplete="new-password"/><button class="eye" type="button" onclick="toggleEye('iConfirm',this)">👁</button></div><div class="hint info" id="hConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div></div></div><button id="authBtn" class="btn btn-p" onclick="App.handleAuth()">Se connecter</button><button class="btn btn-g mt8" onclick="App.backToWelcome()">← Retour</button><div class="aux"><button class="lbtn" id="forgotBtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button class="lbtn hidden" id="resendBtn" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button></div><div class="st" id="authSt"></div></div></div>
-<div id="sp" class="screen"><div class="card"><div class="card-ttl">Mon profil</div><div class="card-sub">Quelques infos avant d'accéder à la carte.</div><div class="field"><label class="lbl" for="iPseudo">Pseudo</label><input class="inp" type="text" id="iPseudo" placeholder="Ton pseudo" autocomplete="nickname"/><div class="hint" id="hPseudo"></div></div><div class="field"><label class="lbl" for="iProPlate">Immatriculation</label><input class="inp" type="text" id="iProPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/><div class="hint" id="hProPlate"></div></div><div class="field"><label class="lbl" for="iProPhone">Téléphone</label><input class="inp" type="tel" id="iProPhone" placeholder="0612345678" autocomplete="tel"/><div class="hint" id="hProPhone"></div></div><div class="field"><label class="lbl" for="iProColor">Couleur du véhicule</label><select class="sel" id="iProColor"><option value="">Choisir une couleur</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div class="hint" id="hProColor"></div></div><div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div><button id="saveBtn" class="btn btn-p mt12" onclick="App.saveProfile()">Enregistrer et continuer →</button><div class="st" id="profileSt"></div></div></div>
-<div id="sr" class="screen"><div class="card"><div class="card-ttl">Nouveau mot de passe</div><div class="card-sub">Choisis un mot de passe sécurisé.</div><div class="field"><label class="lbl" for="iNewPwd">Nouveau mot de passe</label><div class="iw"><input class="inp pr" type="password" id="iNewPwd" placeholder="••••••••" autocomplete="new-password"/><button class="eye" type="button" onclick="toggleEye('iNewPwd',this)">👁</button></div><div class="hint" id="hNewPwd"></div></div><div class="field"><label class="lbl" for="iNewCfm">Confirmer</label><div class="iw"><input class="inp pr" type="password" id="iNewCfm" placeholder="••••••••" autocomplete="new-password"/><button class="eye" type="button" onclick="toggleEye('iNewCfm',this)">👁</button></div><div class="hint info" id="hNewCfm">Min. 8 car., 1 majuscule, 1 caractère spécial</div></div><button id="updPwdBtn" class="btn btn-p" onclick="App.updatePwd()">Mettre à jour</button><div class="st" id="resetSt"></div></div></div>
-<div id="sm" class="screen"><div class="map-shell"><div id="map"></div><div class="map-dim"></div></div><div class="map-top-brand">Immat<span>Connect</span></div><button class="map-menu" onclick="App.toggleSheet()">☰</button><button class="map-music" onclick="toast('Bouton décoratif : tu peux le brancher à une option plus tard.')">♪</button><button id="driveBtn" class="map-drive" onclick="App.toggleDriveMode()">🚘</button><button class="map-report" onclick="App.openReportQuick()">⚠️</button><button class="map-sos" id="sosFab" onclick="App.sos()" title="Appeler le 112">🚨</button><div class="speed-bubble"><strong id="speedVal">0</strong><span>km/h</span></div><div class="front-arrow"></div><div class="alert-pill"><span class="circle">🟠</span><span><strong id="nearCount">0 signalement</strong><br>autour de vous</span></div><div class="bottom-sheet" id="bottomSheet"><div class="sheet-handle"></div><div class="profile-chip"><div class="who"><div class="plate" id="tbPlate"></div><div class="pseudo" id="tbPseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="search-bar" onclick="App.focusTarget()">🔍 <span>Où va-t-on ?</span><b>🎙️</b></div><div class="shortcut-row"><button onclick="App.locate()">🏠 Domicile</button><button onclick="App.loadOthers()">💼 Travail</button><button onclick="App.clearMsg()">＋ Nouveau</button></div><div id="driveInfo" class="drive-info">🚘 Mode conduite activé — recherche du véhicule devant vous…</div><div class="actions-grid"><button id="locBtn" class="small-action primary" onclick="App.locate()">📍 Me localiser</button><button id="othersBtn" class="small-action" onclick="App.loadOthers()">👥 Conducteurs</button><button id="invisBtn" class="small-action" onclick="App.toggleInvisible()">👻 Invisible</button><button class="small-action" onclick="App.openBlocked()">🚫 Bloqués</button><button class="small-action" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="small-action danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="section-title">Contacter un véhicule</div><div class="contact-card"><div class="field"><label class="lbl" for="iTarget">Plaque du véhicule</label><input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/><div class="hint" id="hTarget"></div></div><div class="quick-wrap"><div class="quick-row"><div class="quick-title red">🔴 Urgence</div><div class="quick-buttons"><button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : de la fumée ou une fuite est visible sur votre véhicule.')">Fumée / fuite</button><button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble présenter un danger immédiat.')">Roue</button><button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : un élément semble se détacher de votre véhicule.')">Pièce détachée</button></div></div><div class="quick-row"><div class="quick-title orange">🟠 Important</div><div class="quick-buttons"><button class="qbtn orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button><button class="qbtn orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne semble pas fonctionner.')">Feu HS</button><button class="qbtn orange" onclick="App.quickMsg('⚠️ Une porte ou le coffre semble mal fermé.')">Coffre / porte</button></div></div><div class="quick-row"><div class="quick-title green">🟢 Info</div><div class="quick-buttons"><button class="qbtn green" onclick="App.quickMsg('ℹ️ Votre trappe à carburant semble ouverte.')">Trappe</button><button class="qbtn green" onclick="App.quickMsg('ℹ️ Vos feux semblent être restés allumés.')">Feux allumés</button><button class="qbtn green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div></div></div><div class="field"><label class="lbl" for="iMsg">Message</label><textarea class="inp" id="iMsg" placeholder="Ex : Vos phares sont allumés…"></textarea><div class="hint" id="hMsg"></div></div><button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer →</button><button id="clearMsgBtn" class="btn btn-g mt8" onclick="App.clearMsg()">Vider le message</button><div class="rrow" id="reqSt"></div></div><div class="messages-card"><div class="mhdr"><div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div><button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻ Actualiser</button></div><div id="convbar" class="convbar"></div><div id="convTitle" class="conv-title">Conversation : <strong>Toutes les plaques</strong></div><div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div></div><div class="section-title">Récemment</div><div class="recent-item" onclick="App.focusTarget()"><div class="ri">↺</div><div><strong>Contacter une plaque</strong><span>Saisis une plaque ou choisis un conducteur sur la carte</span></div></div></div></div>
-<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()"><div class="modal-card"><h2>Confidentialité & conditions</h2><p><strong>ImmatConnect</strong> utilise votre plaque, votre compte, la couleur du véhicule et votre position uniquement pour permettre la mise en relation entre conducteurs.</p><ul><li>Votre téléphone n’est pas affiché aux autres utilisateurs.</li><li>Votre position peut être masquée avec le mode invisible.</li><li>Les positions anciennes sont ignorées automatiquement.</li><li>Vous pouvez bloquer et débloquer une plaque depuis l’application.</li><li>En cas d’urgence réelle, utilisez les services officiels de secours.</li></ul><button class="btn btn-p" onclick="App.closeLegal()">J’ai compris</button></div></div><div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()"><div class="modal-card"><h2>Plaques bloquées</h2><p>Les plaques bloquées sont masquées sur cet appareil. Vous pouvez les débloquer ici.</p><div id="blockedList" class="blocked-list"></div><button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button></div></div><div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div><div id="alertReport" class="alert-report"></div><div class="toast" id="toastEl"></div>
+
+<!-- ============ WELCOME SCREEN ============ -->
+
+<div id="sw" class="screen active">
+  <div class="ww">
+    <div class="logo-block">
+      <div class="logo-ring">🚗</div>
+      <div class="brand-name">Immat<span class="dot">Connect</span></div>
+      <div class="brand-tag">La route, connectée</div>
+    </div>
+    <h1 class="w-h1">Parlez à <mark>n'importe quel</mark> conducteur</h1>
+    <p class="w-p">Liez votre plaque, apparaissez sur la carte en temps réel et envoyez un message à n'importe quel véhicule autour de vous.</p>
+    <div class="feat-grid">
+      <div class="feat-pill"><div class="fi">🪪</div><div class="ft">Votre plaque liée à votre compte de façon sécurisée</div></div>
+      <div class="feat-pill"><div class="fi">📍</div><div class="ft">Carte temps réel après connexion</div></div>
+      <div class="feat-pill"><div class="fi">🎨</div><div class="ft">Couleur du véhicule pour mieux repérer le bon conducteur</div></div>
+      <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Messages rapides de sécurité routière</div></div>
+    </div>
+    <div class="btn-stack">
+      <button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button>
+      <button class="btn btn-g" onclick="App.goToAuth('login')">J'ai déjà un compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AUTH SCREEN ============ -->
+
+<div id="sa" class="screen">
+  <div class="card">
+    <div class="card-ttl" id="authTitle">Connexion</div>
+    <div class="card-sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div>
+    <div class="tab-bar" id="authTabBar">
+      <button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button>
+      <button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iEmail"><span class="lbl-icon">✉️</span>Email</label>
+      <input class="inp" type="email" id="iEmail" placeholder="ton@email.com" autocomplete="email"/>
+      <div class="hint" id="hEmail"></div>
+    </div>
+    <div id="suExtras" class="hidden">
+      <div class="field">
+        <label class="lbl" for="iPhone"><span class="lbl-icon">📱</span>Téléphone</label>
+        <input class="inp" type="tel" id="iPhone" placeholder="0612345678" autocomplete="tel"/>
+        <div class="hint" id="hPhone"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="iPlate"><span class="lbl-icon">🪪</span>Immatriculation</label>
+        <input class="inp" type="text" id="iPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+        <div class="hint" id="hPlate"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="iColor"><span class="lbl-icon">🎨</span>Couleur du véhicule</label>
+        <div class="sel-wrap">
+          <select class="sel" id="iColor">
+            <option value="">Choisir une couleur</option>
+            <option value="white">⚪ Blanc</option>
+            <option value="black">⚫ Noir</option>
+            <option value="gray">🔘 Gris</option>
+            <option value="blue">🔵 Bleu</option>
+            <option value="red">🔴 Rouge</option>
+            <option value="green">🟢 Vert</option>
+            <option value="yellow">🟡 Jaune / Orange</option>
+            <option value="other">🟣 Autre</option>
+          </select>
+        </div>
+        <div class="hint" id="hColor"></div>
+      </div>
+      <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iPwd"><span class="lbl-icon">🔑</span>Mot de passe</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iPwd" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iPwd',this)" aria-label="Afficher le mot de passe">👁</button>
+      </div>
+      <div class="hint" id="hPwd"></div>
+    </div>
+    <div id="confirmWrap" class="hidden">
+      <div class="field">
+        <label class="lbl" for="iConfirm"><span class="lbl-icon">🔒</span>Confirmer le mot de passe</label>
+        <div class="iw">
+          <input class="inp pr" type="password" id="iConfirm" placeholder="••••••••" autocomplete="new-password"/>
+          <button class="eye" type="button" onclick="toggleEye('iConfirm',this)" aria-label="Afficher la confirmation">👁</button>
+        </div>
+        <div class="hint info" id="hConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
+      </div>
+    </div>
+    <button id="authBtn" class="btn btn-p" onclick="App.handleAuth()">Se connecter</button>
+    <button class="btn btn-g mt8" onclick="App.backToWelcome()">← Retour</button>
+    <div class="aux">
+      <button class="lbtn" id="forgotBtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button>
+      <button class="lbtn hidden" id="resendBtn" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button>
+    </div>
+    <div class="st" id="authSt"></div>
+  </div>
+</div>
+
+<!-- ============ PROFILE SCREEN ============ -->
+
+<div id="sp" class="screen">
+  <div class="card">
+    <div class="card-ttl">Mon profil</div>
+    <div class="card-sub">Quelques infos avant d'accéder à la carte.</div>
+    <div class="field">
+      <label class="lbl" for="iPseudo"><span class="lbl-icon">👤</span>Pseudo</label>
+      <input class="inp" type="text" id="iPseudo" placeholder="Ton pseudo" autocomplete="nickname"/>
+      <div class="hint" id="hPseudo"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProPlate"><span class="lbl-icon">🪪</span>Immatriculation</label>
+      <input class="inp" type="text" id="iProPlate" placeholder="AB-123-CD" autocomplete="off" maxlength="9"/>
+      <div class="hint" id="hProPlate"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProPhone"><span class="lbl-icon">📱</span>Téléphone</label>
+      <input class="inp" type="tel" id="iProPhone" placeholder="0612345678" autocomplete="tel"/>
+      <div class="hint" id="hProPhone"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iProColor"><span class="lbl-icon">🎨</span>Couleur du véhicule</label>
+      <div class="sel-wrap">
+        <select class="sel" id="iProColor">
+          <option value="">Choisir une couleur</option>
+          <option value="white">⚪ Blanc</option>
+          <option value="black">⚫ Noir</option>
+          <option value="gray">🔘 Gris</option>
+          <option value="blue">🔵 Bleu</option>
+          <option value="red">🔴 Rouge</option>
+          <option value="green">🟢 Vert</option>
+          <option value="yellow">🟡 Jaune / Orange</option>
+          <option value="other">🟣 Autre</option>
+        </select>
+      </div>
+      <div class="hint" id="hProColor"></div>
+    </div>
+    <div class="ibox">🔒 Votre téléphone n'est jamais visible par d'autres utilisateurs.</div>
+    <button id="saveBtn" class="btn btn-p mt12" onclick="App.saveProfile()">Enregistrer et continuer →</button>
+    <div class="st" id="profileSt"></div>
+  </div>
+</div>
+
+<!-- ============ RESET PASSWORD SCREEN ============ -->
+
+<div id="sr" class="screen">
+  <div class="card">
+    <div class="card-ttl">Nouveau mot de passe</div>
+    <div class="card-sub">Choisis un mot de passe sécurisé.</div>
+    <div class="field">
+      <label class="lbl" for="iNewPwd"><span class="lbl-icon">🔑</span>Nouveau mot de passe</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iNewPwd" placeholder="••••••••" autocomplete="new-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iNewPwd',this)">👁</button>
+      </div>
+      <div class="hint" id="hNewPwd"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="iNewCfm"><span class="lbl-icon">🔒</span>Confirmer</label>
+      <div class="iw">
+        <input class="inp pr" type="password" id="iNewCfm" placeholder="••••••••" autocomplete="new-password"/>
+        <button class="eye" type="button" onclick="toggleEye('iNewCfm',this)">👁</button>
+      </div>
+      <div class="hint info" id="hNewCfm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
+    </div>
+    <button id="updPwdBtn" class="btn btn-p" onclick="App.updatePwd()">Mettre à jour</button>
+    <div class="st" id="resetSt"></div>
+  </div>
+</div>
+
+<!-- ============ MAP SCREEN ============ -->
+
+<div id="sm" class="screen">
+  <div class="map-shell">
+    <div id="map"></div>
+    <div class="map-dim"></div>
+  </div>
+  <div class="map-top-brand">Immat<span>Connect</span></div>
+  <button class="map-menu" onclick="App.toggleSheet()" aria-label="Menu"></button>
+  <button class="map-music" onclick="toast('Bouton décoratif : tu peux le brancher à une option plus tard.')" aria-label="Musique">♪</button>
+  <button id="driveBtn" class="map-drive" onclick="App.toggleDriveMode()" aria-label="Mode conduite">🚘</button>
+  <button class="map-report" onclick="App.openReportQuick()" aria-label="Signaler">⚠️</button>
+  <button class="map-sos" id="sosFab" onclick="App.sos()" title="Appeler le 112" aria-label="SOS">🚨</button>
+  <div class="speed-bubble"><strong id="speedVal">0</strong><span>km/h</span></div>
+  <div class="front-arrow"></div>
+  <div class="alert-pill">
+    <span class="circle">🟠</span>
+    <span><strong id="nearCount">0 signalement</strong><br>autour de vous</span>
+  </div>
+
+  <!-- BOTTOM SHEET -->
+
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-handle"></div>
+
+```
+<!-- Profile chip -->
+<div class="profile-chip">
+  <div class="who">
+    <div class="plate" id="tbPlate"></div>
+    <div class="pseudo" id="tbPseudo"></div>
+  </div>
+  <div class="radius-select-wrap">
+    <select id="radiusSel" onchange="App.setRadius(this.value)" aria-label="Rayon de recherche">
+      <option value="1">1 km</option>
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="25">25 km</option>
+    </select>
+  </div>
+</div>
+
+<!-- Search bar -->
+<div class="search-bar" onclick="App.focusTarget()" role="searchbox" aria-label="Rechercher une destination">
+  🔍 <span>Où va-t-on ?</span><b>🎙️</b>
+</div>
+
+<!-- Shortcuts -->
+<div class="shortcut-row">
+  <button onclick="App.locate()">🏠 Domicile</button>
+  <button onclick="App.loadOthers()">💼 Travail</button>
+  <button onclick="App.clearMsg()">＋ Nouveau</button>
+</div>
+
+<!-- Drive info -->
+<div id="driveInfo" class="drive-info">🚘 Mode conduite activé — recherche du véhicule devant vous…</div>
+
+<!-- Actions grid -->
+<div class="actions-grid">
+  <button id="locBtn" class="small-action primary" onclick="App.locate()">📍 Me localiser</button>
+  <button id="othersBtn" class="small-action" onclick="App.loadOthers()">👥 Conducteurs</button>
+  <button id="invisBtn" class="small-action" onclick="App.toggleInvisible()">👻 Invisible</button>
+  <button class="small-action" onclick="App.openBlocked()">🚫 Bloqués</button>
+  <button class="small-action" onclick="App.openLegal()">⚖️ Confidentialité</button>
+  <button class="small-action danger" onclick="App.logout()">⏻ Déconnexion</button>
+</div>
+
+<div class="section-title">Contacter un véhicule</div>
+
+<!-- Contact card -->
+<div class="contact-card">
+  <div class="field">
+    <label class="lbl" for="iTarget"><span class="lbl-icon">🪪</span>Plaque du véhicule</label>
+    <input class="inp" type="text" id="iTarget" placeholder="XY-456-ZT" autocomplete="off" maxlength="9"/>
+    <div class="hint" id="hTarget"></div>
+  </div>
+
+  <!-- Quick messages -->
+  <div class="quick-wrap">
+    <div class="quick-row">
+      <div class="quick-title red">🔴 Urgence</div>
+      <div class="quick-buttons">
+        <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : de la fumée ou une fuite est visible sur votre véhicule.')">Fumée / fuite</button>
+        <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble présenter un danger immédiat.')">Roue</button>
+        <button class="qbtn red" onclick="App.quickMsg('🚨 URGENCE : un élément semble se détacher de votre véhicule.')">Pièce détachée</button>
+      </div>
+    </div>
+    <div class="quick-row">
+      <div class="quick-title orange">🟠 Important</div>
+      <div class="quick-buttons">
+        <button class="qbtn orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button>
+        <button class="qbtn orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne semble pas fonctionner.')">Feu HS</button>
+        <button class="qbtn orange" onclick="App.quickMsg('⚠️ Une porte ou le coffre semble mal fermé.')">Coffre / porte</button>
+      </div>
+    </div>
+    <div class="quick-row">
+      <div class="quick-title green">🟢 Info</div>
+      <div class="quick-buttons">
+        <button class="qbtn green" onclick="App.quickMsg('ℹ️ Votre trappe à carburant semble ouverte.')">Trappe</button>
+        <button class="qbtn green" onclick="App.quickMsg('ℹ️ Vos feux semblent être restés allumés.')">Feux allumés</button>
+        <button class="qbtn green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="lbl" for="iMsg"><span class="lbl-icon">✍️</span>Message</label>
+    <textarea class="inp" id="iMsg" placeholder="Ex : Vos phares sont allumés…"></textarea>
+    <div class="hint" id="hMsg"></div>
+  </div>
+  <button id="sendBtn" class="btn btn-p" onclick="App.sendMsg()">Envoyer →</button>
+  <button id="clearMsgBtn" class="btn btn-g mt8" onclick="App.clearMsg()">Vider le message</button>
+  <div class="rrow" id="reqSt"></div>
+</div>
+
+<!-- Messages card -->
+<div class="messages-card">
+  <div class="mhdr">
+    <div class="sec-h">💬 Messages <span class="badge" id="msgBadge">●</span></div>
+    <button class="rbtn" onclick="App.loadMsgs();App.hideBadge()">↻</button>
+  </div>
+  <div id="convbar" class="convbar"></div>
+  <div id="convTitle" class="conv-title">Conversation : <strong>Toutes les plaques</strong></div>
+  <div id="chatBox"><div class="cempty">Aucun message pour le moment.</div></div>
+</div>
+
+<div class="section-title">Récemment</div>
+<div class="recent-item" onclick="App.focusTarget()">
+  <div class="ri">↺</div>
+  <div>
+    <strong>Contacter une plaque</strong>
+    <span>Saisis une plaque ou choisis un conducteur sur la carte</span>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<div id="legalModal" class="modalx" onclick="if(event.target.id==='legalModal')App.closeLegal()">
+  <div class="modal-card">
+    <h2>Confidentialité & conditions</h2>
+    <p><strong>ImmatConnect</strong> utilise votre plaque, votre compte, la couleur du véhicule et votre position uniquement pour permettre la mise en relation entre conducteurs.</p>
+    <ul>
+      <li>Votre téléphone n'est pas affiché aux autres utilisateurs.</li>
+      <li>Votre position peut être masquée avec le mode invisible.</li>
+      <li>Les positions anciennes sont ignorées automatiquement.</li>
+      <li>Vous pouvez bloquer et débloquer une plaque depuis l'application.</li>
+      <li>En cas d'urgence réelle, utilisez les services officiels de secours.</li>
+    </ul>
+    <button class="btn btn-p" onclick="App.closeLegal()">J'ai compris</button>
+  </div>
+</div>
+
+<div id="blockedModal" class="modalx" onclick="if(event.target.id==='blockedModal')App.closeBlocked()">
+  <div class="modal-card">
+    <h2>Plaques bloquées</h2>
+    <p>Les plaques bloquées sont masquées sur cet appareil. Vous pouvez les débloquer ici.</p>
+    <div id="blockedList" class="blocked-list"></div>
+    <button class="btn btn-g" onclick="App.closeBlocked()">Fermer</button>
+  </div>
+</div>
+
+<div id="bigNotif" class="big-notif" onclick="App.openNotifConversation()"></div>
+<div id="alertReport" class="alert-report"></div>
+<div class="toast" id="toastEl"></div>
+
+<!-- ============ JAVASCRIPT (inchangé + améliorations mineures) ============ -->
+
 <script>
 'use strict';
-window.onerror=function(msg,src,line){alert('Erreur JS : '+msg+' ligne '+line)};
+window.onerror=function(msg,src,line){console.error('JS Error: '+msg+' line '+line)};
 function safeLocalGet(key,fallback){try{const v=localStorage.getItem(key);return v===null?fallback:v}catch(e){return fallback}}
 function safeLocalSet(key,value){try{localStorage.setItem(key,value)}catch(e){}}
 function safeJsonGet(key,fallback){try{const raw=localStorage.getItem(key);if(!raw)return fallback;const parsed=JSON.parse(raw);return Array.isArray(parsed)?parsed:fallback}catch(e){try{localStorage.removeItem(key)}catch(_){}return fallback}}
+
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,defaultRadiusKm:5,maxMsgPerMinute:5};
 const sb=window.supabase&&window.supabase.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
 const S={uid:null,mode:'login',sessionDone:false,selPlate:null,map:null,myMarker:null,otherMkrs:[],watchId:null,firstFix:true,loadingOthers:false,chMsg:null,chLoc:null,chReports:null,invisible:safeLocalGet('ic_invisible','0')==='1',radiusKm:Number(safeLocalGet('ic_radius',CFG.defaultRadiusKm))||CFG.defaultRadiusKm,myLat:null,myLng:null,msgClicks:[],blocked:safeJsonGet('ic_blocked',[]),conversationFilter:'all',driveMode:false,lastHeading:null,frontVehicle:null,currentProfile:null,sheetOpen:true};
 let audioUnlocked=false,lastNotifPlate=null;
+
 document.addEventListener('click',()=>{if(audioUnlocked)return;try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;const ctx=new Ctx(),osc=ctx.createOscillator(),gain=ctx.createGain();gain.gain.value=.0001;osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.01);setTimeout(()=>ctx.close(),50);audioUnlocked=true}catch(e){}},{once:false});
-const RE_PH=/^0\d{9}$/;const RE_PL=/^[A-Z]{2}-\d{3}-[A-Z]{2}$/;const vPhone=v=>RE_PH.test(String(v||'').replace(/\s/g,''));const vPlate=v=>RE_PL.test(String(v||'').trim().toUpperCase());const sPwd=v=>String(v||'').length>=8&&/[A-Z]/.test(v)&&/[^A-Za-z0-9]/.test(v);const nPlate=v=>String(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');const nPhone=v=>String(v||'').replace(/\D/g,'');
-function fPlate(r){const s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);if(s.length<=2)return s;if(s.length<=5)return s.slice(0,2)+'-'+s.slice(2);return s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5)}function fPhone(r){return String(r||'').replace(/\D/g,'').slice(0,10)}function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}function jsStr(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'')}function hint(id,t,m){const e=document.getElementById(id);if(!e)return;e.className='hint'+(t?' '+t:'');e.textContent=m||''}function ch(...ids){ids.forEach(id=>hint(id,'',''))}function mi(id,v){const e=document.getElementById(id);if(!e)return;e.classList.toggle('ok',v===true);e.classList.toggle('err',v===false)}function setSt(id,m,t){const e=document.getElementById(id);if(!e)return;e.textContent=m||'';e.className='st'+(t?' '+t:'')+(m?' show':'')}function sBtn(id,l,idle){const e=document.getElementById(id);if(!e)return;e.disabled=l;e.textContent=l?'Chargement…':idle}function setReq(m,t){const e=document.getElementById('reqSt');if(!e)return;e.textContent=m||'';e.className='rrow'+(t?' '+t:'')}let _tt=null;function toast(m,t){const e=document.getElementById('toastEl');if(!e)return;e.textContent=m;e.className='toast'+(t?' '+t:'');requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove('show'),3200)}function beep(){try{if('vibrate'in navigator)navigator.vibrate([180,90,180]);const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;const ctx=new Ctx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=1050;gain.gain.setValueAtTime(.001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.22,ctx.currentTime+.04);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.35);setTimeout(()=>ctx.close(),500)}catch(e){}}function xlErr(m){const s=String(m||'').toLowerCase();if(s.includes('invalid login credentials'))return'Email ou mot de passe incorrect.';if(s.includes('email not confirmed'))return'Email non confirmé. Vérifie ta boîte mail.';if(s.includes('user already registered'))return'Un compte existe déjà avec cet email.';if(s.includes('duplicate')||s.includes('unique'))return'Cette plaque est déjà utilisée.';if(s.includes('rate limit'))return'Trop de tentatives. Réessaie plus tard.';if(s.includes('password should'))return'Le mot de passe ne respecte pas les critères.';if(s.includes('same password'))return'Le nouveau mot de passe doit être différent.';if(s.includes('network')||s.includes('fetch'))return'Erreur réseau. Vérifie ta connexion.';if(s.includes('vehicle_color'))return'Colonne vehicle_color manquante. Ajoute-la dans SQL.';return'Une erreur est survenue. Réessaie.'}function km(aLat,aLng,bLat,bLng){const R=6371,dLat=(bLat-aLat)*Math.PI/180,dLng=(bLng-aLng)*Math.PI/180,x=Math.sin(dLat/2)**2+Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}function relTime(iso){if(!iso)return'inconnu';const diff=Date.now()-new Date(iso).getTime(),min=Math.max(0,Math.round(diff/60000));if(min<1)return'à l’instant';if(min===1)return'il y a 1 min';return'il y a '+min+' min'}function canSendNow(){const now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);if(S.msgClicks.length>=CFG.maxMsgPerMinute)return false;S.msgClicks.push(now);return true}function colorLabel(c){return{white:'Blanc',black:'Noir',gray:'Gris',blue:'Bleu',red:'Rouge',green:'Vert',yellow:'Jaune / Orange',other:'Autre'}[c||'']||'Couleur non renseignée'}function colorHex(c){return{white:'#f5f5f5',black:'#111111',gray:'#8e8e93',blue:'#2979ff',red:'#ff3b5c',green:'#00c853',yellow:'#ffb300',other:'#b388ff'}[c||'other']||'#b388ff'}function colorDot(c){return'<span class="color-dot" style="background:'+esc(colorHex(c))+'"></span>'}const SCREENS=['sw','sa','sp','sr','sm'];function show(id){SCREENS.forEach(s=>document.getElementById(s)?.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.getElementById('sosFab')?.classList.toggle('show',id==='sm')}function toggleEye(iid,btn){const e=document.getElementById(iid);if(!e)return;const v=e.type==='password';e.type=v?'text':'password';btn.textContent=v?'🙈':'👁'}function bindInputs(){[['iPhone','hPhone'],['iProPhone','hProPhone']].forEach(([i,h])=>{const e=document.getElementById(i);if(!e)return;e.addEventListener('input',()=>{e.value=fPhone(e.value);const v=e.value.trim();if(!v){mi(i);hint(h,'','');return}const ok=vPhone(v);mi(i,ok);hint(h,ok?'ok':'err',ok?'✓ Format valide':'Format attendu : 0612345678')})});[['iPlate','hPlate'],['iProPlate','hProPlate'],['iTarget','hTarget']].forEach(([i,h])=>{const e=document.getElementById(i);if(!e)return;e.addEventListener('input',()=>{e.value=fPlate(e.value);const v=e.value.trim();if(!v){mi(i);hint(h,'','');return}const ok=vPlate(v);mi(i,ok);hint(h,ok?'ok':'err',ok?'✓ Format valide':'Format attendu : AB-123-CD')})})}
-const App={_notifTimer:null,_reportTimer:null,toggleSheet(){const sh=document.getElementById('bottomSheet');if(!sh)return;S.sheetOpen=!S.sheetOpen;sh.style.transform=S.sheetOpen?'translateY(0)':'translateY(calc(100% - 96px))'},focusTarget(){S.sheetOpen=true;const sh=document.getElementById('bottomSheet');if(sh)sh.style.transform='translateY(0)';setTimeout(()=>document.getElementById('iTarget')?.focus(),120)},openReportQuick(){const p=prompt('Plaque à signaler :');if(p)App.reportPlate(p)},showBigNotif(title,sub,plate){const n=document.getElementById('bigNotif');if(!n)return;lastNotifPlate=nPlate(plate||'');n.innerHTML=esc(title)+'<small>'+esc(sub||'Toucher pour ouvrir la conversation')+'</small>';n.classList.add('show');clearTimeout(App._notifTimer);App._notifTimer=setTimeout(()=>n.classList.remove('show'),6500)},openNotifConversation(){const n=document.getElementById('bigNotif');if(n)n.classList.remove('show');if(lastNotifPlate){App.setConversation(lastNotifPlate);const target=document.getElementById('iTarget');if(target)target.value=lastNotifPlate;App.focusTarget()}},showReportAlert(text){const n=document.getElementById('alertReport');if(!n)return;n.innerHTML='⚠️ '+esc(text)+'<small>Merci de vérifier votre véhicule et votre comportement sur la route.</small>';n.classList.add('show');beep();clearTimeout(App._reportTimer);App._reportTimer=setTimeout(()=>n.classList.remove('show'),8000)},async _subReports(){if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;const{data:prof}=await sb.from('profiles').select('owner_plate').eq('id',user.id).maybeSingle();const myPlate=nPlate(prof?.owner_plate||'');if(!myPlate)return;if(S.chReports){await sb.removeChannel(S.chReports);S.chReports=null}S.chReports=sb.channel('ic_reports_'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},payload=>{const r=payload.new;if(r&&nPlate(r.plate)===myPlate)App.showReportAlert('Une alerte a été signalée sur votre véhicule.')}).subscribe()},goToAuth(m){App.setMode(m);show('sa')},backToWelcome(){show('sw');setSt('authSt','')},setMode(m){S.mode=m==='signup'?'signup':'login';const su=S.mode==='signup';document.getElementById('authTitle').textContent=su?'Créer un compte':'Connexion';document.getElementById('authSub').textContent=su?'Crée ton compte en quelques secondes.':'Connecte-toi avec ton email et mot de passe.';document.getElementById('authBtn').textContent=su?'Créer mon compte':'Se connecter';document.getElementById('tabSignup').classList.toggle('on',su);document.getElementById('tabLogin').classList.toggle('on',!su);document.getElementById('suExtras').classList.toggle('hidden',!su);document.getElementById('confirmWrap').classList.toggle('hidden',!su);document.getElementById('resendBtn').classList.toggle('hidden',!su);setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');['iEmail','iPhone','iPlate','iPwd','iConfirm'].forEach(id=>{mi(id,undefined);const e=document.getElementById(id);if(e)e.value=''});const c=document.getElementById('iColor');if(c)c.value=''},async plateAvailable(plate,selfId){if(!sb)return true;const{data,error}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();if(error)return true;if(!data?.id)return true;return data.id===selfId},pendingProfile(email,plate,phone,color){safeLocalSet('ic_pending_profile',JSON.stringify({email,pseudo:email.split('@')[0],owner_plate:plate,phone,vehicle_color:color}))},getPendingProfile(email){try{const raw=safeLocalGet('ic_pending_profile','');if(!raw)return null;const p=JSON.parse(raw);if(!p||p.email!==email)return null;return p}catch(e){return null}},clearPendingProfile(){try{localStorage.removeItem('ic_pending_profile')}catch(e){}},async handleAuth(){if(!sb){setSt('authSt','Supabase n’est pas chargé. Vérifie ta connexion.','err');return}setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');const email=document.getElementById('iEmail').value.trim(),pwd=document.getElementById('iPwd').value;if(!email){hint('hEmail','err','Requis.');return}if(!pwd){hint('hPwd','err','Requis.');return}const btn=document.getElementById('authBtn'),idle=S.mode==='signup'?'Créer mon compte':'Se connecter';btn.disabled=true;btn.textContent=S.mode==='signup'?'Création…':'Connexion…';try{if(S.mode==='signup')await App._signup(email,pwd);else await App._login(email,pwd)}catch(e){console.error(e);setSt('authSt','Erreur inattendue : '+String(e?.message||''),'err')}finally{btn.disabled=false;btn.textContent=idle}},async _signup(email,pwd){const phoneRaw=document.getElementById('iPhone').value.trim(),plateRaw=document.getElementById('iPlate').value.trim(),color=document.getElementById('iColor').value,confirm=document.getElementById('iConfirm').value;let fail=false;if(!phoneRaw){hint('hPhone','err','Requis.');fail=true}else if(!vPhone(phoneRaw)){hint('hPhone','err','Format : 0612345678');fail=true}if(!plateRaw){hint('hPlate','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hPlate','err','Format : AB-123-CD');fail=true}if(!color){hint('hColor','err','Choisis la couleur du véhicule.');fail=true}if(!sPwd(pwd)){hint('hPwd','err','Min. 8 car., 1 maj., 1 spécial.');fail=true}if(!confirm){hint('hConfirm','err','Requis.');fail=true}else if(pwd!==confirm){hint('hConfirm','err','Les mots de passe ne correspondent pas.');fail=true}if(fail)return;const phone=nPhone(phoneRaw),plate=nPlate(plateRaw);const available=await App.plateAvailable(plate,null);if(!available){hint('hPlate','err','Cette plaque est déjà utilisée.');return}App.pendingProfile(email,plate,phone,color);const{data,error}=await sb.auth.signUp({email,password:pwd,options:{emailRedirectTo:CFG.site}});if(error){setSt('authSt',xlErr(error.message),'err');return}const user=data?.user;if(user){const{error:pe}=await sb.from('profiles').upsert({id:user.id,email,pseudo:email.split('@')[0],owner_plate:plate,phone,vehicle_color:color});if(pe)console.warn('profile insert pending after signup:',pe)}setSt('authSt','✅ Compte créé ! Vérifie ton email puis connecte-toi. Tes infos véhicule seront récupérées automatiquement.','ok')},async _login(email,pwd){const{data,error}=await sb.auth.signInWithPassword({email,password:pwd});if(error){setSt('authSt',xlErr(error.message),'err');return}const user=data?.user;if(!user){setSt('authSt','Aucun utilisateur retourné. Réessaie.','err');return}S.uid=user.id;S.sessionDone=true;await App._afterAuth()},async resendConfirm(){if(!sb)return;const email=document.getElementById('iEmail').value.trim();if(!email){hint('hEmail','err','Requis.');return}sBtn('resendBtn',true,"Renvoyer l'email de confirmation");try{const{error}=await sb.auth.resend({type:'signup',email,options:{emailRedirectTo:CFG.site}});if(error){setSt('authSt',xlErr(error.message),'err');return}setSt('authSt','Email de confirmation renvoyé.','ok')}finally{sBtn('resendBtn',false,"Renvoyer l'email de confirmation")}},async forgotPwd(){if(!sb)return;const email=document.getElementById('iEmail').value.trim();if(!email){hint('hEmail','err','Requis.');return}sBtn('forgotBtn',true,'Mot de passe oublié ?');try{const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:CFG.site});if(error){setSt('authSt',xlErr(error.message),'err');return}setSt('authSt','Email de réinitialisation envoyé.','ok')}finally{sBtn('forgotBtn',false,'Mot de passe oublié ?')}},async updatePwd(){if(!sb)return;ch('hNewPwd','hNewCfm');setSt('resetSt','');const pwd=document.getElementById('iNewPwd').value,cfm=document.getElementById('iNewCfm').value;let fail=false;if(!sPwd(pwd)){hint('hNewPwd','err','Min. 8 car., 1 maj., 1 spécial.');fail=true}if(!cfm){hint('hNewCfm','err','Requis.');fail=true}else if(pwd!==cfm){hint('hNewCfm','err','Les mots de passe ne correspondent pas.');fail=true}if(fail)return;sBtn('updPwdBtn',true,'Mettre à jour');try{const{error}=await sb.auth.updateUser({password:pwd});if(error){setSt('resetSt',xlErr(error.message),'err');return}setSt('resetSt','✅ Mot de passe mis à jour !','ok');setTimeout(async()=>{S.sessionDone=true;await App._afterAuth()},1400)}finally{sBtn('updPwdBtn',false,'Mettre à jour')}},async _afterAuth(){if(!sb){show('sw');return}const{data:ud,error:ue}=await sb.auth.getUser();if(ue||!ud?.user){setSt('authSt','Session introuvable. Reconnecte-toi.','err');show('sa');return}const user=ud.user;S.uid=user.id;let{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(!prof||!prof.owner_plate||!prof.phone||!prof.vehicle_color){const pending=App.getPendingProfile(user.email);if(pending?.owner_plate&&pending?.phone&&pending?.vehicle_color){const{error:upErr}=await sb.from('profiles').upsert({id:user.id,email:user.email,pseudo:pending.pseudo||user.email.split('@')[0],owner_plate:nPlate(pending.owner_plate),phone:nPhone(pending.phone),vehicle_color:pending.vehicle_color});if(!upErr){App.clearPendingProfile();prof={id:user.id,email:user.email,pseudo:pending.pseudo||user.email.split('@')[0],owner_plate:nPlate(pending.owner_plate),phone:nPhone(pending.phone),vehicle_color:pending.vehicle_color}}}}if(prof&&prof.owner_plate&&prof.phone&&prof.vehicle_color){App._openMap(prof,user.email)}else{App.prefillProfileFromPending(user.email);show('sp')}},prefillProfileFromPending(email){const pending=App.getPendingProfile(email);if(!pending)return;const pseudo=document.getElementById('iPseudo'),plate=document.getElementById('iProPlate'),phone=document.getElementById('iProPhone'),color=document.getElementById('iProColor');if(pseudo&&pending.pseudo)pseudo.value=pending.pseudo;if(plate&&pending.owner_plate)plate.value=fPlate(pending.owner_plate);if(phone&&pending.phone)phone.value=fPhone(pending.phone);if(color&&pending.vehicle_color)color.value=pending.vehicle_color},async saveProfile(){if(!sb)return;ch('hPseudo','hProPlate','hProPhone','hProColor');setSt('profileSt','');const pseudo=document.getElementById('iPseudo').value.trim(),plateRaw=document.getElementById('iProPlate').value.trim(),phoneRaw=document.getElementById('iProPhone').value.trim(),color=document.getElementById('iProColor').value;let fail=false;if(!pseudo){hint('hPseudo','err','Requis.');fail=true}if(!plateRaw){hint('hProPlate','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hProPlate','err','Format : AB-123-CD');fail=true}if(!phoneRaw){hint('hProPhone','err','Requis.');fail=true}else if(!vPhone(phoneRaw)){hint('hProPhone','err','Format : 0612345678');fail=true}if(!color){hint('hProColor','err','Choisis la couleur du véhicule.');fail=true}if(fail)return;sBtn('saveBtn',true,'Enregistrer et continuer →');try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){setSt('profileSt','Session introuvable.','err');return}S.uid=user.id;const plate=nPlate(plateRaw),phone=nPhone(phoneRaw);const available=await App.plateAvailable(plate,user.id);if(!available){hint('hProPlate','err','Cette plaque est déjà utilisée.');return}const{error}=await sb.from('profiles').upsert({id:user.id,email:user.email,pseudo,owner_plate:plate,phone,vehicle_color:color});if(error){console.error(error);setSt('profileSt',xlErr(error.message),'err');return}App.clearPendingProfile();App._openMap({email:user.email,pseudo,owner_plate:plate,phone,vehicle_color:color},user.email)}finally{sBtn('saveBtn',false,'Enregistrer et continuer →')}},_openMap(profile,email){S.currentProfile=profile||{};show('sm');App.refreshInvisibleBtn();App.refreshDriveBtn();const r=document.getElementById('radiusSel');if(r)r.value=String(S.radiusKm);document.getElementById('tbPlate').innerHTML=colorDot(profile?.vehicle_color)+' '+esc(profile?.owner_plate||'');document.getElementById('tbPseudo').textContent=(profile?.pseudo||email||'')+' · '+colorLabel(profile?.vehicle_color);setTimeout(()=>{App._initMap();if(S.map)S.map.invalidateSize();if(!S.invisible)App.locate();else toast('Mode invisible activé : votre position n’est pas partagée.','ok')},300);App._startMsgs();App._subLocs();App._subReports()},_initMap(){if(S.map)return;if(!window.L){toast('Carte non chargée. Vérifie ta connexion.','bad');return}S.map=L.map('map',{zoomControl:false,zoomSnap:0,zoomDelta:.5,wheelPxPerZoomLevel:120,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map)},async deleteMyLocation(){try{if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;await sb.from('user_locations').delete().eq('id',user.id)}catch(e){console.warn('delete location failed:',e)}},async toggleInvisible(){S.invisible=!S.invisible;safeLocalSet('ic_invisible',S.invisible?'1':'0');App.refreshInvisibleBtn();if(S.invisible){if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}if(S.myMarker&&S.map){S.map.removeLayer(S.myMarker);S.myMarker=null}await App.deleteMyLocation();toast('Mode invisible activé. Votre position a été retirée.','ok')}else{toast('Mode visible activé.','ok');App.locate()}},refreshInvisibleBtn(){const b=document.getElementById('invisBtn');if(!b)return;b.textContent=S.invisible?'👁️ Redevenir visible':'👻 Invisible';b.classList.toggle('primary',S.invisible)},setRadius(v){S.radiusKm=Number(v)||CFG.defaultRadiusKm;safeLocalSet('ic_radius',String(S.radiusKm));App.loadOthers()},toggleDriveMode(){S.driveMode=!S.driveMode;App.refreshDriveBtn();if(S.driveMode&&S.map&&S.myLat!==null&&S.myLng!==null)S.map.setView([S.myLat,S.myLng],18,{animate:true});App.loadOthers()},refreshDriveBtn(){const btn=document.getElementById('driveBtn'),info=document.getElementById('driveInfo');if(btn){btn.textContent=S.driveMode?'🧭':'🚘';btn.classList.toggle('on',S.driveMode)}if(info){info.style.display=S.driveMode?'block':'none';if(S.driveMode)info.innerHTML='🚘 Mode conduite activé — recherche du véhicule devant vous…'}},_updateFrontVehicle(candidates){const info=document.getElementById('driveInfo');if(!info||!S.driveMode)return;if(!candidates||!candidates.length){S.frontVehicle=null;info.innerHTML='🚘 Aucun véhicule connecté juste devant vous.';return}candidates.sort((a,b)=>a.dist-b.dist);const best=candidates[0];S.frontVehicle=best;info.innerHTML='🚘 Véhicule devant vous — '+Math.round(best.dist*1000)+' m<br>'+colorDot(best.color)+' <strong>'+esc(best.plate)+'</strong> · '+esc(colorLabel(best.color))+' <button style="margin-left:8px;border:none;border-radius:8px;padding:5px 9px;background:#00ffb3;color:#06150f;font-weight:900" onclick="App._selPlate(\''+jsStr(best.plate)+'\')">Sélectionner</button>'},locate(){if(S.invisible){toast('Mode invisible actif. Active le mode visible pour partager ta position.','bad');return}if(!navigator.geolocation){toast('Géolocalisation non disponible.','bad');return}const btn=document.getElementById('locBtn');if(btn){btn.disabled=true;btn.textContent='⌛ Localisation…'}App._initMap();if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{const{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastHeading=Number.isFinite(pos.coords.heading)?pos.coords.heading:S.lastHeading;const spd=Math.max(0,Math.round((Number(speed)||0)*3.6));const sv=document.getElementById('speedVal');if(sv)sv.textContent=String(spd);if(btn){btn.disabled=false;btn.textContent='📍 Me localiser'}if(S.map){if(S.driveMode)S.map.setView([lat,lng],18,{animate:false});else if(S.firstFix){S.map.flyTo([lat,lng],16,{duration:.9});S.firstFix=false}else S.map.setView([lat,lng],S.map.getZoom(),{animate:false});if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.circleMarker([lat,lng],{radius:S.driveMode?11:8,color:'#00bcd4',weight:4,fillColor:'#00e5ff',fillOpacity:.55}).addTo(S.map)}if(!sb||S.invisible)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;S.uid=user.id;await sb.from('user_locations').upsert({id:user.id,user_name:user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})},err=>{if(btn){btn.disabled=false;btn.textContent='📍 Me localiser'}const msgs={1:'Localisation refusée.',2:'Position introuvable.',3:'Délai dépassé.'};toast(msgs[err.code]||'Erreur de géolocalisation.','bad')},{enableHighAccuracy:true,timeout:15000,maximumAge:5000})},async loadOthers(){if(!sb||S.loadingOthers)return;S.loadingOthers=true;const btn=document.getElementById('othersBtn');if(btn){btn.disabled=true;btn.textContent='⌛ Chargement…'}App._initMap();if(S.map){S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[]}try{const{data:ud}=await sb.auth.getUser();const me=ud?.user;if(me)S.uid=me.id;const cutoff=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();let locQ=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cutoff);if(me)locQ=locQ.neq('id',me.id);const{data:locs,error:le}=await locQ;if(le){console.error('user_locations:',le);toast('Erreur positions : '+le.message,'bad');return}if(!locs?.length){toast('Aucun conducteur récent dans le rayon.');if(S.driveMode)App._updateFrontVehicle([]);App.updateNearCount(0);return}const ids=locs.map(l=>l.id);const{data:profiles,error:pe}=await sb.from('profiles').select('id,pseudo,owner_plate,vehicle_color').in('id',ids);if(pe)console.warn('profiles fetch warn:',pe);const pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p);let shown=0;const frontCandidates=[];locs.forEach(loc=>{const lat=Number(loc.latitude),lng=Number(loc.longitude);if(!isFinite(lat)||!isFinite(lng))return;const prof=pMap[loc.id]||{},pseudo=prof.pseudo||'Conducteur',plate=prof.owner_plate?nPlate(prof.owner_plate):'',vcolor=prof.vehicle_color||'other';if(plate&&S.blocked.includes(plate))return;let dist=null;if(S.myLat!==null&&S.myLng!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}if(S.driveMode&&dist!==null&&dist<=.3&&plate)frontCandidates.push({plate,color:vcolor,dist});if(!S.map)return;const icon=L.divIcon({html:'<div style="font-size:27px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))">'+App.iconForColor(vcolor)+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});const distTxt=dist===null?'':'<div class="pps">Distance : '+esc(dist.toFixed(1))+' km</div>';const mkr=L.marker([lat,lng],{icon}).addTo(S.map);mkr.bindPopup('<div class="pp">'+colorDot(vcolor)+esc(plate)+'</div><div class="pps">'+esc(pseudo)+' · '+esc(colorLabel(vcolor))+' · '+esc(relTime(loc.updated_at))+'</div>'+distTxt+'<button class="ppb" data-plate="'+esc(plate)+'">Contacter ce véhicule</button>');mkr.on('popupopen',()=>{const pop=mkr.getPopup().getElement();if(!pop)return;const pb=pop.querySelector('.ppb');if(!pb)return;pb.onclick=()=>{App._selPlate(pb.dataset.plate);mkr.closePopup()}});S.otherMkrs.push(mkr);shown++});if(S.driveMode)App._updateFrontVehicle(frontCandidates);App.updateNearCount(shown);if(!shown){toast('Aucun conducteur dans le rayon choisi.');return}toast(shown+' conducteur'+(shown>1?'s':'')+' affiché'+(shown>1?'s':'')+'.','ok')}finally{S.loadingOthers=false;if(btn){btn.disabled=false;btn.textContent='👥 Conducteurs'}}},iconForColor(c){return{white:'🚙',black:'🚓',gray:'🚗',blue:'🚙',red:'🚗',green:'🛻',yellow:'🚕',other:'🚘'}[c||'other']||'🚘'},updateNearCount(n){const e=document.getElementById('nearCount');if(e)e.textContent=n+' signalement'+(n>1?'s':'')},_selPlate(plate){const p=nPlate(plate);if(!p)return;if(S.blocked.includes(p)){toast('Cette plaque est bloquée.','bad');return}S.selPlate=p;S.conversationFilter=p;const el=document.getElementById('iTarget');el.value=p;mi('iTarget',true);hint('hTarget','ok','Véhicule sélectionné ✓');App.updateConversationTitle();App.loadMsgs();App.focusTarget();document.getElementById('iMsg')?.focus()},quickMsg(text){const target=document.getElementById('iTarget'),msg=document.getElementById('iMsg');if(!target.value.trim()&&S.frontVehicle?.plate){target.value=S.frontVehicle.plate;S.selPlate=S.frontVehicle.plate;S.conversationFilter=S.frontVehicle.plate;mi('iTarget',true);hint('hTarget','ok','Véhicule devant sélectionné ✓');App.updateConversationTitle()}if(!target.value.trim()){toast('Sélectionne d’abord une plaque ou un véhicule devant.','bad');return}msg.value=text;hint('hMsg','ok','Message rapide prêt à envoyer.');msg.focus()},clearMsg(){const m=document.getElementById('iMsg'),t=document.getElementById('iTarget');if(m)m.value='';if(t)t.value='';ch('hMsg','hTarget');setReq('','')},async sendMsg(){if(!sb)return;ch('hTarget','hMsg');setReq('','');if(!canSendNow()){setReq('Trop de messages envoyés. Attends un peu.','err');return}const plateRaw=document.getElementById('iTarget').value.trim(),msg=document.getElementById('iMsg').value.trim();let fail=false;if(!plateRaw){hint('hTarget','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hTarget','err','Format : AB-123-CD');fail=true}if(!msg){hint('hMsg','err','Ajoute un message.');fail=true}if(fail)return;const plate=nPlate(plateRaw);if(S.blocked.includes(plate)){setReq('Tu as bloqué cette plaque.','err');return}if(S.selPlate!==plate&&!confirm('Envoyer une demande de contact à '+plate+' ?'))return;sBtn('sendBtn',true,'Envoyer →');try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){setReq('Tu dois être connecté.','err');return}S.uid=user.id;const{data:target,error:te}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();if(te||!target?.id){setReq('Aucun utilisateur trouvé avec cette plaque.','err');return}if(target.id===user.id){setReq("Tu ne peux pas t'envoyer un message à toi-même.",'err');return}S.selPlate=plate;S.conversationFilter=plate;App.updateConversationTitle();const{data:ex1}=await sb.from('messages').select('status').eq('sender_id',user.id).eq('receiver_id',target.id).eq('target_plate',plate);const{data:ex2}=await sb.from('messages').select('status').eq('sender_id',target.id).eq('receiver_id',user.id).eq('target_plate',plate);const rows=[...(ex1||[]),...(ex2||[])],hasAcc=rows.some(m=>m.status==='accepted'),hasPend=rows.some(m=>m.status==='pending');if(hasPend&&!hasAcc){setReq('Demande déjà envoyée, en attente de réponse.','ok');await App.loadMsgs();return}const{error}=await sb.from('messages').insert({sender_id:user.id,receiver_id:target.id,target_plate:plate,message:msg,status:hasAcc?'accepted':'pending'});if(error){console.error(error);setReq("Erreur lors de l'envoi.",'err');return}document.getElementById('iMsg').value='';ch('hMsg');setReq(hasAcc?'✅ Message envoyé dans la conversation '+plate:'⏳ Demande envoyée pour la plaque '+plate,'ok');await App.loadMsgs()}finally{sBtn('sendBtn',false,'Envoyer →')}},async _startMsgs(){await App.loadMsgs();await App._subMsgs()},async loadMsgs(){if(!sb)return;const box=document.getElementById('chatBox');if(!box)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){box.innerHTML='<div class="cempty">Connecte-toi pour voir les messages.</div>';return}S.uid=user.id;const{data,error}=await sb.from('messages').select('*').or('sender_id.eq.'+user.id+',receiver_id.eq.'+user.id).neq('status','rejected').order('created_at',{ascending:true}).limit(150);if(error){console.error(error);box.innerHTML='<div class="cempty">Erreur de chargement.</div>';return}let rows=data||[];rows=rows.filter(m=>!S.blocked.includes(nPlate(m.target_plate)));App.renderConversations(rows);if(S.conversationFilter!=='all')rows=rows.filter(m=>nPlate(m.target_plate)===S.conversationFilter);App.updateConversationTitle();if(!rows.length){box.innerHTML=S.conversationFilter==='all'?'<div class="cempty">Aucun message pour le moment.</div>':'<div class="cempty">Aucun message pour la plaque '+esc(S.conversationFilter)+'.</div>';return}box.innerHTML=rows.map(m=>App._buildMsg(m,user.id)).join('');box.scrollTop=box.scrollHeight},renderConversations(rows){const bar=document.getElementById('convbar');if(!bar)return;const plates=[...new Set((rows||[]).map(m=>nPlate(m.target_plate)).filter(Boolean))];bar.innerHTML='<button class="convpill '+(S.conversationFilter==='all'?'on':'')+'" onclick="App.setConversation(\'all\')">Toutes les plaques</button>'+plates.map(p=>'<button class="convpill '+(S.conversationFilter===p?'on':'')+'" onclick="App.setConversation(\''+jsStr(p)+'\')">🚗 '+esc(p)+'</button>').join('')},updateConversationTitle(){const el=document.getElementById('convTitle');if(!el)return;if(S.conversationFilter==='all')el.innerHTML='Conversation : <strong>Toutes les plaques</strong><br><span>Chaque échange reste rattaché à sa plaque concernée.</span>';else el.innerHTML='Conversation avec la plaque : <strong>'+esc(S.conversationFilter)+'</strong><br><span>Tous les messages affichés ici concernent uniquement ce véhicule.</span>'},setConversation(p){S.conversationFilter=p||'all';S.selPlate=S.conversationFilter==='all'?S.selPlate:S.conversationFilter;if(S.conversationFilter!=='all'){const target=document.getElementById('iTarget');if(target)target.value=S.conversationFilter}App.updateConversationTitle();App.loadMsgs()},_buildMsg(msg,myId){const sent=msg.sender_id===myId,status=msg.status||'accepted',plateRaw=nPlate(msg.target_plate||''),plate=esc(plateRaw),text=esc(msg.message||''),time=msg.created_at?new Date(msg.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';const lbl=sent?(status==='pending'?"⏳ Demande en attente — "+plate:'📤 Envoyé — '+plate):(status==='pending'?'📩 Demande de contact — '+plate:'🚗 Reçu — '+plate);let acts='';if(!sent&&msg.receiver_id===myId&&status==='pending')acts='<div class="macts"><button class="abtn2 acc" onclick="App._accept(\''+jsStr(msg.id)+'\',\''+jsStr(msg.sender_id)+'\',\''+jsStr(msg.target_plate||'')+'\')">✅ Accepter</button><button class="abtn2 rej" onclick="App._reject(\''+jsStr(msg.id)+'\')">❌ Refuser</button></div>';let rbox='';if(!sent&&status==='accepted'){const tid='ta_'+String(msg.id).replace(/[^a-zA-Z0-9_-]/g,''),bid='tb_'+String(msg.id).replace(/[^a-zA-Z0-9_-]/g,'');rbox='<div class="rbox"><textarea id="'+esc(tid)+'" placeholder="Réponse à la plaque '+plate+'…" rows="2"></textarea><button id="'+esc(bid)+'" class="rbox-btn" onclick="App._reply(\''+jsStr(msg.id)+'\',\''+jsStr(msg.sender_id)+'\',\''+jsStr(msg.target_plate||'')+'\',\''+jsStr(tid)+'\',\''+jsStr(bid)+'\')">Répondre à '+plate+' →</button></div>'}const mini='<div class="mini-actions"><button class="abtn2 rej" onclick="App.blockPlate(\''+jsStr(plateRaw)+'\')">🚫 Bloquer '+plate+'</button><button class="abtn2 rej" onclick="App.reportPlate(\''+jsStr(plateRaw)+'\')">⚠️ Signaler '+plate+'</button></div>';return '<div class="msg '+(sent?'sent':'recv')+'"><div class="plate-ref">Plaque concernée : '+plate+'</div><div class="mlbl '+(sent?'':'r')+'">'+lbl+'</div><div class="mbody">'+text+'</div>'+acts+rbox+mini+'<div class="mtime">'+esc(time)+'</div></div>'},async _accept(id,senderId,plate){if(!sb)return;try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',user.id);await sb.from('messages').insert({sender_id:user.id,receiver_id:senderId,target_plate:plate,message:'Votre demande de contact pour la plaque '+nPlate(plate)+' a été acceptée. Vous pouvez maintenant échanger.',status:'accepted'});S.selPlate=nPlate(plate);S.conversationFilter=S.selPlate;document.getElementById('iTarget').value=S.selPlate;App.updateConversationTitle();setReq('✅ Demande acceptée pour '+S.selPlate,'ok');toast('✅ Demande acceptée pour '+S.selPlate,'ok');beep();await App.loadMsgs()}catch(e){console.error(e);toast('Erreur lors de l’acceptation.','bad')}},async _reject(id){if(!sb)return;try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',user.id);setReq('Demande refusée.','');toast('Demande refusée.');await App.loadMsgs()}catch(e){console.error(e);toast('Erreur lors du refus.','bad')}},async _reply(msgId,receiverId,plate,taId,btnId){if(!sb)return;const ta=document.getElementById(taId);if(!ta)return;const text=ta.value.trim();if(!text){ta.style.borderColor='var(--red)';setTimeout(()=>{ta.style.borderColor=''},1500);return}if(!canSendNow()){toast('Trop de messages envoyés. Attends un peu.','bad');return}const btn=document.getElementById(btnId);if(btn){btn.disabled=true;btn.textContent='Envoi…'}try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;const cleanPlate=nPlate(plate);const{error}=await sb.from('messages').insert({sender_id:user.id,receiver_id:receiverId,target_plate:cleanPlate,message:text,status:'accepted'});if(error){console.error(error);toast('Erreur envoi réponse.','bad');return}S.conversationFilter=cleanPlate;App.updateConversationTitle();ta.value='';toast('✅ Réponse envoyée à '+cleanPlate,'ok');await App.loadMsgs()}finally{if(btn){btn.disabled=false;btn.textContent='Répondre →'}}},blockPlate(plate){const p=nPlate(plate);if(!p)return;if(!confirm('Bloquer la plaque '+p+' ? Ses messages seront masqués sur cet appareil.'))return;if(!S.blocked.includes(p))S.blocked.push(p);safeLocalSet('ic_blocked',JSON.stringify(S.blocked));if(S.conversationFilter===p)S.conversationFilter='all';toast('Plaque bloquée : '+p,'ok');App.renderBlocked();App.updateConversationTitle();App.loadMsgs();App.loadOthers()},unblockPlate(plate){const p=nPlate(plate);if(!p)return;S.blocked=S.blocked.filter(x=>x!==p);safeLocalSet('ic_blocked',JSON.stringify(S.blocked));toast('Plaque débloquée : '+p,'ok');App.renderBlocked();App.loadMsgs();App.loadOthers()},renderBlocked(){const box=document.getElementById('blockedList');if(!box)return;if(!S.blocked.length){box.innerHTML='<div class="blocked-empty">Aucune plaque bloquée.</div>';return}box.innerHTML=S.blocked.map(p=>'<div class="blocked-row"><div class="blocked-plate">'+esc(p)+'</div><button class="abtn2 acc" onclick="App.unblockPlate(\''+jsStr(p)+'\')">Débloquer</button></div>').join('')},openBlocked(){App.renderBlocked();document.getElementById('blockedModal')?.classList.add('show')},closeBlocked(){document.getElementById('blockedModal')?.classList.remove('show')},async reportPlate(plate){if(!sb)return;const p=nPlate(plate);if(!p)return;const reason=prompt('Raison du signalement pour la plaque '+p+' :');if(!reason)return;try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){toast('Tu dois être connecté pour signaler.','bad');return}const{error}=await sb.from('reports').insert({reporter_id:user.id,plate:p,reason:reason.slice(0,500),created_at:new Date().toISOString()});if(error){console.error(error);toast('Erreur lors du signalement.','bad');return}toast('Signalement envoyé pour '+p+'.','ok');let n=Number((document.getElementById('nearCount')?.textContent||'0').match(/\d+/)?.[0]||0)+1;App.updateNearCount(n)}catch(e){console.error(e);toast('Erreur lors du signalement.','bad')}},async _subMsgs(){if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;S.uid=user.id;if(S.chMsg){await sb.removeChannel(S.chMsg);S.chMsg=null}S.chMsg=sb.channel('ic_msg_'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'messages'},payload=>{const msg=payload.new||payload.old;if(!msg)return;if(msg.sender_id!==user.id&&msg.receiver_id!==user.id)return;if(S.blocked.includes(nPlate(msg.target_plate)))return;if(payload.eventType==='INSERT'&&msg.receiver_id===user.id){const p=nPlate(msg.target_plate);if(msg.status==='pending'){toast('📩 Nouvelle demande pour la plaque '+p+' !','ok');App.showBigNotif('📩 Nouvelle demande','Plaque '+p+' — toucher pour ouvrir',p);App.showBadge();beep()}else if(String(msg.message||'').includes('acceptée')){toast('✅ Ta demande pour '+p+' a été acceptée !','ok');App.showBigNotif('✅ Demande acceptée','Plaque '+p+' — toucher pour ouvrir',p);beep()}else{toast('💬 Nouveau message pour '+p,'ok');App.showBigNotif('💬 Nouveau message','Plaque '+p+' — toucher pour ouvrir',p);App.showBadge();beep()}}App.loadMsgs()}).subscribe()},async _subLocs(){if(!sb)return;if(S.chLoc){await sb.removeChannel(S.chLoc);S.chLoc=null}S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if(document.getElementById('sm').classList.contains('active'))App.loadOthers()}).subscribe()},showBadge(){document.getElementById('msgBadge')?.classList.add('show')},hideBadge(){document.getElementById('msgBadge')?.classList.remove('show')},openLegal(){document.getElementById('legalModal')?.classList.add('show')},closeLegal(){document.getElementById('legalModal')?.classList.remove('show')},async logout(){if(!confirm('Veux-tu vraiment te déconnecter ? Ta position sera supprimée de la carte.'))return;if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}await App.deleteMyLocation();if(sb&&S.chMsg){await sb.removeChannel(S.chMsg);S.chMsg=null}if(sb&&S.chLoc){await sb.removeChannel(S.chLoc);S.chLoc=null}if(sb&&S.chReports){await sb.removeChannel(S.chReports);S.chReports=null}if(sb)await sb.auth.signOut();location.href=CFG.site},sos(){const ok1=confirm('Appel d’urgence 112. Continuer uniquement en cas de vraie urgence ?');if(!ok1)return;const ok2=confirm('Confirmation finale : appeler le 112 maintenant ?');if(ok2)window.location.href='tel:112'}};
-if(sb){sb.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){S.sessionDone=false;S.uid=session?.user?.id||null;show('sr');return}if(event==='SIGNED_IN'&&session){if(S.sessionDone)return;S.uid=session.user.id;S.sessionDone=true;setTimeout(()=>App._afterAuth(),0);return}if(event==='SIGNED_OUT'){S.sessionDone=false;S.uid=null;S.selPlate=null;if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}if(S.chMsg){try{sb.removeChannel(S.chMsg)}catch(e){}S.chMsg=null}if(S.chLoc){try{sb.removeChannel(S.chLoc)}catch(e){}S.chLoc=null}if(S.chReports){try{sb.removeChannel(S.chReports)}catch(e){}S.chReports=null}show('sw')}})}
-async function boot(){bindInputs();const r=document.getElementById('radiusSel');if(r)r.value=String(S.radiusKm);App.refreshInvisibleBtn();App.refreshDriveBtn();App.updateConversationTitle();if(!sb){toast('Supabase non chargé. Vérifie ta connexion.','bad');show('sw');return}const frag=(window.location.hash||'')+(window.location.search||'');if(frag.toLowerCase().includes('type=recovery')){show('sr');return}try{const{data:sd,error:se}=await sb.auth.getSession();if(se){console.error('boot getSession:',se);show('sw');return}const session=sd?.session;if(!session){show('sw');return}S.uid=session.user.id;S.sessionDone=true;await App._afterAuth()}catch(e){console.error(e);show('sw')}}boot();
+
+const RE_PH=/^0\d{9}$/;const RE_PL=/^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
+const vPhone=v=>RE_PH.test(String(v||'').replace(/\s/g,''));
+const vPlate=v=>RE_PL.test(String(v||'').trim().toUpperCase());
+const sPwd=v=>String(v||'').length>=8&&/[A-Z]/.test(v)&&/[^A-Za-z0-9]/.test(v);
+const nPlate=v=>String(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');
+const nPhone=v=>String(v||'').replace(/\D/g,'');
+
+function fPlate(r){const s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);if(s.length<=2)return s;if(s.length<=5)return s.slice(0,2)+'-'+s.slice(2);return s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5)}
+function fPhone(r){return String(r||'').replace(/\D/g,'').slice(0,10)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function jsStr(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'')}
+function hint(id,t,m){const e=document.getElementById(id);if(!e)return;e.className='hint'+(t?' '+t:'');e.textContent=m||''}
+function ch(...ids){ids.forEach(id=>hint(id,'',''))}
+function mi(id,v){const e=document.getElementById(id);if(!e)return;e.classList.toggle('ok',v===true);e.classList.toggle('err',v===false)}
+function setSt(id,m,t){const e=document.getElementById(id);if(!e)return;e.textContent=m||'';e.className='st'+(t?' '+t:'')+(m?' show':'')}
+function sBtn(id,l,idle){const e=document.getElementById(id);if(!e)return;e.disabled=l;e.textContent=l?'Chargement…':idle}
+function setReq(m,t){const e=document.getElementById('reqSt');if(!e)return;e.textContent=m||'';e.className='rrow'+(t?' '+t:'')}
+
+let _tt=null;
+function toast(m,t){const e=document.getElementById('toastEl');if(!e)return;e.textContent=m;e.className='toast'+(t?' '+t:'');requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove('show'),3400)}
+
+function beep(){try{if('vibrate'in navigator)navigator.vibrate([180,90,180]);const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;const ctx=new Ctx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=1050;gain.gain.setValueAtTime(.001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.22,ctx.currentTime+.04);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.35);setTimeout(()=>ctx.close(),500)}catch(e){}}
+
+function xlErr(m){const s=String(m||'').toLowerCase();if(s.includes('invalid login credentials'))return'Email ou mot de passe incorrect.';if(s.includes('email not confirmed'))return'Email non confirmé. Vérifie ta boîte mail.';if(s.includes('user already registered'))return'Un compte existe déjà avec cet email.';if(s.includes('duplicate')||s.includes('unique'))return'Cette plaque est déjà utilisée.';if(s.includes('rate limit'))return'Trop de tentatives. Réessaie plus tard.';if(s.includes('password should'))return'Le mot de passe ne respecte pas les critères.';if(s.includes('same password'))return'Le nouveau mot de passe doit être différent.';if(s.includes('network')||s.includes('fetch'))return'Erreur réseau. Vérifie ta connexion.';if(s.includes('vehicle_color'))return'Colonne vehicle_color manquante. Ajoute-la dans SQL.';return'Une erreur est survenue. Réessaie.'}
+
+function km(aLat,aLng,bLat,bLng){const R=6371,dLat=(bLat-aLat)*Math.PI/180,dLng=(bLng-aLng)*Math.PI/180,x=Math.sin(dLat/2)**2+Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function relTime(iso){if(!iso)return'inconnu';const diff=Date.now()-new Date(iso).getTime(),min=Math.max(0,Math.round(diff/60000));if(min<1)return'à l\'instant';if(min===1)return'il y a 1 min';return'il y a '+min+' min'}
+function canSendNow(){const now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);if(S.msgClicks.length>=CFG.maxMsgPerMinute)return false;S.msgClicks.push(now);return true}
+function colorLabel(c){return{white:'Blanc',black:'Noir',gray:'Gris',blue:'Bleu',red:'Rouge',green:'Vert',yellow:'Jaune / Orange',other:'Autre'}[c||'']||'Couleur non renseignée'}
+function colorHex(c){return{white:'#f5f5f5',black:'#111111',gray:'#8e8e93',blue:'#2979ff',red:'#ff3b5c',green:'#00c853',yellow:'#ffb300',other:'#b388ff'}[c||'other']||'#b388ff'}
+function colorDot(c){return'<span class="color-dot" style="background:'+esc(colorHex(c))+'"></span>'}
+
+const SCREENS=['sw','sa','sp','sr','sm'];
+function show(id){SCREENS.forEach(s=>document.getElementById(s)?.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.getElementById('sosFab')?.classList.toggle('show',id==='sm')}
+
+function toggleEye(iid,btn){const e=document.getElementById(iid);if(!e)return;const v=e.type==='password';e.type=v?'text':'password';btn.textContent=v?'🙈':'👁'}
+
+function bindInputs(){
+  [['iPhone','hPhone'],['iProPhone','hProPhone']].forEach(([i,h])=>{
+    const e=document.getElementById(i);if(!e)return;
+    e.addEventListener('input',()=>{e.value=fPhone(e.value);const v=e.value.trim();if(!v){mi(i);hint(h,'','');return}const ok=vPhone(v);mi(i,ok);hint(h,ok?'ok':'err',ok?'✓ Format valide':'Format attendu : 0612345678')})
+  });
+  [['iPlate','hPlate'],['iProPlate','hProPlate'],['iTarget','hTarget']].forEach(([i,h])=>{
+    const e=document.getElementById(i);if(!e)return;
+    e.addEventListener('input',()=>{e.value=fPlate(e.value);const v=e.value.trim();if(!v){mi(i);hint(h,'','');return}const ok=vPlate(v);mi(i,ok);hint(h,ok?'ok':'err',ok?'✓ Format valide':'Format attendu : AB-123-CD')})
+  })
+}
+
+const App={
+  _notifTimer:null,_reportTimer:null,
+  toggleSheet(){
+    const sh=document.getElementById('bottomSheet');if(!sh)return;
+    S.sheetOpen=!S.sheetOpen;
+    sh.style.transform=S.sheetOpen?'translateY(0)':'translateY(calc(100% - 100px))';
+  },
+  focusTarget(){
+    S.sheetOpen=true;
+    const sh=document.getElementById('bottomSheet');
+    if(sh)sh.style.transform='translateY(0)';
+    setTimeout(()=>document.getElementById('iTarget')?.focus(),120)
+  },
+  openReportQuick(){const p=prompt('Plaque à signaler :');if(p)App.reportPlate(p)},
+  showBigNotif(title,sub,plate){
+    const n=document.getElementById('bigNotif');if(!n)return;
+    lastNotifPlate=nPlate(plate||'');
+    n.innerHTML=esc(title)+'<small>'+esc(sub||'Toucher pour ouvrir la conversation')+'</small>';
+    n.classList.add('show');clearTimeout(App._notifTimer);
+    App._notifTimer=setTimeout(()=>n.classList.remove('show'),6500)
+  },
+  openNotifConversation(){
+    const n=document.getElementById('bigNotif');if(n)n.classList.remove('show');
+    if(lastNotifPlate){App.setConversation(lastNotifPlate);const target=document.getElementById('iTarget');if(target)target.value=lastNotifPlate;App.focusTarget()}
+  },
+  showReportAlert(text){
+    const n=document.getElementById('alertReport');if(!n)return;
+    n.innerHTML='⚠️ '+esc(text)+'<small>Merci de vérifier votre véhicule et votre comportement sur la route.</small>';
+    n.classList.add('show');beep();clearTimeout(App._reportTimer);
+    App._reportTimer=setTimeout(()=>n.classList.remove('show'),8000)
+  },
+  async _subReports(){
+    if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;
+    const{data:prof}=await sb.from('profiles').select('owner_plate').eq('id',user.id).maybeSingle();
+    const myPlate=nPlate(prof?.owner_plate||'');if(!myPlate)return;
+    if(S.chReports){await sb.removeChannel(S.chReports);S.chReports=null}
+    S.chReports=sb.channel('ic_reports_'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},payload=>{
+      const r=payload.new;if(r&&nPlate(r.plate)===myPlate)App.showReportAlert('Une alerte a été signalée sur votre véhicule.')
+    }).subscribe()
+  },
+  goToAuth(m){App.setMode(m);show('sa')},
+  backToWelcome(){show('sw');setSt('authSt','')},
+  setMode(m){
+    S.mode=m==='signup'?'signup':'login';
+    const su=S.mode==='signup';
+    document.getElementById('authTitle').textContent=su?'Créer un compte':'Connexion';
+    document.getElementById('authSub').textContent=su?'Crée ton compte en quelques secondes.':'Connecte-toi avec ton email et mot de passe.';
+    document.getElementById('authBtn').textContent=su?'Créer mon compte':'Se connecter';
+    document.getElementById('tabSignup').classList.toggle('on',su);
+    document.getElementById('tabLogin').classList.toggle('on',!su);
+    // Sliding tab indicator
+    document.getElementById('authTabBar').classList.toggle('on-signup',su);
+    document.getElementById('suExtras').classList.toggle('hidden',!su);
+    document.getElementById('confirmWrap').classList.toggle('hidden',!su);
+    document.getElementById('resendBtn').classList.toggle('hidden',!su);
+    setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');
+    ['iEmail','iPhone','iPlate','iPwd','iConfirm'].forEach(id=>{mi(id,undefined);const e=document.getElementById(id);if(e)e.value=''});
+    const c=document.getElementById('iColor');if(c)c.value='';
+  },
+  async plateAvailable(plate,selfId){
+    if(!sb)return true;
+    const{data,error}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();
+    if(error)return true;if(!data?.id)return true;return data.id===selfId
+  },
+  pendingProfile(email,plate,phone,color){safeLocalSet('ic_pending_profile',JSON.stringify({email,pseudo:email.split('@')[0],owner_plate:plate,phone,vehicle_color:color}))},
+  getPendingProfile(email){try{const raw=safeLocalGet('ic_pending_profile','');if(!raw)return null;const p=JSON.parse(raw);if(!p||p.email!==email)return null;return p}catch(e){return null}},
+  clearPendingProfile(){try{localStorage.removeItem('ic_pending_profile')}catch(e){}},
+  async handleAuth(){
+    if(!sb){setSt('authSt','Supabase n\'est pas chargé. Vérifie ta connexion.','err');return}
+    setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');
+    const email=document.getElementById('iEmail').value.trim(),pwd=document.getElementById('iPwd').value;
+    if(!email){hint('hEmail','err','Requis.');return}
+    if(!pwd){hint('hPwd','err','Requis.');return}
+    const btn=document.getElementById('authBtn'),idle=S.mode==='signup'?'Créer mon compte':'Se connecter';
+    btn.disabled=true;btn.textContent=S.mode==='signup'?'Création…':'Connexion…';
+    try{if(S.mode==='signup')await App._signup(email,pwd);else await App._login(email,pwd)}
+    catch(e){console.error(e);setSt('authSt','Erreur inattendue : '+String(e?.message||''),'err')}
+    finally{btn.disabled=false;btn.textContent=idle}
+  },
+  async _signup(email,pwd){
+    const phoneRaw=document.getElementById('iPhone').value.trim(),plateRaw=document.getElementById('iPlate').value.trim(),color=document.getElementById('iColor').value,confirm=document.getElementById('iConfirm').value;
+    let fail=false;
+    if(!phoneRaw){hint('hPhone','err','Requis.');fail=true}else if(!vPhone(phoneRaw)){hint('hPhone','err','Format : 0612345678');fail=true}
+    if(!plateRaw){hint('hPlate','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hPlate','err','Format : AB-123-CD');fail=true}
+    if(!color){hint('hColor','err','Choisis la couleur du véhicule.');fail=true}
+    if(!sPwd(pwd)){hint('hPwd','err','Min. 8 car., 1 maj., 1 spécial.');fail=true}
+    if(!confirm){hint('hConfirm','err','Requis.');fail=true}else if(pwd!==confirm){hint('hConfirm','err','Les mots de passe ne correspondent pas.');fail=true}
+    if(fail)return;
+    const phone=nPhone(phoneRaw),plate=nPlate(plateRaw);
+    const available=await App.plateAvailable(plate,null);
+    if(!available){hint('hPlate','err','Cette plaque est déjà utilisée.');return}
+    App.pendingProfile(email,plate,phone,color);
+    const{data,error}=await sb.auth.signUp({email,password:pwd,options:{emailRedirectTo:CFG.site}});
+    if(error){setSt('authSt',xlErr(error.message),'err');return}
+    const user=data?.user;
+    if(user){const{error:pe}=await sb.from('profiles').upsert({id:user.id,email,pseudo:email.split('@')[0],owner_plate:plate,phone,vehicle_color:color});if(pe)console.warn('profile insert pending after signup:',pe)}
+    setSt('authSt','✅ Compte créé ! Vérifie ton email puis connecte-toi. Tes infos véhicule seront récupérées automatiquement.','ok')
+  },
+  async _login(email,pwd){
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pwd});
+    if(error){setSt('authSt',xlErr(error.message),'err');return}
+    const user=data?.user;
+    if(!user){setSt('authSt','Aucun utilisateur retourné. Réessaie.','err');return}
+    S.uid=user.id;S.sessionDone=true;await App._afterAuth()
+  },
+  async resendConfirm(){
+    if(!sb)return;const email=document.getElementById('iEmail').value.trim();
+    if(!email){hint('hEmail','err','Requis.');return}
+    sBtn('resendBtn',true,"Renvoyer l'email de confirmation");
+    try{const{error}=await sb.auth.resend({type:'signup',email,options:{emailRedirectTo:CFG.site}});if(error){setSt('authSt',xlErr(error.message),'err');return}setSt('authSt','Email de confirmation renvoyé.','ok')}
+    finally{sBtn('resendBtn',false,"Renvoyer l'email de confirmation")}
+  },
+  async forgotPwd(){
+    if(!sb)return;const email=document.getElementById('iEmail').value.trim();
+    if(!email){hint('hEmail','err','Requis.');return}
+    sBtn('forgotBtn',true,'Mot de passe oublié ?');
+    try{const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:CFG.site});if(error){setSt('authSt',xlErr(error.message),'err');return}setSt('authSt','Email de réinitialisation envoyé.','ok')}
+    finally{sBtn('forgotBtn',false,'Mot de passe oublié ?')}
+  },
+  async updatePwd(){
+    if(!sb)return;ch('hNewPwd','hNewCfm');setSt('resetSt','');
+    const pwd=document.getElementById('iNewPwd').value,cfm=document.getElementById('iNewCfm').value;
+    let fail=false;
+    if(!sPwd(pwd)){hint('hNewPwd','err','Min. 8 car., 1 maj., 1 spécial.');fail=true}
+    if(!cfm){hint('hNewCfm','err','Requis.');fail=true}else if(pwd!==cfm){hint('hNewCfm','err','Les mots de passe ne correspondent pas.');fail=true}
+    if(fail)return;sBtn('updPwdBtn',true,'Mettre à jour');
+    try{const{error}=await sb.auth.updateUser({password:pwd});if(error){setSt('resetSt',xlErr(error.message),'err');return}setSt('resetSt','✅ Mot de passe mis à jour !','ok');setTimeout(async()=>{S.sessionDone=true;await App._afterAuth()},1400)}
+    finally{sBtn('updPwdBtn',false,'Mettre à jour')}
+  },
+  async _afterAuth(){
+    if(!sb){show('sw');return}
+    const{data:ud,error:ue}=await sb.auth.getUser();
+    if(ue||!ud?.user){setSt('authSt','Session introuvable. Reconnecte-toi.','err');show('sa');return}
+    const user=ud.user;S.uid=user.id;
+    let{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!prof||!prof.owner_plate||!prof.phone||!prof.vehicle_color){
+      const pending=App.getPendingProfile(user.email);
+      if(pending?.owner_plate&&pending?.phone&&pending?.vehicle_color){
+        const{error:upErr}=await sb.from('profiles').upsert({id:user.id,email:user.email,pseudo:pending.pseudo||user.email.split('@')[0],owner_plate:nPlate(pending.owner_plate),phone:nPhone(pending.phone),vehicle_color:pending.vehicle_color});
+        if(!upErr){App.clearPendingProfile();prof={id:user.id,email:user.email,pseudo:pending.pseudo||user.email.split('@')[0],owner_plate:nPlate(pending.owner_plate),phone:nPhone(pending.phone),vehicle_color:pending.vehicle_color}}
+      }
+    }
+    if(prof&&prof.owner_plate&&prof.phone&&prof.vehicle_color){App._openMap(prof,user.email)}
+    else{App.prefillProfileFromPending(user.email);show('sp')}
+  },
+  prefillProfileFromPending(email){
+    const pending=App.getPendingProfile(email);if(!pending)return;
+    const pseudo=document.getElementById('iPseudo'),plate=document.getElementById('iProPlate'),phone=document.getElementById('iProPhone'),color=document.getElementById('iProColor');
+    if(pseudo&&pending.pseudo)pseudo.value=pending.pseudo;
+    if(plate&&pending.owner_plate)plate.value=fPlate(pending.owner_plate);
+    if(phone&&pending.phone)phone.value=fPhone(pending.phone);
+    if(color&&pending.vehicle_color)color.value=pending.vehicle_color;
+  },
+  async saveProfile(){
+    if(!sb)return;ch('hPseudo','hProPlate','hProPhone','hProColor');setSt('profileSt','');
+    const pseudo=document.getElementById('iPseudo').value.trim(),plateRaw=document.getElementById('iProPlate').value.trim(),phoneRaw=document.getElementById('iProPhone').value.trim(),color=document.getElementById('iProColor').value;
+    let fail=false;
+    if(!pseudo){hint('hPseudo','err','Requis.');fail=true}
+    if(!plateRaw){hint('hProPlate','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hProPlate','err','Format : AB-123-CD');fail=true}
+    if(!phoneRaw){hint('hProPhone','err','Requis.');fail=true}else if(!vPhone(phoneRaw)){hint('hProPhone','err','Format : 0612345678');fail=true}
+    if(!color){hint('hProColor','err','Choisis la couleur du véhicule.');fail=true}
+    if(fail)return;sBtn('saveBtn',true,'Enregistrer et continuer →');
+    try{
+      const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){setSt('profileSt','Session introuvable.','err');return}
+      S.uid=user.id;const plate=nPlate(plateRaw),phone=nPhone(phoneRaw);
+      const available=await App.plateAvailable(plate,user.id);
+      if(!available){hint('hProPlate','err','Cette plaque est déjà utilisée.');return}
+      const{error}=await sb.from('profiles').upsert({id:user.id,email:user.email,pseudo,owner_plate:plate,phone,vehicle_color:color});
+      if(error){console.error(error);setSt('profileSt',xlErr(error.message),'err');return}
+      App.clearPendingProfile();App._openMap({email:user.email,pseudo,owner_plate:plate,phone,vehicle_color:color},user.email)
+    }finally{sBtn('saveBtn',false,'Enregistrer et continuer →')}
+  },
+  _openMap(profile,email){
+    S.currentProfile=profile||{};show('sm');App.refreshInvisibleBtn();App.refreshDriveBtn();
+    const r=document.getElementById('radiusSel');if(r)r.value=String(S.radiusKm);
+    document.getElementById('tbPlate').innerHTML=colorDot(profile?.vehicle_color)+' '+esc(profile?.owner_plate||'');
+    document.getElementById('tbPseudo').textContent=(profile?.pseudo||email||'')+' · '+colorLabel(profile?.vehicle_color);
+    setTimeout(()=>{App._initMap();if(S.map)S.map.invalidateSize();if(!S.invisible)App.locate();else toast('Mode invisible activé : votre position n\'est pas partagée.','ok')},300);
+    App._startMsgs();App._subLocs();App._subReports()
+  },
+  _initMap(){
+    if(S.map)return;if(!window.L){toast('Carte non chargée. Vérifie ta connexion.','bad');return}
+    S.map=L.map('map',{zoomControl:false,zoomSnap:0,zoomDelta:.5,wheelPxPerZoomLevel:120,preferCanvas:true}).setView([46.6,1.9],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map)
+  },
+  async deleteMyLocation(){
+    try{if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;await sb.from('user_locations').delete().eq('id',user.id)}catch(e){console.warn('delete location failed:',e)}
+  },
+  async toggleInvisible(){
+    S.invisible=!S.invisible;safeLocalSet('ic_invisible',S.invisible?'1':'0');App.refreshInvisibleBtn();
+    if(S.invisible){if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}if(S.myMarker&&S.map){S.map.removeLayer(S.myMarker);S.myMarker=null}await App.deleteMyLocation();toast('Mode invisible activé. Votre position a été retirée.','ok')}
+    else{toast('Mode visible activé.','ok');App.locate()}
+  },
+  refreshInvisibleBtn(){const b=document.getElementById('invisBtn');if(!b)return;b.textContent=S.invisible?'👁️ Redevenir visible':'👻 Invisible';b.classList.toggle('primary',S.invisible)},
+  setRadius(v){S.radiusKm=Number(v)||CFG.defaultRadiusKm;safeLocalSet('ic_radius',String(S.radiusKm));App.loadOthers()},
+  toggleDriveMode(){S.driveMode=!S.driveMode;App.refreshDriveBtn();if(S.driveMode&&S.map&&S.myLat!==null&&S.myLng!==null)S.map.setView([S.myLat,S.myLng],18,{animate:true});App.loadOthers()},
+  refreshDriveBtn(){
+    const btn=document.getElementById('driveBtn'),info=document.getElementById('driveInfo');
+    if(btn){btn.textContent=S.driveMode?'🧭':'🚘';btn.classList.toggle('on',S.driveMode)}
+    if(info){info.style.display=S.driveMode?'block':'none';if(S.driveMode)info.innerHTML='🚘 Mode conduite activé — recherche du véhicule devant vous…'}
+  },
+  _updateFrontVehicle(candidates){
+    const info=document.getElementById('driveInfo');if(!info||!S.driveMode)return;
+    if(!candidates||!candidates.length){S.frontVehicle=null;info.innerHTML='🚘 Aucun véhicule connecté juste devant vous.';return}
+    candidates.sort((a,b)=>a.dist-b.dist);const best=candidates[0];S.frontVehicle=best;
+    info.innerHTML='🚘 Véhicule devant vous — '+Math.round(best.dist*1000)+' m<br>'+colorDot(best.color)+' <strong>'+esc(best.plate)+'</strong> · '+esc(colorLabel(best.color))+' <button style="margin-left:8px;border:none;border-radius:10px;padding:6px 12px;background:#00ffb3;color:#06150f;font-weight:900;cursor:pointer" onclick="App._selPlate(\''+jsStr(best.plate)+'\')">Sélectionner</button>'
+  },
+  locate(){
+    if(S.invisible){toast('Mode invisible actif. Active le mode visible pour partager ta position.','bad');return}
+    if(!navigator.geolocation){toast('Géolocalisation non disponible.','bad');return}
+    const btn=document.getElementById('locBtn');if(btn){btn.disabled=true;btn.textContent='⌛ Localisation…'}
+    App._initMap();
+    if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.firstFix=true}
+    S.watchId=navigator.geolocation.watchPosition(async pos=>{
+      const{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastHeading=Number.isFinite(pos.coords.heading)?pos.coords.heading:S.lastHeading;
+      const spd=Math.max(0,Math.round((Number(speed)||0)*3.6));
+      const sv=document.getElementById('speedVal');if(sv)sv.textContent=String(spd);
+      if(btn){btn.disabled=false;btn.textContent='📍 Me localiser'}
+      if(S.map){
+        if(S.driveMode)S.map.setView([lat,lng],18,{animate:false});
+        else if(S.firstFix){S.map.flyTo([lat,lng],16,{duration:.9});S.firstFix=false}
+        else S.map.setView([lat,lng],S.map.getZoom(),{animate:false});
+        if(S.myMarker)S.map.removeLayer(S.myMarker);
+        S.myMarker=L.circleMarker([lat,lng],{radius:S.driveMode?11:8,color:'#00bcd4',weight:4,fillColor:'#00e5ff',fillOpacity:.55}).addTo(S.map)
+      }
+      if(!sb||S.invisible)return;
+      const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;S.uid=user.id;
+      await sb.from('user_locations').upsert({id:user.id,user_name:user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})
+    },err=>{
+      if(btn){btn.disabled=false;btn.textContent='📍 Me localiser'}
+      const msgs={1:'Localisation refusée.',2:'Position introuvable.',3:'Délai dépassé.'};toast(msgs[err.code]||'Erreur de géolocalisation.','bad')
+    },{enableHighAccuracy:true,timeout:15000,maximumAge:5000})
+  },
+  async loadOthers(){
+    if(!sb||S.loadingOthers)return;S.loadingOthers=true;
+    const btn=document.getElementById('othersBtn');if(btn){btn.disabled=true;btn.textContent='⌛ Chargement…'}
+    App._initMap();if(S.map){S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[]}
+    try{
+      const{data:ud}=await sb.auth.getUser();const me=ud?.user;if(me)S.uid=me.id;
+      const cutoff=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();
+      let locQ=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cutoff);
+      if(me)locQ=locQ.neq('id',me.id);
+      const{data:locs,error:le}=await locQ;
+      if(le){console.error('user_locations:',le);toast('Erreur positions : '+le.message,'bad');return}
+      if(!locs?.length){toast('Aucun conducteur récent dans le rayon.');if(S.driveMode)App._updateFrontVehicle([]);App.updateNearCount(0);return}
+      const ids=locs.map(l=>l.id);
+      const{data:profiles,error:pe}=await sb.from('profiles').select('id,pseudo,owner_plate,vehicle_color').in('id',ids);
+      if(pe)console.warn('profiles fetch warn:',pe);
+      const pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p);
+      let shown=0;const frontCandidates=[];
+      locs.forEach(loc=>{
+        const lat=Number(loc.latitude),lng=Number(loc.longitude);if(!isFinite(lat)||!isFinite(lng))return;
+        const prof=pMap[loc.id]||{},pseudo=prof.pseudo||'Conducteur',plate=prof.owner_plate?nPlate(prof.owner_plate):'',vcolor=prof.vehicle_color||'other';
+        if(plate&&S.blocked.includes(plate))return;
+        let dist=null;
+        if(S.myLat!==null&&S.myLng!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}
+        if(S.driveMode&&dist!==null&&dist<=.3&&plate)frontCandidates.push({plate,color:vcolor,dist});
+        if(!S.map)return;
+        const icon=L.divIcon({html:'<div style="font-size:27px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))">'+App.iconForColor(vcolor)+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});
+        const distTxt=dist===null?'':'<div class="pps">Distance : '+esc(dist.toFixed(1))+' km</div>';
+        const mkr=L.marker([lat,lng],{icon}).addTo(S.map);
+        mkr.bindPopup('<div class="pp">'+colorDot(vcolor)+esc(plate)+'</div><div class="pps">'+esc(pseudo)+' · '+esc(colorLabel(vcolor))+' · '+esc(relTime(loc.updated_at))+'</div>'+distTxt+'<button class="ppb" data-plate="'+esc(plate)+'">Contacter ce véhicule</button>');
+        mkr.on('popupopen',()=>{const pop=mkr.getPopup().getElement();if(!pop)return;const pb=pop.querySelector('.ppb');if(!pb)return;pb.onclick=()=>{App._selPlate(pb.dataset.plate);mkr.closePopup()}});
+        S.otherMkrs.push(mkr);shown++
+      });
+      if(S.driveMode)App._updateFrontVehicle(frontCandidates);
+      App.updateNearCount(shown);
+      if(!shown){toast('Aucun conducteur dans le rayon choisi.');return}
+      toast(shown+' conducteur'+(shown>1?'s':'')+' affiché'+(shown>1?'s':'')+'.','ok')
+    }finally{S.loadingOthers=false;if(btn){btn.disabled=false;btn.textContent='👥 Conducteurs'}}
+  },
+  iconForColor(c){return{white:'🚙',black:'🚓',gray:'🚗',blue:'🚙',red:'🚗',green:'🛻',yellow:'🚕',other:'🚘'}[c||'other']||'🚘'},
+  updateNearCount(n){const e=document.getElementById('nearCount');if(e)e.textContent=n+' signalement'+(n>1?'s':'')},
+  _selPlate(plate){
+    const p=nPlate(plate);if(!p)return;
+    if(S.blocked.includes(p)){toast('Cette plaque est bloquée.','bad');return}
+    S.selPlate=p;S.conversationFilter=p;
+    const el=document.getElementById('iTarget');el.value=p;mi('iTarget',true);hint('hTarget','ok','Véhicule sélectionné ✓');
+    App.updateConversationTitle();App.loadMsgs();App.focusTarget();document.getElementById('iMsg')?.focus()
+  },
+  quickMsg(text){
+    const target=document.getElementById('iTarget'),msg=document.getElementById('iMsg');
+    if(!target.value.trim()&&S.frontVehicle?.plate){target.value=S.frontVehicle.plate;S.selPlate=S.frontVehicle.plate;S.conversationFilter=S.frontVehicle.plate;mi('iTarget',true);hint('hTarget','ok','Véhicule devant sélectionné ✓');App.updateConversationTitle()}
+    if(!target.value.trim()){toast('Sélectionne d\'abord une plaque ou un véhicule devant.','bad');return}
+    msg.value=text;hint('hMsg','ok','Message rapide prêt à envoyer.');msg.focus()
+  },
+  clearMsg(){
+    const m=document.getElementById('iMsg'),t=document.getElementById('iTarget');
+    if(m)m.value='';if(t)t.value='';ch('hMsg','hTarget');setReq('','')
+  },
+  async sendMsg(){
+    if(!sb)return;ch('hTarget','hMsg');setReq('','');
+    if(!canSendNow()){setReq('Trop de messages envoyés. Attends un peu.','err');return}
+    const plateRaw=document.getElementById('iTarget').value.trim(),msg=document.getElementById('iMsg').value.trim();
+    let fail=false;
+    if(!plateRaw){hint('hTarget','err','Requis.');fail=true}else if(!vPlate(nPlate(plateRaw))){hint('hTarget','err','Format : AB-123-CD');fail=true}
+    if(!msg){hint('hMsg','err','Ajoute un message.');fail=true}
+    if(fail)return;
+    const plate=nPlate(plateRaw);
+    if(S.blocked.includes(plate)){setReq('Tu as bloqué cette plaque.','err');return}
+    if(S.selPlate!==plate&&!confirm('Envoyer une demande de contact à '+plate+' ?'))return;
+    sBtn('sendBtn',true,'Envoyer →');
+    try{
+      const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){setReq('Tu dois être connecté.','err');return}
+      S.uid=user.id;
+      const{data:target,error:te}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();
+      if(te||!target?.id){setReq('Aucun utilisateur trouvé avec cette plaque.','err');return}
+      if(target.id===user.id){setReq('Tu ne peux pas t\'envoyer un message à toi-même.','err');return}
+      S.selPlate=plate;S.conversationFilter=plate;App.updateConversationTitle();
+      const{data:ex1}=await sb.from('messages').select('status').eq('sender_id',user.id).eq('receiver_id',target.id).eq('target_plate',plate);
+      const{data:ex2}=await sb.from('messages').select('status').eq('sender_id',target.id).eq('receiver_id',user.id).eq('target_plate',plate);
+      const rows=[...(ex1||[]),...(ex2||[])],hasAcc=rows.some(m=>m.status==='accepted'),hasPend=rows.some(m=>m.status==='pending');
+      if(hasPend&&!hasAcc){setReq('Demande déjà envoyée, en attente de réponse.','ok');await App.loadMsgs();return}
+      const{error}=await sb.from('messages').insert({sender_id:user.id,receiver_id:target.id,target_plate:plate,message:msg,status:hasAcc?'accepted':'pending'});
+      if(error){console.error(error);setReq('Erreur lors de l\'envoi.','err');return}
+      document.getElementById('iMsg').value='';ch('hMsg');setReq(hasAcc?'✅ Message envoyé dans la conversation '+plate:'⏳ Demande envoyée pour la plaque '+plate,'ok');await App.loadMsgs()
+    }finally{sBtn('sendBtn',false,'Envoyer →')}
+  },
+  async _startMsgs(){await App.loadMsgs();await App._subMsgs()},
+  async loadMsgs(){
+    if(!sb)return;const box=document.getElementById('chatBox');if(!box)return;
+    const{data:ud}=await sb.auth.getUser();const user=ud?.user;
+    if(!user){box.innerHTML='<div class="cempty">Connecte-toi pour voir les messages.</div>';return}
+    S.uid=user.id;
+    const{data,error}=await sb.from('messages').select('*').or('sender_id.eq.'+user.id+',receiver_id.eq.'+user.id).neq('status','rejected').order('created_at',{ascending:true}).limit(150);
+    if(error){console.error(error);box.innerHTML='<div class="cempty">Erreur de chargement.</div>';return}
+    let rows=data||[];rows=rows.filter(m=>!S.blocked.includes(nPlate(m.target_plate)));
+    App.renderConversations(rows);
+    if(S.conversationFilter!=='all')rows=rows.filter(m=>nPlate(m.target_plate)===S.conversationFilter);
+    App.updateConversationTitle();
+    if(!rows.length){box.innerHTML=S.conversationFilter==='all'?'<div class="cempty">Aucun message pour le moment.</div>':'<div class="cempty">Aucun message pour la plaque '+esc(S.conversationFilter)+'.</div>';return}
+    box.innerHTML=rows.map(m=>App._buildMsg(m,user.id)).join('');box.scrollTop=box.scrollHeight
+  },
+  renderConversations(rows){
+    const bar=document.getElementById('convbar');if(!bar)return;
+    const plates=[...new Set((rows||[]).map(m=>nPlate(m.target_plate)).filter(Boolean))];
+    bar.innerHTML='<button class="convpill '+(S.conversationFilter==='all'?'on':'')+'" onclick="App.setConversation(\'all\')">Toutes les plaques</button>'+plates.map(p=>'<button class="convpill '+(S.conversationFilter===p?'on':'')+'" onclick="App.setConversation(\''+jsStr(p)+'\')">🚗 '+esc(p)+'</button>').join('')
+  },
+  updateConversationTitle(){
+    const el=document.getElementById('convTitle');if(!el)return;
+    if(S.conversationFilter==='all')el.innerHTML='Conversation : <strong>Toutes les plaques</strong><br><span>Chaque échange reste rattaché à sa plaque concernée.</span>';
+    else el.innerHTML='Conversation avec la plaque : <strong>'+esc(S.conversationFilter)+'</strong><br><span>Tous les messages affichés ici concernent uniquement ce véhicule.</span>'
+  },
+  setConversation(p){
+    S.conversationFilter=p||'all';S.selPlate=S.conversationFilter==='all'?S.selPlate:S.conversationFilter;
+    if(S.conversationFilter!=='all'){const target=document.getElementById('iTarget');if(target)target.value=S.conversationFilter}
+    App.updateConversationTitle();App.loadMsgs()
+  },
+  _buildMsg(msg,myId){
+    const sent=msg.sender_id===myId,status=msg.status||'accepted',plateRaw=nPlate(msg.target_plate||''),plate=esc(plateRaw),text=esc(msg.message||''),time=msg.created_at?new Date(msg.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const lbl=sent?(status==='pending'?'⏳ Demande en attente — '+plate:'📤 Envoyé — '+plate):(status==='pending'?'📩 Demande de contact — '+plate:'🚗 Reçu — '+plate);
+    let acts='';
+    if(!sent&&msg.receiver_id===myId&&status==='pending')acts='<div class="macts"><button class="abtn2 acc" onclick="App._accept(\''+jsStr(msg.id)+'\',\''+jsStr(msg.sender_id)+'\',\''+jsStr(msg.target_plate||'')+'\')">✅ Accepter</button><button class="abtn2 rej" onclick="App._reject(\''+jsStr(msg.id)+'\')">❌ Refuser</button></div>';
+    let rbox='';
+    if(!sent&&status==='accepted'){const tid='ta_'+String(msg.id).replace(/[^a-zA-Z0-9_-]/g,''),bid='tb_'+String(msg.id).replace(/[^a-zA-Z0-9_-]/g,'');rbox='<div class="rbox"><textarea id="'+esc(tid)+'" placeholder="Réponse à la plaque '+plate+'…" rows="2"></textarea><button id="'+esc(bid)+'" class="rbox-btn" onclick="App._reply(\''+jsStr(msg.id)+'\',\''+jsStr(msg.sender_id)+'\',\''+jsStr(msg.target_plate||'')+'\',\''+jsStr(tid)+'\',\''+jsStr(bid)+'\')">Répondre à '+plate+' →</button></div>'}
+
+```
+const mini='<div class="mini-actions"><button class="abtn2 rej" onclick="App.blockPlate(\''+jsStr(plateRaw)+'\')">🚫 Bloquer '+plate+'</button><button class="abtn2 rej" onclick="App.reportPlate(\''+jsStr(plateRaw)+'\')">⚠️ Signaler '+plate+'</button></div>';
+return '<div class="msg '+(sent?'sent':'recv')+'"><div class="plate-ref">Plaque concernée : '+plate+'</div><div class="mlbl '+(sent?'':'r')+'">'+lbl+'</div><div class="mbody">'+text+'</div>'+acts+rbox+mini+'<div class="mtime">'+esc(time)+'</div></div>'
+```
+
+},
+async _accept(id,senderId,plate){
+if(!sb)return;
+try{
+const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;
+await sb.from(‘messages’).update({status:‘accepted’}).eq(‘id’,id).eq(‘receiver_id’,user.id);
+await sb.from(‘messages’).insert({sender_id:user.id,receiver_id:senderId,target_plate:plate,message:‘Votre demande de contact pour la plaque ‘+nPlate(plate)+’ a été acceptée. Vous pouvez maintenant échanger.’,status:‘accepted’});
+S.selPlate=nPlate(plate);S.conversationFilter=S.selPlate;document.getElementById(‘iTarget’).value=S.selPlate;App.updateConversationTitle();setReq(‘✅ Demande acceptée pour ‘+S.selPlate,‘ok’);toast(‘✅ Demande acceptée pour ‘+S.selPlate,‘ok’);beep();await App.loadMsgs()
+}catch(e){console.error(e);toast(‘Erreur lors de l'acceptation.’,‘bad’)}
+},
+async _reject(id){
+if(!sb)return;
+try{const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;await sb.from(‘messages’).update({status:‘rejected’}).eq(‘id’,id).eq(‘receiver_id’,user.id);setReq(‘Demande refusée.’,’’);toast(‘Demande refusée.’);await App.loadMsgs()}
+catch(e){console.error(e);toast(‘Erreur lors du refus.’,‘bad’)}
+},
+async _reply(msgId,receiverId,plate,taId,btnId){
+if(!sb)return;const ta=document.getElementById(taId);if(!ta)return;
+const text=ta.value.trim();
+if(!text){ta.style.borderColor=’#ff3b5c’;setTimeout(()=>{ta.style.borderColor=’’},1500);return}
+if(!canSendNow()){toast(‘Trop de messages envoyés. Attends un peu.’,‘bad’);return}
+const btn=document.getElementById(btnId);if(btn){btn.disabled=true;btn.textContent=‘Envoi…’}
+try{
+const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;
+const cleanPlate=nPlate(plate);
+const{error}=await sb.from(‘messages’).insert({sender_id:user.id,receiver_id:receiverId,target_plate:cleanPlate,message:text,status:‘accepted’});
+if(error){console.error(error);toast(‘Erreur envoi réponse.’,‘bad’);return}
+S.conversationFilter=cleanPlate;App.updateConversationTitle();ta.value=’’;toast(‘✅ Réponse envoyée à ‘+cleanPlate,‘ok’);await App.loadMsgs()
+}finally{if(btn){btn.disabled=false;btn.textContent=‘Répondre →’}}
+},
+blockPlate(plate){
+const p=nPlate(plate);if(!p)return;
+if(!confirm(‘Bloquer la plaque ‘+p+’ ? Ses messages seront masqués sur cet appareil.’))return;
+if(!S.blocked.includes(p))S.blocked.push(p);safeLocalSet(‘ic_blocked’,JSON.stringify(S.blocked));
+if(S.conversationFilter===p)S.conversationFilter=‘all’;toast(‘Plaque bloquée : ‘+p,‘ok’);App.renderBlocked();App.updateConversationTitle();App.loadMsgs();App.loadOthers()
+},
+unblockPlate(plate){
+const p=nPlate(plate);if(!p)return;S.blocked=S.blocked.filter(x=>x!==p);safeLocalSet(‘ic_blocked’,JSON.stringify(S.blocked));toast(‘Plaque débloquée : ‘+p,‘ok’);App.renderBlocked();App.loadMsgs();App.loadOthers()
+},
+renderBlocked(){
+const box=document.getElementById(‘blockedList’);if(!box)return;
+if(!S.blocked.length){box.innerHTML=’<div class="blocked-empty">Aucune plaque bloquée.</div>’;return}
+box.innerHTML=S.blocked.map(p=>’<div class="blocked-row"><div class="blocked-plate">’+esc(p)+’</div><button class="abtn2 acc" onclick="App.unblockPlate(\''+jsStr(p)+'\')">Débloquer</button></div>’).join(’’)
+},
+openBlocked(){App.renderBlocked();document.getElementById(‘blockedModal’)?.classList.add(‘show’)},
+closeBlocked(){document.getElementById(‘blockedModal’)?.classList.remove(‘show’)},
+async reportPlate(plate){
+if(!sb)return;const p=nPlate(plate);if(!p)return;
+const reason=prompt(‘Raison du signalement pour la plaque ‘+p+’ :’);if(!reason)return;
+try{
+const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user){toast(‘Tu dois être connecté pour signaler.’,‘bad’);return}
+const{error}=await sb.from(‘reports’).insert({reporter_id:user.id,plate:p,reason:reason.slice(0,500),created_at:new Date().toISOString()});
+if(error){console.error(error);toast(‘Erreur lors du signalement.’,‘bad’);return}
+toast(‘Signalement envoyé pour ‘+p+’.’,‘ok’);let n=Number((document.getElementById(‘nearCount’)?.textContent||‘0’).match(/\d+/)?.[0]||0)+1;App.updateNearCount(n)
+}catch(e){console.error(e);toast(‘Erreur lors du signalement.’,‘bad’)}
+},
+async *subMsgs(){
+if(!sb)return;const{data:ud}=await sb.auth.getUser();const user=ud?.user;if(!user)return;S.uid=user.id;
+if(S.chMsg){await sb.removeChannel(S.chMsg);S.chMsg=null}
+S.chMsg=sb.channel(’ic_msg*’+user.id).on(‘postgres_changes’,{event:’*’,schema:‘public’,table:‘messages’},payload=>{
+const msg=payload.new||payload.old;if(!msg)return;
+if(msg.sender_id!==user.id&&msg.receiver_id!==user.id)return;
+if(S.blocked.includes(nPlate(msg.target_plate)))return;
+if(payload.eventType===‘INSERT’&&msg.receiver_id===user.id){
+const p=nPlate(msg.target_plate);
+if(msg.status===‘pending’){toast(‘📩 Nouvelle demande pour la plaque ‘+p+’ !’,‘ok’);App.showBigNotif(‘📩 Nouvelle demande’,‘Plaque ‘+p+’ — toucher pour ouvrir’,p);App.showBadge();beep()}
+else if(String(msg.message||’’).includes(‘acceptée’)){toast(‘✅ Ta demande pour ‘+p+’ a été acceptée !’,‘ok’);App.showBigNotif(‘✅ Demande acceptée’,‘Plaque ‘+p+’ — toucher pour ouvrir’,p);beep()}
+else{toast(’💬 Nouveau message pour ‘+p,‘ok’);App.showBigNotif(‘💬 Nouveau message’,‘Plaque ‘+p+’ — toucher pour ouvrir’,p);App.showBadge();beep()}
+}
+App.loadMsgs()
+}).subscribe()
+},
+async _subLocs(){
+if(!sb)return;if(S.chLoc){await sb.removeChannel(S.chLoc);S.chLoc=null}
+S.chLoc=sb.channel(‘ic_loc’).on(‘postgres_changes’,{event:’*’,schema:‘public’,table:‘user_locations’},()=>{if(document.getElementById(‘sm’).classList.contains(‘active’))App.loadOthers()}).subscribe()
+},
+showBadge(){document.getElementById(‘msgBadge’)?.classList.add(‘show’)},
+hideBadge(){document.getElementById(‘msgBadge’)?.classList.remove(‘show’)},
+openLegal(){document.getElementById(‘legalModal’)?.classList.add(‘show’)},
+closeLegal(){document.getElementById(‘legalModal’)?.classList.remove(‘show’)},
+async logout(){
+if(!confirm(‘Veux-tu vraiment te déconnecter ? Ta position sera supprimée de la carte.’))return;
+if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}
+await App.deleteMyLocation();
+if(sb&&S.chMsg){await sb.removeChannel(S.chMsg);S.chMsg=null}
+if(sb&&S.chLoc){await sb.removeChannel(S.chLoc);S.chLoc=null}
+if(sb&&S.chReports){await sb.removeChannel(S.chReports);S.chReports=null}
+if(sb)await sb.auth.signOut();location.href=CFG.site
+},
+sos(){
+const ok1=confirm(‘Appel d'urgence 112. Continuer uniquement en cas de vraie urgence ?’);if(!ok1)return;
+const ok2=confirm(‘Confirmation finale : appeler le 112 maintenant ?’);if(ok2)window.location.href=‘tel:112’
+}
+};
+
+if(sb){sb.auth.onAuthStateChange((event,session)=>{
+if(event===‘PASSWORD_RECOVERY’){S.sessionDone=false;S.uid=session?.user?.id||null;show(‘sr’);return}
+if(event===‘SIGNED_IN’&&session){if(S.sessionDone)return;S.uid=session.user.id;S.sessionDone=true;setTimeout(()=>App._afterAuth(),0);return}
+if(event===‘SIGNED_OUT’){
+S.sessionDone=false;S.uid=null;S.selPlate=null;
+if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}
+if(S.chMsg){try{sb.removeChannel(S.chMsg)}catch(e){}S.chMsg=null}
+if(S.chLoc){try{sb.removeChannel(S.chLoc)}catch(e){}S.chLoc=null}
+if(S.chReports){try{sb.removeChannel(S.chReports)}catch(e){}S.chReports=null}
+show(‘sw’)
+}
+})}
+
+async function boot(){
+bindInputs();
+const r=document.getElementById(‘radiusSel’);if(r)r.value=String(S.radiusKm);
+App.refreshInvisibleBtn();App.refreshDriveBtn();App.updateConversationTitle();
+if(!sb){toast(‘Supabase non chargé. Vérifie ta connexion.’,‘bad’);show(‘sw’);return}
+const frag=(window.location.hash||’’)+(window.location.search||’’);
+if(frag.toLowerCase().includes(‘type=recovery’)){show(‘sr’);return}
+try{
+const{data:sd,error:se}=await sb.auth.getSession();
+if(se){console.error(‘boot getSession:’,se);show(‘sw’);return}
+const session=sd?.session;if(!session){show(‘sw’);return}
+S.uid=session.user.id;S.sessionDone=true;await App._afterAuth()
+}catch(e){console.error(e);show(‘sw’)}
+}
+boot();
 </script>
+
 </body>
 </html>
