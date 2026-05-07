@@ -91,9 +91,7 @@ cursor:default;
 .ft{font-size:13px;color:var(–muted2);line-height:1.5}
 
 .btn-stack{display:flex;flex-direction:column;gap:10px}
-.btn{width:100%;padding:16px 20px;border:none;border-radius:var(–r12);font-family:var(–fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(–t) var(–ease);position:relative;overflow:hidden}
-.btn::after{content:’’;position:absolute;inset:0;background:rgba(255,255,255,0);transition:background var(–t)}
-.btn:active::after{background:rgba(255,255,255,.08)}
+.btn{width:100%;padding:16px 20px;border:none;border-radius:var(–r12);font-family:var(–fui);font-size:15px;font-weight:600;cursor:pointer;transition:all var(–t) var(–ease);position:relative;-webkit-appearance:none;appearance:none;}
 .btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important}
 
 .btn-p{background:linear-gradient(135deg,var(–green),#00d68f);color:#06150f;font-weight:700;box-shadow:0 4px 24px rgba(0,255,179,.25),0 1px 0 rgba(255,255,255,.2) inset}
@@ -795,8 +793,8 @@ input:-webkit-autofill{
       <div class="feat-pill"><div class="fi">🚨</div><div class="ft">Messages rapides de sécurité routière</div></div>
     </div>
     <div class="btn-stack">
-      <button class="btn btn-p" onclick="App.goToAuth('signup')">Créer un compte</button>
-      <button class="btn btn-g" onclick="App.goToAuth('login')">J'ai déjà un compte</button>
+      <button class="btn btn-p" onclick="App.goToAuth('signup')" type="button">Créer un compte</button>
+      <button class="btn btn-g" onclick="App.goToAuth('login')" type="button">J'ai déjà un compte</button>
     </div>
   </div>
 </div>
@@ -864,8 +862,8 @@ input:-webkit-autofill{
         <div class="hint info" id="hConfirm">Min. 8 car., 1 majuscule, 1 caractère spécial</div>
       </div>
     </div>
-    <button id="authBtn" class="btn btn-p" onclick="App.handleAuth()">Se connecter</button>
-    <button class="btn btn-g mt8" onclick="App.backToWelcome()">← Retour</button>
+    <button id="authBtn" class="btn btn-p" onclick="App.handleAuth()" type="button">Se connecter</button>
+    <button class="btn btn-g mt8" onclick="App.backToWelcome()" type="button">← Retour</button>
     <div class="aux">
       <button class="lbtn" id="forgotBtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button>
       <button class="lbtn hidden" id="resendBtn" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button>
@@ -1118,7 +1116,7 @@ input:-webkit-autofill{
 
 <script>
 'use strict';
-window.onerror=function(msg,src,line){console.error('JS Error: '+msg+' line '+line)};
+window.onerror=function(msg,src,line){console.error('JS:'+msg+' L'+line)};
 function safeLocalGet(key,fallback){try{const v=localStorage.getItem(key);return v===null?fallback:v}catch(e){return fallback}}
 function safeLocalSet(key,value){try{localStorage.setItem(key,value)}catch(e){}}
 function safeJsonGet(key,fallback){try{const raw=localStorage.getItem(key);if(!raw)return fallback;const parsed=JSON.parse(raw);return Array.isArray(parsed)?parsed:fallback}catch(e){try{localStorage.removeItem(key)}catch(_){}return fallback}}
