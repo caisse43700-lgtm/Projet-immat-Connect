@@ -1143,7 +1143,7 @@ function hint(id,t,m){const e=document.getElementById(id);if(!e)return;e.classNa
 function ch(...ids){ids.forEach(id=>hint(id,'',''))}
 function mi(id,v){const e=document.getElementById(id);if(!e)return;e.classList.toggle('ok',v===true);e.classList.toggle('err',v===false)}
 function setSt(id,m,t){const e=document.getElementById(id);if(!e)return;e.textContent=m||'';e.className='st'+(t?' '+t:'')+(m?' show':'')}
-function sBtn(id,l,idle){const e=document.getElementById(id);if(!e)return;e.disabled=l;e.textContent=l?'Chargement…':idle}
+function sBtn(id,l,idle){const e=document.getElementById(id);if(!e)return;e.disabled=!!l;if(!l&&idle)e.textContent=idle;else if(l)e.textContent='Chargement…'}
 function setReq(m,t){const e=document.getElementById('reqSt');if(!e)return;e.textContent=m||'';e.className='rrow'+(t?' '+t:'')}
 
 let _tt=null;
@@ -1244,16 +1244,29 @@ const App={
   getPendingProfile(email){try{const raw=safeLocalGet('ic_pending_profile','');if(!raw)return null;const p=JSON.parse(raw);if(!p||p.email!==email)return null;return p}catch(e){return null}},
   clearPendingProfile(){try{localStorage.removeItem('ic_pending_profile')}catch(e){}},
   async handleAuth(){
-    if(!sb){setSt('authSt','Supabase n\'est pas chargé. Vérifie ta connexion.','err');return}
-    setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');
-    const email=document.getElementById('iEmail').value.trim(),pwd=document.getElementById('iPwd').value;
-    if(!email){hint('hEmail','err','Requis.');return}
-    if(!pwd){hint('hPwd','err','Requis.');return}
-    const btn=document.getElementById('authBtn'),idle=S.mode==='signup'?'Créer mon compte':'Se connecter';
-    btn.disabled=true;btn.textContent=S.mode==='signup'?'Création…':'Connexion…';
-    try{if(S.mode==='signup')await App._signup(email,pwd);else await App._login(email,pwd)}
-    catch(e){console.error(e);setSt('authSt','Erreur inattendue : '+String(e?.message||''),'err')}
-    finally{btn.disabled=false;btn.textContent=idle}
+    const btn=document.getElementById('authBtn');
+    const idle=S.mode==='signup'?'Créer mon compte':'Se connecter';
+    // Sécurité : toujours réactiver le bouton même si crash
+    const unlock=()=>{if(btn){btn.disabled=false;btn.textContent=idle}};
+    try{
+      if(!sb){setSt('authSt','❌ Supabase non chargé. Vérifie ta connexion internet.','err');return}
+      setSt('authSt','');ch('hEmail','hPhone','hPlate','hPwd','hConfirm','hColor');
+      const email=document.getElementById('iEmail').value.trim();
+      const pwd=document.getElementById('iPwd').value;
+      if(!email){hint('hEmail','err','Requis.');return}
+      if(!pwd){hint('hPwd','err','Requis.');return}
+      if(btn){btn.disabled=true;btn.textContent=S.mode==='signup'?'Création…':'Connexion…'}
+      // Timeout 15s pour éviter blocage infini
+      const timeoutId=setTimeout(()=>{unlock();setSt('authSt','⏱ Délai dépassé. Vérifie ta connexion et réessaie.','err')},15000);
+      try{
+        if(S.mode==='signup')await App._signup(email,pwd);
+        else await App._login(email,pwd);
+      }finally{clearTimeout(timeoutId);unlock()}
+    }catch(e){
+      console.error('handleAuth error:',e);
+      setSt('authSt','Erreur : '+String(e?.message||'Erreur inattendue'),'err');
+      unlock();
+    }
   },
   async _signup(email,pwd){
     const phoneRaw=document.getElementById('iPhone').value.trim(),plateRaw=document.getElementById('iPlate').value.trim(),color=document.getElementById('iColor').value,confirm=document.getElementById('iConfirm').value;
