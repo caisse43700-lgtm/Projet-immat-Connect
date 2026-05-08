@@ -1,209 +1,161 @@
-from pathlib import Path
-
-html = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ImmatConnect V2</title>
-
-<!--
-STRUCTURE PROPRE V2
-- Base stable
-- Architecture modulaire
-- Préparée pour Supabase
-- Préparée pour Leaflet
-- Préparée pour PWA
--->
+<title>Immaticonnect</title>
 
 <style>
-:root{
-  --bg:#0b0f18;
-  --card:#141b27;
-  --line:#243046;
-  --green:#00ffb3;
-  --text:#edf2ff;
-  --muted:#95a2bf;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
 }
-
-*{box-sizing:border-box;margin:0;padding:0}
 
 body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,sans-serif;
+    background:#020817;
+    color:white;
+    padding:20px;
 }
 
-header{
-  padding:20px;
-  border-bottom:1px solid var(--line);
-}
-
-.logo{
-  font-size:32px;
-  font-weight:900;
-}
-
-.logo span{
-  color:var(--green);
-}
-
-main{
-  padding:20px;
+.container{
+    max-width:430px;
+    margin:auto;
 }
 
 .card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:20px;
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:28px;
+    padding:24px;
+    margin-bottom:24px;
+    box-shadow:0 0 20px rgba(0,0,0,.25);
+}
+
+h2{
+    color:#94a3b8;
+    letter-spacing:2px;
+    font-size:22px;
+    margin-bottom:22px;
+    text-transform:uppercase;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    background:#020617;
+    border:1px solid #22304a;
+    color:white;
+    padding:18px;
+    border-radius:18px;
+    margin-bottom:18px;
+    font-size:16px;
+}
+
+textarea{
+    min-height:120px;
+    resize:none;
 }
 
 button{
-  background:var(--green);
-  border:none;
-  color:#06150f;
-  padding:12px 18px;
-  border-radius:12px;
-  font-weight:700;
-  cursor:pointer;
+    background:#10f0b0;
+    border:none;
+    color:black;
+    font-weight:bold;
+    padding:16px 28px;
+    border-radius:18px;
+    font-size:18px;
+    cursor:pointer;
 }
 
-input, textarea, select{
-  width:100%;
-  margin-top:10px;
-  margin-bottom:14px;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  background:#0f1521;
-  color:white;
+.quick-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
 }
 
-#map{
-  height:420px;
-  border-radius:20px;
-  border:1px solid var(--line);
+.quick-actions button{
+    flex:1;
+    min-width:140px;
 }
 
-.section-title{
-  margin-bottom:14px;
-  color:var(--muted);
-  text-transform:uppercase;
-  font-size:12px;
-  letter-spacing:1px;
+.map{
+    height:260px;
+    border-radius:22px;
+    border:1px solid #22304a;
+    background:#071126;
+}
+
+.footer{
+    text-align:center;
+    color:#64748b;
+    margin-top:30px;
+    font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">Immat<span>Connect</span></div>
-</header>
+<div class="container">
 
-<main>
+    <div class="card">
+        <h2>Connexion</h2>
 
-  <!-- AUTH -->
-  <section class="card">
-    <div class="section-title">Connexion</div>
+        <input type="email" placeholder="Email">
+        <input type="password" placeholder="Mot de passe">
 
-    <input type="email" placeholder="Email">
-    <input type="password" placeholder="Mot de passe">
+        <button>Connexion</button>
+    </div>
 
-    <button>Connexion</button>
-  </section>
+    <div class="card">
+        <h2>Profil conducteur</h2>
 
-  <!-- PROFIL -->
-  <section class="card">
-    <div class="section-title">Profil conducteur</div>
+        <input type="text" placeholder="Pseudo">
+        <input type="text" placeholder="AB-123-CD">
+        <input type="tel" placeholder="0612345678">
 
-    <input type="text" placeholder="Pseudo">
-    <input type="text" placeholder="AB-123-CD">
-    <input type="tel" placeholder="0612345678">
+        <select>
+            <option>Choisir un véhicule</option>
+            <option>Citadine</option>
+            <option>SUV</option>
+            <option>Utilitaire</option>
+        </select>
 
-    <select>
-      <option>Couleur du véhicule</option>
-      <option>Blanc</option>
-      <option>Noir</option>
-      <option>Gris</option>
-      <option>Bleu</option>
-      <option>Rouge</option>
-    </select>
+        <button>Enregistrer</button>
+    </div>
 
-    <button>Enregistrer</button>
-  </section>
+    <div class="card">
+        <h2>Carte temps réel</h2>
+        <div class="map"></div>
+    </div>
 
-  <!-- MAP -->
-  <section class="card">
-    <div class="section-title">Carte temps réel</div>
+    <div class="card">
+        <h2>Messagerie plaque</h2>
 
-    <div id="map"></div>
-  </section>
+        <input type="text" placeholder="Plaque cible">
+        <textarea placeholder="Votre message"></textarea>
 
-  <!-- MESSAGES -->
-  <section class="card">
-    <div class="section-title">Messagerie plaque</div>
+        <button>Envoyer</button>
+    </div>
 
-    <input type="text" placeholder="Plaque cible">
-    <textarea placeholder="Votre message"></textarea>
+    <div class="card">
+        <h2>Actions rapides</h2>
 
-    <button>Envoyer</button>
-  </section>
+        <div class="quick-actions">
+            <button>🚨 Signalement</button>
+            <button>🚗 Mode conduite</button>
+            <button>👻 Invisible</button>
+        </div>
+    </div>
 
-  <!-- QUICK ACTIONS -->
-  <section class="card">
-    <div class="section-title">Actions rapides</div>
+    <div class="footer">
+        Immaticonnect © 2026
+    </div>
 
-    <button>🚨 Signalement</button>
-    <button>🚘 Mode conduite</button>
-    <button>👻 Invisible</button>
-  </section>
-
-</main>
-
-<script>
-/*
-=========================================================
-IMMATCONNECT V2
-ARCHITECTURE PROPRE
-=========================================================
-
-MODULES À AJOUTER :
-
-1. AUTH SUPABASE
-2. PROFILS
-3. GEOLOCALISATION
-4. LEAFLET MAP
-5. REALTIME
-6. CONVERSATIONS
-7. SIGNALMENTS
-8. BLOCAGE PLAQUES
-9. NOTIFICATIONS
-10. MODE CONDUITE
-11. PWA
-12. CACHE OFFLINE
-13. PUSH NOTIFICATIONS
-14. SÉCURITÉ
-15. RATE LIMIT
-16. ANTI-SPAM
-17. MODERATION
-18. API VEHICULES
-19. UI MOBILE
-20. OPTIMISATION
-
-=========================================================
-*/
-
-console.log("ImmatConnect V2 chargé");
-</script>
+</div>
 
 </body>
 </html>
-'''
-
-path = Path("/mnt/data/immaticonnect_v2.html")
-path.write_text(html, encoding="utf-8")
-
-print(f"Fichier créé : {path}")
