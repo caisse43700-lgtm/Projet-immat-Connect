@@ -454,6 +454,35 @@ body.ui-input-focus .speed{
   font-weight:700;
 }
 
+
+/* ===== CORRECTIF FINAL : SUPPRESSION CERCLE GPS + PANNEAUX EXCLUSIFS + ALERTES DESACTIVABLES ===== */
+.radar-box,.radar-me,.radar-dot{display:none!important}
+.leaflet-interactive[stroke="#00bcd4"],
+.leaflet-interactive[fill="#00e5ff"],
+.leaflet-interactive[stroke="#3388ff"],
+.leaflet-interactive[fill="#3388ff"]{display:none!important}
+
+.active-alerts-panel{
+  position:absolute;z-index:1325;left:12px;right:12px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 104px);
+  background:#fff;color:#10161d;border-radius:24px;padding:12px;
+  box-shadow:0 18px 55px rgba(0,0,0,.24);display:none;max-height:42vh;overflow:auto
+}
+.active-alerts-panel.show{display:block}
+.active-alerts-panel b{display:block;font-size:18px;margin-right:32px}
+.alert-list{display:grid;gap:8px;margin-top:10px}
+.alert-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f3f6f9;border:1px solid #e2e8ef;border-radius:16px;padding:10px}
+.alert-item small{color:#667383}
+.alert-item button{border-radius:12px;background:#ffe8ed;color:#cf0035;padding:8px 10px;font-size:12px;font-weight:900}
+
+
+/* ===== PACK QUALITE CODE / STABILITE UI ===== */
+.is-hidden{display:none!important}
+.is-open{display:block!important}
+body.keyboard-open .pro-actions,
+body.keyboard-open .speed{display:none!important}
+button:disabled{opacity:.45!important;pointer-events:none!important}
+
 </style></head><body>
 <section id="sw" class="screen center active"><div class="card"><div class="brand">Immat<span>Connect</span></div><button type="button" class="btn primary" onclick="App.goToAuth('login')">Se connecter</button><button type="button" class="btn ghost" onclick="App.goToAuth('signup')">Créer un compte</button></div></section>
 <section id="sa" class="screen center"><div class="card"><div class="ttl" id="authTitle">Connexion</div><div class="sub" id="authSub">Connecte-toi avec ton email et ton mot de passe.</div><div class="tabs"><button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button><button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="lbl">Email</label><input id="iEmail" class="inp" type="email" placeholder="ton@email.com"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="lbl">Téléphone</label><input id="iPhone" class="inp" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="lbl">Immatriculation</label><input id="iPlate" class="inp" placeholder="AB-123-CD" maxlength="9"><div id="hPlate" class="hint"></div></div><div class="field"><label class="lbl">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="lbl">Mot de passe</label><div class="iw"><input id="iPwd" class="inp pr" type="password" placeholder="••••••••"><button class="eye" type="button" onclick="toggleEye('iPwd',this)">👁</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="hidden"><div class="field"><label class="lbl">Confirmer</label><div class="iw"><input id="iConfirm" class="inp pr" type="password" placeholder="••••••••"><button class="eye" type="button" onclick="toggleEye('iConfirm',this)">👁</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div></div><button id="authBtn" class="btn primary" onclick="App.handleAuth()">Se connecter</button><button class="btn ghost" onclick="App.backToWelcome()">← Retour</button><div style="text-align:center"><button class="lbtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button id="resendBtn" class="lbtn hidden" onclick="App.resendConfirm()">Renvoyer l'email</button></div><div id="authSt" class="st"></div></div></section>
@@ -465,7 +494,7 @@ body.ui-input-focus .speed{
   <button class="report" title="Signaler la route" onclick="App.openRoadReport()">⚠️</button>
   <button class="center" title="Recentrer" onclick="App.recenter()">🎯</button><button class="nearby-btn" title="Conducteurs proches" onclick="App.openNearbyDrivers()">👥</button>
   <button class="view" title="Vue GPS" onclick="App.toggleViewMenu()">🗺</button>
-  <button title="Assistance" onclick="App.openAssist()">🆘</button>
+  <button title="Assistance" onclick="App.openAssist()">🆘</button><button title="Alertes actives" onclick="App.openActiveAlerts()">✅</button>
 </div>
 <div id="viewMenu" class="view-menu">
   <button onclick="App.setMapMode('2d')">🗺 Vue 2D</button>
@@ -486,7 +515,7 @@ body.ui-input-focus .speed{
     <button onclick="App.closeAssist()">Annuler</button>
   </div>
 </div>
-<div id="nearbyPanel" class="nearby-panel"><button type="button" class="close-x" onclick="App.closeNearbyDrivers()">×</button><b>Conducteurs proches</b><small>Les véhicules connectés autour de toi apparaissent ici et sur la carte.</small><div id="nearbyList" class="nearby-list"><div class="empty">Charge les conducteurs proches…</div></div></div><div id="sheet" class="sheet"><button type="button" class="sheet-close" onclick="App.closeBottomSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="nav"><button id="tabDrive" class="on" onclick="App.setPanel('drive')">GPS</button><button id="tabContact" onclick="App.setPanel('contact')">Message</button><button id="tabMessages" onclick="App.setPanel('messages')">Inbox</button><button id="tabSettings" onclick="App.setPanel('settings')">Options</button></div><div id="panelDrive" class="panel on"><div class="section">Navigation</div><div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.openGpsSearch()">🧭 Chercher</button><button class="act" onclick="App.openFavorites()">⭐ Favoris</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.toggleMapView()">🗺 Vue 2D</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button></div><div id="driveInfo" class="st"></div></div><div id="panelContact" class="panel"><div class="section">Contacter un véhicule</div><div class="row"><input id="iTarget" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="act primary" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="inp lightInp" placeholder="Message court et utile…"></textarea><div class="voice-mini"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMessage()">🎙 Message</button></div><div id="hMsg" class="hint"></div><div class="quick"><button class="q red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite visible sur votre véhicule.')">Fumée</button><button class="q red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble dangereuse.')">Roue</button><button class="q orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button><button class="q orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne fonctionne pas.')">Feu HS</button><button class="q green" onclick="App.quickMsg('ℹ️ Vos feux semblent restés allumés.')">Feux</button><button class="q green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div><button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button><div id="reqSt" class="hint"></div></div><div id="panelMessages" class="panel"><div class="section">Messages</div><div id="convbar" class="convbar"></div><div class="msg-tools"><button onclick="App.markConversationRead()">Marquer lu</button><button class="danger" onclick="App.deleteCurrentConversation()">Supprimer conversation</button></div><div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div><div class="quick-reply-row"><button onclick="App.quickReply('Merci, je vérifie.')">Merci, je vérifie</button><button onclick="App.quickReply('Pouvez-vous préciser ?')">Pouvez-vous préciser ?</button><button onclick="App.quickReply('Je suis au véhicule.')">Je suis au véhicule</button><button onclick="App.quickReply('Bien reçu, merci.')">Bien reçu</button></div></div><div id="panelSettings" class="panel"><div class="section">Options</div><div class="grid"><button class="act" data-hide-duplicate="true" onclick="App.openReportPanel()">⚠️ Signaler</button><button class="act" onclick="App.openRoadReport()">⚠️ Route</button><button class="act" onclick="App.openReportPanel()">🚗 Véhicule</button><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.exportDebug()">🧪 Diagnostic</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button><button class="act" onclick="App.toggleNightMode()">🌙 Nuit</button><button class="act" onclick="App.toggleRadar()">📡 Radar</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div></section>
+<div id="nearbyPanel" class="nearby-panel"><button type="button" class="close-x" onclick="App.closeNearbyDrivers()">×</button><b>Conducteurs proches</b><small>Les véhicules connectés autour de toi apparaissent ici et sur la carte.</small><div id="nearbyList" class="nearby-list"><div class="empty">Charge les conducteurs proches…</div></div></div><div id="activeAlertsPanel" class="active-alerts-panel"><button type="button" class="close-x" onclick="App.closeActiveAlerts()">×</button><b>Alertes actives</b><small>Désélectionne ce qui est passé ou plus utile.</small><div id="activeAlertsList" class="alert-list"><div class="empty">Aucune alerte active.</div></div></div><div id="sheet" class="sheet"><button type="button" class="sheet-close" onclick="App.closeBottomSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="nav"><button id="tabDrive" class="on" onclick="App.setPanel('drive')">GPS</button><button id="tabContact" onclick="App.setPanel('contact')">Message</button><button id="tabMessages" onclick="App.setPanel('messages')">Inbox</button><button id="tabSettings" onclick="App.setPanel('settings')">Options</button></div><div id="panelDrive" class="panel on"><div class="section">Navigation</div><div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.openGpsSearch()">🧭 Chercher</button><button class="act" onclick="App.openFavorites()">⭐ Favoris</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.toggleMapView()">🗺 Vue 2D</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button></div><div id="driveInfo" class="st"></div></div><div id="panelContact" class="panel"><div class="section">Contacter un véhicule</div><div class="row"><input id="iTarget" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="act primary" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="inp lightInp" placeholder="Message court et utile…"></textarea><div class="voice-mini"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMessage()">🎙 Message</button></div><div id="hMsg" class="hint"></div><div class="quick"><button class="q red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite visible sur votre véhicule.')">Fumée</button><button class="q red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble dangereuse.')">Roue</button><button class="q orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button><button class="q orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne fonctionne pas.')">Feu HS</button><button class="q green" onclick="App.quickMsg('ℹ️ Vos feux semblent restés allumés.')">Feux</button><button class="q green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div><button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button><div id="reqSt" class="hint"></div></div><div id="panelMessages" class="panel"><div class="section">Messages</div><div id="convbar" class="convbar"></div><div class="msg-tools"><button onclick="App.markConversationRead()">Marquer lu</button><button class="danger" onclick="App.deleteCurrentConversation()">Supprimer conversation</button></div><div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div><div class="quick-reply-row"><button onclick="App.quickReply('Merci, je vérifie.')">Merci, je vérifie</button><button onclick="App.quickReply('Pouvez-vous préciser ?')">Pouvez-vous préciser ?</button><button onclick="App.quickReply('Je suis au véhicule.')">Je suis au véhicule</button><button onclick="App.quickReply('Bien reçu, merci.')">Bien reçu</button></div></div><div id="panelSettings" class="panel"><div class="section">Options</div><div class="grid"><button class="act" data-hide-duplicate="true" onclick="App.openReportPanel()">⚠️ Signaler</button><button class="act" onclick="App.openRoadReport()">⚠️ Route</button><button class="act" onclick="App.openReportPanel()">🚗 Véhicule</button><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.exportDebug()">🧪 Diagnostic</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button><button class="act" onclick="App.toggleNightMode()">🌙 Nuit</button><button class="act" onclick="App.toggleRadar()">📡 Radar</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div></section>
 <div id="drawer" class="drawer"><div class="back" onclick="App.closeDrawer()"></div><div class="drawerCard"><h2>Menu</h2><p class="pseudo">GPS, communication et sécurité.</p><div class="menu"><button onclick="App.closeDrawer();App.setPanel('drive')">GPS <span>🧭</span></button><button onclick="App.closeDrawer();App.setPanel('contact')">Contacter <span>💬</span></button><button onclick="App.closeDrawer();App.setPanel('messages')">Messages <span>📩</span></button><button onclick="App.closeDrawer();App.toggleMapView()">Vue conduite / 2D <span>🗺</span></button><button onclick="App.closeDrawer();App.stopGps()">Stop GPS <span>⏹</span></button><button onclick="App.closeDrawer();App.toggleInvisible()">Invisible <span>👻</span></button><button onclick="App.closeDrawer();App.openRecent()">Récents <span>🕘</span></button><button onclick="App.closeDrawer();App.openBlocked()">Bloqués <span>🚫</span></button><button onclick="App.closeDrawer();App.logout()">Déconnexion <span>⏻</span></button></div></div></div>
 <div id="legal" class="modal"><div class="back" onclick="App.closeLegal()"></div><div class="modalCard"><h2>Confidentialité</h2><p>Ton téléphone n’est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><p>Les notifications hors application nécessitent une PWA/Service Worker côté hébergement. Les notifications navigateur sont préparées.</p><button class="btn primary" onclick="App.closeLegal()">J’ai compris</button></div></div><div id="blocked" class="modal"><div class="back" onclick="App.closeBlocked()"></div><div class="modalCard"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button class="btn ghost close-light" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="back" onclick="App.closeRecent()"></div><div class="modalCard"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><button class="btn ghost close-light" onclick="App.closeRecent()">Fermer</button></div></div><div id="reportModal" class="modal"><div class="back" onclick="App.closeReport()"></div><div class="modalCard"><h2>Signaler un problème</h2><p class="pseudo">Choisis une raison claire. Le signalement reste lié à la plaque concernée.</p><div class="report-target"><input id="reportPlate" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="tiny ok" onclick="App.useTargetForReport()">Plaque actuelle</button></div><div class="report-grid"><button class="report-choice" data-report-type="danger_route" onclick="App.selectReportType('danger_route',this)">🚧 Danger sur route</button><button class="report-choice" data-report-type="conduite_dangereuse" onclick="App.selectReportType('conduite_dangereuse',this)">⚠️ Conduite dangereuse</button><button class="report-choice" data-report-type="vehicule_gene" onclick="App.selectReportType('vehicule_gene',this)">🚗 Véhicule gênant</button><button class="report-choice" data-report-type="feu_hs" onclick="App.selectReportType('feu_hs',this)">💡 Feu / clignotant HS</button><button class="report-choice" data-report-type="pneu" onclick="App.selectReportType('pneu',this)">🛞 Pneu / roue</button><button class="report-choice" data-report-type="fumee_fuite" onclick="App.selectReportType('fumee_fuite',this)">🚨 Fumée / fuite</button><button class="report-choice" data-report-type="coffre_porte" onclick="App.selectReportType('coffre_porte',this)">🚪 Coffre / porte</button><button class="report-choice" data-report-type="autre" onclick="App.selectReportType('autre',this)">✍️ Autre</button></div><div class="report-levels"><button class="report-level info on" data-report-level="info" onclick="App.selectReportLevel('info',this)">Info</button><button class="report-level warn" data-report-level="important" onclick="App.selectReportLevel('important',this)">Important</button><button class="report-level danger" data-report-level="urgent" onclick="App.selectReportLevel('urgent',this)">Urgent</button></div><textarea id="reportNote" class="report-note" placeholder="Note facultative : détail du problème, lieu, précision utile…"></textarea><div id="reportPreview" class="report-preview">Aucun type sélectionné.</div><button class="btn primary" onclick="App.submitReportPro()">Envoyer le signalement</button><button class="btn ghost close-light" onclick="App.closeReport()">Annuler</button></div></div><div id="favorites" class="modal"><div class="back" onclick="App.closeFavorites()"></div><div class="modalCard"><h2>Favoris GPS</h2><p class="pseudo">Enregistre et relance rapidement tes destinations fréquentes.</p><div class="premium-row"><button class="act primary" onclick="App.saveCurrentDestination()">⭐ Ajouter destination actuelle</button><button class="act" onclick="App.openGpsSearch();App.closeFavorites()">🔎 Chercher</button></div><div id="favoritesList" class="fav-list"></div><button class="btn ghost close-light" onclick="App.closeFavorites()">Fermer</button></div></div><div id="reportChoice" class="modal"><div class="back" onclick="App.closeReportChoice()"></div><div class="modalCard"><button type="button" class="close-x" onclick="App.closeReportChoice()">×</button><h2>Que veux-tu signaler ?</h2><p class="pseudo">Choisis le bon type pour éviter les doublons.</p><div class="report-choice-card"><button onclick="App.chooseRoadReport()">⚠️ Problème sur la route<small>Accident, bouchon, travaux, obstacle, contrôle, véhicule arrêté. Visible par les conducteurs autour.</small></button><button onclick="App.chooseVehicleReport()">🚗 Problème sur un véhicule<small>Feu HS, pneu, fumée, coffre ouvert. À utiliser après avoir sélectionné ou saisi une plaque.</small></button></div></div></div><div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
 <script>
@@ -1274,6 +1303,253 @@ App.removeGpsBlueDot=function(){
 if(!App._blueDotInterval){
   App._blueDotInterval=setInterval(()=>App.removeGpsBlueDot(),800);
 }
+
+
+/* ===== CORRECTIF FINAL : CERCLE GPS / ALERTES / PANNEAUX EXCLUSIFS ===== */
+App.closePanelsOnly=function(except){
+  const ids=['route','inst','roadReportPanel','assistPanel','viewMenu','nearbyPanel','activeAlertsPanel','reportModal','reportChoice','favorites','recent','blocked','legal','drawer'];
+  ids.forEach(id=>{if(id!==except)$(id)?.classList.remove('show')});
+};
+
+(function(){
+  const wrap=(name,id)=>{
+    const old=App[name]?.bind(App);
+    if(!old||App['_exclusive_'+name])return;
+    App['_exclusive_'+name]=true;
+    App[name]=function(...args){
+      this.closePanelsOnly(id);
+      const r=old(...args);
+      setTimeout(()=>this.updateFloatingVisibility?.(),50);
+      return r;
+    };
+  };
+  wrap('openGpsSearch','route');
+  wrap('openRoadReport','roadReportPanel');
+  wrap('openAssist','assistPanel');
+  wrap('openNearbyDrivers','nearbyPanel');
+  wrap('openFavorites','favorites');
+  wrap('openRecent','recent');
+  wrap('openBlocked','blocked');
+  wrap('openLegal','legal');
+  wrap('openReportPanel','reportModal');
+  wrap('openReportChoice','reportChoice');
+})();
+
+App.removeGpsBlueDot=function(){
+  try{
+    document.querySelectorAll('path.leaflet-interactive,circle.leaflet-interactive').forEach(el=>{
+      const stroke=(el.getAttribute('stroke')||'').toLowerCase();
+      const fill=(el.getAttribute('fill')||'').toLowerCase();
+      if(stroke.includes('00bcd4')||fill.includes('00e5ff')||stroke.includes('3388ff')||fill.includes('3388ff')){
+        el.remove();
+      }
+    });
+  }catch(e){}
+};
+if(!App._removeBlueDotForever){App._removeBlueDotForever=setInterval(()=>App.removeGpsBlueDot(),500)}
+
+S.radar=false;
+try{set('ic_radar','0')}catch(e){}
+App.toggleRadar=function(){S.radar=false;try{set('ic_radar','0')}catch(e){};toast('Radar circulaire supprimé.','ok')};
+
+S.activeAlerts=S.activeAlerts||jget('ic_active_alerts',[]);
+App.saveActiveAlerts=function(){try{set('ic_active_alerts',JSON.stringify(S.activeAlerts||[]))}catch(e){}};
+App.addActiveAlert=function(type,label,lat,lng,marker){
+  const id='al_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+  S.activeAlerts=S.activeAlerts||[];
+  S.activeAlerts.unshift({id,type,label,lat,lng,at:Date.now(),markerId:id});
+  if(marker)marker._immatAlertId=id;
+  S.activeAlerts=S.activeAlerts.slice(0,30);
+  this.saveActiveAlerts();this.renderActiveAlerts();return id;
+};
+App.openActiveAlerts=function(){
+  this.closePanelsOnly('activeAlertsPanel');
+  $('activeAlertsPanel')?.classList.add('show');
+  this.renderActiveAlerts();this.updateFloatingVisibility?.();
+};
+App.closeActiveAlerts=function(){$('activeAlertsPanel')?.classList.remove('show');this.updateFloatingVisibility?.()};
+App.renderActiveAlerts=function(){
+  const list=$('activeAlertsList');if(!list)return;
+  const rows=S.activeAlerts||[];
+  if(!rows.length){list.innerHTML='<div class="empty">Aucune alerte active.</div>';return}
+  list.innerHTML=rows.map(a=>{
+    const time=new Date(a.at||Date.now()).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="alert-item"><span><b>'+esc(a.label||a.type||'Alerte')+'</b><br><small>'+esc(time)+' · Retire si c’est passé</small></span><button onclick="App.dismissAlert(\''+js(a.id)+'\')">Retirer</button></div>';
+  }).join('');
+};
+App.dismissAlert=function(id){
+  S.activeAlerts=(S.activeAlerts||[]).filter(a=>a.id!==id);
+  try{
+    (S.roadMkrs||[]).forEach(m=>{if(m&&m._immatAlertId===id&&S.map){S.map.removeLayer(m)}});
+    S.roadMkrs=(S.roadMkrs||[]).filter(m=>m&&m._immatAlertId!==id);
+  }catch(e){}
+  this.saveActiveAlerts();this.renderActiveAlerts();toast('Alerte retirée.','ok');
+};
+
+if(!App._alertMarkerWrapped){
+  App._alertMarkerWrapped=true;
+  const oldAdd=App.addRoadMarker?.bind(App);
+  App.addRoadMarker=function(type,lat,lng){
+    const before=(S.roadMkrs||[]).length;
+    const r=oldAdd?oldAdd(type,lat,lng):null;
+    const mk=(S.roadMkrs||[])[before]||(S.roadMkrs||[]).slice(-1)[0];
+    const label=(this.roadLabels&&this.roadLabels[type])?this.roadLabels[type]:type;
+    if(mk&&!mk._immatAlertId)this.addActiveAlert(type,label,lat,lng,mk);
+    return r;
+  };
+}
+
+if(!App._sosWrappedFinal){
+  App._sosWrappedFinal=true;
+  const oldSos=App.sos?.bind(App);
+  App.sos=function(){
+    if(S.myLat!==null&&S.myLng!==null){
+      this.addRoadMarker?.('danger',S.myLat,S.myLng);
+      this.addActiveAlert('sos','SOS / urgence',S.myLat,S.myLng,null);
+    }
+    return oldSos?oldSos():null;
+  };
+}
+setTimeout(()=>App.renderActiveAlerts?.(),800);
+
+
+/* ===== PACK QUALITE CODE / STABILITE JS ===== */
+window.IC = window.IC || {};
+
+IC.$ = function(id){ return document.getElementById(id); };
+IC.show = function(id){ const e=IC.$(id); if(e)e.classList.add('show'); };
+IC.hide = function(id){ const e=IC.$(id); if(e)e.classList.remove('show'); };
+
+IC.panels = [
+  'route','inst','roadReportPanel','assistPanel','viewMenu','nearbyPanel',
+  'activeAlertsPanel','reportModal','reportChoice','favorites','recent',
+  'blocked','legal','drawer'
+];
+
+IC.closePanels = function(except){
+  IC.panels.forEach(id=>{
+    if(id!==except){
+      const e=IC.$(id);
+      if(e)e.classList.remove('show');
+    }
+  });
+  App?.updateFloatingVisibility?.();
+};
+
+IC.safeJsonSet = function(key,value){
+  try{ localStorage.setItem(key,JSON.stringify(value)); }catch(e){}
+};
+
+IC.safeJsonGet = function(key,fallback){
+  try{
+    const v=localStorage.getItem(key);
+    return v?JSON.parse(v):fallback;
+  }catch(e){ return fallback; }
+};
+
+App.closePanelsOnly = function(except){ IC.closePanels(except); };
+
+App.openPanelSafe = function(id){
+  IC.closePanels(id);
+  IC.show(id);
+  this.updateFloatingVisibility?.();
+};
+
+App.closePanelSafe = function(id){
+  IC.hide(id);
+  this.updateFloatingVisibility?.();
+};
+
+App.closeGpsSearch = function(){ this.closePanelSafe('route'); };
+App.closeInstruction = function(){ this.closePanelSafe('inst'); };
+App.closeRoadReport = function(){ this.closePanelSafe('roadReportPanel'); };
+App.closeAssist = function(){ this.closePanelSafe('assistPanel'); };
+App.closeNearbyDrivers = function(){ this.closePanelSafe('nearbyPanel'); };
+App.closeActiveAlerts = function(){ this.closePanelSafe('activeAlertsPanel'); };
+App.closeReportChoice = function(){ this.closePanelSafe('reportChoice'); };
+
+if(!App._qualityOpeners){
+  App._qualityOpeners=true;
+  const mapOpeners = {
+    openRoadReport:'roadReportPanel',
+    openAssist:'assistPanel',
+    openNearbyDrivers:'nearbyPanel',
+    openActiveAlerts:'activeAlertsPanel',
+    openReportChoice:'reportChoice',
+    openFavorites:'favorites',
+    openRecent:'recent',
+    openBlocked:'blocked',
+    openLegal:'legal'
+  };
+  Object.keys(mapOpeners).forEach(fn=>{
+    const old=App[fn]?.bind(App);
+    if(!old)return;
+    App[fn]=async function(...args){
+      IC.closePanels(mapOpeners[fn]);
+      const result=await old(...args);
+      IC.show(mapOpeners[fn]);
+      this.updateFloatingVisibility?.();
+      return result;
+    };
+  });
+}
+
+if(!IC.keyboardHandlerInstalled){
+  IC.keyboardHandlerInstalled=true;
+  document.addEventListener('focusin',e=>{
+    const tag=(e.target?.tagName||'').toLowerCase();
+    if(['input','textarea','select'].includes(tag)){
+      document.body.classList.add('keyboard-open');
+    }
+  });
+  document.addEventListener('focusout',e=>{
+    const tag=(e.target?.tagName||'').toLowerCase();
+    if(['input','textarea','select'].includes(tag)){
+      setTimeout(()=>document.body.classList.remove('keyboard-open'),220);
+    }
+  });
+}
+
+App.removeGpsBlueDot = function(){
+  try{
+    document.querySelectorAll('path.leaflet-interactive,circle.leaflet-interactive').forEach(el=>{
+      const stroke=(el.getAttribute('stroke')||'').toLowerCase();
+      const fill=(el.getAttribute('fill')||'').toLowerCase();
+      if(stroke.includes('00bcd4') || fill.includes('00e5ff') || stroke.includes('3388ff') || fill.includes('3388ff')){
+        el.remove();
+      }
+    });
+  }catch(e){}
+};
+
+if(!App._qualityBlueDotCleaner){
+  App._qualityBlueDotCleaner=setInterval(()=>App.removeGpsBlueDot(),700);
+}
+
+App.safeRefreshUI = function(){
+  try{ this.refresh?.(); }catch(e){}
+  try{ this.updateFloatingVisibility?.(); }catch(e){}
+  try{ this.renderActiveAlerts?.(); }catch(e){}
+  try{ this.renderNearbyDrivers?.(); }catch(e){}
+};
+
+App.exportDebug = function(){
+  const data={
+    profile:S.profile||null,
+    position:{lat:S.myLat,lng:S.myLng},
+    radiusKm:S.radiusKm,
+    invisible:S.invisible,
+    driveMode:S.driveMode,
+    mapMode:S.mapMode||S.mapView,
+    voice:S.voice,
+    activeAlerts:S.activeAlerts?.length||0,
+    nearbyDrivers:S.nearbyDrivers?.length||0,
+    blocked:S.blocked?.length||0
+  };
+  alert(JSON.stringify(data,null,2));
+};
+
+setTimeout(()=>App.safeRefreshUI?.(),800);
 
 window.App=App;
 
