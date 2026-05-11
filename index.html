@@ -143,6 +143,60 @@ body.night .nav-premium .nav-card,body.night .voice-premium-box{background:#1723
 #authHelp b{color:var(--green)}
 
 </style>
+
+<style id="ux-mobile-fixes">
+/* UX cleanup */
+.top-search-btn,.floating-search-top,.search-top-btn{display:none !important;}
+
+@media (orientation:portrait){
+  .bottom-sheet,.vehicle-panel,.plate-panel{
+    bottom:-8px !important;
+    max-height:120px !important;
+    border-radius:24px 24px 0 0 !important;
+  }
+  .speedometer,.speed-box{
+    bottom:120px !important;
+  }
+  .floating-sos,.big-sos{
+    display:none !important;
+  }
+}
+
+@media (orientation:landscape){
+  .bottom-sheet,.vehicle-panel,.plate-panel{
+    width:280px !important;
+    right:-210px !important;
+    left:auto !important;
+    bottom:12px !important;
+    max-height:90vh !important;
+    transition:all .25s ease;
+    opacity:.92;
+  }
+  .bottom-sheet:hover,.vehicle-panel:hover,.plate-panel:hover{
+    right:-120px !important;
+  }
+
+  .dock,.bottom-dock,.action-bar{
+    left:50% !important;
+    transform:translateX(-50%) !important;
+    bottom:12px !important;
+  }
+
+  .floating-sos,.big-sos{
+    display:none !important;
+  }
+
+  .top-search-btn,.floating-search-top,.search-top-btn{
+    display:none !important;
+  }
+}
+
+/* Map priority */
+.leaflet-container{
+  z-index:1;
+}
+</style>
+
 </head>
 <body>
 <section id="sw" class="screen center active">
@@ -585,5 +639,32 @@ if(!App.clearOfflineCache){App.clearOfflineCache=function(){['ic_favorites','ic_
 
 window.App=App;
 </script>
+
+<script id="community-alerts-restore">
+window.IMMAT_ALERT_CATEGORIES = [
+  {id:'panne',label:'Panne',color:'#ff3b30',icon:'🚗'},
+  {id:'accident',label:'Accident',color:'#ff9500',icon:'💥'},
+  {id:'malaise',label:'Malaise',color:'#ff2d55',icon:'🆘'},
+  {id:'danger',label:'Danger',color:'#ffd60a',icon:'⚠️'},
+  {id:'controle',label:'Contrôle',color:'#0a84ff',icon:'👮'},
+  {id:'bouchon',label:'Bouchon',color:'#ff9f0a',icon:'🚦'},
+  {id:'travaux',label:'Travaux',color:'#bf5af2',icon:'🚧'},
+  {id:'animal',label:'Animal',color:'#30d158',icon:'🐗'},
+  {id:'radar',label:'Radar',color:'#64d2ff',icon:'📡'},
+  {id:'carburant',label:'Carburant',color:'#32d74b',icon:'⛽'},
+  {id:'assistance',label:'Assistance',color:'#5e5ce6',icon:'🛠️'}
+];
+
+window.showAlertToast = window.showAlertToast || function(msg){
+  const t=document.createElement('div');
+  t.innerHTML=msg;
+  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 18px;border-radius:16px;z-index:99999;font-family:sans-serif';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+};
+
+console.log('ImmatConnect UX patch loaded');
+</script>
+
 </body>
 </html>
