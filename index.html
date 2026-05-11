@@ -852,6 +852,245 @@ body.keyboard-open .speed{
   display:none!important;
 }
 
+
+/* ===== PACK ARCHITECTURE PRO 100 : UI UNIFIEE / GPS INTEGRE / DESIGN SYSTEM ===== */
+:root{
+  --ic-bg:#071018;
+  --ic-card:#101923;
+  --ic-card2:#172335;
+  --ic-text:#eef6ff;
+  --ic-muted:#9badc5;
+  --ic-primary:#00ffb3;
+  --ic-danger:#ff2d55;
+  --ic-warn:#ffb020;
+  --ic-radius:22px;
+  --ic-shadow:0 18px 55px rgba(0,0,0,.28);
+}
+
+/* Design system uniforme */
+.btn,.act,.q,.round,.fab,.pro-actions button,.sheet button{
+  transition:transform .16s ease,opacity .16s ease,background .16s ease;
+}
+button:active{transform:scale(.96)}
+.panel,.sheet,.route,.report-center,.nearby-panel,.assist-panel,.active-alerts-panel{
+  box-shadow:var(--ic-shadow);
+}
+
+/* Carte = fond permanent, panneau droite = seule zone de contenu */
+.route{
+  display:none!important;
+}
+.route.show{
+  display:none!important;
+}
+
+/* GPS intégré directement dans le panneau droit */
+#panelDrive .gps-integrated{
+  display:grid;
+  gap:10px;
+}
+.gps-search-card{
+  background:#f4f7fb;
+  border:1px solid #e1e7ef;
+  border-radius:20px;
+  padding:10px;
+  color:#10161d;
+}
+body.auto-night .gps-search-card{
+  background:#172335;
+  border-color:#26364d;
+  color:#eef6ff;
+}
+.gps-search-row{
+  display:grid;
+  grid-template-columns:1fr 44px 44px;
+  gap:7px;
+}
+.gps-search-row input{
+  width:100%;
+  border:0;
+  outline:0;
+  border-radius:999px;
+  background:#fff;
+  color:#10161d;
+  padding:12px 14px;
+  font-weight:800;
+}
+body.auto-night .gps-search-row input{
+  background:#0d1723;
+  color:#eef6ff;
+}
+.gps-search-row button{
+  border-radius:50%;
+  background:#10161d;
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+}
+.gps-poi-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:9px;
+}
+.gps-poi-grid button{
+  border-radius:14px;
+  background:#fff;
+  color:#10161d;
+  border:1px solid #dfe6ee;
+  padding:9px 5px;
+  font-size:11px;
+  font-weight:900;
+}
+body.auto-night .gps-poi-grid button{
+  background:#0d1723;
+  color:#eef6ff;
+  border-color:#26364d;
+}
+.gps-results-integrated{
+  display:grid;
+  gap:7px;
+  max-height:190px;
+  overflow:auto;
+}
+.gps-results-integrated .res{
+  background:#fff;
+  color:#10161d;
+  border:1px solid #e1e7ef;
+  border-radius:15px;
+  padding:9px;
+  display:grid;
+  grid-template-columns:24px 1fr auto;
+  align-items:center;
+  gap:7px;
+  text-align:left;
+  font-size:12px;
+}
+body.auto-night .gps-results-integrated .res{
+  background:#0d1723;
+  color:#eef6ff;
+  border-color:#26364d;
+}
+.gps-results-integrated small{
+  display:block;
+  color:#667383;
+}
+body.auto-night .gps-results-integrated small{color:#9badc5}
+
+/* Bottom sheet intelligent */
+.sheet{
+  transition:transform .28s cubic-bezier(.22,1,.36,1), width .2s ease, height .2s ease;
+}
+.sheet.snap-mini{transform:translateY(calc(100% - 92px))!important}
+.sheet.snap-mid{transform:translateY(0)!important;max-height:58vh!important}
+.sheet.snap-full{top:calc(env(safe-area-inset-top,0px) + 8px)!important;max-height:none!important;height:calc(100dvh - env(safe-area-inset-top,0px) - 8px)!important}
+
+/* Actions : portrait gauche centré verticalement */
+.pro-actions{
+  left:14px!important;
+  right:auto!important;
+  top:50%!important;
+  bottom:auto!important;
+  transform:translateY(-50%)!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:10px!important;
+  width:58px!important;
+  z-index:420!important;
+}
+.pro-actions button{
+  width:56px!important;height:56px!important;min-width:56px!important;min-height:56px!important;border-radius:50%!important;
+}
+.fab-toggle{
+  left:14px!important;
+  right:auto!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 60px)!important;
+}
+
+/* Vitesse hors superposition */
+.speed{
+  left:86px!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 70px)!important;
+  width:64px!important;height:64px!important;
+}
+
+/* Clustering véhicules */
+.ic-cluster{
+  width:38px;height:38px;border-radius:50%;
+  background:#10161d;color:#00ffb3;border:3px solid #fff;
+  display:grid;place-items:center;font-weight:900;box-shadow:0 8px 20px rgba(0,0,0,.32)
+}
+.vehicle-halo{box-shadow:0 0 0 5px rgba(0,255,179,.26),0 8px 20px rgba(0,0,0,.34)!important}
+.vehicle-halo-urgent{box-shadow:0 0 0 6px rgba(255,45,85,.34),0 8px 20px rgba(0,0,0,.36)!important}
+
+/* Alertes priorité */
+.priority-info{background:#eef6ff!important;color:#244acb!important}
+.priority-important{background:#fff1d8!important;color:#ad6200!important}
+.priority-urgent{background:#ffe8ed!important;color:#cf0035!important;animation:icPulse 1.1s infinite}
+@keyframes icPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+/* Mode conduite automatique */
+body.driving-mode .sheet{transform:translateY(calc(100% - 92px))!important}
+body.driving-mode .top .logoTop{display:none!important}
+body.driving-mode .pro-actions button:not(.report):not(.nearby-btn){opacity:.58}
+body.driving-mode .front-car-banner{display:flex!important}
+
+/* Panneau Options restructuré visuellement */
+.settings-group{
+  background:#f4f7fb;
+  border:1px solid #e1e7ef;
+  border-radius:18px;
+  padding:10px;
+  margin:8px 0;
+}
+body.auto-night .settings-group{
+  background:#172335;
+  border-color:#26364d;
+}
+.settings-group h4{
+  margin:0 0 8px;
+  color:#7a8796;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  font-size:11px;
+}
+.settings-group .grid{margin:0}
+
+/* Paysage : barre basse + panneau droit propre */
+@media(orientation:landscape) and (max-height:560px){
+  .pro-actions{
+    left:50%!important;
+    top:auto!important;
+    bottom:10px!important;
+    transform:translateX(-50%)!important;
+    display:flex!important;
+    flex-direction:row!important;
+    grid-template-columns:none!important;
+    width:auto!important;
+    max-width:64vw!important;
+    gap:8px!important;
+    padding:6px!important;
+    border-radius:999px!important;
+    background:rgba(7,16,24,.72)!important;
+    backdrop-filter:blur(12px)!important;
+  }
+  .pro-actions button{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;font-size:18px!important}
+  .fab-toggle{display:none!important}
+  .speed{left:10px!important;bottom:10px!important;width:58px!important;height:58px!important}
+  .sheet{
+    top:8px!important;right:8px!important;left:auto!important;bottom:8px!important;
+    width:min(430px,46vw)!important;height:auto!important;max-height:none!important;border-radius:24px!important;
+  }
+  .sheet.snap-mini{transform:translateX(calc(100% - 54px))!important}
+  .sheet.snap-full{width:min(500px,52vw)!important;height:calc(100vh - 16px)!important}
+  .gps-results-integrated{max-height:120px}
+}
+
+/* Micro et erreurs : jamais de gros prompt custom */
+.voice-warning{display:none}
+.voice-warning.show{display:block}
+body.keyboard-open .pro-actions,body.keyboard-open .fab-toggle,body.keyboard-open .speed{display:none!important}
+
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#071018">
@@ -891,7 +1130,27 @@ body.keyboard-open .speed{
     <button onclick="App.closeAssist()">Annuler</button>
   </div>
 </div>
-<div id="nearbyPanel" class="nearby-panel"><button type="button" class="close-x" onclick="App.closeNearbyDrivers()">×</button><b>Conducteurs proches</b><small>Les véhicules connectés autour de toi apparaissent ici et sur la carte.</small><div id="nearbyList" class="nearby-list"><div class="empty">Charge les conducteurs proches…</div></div></div><div id="activeAlertsPanel" class="active-alerts-panel"><button type="button" class="close-x" onclick="App.closeActiveAlerts()">×</button><b>Alertes actives</b><small>Désélectionne ce qui est passé ou plus utile.</small><div id="activeAlertsList" class="alert-list"><div class="empty">Aucune alerte active.</div></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div><div id="reportCenter" class="report-center"><button type="button" class="close-x" onclick="App.closeReportCenter()">×</button><h2>Signaler</h2><p>Prévenir un conducteur, informer la route ou demander de l’aide.</p><div class="report-block"><h3>🚗 Prévenir un véhicule</h3><div class="report-grid"><button class="info" onclick="App.vehicleAlert('Feux restés allumés')">💡 Feux allumés<small>Info simple</small></button><button class="info" onclick="App.vehicleAlert('Porte ou coffre mal fermé')">🚪 Porte / coffre<small>À vérifier</small></button><button class="important" onclick="App.vehicleAlert('Problème d’éclairage')">💡 Éclairage<small>Feu grillé</small></button><button class="important" onclick="App.vehicleAlert('Élément semble se détacher')">🔧 Élément détaché<small>Risque matériel</small></button><button class="urgent" onclick="App.vehicleAlert('Pneu dégonflé ou roue dangereuse')">🛞 Pneu / roue<small>Urgent</small></button><button class="urgent" onclick="App.vehicleAlert('Fumée ou risque d’incendie visible')">🚨 Fumée / feu<small>Urgent</small></button></div></div><div class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button class="route" onclick="App.submitRoadReport('accident')">🚗 Accident</button><button class="route" onclick="App.submitRoadReport('bouchon')">🚦 Bouchon</button><button class="route" onclick="App.submitRoadReport('obstacle')">⚠️ Obstacle</button><button class="route" onclick="App.submitRoadReport('travaux')">🚧 Travaux</button><button class="route" onclick="App.submitRoadReport('controle')">👮 Contrôle</button><button class="route" onclick="App.submitRoadReport('danger')">❗ Danger</button></div></div><div class="report-block"><h3>🆘 Demander de l’aide</h3><div class="report-grid"><button class="help" onclick="App.submitAssist('panne')">🚗 Panne</button><button class="help" onclick="App.submitAssist('carburant')">⛽ Carburant</button><button class="help" onclick="App.submitAssist('moteur')">⚙️ Moteur</button><button class="help" onclick="App.submitAssist('malaise')">🩺 Malaise</button><button class="urgent" onclick="App.submitAssist('incendie')">🔥 Risque incendie</button><button class="help" onclick="App.submitAssist('perdu')">🧭 Perdu</button></div></div></div><button id="fabToggle" class="fab-toggle" onclick="App.toggleFabStack()">☰</button><div id="sheet" class="sheet"><button type="button" class="sheet-close" onclick="App.closeBottomSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="nav"><button id="tabDrive" class="on" onclick="App.setPanel('drive')">GPS</button><button id="tabContact" onclick="App.setPanel('contact')">Message</button><button id="tabMessages" onclick="App.setPanel('messages')">Inbox</button><button id="tabSettings" onclick="App.setPanel('settings')">Options</button></div><div id="panelDrive" class="panel on"><div class="section">Navigation</div><div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.openGpsSearch()">🧭 Chercher</button><button class="act" onclick="App.openFavorites()">⭐ Favoris</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.toggleMapView()">🗺 Vue 2D</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button></div><div id="driveInfo" class="st"></div></div><div id="panelContact" class="panel"><div class="section">Contacter un véhicule</div><div class="row"><input id="iTarget" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="act primary" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="inp lightInp" placeholder="Message court et utile…"></textarea><div class="voice-mini"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMessage()">🎙 Message</button></div><div id="hMsg" class="hint"></div><div class="quick"><button class="q red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite visible sur votre véhicule.')">Fumée</button><button class="q red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble dangereuse.')">Roue</button><button class="q orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button><button class="q orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne fonctionne pas.')">Feu HS</button><button class="q green" onclick="App.quickMsg('ℹ️ Vos feux semblent restés allumés.')">Feux</button><button class="q green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div><button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button><div id="reqSt" class="hint"></div></div><div id="panelMessages" class="panel"><div class="section">Messages</div><div id="convbar" class="convbar"></div><div class="msg-tools"><button onclick="App.markConversationRead()">Marquer lu</button><button class="danger" onclick="App.deleteCurrentConversation()">Supprimer conversation</button></div><div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div><div class="smart-replies"><button onclick="App.quickReply(\'Merci, je vérifie.\')">Merci, je vérifie</button><button onclick="App.quickReply(\'Bien reçu.\')">Bien reçu</button><button onclick="App.quickReply(\'Je m’arrête dès que possible.\')">Je m’arrête</button><button onclick="App.quickReply(\'Problème réglé, merci.\')">Problème réglé</button></div><div class="quick-reply-row"><button onclick="App.quickReply('Merci, je vérifie.')">Merci, je vérifie</button><button onclick="App.quickReply('Pouvez-vous préciser ?')">Pouvez-vous préciser ?</button><button onclick="App.quickReply('Je suis au véhicule.')">Je suis au véhicule</button><button onclick="App.quickReply('Bien reçu, merci.')">Bien reçu</button></div></div><div id="panelSettings" class="panel"><div class="section">Options</div><div class="grid"><button class="act" data-hide-duplicate="true" onclick="App.openReportPanel()">⚠️ Signaler</button><button class="act" onclick="App.openRoadReport()">⚠️ Route</button><button class="act" onclick="App.openReportPanel()">🚗 Véhicule</button><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.exportDebug()">🧪 Diagnostic</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button><button class="act" onclick="App.toggleNightMode()">🌙 Nuit</button><button class="act" onclick="App.toggleRadar()">📡 Radar</button><button class="act" onclick="App.toggleSounds()">🔔 Sons/Vibrations</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div></section>
+<div id="nearbyPanel" class="nearby-panel"><button type="button" class="close-x" onclick="App.closeNearbyDrivers()">×</button><b>Conducteurs proches</b><small>Les véhicules connectés autour de toi apparaissent ici et sur la carte.</small><div id="nearbyList" class="nearby-list"><div class="empty">Charge les conducteurs proches…</div></div></div><div id="activeAlertsPanel" class="active-alerts-panel"><button type="button" class="close-x" onclick="App.closeActiveAlerts()">×</button><b>Alertes actives</b><small>Désélectionne ce qui est passé ou plus utile.</small><div id="activeAlertsList" class="alert-list"><div class="empty">Aucune alerte active.</div></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div><div id="reportCenter" class="report-center"><button type="button" class="close-x" onclick="App.closeReportCenter()">×</button><h2>Signaler</h2><p>Prévenir un conducteur, informer la route ou demander de l’aide.</p><div class="report-block"><h3>🚗 Prévenir un véhicule</h3><div class="report-grid"><button class="info" onclick="App.vehicleAlert('Feux restés allumés')">💡 Feux allumés<small>Info simple</small></button><button class="info" onclick="App.vehicleAlert('Porte ou coffre mal fermé')">🚪 Porte / coffre<small>À vérifier</small></button><button class="important" onclick="App.vehicleAlert('Problème d’éclairage')">💡 Éclairage<small>Feu grillé</small></button><button class="important" onclick="App.vehicleAlert('Élément semble se détacher')">🔧 Élément détaché<small>Risque matériel</small></button><button class="urgent" onclick="App.vehicleAlert('Pneu dégonflé ou roue dangereuse')">🛞 Pneu / roue<small>Urgent</small></button><button class="urgent" onclick="App.vehicleAlert('Fumée ou risque d’incendie visible')">🚨 Fumée / feu<small>Urgent</small></button></div></div><div class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button class="route" onclick="App.submitRoadReport('accident')">🚗 Accident</button><button class="route" onclick="App.submitRoadReport('bouchon')">🚦 Bouchon</button><button class="route" onclick="App.submitRoadReport('obstacle')">⚠️ Obstacle</button><button class="route" onclick="App.submitRoadReport('travaux')">🚧 Travaux</button><button class="route" onclick="App.submitRoadReport('controle')">👮 Contrôle</button><button class="route" onclick="App.submitRoadReport('danger')">❗ Danger</button></div></div><div class="report-block"><h3>🆘 Demander de l’aide</h3><div class="report-grid"><button class="help" onclick="App.submitAssist('panne')">🚗 Panne</button><button class="help" onclick="App.submitAssist('carburant')">⛽ Carburant</button><button class="help" onclick="App.submitAssist('moteur')">⚙️ Moteur</button><button class="help" onclick="App.submitAssist('malaise')">🩺 Malaise</button><button class="urgent" onclick="App.submitAssist('incendie')">🔥 Risque incendie</button><button class="help" onclick="App.submitAssist('perdu')">🧭 Perdu</button></div></div></div><button id="fabToggle" class="fab-toggle" onclick="App.toggleFabStack()">☰</button><div id="sheet" class="sheet"><button type="button" class="sheet-close" onclick="App.closeBottomSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="nav"><button id="tabDrive" class="on" onclick="App.setPanel('drive')">GPS</button><button id="tabContact" onclick="App.setPanel('contact')">Message</button><button id="tabMessages" onclick="App.setPanel('messages')">Inbox</button><button id="tabSettings" onclick="App.setPanel('settings')">Options</button></div><div id="panelDrive" class="panel on">
+<div class="gps-integrated">
+  <div class="section">Recherche GPS</div>
+  <div class="gps-search-card">
+    <div class="gps-search-row">
+      <input id="gpsSearchInput" placeholder="Rue, lieu, POI">
+      <button onclick="App.searchIntegratedGps()">🔍</button>
+      <button onclick="App.voiceIntegratedGps()">🎙️</button>
+    </div>
+    <div class="gps-poi-grid">
+      <button onclick="App.poiIntegrated('station essence')">⛽ Carburant</button>
+      <button onclick="App.poiIntegrated('restaurant')">🍽️ Resto</button>
+      <button onclick="App.poiIntegrated('parking')">🅿️ Parking</button>
+      <button onclick="App.poiIntegrated('garage automobile')">🔧 Garage</button>
+      <button onclick="App.poiIntegrated('borne recharge')">🔌 Recharge</button>
+      <button onclick="App.poiIntegrated('hôpital')">🏥 Santé</button>
+    </div>
+    <div id="gpsIntegratedResults" class="gps-results-integrated"></div>
+  </div>
+</div>
+<div class="section">Navigation</div><div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.openGpsSearch()">🧭 Chercher</button><button class="act" onclick="App.openFavorites()">⭐ Favoris</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.toggleMapView()">🗺 Vue 2D</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button></div><div id="driveInfo" class="st"></div></div><div id="panelContact" class="panel"><div class="section">Contacter un véhicule</div><div class="row"><input id="iTarget" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="act primary" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="inp lightInp" placeholder="Message court et utile…"></textarea><div class="voice-mini"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMessage()">🎙 Message</button></div><div id="hMsg" class="hint"></div><div class="quick"><button class="q red" onclick="App.quickMsg('🚨 URGENCE : fumée ou fuite visible sur votre véhicule.')">Fumée</button><button class="q red" onclick="App.quickMsg('🚨 URGENCE : votre roue semble dangereuse.')">Roue</button><button class="q orange" onclick="App.quickMsg('⚠️ Votre pneu semble dégonflé.')">Pneu</button><button class="q orange" onclick="App.quickMsg('⚠️ Un feu ou clignotant ne fonctionne pas.')">Feu HS</button><button class="q green" onclick="App.quickMsg('ℹ️ Vos feux semblent restés allumés.')">Feux</button><button class="q green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div><button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button><div id="reqSt" class="hint"></div></div><div id="panelMessages" class="panel"><div class="section">Messages</div><div id="convbar" class="convbar"></div><div class="msg-tools"><button onclick="App.markConversationRead()">Marquer lu</button><button class="danger" onclick="App.deleteCurrentConversation()">Supprimer conversation</button></div><div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div><div class="smart-replies"><button onclick="App.quickReply(\'Merci, je vérifie.\')">Merci, je vérifie</button><button onclick="App.quickReply(\'Bien reçu.\')">Bien reçu</button><button onclick="App.quickReply(\'Je m’arrête dès que possible.\')">Je m’arrête</button><button onclick="App.quickReply(\'Problème réglé, merci.\')">Problème réglé</button></div><div class="quick-reply-row"><button onclick="App.quickReply('Merci, je vérifie.')">Merci, je vérifie</button><button onclick="App.quickReply('Pouvez-vous préciser ?')">Pouvez-vous préciser ?</button><button onclick="App.quickReply('Je suis au véhicule.')">Je suis au véhicule</button><button onclick="App.quickReply('Bien reçu, merci.')">Bien reçu</button></div></div><div id="panelSettings" class="panel"><div class="section">Options</div><div class="grid"><button class="act" data-hide-duplicate="true" onclick="App.openReportPanel()">⚠️ Signaler</button><button class="act" onclick="App.openRoadReport()">⚠️ Route</button><button class="act" onclick="App.openReportPanel()">🚗 Véhicule</button><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.exportDebug()">🧪 Diagnostic</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button><button class="act" onclick="App.toggleNightMode()">🌙 Nuit</button><button class="act" onclick="App.toggleRadar()">📡 Radar</button><button class="act" onclick="App.toggleSounds()">🔔 Sons/Vibrations</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div></section>
 <div id="drawer" class="drawer"><div class="back" onclick="App.closeDrawer()"></div><div class="drawerCard"><h2>Menu</h2><p class="pseudo">GPS, communication et sécurité.</p><div class="menu"><button onclick="App.closeDrawer();App.setPanel('drive')">GPS <span>🧭</span></button><button onclick="App.closeDrawer();App.setPanel('contact')">Contacter <span>💬</span></button><button onclick="App.closeDrawer();App.setPanel('messages')">Messages <span>📩</span></button><button onclick="App.closeDrawer();App.toggleMapView()">Vue conduite / 2D <span>🗺</span></button><button onclick="App.closeDrawer();App.stopGps()">Stop GPS <span>⏹</span></button><button onclick="App.closeDrawer();App.toggleInvisible()">Invisible <span>👻</span></button><button onclick="App.closeDrawer();App.openRecent()">Récents <span>🕘</span></button><button onclick="App.closeDrawer();App.openBlocked()">Bloqués <span>🚫</span></button><button onclick="App.closeDrawer();App.logout()">Déconnexion <span>⏻</span></button></div></div></div>
 <div id="legal" class="modal"><div class="back" onclick="App.closeLegal()"></div><div class="modalCard"><h2>Confidentialité</h2><p>Ton téléphone n’est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><p>Les notifications hors application nécessitent une PWA/Service Worker côté hébergement. Les notifications navigateur sont préparées.</p><button class="btn primary" onclick="App.closeLegal()">J’ai compris</button></div></div><div id="blocked" class="modal"><div class="back" onclick="App.closeBlocked()"></div><div class="modalCard"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button class="btn ghost close-light" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="back" onclick="App.closeRecent()"></div><div class="modalCard"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><button class="btn ghost close-light" onclick="App.closeRecent()">Fermer</button></div></div><div id="reportModal" class="modal"><div class="back" onclick="App.closeReport()"></div><div class="modalCard"><h2>Signaler un problème</h2><p class="pseudo">Choisis une raison claire. Le signalement reste lié à la plaque concernée.</p><div class="report-target"><input id="reportPlate" class="inp lightInp" placeholder="AB-123-CD" maxlength="9"><button class="tiny ok" onclick="App.useTargetForReport()">Plaque actuelle</button></div><div class="report-grid"><button class="report-choice" data-report-type="danger_route" onclick="App.selectReportType('danger_route',this)">🚧 Danger sur route</button><button class="report-choice" data-report-type="conduite_dangereuse" onclick="App.selectReportType('conduite_dangereuse',this)">⚠️ Conduite dangereuse</button><button class="report-choice" data-report-type="vehicule_gene" onclick="App.selectReportType('vehicule_gene',this)">🚗 Véhicule gênant</button><button class="report-choice" data-report-type="feu_hs" onclick="App.selectReportType('feu_hs',this)">💡 Feu / clignotant HS</button><button class="report-choice" data-report-type="pneu" onclick="App.selectReportType('pneu',this)">🛞 Pneu / roue</button><button class="report-choice" data-report-type="fumee_fuite" onclick="App.selectReportType('fumee_fuite',this)">🚨 Fumée / fuite</button><button class="report-choice" data-report-type="coffre_porte" onclick="App.selectReportType('coffre_porte',this)">🚪 Coffre / porte</button><button class="report-choice" data-report-type="autre" onclick="App.selectReportType('autre',this)">✍️ Autre</button></div><div class="report-levels"><button class="report-level info on" data-report-level="info" onclick="App.selectReportLevel('info',this)">Info</button><button class="report-level warn" data-report-level="important" onclick="App.selectReportLevel('important',this)">Important</button><button class="report-level danger" data-report-level="urgent" onclick="App.selectReportLevel('urgent',this)">Urgent</button></div><textarea id="reportNote" class="report-note" placeholder="Note facultative : détail du problème, lieu, précision utile…"></textarea><div id="reportPreview" class="report-preview">Aucun type sélectionné.</div><button class="btn primary" onclick="App.submitReportPro()">Envoyer le signalement</button><button class="btn ghost close-light" onclick="App.closeReport()">Annuler</button></div></div><div id="favorites" class="modal"><div class="back" onclick="App.closeFavorites()"></div><div class="modalCard"><h2>Favoris GPS</h2><p class="pseudo">Enregistre et relance rapidement tes destinations fréquentes.</p><div class="premium-row"><button class="act primary" onclick="App.saveCurrentDestination()">⭐ Ajouter destination actuelle</button><button class="act" onclick="App.openGpsSearch();App.closeFavorites()">🔎 Chercher</button></div><div id="favoritesList" class="fav-list"></div><button class="btn ghost close-light" onclick="App.closeFavorites()">Fermer</button></div></div><div id="reportChoice" class="modal"><div class="back" onclick="App.closeReportChoice()"></div><div class="modalCard"><button type="button" class="close-x" onclick="App.closeReportChoice()">×</button><h2>Que veux-tu signaler ?</h2><p class="pseudo">Choisis le bon type pour éviter les doublons.</p><div class="report-choice-card"><button onclick="App.chooseRoadReport()">⚠️ Problème sur la route<small>Accident, bouchon, travaux, obstacle, contrôle, véhicule arrêté. Visible par les conducteurs autour.</small></button><button onclick="App.chooseVehicleReport()">🚗 Problème sur un véhicule<small>Feu HS, pneu, fumée, coffre ouvert. À utiliser après avoir sélectionné ou saisi une plaque.</small></button></div></div></div><div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
 <script>
@@ -2459,6 +2718,190 @@ if(!App._gpsSearchCleanWrapped){
 window.addEventListener('resize',()=>setTimeout(()=>App.applyResponsiveActions?.(),120));
 window.addEventListener('orientationchange',()=>setTimeout(()=>App.applyResponsiveActions?.(),450));
 setTimeout(()=>App.applyResponsiveActions?.(),600);
+
+
+/* ===== PACK ARCHITECTURE PRO 100 JS ===== */
+
+/* 1. UI unique et panneaux stables */
+window.ICUI = window.ICUI || {};
+ICUI.panels=['route','roadReportPanel','assistPanel','nearbyPanel','activeAlertsPanel','reportCenter','reportChoice','reportModal','favorites','recent','blocked','legal','drawer'];
+ICUI.el=id=>document.getElementById(id);
+ICUI.closeAll=function(except){ICUI.panels.forEach(id=>{if(id!==except)ICUI.el(id)?.classList.remove('show')});document.body.classList.toggle('panel-open',!!except)};
+ICUI.open=function(id){ICUI.closeAll(id);ICUI.el(id)?.classList.add('show')};
+
+App.snapSheet=function(mode){
+  const s=$('sheet'); if(!s)return;
+  s.classList.remove('snap-mini','snap-mid','snap-full','mini');
+  s.classList.add(mode==='full'?'snap-full':mode==='mini'?'snap-mini':'snap-mid');
+  S.sheetOpen=mode!=='mini';
+  try{S.map?.invalidateSize()}catch(e){}
+};
+App.toggleSheet=function(){
+  const s=$('sheet'); if(!s)return;
+  if(s.classList.contains('snap-mini')||s.classList.contains('mini')) this.snapSheet('mid');
+  else this.snapSheet('mini');
+};
+App.closeBottomSheet=function(){this.snapSheet('mini')};
+
+/* 2. GPS intégré dans le panneau de droite */
+App.openGpsSearch=function(){
+  this.setPanel?.('drive');
+  this.snapSheet?.('mid');
+  setTimeout(()=>$('gpsSearchInput')?.focus(),180);
+};
+App.searchIntegratedGps=async function(){
+  const input=$('gpsSearchInput');
+  const q=(input?.value||'').trim();
+  const box=$('gpsIntegratedResults');
+  if(!box||q.length<2)return;
+  box.innerHTML='<div class="res"><span>🔎</span><span>Recherche…</span><span></span></div>';
+  try{
+    const p=new URLSearchParams({format:'json',limit:'8',countrycodes:'fr',addressdetails:'1',q:q+' France'});
+    if(S.myLat!==null&&S.myLng!==null){
+      p.set('viewbox',(S.myLng-.35)+','+(S.myLat+.35)+','+(S.myLng+.35)+','+(S.myLat-.35));
+      p.set('bounded','0');
+    }
+    let arr=await(await fetch('https://nominatim.openstreetmap.org/search?'+p.toString())).json();
+    arr=(arr||[]).map(r=>{
+      const lat=Number(r.lat),lon=Number(r.lon);
+      const dist=(S.myLat!==null&&S.myLng!==null)?km(S.myLat,S.myLng,lat,lon):999999;
+      return {...r,dist};
+    }).sort((a,b)=>a.dist-b.dist);
+    box.innerHTML=arr.length?arr.map(r=>{
+      const d=r.dist<1?Math.round(r.dist*1000)+' m':r.dist<999999?r.dist.toFixed(1)+' km':'';
+      const name=(r.display_name||'').split(',');
+      return '<button class="res" onclick="App.pickDest('+Number(r.lat)+','+Number(r.lon)+',\''+js(r.display_name)+'\')"><span>📍</span><span><b>'+esc(name[0]||r.display_name)+'</b><small>'+esc(name.slice(1,3).join(', '))+'</small></span><span>'+esc(d)+'</span></button>';
+    }).join(''):'<div class="res"><span>⚠️</span><span>Aucun résultat. Ajoute ville ou CP.</span><span></span></div>';
+  }catch(e){
+    console.warn(e);
+    box.innerHTML='<div class="res"><span>⚠️</span><span>Recherche indisponible.</span><span></span></div>';
+  }
+};
+App.poiIntegrated=function(q){
+  const input=$('gpsSearchInput');
+  if(input)input.value=q;
+  this.searchIntegratedGps();
+};
+App.poi=function(q){this.poiIntegrated(q)};
+App.poiPro=function(q){this.poiIntegrated(q)};
+App.voiceIntegratedGps=function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Micro indisponible, saisie manuelle activée.','bad');$('gpsSearchInput')?.focus();return;}
+  try{
+    const rec=new SR();rec.lang='fr-FR';rec.interimResults=false;rec.maxAlternatives=1;
+    toast('Dis l’adresse ou le lieu.','ok');
+    rec.onresult=e=>{const txt=e.results?.[0]?.[0]?.transcript||'';if(txt){$('gpsSearchInput').value=txt;App.searchIntegratedGps()}};
+    rec.onerror=()=>{toast('Micro indisponible, saisie manuelle activée.','bad');$('gpsSearchInput')?.focus()};
+    rec.start();
+  }catch(e){toast('Micro indisponible, saisie manuelle activée.','bad');}
+};
+App.voiceSearchGps=function(){this.voiceIntegratedGps()};
+
+/* 3. Permissions au lancement : localisation puis micro puis notifications */
+App.runPermissionOnboarding=async function(){
+  if(get('ic_perm_done','0')==='1')return;
+  set('ic_perm_done','1');
+  setTimeout(()=>toast('Active la localisation pour voir les conducteurs proches.','ok'),500);
+  try{ if(!S.watchId&&!S.invisible) this.locate?.(); }catch(e){}
+  setTimeout(async()=>{
+    try{
+      if(navigator.mediaDevices?.getUserMedia){
+        const s=await navigator.mediaDevices.getUserMedia({audio:true});
+        s.getTracks().forEach(t=>t.stop());
+        toast('Micro activé pour la recherche vocale.','ok');
+      }
+    }catch(e){toast('Micro non activé : saisie manuelle disponible.','bad')}
+  },2200);
+  setTimeout(()=>this.requestNotifications?.(),3600);
+};
+
+/* 4. Mode conduite automatique */
+App.updateDrivingMode=function(){
+  const moving=(S.lastSpeed||0)>15;
+  document.body.classList.toggle('driving-mode',moving);
+};
+setInterval(()=>App.updateDrivingMode?.(),2000);
+
+/* 5. Véhicules proches : halo + regroupement simple */
+App.clusterCloseVehicles=function(){
+  if(!S.map||!S.otherMkrs?.length)return;
+  const used=new Set();
+  S.otherMkrs.forEach((m,i)=>{
+    if(used.has(i))return;
+    const a=m.getLatLng?.(); if(!a)return;
+    let group=[m];
+    S.otherMkrs.forEach((n,j)=>{
+      if(i===j||used.has(j))return;
+      const b=n.getLatLng?.(); if(!b)return;
+      if(km(a.lat,a.lng,b.lat,b.lng)*1000<14){group.push(n);used.add(j)}
+    });
+    if(group.length>1){
+      group.forEach((g,k)=>{
+        const ll=g.getLatLng();
+        const angle=(k*60)*Math.PI/180, off=.00009;
+        g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);
+        g.setZIndexOffset(1200+k);
+      });
+    }
+  });
+};
+if(!App._clusterWrap100){
+  App._clusterWrap100=true;
+  const oldLoad=App.loadOthers?.bind(App);
+  if(oldLoad){App.loadOthers=async function(...args){const r=await oldLoad(...args);this.clusterCloseVehicles?.();return r}}
+}
+
+/* 6. Alertes priorité et sons/vibrations */
+App.priorityForVehicleAlert=function(label){
+  const urgent=/pneu|roue|fumée|feu|incendie|dangereuse/i.test(label);
+  const important=/éclairage|détach|fuite|coffre|porte/i.test(label);
+  return urgent?'urgent':important?'important':'info';
+};
+App.vehicleAlert=function(label){
+  let p=nPlate($('iTarget')?.value||S.selPlate||S.conv||'');
+  if(!p||p==='ALL'){toast('Clique d’abord un véhicule ou saisis sa plaque.','bad');this.setPanel?.('contact');return}
+  const pr=this.priorityForVehicleAlert(label);
+  $('iTarget').value=p;
+  $('iMsg').value=(pr==='urgent'?'🚨 URGENT : ':pr==='important'?'⚠️ IMPORTANT : ':'ℹ️ INFO : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
+  this.closeReportCenter?.();
+  this.setPanel('contact');
+  if(pr==='urgent')this.haptic?.([120,60,120]);
+};
+
+/* 7. Options restructurées sans supprimer */
+App.restructureSettings=function(){
+  const panel=$('panelSettings'); if(!panel||panel.dataset.structured==='1')return;
+  panel.dataset.structured='1';
+  const grid=panel.querySelector('.grid'); if(!grid)return;
+  grid.insertAdjacentHTML('beforebegin','<div class="settings-group"><h4>Navigation</h4></div><div class="settings-group"><h4>Sécurité</h4></div>');
+};
+setTimeout(()=>App.restructureSettings?.(),1200);
+
+/* 8. Session robuste */
+App.keepSessionAlive=async function(){
+  try{
+    const {data}=await sb.auth.getSession();
+    if(data?.session && !$('sm')?.classList.contains('active')){
+      await App.afterAuth?.();
+      App.forceAuthenticatedUI?.();
+    }
+  }catch(e){}
+};
+setInterval(()=>App.keepSessionAlive?.(),5000);
+
+/* 9. Performances : layout léger */
+App.applyProLayout=function(){
+  const landscape=matchMedia('(orientation: landscape) and (max-height:560px)').matches;
+  const pa=document.getElementById('proActions');
+  if(pa){
+    pa.style.display=landscape?'flex':'grid';
+    pa.style.gridTemplateColumns=landscape?'none':'1fr';
+  }
+  try{S.map?.invalidateSize()}catch(e){}
+};
+window.addEventListener('resize',()=>setTimeout(()=>App.applyProLayout(),180));
+window.addEventListener('orientationchange',()=>setTimeout(()=>App.applyProLayout(),450));
+setTimeout(()=>{App.applyProLayout();App.runPermissionOnboarding?.()},1000);
 
 window.App=App;
 
