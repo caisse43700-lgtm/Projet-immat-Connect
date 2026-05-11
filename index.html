@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -90,13 +90,59 @@ body.reduce-effects *{animation:none!important;backdrop-filter:none!important;tr
 body.night .nav-premium .nav-card,body.night .voice-premium-box{background:#172335;color:#eef6ff;border-color:#26364d}
 @media(orientation:landscape) and (max-height:560px){.sheet.full{top:8px!important;height:calc(100vh - 16px)!important}.nav-premium{grid-template-columns:repeat(6,1fr)}}
 
+
+/* ===== CORRECTIF ACCUEIL + PANNEAU PRINCIPAL ===== */
+#sw.active,#sa.active,#sp.active,#sr.active{
+  position:fixed!important;
+  inset:0!important;
+  z-index:9999!important;
+  background:#071018!important;
+}
+#sm:not(.active){
+  display:none!important;
+}
+#sw.active ~ #sm,
+#sa.active ~ #sm,
+#sp.active ~ #sm,
+#sr.active ~ #sm{
+  display:none!important;
+}
+#sw .hero{
+  display:none!important;
+}
+#sw .card{
+  max-width:390px!important;
+}
+#sw .brand{
+  margin-bottom:22px!important;
+}
+.sheet{
+  transform:translateY(0);
+}
+.sheet.mini{
+  transform:translateY(calc(100% - 94px))!important;
+}
+.sheet.full{
+  transform:translateY(0)!important;
+}
+@media(orientation:landscape) and (max-height:560px){
+  .sheet{
+    transform:translateX(0);
+  }
+  .sheet.mini{
+    transform:translateX(calc(100% - 58px))!important;
+  }
+  .sheet.full{
+    transform:translateX(0)!important;
+  }
+}
+
 </style>
 </head>
 <body>
 <section id="sw" class="screen center active">
   <div class="card">
     <div class="brand">Immat<span>Connect</span></div>
-    <p class="hero">GPS communautaire et communication entre conducteurs.</p>
     <button class="btn primary" onclick="App.goAuth('login')">Se connecter</button>
     <button class="btn ghost" onclick="App.goAuth('signup')">Créer un compte</button>
   </div>
@@ -427,359 +473,61 @@ App.applyPerformanceMode=function(){const low=(navigator.hardwareConcurrency&&na
 setTimeout(()=>{App.initSheetDrag();App.applyPerformanceMode()},900);
 setInterval(()=>App.saveOfflineCache?.(),15000);
 
-window.App=App;
-</script>
-</body>
-</html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<title>ImmatConnect Pro</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#071018">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ImmatConnect">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-<style>
-:root{
-  --bg:#071018;--panel:#101923;--panel2:#162235;--card:#fff;--text:#eef6ff;--muted:#8fa0b6;
-  --green:#00ffb3;--green2:#00d491;--red:#ff2d55;--orange:#ffb020;--blue:#3478ff;
-  --shadow:0 18px 55px rgba(0,0,0,.28);--r:22px
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text)}
-button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}.hidden{display:none!important}
-.screen{display:none;height:100dvh;overflow:hidden}.screen.active{display:flex}.center{align-items:center;justify-content:center;padding:22px;overflow:auto}
-.card{width:100%;max-width:430px;background:#0d1723;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:24px;box-shadow:0 30px 80px #0008}
-.brand{font-size:42px;font-weight:950;letter-spacing:-1px;text-align:center}.brand span{color:var(--green)}
-.hero{color:#a6b5c9;text-align:center;line-height:1.55;margin:12px 0 20px}
-.btn{width:100%;border-radius:16px;padding:14px 16px;font-weight:900;margin-top:8px}
-.primary{background:linear-gradient(135deg,var(--green),var(--green2));color:#06140f}.ghost{background:#142233;color:#dce7f5;border:1px solid rgba(255,255,255,.12)}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:#142233;border-radius:14px;padding:4px;margin:16px 0}.tab{padding:11px;border-radius:11px;background:transparent;color:#8da0b8;font-weight:900}.tab.on{background:#071018;color:#fff}
-.ttl{font-size:30px;font-weight:950}.sub{color:#9badc5;margin:6px 0 16px;line-height:1.45}.field{margin:12px 0}.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#a6b5c9;font-weight:950;margin-bottom:7px;display:block}
-.inp,.sel{width:100%;border:1px solid rgba(255,255,255,.12);background:#142233;color:#eef6ff;border-radius:14px;padding:13px;outline:none}.inp:focus,.sel:focus{border-color:var(--green)}
-.hint{min-height:16px;font-size:11px;margin-top:5px}.hint.err{color:var(--red)}.hint.ok{color:var(--green)}
-.st{display:none;margin-top:10px;border-radius:14px;padding:11px;font-size:13px}.st.show{display:block}.st.err{background:#351522;color:#ff91a5}.st.ok{background:#0b342a;color:var(--green)}
-.iw{position:relative}.pr{padding-right:50px}.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:transparent;color:#a6b5c9}
-.row{display:flex;gap:8px}.lbtn{background:transparent;color:#a6b5c9;margin-top:8px;padding:6px}
 
-/* App */
-.app{display:block;background:#dfe7ef;color:#0b1016}#map{position:absolute;inset:0;z-index:1}.shade{position:absolute;z-index:5;left:0;right:0;top:0;height:145px;background:linear-gradient(#ffffffe8,#fff0);pointer-events:none}
-.top{position:absolute;z-index:80;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.round{width:54px;height:54px;border-radius:19px;background:#fff;box-shadow:0 10px 32px #1a2a3a33;font-size:22px}.logoTop{background:#ffffffe8;border-radius:999px;padding:9px 15px;font-weight:950}.logoTop span{color:#00a872}
-.speed{position:absolute;z-index:60;left:86px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);width:64px;height:64px;border-radius:50%;background:#111923;color:white;display:grid;place-items:center;box-shadow:0 12px 30px #0005}.speed strong{font-size:27px;line-height:1}.speed small{font-size:10px}
-.actions{position:absolute;z-index:70;left:14px;top:50%;transform:translateY(-50%);display:grid;gap:10px}
-.actions button{width:56px;height:56px;border-radius:50%;background:#fff;color:#10161d;box-shadow:0 12px 30px rgba(0,0,0,.28);font-size:22px;font-weight:950}.actions .report{background:var(--red);color:#fff}.actions .center{background:var(--green);color:#06140f}
-.sheet{position:absolute;z-index:90;left:0;right:0;bottom:0;max-height:62vh;background:#fff;color:#10161d;border-radius:28px 28px 0 0;box-shadow:0 -18px 55px #0003;padding:12px 14px calc(env(safe-area-inset-bottom,0px) + 14px);overflow:auto;transition:.28s cubic-bezier(.22,1,.36,1)}
-.sheet.mini{transform:translateY(calc(100% - 94px))}.handle{width:72px;height:5px;background:#c6cdd6;border-radius:999px;margin:0 auto 12px}.sheet-close{position:absolute;top:10px;right:14px;width:28px;height:28px;border-radius:50%;background:#fff;color:var(--red);border:1px solid #ffd3dc;box-shadow:0 5px 14px rgba(0,0,0,.16);font-size:18px;font-weight:950}
-.profile{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f3f6f9;border-radius:18px;padding:10px;margin-bottom:10px}.plate{font-size:22px;font-weight:950;color:#008866}.pseudo{font-size:12px;color:#667383}.profile select{border:0;background:white;border-radius:12px;padding:8px;font-weight:900}
-.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.nav button{height:48px;border-radius:16px;background:#eef2f6;font-size:12px;font-weight:950;color:#5d6877}.nav button.on{background:#10161d;color:#fff}
-.panel{display:none}.panel.on{display:block}.section{font-size:11px;font-weight:950;color:#7a8796;text-transform:uppercase;letter-spacing:.7px;margin:14px 0 8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.act{background:#eef2f6;border:1px solid #e2e8ef;border-radius:17px;padding:12px 8px;font-weight:950;color:#24303e}.act.primary{background:var(--green);color:#06140f}.act.danger{background:#ffe8ed;color:#c90035}
-.lightInp{background:#f5f7fa;color:#10161d;border:1px solid #e2e8ef}.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.q{border-radius:13px;padding:10px 5px;font-size:11px;font-weight:950}.q.red{background:#ffe8ed;color:#c90035}.q.orange{background:#fff1d8;color:#ad6200}.q.green{background:#e7fff6;color:#008866}
-.chat{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto;background:#f6f8fb;border:1px solid #e8edf3;border-radius:18px;padding:10px}.msg{width:100%;border-radius:17px;padding:10px 12px;font-size:13px;line-height:1.45;box-shadow:0 4px 16px rgba(0,0,0,.06)}.sent{align-self:flex-end;background:#dcfff3;border:1px solid #b8f5df}.recv{align-self:flex-start;background:#fff;border:1px solid #e8edf3}.mlbl{font-size:10px;font-weight:950;text-transform:uppercase;color:#008866;margin-bottom:4px}.time{font-size:10px;color:#84909f;text-align:right;margin-top:4px}.tiny{border-radius:10px;padding:7px 10px;font-size:11px;font-weight:950;margin:4px 4px 0 0}.ok{background:#e7fff6;color:#008866}.no{background:#ffe8ed;color:#cf0035}.msg-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.msg-tools button{border-radius:14px;background:#eef2f6;color:#263241;padding:10px 8px;font-size:12px;font-weight:950}.msg-tools .danger{background:#ffe8ed;color:#cf0035}.convbar{display:flex;gap:7px;overflow:auto;margin-bottom:9px}.conv{white-space:nowrap;border-radius:999px;background:#eef2f6;color:#657284;padding:8px 12px;font-size:12px;font-weight:950}.conv.on{background:#10161d;color:#fff}
-.gps-search-card{background:#f4f7fb;border:1px solid #e1e7ef;border-radius:20px;padding:10px}.gps-search-row{display:grid;grid-template-columns:1fr 44px 44px;gap:7px}.gps-search-row input{border:0;outline:0;border-radius:999px;background:#fff;color:#10161d;padding:12px 14px;font-weight:800;min-width:0}.gps-search-row button{border-radius:50%;background:#10161d;color:#fff;font-size:18px;font-weight:950}.gps-poi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.gps-poi-grid button{border-radius:14px;background:#fff;color:#10161d;border:1px solid #dfe6ee;padding:9px 5px;font-size:11px;font-weight:950}.gps-results{display:grid;gap:7px;max-height:190px;overflow:auto;margin-top:8px}.gps-results button{background:#fff;color:#10161d;border:1px solid #e1e7ef;border-radius:15px;padding:9px;display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:7px;text-align:left;font-size:12px}.gps-results small{display:block;color:#667383}.route-mini{display:none;background:#10161d;color:#fff;border-radius:16px;padding:11px;font-size:13px;margin-top:8px}.route-mini.show{display:flex;justify-content:space-between;gap:10px;align-items:center}.route-mini b{color:var(--green)}.route-mini button{background:#fff;color:#10161d;border-radius:12px;padding:8px 11px;font-weight:950}
-.inst{position:absolute;z-index:75;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);background:#10161df2;color:white;border-radius:22px;padding:12px;box-shadow:0 16px 48px #0005;display:none;gap:12px;align-items:center}.inst.show{display:flex}.inst b{font-size:22px;color:var(--green)}
-.overlay{position:absolute;z-index:120;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);background:#fff;color:#10161d;border-radius:24px;padding:12px;box-shadow:var(--shadow);display:none;max-height:62vh;overflow:auto}.overlay.show{display:block}.close-x{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;background:#fff;color:var(--red);border:1px solid #ffd3dc;box-shadow:0 5px 14px rgba(0,0,0,.16);font-size:18px;font-weight:950}.overlay h2{font-size:22px;margin-right:34px}.overlay p,.overlay small{color:#667383;line-height:1.35}.report-block{border:1px solid #e1e7ef;background:#f7f9fc;border-radius:22px;padding:11px;margin-top:10px}.report-block h3{font-size:15px;margin-bottom:8px}.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.report-grid button{border-radius:14px;padding:11px 8px;text-align:left;font-weight:950;font-size:12px;color:#10161d;background:#fff;border:1px solid #dfe6ee}.report-grid .info{background:#e7fff6;color:#008866}.report-grid .important{background:#fff1d8;color:#ad6200}.report-grid .urgent{background:#ffe8ed;color:#cf0035}.report-grid .route{background:#eef2ff;color:#244acb}.report-grid .help{background:#f0e8ff;color:#6831c4}
-.list{display:grid;gap:8px;margin-top:10px}.item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f3f6f9;border:1px solid #e2e8ef;border-radius:16px;padding:10px}.item b{color:#008866}.item button{border-radius:12px;background:var(--green);color:#06140f;padding:8px 10px;font-size:12px;font-weight:950}
-.drawer,.modal{position:fixed;inset:0;z-index:700;display:none}.drawer.show,.modal.show{display:block}.back{position:absolute;inset:0;background:#0007;backdrop-filter:blur(2px)}.drawerCard{position:absolute;left:0;top:0;bottom:0;width:min(360px,86vw);background:#fff;color:#10161d;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 18px;box-shadow:20px 0 70px #0004;overflow:auto}.drawerCard h2{font-size:34px}.menu{display:grid;gap:8px;margin-top:18px}.menu button{display:flex;justify-content:space-between;background:#f2f5f8;border-radius:16px;padding:14px;color:#10161d;font-weight:950}.modalCard{position:absolute;left:18px;right:18px;top:50%;transform:translateY(-50%);background:#fff;color:#10161d;border-radius:26px;padding:18px;max-height:80vh;overflow:auto}
-.toast,.notif{position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 14px);z-index:900;border-radius:18px;padding:13px 16px;font-weight:950;box-shadow:0 18px 60px #0004;transform:translateY(-120px);opacity:0;transition:.28s cubic-bezier(.34,1.56,.64,1);text-align:center}.toast.show,.notif.show{transform:none;opacity:1}.toast{background:#fff;color:#10161d}.toast.bad{color:#cf0035}.toast.ok{color:#008866}.notif{background:var(--green);color:#06140f;text-align:left}.notif small{display:block;font-size:12px;opacity:.8;margin-top:4px}
-.car-pin{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;font-size:19px;border:3px solid #fff;box-shadow:0 0 0 6px rgba(0,255,179,.13),0 8px 18px rgba(0,0,0,.32)}.car-pin.self{width:42px;height:42px;border-radius:16px;box-shadow:0 0 0 4px rgba(255,255,255,.9),0 8px 20px rgba(0,0,0,.34)}
-.road-pin{font-size:28px;filter:drop-shadow(0 5px 5px rgba(0,0,0,.32))}
-.empty{text-align:center;color:#7a8796;padding:20px 0;font-size:13px}
-body.night #map{filter:brightness(.72) contrast(1.15) saturate(.85)}body.night .sheet,body.night .overlay,body.night .modalCard,body.night .drawerCard{background:#121923;color:#eef6ff}body.night .profile,body.night .act,body.night .chat,body.night .item,body.night .gps-search-card,body.night .report-block{background:#172335;color:#eef6ff;border-color:#26364d}body.night .lightInp,body.night .gps-search-row input{background:#0d1723!important;color:#eef6ff!important;border-color:#26364d!important}body.night .gps-poi-grid button,body.night .gps-results button,body.night .menu button,body.night .nav button{background:#1c2a3d;color:#eef6ff;border-color:#2d3d52}
-body.keyboard-open .actions,body.keyboard-open .speed{display:none!important}.leaflet-interactive[stroke="#3388ff"],.leaflet-interactive[fill="#3388ff"],.leaflet-interactive[stroke="#00bcd4"],.leaflet-interactive[fill="#00e5ff"]{display:none!important}
-@media(orientation:landscape) and (max-height:560px){
-  .top{top:8px;left:8px;right:auto;width:44vw}.top .logoTop{display:none}.round{width:46px;height:46px;border-radius:16px}.actions{left:50%;top:auto;bottom:10px;transform:translateX(-50%);display:flex;gap:8px;padding:6px;border-radius:999px;background:rgba(7,16,24,.74);backdrop-filter:blur(10px);box-shadow:0 12px 35px rgba(0,0,0,.28)}.actions button{width:46px;height:46px;min-width:46px;box-shadow:none;font-size:18px}.speed{left:10px;bottom:10px;width:58px;height:58px}.sheet{left:auto;right:8px;top:8px;bottom:8px;width:min(430px,46vw);max-height:none;border-radius:24px}.sheet.mini{transform:translateX(calc(100% - 58px))}.overlay{left:8px;right:auto;width:48vw;bottom:10px;max-height:calc(100vh - 20px)}.inst{left:8px;right:auto;width:48vw;top:62px}.nav button{height:40px;font-size:11px}.chat{max-height:135px}
-}
+/* ===== CORRECTIF ETAT PANNEAU PRINCIPAL ===== */
+(function(){
+  if(window.__IC_PANEL_FIX__) return;
+  window.__IC_PANEL_FIX__ = true;
 
-/* ===== MODULES AVANCES REINTEGRES ===== */
-.install-panel,.perm-panel{position:fixed;z-index:950;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);background:#fff;color:#10161d;border-radius:22px;padding:14px;box-shadow:0 20px 65px rgba(0,0,0,.3);display:none}
-.install-panel.show,.perm-panel.show{display:block}.install-panel b,.perm-panel b{display:block;font-size:18px;margin-bottom:4px}.install-panel p,.perm-panel p{font-size:13px;color:#667383;margin:6px 0 10px;line-height:1.45}
-.install-panel .row-actions,.perm-panel .row-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.install-panel button,.perm-panel button{border-radius:14px;padding:11px 8px;font-weight:950}.install-panel .ok,.perm-panel .ok{background:var(--green);color:#06140f}.install-panel .no,.perm-panel .no{background:#f2f5f8;color:#263241}
-.front-car-banner{position:absolute;z-index:78;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);background:rgba(255,255,255,.96);color:#10161d;border-radius:20px;padding:10px 12px;box-shadow:0 14px 42px rgba(0,0,0,.22);display:none;align-items:center;justify-content:space-between;gap:8px}
-.front-car-banner.show{display:flex}.front-car-banner b{color:#008866}.front-car-banner button{border-radius:12px;background:var(--green);color:#06140f;padding:8px 10px;font-size:12px;font-weight:950}
-.favorite-card,.history-card{background:#f4f7fb;border:1px solid #e1e7ef;border-radius:18px;padding:10px;margin-top:8px}.favorite-card h4,.history-card h4{font-size:12px;text-transform:uppercase;color:#7a8796;letter-spacing:.6px;margin-bottom:8px}
-.mini-list{display:grid;gap:7px}.mini-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid #e1e7ef;border-radius:14px;padding:9px;font-size:12px}.mini-row b{color:#008866}.mini-row button{border-radius:10px;background:var(--green);color:#06140f;padding:7px 9px;font-weight:950;font-size:11px}
-.long-sos{position:absolute;z-index:74;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 82px);width:64px;height:64px;border-radius:50%;background:var(--red);color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.32);font-size:22px;font-weight:950;display:grid;place-items:center}
-.long-sos.holding{animation:sosPulse .6s infinite alternate}@keyframes sosPulse{from{transform:scale(1)}to{transform:scale(1.08)}}
-body.driving .sheet{transform:translateY(calc(100% - 94px))}body.driving .top .logoTop{display:none}body.driving .actions button:not(.report):not(.center){opacity:.55}
-.status-chip{display:inline-block;border-radius:999px;background:#eef2f6;color:#667383;padding:3px 8px;font-size:10px;font-weight:950;margin-left:4px}.status-read{background:#e7fff6;color:#008866}.status-sent{background:#eef6ff;color:#244acb}
-.alert-confirm{display:flex;gap:6px}.alert-confirm button{padding:8px 9px}
-body.night .install-panel,body.night .perm-panel,body.night .front-car-banner,body.night .favorite-card,body.night .history-card{background:#121923;color:#eef6ff;border-color:#26364d}body.night .mini-row{background:#0d1723;color:#eef6ff;border-color:#26364d}
-@media(orientation:landscape) and (max-height:560px){.front-car-banner{left:8px;right:auto;width:48vw;top:62px}.long-sos{right:10px;bottom:76px;width:52px;height:52px}.install-panel,.perm-panel{left:10px;right:auto;width:48vw}}
+  App.resetSheetState = function(){
+    const s = $('sheet');
+    if(!s) return;
+    s.classList.remove('mini','full','dragging');
+    s.style.transform = '';
+    S.sheetSnap = 'mid';
+    try{ S.map?.invalidateSize(); }catch(e){}
+  };
 
-</style>
-</head>
-<body>
-<section id="sw" class="screen center active">
-  <div class="card">
-    <div class="brand">Immat<span>Connect</span></div>
-    <p class="hero">GPS communautaire et communication entre conducteurs.</p>
-    <button class="btn primary" onclick="App.goAuth('login')">Se connecter</button>
-    <button class="btn ghost" onclick="App.goAuth('signup')">Créer un compte</button>
-  </div>
-</section>
+  const oldPanel = App.panel?.bind(App);
+  if(oldPanel){
+    App.panel = function(p){
+      const r = oldPanel(p);
+      this.resetSheetState();
+      return r;
+    };
+  }
 
-<section id="sa" class="screen center">
-  <div class="card">
-    <div class="ttl" id="authTitle">Connexion</div>
-    <div class="sub">Connecte-toi avec ton email et ton mot de passe.</div>
-    <div class="tabs"><button id="tabLogin" class="tab on" onclick="App.setMode('login')">Connexion</button><button id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div>
-    <div class="field"><label class="lbl">Email</label><input id="iEmail" class="inp" type="email" placeholder="ton@email.com"><div id="hEmail" class="hint"></div></div>
-    <div id="suExtras" class="hidden">
-      <div class="field"><label class="lbl">Téléphone</label><input id="iPhone" class="inp" placeholder="0612345678"><div id="hPhone" class="hint"></div></div>
-      <div class="field"><label class="lbl">Immatriculation</label><input id="iPlate" class="inp plateInput" placeholder="AB-123-CD" maxlength="9"><div id="hPlate" class="hint"></div></div>
-      <div class="field"><label class="lbl">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div>
-    </div>
-    <div class="field"><label class="lbl">Mot de passe</label><div class="iw"><input id="iPwd" class="inp pr" type="password" placeholder="••••••••"><button class="eye" type="button" onclick="App.eye('iPwd',this)">👁</button></div><div id="hPwd" class="hint"></div></div>
-    <div id="confirmWrap" class="hidden"><div class="field"><label class="lbl">Confirmer</label><div class="iw"><input id="iConfirm" class="inp pr" type="password" placeholder="••••••••"><button class="eye" type="button" onclick="App.eye('iConfirm',this)">👁</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div></div>
-    <button id="authBtn" class="btn primary" onclick="App.handleAuth()">Se connecter</button>
-    <button class="btn ghost" onclick="App.show('sw')">← Retour</button>
-    <div style="text-align:center"><button class="lbtn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button id="resendBtn" class="lbtn hidden" onclick="App.resendConfirm()">Renvoyer l'email</button></div>
-    <div id="authSt" class="st"></div>
-  </div>
-</section>
+  const oldOpenGps = App.openGps?.bind(App);
+  if(oldOpenGps){
+    App.openGps = function(){
+      const r = oldOpenGps();
+      this.resetSheetState();
+      setTimeout(()=>$('gpsSearch')?.focus(),120);
+      return r;
+    };
+  }
 
-<section id="sp" class="screen center">
-  <div class="card">
-    <div class="ttl">Mon profil</div><div class="sub">Infos nécessaires pour apparaître sur la carte.</div>
-    <div class="field"><label class="lbl">Pseudo</label><input id="iPseudo" class="inp"></div>
-    <div class="field"><label class="lbl">Plaque</label><input id="iProPlate" class="inp plateInput" placeholder="AB-123-CD" maxlength="9"><div id="hProPlate" class="hint"></div></div>
-    <div class="field"><label class="lbl">Téléphone</label><input id="iProPhone" class="inp" placeholder="0612345678"><div id="hProPhone" class="hint"></div></div>
-    <div class="field"><label class="lbl">Couleur</label><select id="iProColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select></div>
-    <button class="btn primary" onclick="App.saveProfile()">Enregistrer et continuer</button><div id="profileSt" class="st"></div>
-  </div>
-</section>
+  const oldShow = App.show?.bind(App);
+  if(oldShow){
+    App.show = function(id){
+      const r = oldShow(id);
+      if(id !== 'sm'){
+        document.body.classList.remove('authenticated');
+      }
+      return r;
+    };
+  }
 
-<section id="sr" class="screen center">
-  <div class="card"><div class="ttl">Nouveau mot de passe</div><input id="iNewPwd" class="inp" type="password" placeholder="Nouveau mot de passe"><br><br><input id="iNewCfm" class="inp" type="password" placeholder="Confirmer"><button class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><div id="resetSt" class="st"></div></div>
-</section>
-
-<section id="sm" class="screen app">
-  <div id="map"></div><div class="shade"></div>
-  <div class="top"><button class="round" onclick="App.openDrawer()">☰</button><div class="logoTop">Immat<span>Connect</span> Pro</div><button class="round" onclick="App.openGps()">🔎</button></div>
-  <div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div>
-  <div class="actions" id="actions">
-    <button title="Recherche" onclick="App.openGps()">🔍</button>
-    <button class="report" title="Signaler" onclick="App.openReport()">⚠️</button>
-    <button class="center" title="Recentrer" onclick="App.recenter()">🎯</button>
-    <button title="Conducteurs" onclick="App.openNearby()">👥</button>
-    <button title="Vue" onclick="App.cycleView()">🗺</button>
-    <button title="Assistance" onclick="App.openAssist()">🆘</button>
-  </div>
-  <div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><button id="longSos" class="long-sos" onpointerdown="App.startSosHold(event)" onpointerup="App.cancelSosHold()" onpointerleave="App.cancelSosHold()">SOS</button><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div>
-
-  <div id="sheet" class="sheet">
-    <button class="sheet-close" onclick="App.closeSheet()">×</button>
-    <div class="handle" onclick="App.toggleSheet()"></div>
-    <div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div>
-    <div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Message</button><button id="tabMessages" onclick="App.panel('messages')">Inbox</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
-    <div id="panelDrive" class="panel on">
-      <div class="section">Recherche GPS</div>
-      <div class="gps-search-card">
-        <div class="gps-search-row"><input id="gpsSearch" placeholder="Rue, lieu, POI"><button onclick="App.searchGps()">🔍</button><button onclick="App.voiceGps()">🎙️</button></div>
-        <div class="gps-poi-grid"><button onclick="App.poi('station essence')">⛽ Carburant</button><button onclick="App.poi('restaurant')">🍽️ Resto</button><button onclick="App.poi('parking')">🅿️ Parking</button><button onclick="App.poi('garage automobile')">🔧 Garage</button><button onclick="App.poi('borne recharge')">🔌 Recharge</button><button onclick="App.poi('hôpital')">🏥 Santé</button></div>
-        <div id="gpsResults" class="gps-results"></div>
-        <div id="routeMini" class="route-mini"></div><div class="favorite-card"><h4>Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty">Aucun favori.</div></div><button class="act primary" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty">Aucun historique.</div></div></div>
-      </div>
-      <div class="section">Navigation</div>
-      <div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.openAlerts()">✅ Alertes</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.cycleView()">🗺 Vue</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button></div>
-    </div>
-    <div id="panelContact" class="panel">
-      <div class="section">Contacter un véhicule</div>
-      <div class="row"><input id="iTarget" class="inp lightInp plateInput" placeholder="AB-123-CD" maxlength="9"><button class="act primary" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div>
-      <textarea id="iMsg" class="inp lightInp" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div>
-      <div class="row"><button class="act" onclick="App.voicePlate()">🎙 Plaque</button><button class="act" onclick="App.voiceMsg()">🎙 Message</button></div>
-      <div class="quick"><button class="q red" onclick="App.quickMsg('🚨 URGENT : fumée ou fuite visible sur votre véhicule.')">Fumée</button><button class="q red" onclick="App.quickMsg('🚨 URGENT : pneu ou roue dangereux.')">Roue</button><button class="q orange" onclick="App.quickMsg('⚠️ Problème d’éclairage visible.')">Éclairage</button><button class="q orange" onclick="App.quickMsg('⚠️ Porte ou coffre mal fermé.')">Porte</button><button class="q green" onclick="App.quickMsg('ℹ️ Feux restés allumés.')">Feux</button><button class="q green" onclick="App.quickMsg('ℹ️ Pouvez-vous vérifier votre véhicule ?')">Vérifier</button></div>
-      <button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button>
-    </div>
-    <div id="panelMessages" class="panel">
-      <div class="section">Messages</div><div id="convbar" class="convbar"></div>
-      <div class="msg-tools"><button onclick="App.markRead()">Marquer lu</button><button class="danger" onclick="App.deleteConv()">Supprimer conversation</button></div>
-      <div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div>
-      <div class="quick"><button class="q green" onclick="App.quickReply('Merci, je vérifie.')">Merci</button><button class="q green" onclick="App.quickReply('Bien reçu.')">Reçu</button><button class="q orange" onclick="App.quickReply('Je m’arrête dès que possible.')">Je m’arrête</button></div>
-    </div>
-    <div id="panelSettings" class="panel">
-      <div class="section">Options</div>
-      <div class="grid"><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.toggleSounds()">🔔 Sons/Vibrations</button><button class="act" onclick="App.toggleVoice()">🔊 Voix GPS</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div>
-    </div>
-  </div>
-
-  <div id="reportPanel" class="overlay"><button class="close-x" onclick="App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Préviens un véhicule, informe la route ou demande de l’aide.</p>
-    <div class="report-block"><h3>🚗 Prévenir un véhicule</h3><div class="report-grid"><button class="info" onclick="App.vehicleAlert('Feux restés allumés')">💡 Feux allumés</button><button class="info" onclick="App.vehicleAlert('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button class="important" onclick="App.vehicleAlert('Problème d’éclairage')">💡 Éclairage</button><button class="important" onclick="App.vehicleAlert('Élément semble se détacher')">🔧 Élément détaché</button><button class="urgent" onclick="App.vehicleAlert('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button class="urgent" onclick="App.vehicleAlert('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div>
-    <div class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button class="route" onclick="App.roadReport('accident')">🚗 Accident</button><button class="route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button class="route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button class="route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button class="route" onclick="App.roadReport('controle')">👮 Contrôle</button><button class="route" onclick="App.roadReport('danger')">❗ Danger</button></div></div>
-    <div class="report-block"><h3>🆘 Demander de l’aide</h3><div class="report-grid"><button class="help" onclick="App.assist('panne')">🚗 Panne</button><button class="help" onclick="App.assist('carburant')">⛽ Carburant</button><button class="help" onclick="App.assist('batterie')">🔋 Batterie</button><button class="help" onclick="App.assist('moteur')">⚙️ Moteur</button><button class="urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button class="help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div>
-  </div>
-  <div id="nearbyPanel" class="overlay"><button class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty">Recherche…</div></div></div>
-  <div id="alertsPanel" class="overlay"><button class="close-x" onclick="App.closeOverlay('alertsPanel')">×</button><h2>Alertes actives</h2><div id="alertsList" class="list"><div class="empty">Aucune alerte.</div></div></div>
-</section>
-
-<div id="drawer" class="drawer"><div class="back" onclick="App.closeDrawer()"></div><div class="drawerCard"><h2>Menu</h2><p class="pseudo">GPS, communication et sécurité.</p><div class="menu"><button onclick="App.closeDrawer();App.panel('drive')">GPS <span>🧭</span></button><button onclick="App.closeDrawer();App.panel('contact')">Contacter <span>💬</span></button><button onclick="App.closeDrawer();App.panel('messages')">Messages <span>📩</span></button><button onclick="App.closeDrawer();App.openNearby()">Conducteurs <span>👥</span></button><button onclick="App.closeDrawer();App.openAlerts()">Alertes <span>✅</span></button><button onclick="App.closeDrawer();App.logout()">Déconnexion <span>⏻</span></button></div></div></div>
-<div id="legal" class="modal"><div class="back" onclick="App.closeLegal()"></div><div class="modalCard"><h2>Confidentialité</h2><p>Ton téléphone n’est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button class="btn primary" onclick="App.closeLegal()">J’ai compris</button></div></div>
-<div id="blocked" class="modal"><div class="back" onclick="App.closeBlocked()"></div><div class="modalCard"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button class="btn ghost" style="color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div>
-<div id="recent" class="modal"><div class="back" onclick="App.closeRecent()"></div><div class="modalCard"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><button class="btn ghost" style="color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div>
-<div id="permPanel" class="perm-panel"><b>Activer les accès utiles</b><p>Localisation pour la carte, micro pour la recherche vocale, notifications pour les alertes importantes.</p><div class="row-actions"><button class="ok" onclick="App.runPermissions(true)">Activer</button><button class="no" onclick="App.dismissPermPanel()">Plus tard</button></div></div><div id="installPanel" class="install-panel"><b>Installer ImmatConnect</b><p>Ajoute l’app à l’écran d’accueil pour un affichage plein écran et une meilleure stabilité.</p><div class="row-actions"><button class="ok" onclick="App.enableInstallFeatures()">Activer</button><button class="no" onclick="App.dismissInstallPanel()">Plus tard</button></div></div><div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
-
-<script>
-'use strict';
-const $=id=>document.getElementById(id);
-const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdtXAiOiIxNzcyODQwNzA3IiwiZXhwIjoyMDg4NDE2NzA3fQ.fake',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-CFG.key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InZlbWdka2tibGRneXZhaXN1ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjkwMjYsImV4cCI6MjA5MjQ0NTAyNn0.O4p61ukd0y9tkcMCBuosAbVEpmtUuF-IJCW_pPxksfI';
-const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
-const get=(k,f)=>{try{let v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}},set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},jget=(k,f)=>{try{let v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
-const S={uid:null,mode:'login',map:null,myMarker:null,otherMkrs:[],roadMkrs:[],routeLayer:null,routeDest:null,routeSteps:[],nextStep:0,watchId:null,firstFix:true,chMsg:null,chLoc:null,chReports:null,invisible:get('ic_invisible','0')==='1',radiusKm:Number(get('ic_radius',5))||5,myLat:null,myLng:null,lastSpeed:0,msgClicks:[],blocked:jget('ic_blocked',[]),recent:jget('ic_recent_vehicles',[]),alerts:jget('ic_alerts',[]),conv:'all',selPlate:null,driveMode:false,mapView:get('ic_view','drive'),frontVehicle:null,profile:null,voice:get('ic_voice','1')==='1',sounds:get('ic_sounds','1')==='1',autoFollow:true};
-let lastNotif='',lastSpoken='',toastTimer=null,gpsTimer=null;
-const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const js=s=>String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
-const nPlate=v=>String(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''),nPhone=v=>String(v||'').replace(/\D/g,''),vPhone=v=>/^0\d{9}$/.test(String(v||'').replace(/\s/g,'')),vPlate=v=>/^[A-Z]{2}-\d{3}-[A-Z]{2}$/.test(String(v||'').trim().toUpperCase()),sPwd=v=>String(v||'').length>=8&&/[A-Z]/.test(v)&&/[^A-Za-z0-9]/.test(v);
-function fPlate(r){let s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);return s.length<=2?s:s.length<=5?s.slice(0,2)+'-'+s.slice(2):s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5)}
-function colorHex(c){return{white:'#f5f5f5',black:'#111',gray:'#8e8e93',blue:'#2979ff',red:'#ff3b5c',green:'#00c853',yellow:'#ffb300',other:'#b388ff'}[c||'other']||'#b388ff'}
-function colorLabel(c){return{white:'Blanc',black:'Noir',gray:'Gris',blue:'Bleu',red:'Rouge',green:'Vert',yellow:'Jaune / Orange',other:'Autre'}[c||'']||'Couleur non renseignée'}
-function dot(c){return'<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:'+colorHex(c)+';border:2px solid white;vertical-align:-1px"></span>'}
-function icon(c,self=false){let fill=colorHex(c),stroke=c==='white'?'#555':'#fff',cls=self?'car-pin self':'car-pin';return L.divIcon({html:'<div class="'+cls+'" style="background:'+fill+';border-color:'+stroke+'">🚗</div>',iconSize:self?[42,42]:[38,38],iconAnchor:self?[21,21]:[19,19],className:''})}
-function roadIcon(t){return {accident:'🚗',bouchon:'🚦',obstacle:'⚠️',travaux:'🚧',controle:'👮',danger:'❗',panne:'🆘',carburant:'⛽',batterie:'🔋',moteur:'⚙️',incendie:'🔥',perdu:'🧭'}[t]||'⚠️'}
-function km(a,b,c,d){let R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,z=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
-function toast(m,t=''){let e=$('toast');if(!e)return;e.textContent=m;e.className='toast '+t;requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),3200)}
-function hint(id,t,m){let e=$(id);if(e){e.className='hint '+(t||'');e.textContent=m||''}}
-function st(id,m,t){let e=$(id);if(e){e.textContent=m||'';e.className='st '+(t||'')+(m?' show':'')}}
-function speak(txt,force=false){if(!S.voice||!('speechSynthesis'in window))return;if(!force&&txt===lastSpoken)return;lastSpoken=txt;try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(String(txt||''));u.lang='fr-FR';u.rate=.86;u.pitch=.98;let v=speechSynthesis.getVoices().find(v=>(v.lang||'').toLowerCase().startsWith('fr'));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
-function instr(step){if(!step)return'Continuez tout droit.';let m=step.maneuver||{},mod=m.modifier||'',type=m.type||'',road=step.name?' sur '+step.name:'';if(type==='arrive')return'Vous êtes arrivé.';if(type==='roundabout')return'Au rond-point, prenez la sortie indiquée'+road+'.';if(mod.includes('left'))return'Tournez à gauche'+road+'.';if(mod.includes('right'))return'Tournez à droite'+road+'.';return'Continuez tout droit'+road+'.'}
-
-const App={
-show(id){['sw','sa','sp','sr','sm'].forEach(x=>$(x)?.classList.remove('active'));$(id)?.classList.add('active')},
-eye(id,b){let e=$(id),v=e.type==='password';e.type=v?'text':'password';b.textContent=v?'🙈':'👁'},
-goAuth(m){this.setMode(m);this.show('sa')},
-setMode(m){S.mode=m==='signup'?'signup':'login';let su=S.mode==='signup';$('authTitle').textContent=su?'Créer un compte':'Connexion';$('authBtn').textContent=su?'Créer mon compte':'Se connecter';$('tabSignup').classList.toggle('on',su);$('tabLogin').classList.toggle('on',!su);$('suExtras').classList.toggle('hidden',!su);$('confirmWrap').classList.toggle('hidden',!su);$('resendBtn').classList.toggle('hidden',!su)},
-pending(email,p,ph,c){set('ic_pending_profile',JSON.stringify({email,pseudo:email.split('@')[0],owner_plate:p,phone:ph,vehicle_color:c}))},
-pendingGet(email){try{let p=JSON.parse(get('ic_pending_profile','null'));return p?.email===email?p:null}catch(e){return null}},
-async plateAvailable(p,self){if(!sb)return true;let{data,error}=await sb.from('profiles').select('id').eq('owner_plate',p).maybeSingle();return error||!data?.id||data.id===self},
-async handleAuth(){if(!sb)return st('authSt','Supabase non chargé.','err');let email=$('iEmail').value.trim(),pwd=$('iPwd').value;if(!email)return hint('hEmail','err','Requis.');if(!pwd)return hint('hPwd','err','Requis.');$('authBtn').disabled=true;try{S.mode==='signup'?await this.signup(email,pwd):await this.login(email,pwd)}finally{$('authBtn').disabled=false}},
-async signup(email,pwd){let ph=nPhone($('iPhone').value),pl=nPlate($('iPlate').value),c=$('iColor').value,cf=$('iConfirm').value;if(!vPhone(ph))return hint('hPhone','err','Format : 0612345678');if(!vPlate(pl))return hint('hPlate','err','Format : AB-123-CD');if(!c)return hint('hColor','err','Choisis une couleur.');if(!sPwd(pwd))return hint('hPwd','err','Mot de passe trop faible.');if(pwd!==cf)return hint('hConfirm','err','Les mots de passe ne correspondent pas.');if(!await this.plateAvailable(pl,null))return hint('hPlate','err','Plaque déjà utilisée.');this.pending(email,pl,ph,c);let{data,error}=await sb.auth.signUp({email,password:pwd,options:{emailRedirectTo:CFG.site}});if(error)return st('authSt',error.message,'err');if(data?.user)await sb.from('profiles').upsert({id:data.user.id,email,pseudo:email.split('@')[0],owner_plate:pl,phone:ph,vehicle_color:c});st('authSt','✅ Compte créé. Vérifie ton email.','ok')},
-async login(email,pwd){st('authSt','Connexion en cours...','ok');let{data,error}=await sb.auth.signInWithPassword({email,password:pwd});if(error)return st('authSt','Email ou mot de passe incorrect.','err');S.uid=data.user.id;await this.afterAuth()},
-async forgotPwd(){let email=$('iEmail').value.trim();if(email){let{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:CFG.site});st('authSt',error?error.message:'Email de réinitialisation envoyé.',error?'err':'ok')}},
-async resendConfirm(){let email=$('iEmail').value.trim();if(email){let{error}=await sb.auth.resend({type:'signup',email,options:{emailRedirectTo:CFG.site}});st('authSt',error?error.message:'Email renvoyé.',error?'err':'ok')}},
-async updatePwd(){let p=$('iNewPwd').value,c=$('iNewCfm').value;if(!sPwd(p))return st('resetSt','Mot de passe trop faible.','err');if(p!==c)return st('resetSt','Les mots de passe ne correspondent pas.','err');let{error}=await sb.auth.updateUser({password:p});st('resetSt',error?error.message:'✅ Mot de passe mis à jour.',error?'err':'ok')},
-async afterAuth(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return this.show('sw');S.uid=u.id;let{data:p}=await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();if(!p?.owner_plate){let pp=this.pendingGet(u.email);if(pp){await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo:pp.pseudo,owner_plate:pp.owner_plate,phone:pp.phone,vehicle_color:pp.vehicle_color});p=pp}}if(p?.owner_plate&&p?.phone&&p?.vehicle_color)this.openMap(p,u.email);else this.show('sp')},
-async saveProfile(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=nPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo||!vPlate(pl)||!vPhone(ph)||!c)return st('profileSt','Complète tous les champs correctement.','err');if(!await this.plateAvailable(pl,u.id))return hint('hProPlate','err','Plaque déjà utilisée.');await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)},
-openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate;$('tbPseudo').textContent=(p.pseudo||email)+' · '+colorLabel(p.vehicle_color);$('radiusSel').value=S.radiusKm;this.refresh();setTimeout(()=>{this.initMap();S.map.invalidateSize();if(!S.invisible)this.locate();this.requestBasics()},180);this.startMsgs();this.subLocs();this.subReports();toast('Connecté à ImmatConnect.','ok')},
-requestBasics(){this.autoNight();if('Notification'in window&&Notification.permission==='default')Notification.requestPermission().catch(()=>{})},
-initMap(){if(S.map)return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',e=>{S.longPressLatLng=e.latlng})},
-panel(p){['drive','contact','messages','settings'].forEach(x=>{$('panel'+x[0].toUpperCase()+x.slice(1)).classList.toggle('on',x===p);$('tab'+x[0].toUpperCase()+x.slice(1)).classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs()},
-openGps(){this.panel('drive');this.openSheet();setTimeout(()=>$('gpsSearch')?.focus(),120)},
-toggleSheet(){$('sheet').classList.toggle('mini')},openSheet(){$('sheet').classList.remove('mini')},closeSheet(){$('sheet').classList.add('mini')},
-openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},
-closeOverlay(id){$(id)?.classList.remove('show')},closeAllOverlays(){['reportPanel','nearbyPanel','alertsPanel'].forEach(id=>this.closeOverlay(id))},
-refresh(){$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';document.body.classList.toggle('night',this.isNight())},
-isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},
-toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},
-toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons/vibrations activés.':'Sons/vibrations désactivés.','ok')},
-haptic(p=[35]){try{if(S.sounds)navigator.vibrate?.(p)}catch(e){}},
-locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:1000}).addTo(S.map);this.checkRoute();this.updateDrivingMode();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible)await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
-async deleteMyLocation(){let{data:ud}=await sb.auth.getUser();if(ud?.user)await sb.from('user_locations').delete().eq('id',ud.user.id)},
-async toggleInvisible(){S.invisible=!S.invisible;set('ic_invisible',S.invisible?'1':'0');if(S.invisible){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;if(S.myMarker)S.map.removeLayer(S.myMarker);await this.deleteMyLocation();toast('Invisible : position retirée.','ok')}else this.locate();this.refresh()},
-setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers()},
-recenter(){S.autoFollow=true;if(S.myLat!==null&&S.map)S.map.setView([S.myLat,S.myLng],S.mapView==='drive'?18:16,{animate:true});else this.locate()},
-cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},
-stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst').classList.remove('show');$('routeMini').classList.remove('show');toast('GPS arrêté.','ok')},
-async searchGps(){let q=$('gpsSearch').value.trim(),box=$('gpsResults');if(q.length<2)return;box.innerHTML='<div class="empty">Recherche…</div>';try{let p=new URLSearchParams({format:'json',limit:'10',countrycodes:'fr',addressdetails:'1',q:q+' France'});if(S.myLat!==null&&S.myLng!==null){p.set('viewbox',(S.myLng-.35)+','+(S.myLat+.35)+','+(S.myLng+.35)+','+(S.myLat-.35));p.set('bounded','0')}let arr=await(await fetch('https://nominatim.openstreetmap.org/search?'+p)).json();arr=(arr||[]).map(r=>{let lat=+r.lat,lon=+r.lon,dist=(S.myLat!==null&&S.myLng!==null)?km(S.myLat,S.myLng,lat,lon):999999;return{...r,dist}}).sort((a,b)=>a.dist-b.dist);box.innerHTML=arr.length?arr.map(r=>{let d=r.dist<1?Math.round(r.dist*1000)+' m':r.dist<999999?r.dist.toFixed(1)+' km':'';let n=String(r.display_name||'').split(',');return '<button onclick="App.pickDest('+Number(r.lat)+','+Number(r.lon)+',\''+js(r.display_name)+'\')"><span>📍</span><span><b>'+esc(n[0]||r.display_name)+'</b><small>'+esc(n.slice(1,3).join(', '))+'</small></span><span>'+esc(d)+'</span></button>'}).join(''):'<div class="empty">Aucun résultat.</div>'}catch(e){box.innerHTML='<div class="empty">Recherche indisponible.</div>'}},
-poi(q){$('gpsSearch').value=q;this.searchGps()},
-voiceGps(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Micro indisponible, saisie manuelle.','bad');$('gpsSearch').focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast('Dis l’adresse ou le lieu.','ok');rec.onresult=e=>{let t=e.results?.[0]?.[0]?.transcript||'';if(t){$('gpsSearch').value=t;this.searchGps()}};rec.onerror=()=>toast('Micro indisponible.','bad');rec.start()}catch(e){toast('Micro indisponible.','bad')}},
-async pickDest(lat,lon,name){if(S.myLat===null)return toast('Localise-toi avant.','bad');S.routeDest={lat,lon,name};S.nextStep=0;try{let url='https://router.project-osrm.org/route/v1/driving/'+S.myLng+','+S.myLat+';'+lon+','+lat+'?overview=full&geometries=geojson&steps=true',j=await(await fetch(url)).json(),r=j.routes[0],leg=r.legs[0];S.routeSteps=(leg.steps||[]).map(st=>({lat:st.maneuver.location[1],lon:st.maneuver.location[0],text:instr(st)}));let coords=r.geometry.coordinates.map(c=>[c[1],c[0]]);if(S.routeLayer)S.map.removeLayer(S.routeLayer);S.routeLayer=L.polyline(coords,{color:'#2f7bff',weight:6,opacity:.86}).addTo(S.map);S.map.fitBounds(S.routeLayer.getBounds(),{padding:[45,45]});let kmv=(r.distance/1000).toFixed(1),min=Math.round(r.duration/60),eta=new Date(Date.now()+r.duration*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('routeMini').className='route-mini show';$('routeMini').innerHTML='<span><b>'+kmv+' km</b><br>'+min+' min · arrivée '+eta+'</span><button onclick="App.startNav()">Démarrer</button>';this.showInst('🧭','Itinéraire calculé : '+kmv+' km, '+min+' min.');speak('Votre itinéraire a été calculé.',true)}catch(e){toast('Impossible de calculer.','bad')}},
-startNav(){S.driveMode=true;S.autoFollow=true;this.closeSheet();this.locate();this.showInst('🧭',S.routeSteps[0]?.text||'Démarrage navigation.');speak('Démarrage de la navigation. '+(S.routeSteps[0]?.text||''),true)},
-showInst(i,t){$('instI').textContent=i;$('instT').textContent=t;$('inst').classList.add('show')},
-checkRoute(){if(!S.driveMode||!S.routeDest||S.myLat===null)return;let end=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon)*1000;if(end<35){this.showInst('🏁','Vous êtes arrivé.');speak('Vous êtes arrivé.',true);S.driveMode=false}let stp=S.routeSteps[S.nextStep];if(stp&&km(S.myLat,S.myLng,stp.lat,stp.lon)*1000<75){this.showInst('➡️',stp.text);speak(stp.text);S.nextStep++}},
-updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15)},
-async loadOthers(){this.initMap();S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[];let{data:ud}=await sb.auth.getUser(),me=ud?.user,cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString(),q=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cut);if(me)q=q.neq('id',me.id);let{data:locs}=await q;if(!locs?.length){S.nearby=[];return toast('Aucun conducteur récent.')}let ids=locs.map(l=>l.id),{data:profs}=await sb.from('profiles').select('id,pseudo,owner_plate,vehicle_color').in('id',ids),map={};(profs||[]).forEach(p=>map[p.id]=p);let rows=[];locs.forEach(l=>{let p=map[l.id]||{},pl=nPlate(p.owner_plate),lat=+l.latitude,lng=+l.longitude,dist=null;if(!pl||S.blocked.includes(pl))return;if(S.myLat!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist});this.addRecent(pl,p.vehicle_color,dist);let mk=L.marker([lat,lng],{icon:icon(p.vehicle_color)}).addTo(S.map);mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button class="ppb" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');S.otherMkrs.push(mk)});S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));this.renderNearby();toast(rows.length+' conducteur(s) affiché(s).','ok')},
-addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);set('ic_recent_vehicles',JSON.stringify(S.recent))},
-openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty">Recherche…</div>';this.loadOthers()},
-renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return '<div class="item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty">Aucun conducteur connecté détecté.</div>'},
-pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;$('iTarget').value=S.selPlate;this.panel('contact');this.loadMsgs()},
-quickMsg(t){if(!$('iTarget').value&&S.selPlate)$('iTarget').value=S.selPlate;if(!$('iTarget').value)return toast('Choisis une plaque.','bad');$('iMsg').value=t;this.panel('contact')},
-clearMsg(){$('iMsg').value='';$('iTarget').value=''},
-async sendMsg(){let plate=nPlate($('iTarget').value),msg=$('iMsg').value.trim();if(!vPlate(plate))return hint('hTarget','err','Plaque invalide.');if(!msg)return hint('hMsg','err','Ajoute un message.');let now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);if(S.msgClicks.length>=CFG.maxMsgPerMinute)return toast('Trop de messages.','bad');S.msgClicks.push(now);let{data:ud}=await sb.auth.getUser(),u=ud?.user,{data:target}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();if(!target?.id)return toast('Aucun utilisateur avec cette plaque.','bad');if(target.id===u.id)return toast('Impossible de t’envoyer un message.','bad');let{data:a}=await sb.from('messages').select('status').eq('sender_id',u.id).eq('receiver_id',target.id).eq('target_plate',plate),{data:b}=await sb.from('messages').select('status').eq('sender_id',target.id).eq('receiver_id',u.id).eq('target_plate',plate),rows=[...(a||[]),...(b||[])],acc=rows.some(x=>x.status==='accepted'),pend=rows.some(x=>x.status==='pending');if(pend&&!acc)return toast('Demande déjà en attente.','ok');let{error}=await sb.from('messages').insert({sender_id:u.id,receiver_id:target.id,target_plate:plate,message:msg,status:acc?'accepted':'pending'});if(error)return toast('Erreur envoi.','bad');$('iMsg').value='';S.conv=plate;toast(acc?'Message envoyé.':'Demande envoyée.','ok');this.loadMsgs()},
-async startMsgs(){await this.loadMsgs();await this.subMsgs()},
-async loadMsgs(){let box=$('chatBox'),{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let{data,error}=await sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).neq('status','rejected').order('created_at',{ascending:true}).limit(150);if(error)return;let rows=(data||[]).filter(m=>!S.blocked.includes(nPlate(m.target_plate)));this.renderConv(rows);if(S.conv!=='all')rows=rows.filter(m=>nPlate(m.target_plate)===S.conv);box.innerHTML=rows.length?rows.map(m=>this.msgHtml(m,u.id)).join(''):'<div class="empty">Aucun message.</div>';box.scrollTop=box.scrollHeight},
-renderConv(rows){let ps=[...new Set(rows.map(m=>nPlate(m.target_plate)).filter(Boolean))];$('convbar').innerHTML='<button class="conv '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button class="conv '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('')},
-setConv(p){S.conv=p;if(p!=='all')$('iTarget').value=p;this.loadMsgs()},
-msgHtml(m,my){let sent=m.sender_id===my,p=nPlate(m.target_plate),status=m.status||'accepted',title=sent?'Envoyé au véhicule '+p:'Reçu du véhicule '+p,time=m.created_at?new Date(m.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'',acts='',rep='';if(!sent&&m.receiver_id===my&&status==='pending')acts='<button class="tiny ok" onclick="App.accept(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\')">Accepter</button><button class="tiny no" onclick="App.reject(\''+js(m.id)+'\')">Refuser</button>';if(!sent&&status==='accepted'){let tid='ta_'+String(m.id).replace(/\W/g,'');rep='<textarea id="'+tid+'" class="inp lightInp" placeholder="Répondre…"></textarea><button class="tiny ok" onclick="App.reply(\''+js(m.sender_id)+'\',\''+js(p)+'\',\''+tid+'\')">Répondre</button>'}return'<div class="msg '+(sent?'sent':'recv')+'"><div class="mlbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+rep+'<div><button class="tiny no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button class="tiny no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="time">'+esc(time)+'</div></div>'},
-async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact pour la plaque '+plate+' a été acceptée.',status:'accepted'});this.loadMsgs()},
-async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},
-async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},
-async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;await sb.from('messages').update({status:'rejected'}).eq('id',id);toast('Message supprimé.','ok');this.loadMsgs()},
-async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;let{data:ud}=await sb.auth.getUser(),u=ud.user,{data:rows}=await sb.from('messages').select('id').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).eq('target_plate',S.conv);for(const r of rows||[])await sb.from('messages').update({status:'rejected'}).eq('id',r.id);S.conv='all';toast('Conversation supprimée.','ok');this.loadMsgs()},
-markRead(){toast('Conversation marquée comme lue.','ok')},
-quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');$('iTarget').value=S.conv;$('iMsg').value=t;this.panel('contact')},
-async subMsgs(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;if(S.chMsg)await sb.removeChannel(S.chMsg);S.chMsg=sb.channel('ic_msg_'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages'},p=>{let m=p.new||p.old;if(!m||m.sender_id!==u.id&&m.receiver_id!==u.id)return;if(p.eventType==='INSERT'&&m.receiver_id===u.id){let pl=nPlate(m.target_plate);this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+pl,pl)}this.loadMsgs()}).subscribe()},
-notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);if('Notification'in window&&Notification.permission==='granted')try{new Notification(t,{body:s})}catch(e){}},
-openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
-async subLocs(){if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{$('sm').classList.contains('active')&&this.loadOthers()}).subscribe()},
-async subReports(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let{data:p}=await sb.from('profiles').select('owner_plate').eq('id',u.id).maybeSingle(),my=nPlate(p?.owner_plate);if(!my)return;if(S.chReports)await sb.removeChannel(S.chReports);S.chReports=sb.channel('ic_reports_'+u.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},x=>{if(nPlate(x.new?.plate)===my)toast('⚠️ Alerte signalée sur ton véhicule.','bad')}).subscribe()},
-openReport(){this.closeAllOverlays();$('reportPanel').classList.add('show')},
-vehicleAlert(label){let p=nPlate($('iTarget').value||S.selPlate||S.conv||'');if(!p||p==='ALL')return toast('Clique d’abord un véhicule ou saisis une plaque.','bad');$('iTarget').value=p;$('iMsg').value=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 URGENT : ':'⚠️ ')+label+'. Pouvez-vous vérifier votre véhicule ?';this.closeOverlay('reportPanel');this.panel('contact')},
-async roadReport(type){if(S.myLat===null)return toast('Localise-toi avant.','bad');this.addRoadMarker(type,S.myLat,S.myLng);await this.saveReport('ROUTE','[ROUTE] '+type,S.myLat,S.myLng);this.closeOverlay('reportPanel');toast('Signalement route ajouté.','ok')},
-async assist(type){if(S.myLat===null)return toast('Localise-toi avant.','bad');this.addRoadMarker(type,S.myLat,S.myLng);await this.saveReport('ASSISTANCE','[ASSISTANCE] '+type,S.myLat,S.myLng);this.closeOverlay('reportPanel');toast('Demande d’aide visible autour.','ok')},
-addRoadMarker(type,lat,lng){let mk=L.marker([lat,lng],{icon:L.divIcon({html:'<div class="road-pin">'+roadIcon(type)+'</div>',iconSize:[32,32],iconAnchor:[16,16],className:''})}).addTo(S.map);mk.bindPopup('<b>'+esc(type)+'</b><br><small>Signalement</small>');S.roadMkrs.push(mk);let id='a_'+Date.now();S.alerts.unshift({id,type,label:type,lat,lng,at:Date.now()});S.alerts=S.alerts.slice(0,30);set('ic_alerts',JSON.stringify(S.alerts));this.renderAlerts()},
-async saveReport(plate,reason,lat,lng){try{let{data:ud}=await sb.auth.getUser();if(ud?.user)await sb.from('reports').insert({reporter_id:ud.user.id,plate,reason,latitude:lat,longitude:lng,created_at:new Date().toISOString()})}catch(e){}},
-openAlerts(){this.closeAllOverlays();$('alertsPanel').classList.add('show');this.renderAlerts()},
-renderAlerts(){let list=$('alertsList');if(!list)return;list.innerHTML=S.alerts.length?S.alerts.map(a=>'<div class="item"><span><b>'+roadIcon(a.type)+' '+esc(a.label||a.type)+'</b><br><small>'+new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</small></span><button onclick="App.dismissAlert(\''+js(a.id)+'\')">Retirer</button></div>').join(''):'<div class="empty">Aucune alerte.</div>'},
-dismissAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);set('ic_alerts',JSON.stringify(S.alerts));this.renderAlerts();toast('Alerte retirée.','ok')},
-openAssist(){this.openReport()},
-openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="item"><b>'+esc(p)+'</b><button onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!S.blocked.includes(p))S.blocked.push(p);set('ic_blocked',JSON.stringify(S.blocked));this.loadMsgs();this.loadOthers()},unblockPlate(p){S.blocked=S.blocked.filter(x=>x!==p);set('ic_blocked',JSON.stringify(S.blocked));this.openBlocked()},
-openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b><br><small>'+(r.dist?Math.round(r.dist*1000)+' m':'distance inconnue')+'</small></span><button onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()">Contacter</button></div>').join(''):'<div class="empty">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},
-openLegal(){$('legal').classList.add('show')},closeLegal(){$('legal').classList.remove('show')},
-normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b|\bMOINS\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},
-voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible, écris directement.','bad');$(target)?.focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast(mode==='plate'?'Dicte la plaque…':'Dicte ton message…','ok');rec.onresult=e=>{let txt=e.results?.[0]?.[0]?.transcript||'';$(target).value=mode==='plate'?this.normalizeSpokenPlate(txt):txt};rec.onerror=()=>toast('Vocal indisponible.','bad');rec.start()}catch(e){toast('Vocal indisponible.','bad')}},
-voicePlate(){this.voiceInput('iTarget','plate')},voiceMsg(){this.voiceInput('iMsg','message')},
-async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of [S.chMsg,S.chLoc,S.chReports])if(ch)await sb.removeChannel(ch);await sb.auth.signOut();location.href=CFG.site},
-sos(){if(S.myLat!==null)this.assist('sos');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'}
-};
-
-function bind(){document.querySelectorAll('.plateInput').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));setInterval(()=>App.autoNight(),60000);setInterval(()=>{S.alerts=S.alerts.filter(a=>Date.now()-a.at<7200000);set('ic_alerts',JSON.stringify(S.alerts));App.renderAlerts()},60000)}
-if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT')App.show('sw')});
-async function boot(){bind();App.setMode('login');if(!sb)return toast('Supabase non chargé.','bad');if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');try{let{data}=await sb.auth.getSession();if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){App.show('sw')}}
-boot();
-
-/* ===== MODULES AVANCES REINTEGRES ===== */
-Object.assign(S,{favorites:jget('ic_favorites',[]),gpsHistory:jget('ic_gps_history',[]),lastRoute:null,frontVehicle:null,sosTimer:null});
-
-App.registerServiceWorker=async function(){try{if('serviceWorker' in navigator)await navigator.serviceWorker.register('./service-worker.js')}catch(e){console.warn('SW non actif',e)}};
-App.showPermissionPanel=function(){if(get('ic_perm_panel_done','0')==='1')return;setTimeout(()=>$('permPanel')?.classList.add('show'),900)};
-App.dismissPermPanel=function(){set('ic_perm_panel_done','1');$('permPanel')?.classList.remove('show')};
-App.runPermissions=async function(manual=false){set('ic_perm_panel_done','1');$('permPanel')?.classList.remove('show');try{if(!S.watchId&&!S.invisible)this.locate()}catch(e){}setTimeout(async()=>{try{if(navigator.mediaDevices?.getUserMedia){const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(t=>t.stop());if(manual)toast('Micro activé.','ok')}}catch(e){if(manual)toast('Micro non activé, saisie manuelle disponible.','bad')}},1200);setTimeout(()=>{try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}},2200)};
-App.showInstallPanel=function(){if(get('ic_install_panel_done','0')==='1')return;setTimeout(()=>$('installPanel')?.classList.add('show'),1800)};
-App.dismissInstallPanel=function(){set('ic_install_panel_done','1');$('installPanel')?.classList.remove('show')};
-App.enableInstallFeatures=function(){set('ic_install_panel_done','1');$('installPanel')?.classList.remove('show');this.registerServiceWorker();toast('Fonctions application activées.','ok')};
-
-App.saveCurrentDestination=function(){if(!S.routeDest)return toast('Aucune destination à enregistrer.','bad');const label=S.routeDest.name||'Destination';S.favorites=S.favorites.filter(f=>f.label!==label);S.favorites.unshift({name:label.split(',')[0],label,lat:S.routeDest.lat,lon:S.routeDest.lon,at:Date.now()});S.favorites=S.favorites.slice(0,20);set('ic_favorites',JSON.stringify(S.favorites));this.renderFavs();toast('Destination ajoutée aux favoris.','ok')};
-App.addGpsHistory=function(dest){if(!dest)return;S.gpsHistory=S.gpsHistory.filter(h=>h.label!==dest.name);S.gpsHistory.unshift({name:(dest.name||'Destination').split(',')[0],label:dest.name||'',lat:dest.lat,lon:dest.lon,at:Date.now()});S.gpsHistory=S.gpsHistory.slice(0,20);set('ic_gps_history',JSON.stringify(S.gpsHistory));this.renderHistory()};
-App.renderFavs=function(){const el=$('favMiniList');if(!el)return;el.innerHTML=S.favorites.length?S.favorites.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Favori')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button onclick="App.routeSaved(\'fav\','+i+')">GPS</button></div>').join(''):'<div class="empty">Aucun favori.</div>'};
-App.renderHistory=function(){const el=$('historyMiniList');if(!el)return;el.innerHTML=S.gpsHistory.length?S.gpsHistory.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Destination')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button onclick="App.routeSaved(\'hist\','+i+')">GPS</button></div>').join(''):'<div class="empty">Aucun historique.</div>'};
-App.routeSaved=function(type,i){const f=(type==='fav'?S.favorites:S.gpsHistory)[i];if(!f)return;this.pickDest(f.lat,f.lon,f.label||f.name)};
-if(!App._advancedPickDestWrap){App._advancedPickDestWrap=true;const oldPick=App.pickDest.bind(App);App.pickDest=async function(lat,lon,name){const r=await oldPick(lat,lon,name);this.addGpsHistory({lat,lon,name});return r}};
-
-App.clusterCloseVehicles=function(){if(!S.otherMkrs?.length)return;const used=new Set();S.otherMkrs.forEach((m,i)=>{if(used.has(i))return;const a=m.getLatLng?.();if(!a)return;let group=[m];S.otherMkrs.forEach((n,j)=>{if(i===j||used.has(j))return;const b=n.getLatLng?.();if(!b)return;if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}});if(group.length>1){group.forEach((g,k)=>{const ll=g.getLatLng(),angle=(k*360/group.length)*Math.PI/180,off=.0001;g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);g.setZIndexOffset(1200+k)})}})};
-App.updateFrontVehicle=function(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')};
-App.contactFrontVehicle=function(){if(!S.frontVehicle)return toast('Aucun véhicule devant détecté.','bad');this.pickPlate(S.frontVehicle.plate)};
-if(!App._advancedLoadOthersWrap){App._advancedLoadOthersWrap=true;const oldLoad=App.loadOthers.bind(App);App.loadOthers=async function(){const r=await oldLoad();this.clusterCloseVehicles();S.frontVehicle=(S.nearby||[]).filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.updateFrontVehicle();return r}};
-if(!App._advancedLocateWrap){App._advancedLocateWrap=true;const oldLocate=App.locate.bind(App);App.locate=function(){oldLocate();setTimeout(()=>{this.showPermissionPanel();this.showInstallPanel()},900)}};
-
-App.alertTTL=function(type){return {accident:2700000,bouchon:1800000,travaux:7200000,obstacle:2700000,controle:3600000,danger:2700000,panne:1800000,sos:1800000,incendie:1800000}[type]||2700000};
-App.cleanupAlerts=function(){const now=Date.now(),before=S.alerts.length;S.alerts=S.alerts.filter(a=>now-a.at<this.alertTTL(a.type));if(S.alerts.length!==before){set('ic_alerts',JSON.stringify(S.alerts));this.renderAlerts()}};
-App.confirmAlert=function(id,present){if(present)toast('Merci, alerte confirmée.','ok');else this.dismissAlert(id)};
-App.renderAlerts=function(){let list=$('alertsList');if(!list)return;list.innerHTML=S.alerts.length?S.alerts.map(a=>'<div class="item"><span><b>'+roadIcon(a.type)+' '+esc(a.label||a.type)+'</b><br><small>'+new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</small></span><span class="alert-confirm"><button onclick="App.confirmAlert(\''+js(a.id)+'\',true)">Encore là</button><button onclick="App.confirmAlert(\''+js(a.id)+'\',false)">Disparu</button></span></div>').join(''):'<div class="empty">Aucune alerte.</div>'};
-
-App.startSosHold=function(ev){ev?.preventDefault?.();const b=$('longSos');b?.classList.add('holding');S.sosTimer=setTimeout(()=>{b?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')};
-App.cancelSosHold=function(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')};
-App.markRead=function(){toast('Conversation marquée comme lue.','ok')};
-if(!App._statusMsgWrap){App._statusMsgWrap=true;const oldMsgHtml=App.msgHtml.bind(App);App.msgHtml=function(m,my){let h=oldMsgHtml(m,my);const chip=m.sender_id===my?'<span class="status-chip status-sent">envoyé</span>':'<span class="status-chip status-read">reçu</span>';return h.replace('</div><div>'+esc(m.message),chip+'</div><div>'+esc(m.message))}};
-App.updateDrivingMode=function(){const moving=S.driveMode&&S.lastSpeed>15;document.body.classList.toggle('driving',moving);this.updateFrontVehicle()};
-App.cacheState=function(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}};
-App.reconnectSafe=async function(){try{const {data}=await sb.auth.getSession();if(data?.session&&!$('sm').classList.contains('active'))await this.afterAuth()}catch(e){}};
-setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setTimeout(()=>{App.renderFavs();App.renderHistory();App.registerServiceWorker()},1200);
+  const oldOpenMap = App.openMap?.bind(App);
+  if(oldOpenMap){
+    App.openMap = function(p,email){
+      const r = oldOpenMap(p,email);
+      document.body.classList.add('authenticated');
+      setTimeout(()=>this.resetSheetState(),250);
+      return r;
+    };
+  }
+})();
 
 window.App=App;
 </script>
