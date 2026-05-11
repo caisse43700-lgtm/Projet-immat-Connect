@@ -63,6 +63,23 @@ body.keyboard-open .actions,body.keyboard-open .speed{display:none!important}.le
 @media(orientation:landscape) and (max-height:560px){
   .top{top:8px;left:8px;right:auto;width:44vw}.top .logoTop{display:none}.round{width:46px;height:46px;border-radius:16px}.actions{left:50%;top:auto;bottom:10px;transform:translateX(-50%);display:flex;gap:8px;padding:6px;border-radius:999px;background:rgba(7,16,24,.74);backdrop-filter:blur(10px);box-shadow:0 12px 35px rgba(0,0,0,.28)}.actions button{width:46px;height:46px;min-width:46px;box-shadow:none;font-size:18px}.speed{left:10px;bottom:10px;width:58px;height:58px}.sheet{left:auto;right:8px;top:8px;bottom:8px;width:min(430px,46vw);max-height:none;border-radius:24px}.sheet.mini{transform:translateX(calc(100% - 58px))}.overlay{left:8px;right:auto;width:48vw;bottom:10px;max-height:calc(100vh - 20px)}.inst{left:8px;right:auto;width:48vw;top:62px}.nav button{height:40px;font-size:11px}.chat{max-height:135px}
 }
+
+/* ===== MODULES AVANCES REINTEGRES ===== */
+.install-panel,.perm-panel{position:fixed;z-index:950;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);background:#fff;color:#10161d;border-radius:22px;padding:14px;box-shadow:0 20px 65px rgba(0,0,0,.3);display:none}
+.install-panel.show,.perm-panel.show{display:block}.install-panel b,.perm-panel b{display:block;font-size:18px;margin-bottom:4px}.install-panel p,.perm-panel p{font-size:13px;color:#667383;margin:6px 0 10px;line-height:1.45}
+.install-panel .row-actions,.perm-panel .row-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.install-panel button,.perm-panel button{border-radius:14px;padding:11px 8px;font-weight:950}.install-panel .ok,.perm-panel .ok{background:var(--green);color:#06140f}.install-panel .no,.perm-panel .no{background:#f2f5f8;color:#263241}
+.front-car-banner{position:absolute;z-index:78;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);background:rgba(255,255,255,.96);color:#10161d;border-radius:20px;padding:10px 12px;box-shadow:0 14px 42px rgba(0,0,0,.22);display:none;align-items:center;justify-content:space-between;gap:8px}
+.front-car-banner.show{display:flex}.front-car-banner b{color:#008866}.front-car-banner button{border-radius:12px;background:var(--green);color:#06140f;padding:8px 10px;font-size:12px;font-weight:950}
+.favorite-card,.history-card{background:#f4f7fb;border:1px solid #e1e7ef;border-radius:18px;padding:10px;margin-top:8px}.favorite-card h4,.history-card h4{font-size:12px;text-transform:uppercase;color:#7a8796;letter-spacing:.6px;margin-bottom:8px}
+.mini-list{display:grid;gap:7px}.mini-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid #e1e7ef;border-radius:14px;padding:9px;font-size:12px}.mini-row b{color:#008866}.mini-row button{border-radius:10px;background:var(--green);color:#06140f;padding:7px 9px;font-weight:950;font-size:11px}
+.long-sos{position:absolute;z-index:74;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 82px);width:64px;height:64px;border-radius:50%;background:var(--red);color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.32);font-size:22px;font-weight:950;display:grid;place-items:center}
+.long-sos.holding{animation:sosPulse .6s infinite alternate}@keyframes sosPulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+body.driving .sheet{transform:translateY(calc(100% - 94px))}body.driving .top .logoTop{display:none}body.driving .actions button:not(.report):not(.center){opacity:.55}
+.status-chip{display:inline-block;border-radius:999px;background:#eef2f6;color:#667383;padding:3px 8px;font-size:10px;font-weight:950;margin-left:4px}.status-read{background:#e7fff6;color:#008866}.status-sent{background:#eef6ff;color:#244acb}
+.alert-confirm{display:flex;gap:6px}.alert-confirm button{padding:8px 9px}
+body.night .install-panel,body.night .perm-panel,body.night .front-car-banner,body.night .favorite-card,body.night .history-card{background:#121923;color:#eef6ff;border-color:#26364d}body.night .mini-row{background:#0d1723;color:#eef6ff;border-color:#26364d}
+@media(orientation:landscape) and (max-height:560px){.front-car-banner{left:8px;right:auto;width:48vw;top:62px}.long-sos{right:10px;bottom:76px;width:52px;height:52px}.install-panel,.perm-panel{left:10px;right:auto;width:48vw}}
+
 </style>
 </head>
 <body>
@@ -122,7 +139,7 @@ body.keyboard-open .actions,body.keyboard-open .speed{display:none!important}.le
     <button title="Vue" onclick="App.cycleView()">🗺</button>
     <button title="Assistance" onclick="App.openAssist()">🆘</button>
   </div>
-  <div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div>
+  <div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><button id="longSos" class="long-sos" onpointerdown="App.startSosHold(event)" onpointerup="App.cancelSosHold()" onpointerleave="App.cancelSosHold()">SOS</button><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div>
 
   <div id="sheet" class="sheet">
     <button class="sheet-close" onclick="App.closeSheet()">×</button>
@@ -135,10 +152,10 @@ body.keyboard-open .actions,body.keyboard-open .speed{display:none!important}.le
         <div class="gps-search-row"><input id="gpsSearch" placeholder="Rue, lieu, POI"><button onclick="App.searchGps()">🔍</button><button onclick="App.voiceGps()">🎙️</button></div>
         <div class="gps-poi-grid"><button onclick="App.poi('station essence')">⛽ Carburant</button><button onclick="App.poi('restaurant')">🍽️ Resto</button><button onclick="App.poi('parking')">🅿️ Parking</button><button onclick="App.poi('garage automobile')">🔧 Garage</button><button onclick="App.poi('borne recharge')">🔌 Recharge</button><button onclick="App.poi('hôpital')">🏥 Santé</button></div>
         <div id="gpsResults" class="gps-results"></div>
-        <div id="routeMini" class="route-mini"></div>
+        <div id="routeMini" class="route-mini"></div><div class="favorite-card"><h4>Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty">Aucun favori.</div></div><button class="act primary" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty">Aucun historique.</div></div></div>
       </div>
       <div class="section">Navigation</div>
-      <div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.cycleView()">🗺 Vue</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button></div>
+      <div class="grid"><button class="act primary" onclick="App.locate()">📍 Me localiser</button><button class="act" onclick="App.stopGps()">⏹ Stop GPS</button><button class="act" onclick="App.openAlerts()">✅ Alertes</button><button class="act" onclick="App.recenter()">🎯 Recentrer</button><button id="viewBtn" class="act" onclick="App.cycleView()">🗺 Vue</button><button id="invisBtn" class="act" onclick="App.toggleInvisible()">👻 Invisible</button><button class="act" onclick="App.toggleVoice()">🔊 Voix</button></div>
     </div>
     <div id="panelContact" class="panel">
       <div class="section">Contacter un véhicule</div>
@@ -173,7 +190,7 @@ body.keyboard-open .actions,body.keyboard-open .speed{display:none!important}.le
 <div id="legal" class="modal"><div class="back" onclick="App.closeLegal()"></div><div class="modalCard"><h2>Confidentialité</h2><p>Ton téléphone n’est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button class="btn primary" onclick="App.closeLegal()">J’ai compris</button></div></div>
 <div id="blocked" class="modal"><div class="back" onclick="App.closeBlocked()"></div><div class="modalCard"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button class="btn ghost" style="color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div>
 <div id="recent" class="modal"><div class="back" onclick="App.closeRecent()"></div><div class="modalCard"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><button class="btn ghost" style="color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div>
-<div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
+<div id="permPanel" class="perm-panel"><b>Activer les accès utiles</b><p>Localisation pour la carte, micro pour la recherche vocale, notifications pour les alertes importantes.</p><div class="row-actions"><button class="ok" onclick="App.runPermissions(true)">Activer</button><button class="no" onclick="App.dismissPermPanel()">Plus tard</button></div></div><div id="installPanel" class="install-panel"><b>Installer ImmatConnect</b><p>Ajoute l’app à l’écran d’accueil pour un affichage plein écran et une meilleure stabilité.</p><div class="row-actions"><button class="ok" onclick="App.enableInstallFeatures()">Activer</button><button class="no" onclick="App.dismissInstallPanel()">Plus tard</button></div></div><div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
 
 <script>
 'use strict';
@@ -293,6 +310,45 @@ function bind(){document.querySelectorAll('.plateInput').forEach(e=>e.addEventLi
 if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT')App.show('sw')});
 async function boot(){bind();App.setMode('login');if(!sb)return toast('Supabase non chargé.','bad');if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');try{let{data}=await sb.auth.getSession();if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){App.show('sw')}}
 boot();
+
+/* ===== MODULES AVANCES REINTEGRES ===== */
+Object.assign(S,{favorites:jget('ic_favorites',[]),gpsHistory:jget('ic_gps_history',[]),lastRoute:null,frontVehicle:null,sosTimer:null});
+
+App.registerServiceWorker=async function(){try{if('serviceWorker' in navigator)await navigator.serviceWorker.register('./service-worker.js')}catch(e){console.warn('SW non actif',e)}};
+App.showPermissionPanel=function(){if(get('ic_perm_panel_done','0')==='1')return;setTimeout(()=>$('permPanel')?.classList.add('show'),900)};
+App.dismissPermPanel=function(){set('ic_perm_panel_done','1');$('permPanel')?.classList.remove('show')};
+App.runPermissions=async function(manual=false){set('ic_perm_panel_done','1');$('permPanel')?.classList.remove('show');try{if(!S.watchId&&!S.invisible)this.locate()}catch(e){}setTimeout(async()=>{try{if(navigator.mediaDevices?.getUserMedia){const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(t=>t.stop());if(manual)toast('Micro activé.','ok')}}catch(e){if(manual)toast('Micro non activé, saisie manuelle disponible.','bad')}},1200);setTimeout(()=>{try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}},2200)};
+App.showInstallPanel=function(){if(get('ic_install_panel_done','0')==='1')return;setTimeout(()=>$('installPanel')?.classList.add('show'),1800)};
+App.dismissInstallPanel=function(){set('ic_install_panel_done','1');$('installPanel')?.classList.remove('show')};
+App.enableInstallFeatures=function(){set('ic_install_panel_done','1');$('installPanel')?.classList.remove('show');this.registerServiceWorker();toast('Fonctions application activées.','ok')};
+
+App.saveCurrentDestination=function(){if(!S.routeDest)return toast('Aucune destination à enregistrer.','bad');const label=S.routeDest.name||'Destination';S.favorites=S.favorites.filter(f=>f.label!==label);S.favorites.unshift({name:label.split(',')[0],label,lat:S.routeDest.lat,lon:S.routeDest.lon,at:Date.now()});S.favorites=S.favorites.slice(0,20);set('ic_favorites',JSON.stringify(S.favorites));this.renderFavs();toast('Destination ajoutée aux favoris.','ok')};
+App.addGpsHistory=function(dest){if(!dest)return;S.gpsHistory=S.gpsHistory.filter(h=>h.label!==dest.name);S.gpsHistory.unshift({name:(dest.name||'Destination').split(',')[0],label:dest.name||'',lat:dest.lat,lon:dest.lon,at:Date.now()});S.gpsHistory=S.gpsHistory.slice(0,20);set('ic_gps_history',JSON.stringify(S.gpsHistory));this.renderHistory()};
+App.renderFavs=function(){const el=$('favMiniList');if(!el)return;el.innerHTML=S.favorites.length?S.favorites.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Favori')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button onclick="App.routeSaved(\'fav\','+i+')">GPS</button></div>').join(''):'<div class="empty">Aucun favori.</div>'};
+App.renderHistory=function(){const el=$('historyMiniList');if(!el)return;el.innerHTML=S.gpsHistory.length?S.gpsHistory.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Destination')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button onclick="App.routeSaved(\'hist\','+i+')">GPS</button></div>').join(''):'<div class="empty">Aucun historique.</div>'};
+App.routeSaved=function(type,i){const f=(type==='fav'?S.favorites:S.gpsHistory)[i];if(!f)return;this.pickDest(f.lat,f.lon,f.label||f.name)};
+if(!App._advancedPickDestWrap){App._advancedPickDestWrap=true;const oldPick=App.pickDest.bind(App);App.pickDest=async function(lat,lon,name){const r=await oldPick(lat,lon,name);this.addGpsHistory({lat,lon,name});return r}};
+
+App.clusterCloseVehicles=function(){if(!S.otherMkrs?.length)return;const used=new Set();S.otherMkrs.forEach((m,i)=>{if(used.has(i))return;const a=m.getLatLng?.();if(!a)return;let group=[m];S.otherMkrs.forEach((n,j)=>{if(i===j||used.has(j))return;const b=n.getLatLng?.();if(!b)return;if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}});if(group.length>1){group.forEach((g,k)=>{const ll=g.getLatLng(),angle=(k*360/group.length)*Math.PI/180,off=.0001;g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);g.setZIndexOffset(1200+k)})}})};
+App.updateFrontVehicle=function(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')};
+App.contactFrontVehicle=function(){if(!S.frontVehicle)return toast('Aucun véhicule devant détecté.','bad');this.pickPlate(S.frontVehicle.plate)};
+if(!App._advancedLoadOthersWrap){App._advancedLoadOthersWrap=true;const oldLoad=App.loadOthers.bind(App);App.loadOthers=async function(){const r=await oldLoad();this.clusterCloseVehicles();S.frontVehicle=(S.nearby||[]).filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.updateFrontVehicle();return r}};
+if(!App._advancedLocateWrap){App._advancedLocateWrap=true;const oldLocate=App.locate.bind(App);App.locate=function(){oldLocate();setTimeout(()=>{this.showPermissionPanel();this.showInstallPanel()},900)}};
+
+App.alertTTL=function(type){return {accident:2700000,bouchon:1800000,travaux:7200000,obstacle:2700000,controle:3600000,danger:2700000,panne:1800000,sos:1800000,incendie:1800000}[type]||2700000};
+App.cleanupAlerts=function(){const now=Date.now(),before=S.alerts.length;S.alerts=S.alerts.filter(a=>now-a.at<this.alertTTL(a.type));if(S.alerts.length!==before){set('ic_alerts',JSON.stringify(S.alerts));this.renderAlerts()}};
+App.confirmAlert=function(id,present){if(present)toast('Merci, alerte confirmée.','ok');else this.dismissAlert(id)};
+App.renderAlerts=function(){let list=$('alertsList');if(!list)return;list.innerHTML=S.alerts.length?S.alerts.map(a=>'<div class="item"><span><b>'+roadIcon(a.type)+' '+esc(a.label||a.type)+'</b><br><small>'+new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</small></span><span class="alert-confirm"><button onclick="App.confirmAlert(\''+js(a.id)+'\',true)">Encore là</button><button onclick="App.confirmAlert(\''+js(a.id)+'\',false)">Disparu</button></span></div>').join(''):'<div class="empty">Aucune alerte.</div>'};
+
+App.startSosHold=function(ev){ev?.preventDefault?.();const b=$('longSos');b?.classList.add('holding');S.sosTimer=setTimeout(()=>{b?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')};
+App.cancelSosHold=function(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')};
+App.markRead=function(){toast('Conversation marquée comme lue.','ok')};
+if(!App._statusMsgWrap){App._statusMsgWrap=true;const oldMsgHtml=App.msgHtml.bind(App);App.msgHtml=function(m,my){let h=oldMsgHtml(m,my);const chip=m.sender_id===my?'<span class="status-chip status-sent">envoyé</span>':'<span class="status-chip status-read">reçu</span>';return h.replace('</div><div>'+esc(m.message),chip+'</div><div>'+esc(m.message))}};
+App.updateDrivingMode=function(){const moving=S.driveMode&&S.lastSpeed>15;document.body.classList.toggle('driving',moving);this.updateFrontVehicle()};
+App.cacheState=function(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}};
+App.reconnectSafe=async function(){try{const {data}=await sb.auth.getSession();if(data?.session&&!$('sm').classList.contains('active'))await this.afterAuth()}catch(e){}};
+setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setTimeout(()=>{App.renderFavs();App.renderHistory();App.registerServiceWorker()},1200);
+
 window.App=App;
 </script>
 </body>
