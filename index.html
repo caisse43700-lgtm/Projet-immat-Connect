@@ -197,6 +197,14 @@ body.night .nav-premium .nav-card,body.night .voice-premium-box{background:#1723
 }
 </style>
 
+
+<style id="ux-verify-css">
+/* Cache le bouton recherche du haut uniquement, sans supprimer la recherche du dock/barre */
+.top .round:last-child{display:none!important}
+/* Cache le gros SOS flottant séparé si présent : le SOS du dock reste conservé */
+.big-sos,.floating-sos,#sosBig{display:none!important}
+</style>
+
 </head>
 <body>
 <section id="sw" class="screen center active">
@@ -664,6 +672,82 @@ window.showAlertToast = window.showAlertToast || function(msg){
 };
 
 console.log('ImmatConnect UX patch loaded');
+
+/* ===== PATCH VERIFICATION FONCTIONS MANQUANTES / NON COMPLETES ===== */
+(function(){
+  if(!window.App || !window.S) return;
+
+  App.autoNight = App.autoNight || function(){
+    try{
+      const h = new Date().getHours();
+      document.body.classList.toggle('auto-night', h >= 20 || h < 7);
+    }catch(e){}
+  };
+
+  App.closeDrawer = App.closeDrawer || function(){
+    document.getElementById('drawer')?.classList.remove('show');
+  };
+
+  App.closeLegal = App.closeLegal || function(){
+    document.getElementById('legal')?.classList.remove('show');
+  };
+
+  App.closeBlocked = App.closeBlocked || function(){
+    document.getElementById('blocked')?.classList.remove('show');
+  };
+
+  App.closeRecent = App.closeRecent || function(){
+    document.getElementById('recent')?.classList.remove('show');
+  };
+
+  App.blockPlate = App.blockPlate || function(plate){
+    plate = (plate || '').toString().trim().toUpperCase();
+    if(!plate) return;
+    S.blocked = S.blocked || [];
+    if(!S.blocked.includes(plate)) S.blocked.push(plate);
+    try{ localStorage.setItem('ic_blocked', JSON.stringify(S.blocked)); }catch(e){}
+    try{ App.loadMsgs?.(); App.loadOthers?.(); }catch(e){}
+    if(window.toast) toast('Plaque bloquée : ' + plate, 'ok');
+  };
+
+  App.unblockPlate = App.unblockPlate || function(plate){
+    plate = (plate || '').toString().trim().toUpperCase();
+    S.blocked = (S.blocked || []).filter(p => p !== plate);
+    try{ localStorage.setItem('ic_blocked', JSON.stringify(S.blocked)); }catch(e){}
+    try{ App.openBlocked?.(); App.loadMsgs?.(); App.loadOthers?.(); }catch(e){}
+    if(window.toast) toast('Plaque débloquée : ' + plate, 'ok');
+  };
+
+  App.voiceMsg = App.voiceMsg || function(){
+    if(typeof App.voiceMessage === 'function') return App.voiceMessage();
+    if(typeof App.startVoiceInput === 'function') return App.startVoiceInput('iMsg','message');
+    const el = document.getElementById('iMsg');
+    if(el) el.focus();
+    if(window.toast) toast('Vocal indisponible : écris le message.', 'bad');
+  };
+
+  /* Sécurise l’ouverture des modales existantes */
+  const modalOpeners = {
+    openLegal:'legal',
+    openBlocked:'blocked',
+    openRecent:'recent',
+    openDrawer:'drawer'
+  };
+  Object.keys(modalOpeners).forEach(fn=>{
+    const old = App[fn];
+    if(typeof old === 'function' && !old.__safeWrapped){
+      App[fn] = function(...args){
+        const result = old.apply(App,args);
+        document.getElementById(modalOpeners[fn])?.classList.add('show');
+        return result;
+      };
+      App[fn].__safeWrapped = true;
+    }
+  });
+
+  console.log('ImmatConnect verification patch: fonctions manquantes sécurisées');
+})();
+
 </script>
 
 </body>
