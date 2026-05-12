@@ -411,6 +411,23 @@ body.auto-night .my-alert-row{
 }
 </style>
 
+
+<style id="ic-pro-context-flow-css">
+body.ic-sheet-collapsed #sheet.sheet{overflow:visible!important}
+body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetArrowOpenLandscape){opacity:0!important;pointer-events:none!important}
+#sheetArrowOpenPortrait,#sheetArrowOpenLandscape{position:absolute;z-index:2500;border:0;background:#10161d!important;color:#fff!important;box-shadow:0 8px 24px rgba(0,0,0,.28);font-weight:950;display:grid;place-items:center}
+#sheetArrowOpenPortrait{width:54px;height:32px;border-radius:18px 18px 0 0;left:50%;top:-32px;transform:translateX(-50%)}
+#sheetArrowOpenLandscape{width:34px;height:62px;border-radius:18px 0 0 18px;left:-34px;top:50%;transform:translateY(-50%)}
+@media(orientation:portrait){#sheetArrowOpenLandscape{display:none!important}body.ic-sheet-collapsed #sheet.sheet{transform:translateY(calc(100% - 2px))!important}}
+@media(orientation:landscape) and (max-height:560px){#sheetArrowOpenPortrait{display:none!important}body.ic-sheet-collapsed #sheet.sheet{transform:translateX(100%)!important;right:0!important}}
+#vehicleActionPanel{display:none;color:#10161d}#vehicleActionPanel.show{display:block}
+.vehicle-action-head{background:#f4f7fb;border:1px solid #e1e7ef;border-radius:18px;padding:10px;margin:8px 0 10px}.vehicle-action-head b{display:block;color:#008866;font-size:16px}.vehicle-action-head small{color:#667383;font-size:12px}
+.vehicle-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.vehicle-action-grid button{border-radius:16px;padding:12px 8px;font-size:12px;font-weight:950;background:#eef2f6;color:#263241}.vehicle-action-grid button.primary{background:#00ffb3;color:#06140f}.vehicle-action-grid button.warn{background:#fff1d8;color:#ad6200}.vehicle-action-grid button.danger{background:#ffe8ed;color:#cf0035}.vehicle-action-grid button.dark{background:#10161d;color:#fff}
+.alert-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.alert-choice-grid button{border-radius:15px;padding:11px 8px;font-size:12px;font-weight:950;background:#fff;color:#10161d;border:1px solid #dfe6ee;text-align:left}.alert-choice-grid button.urgent{background:#ffe8ed;color:#cf0035}.alert-choice-grid button.info{background:#e7fff6;color:#008866}.alert-choice-grid button.warn{background:#fff1d8;color:#ad6200}.alert-choice-grid button small{display:block;margin-top:3px;color:#667383;font-size:11px;font-weight:700}
+.vehicle-context-menu .vehicle-bubble.contact-main{background:#00ffb3!important;color:#06140f!important}.vehicle-context-menu .vehicle-bubble.alert-main{background:#ff3b5c!important;color:#fff!important}.vehicle-context-menu .vehicle-bubble.b1{left:-64px!important;top:-70px!important}.vehicle-context-menu .vehicle-bubble.b2{left:18px!important;top:-70px!important}.vehicle-context-menu .vehicle-bubble.b3,.vehicle-context-menu .vehicle-bubble.b4,.vehicle-context-menu .vehicle-bubble.b5{display:none!important}
+.contact-request-card{background:#fff;color:#10161d;border-radius:18px;border:1px solid #e1e7ef;padding:10px;margin:8px 0;box-shadow:0 8px 24px rgba(0,0,0,.10)}.contact-request-card b{color:#008866}.contact-request-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.contact-request-actions button{border-radius:13px;padding:9px 6px;font-size:12px;font-weight:950}.contact-request-actions .accept{background:#00ffb3;color:#06140f}.contact-request-actions .reject{background:#ffe8ed;color:#cf0035}
+</style>
+
 </head>
 <body>
 <section id="sw" class="screen center active">
@@ -470,7 +487,7 @@ body.auto-night .my-alert-row{
   </div>
   <div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><button id="longSos" class="long-sos" onpointerdown="App.startSosHold(event)" onpointerup="App.cancelSosHold()" onpointerleave="App.cancelSosHold()">SOS</button><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div>
 
-  <div id="sheet" class="sheet"><button id="sheetArrowOut" class="sheet-arrow out" type="button" onclick="App.expandContextSheet()">→</button><button id="sheetArrowIn" class="sheet-arrow in" type="button" onclick="App.collapseContextSheet()">←</button><button id="sheetArrowUp" class="sheet-arrow up" type="button" onclick="App.expandContextSheet()">↑</button><button id="sheetArrowDown" class="sheet-arrow down" type="button" onclick="App.collapseContextSheet()">↓</button>
+  <div id="sheet" class="sheet"><button id="sheetArrowOpenPortrait" type="button" onclick="App.openSmartSheet()">⌃</button><button id="sheetArrowOpenLandscape" type="button" onclick="App.openSmartSheet()">‹</button><button id="sheetArrowOut" class="sheet-arrow out" type="button" onclick="App.expandContextSheet()">→</button><button id="sheetArrowIn" class="sheet-arrow in" type="button" onclick="App.collapseContextSheet()">←</button><button id="sheetArrowUp" class="sheet-arrow up" type="button" onclick="App.expandContextSheet()">↑</button><button id="sheetArrowDown" class="sheet-arrow down" type="button" onclick="App.collapseContextSheet()">↓</button>
     <button class="sheet-close" onclick="App.closeSheet()">×</button>
     <div class="handle" onclick="App.toggleSheet()"></div>
     <div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div>
@@ -479,7 +496,28 @@ body.auto-night .my-alert-row{
   <div class="my-alerts-head"><span>⚠️ Mes alertes</span><button class="tiny ok" type="button" onclick="App.openActiveAlerts()">Gérer</button></div>
   <div id="myAlertsList" class="my-alerts-list"><div class="my-alert-empty">Aucune alerte active.</div></div>
 </div><div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Message</button><button id="tabMessages" onclick="App.panel('messages')">Messages reçus</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
-    <div id="panelDrive" class="panel on">
+    
+<div id="vehicleActionPanel">
+  <div class="vehicle-action-head"><b id="vehicleActionTitle">Véhicule sélectionné</b><small id="vehicleActionSub">Choisis une action rapide.</small></div>
+  <div id="vehicleActionMain" class="vehicle-action-grid">
+    <button class="primary" type="button" onclick="App.requestVehicleContact()">☎ Contacter</button>
+    <button class="danger" type="button" onclick="App.openVehicleAlertChoices()">⚠️ Alerter</button>
+    <button class="dark" type="button" onclick="App.setPanel('contact')">💬 Message libre</button>
+    <button class="warn" type="button" onclick="App.openAssist()">🆘 Assistance</button>
+  </div>
+  <div id="vehicleAlertChoices" class="hidden">
+    <div class="section">Prévenir ce véhicule</div>
+    <div class="alert-choice-grid">
+      <button class="urgent" onclick="App.sendStructuredVehicleAlert('Pneu dégonflé ou roue dangereuse','urgent','🛞')">🛞 Pneu / roue<small>Urgent</small></button>
+      <button class="urgent" onclick="App.sendStructuredVehicleAlert('Fumée ou risque d’incendie visible','urgent','🚨')">🚨 Fumée / feu<small>Urgent</small></button>
+      <button class="warn" onclick="App.sendStructuredVehicleAlert('Porte ou coffre mal fermé','important','🚪')">🚪 Porte / coffre<small>À vérifier</small></button>
+      <button class="warn" onclick="App.sendStructuredVehicleAlert('Problème d’éclairage','important','💡')">💡 Éclairage<small>Feu / clignotant</small></button>
+      <button class="info" onclick="App.sendStructuredVehicleAlert('Feux restés allumés','info','💡')">💡 Feux allumés<small>Info</small></button>
+      <button class="warn" onclick="App.sendStructuredVehicleAlert('Élément semble se détacher','important','🔧')">🔧 Élément détaché<small>Risque</small></button>
+    </div>
+  </div>
+</div>
+<div id="panelDrive" class="panel on">
       <div class="section">Recherche GPS</div>
       <div class="gps-search-card">
         <div class="gps-search-row"><input id="gpsSearch" placeholder="Rue, lieu, POI"><button onclick="App.searchGps()">🔍</button><button onclick="App.voiceGps()">🎙️</button></div>
@@ -1296,8 +1334,8 @@ console.log('ImmatConnect UX patch loaded');
 
 
 <div id="vehicleContextMenu" class="vehicle-context-menu">
-  <button class="vehicle-bubble message b1" type="button" onclick="App.vehicleContextAction('message')">💬 Message</button>
-  <button class="vehicle-bubble signal b2" type="button" onclick="App.vehicleContextAction('signal')">⚠️ Signaler</button>
+  <button class="vehicle-bubble contact-main b1" type="button" onclick="App.vehicleContextAction('contact')">☎ Contacter</button>
+  <button class="vehicle-bubble alert-main b2" type="button" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button>
   <button class="vehicle-bubble contact b3" type="button" onclick="App.vehicleContextAction('contact')">☎ Contacter</button>
   <button class="vehicle-bubble assist b4" type="button" onclick="App.vehicleContextAction('assist')">🆘 Aide</button>
   <button class="vehicle-bubble info b5" type="button" onclick="App.vehicleContextAction('info')">ℹ️ Infos</button>
@@ -1443,10 +1481,10 @@ console.log('ImmatConnect UX patch loaded');
       return;
     }
     list.innerHTML=rows.map((a,i)=>{
-      const id=a.id||a.markerId||i;
+      const id=String(a.id||a.markerId||i).replace(/'/g,'');
       const label=(a.label||a.type||'Alerte').toString();
       const icon=a.icon||(/sos|danger|urgent|accident|panne|malaise/i.test(label)?'🚨':'⚠️');
-      return '<div class="my-alert-row"><span>'+icon+' '+label+'</span><button type="button" onclick="App.removeMyAlert(\\''+String(id).replace(/'/g,"\\'")+'\\')">Supprimer</button></div>';
+      return '<div class="my-alert-row"><span>'+icon+' '+label+'</span><button type="button" data-alert-id="'+id+'" onclick="App.removeMyAlert(this.dataset.alertId)">Supprimer</button></div>';
     }).join('');
   };
 
@@ -1540,6 +1578,119 @@ console.log('ImmatConnect UX patch loaded');
   window.addEventListener('orientationchange',()=>setTimeout(refreshOverlays,500));
   setTimeout(()=>{App.renderMyAlertsBlock();refreshOverlays()},800);
 
+})();
+</script>
+
+
+<script id="ic-pro-context-flow-js">
+(function(){
+  if(window.__IC_PRO_CONTEXT_FLOW__) return;
+  window.__IC_PRO_CONTEXT_FLOW__ = true;
+  const $id=id=>document.getElementById(id);
+  const cleanPlate=p=>String(p||'').trim().toUpperCase();
+  const safeToast=(m,t)=>{try{toast(m,t||'ok')}catch(e){console.log(m)}};
+
+  App.openSmartSheet=function(){
+    document.body.classList.remove('ic-sheet-collapsed');
+    const s=$id('sheet'); if(!s)return;
+    s.classList.remove('mini'); s.classList.add('context-open');
+    try{S.sheetOpen=true;S.map&&S.map.invalidateSize()}catch(e){}
+  };
+  App.closeSmartSheet=function(){
+    document.body.classList.add('ic-sheet-collapsed');
+    const s=$id('sheet'); if(!s)return;
+    s.classList.remove('context-open','full'); s.classList.add('mini');
+    try{S.sheetOpen=false;S.map&&S.map.invalidateSize()}catch(e){}
+  };
+  const oldCloseBottom=App.closeBottomSheet&&App.closeBottomSheet.bind(App);
+  App.closeBottomSheet=function(){this.closeSmartSheet(); if(oldCloseBottom){try{oldCloseBottom()}catch(e){} this.closeSmartSheet()}};
+  App.toggleSheet=function(){const closed=document.body.classList.contains('ic-sheet-collapsed')||($id('sheet')&&$id('sheet').classList.contains('mini')); closed?this.openSmartSheet():this.closeSmartSheet()};
+
+  App.showVehicleActionPanel=function(plate){
+    plate=cleanPlate(plate||S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)||S.conv);
+    S.selPlate=plate; S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate});
+    const p=$id('vehicleActionPanel'); if(!p)return;
+    p.classList.add('show');
+    if($id('vehicleActionTitle')) $id('vehicleActionTitle').textContent=plate?'Véhicule '+plate:'Véhicule sélectionné';
+    if($id('vehicleActionSub')) $id('vehicleActionSub').textContent='Contacter ou alerter ce véhicule.';
+    const choices=$id('vehicleAlertChoices'); if(choices) choices.classList.add('hidden');
+    this.openSmartSheet();
+  };
+  App.hideVehicleActionPanel=function(){const p=$id('vehicleActionPanel'); if(p)p.classList.remove('show')};
+
+  const oldSetPanel=App.setPanel&&App.setPanel.bind(App);
+  App.setPanel=function(p){const r=oldSetPanel?oldSetPanel(p):null; if(p!=='contact')this.hideVehicleActionPanel(); this.openSmartSheet(); return r};
+
+  App.openVehicleAlertChoices=function(){this.showVehicleActionPanel(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)); const c=$id('vehicleAlertChoices'); if(c)c.classList.remove('hidden')};
+
+  App.vehicleContextAction=function(action){
+    const plate=cleanPlate((S.contextVehicle&&S.contextVehicle.plate)||S.selPlate||S.conv);
+    if(plate){S.selPlate=plate; if($id('iTarget'))$id('iTarget').value=plate}
+    if(action==='contact'){this.showVehicleActionPanel(plate);return}
+    if(action==='signal'){this.openVehicleAlertChoices();return}
+    if(action==='message'){this.setPanel('contact'); setTimeout(()=>{$id('iMsg')&&$id('iMsg').focus()},150);return}
+    if(action==='assist'){this.openAssist&&this.openAssist();return}
+    this.showVehicleActionPanel(plate);
+  };
+
+  App.requestVehicleContact=async function(){
+    const plate=cleanPlate(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)||($id('iTarget')&&$id('iTarget').value));
+    if(!plate||plate==='ALL')return safeToast('Sélectionne un véhicule d’abord.','bad');
+    if($id('iTarget'))$id('iTarget').value=plate;
+    const msg='Souhaite entrer en contact avec vous pour vous alerter.';
+    try{
+      const old=$id('iMsg')?$id('iMsg').value:'';
+      if($id('iMsg'))$id('iMsg').value=msg;
+      if(App.sendMsg)await App.sendMsg();
+      if($id('iMsg'))$id('iMsg').value=old;
+      safeToast('Demande de contact envoyée.','ok');
+    }catch(e){console.warn(e);safeToast('Demande impossible pour le moment.','bad')}
+  };
+
+  App.sendStructuredVehicleAlert=async function(label,level,icon){
+    const plate=cleanPlate(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)||($id('iTarget')&&$id('iTarget').value));
+    if(!plate||plate==='ALL')return safeToast('Sélectionne un véhicule d’abord.','bad');
+    if($id('iTarget'))$id('iTarget').value=plate;
+    const text=(level==='urgent'?'🚨 URGENT : ':level==='important'?'⚠️ IMPORTANT : ':'ℹ️ INFO : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
+    try{
+      if(App.addContextAlert)App.addContextAlert('vehicle-alert',label,icon||'⚠️');
+      if(App.renderVehicleAlertOrbit)App.renderVehicleAlertOrbit();
+      if(App.renderMyAlertsBlock)App.renderMyAlertsBlock();
+    }catch(e){}
+    try{
+      const old=$id('iMsg')?$id('iMsg').value:'';
+      if($id('iMsg'))$id('iMsg').value=text;
+      if(App.sendMsg)await App.sendMsg();
+      if($id('iMsg'))$id('iMsg').value=old;
+      safeToast('Alerte envoyée au véhicule.','ok');
+    }catch(e){console.warn(e);safeToast('Alerte préparée, envoi impossible pour le moment.','bad')}
+  };
+
+  const oldMsgHtml=App.msgHtml&&App.msgHtml.bind(App);
+  if(oldMsgHtml){
+    App.msgHtml=function(m,my){
+      const txt=String(m.message||'');
+      const isReq=/Souhaite entrer en contact avec vous pour vous alerter/i.test(txt)||m.type==='contact_request';
+      if(isReq&&m.receiver_id===my&&m.status==='pending'){
+        const plate=cleanPlate(m.target_plate||'');
+        const mid=String(m.id||'').replace(/'/g,'');
+        const sender=String(m.sender_id||'').replace(/'/g,'');
+        return '<div class="contact-request-card"><b>Demande de contact</b><br><small>Le véhicule '+esc(plate)+' souhaite entrer en contact avec vous pour vous alerter.</small><div class="contact-request-actions"><button class="accept" data-mid="'+mid+'" data-sender="'+sender+'" data-plate="'+plate+'" onclick="App.accept(this.dataset.mid,this.dataset.sender,this.dataset.plate)">Accepter</button><button class="reject" data-mid="'+mid+'" onclick="App.reject(this.dataset.mid)">Refuser</button></div></div>';
+      }
+      return oldMsgHtml(m,my);
+    };
+  }
+
+  const oldPickPlate=App.pickPlate&&App.pickPlate.bind(App);
+  App.pickPlate=function(plate){
+    plate=cleanPlate(plate); S.selPlate=plate; S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate});
+    if($id('iTarget'))$id('iTarget').value=plate;
+    const r=oldPickPlate?oldPickPlate(plate):null;
+    setTimeout(()=>{try{this.hideVehicleActionPanel();this.showVehicleContextMenu&&this.showVehicleContextMenu(S.contextVehicle);this.closeSmartSheet()}catch(e){}},120);
+    return r;
+  };
+
+  setTimeout(()=>App.closeSmartSheet(),900);
 })();
 </script>
 
