@@ -428,6 +428,33 @@ body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetAr
 .contact-request-card{background:#fff;color:#10161d;border-radius:18px;border:1px solid #e1e7ef;padding:10px;margin:8px 0;box-shadow:0 8px 24px rgba(0,0,0,.10)}.contact-request-card b{color:#008866}.contact-request-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.contact-request-actions button{border-radius:13px;padding:9px 6px;font-size:12px;font-weight:950}.contact-request-actions .accept{background:#00ffb3;color:#06140f}.contact-request-actions .reject{background:#ffe8ed;color:#cf0035}
 </style>
 
+
+<style id="ic-final-optimized-alerts-gps-css">
+#tabMessages{font-size:0!important}#tabMessages:before{content:"Alertes";font-size:12px}
+#tabContact{font-size:0!important}#tabContact:before{content:"Messages";font-size:12px}
+body.ic-sheet-collapsed #sheet.sheet{overflow:visible!important}
+body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetArrowOpenLandscape){opacity:0!important;pointer-events:none!important}
+#sheetArrowOpenPortrait,#sheetArrowOpenLandscape{position:absolute;z-index:2600;border:0;background:rgba(16,22,29,.92)!important;color:#fff!important;box-shadow:0 8px 24px rgba(0,0,0,.28);font-weight:950;display:grid;place-items:center}
+#sheetArrowOpenPortrait{width:52px;height:30px;border-radius:18px 18px 0 0;left:50%;top:-30px;transform:translateX(-50%)}
+#sheetArrowOpenLandscape{width:32px;height:58px;border-radius:18px 0 0 18px;left:-32px;top:50%;transform:translateY(-50%)}
+@media(orientation:portrait){#sheetArrowOpenLandscape{display:none!important}body.ic-sheet-collapsed #sheet.sheet{transform:translateY(calc(100% - 1px))!important}}
+@media(orientation:landscape) and (max-height:560px){#sheetArrowOpenPortrait{display:none!important}body.ic-sheet-collapsed #sheet.sheet{transform:translateX(100%)!important;right:0!important;left:auto!important}}
+#proActions button[title="Assistance"],#proActions button[onclick*="sos"],.fab.red{display:none!important}
+#proActions button[title="Recentrer"],#proActions .center{opacity:.78;transform:scale(.86)!important;background:rgba(255,255,255,.88)!important}
+body:not(.map-moved) #proActions button[title="Recentrer"],body:not(.map-moved) #proActions .center{display:none!important}
+#alertsHub{display:none;color:#10161d}#alertsHub.show{display:block}
+.alerts-hub-head,.alert-category,.route-points-card{background:#f4f7fb;border:1px solid #e1e7ef;border-radius:18px;padding:10px;margin:8px 0;color:#10161d}
+.alerts-hub-head b{display:block;color:#008866;font-size:17px}.alerts-hub-head small,.alert-row small{color:#667383;font-size:12px}
+.alert-category h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#667383}.alert-category-list{display:grid;gap:7px}
+.alert-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid #e1e7ef;border-radius:14px;padding:8px;font-size:12px}.alert-row b{color:#10161d}.alert-row button{border-radius:999px;padding:6px 8px;font-size:11px;font-weight:950;background:#eef2f6;color:#263241}.alert-row .useful{background:#e7fff6;color:#008866}.alert-row .remove{background:#ffe8ed;color:#cf0035}.alert-empty{color:#667383;font-size:12px;padding:6px 0}
+.reliability-card{background:#10161d;color:#fff;border-radius:18px;padding:10px;margin:8px 0}.reliability-card b{color:#00ffb3}.reliability-bar{height:8px;border-radius:999px;background:#263241;overflow:hidden;margin-top:8px}.reliability-fill{height:100%;width:0%;background:#00ffb3;border-radius:999px;transition:width .25s ease}
+#privateMessagesBlock{display:none}#privateMessagesBlock.show{display:block}
+.vehicle-selected-pill{display:inline-block;margin-top:5px;border-radius:999px;background:#e7fff6;color:#008866;padding:4px 8px;font-size:11px;font-weight:950}
+#inst.inst{left:50%!important;right:auto!important;top:calc(env(safe-area-inset-top,0px) + 64px)!important;transform:translateX(-50%)!important;width:auto!important;max-width:min(86vw,420px)!important;min-height:0!important;padding:8px 12px!important;border-radius:999px!important;background:rgba(16,22,29,.82)!important;color:#fff!important;backdrop-filter:blur(10px);box-shadow:0 8px 28px rgba(0,0,0,.20)!important;gap:8px!important}
+#inst #instI{font-size:18px!important;color:#00ffb3!important}#inst #instT{font-size:13px!important;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:310px}#inst .close-x{display:none!important}
+.route-point-line{display:flex;gap:8px;align-items:flex-start;margin:5px 0}.route-point-line span:first-child{width:22px;text-align:center}
+</style>
+
 </head>
 <body>
 <section id="sw" class="screen center active">
@@ -495,7 +522,7 @@ body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetAr
 <div id="myAlertsBlock" class="my-alerts-block">
   <div class="my-alerts-head"><span>⚠️ Mes alertes</span><button class="tiny ok" type="button" onclick="App.openActiveAlerts()">Gérer</button></div>
   <div id="myAlertsList" class="my-alerts-list"><div class="my-alert-empty">Aucune alerte active.</div></div>
-</div><div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Message</button><button id="tabMessages" onclick="App.panel('messages')">Messages reçus</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
+</div><div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Messages</button><button id="tabMessages" onclick="App.panel('messages')">Messages reçus</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
     
 <div id="vehicleActionPanel">
   <div class="vehicle-action-head"><b id="vehicleActionTitle">Véhicule sélectionné</b><small id="vehicleActionSub">Choisis une action rapide.</small></div>
@@ -517,6 +544,8 @@ body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetAr
     </div>
   </div>
 </div>
+
+<div id="routePointsCard" class="route-points-card hidden"><b>Itinéraire</b><div class="route-point-line"><span>🟢</span><div><small>Départ</small><div id="routeStartLabel">Position actuelle</div></div></div><div class="route-point-line"><span>🔴</span><div><small>Arrivée</small><div id="routeEndLabel">Destination</div></div></div></div>
 <div id="panelDrive" class="panel on">
       <div class="section">Recherche GPS</div>
       <div class="gps-search-card">
@@ -537,12 +566,14 @@ body.ic-sheet-collapsed #sheet.sheet>*:not(#sheetArrowOpenPortrait):not(#sheetAr
       <button class="btn ghost" style="color:#10161d" onclick="App.clearMsg()">Vider</button>
     </div>
     <div id="panelMessages" class="panel">
+<div id="alertsHub" class="show"><div class="alerts-hub-head"><b>Alertes</b><small>Signalements reçus, envoyés et utiles, classés par catégorie.</small></div><div id="reliabilityCard" class="reliability-card"><div>Indice fiabilité : <b id="reliabilityScore">0%</b></div><small id="reliabilitySub">Aucun signalement utile confirmé.</small><div class="reliability-bar"><div id="reliabilityFill" class="reliability-fill"></div></div></div><div id="alertsCategories"></div></div><div id="privateMessagesBlock">
+
       <div class="section">Messages</div><div id="convbar" class="convbar"></div>
       <div class="msg-tools"><button onclick="App.markRead()">Marquer lu</button><button class="danger" onclick="App.deleteConv()">Supprimer conversation</button></div>
       <div id="chatBox" class="chat"><div class="empty">Aucun message.</div></div>
       <div class="quick"><button class="q green" onclick="App.quickReply('Merci, je vérifie.')">Merci</button><button class="q green" onclick="App.quickReply('Bien reçu.')">Reçu</button><button class="q orange" onclick="App.quickReply('Je m’arrête dès que possible.')">Je m’arrête</button></div>
     </div>
-    <div id="panelSettings" class="panel">
+    </div><div id="panelSettings" class="panel">
       <div class="section">Options</div>
       <div class="grid"><button class="act" onclick="App.openBlocked()">🚫 Bloqués</button><button class="act" onclick="App.openRecent()">🕘 Récents</button><button class="act" onclick="App.openLegal()">⚖️ Confidentialité</button><button class="act" onclick="App.toggleSounds()">🔔 Sons/Vibrations</button><button class="act" onclick="App.sheetFull()">⬆️ Plein écran</button><button class="act" onclick="App.toggleReduceEffects()">⚡ Performance</button><button class="act" onclick="App.clearOfflineCache()">🧹 Cache</button><button class="act" onclick="App.toggleVoice()">🔊 Voix GPS</button><button class="act danger" onclick="App.logout()">⏻ Déconnexion</button></div>
     </div>
@@ -1691,6 +1722,35 @@ console.log('ImmatConnect UX patch loaded');
   };
 
   setTimeout(()=>App.closeSmartSheet(),900);
+})();
+</script>
+
+
+<script id="ic-final-optimized-alerts-gps-js">
+(function(){
+if(window.__IC_FINAL_OPTIMIZED_ALERTS_GPS__)return;window.__IC_FINAL_OPTIMIZED_ALERTS_GPS__=true;
+const $id=id=>document.getElementById(id),cleanPlate=p=>String(p||'').trim().toUpperCase(),safeToast=(m,t)=>{try{toast(m,t||'ok')}catch(e){console.log(m)}},store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
+S.alerts=S.alerts||load('ic_alerts_unified',[]);S.reliability=S.reliability||load('ic_reliability',{confirmed:0,total:0});
+App.openSmartSheet=App.openSmartSheet||function(){document.body.classList.remove('ic-sheet-collapsed');const s=$id('sheet');if(!s)return;s.classList.remove('mini');s.classList.add('context-open');try{S.sheetOpen=true;S.map&&S.map.invalidateSize()}catch(e){}};
+App.closeSmartSheet=App.closeSmartSheet||function(){document.body.classList.add('ic-sheet-collapsed');const s=$id('sheet');if(!s)return;s.classList.remove('context-open','full');s.classList.add('mini');try{S.sheetOpen=false;S.map&&S.map.invalidateSize()}catch(e){}};
+const oldSetPanel=App.setPanel&&App.setPanel.bind(App);App.setPanel=function(p){const r=oldSetPanel?oldSetPanel(p):null;const ah=$id('alertsHub'),pb=$id('privateMessagesBlock');if(p==='messages'){if(ah)ah.classList.add('show');if(pb)pb.classList.remove('show');this.renderAlertsHub()}if(p==='contact'){if(pb)pb.classList.add('show')}this.openSmartSheet&&this.openSmartSheet();return r};
+App.alertCategoryFor=function(label,type){const s=(label+' '+type).toLowerCase();if(/pneu|roue|feu|fumée|coffre|porte|éclairage|allumé|détach/.test(s))return'Vehicule';if(/travaux|route|obstacle|bouchon|contrôle|controle|danger|accident/.test(s))return'Route';if(/panne|batterie|carburant|aide|assistance|malaise|remorquage/.test(s))return'Assistance';if(/urgent|sos|incendie/.test(s))return'Urgence';return'Information'};
+App.addUnifiedAlert=function(data){const a=Object.assign({id:'al_'+Date.now()+'_'+Math.random().toString(16).slice(2),category:'Autre',type:'info',label:'Alerte',plate:'',status:'active',useful:false,at:Date.now()},data||{});S.alerts=S.alerts||[];S.alerts.unshift(a);S.alerts=S.alerts.slice(0,80);store('ic_alerts_unified',S.alerts);S.activeAlerts=S.activeAlerts||[];S.activeAlerts.unshift({id:a.id,type:a.type,label:a.label,plate:a.plate,at:a.at,icon:a.icon});try{localStorage.setItem('ic_active_alerts',JSON.stringify(S.activeAlerts))}catch(e){};this.renderAlertsHub();this.renderMyAlertsBlock&&this.renderMyAlertsBlock();this.renderActiveAlerts&&this.renderActiveAlerts();this.renderVehicleAlertOrbit&&this.renderVehicleAlertOrbit();return a};
+App.renderAlertsHub=function(){const box=$id('alertsCategories');if(!box)return;const rows=S.alerts||[],cats=['Urgence','Vehicule','Route','Assistance','Information','Autre'];box.innerHTML=cats.map(cat=>{const arr=rows.filter(a=>(a.category||'Autre')===cat).slice(0,12);if(!arr.length)return'';return'<div class="alert-category"><h4>'+esc(cat==='Vehicule'?'Véhicule':cat)+'</h4><div class="alert-category-list">'+arr.map(a=>{const plate=a.plate?' · '+a.plate:'',time=new Date(a.at||Date.now()).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});return'<div class="alert-row"><span><b>'+esc(a.icon||'⚠️')+' '+esc(a.label||'Alerte')+'</b><small>'+esc(time+plate+' · '+(a.status||'active'))+'</small></span><span><button class="useful" data-id="'+esc(a.id)+'" onclick="App.confirmUsefulAlert(this.dataset.id)">'+(a.useful?'Confirmé utile':'Utile ?')+'</button><button class="remove" data-id="'+esc(a.id)+'" onclick="App.removeUnifiedAlert(this.dataset.id)">Retirer</button></span></div>'}).join('')+'</div></div>'}).join('')||'<div class="alert-category"><div class="alert-empty">Aucune alerte pour le moment.</div></div>';this.renderReliability()};
+App.renderReliability=function(){const total=Math.max(0,Number(S.reliability&&S.reliability.total)||0),confirmed=Math.max(0,Number(S.reliability&&S.reliability.confirmed)||0),score=total?Math.round(confirmed/total*100):0;if($id('reliabilityScore'))$id('reliabilityScore').textContent=score+'%';if($id('reliabilitySub'))$id('reliabilitySub').textContent=confirmed+' signalement(s) utile(s) confirmé(s) sur '+total;if($id('reliabilityFill'))$id('reliabilityFill').style.width=score+'%'};
+App.confirmUsefulAlert=function(id){const a=(S.alerts||[]).find(x=>String(x.id)===String(id));if(!a||a.useful)return;a.useful=true;a.status='utile confirmé';S.reliability=S.reliability||{confirmed:0,total:0};S.reliability.confirmed=(Number(S.reliability.confirmed)||0)+1;store('ic_alerts_unified',S.alerts);store('ic_reliability',S.reliability);this.renderAlertsHub();safeToast('Signalement confirmé utile. Fiabilité améliorée.','ok')};
+App.removeUnifiedAlert=function(id){S.alerts=(S.alerts||[]).filter(a=>String(a.id)!==String(id));S.activeAlerts=(S.activeAlerts||[]).filter(a=>String(a.id)!==String(id));store('ic_alerts_unified',S.alerts);try{localStorage.setItem('ic_active_alerts',JSON.stringify(S.activeAlerts))}catch(e){};this.renderAlertsHub();this.renderMyAlertsBlock&&this.renderMyAlertsBlock();this.renderActiveAlerts&&this.renderActiveAlerts();safeToast('Alerte retirée.','ok')};
+App.requireSelectedVehicle=function(){const p=cleanPlate(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)||($id('iTarget')&&$id('iTarget').value));if(!p||p==='ALL'){safeToast('Sélectionnez un véhicule avant d’envoyer cette alerte.','bad');return''}return p};
+const oldSS=App.sendStructuredVehicleAlert&&App.sendStructuredVehicleAlert.bind(App);App.sendStructuredVehicleAlert=async function(label,level,icon){const plate=this.requireSelectedVehicle();if(!plate)return;S.reliability=S.reliability||{confirmed:0,total:0};S.reliability.total=(Number(S.reliability.total)||0)+1;store('ic_reliability',S.reliability);this.addUnifiedAlert({category:this.alertCategoryFor(label,'vehicle'),type:'vehicle',label,plate,icon:icon||'⚠️',status:'envoyé'});if(oldSS)return oldSS(label,level,icon)};
+const oldVA=App.vehicleAlert&&App.vehicleAlert.bind(App);App.vehicleAlert=function(label){const plate=this.requireSelectedVehicle();if(!plate)return;S.reliability=S.reliability||{confirmed:0,total:0};S.reliability.total=(Number(S.reliability.total)||0)+1;store('ic_reliability',S.reliability);this.addUnifiedAlert({category:this.alertCategoryFor(label,'vehicle'),type:'vehicle',label,plate,icon:'⚠️',status:'préparé'});if(oldVA)return oldVA(label)};
+const oldRoad=App.submitRoadReport&&App.submitRoadReport.bind(App);App.submitRoadReport=async function(type){const labels=this.roadLabels||{},label=labels[type]||type||'Signalement route';this.addUnifiedAlert({category:this.alertCategoryFor(label,'route'),type:type||'route',label,plate:'',icon:/accident|danger/i.test(type)?'🚨':'⚠️',status:'actif'});if(oldRoad)return oldRoad(type)};
+const oldAssist=App.submitAssist&&App.submitAssist.bind(App);App.submitAssist=async function(type){const labels={panne:'Panne',batterie:'Batterie',essence:'Carburant',outil:'Besoin d’outil',carburant:'Carburant',malaise:'Malaise',incendie:'Risque incendie',perdu:'Perdu'},label=labels[type]||type||'Assistance';this.addUnifiedAlert({category:'Assistance',type:type||'assistance',label,plate:'',icon:/malaise|incendie/i.test(type)?'🚨':'🛟',status:'demande envoyée'});if(oldAssist)return oldAssist(type)};
+const oldInit=App.initMap&&App.initMap.bind(App);if(oldInit){App.initMap=function(){oldInit();try{if(S.map&&!S.map._icMovedHook){S.map._icMovedHook=true;S.map.on('dragstart zoomstart',()=>document.body.classList.add('map-moved'))}}catch(e){}}}
+const oldRec=App.recenter&&App.recenter.bind(App);App.recenter=function(){document.body.classList.remove('map-moved');if(oldRec)return oldRec()};
+App.setRoutePointsUI=function(startLabel,endLabel){const card=$id('routePointsCard');if(card)card.classList.remove('hidden');if($id('routeStartLabel'))$id('routeStartLabel').textContent=startLabel||'Position actuelle';if($id('routeEndLabel'))$id('routeEndLabel').textContent=endLabel||'Destination'};
+App.addRouteEndpointMarkers=function(sl,sg,el,eg){try{if(!S.map)return;if(S.startMarker)S.map.removeLayer(S.startMarker);if(S.endMarker)S.map.removeLayer(S.endMarker);S.startMarker=L.marker([sl,sg],{icon:L.divIcon({html:'<div style="width:22px;height:22px;border-radius:50%;background:#00ffb3;border:3px solid #fff;box-shadow:0 4px 12px #0005"></div>',iconSize:[22,22],iconAnchor:[11,11],className:''})}).addTo(S.map);S.endMarker=L.marker([el,eg],{icon:L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#ff2d55;border:3px solid #fff;box-shadow:0 4px 12px #0005"></div>',iconSize:[24,24],iconAnchor:[12,12],className:''})}).addTo(S.map)}catch(e){console.warn(e)}};
+const oldPick=App.pickDest&&App.pickDest.bind(App);if(oldPick){App.pickDest=async function(lat,lon,name){const r=await oldPick(lat,lon,name);if(S.myLat!==null&&S.myLng!==null){this.addRouteEndpointMarkers(S.myLat,S.myLng,lat,lon);this.setRoutePointsUI('Position actuelle',name||'Destination')}return r}};
+setTimeout(()=>{document.body.classList.add('ic-sheet-collapsed');App.renderAlertsHub();App.renderReliability()},700);
 })();
 </script>
 
