@@ -205,6 +205,212 @@ body.night .nav-premium .nav-card,body.night .voice-premium-box{background:#1723
 .big-sos,.floating-sos,#sosBig{display:none!important}
 </style>
 
+
+<style id="ic-context-vehicle-alerts-css">
+/* ===== CONTEXTE VEHICULE + ALERTES AUTOUR DU VEHICULE ===== */
+
+/* Bouton recherche haut retiré : la recherche reste dans le dock/panneau */
+.top .round.pink,
+.top button[onclick*="openGpsSearch"],
+.top button[onclick*="openGps"],
+.top button[title="Recherche"]{
+  display:none!important;
+}
+
+/* Panneau principal plus bas en portrait : ne masque plus vitesse/SOS/carte */
+@media (orientation:portrait){
+  #sheet.sheet,
+  .sheet{
+    transform:translateY(calc(100% - 84px))!important;
+  }
+  #sheet.sheet:not(.mini).context-open,
+  .sheet.context-open{
+    transform:translateY(calc(100% - 260px))!important;
+    max-height:300px!important;
+  }
+  #sheet.sheet.full,
+  .sheet.full{
+    transform:translateY(0)!important;
+  }
+}
+
+/* Panneau latéral paysage : plus serré, visible par une languette */
+@media (orientation:landscape) and (max-height:560px){
+  #sheet.sheet,
+  .sheet{
+    right:0!important;
+    left:auto!important;
+    width:min(390px,44vw)!important;
+    transform:translateX(calc(100% - 46px))!important;
+    border-radius:24px 0 0 24px!important;
+  }
+  #sheet.sheet.context-open,
+  .sheet.context-open,
+  #sheet.sheet:not(.mini):not(.context-open),
+  .sheet:not(.mini):not(.context-open){
+    transform:translateX(0)!important;
+  }
+}
+
+/* Flèches de contrôle du panneau */
+.sheet-arrow{
+  position:absolute;
+  z-index:999;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#10161d!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.25);
+  font-weight:900;
+  display:grid;
+  place-items:center;
+}
+.sheet-arrow.out{left:-18px;top:48%;transform:translateY(-50%)}
+.sheet-arrow.in{left:-18px;top:calc(48% + 42px);transform:translateY(-50%)}
+.sheet-arrow.up{right:54px;top:10px}
+.sheet-arrow.down{right:14px;top:10px}
+@media (orientation:portrait){
+  .sheet-arrow.out,.sheet-arrow.in{display:none!important}
+}
+@media (orientation:landscape) and (max-height:560px){
+  .sheet-arrow.up,.sheet-arrow.down{display:none!important}
+}
+
+/* Renommage visuel : Inbox -> Messages reçus si texte remplacé par JS */
+#tabMessages{white-space:normal}
+
+/* Bulles contextuelles autour d’un véhicule */
+.vehicle-context-menu{
+  position:absolute;
+  z-index:1400;
+  pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+.vehicle-context-menu.show{display:block}
+.vehicle-context-menu:not(.show){display:none}
+.vehicle-bubble{
+  position:absolute;
+  min-width:64px;
+  min-height:42px;
+  padding:8px 10px;
+  border-radius:999px;
+  border:2px solid #fff;
+  background:#10161d;
+  color:#fff;
+  box-shadow:0 10px 26px rgba(0,0,0,.30);
+  font-size:12px;
+  font-weight:950;
+  pointer-events:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  white-space:nowrap;
+}
+.vehicle-bubble.message{background:#00ffb3;color:#06140f}
+.vehicle-bubble.signal{background:#ff3b5c;color:#fff}
+.vehicle-bubble.info{background:#fff;color:#10161d}
+.vehicle-bubble.contact{background:#10161d;color:#fff}
+.vehicle-bubble.assist{background:#5e5ce6;color:#fff}
+.vehicle-bubble.b1{left:-38px;top:-76px}
+.vehicle-bubble.b2{left:42px;top:-34px}
+.vehicle-bubble.b3{left:-104px;top:-34px}
+.vehicle-bubble.b4{left:-86px;top:26px}
+.vehicle-bubble.b5{left:38px;top:26px}
+
+/* Mini popups d’alertes réparties autour du véhicule */
+.vehicle-alert-orbit{
+  position:absolute;
+  z-index:1300;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.vehicle-alert-badge{
+  position:absolute;
+  min-width:36px;
+  height:36px;
+  padding:0 9px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:#fff;
+  color:#10161d;
+  border:2px solid #fff;
+  box-shadow:0 8px 22px rgba(0,0,0,.28);
+  font-size:16px;
+  font-weight:950;
+}
+.vehicle-alert-badge.urgent{background:#ff3b5c;color:#fff;animation:icAlertPulse 1.2s infinite}
+.vehicle-alert-badge.warn{background:#ffb020;color:#10161d}
+.vehicle-alert-badge.info{background:#00ffb3;color:#06140f}
+.vehicle-alert-badge.a0{left:-18px;top:-72px}
+.vehicle-alert-badge.a1{left:54px;top:-34px}
+.vehicle-alert-badge.a2{left:-88px;top:-34px}
+.vehicle-alert-badge.a3{left:54px;top:38px}
+.vehicle-alert-badge.a4{left:-88px;top:38px}
+.vehicle-alert-badge.a5{left:-18px;top:76px}
+@keyframes icAlertPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* Bloc Mes alertes dans le panneau principal */
+.my-alerts-block{
+  background:#f4f7fb;
+  border:1px solid #e1e7ef;
+  border-radius:18px;
+  padding:10px;
+  margin:10px 0;
+  color:#10161d;
+}
+.my-alerts-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:13px;
+  font-weight:950;
+}
+.my-alerts-list{
+  display:grid;
+  gap:7px;
+  margin-top:8px;
+  max-height:120px;
+  overflow:auto;
+}
+.my-alert-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid #e1e7ef;
+  font-size:12px;
+  font-weight:800;
+}
+.my-alert-row button{
+  border-radius:999px;
+  background:#ffe8ed;
+  color:#cf0035;
+  padding:6px 8px;
+  font-size:11px;
+  font-weight:950;
+}
+.my-alert-empty{
+  color:#667383;
+  font-size:12px;
+  padding:6px 0;
+}
+body.auto-night .my-alerts-block,
+body.auto-night .my-alert-row{
+  background:#172335;
+  color:#eef6ff;
+  border-color:#26364d;
+}
+</style>
+
 </head>
 <body>
 <section id="sw" class="screen center active">
@@ -264,11 +470,15 @@ body.night .nav-premium .nav-card,body.night .voice-premium-box{background:#1723
   </div>
   <div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><button id="longSos" class="long-sos" onpointerdown="App.startSosHold(event)" onpointerup="App.cancelSosHold()" onpointerleave="App.cancelSosHold()">SOS</button><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button onclick="App.contactFrontVehicle()">Contacter</button></div>
 
-  <div id="sheet" class="sheet">
+  <div id="sheet" class="sheet"><button id="sheetArrowOut" class="sheet-arrow out" type="button" onclick="App.expandContextSheet()">→</button><button id="sheetArrowIn" class="sheet-arrow in" type="button" onclick="App.collapseContextSheet()">←</button><button id="sheetArrowUp" class="sheet-arrow up" type="button" onclick="App.expandContextSheet()">↑</button><button id="sheetArrowDown" class="sheet-arrow down" type="button" onclick="App.collapseContextSheet()">↓</button>
     <button class="sheet-close" onclick="App.closeSheet()">×</button>
     <div class="handle" onclick="App.toggleSheet()"></div>
     <div class="profile"><div><div id="tbPlate" class="plate"></div><div id="tbPseudo" class="pseudo"></div></div><select id="radiusSel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div>
-    <div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Message</button><button id="tabMessages" onclick="App.panel('messages')">Inbox</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
+    
+<div id="myAlertsBlock" class="my-alerts-block">
+  <div class="my-alerts-head"><span>⚠️ Mes alertes</span><button class="tiny ok" type="button" onclick="App.openActiveAlerts()">Gérer</button></div>
+  <div id="myAlertsList" class="my-alerts-list"><div class="my-alert-empty">Aucune alerte active.</div></div>
+</div><div class="nav"><button id="tabDrive" class="on" onclick="App.panel('drive')">GPS</button><button id="tabContact" onclick="App.panel('contact')">Message</button><button id="tabMessages" onclick="App.panel('messages')">Messages reçus</button><button id="tabSettings" onclick="App.panel('settings')">Options</button></div>
     <div id="panelDrive" class="panel on">
       <div class="section">Recherche GPS</div>
       <div class="gps-search-card">
@@ -1081,6 +1291,255 @@ console.log('ImmatConnect UX patch loaded');
   ensureStatusUi();
   setTimeout(()=>{App.cleanupAlerts?.();App.renderAlerts?.();App.updateCommunityStatus?.();App.syncOfflineReports?.();},800);
   console.log('ImmatConnect community realtime complete patch loaded');
+})();
+</script>
+
+
+<div id="vehicleContextMenu" class="vehicle-context-menu">
+  <button class="vehicle-bubble message b1" type="button" onclick="App.vehicleContextAction('message')">💬 Message</button>
+  <button class="vehicle-bubble signal b2" type="button" onclick="App.vehicleContextAction('signal')">⚠️ Signaler</button>
+  <button class="vehicle-bubble contact b3" type="button" onclick="App.vehicleContextAction('contact')">☎ Contacter</button>
+  <button class="vehicle-bubble assist b4" type="button" onclick="App.vehicleContextAction('assist')">🆘 Aide</button>
+  <button class="vehicle-bubble info b5" type="button" onclick="App.vehicleContextAction('info')">ℹ️ Infos</button>
+</div>
+<div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
+
+
+<script id="ic-context-vehicle-alerts-js">
+(function(){
+  if(window.__IC_CONTEXT_VEHICLE_ALERTS__) return;
+  window.__IC_CONTEXT_VEHICLE_ALERTS__ = true;
+
+  const $id = (id)=>document.getElementById(id);
+
+  function safeToast(msg,type){
+    if(window.toast) return toast(msg,type||'ok');
+    console.log(msg);
+  }
+
+  function getMapPoint(lat,lng){
+    try{
+      if(!window.S || !S.map || lat==null || lng==null) return null;
+      return S.map.latLngToContainerPoint([lat,lng]);
+    }catch(e){return null}
+  }
+
+  function activeVehicleLatLng(){
+    try{
+      if(S.selectedVehicleLatLng) return S.selectedVehicleLatLng;
+      if(S.contextVehicle?.lat!=null) return {lat:S.contextVehicle.lat,lng:S.contextVehicle.lng};
+      if(S.myLat!=null && S.myLng!=null) return {lat:S.myLat,lng:S.myLng};
+    }catch(e){}
+    return null;
+  }
+
+  App.expandContextSheet = function(){
+    const s=$id('sheet');
+    if(!s) return;
+    s.classList.remove('mini');
+    s.classList.add('context-open');
+    try{S.sheetOpen=true;S.map?.invalidateSize()}catch(e){}
+  };
+
+  App.collapseContextSheet = function(){
+    const s=$id('sheet');
+    if(!s) return;
+    s.classList.remove('context-open','full');
+    s.classList.add('mini');
+    try{S.sheetOpen=false;S.map?.invalidateSize()}catch(e){}
+  };
+
+  App.showVehicleContextMenu = function(vehicle){
+    const menu=$id('vehicleContextMenu');
+    if(!menu) return;
+    S.contextVehicle = vehicle || S.contextVehicle || {};
+    let latlng = null;
+
+    if(vehicle?.lat!=null && vehicle?.lng!=null) latlng={lat:vehicle.lat,lng:vehicle.lng};
+    else if(vehicle?.marker?.getLatLng) latlng=vehicle.marker.getLatLng();
+    else latlng=activeVehicleLatLng();
+
+    if(!latlng || !S.map) return;
+    S.selectedVehicleLatLng = {lat:latlng.lat,lng:latlng.lng};
+
+    const p=getMapPoint(latlng.lat,latlng.lng);
+    if(!p) return;
+    menu.style.left=p.x+'px';
+    menu.style.top=p.y+'px';
+    menu.classList.add('show');
+
+    this.expandContextSheet();
+    this.renderVehicleAlertOrbit();
+  };
+
+  App.hideVehicleContextMenu = function(){
+    $id('vehicleContextMenu')?.classList.remove('show');
+  };
+
+  App.vehicleContextAction = function(action){
+    const plate = (S.contextVehicle?.plate || S.selPlate || S.conv || '').toString();
+    if(action==='message' || action==='contact'){
+      if(plate && plate !== 'all'){
+        try{$id('iTarget').value=plate}catch(e){}
+        S.selPlate=plate;
+      }
+      this.setPanel?.('contact');
+      this.expandContextSheet();
+      setTimeout(()=>{$id('iMsg')?.focus()},180);
+      return;
+    }
+    if(action==='signal'){
+      if(plate && plate !== 'all'){
+        try{$id('reportPlate').value=plate}catch(e){}
+        try{$id('iTarget').value=plate}catch(e){}
+        S.selPlate=plate;
+      }
+      if(this.openReportCenter) this.openReportCenter();
+      else if(this.openReportPanel) this.openReportPanel(plate);
+      this.expandContextSheet();
+      return;
+    }
+    if(action==='assist'){
+      if(this.openAssist) this.openAssist();
+      this.expandContextSheet();
+      return;
+    }
+    if(action==='info'){
+      safeToast(plate ? 'Véhicule sélectionné : '+plate : 'Véhicule sélectionné','ok');
+      this.expandContextSheet();
+      return;
+    }
+  };
+
+  App.renderVehicleAlertOrbit = function(){
+    const orbit=$id('vehicleAlertOrbit');
+    if(!orbit) return;
+    const latlng=activeVehicleLatLng();
+    if(!latlng || !S.map){orbit.innerHTML='';return}
+    const p=getMapPoint(latlng.lat,latlng.lng);
+    if(!p) return;
+    orbit.style.left=p.x+'px';
+    orbit.style.top=p.y+'px';
+
+    const alerts=(S.activeAlerts||S.myAlerts||[]).slice(0,6);
+    if(!alerts.length){orbit.innerHTML='';return}
+    orbit.innerHTML = alerts.map((a,i)=>{
+      const label=(a.label||a.type||'Alerte').toString();
+      const type=(a.type||'info').toString();
+      const urgent=/sos|danger|accident|malaise|panne|urgent|incendie/i.test(type+' '+label);
+      const warn=/bouchon|travaux|controle|obstacle|important/i.test(type+' '+label);
+      const cls=urgent?'urgent':warn?'warn':'info';
+      const icon = a.icon || (urgent?'🚨':warn?'⚠️':'ℹ️');
+      return '<div class="vehicle-alert-badge '+cls+' a'+i+'" title="'+label.replace(/"/g,'')+'">'+icon+'</div>';
+    }).join('');
+  };
+
+  App.renderMyAlertsBlock = function(){
+    const list=$id('myAlertsList');
+    if(!list) return;
+    const rows=(S.activeAlerts||S.myAlerts||[]).slice(0,8);
+    if(!rows.length){
+      list.innerHTML='<div class="my-alert-empty">Aucune alerte active.</div>';
+      return;
+    }
+    list.innerHTML=rows.map((a,i)=>{
+      const id=a.id||a.markerId||i;
+      const label=(a.label||a.type||'Alerte').toString();
+      const icon=a.icon||(/sos|danger|urgent|accident|panne|malaise/i.test(label)?'🚨':'⚠️');
+      return '<div class="my-alert-row"><span>'+icon+' '+label+'</span><button type="button" onclick="App.removeMyAlert(\\''+String(id).replace(/'/g,"\\'")+'\\')">Supprimer</button></div>';
+    }).join('');
+  };
+
+  App.removeMyAlert = function(id){
+    if(Array.isArray(S.activeAlerts)){
+      S.activeAlerts=S.activeAlerts.filter((a,i)=>String(a.id||a.markerId||i)!==String(id));
+      try{localStorage.setItem('ic_active_alerts',JSON.stringify(S.activeAlerts))}catch(e){}
+    }
+    if(Array.isArray(S.myAlerts)){
+      S.myAlerts=S.myAlerts.filter((a,i)=>String(a.id||a.markerId||i)!==String(id));
+    }
+    this.renderMyAlertsBlock();
+    this.renderVehicleAlertOrbit();
+    if(this.renderActiveAlerts) this.renderActiveAlerts();
+    safeToast('Alerte supprimée','ok');
+  };
+
+  App.addContextAlert = function(type,label,icon){
+    const latlng=activeVehicleLatLng() || {};
+    const alert={id:'ctx_'+Date.now(),type:type||'info',label:label||type||'Alerte',icon:icon||'⚠️',lat:latlng.lat,lng:latlng.lng,at:Date.now()};
+    S.activeAlerts=S.activeAlerts||[];
+    S.activeAlerts.unshift(alert);
+    try{localStorage.setItem('ic_active_alerts',JSON.stringify(S.activeAlerts))}catch(e){}
+    this.renderMyAlertsBlock();
+    this.renderVehicleAlertOrbit();
+    return alert;
+  };
+
+  const oldVehicleAlert = App.vehicleAlert?.bind(App);
+  App.vehicleAlert = function(label){
+    const alert=this.addContextAlert('vehicle',label,'⚠️');
+    if(oldVehicleAlert) return oldVehicleAlert(label);
+    safeToast('Signalement ajouté : '+label,'ok');
+  };
+
+  const oldSubmitRoadReport = App.submitRoadReport?.bind(App);
+  App.submitRoadReport = async function(type){
+    const icons={accident:'💥',bouchon:'🚦',travaux:'🚧',obstacle:'⚠️',controle:'👮',danger:'🚨',panne:'🔧',malaise:'🆘'};
+    const labels=this.roadLabels||{};
+    this.addContextAlert(type,labels[type]||type,icons[type]||'⚠️');
+    if(oldSubmitRoadReport) return oldSubmitRoadReport(type);
+    safeToast('Alerte ajoutée','ok');
+  };
+
+  /* Hook sélection véhicule : garde toutes les anciennes fonctions */
+  const oldPickPlate = App.pickPlate?.bind(App);
+  App.pickPlate = function(plate){
+    S.selPlate=plate;
+    S.contextVehicle = Object.assign({},S.contextVehicle||{},{plate});
+    const r = oldPickPlate ? oldPickPlate(plate) : null;
+    setTimeout(()=>this.showVehicleContextMenu(S.contextVehicle),120);
+    return r;
+  };
+
+  /* Hook marqueurs véhicules quand possible : clic = mini popups + panneau */
+  const oldLoadOthers = App.loadOthers?.bind(App);
+  if(oldLoadOthers){
+    App.loadOthers = async function(){
+      const r = await oldLoadOthers();
+      try{
+        (S.otherMkrs||[]).forEach(m=>{
+          if(m._contextHooked) return;
+          m._contextHooked=true;
+          m.on('click',()=>{
+            const ll=m.getLatLng();
+            let plate='';
+            try{
+              const content=m.getPopup()?.getContent?.()||'';
+              const match=String(content).match(/[A-Z]{2}-\\d{3}-[A-Z]{2}/);
+              plate=match?match[0]:'';
+            }catch(e){}
+            S.contextVehicle={plate,lat:ll.lat,lng:ll.lng,marker:m};
+            if(plate) S.selPlate=plate;
+            App.showVehicleContextMenu(S.contextVehicle);
+          });
+        });
+      }catch(e){console.warn('context hook vehicles',e)}
+      return r;
+    }
+  }
+
+  /* Repositionne les bulles quand la carte bouge */
+  function refreshOverlays(){
+    try{
+      if($id('vehicleContextMenu')?.classList.contains('show')) App.showVehicleContextMenu(S.contextVehicle);
+      App.renderVehicleAlertOrbit();
+    }catch(e){}
+  }
+  setInterval(()=>{App.renderMyAlertsBlock();refreshOverlays()},1600);
+  window.addEventListener('resize',()=>setTimeout(refreshOverlays,250));
+  window.addEventListener('orientationchange',()=>setTimeout(refreshOverlays,500));
+  setTimeout(()=>{App.renderMyAlertsBlock();refreshOverlays()},800);
+
 })();
 </script>
 
