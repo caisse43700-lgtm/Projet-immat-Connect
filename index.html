@@ -750,5 +750,339 @@ console.log('ImmatConnect UX patch loaded');
 
 </script>
 
+
+<script id="community-realtime-complete-patch">
+/* ===== PATCH COMMUNAUTAIRE COMPLET : ALERTES LIVE / FILTRES / HISTORIQUE / ETAT RESEAU ===== */
+(function(){
+  'use strict';
+  if(!window.App || !window.S) return;
+  const $ = window.$ || (id=>document.getElementById(id));
+  const safeSet = (k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  const safeGet = (k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
+  const toastSafe = (msg,type)=>{try{toast(msg,type)}catch(e){console.log(msg)}};
+  const now = ()=>Date.now();
+  const kmSafe = (a,b,c,d)=>{try{return km(a,b,c,d)}catch(e){return null}};
+  const normPlate = v=>String(v||'').trim().toUpperCase();
+  const cleanReason = r=>String(r||'').replace(/^\[[^\]]+\]\s*/,'').trim();
+
+  const CATS = {
+    accident:{label:'Accident',icon:'🚗',level:'urgent',ttl:45*60*1000,group:'route'},
+    bouchon:{label:'Bouchon',icon:'🚦',level:'important',ttl:30*60*1000,group:'route'},
+    obstacle:{label:'Obstacle',icon:'⚠️',level:'urgent',ttl:45*60*1000,group:'route'},
+    travaux:{label:'Travaux',icon:'🚧',level:'info',ttl:2*60*60*1000,group:'route'},
+    controle:{label:'Contrôle',icon:'👮',level:'info',ttl:60*60*1000,group:'route'},
+    danger:{label:'Danger',icon:'❗',level:'urgent',ttl:45*60*1000,group:'route'},
+    panne:{label:'Panne',icon:'🚗',level:'urgent',ttl:45*60*1000,group:'assist'},
+    carburant:{label:'Carburant',icon:'⛽',level:'important',ttl:45*60*1000,group:'assist'},
+    batterie:{label:'Batterie',icon:'🔋',level:'important',ttl:45*60*1000,group:'assist'},
+    moteur:{label:'Moteur',icon:'⚙️',level:'urgent',ttl:45*60*1000,group:'assist'},
+    malaise:{label:'Malaise',icon:'🩺',level:'urgent',ttl:30*60*1000,group:'assist'},
+    incendie:{label:'Incendie',icon:'🔥',level:'urgent',ttl:30*60*1000,group:'assist'},
+    perdu:{label:'Perdu',icon:'🧭',level:'info',ttl:45*60*1000,group:'assist'},
+    vehicule:{label:'Véhicule',icon:'🚘',level:'important',ttl:60*60*1000,group:'vehicle'},
+    info:{label:'Info',icon:'ℹ️',level:'info',ttl:60*60*1000,group:'misc'}
+  };
+  window.IMMAT_ALERT_CATEGORIES = Object.keys(CATS).map(id=>({id,...CATS[id]}));
+
+  S.alerts = Array.isArray(S.alerts) ? S.alerts : safeGet('ic_alerts',[]);
+  S.alertHistory = Array.isArray(S.alertHistory) ? S.alertHistory : safeGet('ic_alert_history',[]);
+  S.alertFilter = S.alertFilter || safeGet('ic_alert_filter','all');
+  S.alertMarkersById = S.alertMarkersById || {};
+  S.offlineReports = Array.isArray(S.offlineReports) ? S.offlineReports : safeGet('ic_offline_reports',[]);
+  S.networkOnline = navigator.onLine !== false;
+  S.gpsStatus = S.gpsStatus || 'pending';
+
+  function inferType(input){
+    const s=String(input||'').toLowerCase();
+    if(s.includes('accident')) return 'accident';
+    if(s.includes('bouchon')) return 'bouchon';
+    if(s.includes('travaux')) return 'travaux';
+    if(s.includes('controle')||s.includes('contrôle')) return 'controle';
+    if(s.includes('obstacle')) return 'obstacle';
+    if(s.includes('panne')) return 'panne';
+    if(s.includes('carburant')||s.includes('essence')) return 'carburant';
+    if(s.includes('batterie')) return 'batterie';
+    if(s.includes('moteur')) return 'moteur';
+    if(s.includes('malaise')||s.includes('medical')||s.includes('médical')) return 'malaise';
+    if(s.includes('incendie')||s.includes('feu')||s.includes('fumée')||s.includes('fumee')) return 'incendie';
+    if(s.includes('perdu')) return 'perdu';
+    if(s.includes('vehicule')||s.includes('véhicule')||s.includes('pneu')||s.includes('roue')||s.includes('porte')||s.includes('coffre')||s.includes('éclairage')) return 'vehicule';
+    if(s.includes('danger')) return 'danger';
+    return 'info';
+  }
+  function cat(type){return CATS[type]||CATS.info}
+  function ttlFor(type){return cat(type).ttl || 60*60*1000}
+  function alertKey(a){return String(a.remoteId||a.id||'') || [a.type,a.plate,a.reason,a.lat,a.lng,a.at].join('|')}
+  function saveAlerts(){
+    safeSet('ic_alerts',S.alerts.slice(0,80));
+    safeSet('ic_alert_history',S.alertHistory.slice(0,150));
+    safeSet('ic_offline_reports',S.offlineReports.slice(0,50));
+  }
+  function distanceOf(a){
+    if(S.myLat==null || S.myLng==null || a.lat==null || a.lng==null) return null;
+    return kmSafe(S.myLat,S.myLng,Number(a.lat),Number(a.lng));
+  }
+  function isNearby(a){
+    const d=distanceOf(a);
+    return d==null || d <= (Number(S.radiusKm)||5);
+  }
+  function notify(title,body,level){
+    toastSafe(title + (body?' · '+body:''), level==='urgent'?'bad':'ok');
+    try{ if(level==='urgent' && navigator.vibrate) navigator.vibrate([140,60,140]); }catch(e){}
+    try{ if('Notification' in window && Notification.permission==='granted') new Notification(title,{body:body||''}); }catch(e){}
+  }
+  function ensureStatusUi(){
+    if(!$('communityStatus')){
+      const div=document.createElement('div');
+      div.id='communityStatus';
+      div.style.cssText='position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 76px);z-index:450;background:rgba(7,16,24,.88);color:white;border-radius:999px;padding:7px 10px;font:700 11px system-ui;display:flex;gap:8px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.22);pointer-events:none';
+      document.body.appendChild(div);
+    }
+    if(!$('alertsToolbar') && $('alertsPanel')){
+      const h=document.createElement('div'); h.id='alertsToolbar'; h.style.cssText='display:flex;gap:6px;overflow:auto;margin:10px 0;padding-bottom:4px';
+      h.innerHTML=['all','route','assist','vehicle','urgent'].map(f=>'<button type="button" data-alert-filter="'+f+'" style="border-radius:999px;padding:8px 10px;font-weight:900;background:#eef2f6;color:#10161d">'+({all:'Toutes',route:'Route',assist:'Aide',vehicle:'Véhicule',urgent:'Urgent'}[f])+'</button>').join('');
+      const list=$('alertsList'); list?.parentNode?.insertBefore(h,list);
+      h.addEventListener('click',e=>{const b=e.target.closest('[data-alert-filter]'); if(!b)return; App.setAlertFilter(b.dataset.alertFilter);});
+    }
+    if(!$('alertHistoryBox') && $('alertsPanel')){
+      const hist=document.createElement('details'); hist.id='alertHistoryBox'; hist.style.cssText='margin-top:12px';
+      hist.innerHTML='<summary style="font-weight:900;cursor:pointer">Historique des signalements</summary><div id="alertHistoryList" class="list"></div>';
+      $('alertsPanel').appendChild(hist);
+    }
+  }
+  App.updateCommunityStatus=function(){
+    ensureStatusUi();
+    const el=$('communityStatus'); if(!el)return;
+    const active=(S.alerts||[]).filter(a=>isNearby(a)).length;
+    const near=(S.nearbyDrivers||[]).length || (S.otherMkrs||[]).length || 0;
+    const net=S.networkOnline?'🟢':'🔴';
+    const gps=S.myLat!=null?'📍':'📍…';
+    el.innerHTML='<span>'+net+' réseau</span><span>'+gps+'</span><span>👥 '+near+'</span><span>⚠️ '+active+'</span>';
+  };
+
+  App.addCommunityAlert=function(raw,opts={}){
+    if(!raw) return null;
+    const type=raw.type||inferType(raw.reason||raw.label||raw.plate);
+    const meta=cat(type);
+    const at=raw.at?Number(raw.at):(raw.created_at?new Date(raw.created_at).getTime():now());
+    const alert={
+      id:raw.id||raw.remoteId||('al_'+now()+'_'+Math.random().toString(16).slice(2)),
+      remoteId:raw.remoteId||raw.id||null,
+      type,
+      label:raw.label||meta.label,
+      reason:cleanReason(raw.reason||raw.label||meta.label),
+      level:raw.level||meta.level,
+      group:raw.group||meta.group,
+      plate:normPlate(raw.plate||''),
+      lat:raw.lat!=null?Number(raw.lat):(raw.latitude!=null?Number(raw.latitude):null),
+      lng:raw.lng!=null?Number(raw.lng):(raw.longitude!=null?Number(raw.longitude):null),
+      at
+    };
+    const key=alertKey(alert);
+    if((S.alerts||[]).some(a=>alertKey(a)===key)) return alert;
+    if(now()-alert.at > ttlFor(alert.type)) return null;
+    S.alerts.unshift(alert);
+    S.alerts=S.alerts.slice(0,80);
+    S.alertHistory.unshift({...alert,seenAt:now()});
+    S.alertHistory=S.alertHistory.slice(0,150);
+    saveAlerts();
+    if(alert.lat!=null && alert.lng!=null) App.addCommunityAlertMarker(alert);
+    App.renderAlerts?.();
+    App.updateCommunityStatus?.();
+    if(opts.notify && isNearby(alert)) notify(meta.icon+' '+meta.label, alert.reason, alert.level);
+    return alert;
+  };
+
+  App.addCommunityAlertMarker=function(a){
+    if(!S.map || a.lat==null || a.lng==null) return;
+    if(S.alertMarkersById[a.id]) return;
+    const meta=cat(a.type);
+    const marker=L.marker([a.lat,a.lng],{icon:L.divIcon({html:'<div class="alert-cluster" style="background:'+(a.level==='urgent'?'#ff2d55':a.level==='important'?'#ff9500':'#10161d')+'">'+meta.icon+'</div>',iconSize:[38,38],iconAnchor:[19,19],className:''})}).addTo(S.map);
+    marker.bindPopup('<b>'+esc(meta.icon+' '+(a.label||meta.label))+'</b><br><small>'+esc(a.reason||'Signalement')+'</small><br><button onclick="App.dismissAlert(\''+js(a.id)+'\')">Retirer</button>');
+    S.alertMarkersById[a.id]=marker;
+  };
+
+  App.cleanupAlerts=function(){
+    const before=(S.alerts||[]).length;
+    S.alerts=(S.alerts||[]).filter(a=>now()-(Number(a.at)||now())<ttlFor(a.type));
+    if(S.alertMarkersById){
+      Object.keys(S.alertMarkersById).forEach(id=>{
+        if(!S.alerts.some(a=>a.id===id)){
+          try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}
+          delete S.alertMarkersById[id];
+        }
+      });
+    }
+    if(before!==S.alerts.length){saveAlerts();App.renderAlerts?.()}
+    App.updateCommunityStatus?.();
+  };
+
+  App.setAlertFilter=function(f){
+    S.alertFilter=f||'all';
+    try{localStorage.setItem('ic_alert_filter',S.alertFilter)}catch(e){}
+    App.renderAlerts?.();
+  };
+
+  App.renderAlerts=function(){
+    ensureStatusUi();
+    const list=$('alertsList'); if(!list)return;
+    App.cleanupAlerts?.();
+    const f=S.alertFilter||'all';
+    document.querySelectorAll('[data-alert-filter]').forEach(b=>{b.style.background=b.dataset.alertFilter===f?'#10161d':'#eef2f6';b.style.color=b.dataset.alertFilter===f?'#fff':'#10161d'});
+    let rows=(S.alerts||[]).filter(a=>isNearby(a));
+    if(f==='urgent') rows=rows.filter(a=>a.level==='urgent');
+    else if(f!=='all') rows=rows.filter(a=>a.group===f || a.type===f);
+    rows.sort((a,b)=>(b.level==='urgent')-(a.level==='urgent') || (b.at||0)-(a.at||0));
+    list.innerHTML=rows.length?rows.map(a=>{
+      const m=cat(a.type); const d=distanceOf(a); const ds=d==null?'':(d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km');
+      const when=new Date(a.at||now()).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      return '<div class="item"><span><b>'+esc(m.icon+' '+(a.label||m.label))+'</b><br><small>'+esc((a.reason||'Signalement')+(ds?' · '+ds:'')+' · '+when)+'</small></span><span><button onclick="App.confirmAlert(\''+js(a.id)+'\',true)">Encore là</button><button onclick="App.confirmAlert(\''+js(a.id)+'\',false)">Disparu</button></span></div>';
+    }).join(''):'<div class="empty">Aucune alerte dans ce filtre.</div>';
+    const h=$('alertHistoryList');
+    if(h){h.innerHTML=(S.alertHistory||[]).slice(0,30).map(a=>'<div class="item"><span><b>'+esc((cat(a.type).icon)+' '+(a.label||cat(a.type).label))+'</b><br><small>'+esc(new Date(a.at||now()).toLocaleString('fr-FR'))+'</small></span></div>').join('') || '<div class="empty">Aucun historique.</div>'}
+    App.updateCommunityStatus?.();
+  };
+
+  App.confirmAlert=function(id,present){
+    const a=(S.alerts||[]).find(x=>x.id===id);
+    if(!present) return App.dismissAlert(id);
+    if(a){a.at=now(); saveAlerts(); App.renderAlerts?.(); toastSafe('Alerte confirmée.','ok')}
+  };
+  App.dismissAlert=function(id){
+    S.alerts=(S.alerts||[]).filter(a=>a.id!==id);
+    if(S.alertMarkersById && S.alertMarkersById[id]){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){};delete S.alertMarkersById[id]}
+    saveAlerts(); App.renderAlerts?.(); toastSafe('Alerte retirée.','ok');
+  };
+
+  async function saveReportCommunity(payload){
+    if(!window.sb && typeof sb==='undefined') return false;
+    const client=window.sb||sb;
+    try{
+      const {data:ud}=await client.auth.getUser();
+      const u=ud?.user;
+      if(u && !payload.reporter_id) payload.reporter_id=u.id;
+      const {error,data}=await client.from('reports').insert(payload).select('id,created_at').maybeSingle();
+      if(error) throw error;
+      return data||true;
+    }catch(e){
+      S.offlineReports.unshift(payload); S.offlineReports=S.offlineReports.slice(0,50); saveAlerts();
+      console.warn('report queued',e);
+      toastSafe('Signalement gardé hors ligne, il sera renvoyé.','bad');
+      return false;
+    }
+  }
+  App.syncOfflineReports=async function(){
+    if(!S.networkOnline || !S.offlineReports?.length) return;
+    const queue=[...S.offlineReports]; S.offlineReports=[];
+    for(const p of queue){const ok=await saveReportCommunity(p); if(!ok) break;}
+    saveAlerts();
+  };
+
+  const oldRoad=App.roadReport?.bind(App);
+  App.roadReport=async function(type){
+    const meta=cat(type);
+    if(S.myLat==null || S.myLng==null){toastSafe('Localise-toi avant de signaler.','bad');return oldRoad?oldRoad(type):null}
+    const alert=App.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'route'},{notify:false});
+    await saveReportCommunity({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});
+    App.closeOverlay?.('reportPanel');
+    notify(meta.icon+' Signalement route',meta.label,meta.level);
+    return alert;
+  };
+
+  const oldAssist=App.assist?.bind(App);
+  App.assist=async function(type){
+    const meta=cat(type);
+    if(S.myLat==null || S.myLng==null){toastSafe('Localise-toi avant de demander de l’aide.','bad');return oldAssist?oldAssist(type):null}
+    const alert=App.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist'},{notify:false});
+    await saveReportCommunity({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});
+    App.closeOverlay?.('reportPanel');
+    notify(meta.icon+' Demande d’aide',meta.label,meta.level);
+    return alert;
+  };
+
+  const oldVehicleAlert=App.vehicleAlert?.bind(App);
+  App.vehicleAlert=function(label){
+    const p=normPlate($('iTarget')?.value||S.selPlate||S.conv||'');
+    const type=inferType(label), meta=cat(type==='info'?'vehicule':type);
+    if(p && p!=='ALL'){
+      App.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:label,plate:p,level:meta.level,group:'vehicle'},{notify:false});
+    }
+    return oldVehicleAlert?oldVehicleAlert(label):null;
+  };
+
+  App.syncCommunityAlerts=async function(){
+    if(!sb) return;
+    try{
+      const since=new Date(now()-3*60*60*1000).toISOString();
+      const {data,error}=await sb.from('reports').select('id,plate,reason,latitude,longitude,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(150);
+      if(error) throw error;
+      (data||[]).forEach(r=>{
+        const type=inferType((r.reason||'')+' '+(r.plate||''));
+        App.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:false});
+      });
+      App.renderAlerts?.(); App.updateCommunityStatus?.();
+    }catch(e){console.warn('syncCommunityAlerts failed',e)}
+  };
+
+  App.subscribeCommunityReports=async function(){
+    if(!sb) return;
+    try{ if(S.chCommunityReports) await sb.removeChannel(S.chCommunityReports); }catch(e){}
+    try{
+      S.chCommunityReports=sb.channel('ic_community_reports_live')
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},payload=>{
+          const r=payload.new||{};
+          const type=inferType((r.reason||'')+' '+(r.plate||''));
+          const a=App.addCommunityAlert({remoteId:r.id,id:String(r.id||('r_'+now())),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:true});
+          if(a) App.renderAlerts?.();
+        }).subscribe();
+    }catch(e){console.warn('subscribeCommunityReports failed',e)}
+  };
+
+  const oldOpenAlerts=App.openAlerts?.bind(App);
+  App.openAlerts=function(){
+    const r=oldOpenAlerts?oldOpenAlerts():($('alertsPanel')?.classList.add('show'));
+    App.syncCommunityAlerts?.();
+    App.renderAlerts?.();
+    return r;
+  };
+
+  const oldOpenMap=App.openMap?.bind(App);
+  if(oldOpenMap && !oldOpenMap.__communityWrapped){
+    App.openMap=function(...args){
+      const r=oldOpenMap.apply(App,args);
+      setTimeout(()=>{App.syncCommunityAlerts?.();App.subscribeCommunityReports?.();App.updateCommunityStatus?.();App.requestNotifications?.();},1200);
+      return r;
+    };
+    App.openMap.__communityWrapped=true;
+  }
+  const oldLoadOthers=App.loadOthers?.bind(App);
+  if(oldLoadOthers && !oldLoadOthers.__communityWrapped){
+    App.loadOthers=async function(...args){const r=await oldLoadOthers.apply(App,args);App.updateCommunityStatus?.();return r};
+    App.loadOthers.__communityWrapped=true;
+  }
+  const oldLocate=App.locate?.bind(App);
+  if(oldLocate && !oldLocate.__communityWrapped){
+    App.locate=function(...args){
+      const r=oldLocate.apply(App,args);
+      S.gpsStatus='watching';
+      setTimeout(()=>App.updateCommunityStatus?.(),500);
+      return r;
+    };
+    App.locate.__communityWrapped=true;
+  }
+  App.requestNotifications=async function(){
+    try{ if('Notification' in window && Notification.permission==='default') await Notification.requestPermission(); }catch(e){}
+  };
+
+  window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toastSafe('Connexion retrouvée.','ok')});
+  window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toastSafe('Mode hors ligne.','bad')});
+  setInterval(()=>{App.cleanupAlerts?.();App.syncOfflineReports?.();},60000);
+  setInterval(()=>{if(document.getElementById('sm')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);
+  ensureStatusUi();
+  setTimeout(()=>{App.cleanupAlerts?.();App.renderAlerts?.();App.updateCommunityStatus?.();App.syncOfflineReports?.();},800);
+  console.log('ImmatConnect community realtime complete patch loaded');
+})();
+</script>
+
 </body>
 </html>
