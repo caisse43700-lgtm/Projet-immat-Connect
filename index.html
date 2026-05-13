@@ -288,7 +288,7 @@ alertsHtml(){
  return state.alerts.length?state.alerts.map(a=>{
   const mine=a.senderPlate===(state.profile.plate||'Moi');
   const btn=mine?'<button class="useful" disabled>En attente utile</button>':'<button class="useful" onclick="App.confirmUseful('+a.id+')">Info utile</button>';
-  return '<div class="card"><b>'+escapeHtml(a.type)+'</b><div class="meta">Cible : '+escapeHtml(a.targetPlate)+' • envoyé par '+escapeHtml(a.senderPlate)+' • '+a.time+'</div><div class="row">'+btn+'<button class="dark" onclick="App.openPanel(\\'messages\\',true)">Répondre</button></div></div>'
+  return '<div class="card"><b>'+escapeHtml(a.type)+'</b><div class="meta">Cible : '+escapeHtml(a.targetPlate)+' • envoyé par '+escapeHtml(a.senderPlate)+' • '+a.time+'</div><div class="row">'+btn+'<button class="dark" onclick="App.openPanel(&quot;messages&quot;,true)">Répondre</button></div></div>'
  }).join(''):'<div class="meta">Aucune alerte active.</div>'
 },
 renderAlerts(){
