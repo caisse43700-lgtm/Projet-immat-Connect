@@ -59,7 +59,7 @@ body:not(.map-moved) .qa-center{opacity:.35}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.chip{border-radius:18px;padding:17px 12px;font-weight:950;text-align:center;background:#f1f5f9;color:#243044}.chip.red{background:#ffe5ec;color:#c70b3c}.chip.green{background:#dcfff4;color:#008866}.chip.orange{background:#fff2d6;color:#a26000}.chip.violet{background:#efe8ff;color:#6831c4}
 .search-row{display:grid;grid-template-columns:1fr 96px;gap:10px;margin:10px 0}.search-row input{background:#f3f6fa;border:1px solid #e1e7ef;border-radius:18px;padding:16px;color:#111;font-weight:800;min-width:0}.search-row button{background:#0b1220;color:#fff;border-radius:18px;font-weight:950}
 .poi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}.poi-grid button{border-radius:16px;background:#eef2f7;color:#334155;font-weight:950;padding:13px 4px}
-.route-card,.alert-card,.profile-card{background:#fff;border:1px solid #e1e7ef;border-radius:20px;padding:14px;margin:10px 0}.route-card b,.alert-card b{font-size:18px}.meta{color:#6b7280;margin-top:4px}.row{display:flex;gap:8px;margin-top:10px}.row button{flex:1;border-radius:15px;padding:12px 10px;font-weight:950}.useful{background:var(--green);color:#06140f}.dark{background:#0b1220;color:#fff}.danger{background:#ffe5ec;color:#c70b3c}
+.route-card,.alert-card,.profile-card{background:#fff;border:1px solid #e1e7ef;border-radius:20px;padding:14px;margin:10px 0}.route-card b,.alert-card b{font-size:18px}.meta{color:#6b7280;margin-top:4px}.row{display:flex;gap:8px;margin-top:10px}.row button{flex:1;border-radius:15px;padding:12px 10px;font-weight:950}.useful{background:var(--green);color:#06140f}.useful:disabled{opacity:.55;filter:grayscale(.4);cursor:not-allowed}.dark{background:#0b1220;color:#fff}.danger{background:#ffe5ec;color:#c70b3c}
 
 /* vehicle */
 .vehicle-menu{position:absolute;z-index:40;display:none;gap:8px;transform:translate(-50%,-120%);pointer-events:auto}.vehicle-menu.show{display:flex}.vehicle-menu button{border-radius:999px;background:#fff;color:#111;padding:10px 14px;font-weight:950;box-shadow:0 10px 25px rgba(0,0,0,.2)}
@@ -195,9 +195,9 @@ body:not(.map-moved) .qa-center{opacity:.35}
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ'};
 const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
 const $=id=>document.getElementById(id);
-const state={mode:'login',map:null,myMarker:null,selectedVehicle:null,profile:{plate:localStorage.ic_plate||'',color:localStorage.ic_color||'blue'},alerts:JSON.parse(localStorage.ic_alerts||'[]'),history:JSON.parse(localStorage.ic_history||'[]'),reliable:Number(localStorage.ic_reliable||0),route:null,lat:45.042,lng:3.885};
+const state={mode:'login',map:null,myMarker:null,selectedVehicle:null,profile:{plate:localStorage.ic_plate||'',color:localStorage.ic_color||'blue'},alerts:JSON.parse(localStorage.ic_alerts||'[]'),history:JSON.parse(localStorage.ic_history||'[]'),reliable:Number(localStorage.ic_reliable||0),sentReliable:Number(localStorage.ic_sentReliable||0),route:null,altRoutes:[],destination:null,navigationActive:false,lat:45.042,lng:3.885};
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
-function save(){localStorage.ic_alerts=JSON.stringify(state.alerts);localStorage.ic_history=JSON.stringify(state.history);localStorage.ic_reliable=state.reliable}
+function save(){localStorage.ic_alerts=JSON.stringify(state.alerts);localStorage.ic_history=JSON.stringify(state.history);localStorage.ic_reliable=state.reliable;localStorage.ic_sentReliable=state.sentReliable}
 function plateFormat(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^([A-Z]{2})(\\d{0,3})([A-Z]{0,2}).*/,(_,a,b,c)=>[a,b,c].filter(Boolean).join('-')).slice(0,9)}
 const App={
 authMode(m){state.mode=m;$('loginTab').classList.toggle('on',m==='login');$('signupTab').classList.toggle('on',m==='signup');$('signupFields').classList.toggle('hidden',m!=='signup');$('authBtn').textContent=m==='login'?'Se connecter':'Créer mon compte';$('authSub').textContent=m==='login'?'Connecte-toi à ton espace conducteur.':'Crée ton profil conducteur et ton véhicule.'},
@@ -222,39 +222,125 @@ initMap(){
  const car=L.divIcon({className:'',html:'<div class="car-pin"></div><div class="vehicle-label">'+(state.profile.plate||'Mon véhicule')+'</div>',iconSize:[80,58],iconAnchor:[40,29]});
  state.myMarker=L.marker([state.lat,state.lng],{icon:car}).addTo(state.map).on('click',()=>this.selectVehicle(state.profile.plate||'Mon véhicule',[state.lat,state.lng]));
  state.map.on('move',()=>document.body.classList.add('map-moved'));
- navigator.geolocation?.watchPosition(p=>{state.lat=p.coords.latitude;state.lng=p.coords.longitude;$('speed').textContent=Math.round((p.coords.speed||0)*3.6);state.myMarker?.setLatLng([state.lat,state.lng]);},()=>{});
+ navigator.geolocation?.watchPosition(p=>{state.lat=p.coords.latitude;state.lng=p.coords.longitude;$('speed').textContent=Math.round((p.coords.speed||0)*3.6);state.myMarker?.setLatLng([state.lat,state.lng]); if(state.navigationActive&&state.destination&&!state._recalcLock){state._recalcLock=true;setTimeout(()=>{state._recalcLock=false;},15000);}},()=>{});
 },
 selectVehicle(plate,latlng){state.selectedVehicle={plate,latlng};const p=state.map.latLngToContainerPoint(latlng);const menu=$('vehicleMenu');menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show');this.openSheet(false)},
 contactSelected(){this.openPanel('messages');this.openSheet(true);toast('Conversation ouverte avec '+state.selectedVehicle.plate)},
 signalSelected(){this.openPanel('alertes');this.openSheet(true);this.vehicleAlert('Feux allumés')},
 quickReport(){ if(!state.selectedVehicle){toast('Sélectionnez un véhicule.');return} this.signalSelected() },
 vehicleAlert(type){
- const a={id:Date.now(),type,plate:state.selectedVehicle?.plate||state.profile.plate,status:'active',time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
- state.alerts.unshift(a);save();this.renderAlerts();toast('Signalement envoyé.');this.showMapBadge(type)
+ const a={
+   id:Date.now(),
+   type,
+   targetPlate:state.selectedVehicle?.plate||'Véhicule ciblé',
+   senderPlate:state.profile.plate||'Moi',
+   status:'active',
+   useful:false,
+   time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+ };
+ state.alerts.unshift(a);save();this.renderAlerts();toast('Signalement envoyé au conducteur concerné.');this.showMapBadge(type)
 },
-assist(type){ const a={id:Date.now(),type:'Assistance : '+type,plate:'Communauté',status:'active',time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};state.alerts.unshift(a);save();this.renderAll();toast('Demande d’assistance publiée.')},
-confirmUseful(id){const i=state.alerts.findIndex(a=>a.id===id);if(i>=0){const a=state.alerts.splice(i,1)[0];a.status='utile confirmé';state.history.unshift(a);state.reliable++;save();this.renderAll();toast('Info utile confirmée.')} },
+assist(type){ const a={
+   id:Date.now(),
+   type:'Assistance : '+type,
+   targetPlate:'Communauté',
+   senderPlate:state.profile.plate||'Moi',
+   status:'active',
+   useful:false,
+   time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+ };
+ state.alerts.unshift(a);save();this.renderAll();toast('Demande d’assistance publiée.')},
+confirmUseful(id){
+ const i=state.alerts.findIndex(a=>a.id===id);
+ if(i<0)return;
+ const a=state.alerts[i];
+ if(a.senderPlate===(state.profile.plate||'Moi')){
+   toast('Seul le conducteur ciblé ou un autre utilisateur peut confirmer utile.');
+   return;
+ }
+ state.alerts.splice(i,1);
+ a.status='utile confirmé par '+(state.profile.plate||'utilisateur');
+ a.useful=true;
+ state.history.unshift(a);
+ state.reliable++;
+ save();
+ this.renderAll();
+ toast('Info utile confirmée pour le signalement de '+a.senderPlate+'.')
+},
 renderAlerts(){
  const active=$('activeAlerts'),hist=$('historyAlerts');
- active.innerHTML=state.alerts.length?state.alerts.map(a=>'<div class="alert-card"><b>'+a.type+'</b><div class="meta">'+a.plate+' • '+a.time+'</div><div class="row"><button class="useful" onclick="App.confirmUseful('+a.id+')">Info utile</button><button class="dark" onclick="App.openPanel(\\'messages\\')">Répondre</button></div></div>').join(''):'<div class="meta">Aucune alerte active.</div>';
- hist.innerHTML=state.history.length?state.history.map(a=>'<div class="alert-card"><b>'+a.type+'</b><div class="meta">'+a.plate+' • '+a.status+'</div></div>').join(''):'<div class="meta">Aucun historique.</div>';
- $('reliability').textContent=state.reliable+' signalement'+(state.reliable>1?'s':'')+' fiable'+(state.reliable>1?'s':'');
+ active.innerHTML=state.alerts.length?state.alerts.map(a=>{
+   const mine=a.senderPlate===(state.profile.plate||'Moi');
+   const usefulBtn=mine
+     ? '<button class="useful" disabled title="Validation réservée au destinataire">En attente utile</button>'
+     : '<button class="useful" onclick="App.confirmUseful('+a.id+')">Info utile</button>';
+   return '<div class="alert-card"><b>'+a.type+'</b><div class="meta">Cible : '+(a.targetPlate||a.plate||'Communauté')+' • envoyé par '+(a.senderPlate||'Utilisateur')+' • '+a.time+'</div><div class="row">'+usefulBtn+'<button class="dark" onclick="App.openPanel(\'messages\')">Répondre</button></div></div>'
+ }).join(''):'<div class="meta">Aucune alerte active.</div>';
+ hist.innerHTML=state.history.length?state.history.map(a=>'<div class="alert-card"><b>'+a.type+'</b><div class="meta">Cible : '+(a.targetPlate||a.plate||'Communauté')+' • envoyé par '+(a.senderPlate||'Utilisateur')+' • '+a.status+'</div></div>').join(''):'<div class="meta">Aucun historique.</div>';
+ $('reliability').textContent=state.reliable+' info'+(state.reliable>1?'s':'')+' utile'+(state.reliable>1?'s':'')+' confirmée'+(state.reliable>1?'s':'');
 },
 showMapBadge(type){const b=$('alertBadge');b.textContent='⚠️ '+type.split(' ')[0];b.classList.add('show');setTimeout(()=>b.classList.remove('show'),4000)},
 openPanel(p){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));$('panel-'+p).classList.add('on');document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('on',b.dataset.panel===p));this.openSheet(p!=='carte')},
 toggleSheet(){ $('sheet').classList.toggle('open') },
 openSheet(force=true){$('sheet').classList.toggle('open',force)},
 useMe(){$('start').value='Position actuelle'},
+async geocode(q){
+ const around = state.lat && state.lng ? '&viewbox='+(state.lng-0.15)+','+(state.lat+0.15)+','+(state.lng+0.15)+','+(state.lat-0.15)+'&bounded=0' : '';
+ const url='https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&q='+encodeURIComponent(q)+around;
+ const r=await fetch(url,{headers:{'Accept':'application/json'}});
+ if(!r.ok) throw new Error('geocode');
+ const data=await r.json();
+ if(!data.length) throw new Error('not_found');
+ return {lat:Number(data[0].lat),lng:Number(data[0].lon),label:data[0].display_name};
+},
 async startRoute(){
  const dest=$('dest').value.trim(); if(!dest){toast('Choisis une destination.');return}
- $('routeInfo').classList.remove('hidden');$('routeText').textContent='Recherche itinéraire vers '+dest+'…';
- if(state.route) state.map.removeLayer(state.route);
- const pts=[[state.lat,state.lng],[state.lat+.01,state.lng+.015],[state.lat+.018,state.lng+.025]];
- state.route=L.polyline(pts,{color:'#2563eb',weight:6,opacity:.85}).addTo(state.map);state.map.fitBounds(state.route.getBounds(),{padding:[40,40]});
- $('routeText').textContent='Itinéraire actif • 8 min • 2,4 km • guidage prêt';toast('Navigation démarrée.')
+ $('routeInfo').classList.remove('hidden');$('routeText').textContent='Recherche de '+dest+'…';
+ try{
+   const target=await this.geocode(dest);
+   $('routeText').textContent='Calcul itinéraire…';
+   const osrm='https://router.project-osrm.org/route/v1/driving/'+state.lng+','+state.lat+';'+target.lng+','+target.lat+'?overview=full&geometries=geojson&steps=true&alternatives=true';
+   const r=await fetch(osrm);
+   if(!r.ok) throw new Error('route');
+   const data=await r.json();
+   if(!data.routes||!data.routes.length) throw new Error('route_empty');
+   if(state.route) state.map.removeLayer(state.route);
+   if(state.altRoutes){state.altRoutes.forEach(x=>state.map.removeLayer(x));}
+   state.altRoutes=[];
+   data.routes.slice(1,3).forEach(rt=>{
+     const pts=rt.geometry.coordinates.map(c=>[c[1],c[0]]);
+     state.altRoutes.push(L.polyline(pts,{color:'#94a3b8',weight:4,opacity:.55}).addTo(state.map));
+   });
+   const main=data.routes[0];
+   const pts=main.geometry.coordinates.map(c=>[c[1],c[0]]);
+   state.route=L.polyline(pts,{color:'#2563eb',weight:7,opacity:.9}).addTo(state.map);
+   state.map.fitBounds(state.route.getBounds(),{padding:[42,42]});
+   const km=(main.distance/1000).toFixed(1).replace('.',',');
+   const min=Math.max(1,Math.round(main.duration/60));
+   const step=main.legs?.[0]?.steps?.[0]?.maneuver?.instruction || 'Suivre l’itinéraire';
+   $('routeText').textContent='Navigation active • '+min+' min • '+km+' km • '+step;
+   state.destination=target;
+   state.navigationActive=true;
+   toast('Navigation démarrée.');
+ }catch(e){
+   $('routeText').textContent='GPS indisponible : vérifie la destination ou la connexion.';
+   toast('Impossible de calculer l’itinéraire.');
+ }
 },
-stopRoute(){if(state.route){state.map.removeLayer(state.route);state.route=null}$('routeInfo').classList.add('hidden');toast('Navigation arrêtée.')},
-poi(q){$('dest').value=q;toast('Recherche locale : '+q)},
+stopRoute(){
+ if(state.route){state.map.removeLayer(state.route);state.route=null}
+ if(state.altRoutes){state.altRoutes.forEach(x=>state.map.removeLayer(x));state.altRoutes=[]}
+ state.navigationActive=false;state.destination=null;
+ $('routeInfo').classList.add('hidden');toast('Navigation arrêtée.')
+},
+async poi(q){
+ $('dest').value=q;
+ toast('Recherche locale : '+q);
+ try{
+   const p=await this.geocode(q);
+   $('dest').value=p.label.split(',').slice(0,3).join(', ');
+ }catch(e){}
+},
 recenter(){state.map?.setView([state.lat,state.lng],16);document.body.classList.remove('map-moved')},
 sendMessage(){const t=$('msgText').value.trim(); if(!t)return; $('messagesBox').innerHTML='<b>Message envoyé</b><div class="meta">'+t+'</div>'; $('msgText').value='';toast('Message envoyé.')},
 renderProfile(){ $('profilePlate').textContent=state.profile.plate||'Plaque non renseignée';$('profileMeta').textContent='Couleur : '+(state.profile.color||'non renseignée')},
