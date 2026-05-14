@@ -166,6 +166,116 @@ body.driving .top.top-exact .logo-top{display:flex!important;}
 /* ===== ONGLET ALTET / RECAP SIGNALEMENT ===== */
 .sheet-nav.alert-tabs{grid-template-columns:repeat(5,1fr)!important;gap:7px!important}.sheet-nav.alert-tabs button{font-size:10.5px!important}.altet-card,.signal-recap-card,.altet-active-card{background:#172335;color:#eef6ff;border:1px solid #26364d;border-radius:20px;padding:12px;margin-bottom:10px;box-shadow:0 10px 24px rgba(0,0,0,.12)}.altet-my-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;font-size:15px;margin-bottom:10px}.altet-my-head button{border-radius:999px;background:#e7fff6;color:#008866;padding:8px 13px;font-weight:950;font-size:12px}.altet-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#132033;border:1px solid #2a3c56;border-radius:17px;padding:10px}.altet-row-main{display:flex;align-items:center;gap:10px;min-width:0}.altet-row-icon{font-size:19px;flex:0 0 auto}.altet-row-title{font-weight:950;font-size:14px;color:#eef6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.altet-row-sub{font-size:12px;color:#9aacc2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.altet-status-pill{min-width:34px;height:34px;border-radius:999px;background:#ffced9;color:#b51639;font-weight:950;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 10px;white-space:nowrap}.altet-chevron{color:#9aacc2;font-size:22px;font-weight:950;background:transparent!important}.signal-recap-head{display:flex;align-items:center;justify-content:space-between;font-weight:950;font-size:15px;margin-bottom:10px}.signal-recap-head .chev{font-size:18px;color:#9aacc2}.signal-recap-body{border:1px solid #2a3c56;border-radius:18px;background:#101b2b;padding:12px}.signal-recap-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.signal-vehicle{display:flex;gap:12px;align-items:center;min-width:0}.signal-avatar{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#111f33;border:1px solid #33465f;font-size:26px;flex:0 0 auto}.signal-title{font-size:13px;font-weight:950;color:#fff}.signal-plate{font-size:21px;font-weight:950;color:#00a872;line-height:1.15}.signal-sub{font-size:12px;color:#9aacc2;margin-top:3px}.signal-state{border:1.5px solid #ffb020;color:#ffb020;background:rgba(255,176,32,.08);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:950;white-space:nowrap}.signal-info{display:inline-block;margin-top:14px;border-radius:14px;background:#19283a;padding:9px 10px;max-width:75%}.signal-info small{display:block;color:#c6d3e2;font-size:12px;margin-bottom:3px}.signal-info b{font-size:14px;color:#fff}.signal-time{margin-top:10px;color:#9aacc2;font-size:12px;display:flex;align-items:center;gap:7px}.signal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.signal-actions button{min-height:45px;border-radius:14px;font-weight:950;font-size:13px;background:transparent}.signal-actions .seen{border:1.5px solid #00d491;color:#00d491;background:rgba(0,212,145,.08)}.signal-actions .pending{border:1.5px solid #ffb020;color:#ffb020;background:rgba(255,176,32,.08)}.altet-active-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.altet-active-head h2{font-size:19px;margin:0;color:#fff}.altet-close{width:34px;height:34px;border-radius:50%;background:#fff;color:#ff3b5c;font-weight:950;font-size:18px}.alert-filter-pills{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:8px}.alert-filter-pills button{border-radius:999px;background:#eef2f6;color:#10161d;padding:9px 13px;font-weight:950;font-size:12px;white-space:nowrap}.altet-list{display:grid;gap:8px}.altet-list .list-item{background:#172335;color:#eef6ff;border-color:#26364d}.altet-list .empty-msg{color:#9aacc2}.altet-history summary{font-weight:950;font-size:16px;cursor:pointer;color:#fff;margin-top:8px}.altet-quick{margin-top:8px}.altet-quick button{background:#fff!important;color:#10161d!important;border-radius:16px!important;font-size:13px!important;font-weight:950!important;min-height:44px}.altet-quick span{color:#1478ff;margin-right:6px}.top.top-exact .logo-top{max-width:166px!important;height:42px!important;padding:0 13px!important;font-size:16px!important;overflow:hidden!important;text-overflow:ellipsis!important}.top.top-exact{gap:9px!important}.top-mail-btn{flex-basis:58px!important;width:58px!important;height:58px!important}@media(max-width:390px){.top.top-exact .logo-top{max-width:142px!important;font-size:14px!important;padding:0 10px!important}.sheet-nav.alert-tabs{gap:6px!important}.sheet-nav.alert-tabs button{font-size:10px!important;padding:0 3px!important}.signal-info{max-width:88%}.signal-actions{gap:8px}.top-mail-btn{flex-basis:52px!important;width:52px!important;height:52px!important}.top.top-exact{gap:6px!important}}
 
+
+
+/* ===== FIX BARRE HAUTE + LOGO SANS DÉBORDEMENT + AUTRES VÉHICULES VISIBLES ===== */
+.top.top-exact{
+  position:absolute!important;
+  top:calc(env(safe-area-inset-top,0px) + 10px)!important;
+  left:10px!important;
+  right:10px!important;
+  z-index:1200!important;
+  height:64px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-width:0!important;
+  overflow:visible!important;
+}
+.top.top-exact .menu-round{
+  flex:0 0 50px!important;
+  width:50px!important;
+  height:56px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#fff!important;
+  font-size:36px!important;
+  border-radius:12px!important;
+}
+.top-mail-btn{
+  flex:0 0 58px!important;
+  width:58px!important;
+  height:58px!important;
+  border-radius:18px!important;
+  background:linear-gradient(145deg,#123e77,#0e2b55)!important;
+  color:#fff!important;
+  display:grid!important;
+  place-items:center!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+#communityStatus.top-status-pill{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:52px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:12px!important;
+  padding:0 8px!important;
+  border-radius:999px!important;
+  background:rgba(7,16,24,.48)!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  color:#fff!important;
+  font-size:19px!important;
+}
+#communityStatus.top-status-pill .online-dot-mini{
+  width:22px!important;
+  height:22px!important;
+  flex:0 0 22px!important;
+}
+#communityStatus.top-status-pill span{flex:0 0 auto!important;}
+#communityStatus.top-status-pill .count{font-size:18px!important;}
+.top.top-exact .logo-top{
+  flex:0 1 170px!important;
+  width:auto!important;
+  min-width:118px!important;
+  max-width:170px!important;
+  height:42px!important;
+  padding:0 12px!important;
+  margin-left:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#061018!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  box-sizing:border-box!important;
+}
+.top.top-exact .logo-top span{color:#00a872!important;}
+#appScreen .shade{top:76px!important;height:110px!important;}
+.car-pin.other{
+  width:46px!important;
+  height:46px!important;
+  border-radius:17px!important;
+  font-size:22px!important;
+  border:4px solid #fff!important;
+  box-shadow:0 0 0 6px rgba(52,120,255,.22),0 0 0 12px rgba(0,255,179,.08),0 12px 26px rgba(0,0,0,.38)!important;
+  animation:otherCarPulse 1.8s infinite ease-in-out;
+}
+@keyframes otherCarPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@media(max-width:390px){
+  .top.top-exact{left:8px!important;right:8px!important;gap:6px!important;height:60px!important;}
+  .top.top-exact .menu-round{flex-basis:42px!important;width:42px!important;font-size:32px!important;}
+  .top-mail-btn{flex-basis:52px!important;width:52px!important;height:52px!important;border-radius:16px!important;}
+  .top-mail-btn svg{width:31px!important;height:24px!important;}
+  #communityStatus.top-status-pill{height:48px!important;gap:8px!important;font-size:17px!important;padding:0 6px!important;}
+  #communityStatus.top-status-pill .online-dot-mini{width:19px!important;height:19px!important;flex-basis:19px!important;}
+  .top.top-exact .logo-top{flex-basis:138px!important;max-width:138px!important;min-width:118px!important;height:40px!important;font-size:13.5px!important;padding:0 8px!important;}
+}
+@media(max-width:360px){
+  .top.top-exact .logo-top{flex-basis:122px!important;max-width:122px!important;font-size:12.5px!important;padding:0 6px!important;}
+  #communityStatus.top-status-pill{gap:6px!important;font-size:16px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -212,7 +322,7 @@ function fPlate(r){let s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').sl
 function colorHex(c){return{white:'#f5f5f5',black:'#111',gray:'#8e8e93',blue:'#2979ff',red:'#ff3b5c',green:'#00c853',yellow:'#ffb300',other:'#b388ff'}[c||'other']||'#b388ff'}
 function colorLabel(c){return{white:'Blanc',black:'Noir',gray:'Gris',blue:'Bleu',red:'Rouge',green:'Vert',yellow:'Jaune / Orange',other:'Autre'}[c||'']||'Couleur non renseignée'}
 function dot(c){return'<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:'+colorHex(c)+';border:2px solid white;vertical-align:-1px"></span>'}
-function icon(c,self=false){let fill=colorHex(c),stroke=c==='white'?'#555':'#fff',cls=self?'car-pin self':'car-pin';return L.divIcon({html:'<div class="'+cls+'" style="background:'+fill+';border-color:'+stroke+'">🚗</div>',iconSize:self?[42,42]:[38,38],iconAnchor:self?[21,21]:[19,19],className:''})}
+function icon(c,self=false){let fill=colorHex(c),stroke=c==='white'?'#555':'#fff',cls=self?'car-pin self':'car-pin other';return L.divIcon({html:'<div class="'+cls+'" style="background:'+fill+';border-color:'+stroke+'">🚗</div>',iconSize:self?[42,42]:[46,46],iconAnchor:self?[21,21]:[23,23],className:''})}
 function km(a,b,c,d){let R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,z=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
 function toast(m,t=''){let e=$('toast');if(!e)return;e.textContent=m;e.className='toast '+(t||'');requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),3200)}
 function hint(id,t,m){let e=$(id);if(e){e.className='hint '+(t||'');e.textContent=m||''}}
@@ -365,7 +475,7 @@ async pickDest(lat,lon,name){if(S.myLat===null)return toast('Localise-toi avant.
 startNav(){S.driveMode=true;S.autoFollow=true;this.closeSheet();this.locate();this.showInst('🧭',S.routeSteps[0]?.text||'Démarrage navigation.');speak('Démarrage de la navigation.',true)},showInst(i,t){$('instI').textContent=i;$('instT').textContent=t;$('inst').classList.add('show')},checkRoute(){if(!S.driveMode||!S.routeDest||S.myLat===null)return;let end=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon)*1000;if(end<35){this.showInst('🏁','Vous êtes arrivé.');speak('Vous êtes arrivé.',true);S.driveMode=false;return}let stp=S.routeSteps[S.nextStep];if(stp&&km(S.myLat,S.myLng,stp.lat,stp.lon)*1000<75){this.showInst('➡️',stp.text);speak(stp.text);S.nextStep++}this.updateNavPremium();this.autoRecalculateRoute()},
 updateNavPremium(){const eta=$('etaVal'),rem=$('remainVal'),lim=$('limitVal'),traf=$('trafficVal'),lane=$('laneVal'),rec=$('recalcVal'),bar=$('trafficBar');if(!eta||!rem)return;if(!S.routeDest||S.myLat===null){eta.textContent='--';rem.textContent='--';lim.textContent='--';traf.textContent='--';lane.textContent='--';rec.textContent='OK';return}const dist=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon),avg=S.lastSpeed>10?S.lastSpeed:42,min=Math.max(1,Math.round((dist/avg)*60));eta.textContent=new Date(Date.now()+min*60000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});rem.textContent=dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km';lim.textContent=(S.lastSpeed>90?'110':S.lastSpeed>45?'80':'50')+' km/h';const h=new Date().getHours(),cong=(h>=7&&h<=9)||(h>=17&&h<=19);traf.textContent=cong?'Dense':'Fluide';if(bar)bar.style.width=cong?'78%':'32%';lane.textContent=S.nextStep>0?'Suivre':'Tout droit';rec.textContent='Auto'},autoRecalculateRoute(){if(!S.driveMode||!S.routeDest||S.nextStep>=S.routeSteps.length||S.myLat===null)return;const stp=S.routeSteps[Math.min(S.nextStep,S.routeSteps.length-1)];if(!stp)return;const d=km(S.myLat,S.myLng,stp.lat,stp.lon)*1000;if(d>450&&!S._recalcLock){S._recalcLock=true;if($('recalcVal'))$('recalcVal').textContent='...';this.pickDest(S.routeDest.lat,S.routeDest.lon,S.routeDest.name).finally(()=>setTimeout(()=>S._recalcLock=false,12000))}},
 saveCurrentDestination(){if(!S.routeDest)return toast('Aucune destination à enregistrer.','bad');const label=S.routeDest.name||'Destination';S.favorites=S.favorites.filter(f=>f.label!==label);S.favorites.unshift({name:label.split(',')[0],label,lat:S.routeDest.lat,lon:S.routeDest.lon,at:Date.now()});S.favorites=S.favorites.slice(0,20);safeSet('ic_favorites',S.favorites);this.renderFavs();toast('Destination ajoutée aux favoris.','ok')},addGpsHistory(dest){if(!dest)return;S.gpsHistory=S.gpsHistory.filter(h=>h.label!==dest.name);S.gpsHistory.unshift({name:(dest.name||'Destination').split(',')[0],label:dest.name||'',lat:dest.lat,lon:dest.lon,at:Date.now()});S.gpsHistory=S.gpsHistory.slice(0,20);safeSet('ic_gps_history',S.gpsHistory);this.renderHistory()},renderFavs(){const el=$('favMiniList');if(!el)return;el.innerHTML=S.favorites.length?S.favorites.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Favori')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'fav\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun favori.</div>'},renderHistory(){const el=$('historyMiniList');if(!el)return;el.innerHTML=S.gpsHistory.length?S.gpsHistory.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Destination')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'hist\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun historique.</div>'},routeSaved(type,i){const f=(type==='fav'?S.favorites:S.gpsHistory)[i];if(!f)return;this.pickDest(f.lat,f.lon,f.label||f.name)},
-async loadOthers(){this.initMap();if(!S.map||!sb)return;S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[];let{data:ud}=await sb.auth.getUser(),me=ud?.user;let cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();let q=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cut);if(me)q=q.neq('id',me.id);let{data:locs}=await q;if(!locs?.length){S.nearby=[];this.renderNearby();this.updateCommunityStatus();return}let ids=locs.map(l=>l.id);let profs=await profilesByIds(ids);let rows=[];locs.forEach(l=>{let p=profs[l.id]||{},pl=nPlate(p.owner_plate),lat=+l.latitude,lng=+l.longitude,dist=null;if(!pl||S.blocked.includes(pl))return;if(S.myLat!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist});this.addRecent(pl,p.vehicle_color,dist);let mk=L.marker([lat,lng],{icon:icon(p.vehicle_color)}).addTo(S.map);mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});S.otherMkrs.push(mk)});S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.renderNearby();this.updateFrontVehicle();this.updateCommunityStatus();this.clusterCloseVehicles()},
+async loadOthers(){this.initMap();if(!S.map||!sb)return;S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[];let{data:ud}=await sb.auth.getUser(),me=ud?.user;let cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();let q=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cut);if(me)q=q.neq('id',me.id);let{data:locs}=await q;if(!locs?.length){S.nearby=[];this.renderNearby();this.updateCommunityStatus();return}let ids=locs.map(l=>l.id);let profs=await profilesByIds(ids);let rows=[];locs.forEach(l=>{let p=profs[l.id]||{},pl=nPlate(p.owner_plate),lat=+l.latitude,lng=+l.longitude,dist=null;if(!pl||S.blocked.includes(pl))return;if(S.myLat!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist});this.addRecent(pl,p.vehicle_color,dist);let mk=L.marker([lat,lng],{icon:icon(p.vehicle_color),zIndexOffset:850,riseOnHover:true}).addTo(S.map);mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});S.otherMkrs.push(mk)});S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.renderNearby();this.updateFrontVehicle();this.updateCommunityStatus();this.clusterCloseVehicles()},
 clusterCloseVehicles(){if(!S.otherMkrs?.length)return;const used=new Set();S.otherMkrs.forEach((m,i)=>{if(used.has(i))return;const a=m.getLatLng?.();if(!a)return;let group=[m];S.otherMkrs.forEach((n,j)=>{if(i===j||used.has(j))return;const b=n.getLatLng?.();if(!b)return;if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}});if(group.length>1){group.forEach((g,k)=>{const ll=g.getLatLng(),angle=(k*360/group.length)*Math.PI/180,off=.0001;g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);g.setZIndexOffset(1200+k)})}})},addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;$('iTarget').value=S.selPlate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.panel('contact');this.loadMsgs()},
 showVehicleContextMenu(vehicle){const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;$('iTarget').value=plate}if(action==='contact'){this.panel('contact');setTimeout(()=>$('iMsg')?.focus(),150)}else if(action==='signal'){this.openReport()}else if(action==='assist'){this.openAssist()}},
 quickMsg(t){if(!$('iTarget').value&&S.selPlate)$('iTarget').value=S.selPlate;if(!$('iTarget').value)return toast('Choisis une plaque.','bad');$('iMsg').value=t;this.panel('contact')},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
@@ -396,7 +506,7 @@ voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRe
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
 toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
-function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
+function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
 window.App=App;
 if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT')App.show('sw')});
 async function boot(){try{window.App=App;bind();App.setMode('login');if(!sb){toast('Supabase non chargé.','bad');App.show('sw');return}if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');let{data}=await withTimeout(sb.auth.getSession(),10000,'Session Supabase indisponible.');if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){console.error('BOOT_ERROR',e);App.show('sw');toast('Erreur de démarrage.','bad');st('authSt',authMessage(e),'error')}}
