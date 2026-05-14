@@ -276,6 +276,120 @@ body.driving .top.top-exact .logo-top{display:flex!important;}
   #communityStatus.top-status-pill{gap:6px!important;font-size:16px!important;}
 }
 
+
+
+/* === CORRECTION FINALE DEMANDÉE : barre haute pleine largeur sans chevauchement === */
+#appScreen .top.top-exact{
+  position:absolute!important;
+  z-index:1600!important;
+  top:calc(env(safe-area-inset-top,0px) + 0px)!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  height:76px!important;
+  padding:8px 10px!important;
+  margin:0!important;
+  border-radius:0!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  background:linear-gradient(180deg,rgba(5,13,24,.96),rgba(7,16,28,.90))!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.24)!important;
+  overflow:hidden!important;
+}
+#appScreen .top.top-exact .menu-round{
+  flex:0 0 42px!important;
+  width:42px!important;
+  height:54px!important;
+  min-width:42px!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-size:34px!important;
+  line-height:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+#appScreen .top-mail-btn{
+  flex:0 0 58px!important;
+  width:58px!important;
+  height:58px!important;
+  min-width:58px!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#13427b,#0b2c59)!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,255,255,.14)!important;
+}
+#appScreen .top-mail-btn svg{width:34px!important;height:26px!important;display:block!important;}
+#appScreen .top-msg-badge{
+  position:absolute!important;top:-7px!important;right:-7px!important;
+  min-width:22px!important;height:22px!important;padding:0 5px!important;
+  border-radius:999px!important;background:#ff173d!important;color:#fff!important;
+  font-size:13px!important;font-weight:950!important;display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(5,13,24,.98)!important;box-shadow:0 4px 10px rgba(255,23,61,.45)!important;
+}
+#appScreen #communityStatus.top-status-pill{
+  flex:1 1 118px!important;
+  min-width:108px!important;
+  max-width:210px!important;
+  height:50px!important;
+  padding:0 8px!important;
+  margin:0!important;
+  border-radius:22px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-around!important;
+  gap:8px!important;
+  background:rgba(6,13,25,.42)!important;
+  color:#fff!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.18)!important;
+}
+#appScreen #communityStatus.top-status-pill span{display:inline-flex!important;align-items:center!important;gap:3px!important;flex:0 0 auto!important;}
+#appScreen #communityStatus.top-status-pill .online-dot-mini{
+  width:22px!important;height:22px!important;min-width:22px!important;border-radius:50%!important;
+  background:#18df3c!important;box-shadow:0 0 14px rgba(24,223,60,.75)!important;
+}
+#appScreen #communityStatus.top-status-pill .count{font-size:16px!important;font-weight:950!important;color:#fff!important;}
+#appScreen .top.top-exact .logo-top{
+  flex:0 1 158px!important;
+  width:auto!important;
+  min-width:124px!important;
+  max-width:158px!important;
+  height:42px!important;
+  margin-left:auto!important;
+  padding:0 10px!important;
+  box-sizing:border-box!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:999px!important;background:#fff!important;color:#061018!important;
+  font-size:14px!important;font-weight:950!important;line-height:1!important;white-space:nowrap!important;
+  overflow:hidden!important;text-overflow:clip!important;
+  box-shadow:0 7px 18px rgba(0,0,0,.22)!important;
+}
+#appScreen .top.top-exact .logo-top span{color:#00a872!important;}
+#appScreen .shade{top:76px!important;height:112px!important;}
+@media(max-width:390px){
+  #appScreen .top.top-exact{height:72px!important;padding:7px 8px!important;gap:6px!important;}
+  #appScreen .top.top-exact .menu-round{flex-basis:38px!important;width:38px!important;min-width:38px!important;font-size:31px!important;}
+  #appScreen .top-mail-btn{flex-basis:54px!important;width:54px!important;min-width:54px!important;height:54px!important;border-radius:17px!important;}
+  #appScreen .top-mail-btn svg{width:31px!important;height:24px!important;}
+  #appScreen #communityStatus.top-status-pill{min-width:104px!important;max-width:none!important;height:48px!important;padding:0 5px!important;gap:5px!important;font-size:16px!important;}
+  #appScreen #communityStatus.top-status-pill .online-dot-mini{width:19px!important;height:19px!important;min-width:19px!important;}
+  #appScreen #communityStatus.top-status-pill .count{font-size:15px!important;}
+  #appScreen .top.top-exact .logo-top{flex-basis:132px!important;max-width:132px!important;min-width:116px!important;height:39px!important;font-size:12.7px!important;padding:0 7px!important;}
+}
+@media(max-width:355px){
+  #appScreen .top.top-exact .logo-top{flex-basis:112px!important;max-width:112px!important;font-size:11.5px!important;padding:0 5px!important;}
+  #appScreen #communityStatus.top-status-pill span[title="Position"]{display:none!important;}
+}
+
 </style>
 </head>
 <body>
