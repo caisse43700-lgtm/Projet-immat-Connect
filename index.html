@@ -292,6 +292,168 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
 .top.top-exact .logo-top{flex:0 1 180px!important;max-width:180px!important;min-width:132px!important;overflow:hidden!important;text-overflow:clip!important;white-space:nowrap!important;justify-content:center!important;font-size:15px!important;padding:0 10px!important}
 @media(max-width:390px){.top.top-exact .logo-top{flex-basis:150px!important;max-width:150px!important;min-width:112px!important;font-size:13px!important;padding:0 7px!important}.top-status-pill{flex:1 1 auto!important;min-width:120px!important;overflow:hidden!important}.top.top-exact{overflow:hidden!important}}
 
+
+
+/* ===== RESTAURATION BARRE HAUTE ORIGINALE + SAFE LAYOUT ===== */
+.top.top-exact{
+  position:absolute!important;
+  z-index:1500!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  height:82px!important;
+  padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 10px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  background:linear-gradient(180deg,rgba(5,12,22,.97),rgba(7,16,28,.92))!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.22)!important;
+  overflow:hidden!important;
+}
+.top.top-exact .menu-round{
+  flex:0 0 48px!important;
+  width:48px!important;
+  height:54px!important;
+  border-radius:18px!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-size:34px!important;
+  line-height:1!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.top.top-exact .top-mail-btn{
+  position:relative!important;
+  flex:0 0 60px!important;
+  width:60px!important;
+  height:60px!important;
+  border-radius:19px!important;
+  display:grid!important;
+  place-items:center!important;
+  color:#fff!important;
+  background:linear-gradient(145deg,rgba(17,65,130,.94),rgba(8,37,82,.94))!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.10)!important;
+  padding:0!important;
+}
+.top.top-exact .top-mail-btn svg{width:36px!important;height:28px!important;display:block!important;overflow:visible!important;}
+.top.top-exact .top-msg-badge{
+  position:absolute!important;
+  top:-8px!important;
+  right:-8px!important;
+  min-width:24px!important;
+  height:24px!important;
+  padding:0 6px!important;
+  border-radius:999px!important;
+  background:#ff133d!important;
+  color:#fff!important;
+  border:2px solid rgba(7,16,28,.98)!important;
+  display:none;
+  align-items:center!important;
+  justify-content:center!important;
+  font:950 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  box-shadow:0 7px 16px rgba(255,19,61,.35)!important;
+}
+.top.top-exact .top-status-pill{
+  position:static!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  height:44px!important;
+  padding:0 9px!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  background:rgba(7,16,28,.45)!important;
+  color:#fff!important;
+  border-radius:999px!important;
+  box-shadow:none!important;
+  pointer-events:auto!important;
+  font:900 18px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+}
+.top.top-exact #communityStatus.top-status-pill span{display:inline-flex!important;align-items:center!important;gap:4px!important;line-height:1!important;flex:0 0 auto!important;}
+.top.top-exact #communityStatus.top-status-pill .count{font-size:18px!important;font-weight:950!important;color:#fff!important;margin-left:1px!important;}
+.top.top-exact #communityStatus.top-status-pill .online-dot-mini{
+  width:23px!important;height:23px!important;border-radius:50%!important;background:#13e94f!important;
+  box-shadow:0 0 14px rgba(19,233,79,.95),0 0 26px rgba(19,233,79,.45)!important;
+}
+.top.top-exact .logo-top{
+  position:static!important;
+  flex:0 1 168px!important;
+  min-width:132px!important;
+  max-width:168px!important;
+  height:48px!important;
+  padding:0 14px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#0b1016!important;
+  font:950 17px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.20)!important;
+}
+.top.top-exact .logo-top span{color:#00a872!important;}
+@media (max-width:380px){
+  .top.top-exact{gap:6px!important;padding-left:8px!important;padding-right:8px!important;}
+  .top.top-exact .menu-round{flex-basis:42px!important;width:42px!important;font-size:30px!important;}
+  .top.top-exact .top-mail-btn{flex-basis:56px!important;width:56px!important;height:56px!important;}
+  .top.top-exact .top-status-pill{gap:8px!important;padding:0 7px!important;font-size:17px!important;}
+  .top.top-exact .logo-top{flex-basis:150px!important;min-width:122px!important;max-width:150px!important;font-size:15px!important;padding:0 11px!important;}
+}
+
+
+
+/* === FIX FINAL BARRE HAUTE : aucun chevauchement + logo contenu === */
+.top.top-exact{
+  left:0!important; right:0!important; top:0!important; width:100vw!important;
+  height:calc(env(safe-area-inset-top,0px) + 76px)!important;
+  padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 9px!important;
+  display:grid!important;
+  grid-template-columns:44px 58px minmax(112px,1fr) minmax(122px,170px)!important;
+  align-items:center!important;
+  gap:8px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,rgba(7,16,28,.98),rgba(7,16,28,.88))!important;
+  box-sizing:border-box!important;
+}
+.top.top-exact .menu-round{
+  width:44px!important;height:44px!important;min-width:0!important;flex:unset!important;box-shadow:none!important;background:transparent!important;color:#fff!important;font-size:33px!important;border-radius:14px!important;
+}
+.top.top-exact .top-mail-btn{
+  width:58px!important;height:58px!important;min-width:0!important;flex:unset!important;border-radius:18px!important;
+}
+.top.top-exact #communityStatus.top-status-pill{
+  position:static!important;width:100%!important;min-width:0!important;max-width:none!important;flex:unset!important;height:48px!important;padding:0 9px!important;margin:0!important;gap:8px!important;overflow:hidden!important;justify-content:center!important;
+}
+.top.top-exact #communityStatus.top-status-pill span{white-space:nowrap!important;flex:0 0 auto!important;}
+.top.top-exact #communityStatus.top-status-pill .online-dot-mini{width:22px!important;height:22px!important;flex-basis:22px!important;}
+.top.top-exact #communityStatus.top-status-pill .count{font-size:18px!important;}
+.top.top-exact .logo-top{
+  width:100%!important;min-width:0!important;max-width:170px!important;flex:unset!important;height:43px!important;padding:0 10px!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;border-radius:999px!important;background:#fff!important;color:#0b1016!important;font-size:15px!important;font-weight:950!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;letter-spacing:-.4px!important;box-sizing:border-box!important;
+}
+.top.top-exact .logo-top span{color:#00a872!important;}
+@media(max-width:390px){
+  .top.top-exact{grid-template-columns:40px 54px minmax(96px,1fr) minmax(104px,142px)!important;gap:6px!important;padding-left:8px!important;padding-right:8px!important;}
+  .top.top-exact .menu-round{width:40px!important;height:42px!important;font-size:31px!important;}
+  .top.top-exact .top-mail-btn{width:54px!important;height:54px!important;}
+  .top.top-exact #communityStatus.top-status-pill{height:46px!important;gap:6px!important;font-size:16px!important;padding:0 6px!important;}
+  .top.top-exact .logo-top{max-width:142px!important;height:40px!important;font-size:13.5px!important;padding:0 7px!important;letter-spacing:-.55px!important;}
+}
+@media(max-width:350px){
+  .top.top-exact{grid-template-columns:36px 50px minmax(84px,1fr) minmax(92px,122px)!important;gap:5px!important;}
+  .top.top-exact .logo-top{max-width:122px!important;font-size:12.2px!important;padding:0 5px!important;}
+  .top.top-exact #communityStatus.top-status-pill{font-size:15px!important;gap:5px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -493,9 +655,39 @@ updateNavPremium(){const eta=$('etaVal'),rem=$('remainVal'),lim=$('limitVal'),tr
 saveCurrentDestination(){if(!S.routeDest)return toast('Aucune destination à enregistrer.','bad');const label=S.routeDest.name||'Destination';S.favorites=S.favorites.filter(f=>f.label!==label);S.favorites.unshift({name:label.split(',')[0],label,lat:S.routeDest.lat,lon:S.routeDest.lon,at:Date.now()});S.favorites=S.favorites.slice(0,20);safeSet('ic_favorites',S.favorites);this.renderFavs();toast('Destination ajoutée aux favoris.','ok')},addGpsHistory(dest){if(!dest)return;S.gpsHistory=S.gpsHistory.filter(h=>h.label!==dest.name);S.gpsHistory.unshift({name:(dest.name||'Destination').split(',')[0],label:dest.name||'',lat:dest.lat,lon:dest.lon,at:Date.now()});S.gpsHistory=S.gpsHistory.slice(0,20);safeSet('ic_gps_history',S.gpsHistory);this.renderHistory()},renderFavs(){const el=$('favMiniList');if(!el)return;el.innerHTML=S.favorites.length?S.favorites.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Favori')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'fav\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun favori.</div>'},renderHistory(){const el=$('historyMiniList');if(!el)return;el.innerHTML=S.gpsHistory.length?S.gpsHistory.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Destination')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'hist\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun historique.</div>'},routeSaved(type,i){const f=(type==='fav'?S.favorites:S.gpsHistory)[i];if(!f)return;this.pickDest(f.lat,f.lon,f.label||f.name)},
 async loadOthers(){this.initMap();if(!S.map||!sb)return;S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[];let{data:ud}=await sb.auth.getUser(),me=ud?.user;let cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();let q=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cut);if(me)q=q.neq('id',me.id);let{data:locs}=await q;if(!locs?.length){S.nearby=[];this.renderNearby();this.updateCommunityStatus();return}let ids=locs.map(l=>l.id);let profs=await profilesByIds(ids);let rows=[];locs.forEach(l=>{let p=profs[l.id]||{},pl=nPlate(p.owner_plate),lat=+l.latitude,lng=+l.longitude,dist=null;if(!pl||S.blocked.includes(pl))return;if(S.myLat!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist});this.addRecent(pl,p.vehicle_color,dist);let mk=L.marker([lat,lng],{icon:icon(p.vehicle_color),zIndexOffset:1600,riseOnHover:true}).addTo(S.map);mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});S.otherMkrs.push(mk)});S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.renderNearby();this.updateFrontVehicle();this.updateCommunityStatus();this.clusterCloseVehicles()},
 clusterCloseVehicles(){if(!S.otherMkrs?.length)return;const used=new Set();S.otherMkrs.forEach((m,i)=>{if(used.has(i))return;const a=m.getLatLng?.();if(!a)return;let group=[m];S.otherMkrs.forEach((n,j)=>{if(i===j||used.has(j))return;const b=n.getLatLng?.();if(!b)return;if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}});if(group.length>1){group.forEach((g,k)=>{const ll=g.getLatLng(),angle=(k*360/group.length)*Math.PI/180,off=.0001;g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);g.setZIndexOffset(1200+k)})}})},addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;if($('iTarget'))$('iTarget').value=S.selPlate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.updateReportTarget?.();this.panel('contact');this.loadMsgs()},
-showVehicleContextMenu(vehicle){const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;this.updateReportTarget?.()}if(action==='contact'){this.panel('contact');setTimeout(()=>$('iMsg')?.focus(),150)}else if(action==='signal'){this.openReport()}else if(action==='assist'){this.openAssist()}},
-quickMsg(t){if(!$('iTarget').value&&S.selPlate)$('iTarget').value=S.selPlate;if(!$('iTarget').value)return toast('Choisis une plaque.','bad');$('iMsg').value=t;this.panel('contact')},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
-async sendMsg(){try{let plate=nPlate($('iTarget').value),msg=$('iMsg').value.trim();if(!vPlate(plate))return hint('hTarget','error','Plaque invalide.');if(!msg)return hint('hMsg','error','Ajoute un message.');let now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);if(S.msgClicks.length>=CFG.maxMsgPerMinute)return toast('Trop de messages.','bad');S.msgClicks.push(now);let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return toast('Reconnecte-toi.','bad');let{data:target,error:te}=await sb.from('profiles').select('id').eq('owner_plate',plate).maybeSingle();if(te)console.warn(te);if(!target?.id)return toast('Aucun utilisateur avec cette plaque.','bad');if(target.id===u.id)return toast("Impossible de t'envoyer un message.",'bad');let{data:a}=await sb.from('messages').select('status').or('and(sender_id.eq.'+u.id+',receiver_id.eq.'+target.id+'),and(sender_id.eq.'+target.id+',receiver_id.eq.'+u.id+')');let rows=a||[],acc=rows.some(x=>x.status==='accepted'),pend=rows.some(x=>x.status==='pending');if(pend&&!acc)return toast('Demande déjà en attente.','ok');let{error}=await sb.from('messages').insert({sender_id:u.id,receiver_id:target.id,target_plate:plate,message:msg,status:acc?'accepted':'pending'});if(error){console.error(error);return toast('Erreur envoi.','bad')}$('iMsg').value='';S.conv=plate;toast(acc?'Message envoyé.':'Demande envoyée.','ok');this.loadMsgs()}catch(e){console.error(e);toast('Erreur message.','bad')}},
+showVehicleContextMenu(vehicle){const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate;if($('vehicleContextPlate'))$('vehicleContextPlate').textContent='🚗 '+S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;this.updateReportTarget?.()}if(action==='contact'){this.panel('contact');setTimeout(()=>$('iMsg')?.focus(),150)}else if(action==='signal'){this.openReport()}else if(action==='assist'){this.openAssist()}},
+ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target){if(S.selPlate&&S.selPlate!==this.ownPlate())$('iTarget').value=S.selPlate;else return toast('Choisis un autre véhicule.','bad')}$('iMsg').value=t;this.panel('contact')},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
+async sendMsg(){try{
+  const myPlate=this.ownPlate();
+  let plate=this.selectedTargetPlate();
+  let msg=$('iMsg').value.trim();
+  if(!myPlate)return toast('Profil conducteur introuvable.','bad');
+  if(!plate)return hint('hTarget','error','Sélectionne le véhicule destinataire.');
+  if(plate===myPlate)return hint('hTarget','error','Impossible de t’envoyer un message à toi-même.');
+  if(!vPlate(plate))return hint('hTarget','error','Plaque destinataire invalide.');
+  if(!msg)return hint('hMsg','error','Ajoute un message.');
+  let now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);
+  if(S.msgClicks.length>=CFG.maxMsgPerMinute)return toast('Trop de messages.','bad');
+  S.msgClicks.push(now);
+  let{data:ud}=await sb.auth.getUser(),u=ud?.user;
+  if(!u)return toast('Reconnecte-toi.','bad');
+  let{data:meProfile}=await sb.from('profiles').select('id,owner_plate').eq('id',u.id).maybeSingle();
+  const verifiedMyPlate=nPlate(meProfile?.owner_plate||myPlate);
+  if(verifiedMyPlate&&plate===verifiedMyPlate)return hint('hTarget','error','Impossible de t’envoyer un message à toi-même.');
+  let{data:target,error:te}=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plate).maybeSingle();
+  if(te)console.warn(te);
+  if(!target?.id)return toast('Aucun utilisateur avec cette plaque.','bad');
+  if(target.id===u.id)return hint('hTarget','error','Impossible de t’envoyer un message à toi-même.');
+  const receiverPlate=nPlate(target.owner_plate||plate);
+  let{data:a}=await sb.from('messages').select('status').or('and(sender_id.eq.'+u.id+',receiver_id.eq.'+target.id+'),and(sender_id.eq.'+target.id+',receiver_id.eq.'+u.id+')');
+  let rows=a||[],acc=rows.some(x=>x.status==='accepted'),pend=rows.some(x=>x.status==='pending');
+  if(pend&&!acc)return toast('Demande déjà en attente.','ok');
+  let payload={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:msg,status:acc?'accepted':'pending'};
+  let{error}=await sb.from('messages').insert(payload);
+  if(error){console.error(error);return toast('Erreur envoi.','bad')}
+  $('iMsg').value='';S.conv=receiverPlate;S.selPlate=receiverPlate;if($('iTarget'))$('iTarget').value=receiverPlate;
+  toast(acc?'Message envoyé à '+receiverPlate+'.':'Demande envoyée à '+receiverPlate+'.','ok');this.loadMsgs()
+}catch(e){console.error(e);toast('Erreur message.','bad')}},
 async startMsgs(){await this.loadMsgs();await this.subMsgs()},async loadMsgs(){let box=$('chatBox'),{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u||!box)return;let{data,error}=await sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).neq('status','rejected').order('created_at',{ascending:true}).limit(150);if(error)return;const profs=await profilesByIds((data||[]).flatMap(m=>[m.sender_id,m.receiver_id]));let rows=(data||[]).map(m=>{const senderPlate=nPlate(profs[m.sender_id]?.owner_plate);const receiverPlate=nPlate(profs[m.receiver_id]?.owner_plate||m.target_plate);const sent=m.sender_id===u.id;m._senderPlate=senderPlate;m._receiverPlate=receiverPlate;m._convPlate=sent?nPlate(m.target_plate||receiverPlate):senderPlate;return m}).filter(m=>m._convPlate&&!S.blocked.includes(m._convPlate));this.renderConv(rows);if(S.conv!=='all')rows=rows.filter(m=>m._convPlate===S.conv);box.innerHTML=rows.length?rows.map(m=>this.msgHtml(m,u.id)).join(''):'<div class="empty-msg">Aucun message.</div>';box.scrollTop=box.scrollHeight},
 renderConv(rows){let ps=[...new Set(rows.map(m=>m._convPlate).filter(Boolean))];$('convbar').innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('')},setConv(p){S.conv=p;if(p!=='all')$('iTarget').value=p;this.loadMsgs()},
 msgHtml(m,my){let sent=m.sender_id===my,p=m._convPlate||nPlate(m.target_plate),status=m.status||'accepted',isSignal=looksLikeVehicleSignal(m),score=trustGet(p),title=sent?'Envoyé au véhicule '+p:(isSignal?'Signalement reçu de '+p:'Reçu du véhicule '+p),time=m.created_at?new Date(m.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'',acts='',rep='',feedback='';if(!sent&&m.receiver_id===my&&status==='pending')acts='<button type="button" class="tiny-btn tiny-ok" onclick="App.accept(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\')">Accepter</button><button type="button" class="tiny-btn tiny-no" onclick="App.reject(\''+js(m.id)+'\')">Refuser</button>';if(!sent&&status==='accepted'){let tid='ta_'+String(m.id).replace(/\W/g,'');rep='<textarea id="'+tid+'" class="msg-textarea" style="margin-top:6px" placeholder="Répondre…"></textarea><button type="button" class="tiny-btn tiny-ok" onclick="App.reply(\''+js(m.sender_id)+'\',\''+js(p)+'\',\''+tid+'\')">Répondre</button>'}if(!sent&&isSignal){feedback='<div style="margin-top:8px;padding:8px;border-radius:13px;background:#f4f7fb;border:1px solid #e1e7ef"><b>Info utile ?</b><br><small>Note confiance expéditeur : '+score+'%</small><br><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'utile\')">✅ Info utile</button><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'regle\')">Déjà réglé</button><button type="button" class="tiny-btn tiny-no" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'faux\')">Faux signalement</button></div>'}return'<div class="msg-bubble '+(sent?'msg-sent':'msg-recv')+'"><div class="msg-lbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+feedback+rep+'<div><button type="button" class="tiny-btn tiny-no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button type="button" class="tiny-btn tiny-no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="msg-time">'+esc(time)+'</div></div>'},
