@@ -725,7 +725,14 @@ async loadOthers(){
   this.initMap();
   if(!S.map||!sb)return;
 
+  // Anti-doublon fort : si deux refresh Realtime/GPS arrivent en même temps,
+  // seul le dernier a le droit d'ajouter des marqueurs.
+  const loadSeq=(S._loadOthersSeq||0)+1;
+  S._loadOthersSeq=loadSeq;
+
   // Nettoyage propre des marqueurs distants avant rechargement.
+  try{S.map.closePopup?.()}catch(e){}
+  this.hideVehicleContextMenu?.();
   (S.otherMkrs||[]).forEach(m=>{try{S.map.removeLayer(m)}catch(e){}});
   S.otherMkrs=[];
   S.nearby=[];
@@ -745,6 +752,7 @@ async loadOthers(){
     .order('updated_at',{ascending:false})
     .limit(250);
 
+  if(loadSeq!==S._loadOthersSeq)return;
   if(error){console.warn('loadOthers user_locations',error);this.renderNearby();this.updateCommunityStatus();return;}
 
   const latestByUser=new Map();
@@ -759,6 +767,7 @@ async loadOthers(){
 
   const ids=locs.map(l=>l.id);
   const profs=await profilesByIds(ids);
+  if(loadSeq!==S._loadOthersSeq)return;
   const seenPlates=new Set();
   const rows=[];
 
@@ -781,13 +790,14 @@ async loadOthers(){
     rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist,uid:l.id,updated_at:l.updated_at});
     this.addRecent(pl,p.vehicle_color||'other',dist);
 
+    // On n'affiche qu'un marqueur par véhicule distant. La bulle ImmatConnect
+    // remplace la popup Leaflet pour éviter l'impression de deux véhicules.
     const mk=L.marker([lat,lng],{
       icon:icon(p.vehicle_color||'other',false),
       zIndexOffset:2400,
       riseOnHover:true
     }).addTo(S.map);
 
-    mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');
     mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});
     S.otherMkrs.push(mk);
   });
@@ -992,7 +1002,79 @@ syncVehicleAlertsFromMessages(rows){
 alertFeedbackLabel(kind){if(kind==='utile')return{label:'✅ Info utile',delta:8,status:'seen'};if(kind==='merci')return{label:'🙏 Merci',delta:5,status:'seen'};if(kind==='recu')return{label:'✅ Reçu',delta:3,status:'seen'};if(kind==='regle')return{label:'👌 Déjà réglé',delta:2,status:'seen'};if(kind==='faux')return{label:'❌ Faux signalement',delta:-12,status:'seen'};return{label:'👁️ Vu',delta:1,status:'seen'}},
 async respondVehicleAlert(id,kind){const a=(S.alerts||[]).find(x=>String(x.id)===String(id));if(!a)return toast('Alerte introuvable.','bad');const fb=this.alertFeedbackLabel(kind);a.status=fb.status||'seen';a.feedback=fb.label;a.feedback_at=Date.now();const plate=nPlate(a.from_plate||a.sender_plate||a.plate||'');const score=trustDelta(plate,fb.delta);saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();try{const{data:ud}=await sb.auth.getUser();if(ud?.user&&a.sender_id){await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:a.sender_id,target_plate:plate,receiver_plate:plate,message:fb.label+' — note confiance actuelle : '+score+'%',status:'accepted'})}}catch(e){console.warn('respondVehicleAlert message',e)}toast(fb.label+' · confiance '+score+'%','ok')},
 respondLastVehicleAlert(kind){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(!a)return toast('Aucun signalement à répondre.','bad');return this.respondVehicleAlert(a.id,kind)},
-renderMyAlertsBlock(){const list=$('myAlertsList');if(!list)return;const rows=S.alerts.filter(a=>isNearby(a)).slice(0,8);list.innerHTML=rows.length?rows.map((a,i)=>{const m=cat(a.type),id=String(a.id||i).replace(/'/g,''),isVeh=a.group==='vehicle'||a.type==='vehicule',status=a.status==='seen'?'Vu':'En attente',plate=nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''),feedback=a.feedback?' · '+a.feedback:'';return'<div class="altet-row"><div class="altet-row-main"><span class="altet-row-icon">'+(isVeh?'🚗':m.icon)+'</span><span style="min-width:0"><div class="altet-row-title">'+esc(isVeh?'Le véhicule vous a contacté':(a.label||m.label))+'</div><div class="altet-row-sub">'+esc((plate||'Véhicule')+' · '+(a.reason||'Signalement')+feedback)+'</div></span></div><span class="altet-status-pill">'+esc(status)+'</span><div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="tiny-btn tiny-ok" onclick="App.respondVehicleAlert(''+id+'','utile')">Info utile</button><button type="button" class="tiny-btn tiny-ok" onclick="App.respondVehicleAlert(''+id+'','recu')">Reçu</button><button type="button" class="altet-chevron" onclick="App.markAlertSeen(''+id+'')">Vu</button></div></div>'}).join(''):'<div class="my-alert-empty">Aucune alerte active.</div>';this.renderSignalRecap()},renderSignalRecap(){const rows=(S.alerts||[]).filter(a=>isNearby(a)&&(a.group==='vehicle'||a.type==='vehicule')).sort((a,b)=>(b.at||0)-(a.at||0));const a=rows[0]||null;if(!$('signalRecapCard'))return;const plate=a?nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''):'--';const status=a&&a.status==='seen'?'Vu':'En attente';const reason=a?(a.reason||'Signalement reçu'):'Aucun signalement reçu';const ago=a?this.relativeTime(a.at||Date.now()):'Aucun message.';if($('recapPlate'))$('recapPlate').textContent=plate||'--';if($('recapSub'))$('recapSub').textContent='Immatriculation : '+(plate||'--');if($('recapStatus')){$('recapStatus').textContent=status;$('recapStatus').style.borderColor=status==='Vu'?'#00d491':'#ffb020';$('recapStatus').style.color=status==='Vu'?'#00d491':'#ffb020'}if($('recapReason'))$('recapReason').textContent=reason;if($('recapTime'))$('recapTime').textContent=a?'◷ Reçu '+ago:'◷ Aucun message.'},relativeTime(ts){const d=Math.max(0,Date.now()-Number(ts||Date.now())),m=Math.floor(d/60000);if(m<1)return'il y a quelques sec';if(m<60)return'il y a '+m+' min';const h=Math.floor(m/60);if(h<24)return'il y a '+h+' h';return'il y a '+Math.floor(h/24)+' j'},markLastVehicleAlertSeen(){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(a)this.markAlertSeen(a.id);else toast('Aucun signalement à marquer.','bad')},markLastVehicleAlertPending(){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(a)this.markAlertPending(a.id);else toast('Aucun signalement à marquer.','bad')},markAlertSeen(id){const a=S.alerts.find(x=>x.id===id);if(a){a.status='seen';a.seen_at=Date.now();saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Signalement marqué comme vu.','ok')}},markAlertPending(id){const a=S.alerts.find(x=>x.id===id);if(a){a.status='pending';saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Signalement gardé en attente.','ok')}},
+renderMyAlertsBlock(){
+  const list=$('myAlertsList');
+  if(!list)return;
+  const rows=(S.alerts||[]).filter(a=>isNearby(a)).slice(0,8);
+  if(rows.length){
+    list.innerHTML=rows.map((a,i)=>{
+      const m=cat(a.type);
+      const id=String(a.id||i).replace(/'/g,'');
+      const isVeh=a.group==='vehicle'||a.type==='vehicule';
+      const status=a.status==='seen'?'Vu':'En attente';
+      const plate=nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||'');
+      const feedback=a.feedback?' · '+a.feedback:'';
+      return '<div class="altet-row">'
+        +'<div class="altet-row-main">'
+        +'<span class="altet-row-icon">'+(isVeh?'🚗':m.icon)+'</span>'
+        +'<span style="min-width:0">'
+        +'<div class="altet-row-title">'+esc(isVeh?'Le véhicule vous a contacté':(a.label||m.label))+'</div>'
+        +'<div class="altet-row-sub">'+esc((plate||'Véhicule')+' · '+(a.reason||'Signalement')+feedback)+'</div>'
+        +'</span></div>'
+        +'<span class="altet-status-pill">'+esc(status)+'</span>'
+        +'<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">'
+        +'<button type="button" class="tiny-btn tiny-ok" onclick="App.respondVehicleAlert(\''+id+'\',\'utile\')">Info utile</button>'
+        +'<button type="button" class="tiny-btn tiny-ok" onclick="App.respondVehicleAlert(\''+id+'\',\'recu\')">Reçu</button>'
+        +'<button type="button" class="altet-chevron" onclick="App.markAlertSeen(\''+id+'\')">Vu</button>'
+        +'</div></div>';
+    }).join('');
+  }else{
+    list.innerHTML='<div class="my-alert-empty">Aucune alerte active.</div>';
+  }
+  this.renderSignalRecap();
+},
+renderSignalRecap(){
+  const rows=(S.alerts||[]).filter(a=>isNearby(a)&&(a.group==='vehicle'||a.type==='vehicule')).sort((a,b)=>(b.at||0)-(a.at||0));
+  const a=rows[0]||null;
+  if(!$('signalRecapCard'))return;
+  const plate=a?nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''):'--';
+  const status=a&&a.status==='seen'?'Vu':'En attente';
+  const reason=a?(a.reason||'Signalement reçu'):'Aucun signalement reçu';
+  const ago=a?this.relativeTime(a.at||Date.now()):'Aucun message.';
+  if($('recapPlate'))$('recapPlate').textContent=plate||'--';
+  if($('recapSub'))$('recapSub').textContent='Immatriculation : '+(plate||'--');
+  if($('recapStatus')){
+    $('recapStatus').textContent=status;
+    $('recapStatus').style.borderColor=status==='Vu'?'#00d491':'#ffb020';
+    $('recapStatus').style.color=status==='Vu'?'#00d491':'#ffb020';
+  }
+  if($('recapReason'))$('recapReason').textContent=reason;
+  if($('recapTime'))$('recapTime').textContent=a?'◷ Reçu '+ago:'◷ Aucun message.';
+},
+relativeTime(ts){
+  const d=Math.max(0,Date.now()-Number(ts||Date.now())),m=Math.floor(d/60000);
+  if(m<1)return'il y a quelques sec';
+  if(m<60)return'il y a '+m+' min';
+  const h=Math.floor(m/60);
+  if(h<24)return'il y a '+h+' h';
+  return'il y a '+Math.floor(h/24)+' j';
+},
+markLastVehicleAlertSeen(){
+  const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];
+  if(a)this.markAlertSeen(a.id);else toast('Aucun signalement à marquer.','bad');
+},
+markLastVehicleAlertPending(){
+  const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];
+  if(a)this.markAlertPending(a.id);else toast('Aucun signalement à marquer.','bad');
+},
+markAlertSeen(id){
+  const a=S.alerts.find(x=>x.id===id);
+  if(a){a.status='seen';a.seen_at=Date.now();saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Signalement marqué comme vu.','ok')}
+},
+markAlertPending(id){
+  const a=S.alerts.find(x=>x.id===id);
+  if(a){a.status='pending';saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Signalement gardé en attente.','ok')}
+},
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);if(S.alertMarkersById[id]){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('id,plate,reason,latitude,longitude,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(150);if(error)throw error;(data||[]).forEach(r=>{const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:false})})}catch(e){console.warn('sync alerts',e)}},
 subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},p=>{const r=p.new||{},type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||'r_'+Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:true})}).subscribe()}catch(e){console.warn('sub reports',e)}},
