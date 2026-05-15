@@ -520,7 +520,108 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
   .top.top-exact .logo-top{max-width:145px!important;font-size:13px!important;padding:0 7px!important;}
 }
 
-  </style>
+  
+
+/* =========================================================
+   REPRISE FINALE IMMATCONNECT — DESIGN + FONCTIONNEL 2026
+   Ajout non destructif : aucune fonctionnalité existante supprimée.
+   ========================================================= */
+:root{--ic-bg:#071018;--ic-card:#101b2b;--ic-card2:#172335;--ic-line:#26364d;--ic-text:#eef6ff;--ic-muted:#9aacc2;--ic-green:#00ffb3;--ic-green2:#00d491;--ic-red:#ff3b5c;--ic-blue:#3478ff;--ic-orange:#ffb020;}
+.top.top-exact{position:absolute!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:10px!important;right:10px!important;width:auto!important;height:66px!important;padding:0 10px!important;display:grid!important;grid-template-columns:46px 58px minmax(96px,1fr) minmax(118px,168px)!important;gap:8px!important;align-items:center!important;border-radius:24px!important;background:linear-gradient(180deg,rgba(7,16,24,.97),rgba(7,16,24,.84))!important;backdrop-filter:blur(14px)!important;box-shadow:0 14px 40px rgba(0,0,0,.24)!important;overflow:hidden!important;z-index:1600!important;}
+.top.top-exact .menu-round{width:46px!important;height:48px!important;min-width:0!important;border-radius:17px!important;background:rgba(255,255,255,.08)!important;color:#fff!important;font-size:30px!important;box-shadow:none!important;}
+.top.top-exact .top-mail-btn{width:58px!important;height:56px!important;min-width:0!important;border-radius:19px!important;background:linear-gradient(145deg,#123f78,#0e2b55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important;}
+.top.top-exact #communityStatus.top-status-pill{position:static!important;width:100%!important;min-width:0!important;height:46px!important;border-radius:999px!important;background:rgba(0,0,0,.20)!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;padding:0 8px!important;overflow:hidden!important;white-space:nowrap!important;font:950 16px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#fff!important;box-shadow:none!important;}
+.top.top-exact #communityStatus.top-status-pill .online-dot-mini{width:18px!important;height:18px!important;flex:0 0 18px!important;border-radius:50%!important;background:#12e442!important;box-shadow:0 0 14px rgba(18,228,66,.8)!important;}
+.top.top-exact #communityStatus.top-status-pill .count{font-size:16px!important;color:#fff!important;}
+.top.top-exact .logo-top{width:100%!important;min-width:0!important;max-width:168px!important;height:42px!important;padding:0 10px!important;margin:0!important;border-radius:999px!important;background:#fff!important;color:#061018!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:clamp(12px,3.6vw,16px)!important;font-weight:950!important;line-height:1!important;letter-spacing:-.4px!important;overflow:hidden!important;white-space:nowrap!important;box-shadow:0 10px 24px rgba(0,0,0,.20)!important;}
+body.driving .top.top-exact .logo-top{display:flex!important;}
+#appScreen .shade{top:72px!important;height:112px!important;}
+.sheet{z-index:1500!important;background:linear-gradient(180deg,#101b2b,#0b1420)!important;color:var(--ic-text)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:30px 30px 0 0!important;box-shadow:0 -18px 55px rgba(0,0,0,.28)!important;}
+.sheet.mini{transform:translateY(calc(100% - 106px))!important;}
+.profile-row,.altet-card,.signal-recap-card,.altet-active-card,.gps-card,.fav-card,.history-card,.my-alerts-block,.report-block,.list-item{background:var(--ic-card2)!important;color:var(--ic-text)!important;border-color:var(--ic-line)!important;}
+.sheet-nav.alert-tabs,.sheet-nav{grid-template-columns:repeat(5,1fr)!important;gap:7px!important;}
+.sheet-nav button{height:50px!important;border-radius:18px!important;background:#1c2a3d!important;color:var(--ic-muted)!important;border:1px solid #2d3d52!important;font-size:10.5px!important;}
+.sheet-nav button.on{background:linear-gradient(135deg,var(--ic-green),var(--ic-green2))!important;color:#06140f!important;border-color:transparent!important;}
+.plate-lbl,.list-item b,.signal-plate{color:var(--ic-green)!important;}
+.pseudo-lbl,.empty-msg,.altet-row-sub,.signal-sub,.signal-time{color:var(--ic-muted)!important;}
+.gps-row input,.msg-input-row input,.msg-textarea,.inp-light{background:#0d1723!important;color:var(--ic-text)!important;border-color:var(--ic-line)!important;}
+.poi-grid button,.gps-results button,.act-btn,.msg-tools button,.voice-row button,.clear-btn,.quick-reply-row button{background:#1c2a3d!important;color:var(--ic-text)!important;border-color:#2d3d52!important;}
+.act-btn.primary,.msg-send-btn{background:linear-gradient(135deg,var(--ic-green),var(--ic-green2))!important;color:#06140f!important;}
+.overlay{z-index:1700!important;background:linear-gradient(180deg,#101b2b,#0b1420)!important;color:var(--ic-text)!important;border:1px solid var(--ic-line)!important;border-radius:26px!important;box-shadow:var(--shadow)!important;}
+.overlay p,.overlay small{color:var(--ic-muted)!important;}
+.report-target-line{background:#0d2e20!important;color:var(--ic-green)!important;border-color:#1a5038!important;}
+.report-target-line.warn{background:#2b2412!important;color:var(--ic-orange)!important;border-color:rgba(255,176,32,.35)!important;}
+.report-grid button{min-height:46px!important;border-radius:16px!important;font-weight:950!important;}
+.vehicle-context-menu{z-index:1800!important;}
+.vehicle-context-plate{top:-118px!important;min-width:168px!important;background:#fff!important;color:#10161d!important;border:2px solid rgba(0,255,179,.55)!important;}
+.vehicle-bubble{min-width:82px!important;min-height:44px!important;}
+.car-pin.other{width:48px!important;height:48px!important;border-radius:18px!important;font-size:23px!important;z-index:20!important;box-shadow:0 0 0 6px rgba(52,120,255,.22),0 0 0 12px rgba(0,255,179,.08),0 12px 26px rgba(0,0,0,.38)!important;}
+.car-pin.self{transform:scale(.88)!important;opacity:.82!important;filter:saturate(.9)!important;}
+.road-pin{font-size:25px!important;padding:7px!important;border-radius:14px!important;color:#fff!important;box-shadow:0 8px 22px rgba(0,0,0,.3)!important;position:relative!important;z-index:40!important;}
+.ic-proximity-pop{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 84px);z-index:9200;background:linear-gradient(135deg,#101b2b,#172335);color:#eef6ff;border:1px solid #26364d;border-radius:22px;padding:13px 14px;box-shadow:0 18px 60px rgba(0,0,0,.32);display:none;gap:10px;align-items:flex-start;animation:icPop .22s ease-out;}
+.ic-proximity-pop.show{display:flex;}
+.ic-proximity-pop .icp-icon{font-size:26px;line-height:1;}
+.ic-proximity-pop b{color:#00ffb3;}
+.ic-proximity-pop small{display:block;color:#9aacc2;margin-top:3px;line-height:1.3;}
+.ic-proximity-pop button{margin-left:auto;border-radius:999px;background:#00ffb3;color:#06140f;padding:8px 11px;font-weight:950;font-size:12px;}
+@keyframes icPop{from{transform:translateY(-18px);opacity:0}to{transform:none;opacity:1}}
+@media(max-width:390px){.top.top-exact{grid-template-columns:40px 52px minmax(84px,1fr) minmax(102px,136px)!important;gap:6px!important;padding:0 7px!important;left:8px!important;right:8px!important}.top.top-exact .menu-round{width:40px!important;height:44px!important;font-size:28px!important}.top.top-exact .top-mail-btn{width:52px!important;height:52px!important}.top.top-exact #communityStatus.top-status-pill{font-size:15px!important;gap:6px!important;padding:0 5px!important}.top.top-exact .logo-top{max-width:136px!important;font-size:12.5px!important;padding:0 7px!important}.sheet-nav button{font-size:9.8px!important;padding:0 2px!important;}.report-grid{grid-template-columns:1fr 1fr!important;}}
+@media(orientation:landscape) and (max-height:560px){.sheet{left:auto!important;right:8px!important;top:8px!important;bottom:8px!important;width:min(430px,46vw)!important;max-height:none!important;border-radius:24px!important}.sheet.mini{transform:translateX(calc(100% - 74px))!important}.overlay{left:8px!important;right:auto!important;width:48vw!important;bottom:10px!important}.actions{left:50%!important;top:auto!important;bottom:12px!important;transform:translateX(-50%)!important;display:flex!important}.speed{left:10px!important;bottom:10px!important}}
+
+/* ===== PATCH PRO FINAL : design maquette + séparation Signaler/Alerter ===== */
+:root{--pro-bg:#071018;--pro-card:#101b2b;--pro-card2:#172335;--pro-line:#26364d;--pro-green:#00ffb3;--pro-red:#ff3b5c;--pro-orange:#ffb020;--pro-blue:#3478ff}
+.top.top-exact{
+  position:absolute!important;z-index:1800!important;
+  top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:10px!important;right:10px!important;
+  height:66px!important;padding:0 10px!important;
+  display:grid!important;grid-template-columns:46px 58px minmax(96px,1fr) minmax(120px,170px)!important;
+  align-items:center!important;gap:8px!important;border-radius:24px!important;
+  background:linear-gradient(180deg,rgba(7,16,24,.96),rgba(7,16,24,.82))!important;
+  backdrop-filter:blur(14px)!important;box-shadow:0 14px 40px rgba(0,0,0,.24)!important;overflow:hidden!important
+}
+.top.top-exact .menu-round{width:46px!important;height:48px!important;min-width:0!important;display:grid!important;place-items:center!important;background:rgba(255,255,255,.06)!important;color:#fff!important;box-shadow:none!important;border-radius:17px!important;font-size:30px!important}
+.top.top-exact .top-mail-btn{width:58px!important;height:56px!important;border-radius:19px!important;background:linear-gradient(145deg,#123f78,#0e2b55)!important;color:#fff!important;display:grid!important;place-items:center!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 28px rgba(0,0,0,.28)!important}
+.top.top-exact .top-mail-btn svg{width:34px!important;height:26px!important}
+.top.top-exact .top-msg-badge{top:-7px!important;right:-7px!important;min-width:23px!important;height:23px!important;padding:0 6px!important;border-radius:999px!important;background:var(--pro-red)!important;border:2px solid #071018!important;color:#fff!important;font-size:12px!important;font-weight:950!important}
+.top.top-exact #communityStatus.top-status-pill{position:static!important;width:100%!important;min-width:0!important;height:46px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;border-radius:999px!important;background:rgba(0,0,0,.2)!important;color:#fff!important;white-space:nowrap!important;overflow:hidden!important;font-size:16px!important;font-weight:950!important;box-shadow:none!important}
+.top.top-exact #communityStatus .online-dot-mini{width:18px!important;height:18px!important;border-radius:50%!important;background:#12e442!important;box-shadow:0 0 14px rgba(18,228,66,.8)!important}
+.top.top-exact .logo-top{width:100%!important;min-width:0!important;max-width:170px!important;height:42px!important;border-radius:999px!important;background:#fff!important;color:#061018!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:950!important;font-size:clamp(12px,3.6vw,16px)!important;letter-spacing:-.4px!important;white-space:nowrap!important;overflow:hidden!important;padding:0 9px!important}
+.sheet{background:linear-gradient(180deg,#101b2b,#0b1420)!important;color:#eef6ff!important;border-radius:30px 30px 0 0!important;box-shadow:0 -18px 55px rgba(0,0,0,.28)!important}
+.profile-row,.altet-card,.signal-recap-card,.altet-active-card,.gps-card,.fav-card,.history-card,.my-alerts-block,.report-block{background:#172335!important;color:#eef6ff!important;border:1px solid #26364d!important}
+.sheet-nav button{background:#1c2a3d!important;color:#9aacc2!important;border:1px solid #26364d!important}
+.sheet-nav button.on{background:linear-gradient(135deg,var(--pro-green),#00d491)!important;color:#06140f!important;border-color:transparent!important}
+.act-btn,.nav-card,.mini-row,.list-item{background:#0d1723!important;color:#eef6ff!important;border-color:#26364d!important}
+.act-btn.primary,.list-item button,.mini-row button,.msg-send-btn{background:var(--pro-green)!important;color:#06140f!important}
+.overlay{background:linear-gradient(180deg,#101b2b,#0b1420)!important;color:#eef6ff!important;border:1px solid #26364d!important;border-radius:26px!important;box-shadow:0 28px 80px rgba(0,0,0,.38)!important}
+.report-grid button{border-radius:16px!important;min-height:48px!important}
+#reportPanel.vehicle-only #reportRouteBlock,#reportPanel.vehicle-only #reportAssistBlock,#reportPanel.vehicle-only #reportDriversBlock{display:none!important}
+#reportPanel.full-report #reportVehicleBlock{display:none!important}
+#reportPanel.full-report #reportRouteBlock,#reportPanel.full-report #reportAssistBlock,#reportPanel.full-report #reportDriversBlock{display:block!important}
+.vehicle-context-menu{z-index:1900!important}
+.vehicle-context-plate{border:2px solid rgba(0,255,179,.7)!important}
+.car-pin.self{opacity:.78!important;transform:scale(.9)!important;filter:saturate(.9)!important}
+.car-pin.other{width:48px!important;height:48px!important;font-size:23px!important;border-radius:18px!important;box-shadow:0 0 0 6px rgba(52,120,255,.22),0 0 0 12px rgba(0,255,179,.08),0 12px 26px rgba(0,0,0,.38)!important;animation:icPulse 1.8s infinite ease-in-out!important}
+@keyframes icPulse{50%{transform:scale(1.08)}}
+.ic-proximity-pop{position:fixed;z-index:9200;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 86px);display:none;background:linear-gradient(135deg,#101b2b,#172335);border:1px solid #26364d;border-radius:22px;color:#eef6ff;padding:14px;box-shadow:0 22px 70px rgba(0,0,0,.34)}
+.ic-proximity-pop.show{display:block;animation:icSlide .22s ease-out}
+@keyframes icSlide{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+.ic-proximity-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;margin-bottom:6px}
+.ic-proximity-head b{color:var(--pro-green)}
+.ic-proximity-pop small{display:block;color:#9aacc2;line-height:1.35}
+.ic-proximity-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ic-proximity-actions button{border-radius:14px;padding:10px;font-weight:950}
+.ic-proximity-actions .ok{background:var(--pro-green);color:#06140f}
+.ic-proximity-actions .ghost{background:#1c2a3d;color:#eef6ff;border:1px solid #26364d}
+.road-pin{position:relative;z-index:10!important;box-shadow:0 8px 22px rgba(0,0,0,.35)!important}
+@media(max-width:390px){
+  .top.top-exact{grid-template-columns:40px 52px minmax(84px,1fr) minmax(102px,136px)!important;gap:6px!important;padding:0 7px!important}
+  .top.top-exact .menu-round{width:40px!important;height:44px!important;font-size:28px!important}
+  .top.top-exact .top-mail-btn{width:52px!important;height:52px!important}
+  .top.top-exact #communityStatus.top-status-pill{font-size:15px!important;gap:6px!important}
+  .top.top-exact .logo-top{font-size:12.5px!important}
+}
+
+</style>
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Connecte-toi ou crée ton compte pour accéder à ton espace conducteur.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte</button></div></section>
@@ -1106,6 +1207,234 @@ startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S
 toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
 function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
+
+/* ===== PATCH PRO FINAL — logique fonctionnelle conservée et optimisée ===== */
+(function(){
+  try{
+    window.S=S; window.$=$; window.nPlate=nPlate; window.esc=esc;
+
+    function ensureDriversBlock(){
+      if($('reportDriversBlock')) return;
+      const vehicle=$('reportVehicleBlock');
+      if(!vehicle) return;
+      const block=document.createElement('div');
+      block.id='reportDriversBlock';
+      block.className='report-block';
+      block.innerHTML='<h3>📣 Informer les conducteurs</h3><div class="report-grid">'
+        +'<button type="button" class="report-route" onclick="App.driverInfo(\\'Ralentissement à proximité\\')">🚗 Ralentissement</button>'
+        +'<button type="button" class="report-route" onclick="App.driverInfo(\\'Danger à proximité\\')">⚠️ Danger proche</button>'
+        +'<button type="button" class="report-route" onclick="App.driverInfo(\\'Chaussée glissante\\')">🌧️ Chaussée glissante</button>'
+        +'<button type="button" class="report-route" onclick="App.driverInfo(\\'Visibilité réduite\\')">🌫️ Visibilité réduite</button>'
+        +'</div>';
+      vehicle.insertAdjacentElement('afterend',block);
+    }
+    function vehicleButtons(){
+      return '<h3 id="reportVehicleTitle">🚗 Alerter le véhicule</h3><div class="report-grid">'
+        +'<button type="button" class="report-info" onclick="App.vehicleAlert(\\'Feux restés allumés\\')">💡 Feux allumés</button>'
+        +'<button type="button" class="report-info" onclick="App.vehicleAlert(\\'Porte ou coffre mal fermé\\')">🚪 Porte/coffre</button>'
+        +'<button type="button" class="report-important" onclick="App.vehicleAlert(\\'Problème d’éclairage\\')">💡 Éclairage</button>'
+        +'<button type="button" class="report-important" onclick="App.vehicleAlert(\\'Élément semble se détacher\\')">🔧 Élément détaché</button>'
+        +'<button type="button" class="report-urgent" onclick="App.vehicleAlert(\\'Pneu ou roue dangereux\\')">🛞 Pneu/roue</button>'
+        +'<button type="button" class="report-urgent" onclick="App.vehicleAlert(\\'Fumée ou risque incendie\\')">🚨 Fumée/feu</button>'
+        +'</div>';
+    }
+    function ensureProximityPop(){
+      if($('icProximityPop')) return;
+      const d=document.createElement('div');
+      d.id='icProximityPop';
+      d.className='ic-proximity-pop';
+      d.innerHTML='<div class="ic-proximity-head"><span id="icPopTitle">⚠️ Alerte proche</span><button type="button" onclick="App.hideProximityPop()" style="background:transparent;color:#ff3b5c;font-size:20px;font-weight:950">×</button></div>'
+        +'<small id="icPopBody">Un signalement est proche de votre position.</small>'
+        +'<div class="ic-proximity-actions"><button class="ok" type="button" onclick="App.panel(\\'altet\\');App.hideProximityPop()">Voir dans Alerte</button><button class="ghost" type="button" onclick="App.hideProximityPop()">Plus tard</button></div>';
+      document.body.appendChild(d);
+    }
+    function showProximityAlert(a){
+      ensureProximityPop();
+      const c=(typeof cat==='function'?cat(a.type):{icon:'⚠️',label:a.label||'Alerte'});
+      const dist=(typeof distanceOf==='function')?distanceOf(a):null;
+      const ds=dist==null?'à proximité':(dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km');
+      $('icPopTitle').innerHTML=(c.icon||'⚠️')+' <b>'+esc(a.label||c.label||'Alerte proche')+'</b>';
+      $('icPopBody').textContent=(a.reason||'Signalement')+' · '+ds;
+      $('icProximityPop').classList.add('show');
+      setTimeout(()=>App.hideProximityPop&&App.hideProximityPop(),8500);
+    }
+    App.hideProximityPop=function(){ $('icProximityPop')?.classList.remove('show'); };
+
+    const original={
+      setReportMode:App.setReportMode,
+      openReport:App.openReport,
+      openVehicleReport:App.openVehicleReport,
+      updateReportTarget:App.updateReportTarget,
+      addCommunityAlert:App.addCommunityAlert,
+      addCommunityAlertMarker:App.addCommunityAlertMarker,
+      loadOthers:App.loadOthers,
+      sendMsg:App.sendMsg,
+      showVehicleContextMenu:App.showVehicleContextMenu,
+      syncVehicleAlertsFromMessages:App.syncVehicleAlertsFromMessages,
+      updateCommunityStatus:App.updateCommunityStatus,
+      openMap:App.openMap,
+      panel:App.panel
+    };
+
+    App.openMap=function(p,email){
+      const out=original.openMap?original.openMap.call(App,p,email):undefined;
+      setTimeout(()=>{try{ensureDriversBlock();App.setReportMode('full');App.updateCommunityStatus();}catch(e){}},300);
+      return out;
+    };
+
+    App.selectedVehiclePlate=function(){
+      const own=App.ownPlate?App.ownPlate():'';
+      return [S.contextVehicle&&S.contextVehicle.plate,S.selPlate,$('iTarget')&&$('iTarget').value,S.conv]
+        .map(nPlate).filter(p=>p&&p!=='ALL'&&p!==own)[0]||'';
+    };
+
+    App.updateReportTarget=function(){
+      ensureDriversBlock();
+      const p=App.selectedVehiclePlate();
+      const vehicleMode=$('reportPanel')?.classList.contains('vehicle-only');
+      const line=$('reportTargetLine'), title=$('reportVehicleTitle'), ctx=$('vehicleContextPlate');
+      if(ctx) ctx.textContent=p?'🚗 '+p:'Véhicule';
+      if(title) title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'📣 Informer les conducteurs';
+      if(line){
+        line.classList.toggle('warn',vehicleMode&&!p);
+        line.innerHTML=vehicleMode
+          ? (p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.')
+          : 'Information générale envoyée aux véhicules proches.';
+      }
+    };
+
+    App.setReportMode=function(mode){
+      ensureDriversBlock();
+      const p=$('reportPanel');
+      if(!p) return;
+      const vehicleMode=mode==='vehicle';
+      p.classList.toggle('vehicle-only',vehicleMode);
+      p.classList.toggle('full-report',!vehicleMode);
+      const h=p.querySelector('h2'), desc=p.querySelector('p');
+      if(h) h.textContent=vehicleMode?'Alerter le véhicule':'Signaler';
+      if(desc) desc.textContent=vehicleMode?'Actions uniquement pour le véhicule sélectionné.':'Informe les conducteurs proches, la route ou demande de l’aide.';
+      const vb=$('reportVehicleBlock');
+      if(vb) vb.innerHTML=vehicleButtons();
+      App.updateReportTarget();
+    };
+    App.openReport=function(){App.closeAllOverlays&&App.closeAllOverlays();App.setReportMode('full');$('reportPanel')?.classList.add('show');};
+    App.openVehicleReport=function(){App.closeAllOverlays&&App.closeAllOverlays();App.setReportMode('vehicle');$('reportPanel')?.classList.add('show');};
+
+    App.driverInfo=async function(label){
+      if(S.myLat===null||S.myLng===null) return toast('Localise-toi avant.','bad');
+      const urgent=/danger|urgence|fumée|feu|incendie|accident|glissante|visibilité/i.test(label);
+      const reason='[CONDUCTEURS] '+label;
+      try{App.addCommunityAlert({type:urgent?'danger':'info',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'info',group:'misc'},{notify:false});}catch(e){}
+      await App.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});
+      App.closeOverlay&&App.closeOverlay('reportPanel');
+      toast('Information envoyée aux conducteurs proches.','ok');
+    };
+
+    App.vehicleAlert=function(label){
+      const p=App.selectedVehiclePlate();
+      const own=App.ownPlate?App.ownPlate():'';
+      if(!p) return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');
+      if(p===own) return toast("Impossible de te signaler toi-même.",'bad');
+      const target=$('iTarget'), msg=$('iMsg');
+      if(target) target.value=p;
+      if(msg) msg.value=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
+      S.selPlate=p; S.conv=p; S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});
+      App.closeOverlay&&App.closeOverlay('reportPanel');
+      App.panel&&App.panel('contact');
+      toast('Signalement préparé pour '+p+'. Appuie sur Envoyer pour le transmettre.','ok');
+    };
+
+    App.addCommunityAlert=function(raw,opts){
+      const a=original.addCommunityAlert?original.addCommunityAlert.call(App,raw,opts||{}):null;
+      try{
+        if(a && opts && opts.notify && (typeof isNearby!=='function' || isNearby(a))) showProximityAlert(a);
+      }catch(e){}
+      return a;
+    };
+    App.addCommunityAlertMarker=function(a){
+      if(original.addCommunityAlertMarker) original.addCommunityAlertMarker.call(App,a);
+      try{
+        const m=S.alertMarkersById&&S.alertMarkersById[a.id];
+        if(m){ m.setZIndexOffset(3600); setTimeout(()=>{const el=m.getElement&&m.getElement(); if(el)el.style.zIndex=3600;},100); }
+      }catch(e){}
+    };
+
+    App.sendMsg=async function(){
+      const own=App.ownPlate?App.ownPlate():'';
+      const plate=App.selectedTargetPlate?App.selectedTargetPlate():nPlate($('iTarget')?.value||S.selPlate||'');
+      if(!plate || plate===own){
+        hint('hTarget','error',plate===own?'Impossible de t’envoyer un message à toi-même.':'Sélectionne le véhicule destinataire.');
+        return;
+      }
+      return original.sendMsg?original.sendMsg.call(App):undefined;
+    };
+
+    App.loadOthers=async function(){
+      if(!original.loadOthers) return;
+      await original.loadOthers.call(App);
+      try{
+        const own=App.ownPlate?App.ownPlate():'';
+        if(own && Array.isArray(S.nearby)) S.nearby=S.nearby.filter(v=>nPlate(v.plate)!==own);
+        (S.otherMkrs||[]).forEach((m,i)=>{
+          try{
+            m.setZIndexOffset(2500+i);
+            const el=m.getElement&&m.getElement(); if(el)el.style.zIndex=2500+i;
+          }catch(e){}
+        });
+        if(S.myMarker){S.myMarker.setZIndexOffset(-100); const el=S.myMarker.getElement&&S.myMarker.getElement(); if(el)el.style.zIndex=1;}
+        App.renderNearby&&App.renderNearby();
+        App.updateCommunityStatus&&App.updateCommunityStatus();
+      }catch(e){console.warn('loadOthers patch',e);}
+    };
+
+    App.showVehicleContextMenu=function(vehicle){
+      try{
+        if(vehicle&&vehicle.plate){S.selPlate=nPlate(vehicle.plate); const t=$('iTarget'); if(t)t.value=S.selPlate;}
+      }catch(e){}
+      if(original.showVehicleContextMenu) original.showVehicleContextMenu.call(App,vehicle);
+      try{App.updateReportTarget&&App.updateReportTarget();}catch(e){}
+    };
+
+    App.syncVehicleAlertsFromMessages=function(rows){
+      if(original.syncVehicleAlertsFromMessages) original.syncVehicleAlertsFromMessages.call(App,rows);
+      try{App.renderSignalRecap&&App.renderSignalRecap();App.updateCommunityStatus&&App.updateCommunityStatus();}catch(e){}
+    };
+
+    App.updateCommunityStatus=function(){
+      if(original.updateCommunityStatus) original.updateCommunityStatus.call(App);
+      try{
+        const active=(S.alerts||[]).filter(a=>typeof isNearby!=='function'||isNearby(a)).length;
+        const near=(S.nearby&&S.nearby.length)||((S.otherMkrs||[]).length);
+        const mail=(Number(S.unreadMsgCount)||0)+(S.alerts||[]).filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen').length;
+        const el=$('communityStatus');
+        if(el) el.innerHTML='<span class="online-dot-mini"></span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';
+        const badge=$('topMsgBadge'); if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none';}
+      }catch(e){}
+    };
+
+    App.markRead=function(){setUnreadMsgCount(0);toast('Messages et signalements marqués comme lus.','ok');};
+    const oldPanel=App.panel;
+    App.panel=function(p){
+      if(p==='alert'||p==='alerts'||p==='alerte') p='altet';
+      if(oldPanel) oldPanel.call(App,p);
+      try{ if(p==='altet'){App.renderAlerts&&App.renderAlerts();App.renderMyAlertsBlock&&App.renderMyAlertsBlock();} }catch(e){}
+    };
+
+    function finalInit(){
+      ensureDriversBlock();
+      ensureProximityPop();
+      try{App.setReportMode('full');}catch(e){}
+      try{
+        const tab=$('tabAltet'); if(tab)tab.textContent='Alerte';
+        App.updateCommunityStatus();
+        setTimeout(()=>{try{App.loadOthers&&App.loadOthers();App.syncCommunityAlerts&&App.syncCommunityAlerts();}catch(e){}},800);
+      }catch(e){}
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',finalInit); else finalInit();
+
+  }catch(e){console.error('PATCH PRO FINAL',e);}
+})();
+
 window.App=App;
 if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT')App.show('sw')});
 async function boot(){try{window.App=App;bind();App.setMode('login');if(!sb){toast('Supabase non chargé.','bad');App.show('sw');return}if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');let{data}=await withTimeout(sb.auth.getSession(),10000,'Session Supabase indisponible.');if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){console.error('BOOT_ERROR',e);App.show('sw');toast('Erreur de démarrage.','bad');st('authSt',authMessage(e),'error')}}
