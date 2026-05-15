@@ -454,7 +454,65 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
   .top.top-exact #communityStatus.top-status-pill{font-size:15px!important;gap:5px!important;}
 }
 
-</style>
+
+
+/* ===== REFACTO FINAL 2026-05 : barre stable + couches véhicules ===== */
+.top.top-exact{
+  position:absolute!important;
+  top:calc(env(safe-area-inset-top,0px) + 8px)!important;
+  left:0!important;
+  right:0!important;
+  z-index:1200!important;
+  height:72px!important;
+  padding:0 12px!important;
+  display:grid!important;
+  grid-template-columns:48px 62px minmax(112px,1fr) minmax(132px,176px)!important;
+  gap:8px!important;
+  align-items:center!important;
+  background:linear-gradient(180deg,rgba(7,16,24,.96),rgba(7,16,24,.82))!important;
+  backdrop-filter:blur(14px)!important;
+  overflow:hidden!important;
+}
+.top.top-exact .menu-round{
+  width:48px!important;height:58px!important;min-width:0!important;flex:unset!important;
+  display:grid!important;place-items:center!important;background:transparent!important;box-shadow:none!important;
+  color:#fff!important;font-size:34px!important;border-radius:14px!important;
+}
+.top.top-exact .top-mail-btn{
+  width:62px!important;height:62px!important;flex:unset!important;border-radius:19px!important;
+  background:linear-gradient(145deg,#123f78,#0e2b55)!important;display:grid!important;place-items:center!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+.top.top-exact #communityStatus.top-status-pill{
+  position:static!important;width:100%!important;min-width:0!important;max-width:none!important;height:50px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;
+  padding:0 7px!important;border-radius:999px!important;background:rgba(7,16,24,.50)!important;
+  overflow:hidden!important;white-space:nowrap!important;color:#fff!important;font-size:18px!important;
+}
+.top.top-exact #communityStatus.top-status-pill span{display:inline-flex!important;align-items:center!important;gap:4px!important;flex:0 0 auto!important;line-height:1!important;}
+.top.top-exact #communityStatus.top-status-pill .online-dot-mini{width:22px!important;height:22px!important;flex:0 0 22px!important;border-radius:50%!important;background:#12e442!important;box-shadow:0 0 14px rgba(18,228,66,.8)!important;}
+.top.top-exact #communityStatus.top-status-pill .count{font-size:18px!important;font-weight:950!important;color:#fff!important;}
+.top.top-exact .logo-top{
+  width:100%!important;min-width:0!important;max-width:176px!important;height:42px!important;flex:unset!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;border-radius:999px!important;background:#fff!important;
+  padding:0 10px!important;box-shadow:0 10px 24px rgba(0,0,0,.20)!important;color:#061018!important;
+  font-size:clamp(12px,3.6vw,16px)!important;font-weight:950!important;line-height:1!important;letter-spacing:-.4px!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;
+}
+.top.top-exact .logo-top span{color:#00a872!important;}
+#appScreen .shade{top:72px!important;height:112px!important;}
+.leaflet-marker-icon .car-pin.self{z-index:auto!important;}
+.car-pin.other{position:relative!important;z-index:5!important;}
+@media(max-width:380px){
+  .top.top-exact{grid-template-columns:42px 56px minmax(96px,1fr) minmax(118px,145px)!important;gap:6px!important;padding:0 8px!important;}
+  .top.top-exact .menu-round{width:42px!important;font-size:30px!important;}
+  .top.top-exact .top-mail-btn{width:56px!important;height:56px!important;}
+  .top.top-exact #communityStatus.top-status-pill{gap:6px!important;font-size:16px!important;padding:0 4px!important;}
+  .top.top-exact #communityStatus.top-status-pill .online-dot-mini{width:18px!important;height:18px!important;flex-basis:18px!important;}
+  .top.top-exact .logo-top{max-width:145px!important;font-size:13px!important;padding:0 7px!important;}
+}
+
+  </style>
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Connecte-toi ou crée ton compte pour accéder à ton espace conducteur.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte</button></div></section>
@@ -643,7 +701,7 @@ openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_pl
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
-locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible)await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
+locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible)await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
 async deleteMyLocation(){try{let{data:ud}=await sb.auth.getUser();if(ud?.user)await sb.from('user_locations').delete().eq('id',ud.user.id)}catch(e){}},
 async toggleInvisible(){S.invisible=!S.invisible;set('ic_invisible',S.invisible?'1':'0');if(S.invisible){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;if(S.myMarker&&S.map)S.map.removeLayer(S.myMarker);await this.deleteMyLocation();toast('Invisible : position retirée.','ok')}else this.locate();this.refresh()},
 setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers();this.renderAlerts()},recenter(){S.autoFollow=true;if(S.myLat!==null&&S.map)S.map.setView([S.myLat,S.myLng],S.mapView==='drive'?18:16,{animate:true});else this.locate()},cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer&&S.map)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst')?.classList.remove('show');$('routeMini')?.classList.remove('show');toast('GPS arrêté.','ok')},updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15);this.updateFrontVehicle()},
@@ -653,8 +711,109 @@ async pickDest(lat,lon,name){if(S.myLat===null)return toast('Localise-toi avant.
 startNav(){S.driveMode=true;S.autoFollow=true;this.closeSheet();this.locate();this.showInst('🧭',S.routeSteps[0]?.text||'Démarrage navigation.');speak('Démarrage de la navigation.',true)},showInst(i,t){$('instI').textContent=i;$('instT').textContent=t;$('inst').classList.add('show')},checkRoute(){if(!S.driveMode||!S.routeDest||S.myLat===null)return;let end=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon)*1000;if(end<35){this.showInst('🏁','Vous êtes arrivé.');speak('Vous êtes arrivé.',true);S.driveMode=false;return}let stp=S.routeSteps[S.nextStep];if(stp&&km(S.myLat,S.myLng,stp.lat,stp.lon)*1000<75){this.showInst('➡️',stp.text);speak(stp.text);S.nextStep++}this.updateNavPremium();this.autoRecalculateRoute()},
 updateNavPremium(){const eta=$('etaVal'),rem=$('remainVal'),lim=$('limitVal'),traf=$('trafficVal'),lane=$('laneVal'),rec=$('recalcVal'),bar=$('trafficBar');if(!eta||!rem)return;if(!S.routeDest||S.myLat===null){eta.textContent='--';rem.textContent='--';lim.textContent='--';traf.textContent='--';lane.textContent='--';rec.textContent='OK';return}const dist=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon),avg=S.lastSpeed>10?S.lastSpeed:42,min=Math.max(1,Math.round((dist/avg)*60));eta.textContent=new Date(Date.now()+min*60000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});rem.textContent=dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km';lim.textContent=(S.lastSpeed>90?'110':S.lastSpeed>45?'80':'50')+' km/h';const h=new Date().getHours(),cong=(h>=7&&h<=9)||(h>=17&&h<=19);traf.textContent=cong?'Dense':'Fluide';if(bar)bar.style.width=cong?'78%':'32%';lane.textContent=S.nextStep>0?'Suivre':'Tout droit';rec.textContent='Auto'},autoRecalculateRoute(){if(!S.driveMode||!S.routeDest||S.nextStep>=S.routeSteps.length||S.myLat===null)return;const stp=S.routeSteps[Math.min(S.nextStep,S.routeSteps.length-1)];if(!stp)return;const d=km(S.myLat,S.myLng,stp.lat,stp.lon)*1000;if(d>450&&!S._recalcLock){S._recalcLock=true;if($('recalcVal'))$('recalcVal').textContent='...';this.pickDest(S.routeDest.lat,S.routeDest.lon,S.routeDest.name).finally(()=>setTimeout(()=>S._recalcLock=false,12000))}},
 saveCurrentDestination(){if(!S.routeDest)return toast('Aucune destination à enregistrer.','bad');const label=S.routeDest.name||'Destination';S.favorites=S.favorites.filter(f=>f.label!==label);S.favorites.unshift({name:label.split(',')[0],label,lat:S.routeDest.lat,lon:S.routeDest.lon,at:Date.now()});S.favorites=S.favorites.slice(0,20);safeSet('ic_favorites',S.favorites);this.renderFavs();toast('Destination ajoutée aux favoris.','ok')},addGpsHistory(dest){if(!dest)return;S.gpsHistory=S.gpsHistory.filter(h=>h.label!==dest.name);S.gpsHistory.unshift({name:(dest.name||'Destination').split(',')[0],label:dest.name||'',lat:dest.lat,lon:dest.lon,at:Date.now()});S.gpsHistory=S.gpsHistory.slice(0,20);safeSet('ic_gps_history',S.gpsHistory);this.renderHistory()},renderFavs(){const el=$('favMiniList');if(!el)return;el.innerHTML=S.favorites.length?S.favorites.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Favori')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'fav\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun favori.</div>'},renderHistory(){const el=$('historyMiniList');if(!el)return;el.innerHTML=S.gpsHistory.length?S.gpsHistory.slice(0,4).map((f,i)=>'<div class="mini-row"><span><b>'+esc(f.name||'Destination')+'</b><br><small>'+esc((f.label||'').slice(0,42))+'</small></span><button type="button" onclick="App.routeSaved(\'hist\','+i+')">GPS</button></div>').join(''):'<div class="empty-msg">Aucun historique.</div>'},routeSaved(type,i){const f=(type==='fav'?S.favorites:S.gpsHistory)[i];if(!f)return;this.pickDest(f.lat,f.lon,f.label||f.name)},
-async loadOthers(){this.initMap();if(!S.map||!sb)return;S.otherMkrs.forEach(m=>S.map.removeLayer(m));S.otherMkrs=[];let{data:ud}=await sb.auth.getUser(),me=ud?.user;let cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();let q=sb.from('user_locations').select('id,latitude,longitude,updated_at').gte('updated_at',cut);if(me)q=q.neq('id',me.id);let{data:locs}=await q;if(!locs?.length){S.nearby=[];this.renderNearby();this.updateCommunityStatus();return}let ids=locs.map(l=>l.id);let profs=await profilesByIds(ids);let rows=[];locs.forEach(l=>{let p=profs[l.id]||{},pl=nPlate(p.owner_plate),lat=+l.latitude,lng=+l.longitude,dist=null;if(!pl||S.blocked.includes(pl))return;if(S.myLat!==null){dist=km(S.myLat,S.myLng,lat,lng);if(dist>S.radiusKm)return}rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist});this.addRecent(pl,p.vehicle_color,dist);let mk=L.marker([lat,lng],{icon:icon(p.vehicle_color),zIndexOffset:1600,riseOnHover:true}).addTo(S.map);mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});S.otherMkrs.push(mk)});S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;this.renderNearby();this.updateFrontVehicle();this.updateCommunityStatus();this.clusterCloseVehicles()},
-clusterCloseVehicles(){if(!S.otherMkrs?.length)return;const used=new Set();S.otherMkrs.forEach((m,i)=>{if(used.has(i))return;const a=m.getLatLng?.();if(!a)return;let group=[m];S.otherMkrs.forEach((n,j)=>{if(i===j||used.has(j))return;const b=n.getLatLng?.();if(!b)return;if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}});if(group.length>1){group.forEach((g,k)=>{const ll=g.getLatLng(),angle=(k*360/group.length)*Math.PI/180,off=.0001;g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);g.setZIndexOffset(1200+k)})}})},addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;if($('iTarget'))$('iTarget').value=S.selPlate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.updateReportTarget?.();this.panel('contact');this.loadMsgs()},
+async async loadOthers(){
+  this.initMap();
+  if(!S.map||!sb)return;
+
+  // Nettoyage propre des marqueurs distants avant rechargement.
+  (S.otherMkrs||[]).forEach(m=>{try{S.map.removeLayer(m)}catch(e){}});
+  S.otherMkrs=[];
+  S.nearby=[];
+
+  let me=null;
+  try{const r=await sb.auth.getUser();me=r?.data?.user||null}catch(e){console.warn('auth loadOthers',e)}
+
+  const myId=me?.id||S.uid||null;
+  const myPlate=this.ownPlate?.()||nPlate(S.profile?.owner_plate||'');
+  const cut=new Date(Date.now()-CFG.staleMinutes*60000).toISOString();
+
+  // On récupère large puis on filtre côté client pour éviter les bugs RLS/neq et les doublons.
+  const {data:rawLocs,error}=await sb
+    .from('user_locations')
+    .select('id,latitude,longitude,updated_at')
+    .gte('updated_at',cut)
+    .order('updated_at',{ascending:false})
+    .limit(250);
+
+  if(error){console.warn('loadOthers user_locations',error);this.renderNearby();this.updateCommunityStatus();return;}
+
+  const latestByUser=new Map();
+  (rawLocs||[]).forEach(l=>{
+    if(!l||!l.id)return;
+    if(myId&&l.id===myId)return; // ne jamais afficher le compte connecté comme autre véhicule
+    if(!latestByUser.has(l.id))latestByUser.set(l.id,l);
+  });
+
+  const locs=[...latestByUser.values()];
+  if(!locs.length){this.renderNearby();this.updateCommunityStatus();return;}
+
+  const ids=locs.map(l=>l.id);
+  const profs=await profilesByIds(ids);
+  const seenPlates=new Set();
+  const rows=[];
+
+  locs.forEach(l=>{
+    const p=profs[l.id]||{};
+    const pl=nPlate(p.owner_plate);
+    const lat=Number(l.latitude),lng=Number(l.longitude);
+    if(!pl||!Number.isFinite(lat)||!Number.isFinite(lng))return;
+    if(myPlate&&pl===myPlate)return; // évite le doublon quand un ancien compte a la même plaque
+    if(S.blocked.includes(pl))return;
+    if(seenPlates.has(pl))return; // un véhicule = un seul marqueur
+    seenPlates.add(pl);
+
+    let dist=null;
+    if(S.myLat!==null&&S.myLng!==null){
+      dist=km(S.myLat,S.myLng,lat,lng);
+      if(dist>S.radiusKm)return;
+    }
+
+    rows.push({plate:pl,pseudo:p.pseudo||'Conducteur',color:p.vehicle_color||'other',lat,lng,dist,uid:l.id,updated_at:l.updated_at});
+    this.addRecent(pl,p.vehicle_color||'other',dist);
+
+    const mk=L.marker([lat,lng],{
+      icon:icon(p.vehicle_color||'other',false),
+      zIndexOffset:2400,
+      riseOnHover:true
+    }).addTo(S.map);
+
+    mk.bindPopup('<div><b>'+dot(p.vehicle_color)+' '+esc(pl)+'</b><br><small>'+esc(p.pseudo||'Conducteur')+(dist!==null?' · '+Math.round(dist*1000)+' m':'')+'</small><br><button type="button" onclick="App.pickPlate(\''+js(pl)+'\')">Contacter</button></div>');
+    mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});
+    S.otherMkrs.push(mk);
+  });
+
+  S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));
+  S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;
+  this.clusterCloseVehicles();
+  this.renderNearby();
+  this.updateFrontVehicle();
+  this.updateCommunityStatus();
+},
+clusterCloseVehicles(){
+  if(!S.otherMkrs?.length)return;
+  const used=new Set();
+  S.otherMkrs.forEach((m,i)=>{
+    if(used.has(i))return;
+    const a=m.getLatLng?.();
+    if(!a)return;
+    const group=[m];
+    S.otherMkrs.forEach((n,j)=>{
+      if(i===j||used.has(j))return;
+      const b=n.getLatLng?.();
+      if(!b)return;
+      if(km(a.lat,a.lng,b.lat,b.lng)*1000<16){group.push(n);used.add(j)}
+    });
+    if(group.length>1){
+      group.forEach((g,k)=>{
+        const ll=g.getLatLng();
+        const angle=(k*360/group.length)*Math.PI/180;
+        const off=.00011;
+        g.setLatLng([ll.lat+Math.sin(angle)*off,ll.lng+Math.cos(angle)*off]);
+        g.setZIndexOffset(2400+k);
+      });
+    }
+  });
+},addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;if($('iTarget'))$('iTarget').value=S.selPlate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.updateReportTarget?.();this.panel('contact');this.loadMsgs()},
 showVehicleContextMenu(vehicle){const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate;if($('vehicleContextPlate'))$('vehicleContextPlate').textContent='🚗 '+S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;this.updateReportTarget?.()}if(action==='contact'){this.panel('contact');setTimeout(()=>$('iMsg')?.focus(),150)}else if(action==='signal'){this.openReport()}else if(action==='assist'){this.openAssist()}},
 ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target){if(S.selPlate&&S.selPlate!==this.ownPlate())$('iTarget').value=S.selPlate;else return toast('Choisis un autre véhicule.','bad')}$('iMsg').value=t;this.panel('contact')},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
 async sendMsg(){try{
