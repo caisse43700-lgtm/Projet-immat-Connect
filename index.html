@@ -711,7 +711,10 @@ openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_pl
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
-locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible)await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()})},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
+locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
+        await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
+        if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
+      }},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
 async deleteMyLocation(){try{let{data:ud}=await sb.auth.getUser();if(ud?.user)await sb.from('user_locations').delete().eq('id',ud.user.id)}catch(e){}},
 async toggleInvisible(){S.invisible=!S.invisible;set('ic_invisible',S.invisible?'1':'0');if(S.invisible){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;if(S.myMarker&&S.map)S.map.removeLayer(S.myMarker);await this.deleteMyLocation();toast('Invisible : position retirée.','ok')}else this.locate();this.refresh()},
 setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers();this.renderAlerts()},recenter(){S.autoFollow=true;if(S.myLat!==null&&S.map)S.map.setView([S.myLat,S.myLng],S.mapView==='drive'?18:16,{animate:true});else this.locate()},cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer&&S.map)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst')?.classList.remove('show');$('routeMini')?.classList.remove('show');toast('GPS arrêté.','ok')},updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15);this.updateFrontVehicle()},
@@ -747,7 +750,7 @@ async loadOthers(){
   // On récupère large puis on filtre côté client pour éviter les bugs RLS/neq et les doublons.
   const {data:rawLocs,error}=await sb
     .from('user_locations')
-    .select('id,latitude,longitude,updated_at')
+    .select('id,user_name,latitude,longitude,updated_at')
     .gte('updated_at',cut)
     .order('updated_at',{ascending:false})
     .limit(250);
@@ -758,8 +761,9 @@ async loadOthers(){
   const latestByUser=new Map();
   (rawLocs||[]).forEach(l=>{
     if(!l||!l.id)return;
-    if(myId&&l.id===myId)return; // ne jamais afficher le compte connecté comme autre véhicule
-    if(!latestByUser.has(l.id))latestByUser.set(l.id,l);
+    if(myId&&String(l.id)===String(myId))return; // ne jamais afficher le compte connecté comme autre véhicule
+    const prev=latestByUser.get(l.id);
+    if(!prev || new Date(l.updated_at||0)>new Date(prev.updated_at||0)) latestByUser.set(l.id,l);
   });
 
   const locs=[...latestByUser.values()];
@@ -773,10 +777,14 @@ async loadOthers(){
 
   locs.forEach(l=>{
     const p=profs[l.id]||{};
-    const pl=nPlate(p.owner_plate);
+    let pl=nPlate(p.owner_plate);
     const lat=Number(l.latitude),lng=Number(l.longitude);
-    if(!pl||!Number.isFinite(lat)||!Number.isFinite(lng))return;
-    if(myPlate&&pl===myPlate)return; // évite le doublon quand un ancien compte a la même plaque
+    if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+    // Si le profil est momentanément invisible à cause des RLS, on affiche quand même le véhicule.
+    // Dès que le profil redevient lisible, la vraie plaque reprend le dessus.
+    if(!pl) pl='VEH-'+String(l.id).slice(0,4).toUpperCase();
+    // Ne jamais utiliser la plaque seule pour exclure un véhicule : deux comptes de test peuvent avoir la même immat.
+    // L'exclusion fiable se fait par user.id juste au-dessus.
     if(S.blocked.includes(pl))return;
     if(seenPlates.has(pl))return; // un véhicule = un seul marqueur
     seenPlates.add(pl);
@@ -803,6 +811,7 @@ async loadOthers(){
   });
 
   S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));
+  try{console.info('[ImmatConnect] véhicules détectés',S.nearby.map(v=>v.plate));}catch(e){}
   S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;
   this.clusterCloseVehicles();
   this.renderNearby();
