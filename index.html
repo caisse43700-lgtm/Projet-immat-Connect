@@ -865,13 +865,95 @@ async sendMsg(){try{
   $('iMsg').value='';S.conv=receiverPlate;S.selPlate=receiverPlate;if($('iTarget'))$('iTarget').value=receiverPlate;
   toast(acc?'Message envoyé à '+receiverPlate+'.':'Demande envoyée à '+receiverPlate+'.','ok');this.loadMsgs();
 }catch(e){console.error(e);toast('Erreur message.','bad')}},
-async startMsgs(){await this.loadMsgs();await this.subMsgs()},async loadMsgs(){let box=$('chatBox'),{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u||!box)return;let{data,error}=await sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).neq('status','rejected').order('created_at',{ascending:true}).limit(150);if(error){console.warn('loadMsgs',error);return}const profs=await profilesByIds((data||[]).flatMap(m=>[m.sender_id,m.receiver_id]));let rows=(data||[]).map(m=>{const sent=m.sender_id===u.id;const senderPlate=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate);const receiverPlate=nPlate(m.receiver_plate||m.to_plate||profs[m.receiver_id]?.owner_plate||m.target_plate);m._senderPlate=senderPlate;m._receiverPlate=receiverPlate;m._convPlate=sent?receiverPlate:senderPlate;m._displayPlate=m._convPlate||'PLAQUE INCONNUE';return m}).filter(m=>m._displayPlate&&!S.blocked.includes(m._displayPlate));this.renderConv(rows);if(S.conv!=='all')rows=rows.filter(m=>m._displayPlate===S.conv||m._convPlate===S.conv);box.innerHTML=rows.length?rows.map(m=>this.msgHtml(m,u.id)).join(''):'<div class="empty-msg">Aucun message.</div>';box.scrollTop=box.scrollHeight},
-renderConv(rows){let ps=[...new Set(rows.map(m=>m._displayPlate||m._convPlate).filter(Boolean))];$('convbar').innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('')},setConv(p){S.conv=p;if(p!=='all')$('iTarget').value=p;this.loadMsgs()},
-msgHtml(m,my){let sent=m.sender_id===my,p=m._displayPlate||m._convPlate||nPlate(m.target_plate),status=m.status||'accepted',isSignal=looksLikeVehicleSignal(m),score=trustGet(p),title=sent?'Envoyé au véhicule '+p:(isSignal?'Signalement reçu de '+p:'Reçu du véhicule '+p),time=m.created_at?new Date(m.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'',acts='',rep='',feedback='';if(!sent&&m.receiver_id===my&&status==='pending')acts='<button type="button" class="tiny-btn tiny-ok" onclick="App.accept(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\')">Accepter</button><button type="button" class="tiny-btn tiny-no" onclick="App.reject(\''+js(m.id)+'\')">Refuser</button>';if(!sent&&status==='accepted'){let tid='ta_'+String(m.id).replace(/\W/g,'');rep='<textarea id="'+tid+'" class="msg-textarea" style="margin-top:6px" placeholder="Répondre…"></textarea><button type="button" class="tiny-btn tiny-ok" onclick="App.reply(\''+js(m.sender_id)+'\',\''+js(p)+'\',\''+tid+'\')">Répondre</button>'}if(!sent&&isSignal){feedback='<div style="margin-top:8px;padding:8px;border-radius:13px;background:#f4f7fb;border:1px solid #e1e7ef"><b>Info utile ?</b><br><small>Note confiance expéditeur : '+score+'%</small><br><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'utile\')">✅ Info utile</button><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'regle\')">Déjà réglé</button><button type="button" class="tiny-btn tiny-no" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'faux\')">Faux signalement</button></div>'}return'<div class="msg-bubble '+(sent?'msg-sent':'msg-recv')+'"><div class="msg-lbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+feedback+rep+'<div><button type="button" class="tiny-btn tiny-no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button type="button" class="tiny-btn tiny-no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="msg-time">'+esc(time)+'</div></div>'},
+async startMsgs(){await this.loadMsgs();await this.subMsgs()},
+async loadMsgs(){
+  const box=$('chatBox');
+  const {data:ud}=await sb.auth.getUser();
+  const u=ud?.user;
+  if(!u||!box)return;
+  const myPlate=this.ownPlate();
+  const buckets=[];
+  async function q(label,build){
+    try{
+      const {data,error}=await build();
+      if(error){console.warn('loadMsgs '+label,error.message||error);return}
+      if(Array.isArray(data))buckets.push(...data);
+    }catch(e){console.warn('loadMsgs '+label,e)}
+  }
+  await q('ids',()=>sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+  if(myPlate){
+    await q('target_plate',()=>sb.from('messages').select('*').eq('target_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+    await q('sender_plate',()=>sb.from('messages').select('*').eq('sender_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+    await q('receiver_plate',()=>sb.from('messages').select('*').eq('receiver_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+    await q('from_plate',()=>sb.from('messages').select('*').eq('from_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+    await q('to_plate',()=>sb.from('messages').select('*').eq('to_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
+  }
+  const byId=new Map();
+  buckets.forEach(m=>{if(m&&m.id&&!byId.has(m.id))byId.set(m.id,m)});
+  const data=[...byId.values()].sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+  const profs=await profilesByIds(data.flatMap(m=>[m.sender_id,m.receiver_id]));
+  let rows=data.map(m=>{
+    const senderPlate=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
+    const receiverPlate=nPlate(m.receiver_plate||m.to_plate||profs[m.receiver_id]?.owner_plate||m.target_plate||'');
+    const sent=(m.sender_id===u.id)||(myPlate&&senderPlate===myPlate);
+    const received=(m.receiver_id===u.id)||(myPlate&&(receiverPlate===myPlate||nPlate(m.target_plate)===myPlate));
+    m._senderPlate=senderPlate||'PLAQUE INCONNUE';
+    m._receiverPlate=receiverPlate||nPlate(m.target_plate)||'PLAQUE INCONNUE';
+    m._sent=sent&&!received?true:sent;
+    m._received=received;
+    m._convPlate=(received&&!sent)?m._senderPlate:m._receiverPlate;
+    if(sent&&received)m._convPlate=m._receiverPlate!==myPlate?m._receiverPlate:m._senderPlate;
+    m._displayPlate=m._convPlate||'PLAQUE INCONNUE';
+    return m;
+  }).filter(m=>m._displayPlate&&!S.blocked.includes(m._displayPlate));
+  this.renderConv(rows);
+  if(S.conv!=='all')rows=rows.filter(m=>m._displayPlate===S.conv||m._convPlate===S.conv||m._senderPlate===S.conv||m._receiverPlate===S.conv);
+  box.innerHTML=rows.length?rows.map(m=>this.msgHtml(m,u.id)).join(''):'<div class="empty-msg">Aucun message.</div>';
+  box.scrollTop=box.scrollHeight;
+},
+renderConv(rows){
+  const ps=[...new Set(rows.map(m=>m._displayPlate||m._convPlate).filter(Boolean))];
+  const bar=$('convbar');
+  if(!bar)return;
+  bar.innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('');
+},
+setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;this.loadMsgs()},
+msgHtml(m,my){
+  const sent=!!m._sent;
+  const p=sent?m._receiverPlate:m._senderPlate;
+  const status=m.status||'accepted';
+  const title=sent?'Envoyé au véhicule '+p:'Reçu du véhicule '+p;
+  const time=m.created_at?new Date(m.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+  let acts='',rep='';
+  if(!sent&&m.receiver_id===my&&status==='pending')acts='<button type="button" class="tiny-btn tiny-ok" onclick="App.accept(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\')">Accepter</button><button type="button" class="tiny-btn tiny-no" onclick="App.reject(\''+js(m.id)+'\')">Refuser</button>';
+  if(!sent&&(status==='accepted'||status==='pending')){
+    const tid='ta_'+String(m.id).replace(/\W/g,'');
+    rep='<textarea id="'+tid+'" class="msg-textarea" style="margin-top:6px" placeholder="Répondre…"></textarea><button type="button" class="tiny-btn tiny-ok" onclick="App.reply(\''+js(m.sender_id)+'\',\''+js(p)+'\',\''+tid+'\')">Répondre</button>';
+  }
+  const feedback=!sent&&String(m.message||'').startsWith('⚠️')?'<div><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'utile\')">Info utile</button><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'regle\')">Déjà réglé</button><button type="button" class="tiny-btn tiny-no" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'faux\')">Faux signalement</button></div>':'';
+  return'<div class="msg-bubble '+(sent?'msg-sent':'msg-recv')+'"><div class="msg-lbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+feedback+rep+'<div><button type="button" class="tiny-btn tiny-no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button type="button" class="tiny-btn tiny-no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="msg-time">'+esc(time)+'</div></div>';
+},
 signalFeedback:async function(id,sender,plate,kind){let delta=0,label='Merci';if(kind==='utile'){delta=8;label='✅ Info utile'}else if(kind==='regle'){delta=3;label='👌 Déjà réglé'}else if(kind==='faux'){delta=-12;label='❌ Faux signalement'}const score=trustDelta(plate,delta);try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&sender)await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:sender,target_plate:plate,message:label+' — note confiance actuelle : '+score+'%',status:'accepted'})}catch(e){}toast(label+' · confiance '+score+'%','ok');this.loadMsgs()},
 async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact a été acceptée.',status:'accepted'});this.loadMsgs()},async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;await sb.from('messages').update({status:'rejected'}).eq('id',id);toast('Message supprimé.','ok');this.loadMsgs()},
 async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;let{data:ud}=await sb.auth.getUser(),u=ud.user;let{data:rows}=await sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id);const profs=await profilesByIds((rows||[]).flatMap(m=>[m.sender_id,m.receiver_id]));const ids=(rows||[]).filter(m=>{const sent=m.sender_id===u.id;const senderPlate=nPlate(profs[m.sender_id]?.owner_plate);const receiverPlate=nPlate(profs[m.receiver_id]?.owner_plate||m.target_plate);const conv=sent?nPlate(m.receiver_plate||m.to_plate||m.target_plate||receiverPlate):nPlate(m.sender_plate||m.from_plate||senderPlate);return conv===S.conv}).map(m=>m.id);for(const id of ids)await sb.from('messages').update({status:'rejected'}).eq('id',id);S.conv='all';toast('Conversation supprimée.','ok');this.loadMsgs()},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');$('iTarget').value=S.conv;$('iMsg').value=t;this.panel('contact')},
-async subMsgs(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;if(S.chMsg)await sb.removeChannel(S.chMsg);S.chMsg=sb.channel('ic_msg_'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages'},async p=>{let m=p.new||p.old;if(!m||m.sender_id!==u.id&&m.receiver_id!==u.id)return;if(p.eventType==='INSERT'&&m.receiver_id===u.id){setUnreadMsgCount((S.unreadMsgCount||0)+1);let profs=await profilesByIds([m.sender_id]);let pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+pl,pl)}this.loadMsgs()}).subscribe()},notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
+async subMsgs(){
+  const {data:ud}=await sb.auth.getUser(),u=ud?.user;
+  if(!u)return;
+  if(S.chMsg)await sb.removeChannel(S.chMsg);
+  S.chMsg=sb.channel('ic_msg_'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages'},async p=>{
+    const m=p.new||p.old;if(!m)return;
+    const myPlate=this.ownPlate();
+    const mine=m.sender_id===u.id||m.receiver_id===u.id||nPlate(m.target_plate)===myPlate||nPlate(m.receiver_plate)===myPlate||nPlate(m.to_plate)===myPlate||nPlate(m.sender_plate)===myPlate||nPlate(m.from_plate)===myPlate;
+    if(!mine)return;
+    if(p.eventType==='INSERT'&&(m.receiver_id===u.id||nPlate(m.target_plate)===myPlate||nPlate(m.receiver_plate)===myPlate||nPlate(m.to_plate)===myPlate)){
+      setUnreadMsgCount((S.unreadMsgCount||0)+1);
+      const profs=await profilesByIds([m.sender_id]);
+      const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
+      this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl);
+    }
+    this.loadMsgs();
+  }).subscribe();
+},notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
 async subLocs(){if(!sb)return;if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if($('appScreen').classList.contains('active'))this.loadOthers()}).subscribe()},async subReports(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let{data:p}=await sb.from('profiles').select('owner_plate').eq('id',u.id).maybeSingle(),my=nPlate(p?.owner_plate);if(!my)return;if(S.chReports)await sb.removeChannel(S.chReports);S.chReports=sb.channel('ic_reports_'+u.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},x=>{if(nPlate(x.new?.plate)===my)toast('⚠️ Alerte signalée sur ton véhicule.','bad')}).subscribe()},
 addCommunityAlert(raw,opts={}){if(!raw)return null;const type=raw.type||inferType(raw.reason||raw.label||raw.plate),meta=cat(type),at=raw.at?Number(raw.at):(raw.created_at?new Date(raw.created_at).getTime():Date.now());const alert={id:raw.id||raw.remoteId||('al_'+Date.now()+'_'+Math.random().toString(16).slice(2)),remoteId:raw.remoteId||raw.id||null,type,label:raw.label||meta.label,reason:(raw.reason||raw.label||meta.label).replace(/^\[[^\]]+\]\s*/,'').trim(),level:raw.level||meta.level,group:raw.group||meta.group,plate:nPlate(raw.plate||''),lat:raw.lat!=null?Number(raw.lat):(raw.latitude!=null?Number(raw.latitude):null),lng:raw.lng!=null?Number(raw.lng):(raw.longitude!=null?Number(raw.longitude):null),at};const key=alertKey(alert);if(S.alerts.some(a=>alertKey(a)===key))return alert;if(Date.now()-alert.at>ttlFor(alert.type))return null;S.alerts.unshift(alert);S.alerts=S.alerts.slice(0,80);S.alertHistory.unshift({...alert,seenAt:Date.now()});S.alertHistory=S.alertHistory.slice(0,150);saveAlerts();if(alert.lat!=null&&alert.lng!=null)this.addCommunityAlertMarker(alert);this.renderAlerts();this.renderMyAlertsBlock();this.updateCommunityStatus();if(opts.notify&&isNearby(alert))notifyAlert(meta.icon+' '+meta.label,alert.reason,alert.level);return alert},
 addCommunityAlertMarker(a){if(!S.map||a.lat==null||a.lng==null)return;if(S.alertMarkersById[a.id])return;const meta=cat(a.type),color=a.level==='urgent'?'#ff2d55':a.level==='important'?'#ff9500':'#10161d';const marker=L.marker([a.lat,a.lng],{icon:L.divIcon({html:'<div class="road-pin" style="background:'+color+';padding:6px;border-radius:12px">'+meta.icon+'</div>',iconSize:[38,38],iconAnchor:[19,19],className:''})}).addTo(S.map);marker.bindPopup('<b>'+esc(meta.icon+' '+(a.label||meta.label))+'</b><br><small>'+esc(a.reason||'Signalement')+'</small><br><button type="button" onclick="App.dismissAlert(\''+js(a.id)+'\')">Retirer</button>');S.alertMarkersById[a.id]=marker},
