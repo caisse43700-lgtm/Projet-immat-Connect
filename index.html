@@ -540,21 +540,62 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
 }
 
 
-/* ===== Flow Pro confirmation du dernier signalement ===== */
-.signal-confirm-box,.signal-evaluate-box{margin-top:14px;border-radius:18px;background:#132033;border:1px solid #2a3c56;padding:12px}
-.signal-question{font-weight:950;color:#eef6ff;font-size:14px;margin-bottom:10px}
-.signal-confirm-actions,.signal-evaluate-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.signal-evaluate-actions{grid-template-columns:1fr 1fr 1fr}
-.signal-confirm-actions button,.signal-evaluate-actions button{min-height:46px;border-radius:15px;font-weight:950;font-size:13px;background:transparent}
-.signal-confirm-actions .confirm,.signal-evaluate-actions .useful{border:1.5px solid #00d491;color:#00d491;background:rgba(0,212,145,.08)}
-.signal-confirm-actions .later{border:1.5px solid #ffb020;color:#ffb020;background:rgba(255,176,32,.08)}
-.signal-evaluate-actions .neutral{border:1.5px solid #9aacc2;color:#c6d3e2;background:rgba(154,172,194,.08)}
-.signal-evaluate-actions .false{border:1.5px solid #ff3b5c;color:#ff7f96;background:rgba(255,59,92,.08)}
-.signal-feedback-note{margin-top:10px;color:#9aacc2;font-size:12px;line-height:1.35}
-.signal-state.confirmed{border-color:#00d491!important;color:#00d491!important;background:rgba(0,212,145,.08)!important}
-.signal-state.pending{border-color:#ffb020!important;color:#ffb020!important;background:rgba(255,176,32,.08)!important}
-.signal-state.false{border-color:#ff3b5c!important;color:#ff7f96!important;background:rgba(255,59,92,.08)!important}
-@media(max-width:390px){.signal-evaluate-actions{grid-template-columns:1fr}.signal-confirm-actions{grid-template-columns:1fr}}
+/* ===== Notification fiabilité ===== */
+.reputation-toast{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:110px;
+  background:#0f1a26;
+  color:#fff;
+  padding:14px 18px;
+  border-radius:18px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+  z-index:9999;
+  display:none;
+  font-weight:900;
+  text-align:center;
+}
+.reputation-toast.show{
+  display:block;
+}
+.reputation-toast b{
+  color:#00ffb3;
+  display:block;
+  margin-bottom:4px;
+}
+
+
+/* ===== Compteur + notification fiabilité conducteur ===== */
+.reliability-mini-card{
+  background:#101b2b;
+  border:1px solid #2a3c56;
+  border-radius:16px;
+  padding:10px 12px;
+  margin-top:10px;
+  color:#eef6ff;
+  font-size:12px;
+}
+.reliability-mini-card b{
+  color:#00ffb3;
+  font-size:16px;
+}
+.reliability-mini-card small{
+  color:#9aacc2;
+  display:block;
+  margin-top:3px;
+}
+.reliability-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:7px 10px;
+  background:rgba(0,255,179,.12);
+  color:#00ffb3;
+  font-weight:950;
+  margin-top:8px;
+}
 
 </style>
 </head>
@@ -565,7 +606,7 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
 <section id="sr" class="auth-screen"><div class="app-card"><h1 class="title">Nouveau mot de passe</h1><div class="field"><input id="iNewPwd" class="input" type="password" placeholder="Nouveau mot de passe"></div><div class="field"><input id="iNewCfm" class="input" type="password" placeholder="Confirmer"></div><button type="button" class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><div id="resetSt" class="status-msg"></div></div></section>
 <section id="appScreen"><div id="map"></div><div class="shade"></div><div class="top top-exact"><button type="button" class="round menu-round" onclick="App.openDrawer()" aria-label="Menu">☰</button><button type="button" class="top-mail-btn" onclick="App.openInboxBadge()" aria-label="Messages et signalements"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 6h52v36H6z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M8 8l24 20L56 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="topMsgBadge" class="top-msg-badge">0</span></button><div id="communityStatus" class="top-status-pill" aria-label="Statut communauté"></div><div class="logo-top">Immat<span>Connect</span> Pro</div></div><div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div><div class="actions" id="actions"><button type="button" title="Recherche" onclick="App.openGps()">🔍</button><button type="button" class="report-btn" title="Signaler" onclick="App.openReport()">⚠️</button><button type="button" title="Conducteurs" onclick="App.openNearby()">👥</button><button type="button" class="center-btn" title="Carte" onclick="App.cycleView()">🗺</button></div><div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button type="button" onclick="App.contactFrontVehicle()">Contacter</button></div><div id="vehicleContextMenu" class="vehicle-context-menu"><div id="vehicleContextPlate" class="vehicle-context-plate">Véhicule</div><button type="button" class="vehicle-bubble contact-main" onclick="App.vehicleContextAction('contact')">☎ Contacter</button><button type="button" class="vehicle-bubble alert-main" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button></div><div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
 <div id="sheet" class="sheet mini"><button type="button" id="sheetArrowOpen" onclick="App.openSheet()">⌃</button><button type="button" class="sheet-close" onclick="App.closeSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile-row"><div><div id="tbPlate" class="plate-lbl"></div><div id="tbPseudo" class="pseudo-lbl"></div></div><select id="radiusSel" class="radius-sel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="sheet-nav alert-tabs"><button type="button" id="tabAltet" class="on" onclick="App.panel('altet')">Alerte</button><button type="button" id="tabDrive" onclick="App.panel('drive')">GPS</button><button type="button" id="tabContact" onclick="App.panel('contact')">Message</button><button type="button" id="tabMessages" onclick="App.panel('messages')">Reçus</button><button type="button" id="tabSettings" onclick="App.panel('settings')">Options</button></div>
-<div id="panelAltet" class="panel altet-panel on"><div class="altet-card"><div class="altet-my-head"><span>⚠️ Mes alertes</span><button type="button" onclick="App.panel('altet')">Gérer</button></div><div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div></div><div id="signalRecapCard" class="signal-recap-card"><div class="signal-recap-head"><span>✉️ Récapitulatif du dernier signalement</span><span class="chev">⌃</span></div><div class="signal-recap-body"><div class="signal-recap-top"><div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div><div id="recapStatus" class="signal-state">En attente</div></div><div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div><div id="recapTime" class="signal-time">◷ Aucun message.</div><div id="recapConfirmBox" class="signal-confirm-box"><div class="signal-question">Avez-vous pu vérifier votre véhicule ?</div><div class="signal-confirm-actions"><button type="button" class="confirm" onclick="App.confirmLastVehicleAlert()">✅ Oui, confirmé</button><button type="button" class="later" onclick="App.askLaterLastVehicleAlert()">⏰ Plus tard</button></div></div><div id="recapEvaluateBox" class="signal-evaluate-box hidden"><div class="signal-question">Ce signalement était-il pertinent ?</div><div class="signal-evaluate-actions"><button type="button" class="useful" onclick="App.respondLastVehicleAlert('utile')">👍 Utile</button><button type="button" class="neutral" onclick="App.respondLastVehicleAlert('inutile')">👎 Inutile</button><button type="button" class="false" onclick="App.respondLastVehicleAlert('faux')">⚠️ Faux signalement</button></div><div id="recapFeedbackNote" class="signal-feedback-note"></div></div></div></div><div class="altet-active-card"><div class="altet-active-head"><h2>Alertes actives</h2><button type="button" class="altet-close" onclick="App.closeSheet()">×</button></div><div id="alertsToolbar" class="alert-filter-pills"></div><div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details></div><div class="quick-reply-row altet-quick"><button type="button" onclick="App.respondLastVehicleAlert('utile')"><span>👍</span>Info utile</button><button type="button" onclick="App.respondLastVehicleAlert('merci')"><span>✅</span>Merci</button><button type="button" onclick="App.respondLastVehicleAlert('recu')"><span>✓</span>Reçu</button></div></div>
+<div id="panelAltet" class="panel altet-panel on"><div class="altet-card"><div class="altet-my-head"><span>⚠️ Mes alertes</span><button type="button" onclick="App.panel('altet')">Gérer</button></div><div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div></div><div id="signalRecapCard" class="signal-recap-card"><div class="signal-recap-head"><span>✉️ Récapitulatif du dernier signalement</span><span class="chev">⌃</span></div><div class="signal-recap-body"><div class="signal-recap-top"><div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div><div id="recapStatus" class="signal-state">En attente</div></div><div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div><div id="recapTime" class="signal-time">◷ Aucun message.</div><div class="signal-actions"><button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('merci')">✅ Merci</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button><button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button><button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button></div></div></div><div class="altet-active-card"><div class="altet-active-head"><h2>Alertes actives</h2><button type="button" class="altet-close" onclick="App.closeSheet()">×</button></div><div id="alertsToolbar" class="alert-filter-pills"></div><div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details></div><div class="quick-reply-row altet-quick"><button type="button" onclick="App.respondLastVehicleAlert('utile')"><span>👍</span>Info utile</button><button type="button" onclick="App.respondLastVehicleAlert('merci')"><span>✅</span>Merci</button><button type="button" onclick="App.respondLastVehicleAlert('recu')"><span>✓</span>Reçu</button></div></div>
 <div id="panelDrive" class="panel"><div class="section-lbl">Recherche GPS</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Limite</div><div class="nav-card"><b id="trafficVal">--</b>Trafic</div><div class="nav-card"><b id="laneVal">--</b>Voie</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
 <div id="panelContact" class="panel"><div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
 <div id="panelMessages" class="panel"><div class="section-lbl">Messages</div><div id="convbar" class="conv-bar"></div><div class="msg-tools"><button type="button" onclick="App.markRead()">Marquer lu</button><button type="button" class="danger" onclick="App.deleteConv()">Supprimer conv.</button></div><div id="chatBox" class="chat-box"><div class="empty-msg">Aucun message.</div></div><div class="quick-reply-row"><button type="button" onclick="App.quickReply('Merci, je vérifie.')">Merci</button><button type="button" onclick="App.quickReply('Bien reçu.')">Reçu</button><button type="button" onclick="App.quickReply('Je m\'arrête dès que possible.')">Je m'arrête</button></div></div>
@@ -1052,12 +1093,9 @@ syncVehicleAlertsFromMessages(rows){
     if(changed){S.alerts=S.alerts.slice(0,80);S.alertHistory=S.alertHistory.slice(0,150);saveAlerts();this.renderMyAlertsBlock();this.renderAlerts();this.updateCommunityStatus();}
   }catch(e){console.warn('syncVehicleAlertsFromMessages',e)}
 },
-alertFeedbackLabel(kind){if(kind==='utile')return{label:'👍 Signalement utile',delta:8,status:'rated'};if(kind==='inutile')return{label:'👎 Signalement inutile',delta:-2,status:'rated'};if(kind==='faux')return{label:'⚠️ Faux signalement',delta:-12,status:'rated'};if(kind==='merci')return{label:'🙏 Merci',delta:5,status:'rated'};if(kind==='recu')return{label:'✅ Reçu',delta:3,status:'confirmed'};if(kind==='regle')return{label:'👌 Déjà réglé',delta:2,status:'rated'};return{label:'👁️ Vu',delta:1,status:'confirmed'}},
-async respondVehicleAlert(id,kind){const a=(S.alerts||[]).find(x=>String(x.id)===String(id));if(!a)return toast('Alerte introuvable.','bad');const fb=this.alertFeedbackLabel(kind);a.status=fb.status||'rated';a.confirmed_at=a.confirmed_at||Date.now();a.feedback=fb.label;a.feedback_kind=kind;a.feedback_at=Date.now();const reporterPlate=nPlate(a.reporter_plate||a.from_plate||a.sender_plate||a.plate||'');const score=trustDelta(reporterPlate,fb.delta);saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();try{const{data:ud}=await sb.auth.getUser();if(ud?.user&&a.sender_id){await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:a.sender_id,target_plate:reporterPlate,receiver_plate:reporterPlate,message:fb.label+' — retour sur votre signalement · fiabilité actuelle : '+score+'%',status:'accepted'})}}catch(e){console.warn('respondVehicleAlert message',e)}toast(fb.label+' · fiabilité émetteur '+score+'%','ok')},
+alertFeedbackLabel(kind){if(kind==='utile')return{label:'✅ Info utile',delta:8,status:'seen'};if(kind==='merci')return{label:'🙏 Merci',delta:5,status:'seen'};if(kind==='recu')return{label:'✅ Reçu',delta:3,status:'seen'};if(kind==='regle')return{label:'👌 Déjà réglé',delta:2,status:'seen'};if(kind==='faux')return{label:'❌ Faux signalement',delta:-12,status:'seen'};return{label:'👁️ Vu',delta:1,status:'seen'}},
+async respondVehicleAlert(id,kind){const a=(S.alerts||[]).find(x=>String(x.id)===String(id));if(!a)return toast('Alerte introuvable.','bad');const fb=this.alertFeedbackLabel(kind);a.status=fb.status||'seen';a.feedback=fb.label;a.feedback_at=Date.now();const plate=nPlate(a.from_plate||a.sender_plate||a.plate||'');const score=trustDelta(plate,fb.delta);saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();try{const{data:ud}=await sb.auth.getUser();if(ud?.user&&a.sender_id){await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:a.sender_id,target_plate:plate,receiver_plate:plate,message:fb.label+' — note confiance actuelle : '+score+'%',status:'accepted'})}}catch(e){console.warn('respondVehicleAlert message',e)}toast(fb.label+' · confiance '+score+'%','ok')},
 respondLastVehicleAlert(kind){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(!a)return toast('Aucun signalement à répondre.','bad');return this.respondVehicleAlert(a.id,kind)},
-confirmLastVehicleAlert(){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(!a)return toast('Aucun signalement à confirmer.','bad');a.status='confirmed';a.confirmed_at=Date.now();saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Vérification confirmée. Vous pouvez maintenant évaluer le signalement.','ok')},
-askLaterLastVehicleAlert(){const a=(S.alerts||[]).filter(x=>x.group==='vehicle'||x.type==='vehicule').sort((x,y)=>(y.at||0)-(x.at||0))[0];if(!a)return toast('Aucun signalement en attente.','bad');a.status='pending';saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Signalement gardé en attente.','ok')},
-
 renderMyAlertsBlock(){
   const list=$('myAlertsList');
   if(!list)return;
@@ -1094,21 +1132,18 @@ renderSignalRecap(){
   const a=rows[0]||null;
   if(!$('signalRecapCard'))return;
   const plate=a?nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''):'--';
+  const status=a&&a.status==='seen'?'Vu':'En attente';
   const reason=a?(a.reason||'Signalement reçu'):'Aucun signalement reçu';
   const ago=a?this.relativeTime(a.at||Date.now()):'Aucun message.';
-  const confirmed=!!(a&&(a.status==='confirmed'||a.status==='rated'||a.feedback));
-  const rated=!!(a&&a.feedback);
-  let status='En attente',cls='pending';
-  if(rated){status=(a.feedback_kind==='faux')?'Faux signalement':(a.feedback_kind==='inutile'?'Inutile':'Utile');cls=(a.feedback_kind==='faux')?'false':'confirmed'}
-  else if(confirmed){status='Confirmé';cls='confirmed'}
   if($('recapPlate'))$('recapPlate').textContent=plate||'--';
   if($('recapSub'))$('recapSub').textContent='Immatriculation : '+(plate||'--');
-  if($('recapStatus')){$('recapStatus').textContent=status;$('recapStatus').classList.remove('pending','confirmed','false');$('recapStatus').classList.add(cls)}
+  if($('recapStatus')){
+    $('recapStatus').textContent=status;
+    $('recapStatus').style.borderColor=status==='Vu'?'#00d491':'#ffb020';
+    $('recapStatus').style.color=status==='Vu'?'#00d491':'#ffb020';
+  }
   if($('recapReason'))$('recapReason').textContent=reason;
   if($('recapTime'))$('recapTime').textContent=a?'◷ Reçu '+ago:'◷ Aucun message.';
-  if($('recapConfirmBox'))$('recapConfirmBox').classList.toggle('hidden',!a||confirmed);
-  if($('recapEvaluateBox'))$('recapEvaluateBox').classList.toggle('hidden',!a||!confirmed);
-  if($('recapFeedbackNote'))$('recapFeedbackNote').textContent=rated?('Retour enregistré : '+a.feedback+'. La fiabilité est appliquée au conducteur qui a envoyé l’information.'):'Votre retour ajustera la fiabilité du conducteur qui a envoyé l’information.';
 },
 relativeTime(ts){
   const d=Math.max(0,Date.now()-Number(ts||Date.now())),m=Math.floor(d/60000);
@@ -1153,5 +1188,152 @@ if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.sh
 async function boot(){try{window.App=App;bind();App.setMode('login');if(!sb){toast('Supabase non chargé.','bad');App.show('sw');return}if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');let{data}=await withTimeout(sb.auth.getSession(),10000,'Session Supabase indisponible.');if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){console.error('BOOT_ERROR',e);App.show('sw');toast('Erreur de démarrage.','bad');st('authSt',authMessage(e),'error')}}
 boot();
 </script>
+
+<div id="reputationToast" class="reputation-toast">
+  <b>🏆 Fiabilité augmentée</b>
+  Votre signalement a été confirmé utile.
+</div>
+
+<script>
+function showReputationToast(){
+  const toast = document.getElementById('reputationToast');
+  if(!toast) return;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 4000);
+}
+</script>
+
+
+<script>
+/* ===== Fiabilité PRO : récompense l'expéditeur du signalement ===== */
+(function(){
+  function reliabilityLevel(score){
+    score = Number(score || 0);
+    if(score >= 90) return "Expert communauté";
+    if(score >= 75) return "Conducteur fiable";
+    if(score >= 55) return "Contributeur confirmé";
+    if(score >= 35) return "Nouveau contributeur";
+    return "Fiabilité à construire";
+  }
+
+  window.AppReliabilityPro = {
+    level: reliabilityLevel,
+
+    async rewardReporter(messageId, reporterId, targetPlate, feedbackKind){
+      try{
+        if(!window.sb || !reporterId) return null;
+
+        const positive = feedbackKind === "utile";
+        const neutral = feedbackKind === "regle" || feedbackKind === "inutile";
+        const delta = positive ? 1 : (neutral ? 0 : -1);
+
+        let oldScore = 50;
+        let newScore = oldScore;
+
+        // 1) Lire le profil du conducteur qui a envoyé l'information
+        let profile = null;
+        try{
+          const r = await sb.from("profiles")
+            .select("id,reliability_score,reliability_points,owner_plate")
+            .eq("id", reporterId)
+            .maybeSingle();
+          profile = r && r.data ? r.data : null;
+        }catch(e){}
+
+        const oldPoints = Number(profile && profile.reliability_points != null ? profile.reliability_points : 0);
+        const nextPoints = Math.max(0, oldPoints + delta);
+
+        if(profile && profile.reliability_score != null){
+          oldScore = Number(profile.reliability_score || 50);
+          newScore = Math.max(0, Math.min(100, oldScore + (positive ? 1 : (feedbackKind === "faux" ? -2 : 0))));
+        }else{
+          oldScore = Math.max(0, Math.min(100, 50 + oldPoints));
+          newScore = Math.max(0, Math.min(100, 50 + nextPoints));
+        }
+
+        const lvl = reliabilityLevel(newScore);
+        const plateTxt = targetPlate ? (" concernant " + targetPlate) : "";
+
+        // 2) Essayer de mettre à jour le compteur persistant du reporter
+        try{
+          await sb.from("profiles")
+            .update({
+              reliability_points: nextPoints,
+              reliability_score: newScore,
+              reliability_level: lvl
+            })
+            .eq("id", reporterId);
+        }catch(e){}
+
+        // 3) Marquer le feedback sur le message original si les colonnes existent
+        try{
+          await sb.from("messages")
+            .update({
+              feedback: feedbackKind,
+              feedback_score_delta: delta,
+              feedback_at: new Date().toISOString()
+            })
+            .eq("id", messageId);
+        }catch(e){}
+
+        // 4) Envoyer une notification/message au conducteur qui a aidé
+        let text;
+        if(positive){
+          text = "🏆 Votre signalement" + plateTxt + " a été confirmé utile. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else if(feedbackKind === "faux"){
+          text = "⚠️ Votre signalement" + plateTxt + " a été marqué comme faux. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else{
+          text = "ℹ️ Retour reçu pour votre signalement" + plateTxt + ". Fiabilité : " + newScore + "%. Niveau : " + lvl + ".";
+        }
+
+        try{
+          const auth = await sb.auth.getUser();
+          const me = auth && auth.data && auth.data.user ? auth.data.user : null;
+          if(me){
+            await sb.from("messages").insert({
+              sender_id: me.id,
+              receiver_id: reporterId,
+              target_plate: targetPlate || "",
+              message: text,
+              status: "accepted"
+            });
+          }
+        }catch(e){}
+
+        if(window.toast){
+          toast("Retour envoyé au conducteur · " + lvl + " " + newScore + "%", "ok");
+        }
+
+        return {oldScore, newScore, level:lvl, points:nextPoints};
+      }catch(e){
+        console.warn("Reliability reward failed", e);
+        return null;
+      }
+    }
+  };
+
+  // Patch non destructif : on conserve la fonction existante, puis on ajoute la logique reporter_id.
+  function install(){
+    if(!window.App || !App.signalFeedback || App.signalFeedback.__reliabilityPatched) return;
+    const original = App.signalFeedback.bind(App);
+    App.signalFeedback = async function(id, sender, plate, kind){
+      const result = await original(id, sender, plate, kind);
+      try{
+        await window.AppReliabilityPro.rewardReporter(id, sender, plate, kind);
+      }catch(e){console.warn(e);}
+      return result;
+    };
+    App.signalFeedback.__reliabilityPatched = true;
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", install);
+  }else{
+    install();
+  }
+  setTimeout(install, 1000);
+})();
+</script>
+
 </body>
 </html>
