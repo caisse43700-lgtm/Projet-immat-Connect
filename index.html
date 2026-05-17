@@ -1897,5 +1897,122 @@ function showReputationToast(){
 })();
 </script>
 
+
+<script>
+/* ===== FIX COMPTEUR MESSAGES HOLD6 ===== */
+(function(){
+  if(window.__FixMsgCounterHold6) return;
+  window.__FixMsgCounterHold6 = true;
+
+  function install(){
+    if(!window.App || !window.S || App.__msgCounterFixed) return;
+    App.__msgCounterFixed = true;
+
+    const oldOpenInboxBadge = App.openInboxBadge ? App.openInboxBadge.bind(App) : null;
+    App.openInboxBadge = function(){
+      try{
+        this.panel?.('messages');
+        this.loadMsgs?.();
+        this.openSheet?.();
+        this.updateCommunityStatus?.();
+      }catch(e){
+        if(oldOpenInboxBadge) return oldOpenInboxBadge();
+      }
+    };
+
+    const oldMarkRead = App.markRead ? App.markRead.bind(App) : null;
+    App.markRead = async function(){
+      try{
+        if(oldMarkRead) await oldMarkRead();
+
+        S.unreadMsgCount = 0;
+
+        const badge = document.getElementById('topMsgBadge');
+        const pending = (typeof pendingSignalCount === 'function') ? pendingSignalCount() : 0;
+        const total = pending;
+
+        if(badge){
+          badge.textContent = total > 99 ? '99+' : String(total);
+          badge.style.display = total > 0 ? 'flex' : 'none';
+        }
+
+        this.updateCommunityStatus?.();
+      }catch(e){
+        console.warn('markRead counter fix', e);
+      }
+    };
+
+    const oldLoadMsgs = App.loadMsgs ? App.loadMsgs.bind(App) : null;
+    App.loadMsgs = async function(){
+      const result = oldLoadMsgs ? await oldLoadMsgs() : undefined;
+      try{ this.updateCommunityStatus?.(); }catch(e){}
+      return result;
+    };
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', install);
+  }else{
+    install();
+  }
+  setTimeout(install, 800);
+})();
+</script>
+
+
+<script>
+/* ===== MODE EMAIL : compteur baisse à l'ouverture ===== */
+(function(){
+  if(window.__MailCounterMode) return;
+  window.__MailCounterMode = true;
+
+  function install(){
+    if(!window.App || !window.S || App.__mailCounterInstalled) return;
+    App.__mailCounterInstalled = true;
+
+    const oldPanel = App.panel ? App.panel.bind(App) : null;
+
+    App.panel = function(p){
+      const r = oldPanel ? oldPanel(p) : undefined;
+
+      try{
+        if(p === 'messages'){
+          // Comme une boîte mail : ouverture = lecture
+          S.unreadMsgCount = 0;
+
+          const badge = document.getElementById('topMsgBadge');
+          const pending = (typeof pendingSignalCount === 'function')
+            ? pendingSignalCount()
+            : 0;
+
+          if(badge){
+            if(pending > 0){
+              badge.textContent = pending > 99 ? '99+' : String(pending);
+              badge.style.display = 'flex';
+            }else{
+              badge.style.display = 'none';
+            }
+          }
+
+          this.updateCommunityStatus?.();
+        }
+      }catch(e){
+        console.warn('mail counter mode', e);
+      }
+
+      return r;
+    };
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', install);
+  }else{
+    install();
+  }
+
+  setTimeout(install, 800);
+})();
+</script>
+
 </body>
 </html>
