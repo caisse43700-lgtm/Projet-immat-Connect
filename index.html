@@ -673,6 +673,17 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
   opacity:.72;
 }
 
+
+/* ===== Sécurité véhicules connectés ===== */
+#nearbyList .list-item,
+#driversList .list-item,
+#vehiclesList .list-item,
+#connectedVehiclesList .list-item,
+#panelDrivers .list-item,
+#driversPanel .list-item{
+  display:flex !important;
+}
+
 </style>
 </head>
 <body>
@@ -1451,7 +1462,7 @@ function showReputationToast(){
   function removeFromActiveLists(messageId){
     if(!messageId) return;
     document.querySelectorAll("[data-message-id='"+messageId+"'], [data-id='"+messageId+"']").forEach(el=>{
-      const row = el.closest(".altet-row,.my-alert-row,.list-item");
+      const row = el.closest(".altet-row,.my-alert-row");
       if(row) row.remove();
     });
   }
