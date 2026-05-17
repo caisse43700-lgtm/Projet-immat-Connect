@@ -597,6 +597,82 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
   margin-top:8px;
 }
 
+
+/* ===== Confirmation Pro + vote unique anti-spam ===== */
+.confirmation-pro-box{
+  margin-top:14px;
+  border:1px solid #2a3c56;
+  background:#101b2b;
+  border-radius:18px;
+  padding:12px;
+  color:#eef6ff;
+}
+.confirmation-pro-title{
+  font-size:14px;
+  font-weight:950;
+  margin-bottom:8px;
+}
+.confirmation-pro-sub{
+  font-size:12px;
+  color:#9aacc2;
+  margin-bottom:10px;
+}
+.confirmation-pro-actions,
+.feedback-pro-actions{
+  display:grid;
+  gap:8px;
+}
+.confirmation-pro-actions{
+  grid-template-columns:1fr 1fr;
+}
+.feedback-pro-actions{
+  grid-template-columns:1fr 1fr 1fr;
+  margin-top:9px;
+}
+.confirmation-pro-actions button,
+.feedback-pro-actions button{
+  min-height:42px;
+  border-radius:14px;
+  font-weight:950;
+  font-size:12px;
+}
+.confirmation-pro-confirm{
+  background:#00ffb3;
+  color:#06140f;
+}
+.confirmation-pro-later{
+  background:#19283a;
+  color:#eef6ff;
+  border:1px solid #2a3c56;
+}
+.feedback-pro-box{
+  margin-top:12px;
+  border:1px solid #2a3c56;
+  background:#101b2b;
+  border-radius:18px;
+  padding:12px;
+  color:#eef6ff;
+  display:none;
+}
+.feedback-pro-box.show{
+  display:block;
+}
+.feedback-useful{background:#e7fff6;color:#008866;}
+.feedback-useless{background:#eef2f6;color:#10161d;}
+.feedback-false{background:#ffe8ed;color:#cf0035;}
+.feedback-pro-actions button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.signal-state.confirmed{
+  border-color:#00d491!important;
+  color:#00d491!important;
+  background:rgba(0,212,145,.10)!important;
+}
+.signal-recap-card.signal-treated{
+  opacity:.72;
+}
+
 </style>
 </head>
 <body>
@@ -1223,6 +1299,18 @@ function showReputationToast(){
       try{
         if(!window.sb || !reporterId) return null;
 
+        // Anti-spam : si ce message a déjà un feedback, on ne recompte pas.
+        try{
+          const already = await sb.from("messages")
+            .select("id,feedback,feedback_at")
+            .eq("id", messageId)
+            .maybeSingle();
+          if(already && already.data && already.data.feedback){
+            if(window.toast) toast("Retour déjà enregistré.", "ok");
+            return null;
+          }
+        }catch(e){}
+
         const positive = feedbackKind === "utile";
         const neutral = feedbackKind === "regle" || feedbackKind === "inutile";
         const delta = positive ? 1 : (neutral ? 0 : -1);
@@ -1332,6 +1420,177 @@ function showReputationToast(){
     install();
   }
   setTimeout(install, 1000);
+})();
+</script>
+
+
+<script>
+/* ===== Confirmation Pro : confirmation obligatoire + vote unique ===== */
+(function(){
+  const processedFeedback = new Set();
+
+  function safeToast(msg, type){
+    if(window.toast) return window.toast(msg, type || "ok");
+    alert(msg);
+  }
+
+  function findRecapCard(fromEl){
+    return fromEl ? fromEl.closest(".signal-recap-card,.signal-recap-body,.signal-recap-card *") : null;
+  }
+
+  function lockFeedbackButtons(box, selectedKind){
+    if(!box) return;
+    box.querySelectorAll("button").forEach(btn=>{
+      btn.disabled = true;
+      if(btn.dataset.kind === selectedKind){
+        btn.innerHTML = btn.innerHTML + " ✓";
+      }
+    });
+  }
+
+  function removeFromActiveLists(messageId){
+    if(!messageId) return;
+    document.querySelectorAll("[data-message-id='"+messageId+"'], [data-id='"+messageId+"']").forEach(el=>{
+      const row = el.closest(".altet-row,.my-alert-row,.list-item");
+      if(row) row.remove();
+    });
+  }
+
+  window.AppConfirmPro = {
+    async confirm(messageId, reporterId, plate, btn){
+      const card = btn ? btn.closest(".signal-recap-card,.signal-recap-body") : document.querySelector(".signal-recap-card,.signal-recap-body");
+      const state = card ? card.querySelector(".signal-state") : null;
+      if(state){
+        state.textContent = "Confirmé";
+        state.classList.add("confirmed");
+      }
+
+      if(card){
+        const confirmBox = card.querySelector(".confirmation-pro-box");
+        const feedbackBox = card.querySelector(".feedback-pro-box");
+        if(confirmBox) confirmBox.style.display = "none";
+        if(feedbackBox) feedbackBox.classList.add("show");
+      }
+
+      removeFromActiveLists(messageId);
+
+      try{
+        if(window.sb && messageId){
+          await sb.from("messages").update({
+            status:"confirmed",
+            confirmed_at:new Date().toISOString()
+          }).eq("id", messageId);
+        }
+      }catch(e){ console.warn("confirm update failed", e); }
+
+      safeToast("Signalement confirmé. Vous pouvez maintenant l’évaluer.", "ok");
+    },
+
+    later(){
+      safeToast("Le signalement reste en attente.", "ok");
+    },
+
+    async feedback(messageId, reporterId, plate, kind, btn){
+      if(!messageId){
+        safeToast("Impossible d’identifier ce signalement.", "bad");
+        return;
+      }
+
+      if(processedFeedback.has(messageId)){
+        safeToast("Retour déjà enregistré.", "ok");
+        return;
+      }
+
+      processedFeedback.add(messageId);
+
+      try{
+        if(window.sb){
+          const existing = await sb.from("messages")
+            .select("id,feedback,feedback_at")
+            .eq("id", messageId)
+            .maybeSingle();
+
+          if(existing && existing.data && existing.data.feedback){
+            const box = btn ? btn.closest(".feedback-pro-box") : null;
+            lockFeedbackButtons(box, existing.data.feedback);
+            safeToast("Retour déjà enregistré.", "ok");
+            return;
+          }
+        }
+      }catch(e){}
+
+      const box = btn ? btn.closest(".feedback-pro-box") : null;
+      lockFeedbackButtons(box, kind);
+
+      try{
+        if(window.AppReliabilityPro && AppReliabilityPro.rewardReporter){
+          await AppReliabilityPro.rewardReporter(messageId, reporterId, plate, kind);
+        }else if(window.App && App.signalFeedback){
+          await App.signalFeedback(messageId, reporterId, plate, kind);
+        }
+      }catch(e){
+        console.warn("feedback failed", e);
+      }
+
+      try{
+        if(window.sb){
+          await sb.from("messages").update({
+            feedback:kind,
+            feedback_at:new Date().toISOString(),
+            feedback_locked:true,
+            status:"treated"
+          }).eq("id", messageId).is("feedback", null);
+        }
+      }catch(e){}
+
+      const card = btn ? btn.closest(".signal-recap-card,.signal-recap-body") : null;
+      if(card) card.classList.add("signal-treated");
+      removeFromActiveLists(messageId);
+      safeToast("Retour enregistré une seule fois.", "ok");
+    }
+  };
+
+  // Injecte le bloc de confirmation s'il n'existe pas dans les récapitulatifs.
+  function enhanceRecaps(){
+    document.querySelectorAll(".signal-recap-card,.signal-recap-body").forEach((card, index)=>{
+      if(card.querySelector(".confirmation-pro-box") || card.querySelector(".feedback-pro-box")) return;
+
+      // Tentative de récupération des infos depuis le DOM / variables existantes.
+      const id = card.dataset.messageId || card.dataset.id || "";
+      const reporter = card.dataset.reporterId || card.dataset.senderId || "";
+      const plateEl = card.querySelector(".signal-plate");
+      const plate = plateEl ? plateEl.textContent.trim() : "";
+
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+        <div class="confirmation-pro-box">
+          <div class="confirmation-pro-title">Avez-vous confirmé ce signalement ?</div>
+          <div class="confirmation-pro-sub">Confirmez uniquement après vérification de votre véhicule.</div>
+          <div class="confirmation-pro-actions">
+            <button type="button" class="confirmation-pro-confirm" onclick="AppConfirmPro.confirm('${id}','${reporter}','${plate}',this)">✅ Confirmation</button>
+            <button type="button" class="confirmation-pro-later" onclick="AppConfirmPro.later()">⏰ Plus tard</button>
+          </div>
+        </div>
+        <div class="feedback-pro-box">
+          <div class="confirmation-pro-title">Ce signalement était-il pertinent ?</div>
+          <div class="confirmation-pro-sub">Votre retour sera enregistré une seule fois.</div>
+          <div class="feedback-pro-actions">
+            <button type="button" data-kind="utile" class="feedback-useful" onclick="AppConfirmPro.feedback('${id}','${reporter}','${plate}','utile',this)">👍 Utile</button>
+            <button type="button" data-kind="inutile" class="feedback-useless" onclick="AppConfirmPro.feedback('${id}','${reporter}','${plate}','inutile',this)">👎 Inutile</button>
+            <button type="button" data-kind="faux" class="feedback-false" onclick="AppConfirmPro.feedback('${id}','${reporter}','${plate}','faux',this)">⚠️ Faux</button>
+          </div>
+        </div>
+      `;
+      card.appendChild(wrap);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", enhanceRecaps);
+  }else{
+    enhanceRecaps();
+  }
+  setInterval(enhanceRecaps, 1500);
 })();
 </script>
 
