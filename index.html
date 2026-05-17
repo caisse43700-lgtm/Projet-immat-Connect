@@ -520,7 +520,26 @@ body.night .contact-only-note{background:#172335;color:#9aacc2;border:1px solid 
   .top.top-exact .logo-top{max-width:145px!important;font-size:13px!important;padding:0 7px!important;}
 }
 
-  </style>
+  
+/* ===== Nettoyage interface alertes ===== */
+
+/* Cache les anciennes listes et alertes actives */
+.altet-card,
+.altet-list,
+.my-alerts-block,
+.my-alert-row,
+.altet-active-card,
+.altet-active-head,
+.alert-filter-pills{
+    display:none !important;
+}
+
+/* Garde uniquement le récapitulatif du dernier signalement */
+.signal-recap-card{
+    margin-top:12px !important;
+}
+
+</style>
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Connecte-toi ou crée ton compte pour accéder à ton espace conducteur.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte</button></div></section>
