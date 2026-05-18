@@ -2284,5 +2284,175 @@ function showReputationToast(){
 })();
 </script>
 
+
+<script id="fixSendMessagesPlateLookup">
+/* ===== FIX ENVOI MESSAGES : PLAQUE + ENVOYÉS ===== */
+(function(){
+  if(window.__FixSendMessagesPlateLookup) return;
+  window.__FixSendMessagesPlateLookup = true;
+
+  function compactPlate(v){
+    return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  }
+
+  function formatFrenchPlate(v){
+    const s = compactPlate(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
+      return s.slice(0,2) + "-" + s.slice(2,5) + "-" + s.slice(5,7);
+    }
+    return String(v || "").toUpperCase().trim();
+  }
+
+  async function findProfileByPlate(rawPlate){
+    const formatted = formatFrenchPlate(rawPlate);
+    const compact = compactPlate(rawPlate);
+
+    try{
+      const r = await sb.from("profiles")
+        .select("id,owner_plate")
+        .eq("owner_plate", formatted)
+        .maybeSingle();
+      if(r && r.data) return r.data;
+    }catch(e){}
+
+    try{
+      const r = await sb.from("profiles")
+        .select("id,owner_plate")
+        .eq("owner_plate", rawPlate)
+        .maybeSingle();
+      if(r && r.data) return r.data;
+    }catch(e){}
+
+    try{
+      const r = await sb.from("profiles")
+        .select("id,owner_plate")
+        .limit(500);
+      const rows = Array.isArray(r.data) ? r.data : [];
+      return rows.find(p => compactPlate(p.owner_plate) === compact) || null;
+    }catch(e){}
+
+    return null;
+  }
+
+  function install(){
+    if(!window.ImmatMessages || !window.sb || ImmatMessages.__sendFixInstalled) return;
+    ImmatMessages.__sendFixInstalled = true;
+
+    const oldSendNew = ImmatMessages.sendNew ? ImmatMessages.sendNew.bind(ImmatMessages) : null;
+    const oldSetMode = ImmatMessages.setMode ? ImmatMessages.setMode.bind(ImmatMessages) : null;
+    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
+
+    ImmatMessages.sendNew = async function(){
+      const plateInput = document.getElementById("icComposePlate");
+      const textInput = document.getElementById("icComposeText");
+
+      const formattedPlate = formatFrenchPlate(plateInput && plateInput.value ? plateInput.value : "");
+      const msg = String(textInput && textInput.value ? textInput.value : "").trim();
+
+      if(plateInput) plateInput.value = formattedPlate;
+
+      if(!formattedPlate || !msg){
+        if(window.toast) toast("Plaque et message obligatoires.","bad");
+        return;
+      }
+
+      try{
+        const target = await findProfileByPlate(formattedPlate);
+
+        if(!target || !target.id){
+          if(window.toast) toast("Aucun véhicule reconnu avec cette plaque : " + formattedPlate,"bad");
+          return;
+        }
+
+        const auth = await sb.auth.getUser();
+        const user = auth && auth.data && auth.data.user ? auth.data.user : null;
+
+        if(!user){
+          if(window.toast) toast("Reconnecte-toi.","bad");
+          return;
+        }
+
+        let myPlate = "";
+        try{
+          myPlate = (window.App && App.ownPlate) ? App.ownPlate() : (window.S && S.profile ? S.profile.owner_plate : "");
+        }catch(e){}
+
+        if(compactPlate(myPlate) && compactPlate(myPlate) === compactPlate(formattedPlate)){
+          if(window.toast) toast("Impossible de t’envoyer un message à toi-même.","bad");
+          return;
+        }
+
+        const targetPlate = target.owner_plate || formattedPlate;
+
+        const payloadRich = {
+          sender_id:user.id,
+          receiver_id:target.id,
+          target_plate:targetPlate,
+          sender_plate:formatFrenchPlate(myPlate),
+          receiver_plate:targetPlate,
+          message:msg,
+          status:"accepted"
+        };
+
+        const payloadBase = {
+          sender_id:user.id,
+          receiver_id:target.id,
+          target_plate:targetPlate,
+          message:msg,
+          status:"accepted"
+        };
+
+        let result = await sb.from("messages").insert(payloadRich);
+
+        if(result.error && /sender_plate|receiver_plate|column|schema/i.test(String(result.error.message || ""))){
+          result = await sb.from("messages").insert(payloadBase);
+        }
+
+        if(result.error){
+          console.warn(result.error);
+          if(window.toast) toast("Erreur envoi message.","bad");
+          return;
+        }
+
+        if(textInput) textInput.value = "";
+
+        if(oldSetMode) oldSetMode("sent");
+        if(oldRefresh) await oldRefresh();
+
+        setTimeout(function(){
+          try{
+            if(oldSetMode) oldSetMode("sent");
+            if(oldRefresh) oldRefresh();
+          }catch(e){}
+        },300);
+
+        if(window.toast) toast("Message envoyé à " + targetPlate + ".","ok");
+      }catch(e){
+        console.warn("sendNew fixed error", e);
+        if(oldSendNew) return oldSendNew();
+        if(window.toast) toast("Erreur envoi message.","bad");
+      }
+    };
+
+    const input = document.getElementById("icComposePlate");
+    if(input && !input.__plateFormatInstalled){
+      input.__plateFormatInstalled = true;
+      input.addEventListener("blur", function(){
+        input.value = formatFrenchPlate(input.value);
+      });
+    }
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", install);
+  }else{
+    install();
+  }
+
+  setTimeout(install,800);
+  setTimeout(install,1800);
+})();
+</script>
+
 </body>
 </html>
