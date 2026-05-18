@@ -747,7 +747,7 @@
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Connecte-toi ou crée ton compte pour accéder à ton espace conducteur.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte</button></div></section>
-<section id="sa" class="auth-screen"><div class="app-card"><h1 id="authTitle" class="title">Connexion</h1><p id="authSubtitle" class="subtitle">Entre ton email et ton mot de passe.</p><div class="tabs"><button type="button" id="tabLogin" class="tab active" onclick="App.setMode('login')">Connexion</button><button type="button" id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="label">Email</label><input id="iEmail" class="input" type="email" placeholder="ton@email.com" autocomplete="email"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="label">Téléphone</label><input id="iPhone" class="input" type="tel" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="label">Immatriculation</label><input id="iPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hPlate" class="hint"></div></div><div class="field"><label class="label">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="label">Mot de passe</label><div class="pw-wrap"><input id="iPwd" class="input" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="show-pw" onclick="App.eye('iPwd',this)">Voir</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="field hidden"><label class="label">Confirmer</label><div class="pw-wrap"><input id="iConfirm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" onclick="App.eye('iConfirm',this)">Voir</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div><button type="button" id="authBtn" class="btn primary">Se connecter</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><button type="button" class="text-btn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button type="button" id="resendBtn" class="text-btn hidden" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button><div id="authSt" class="status-msg"></div></div></section>
+<section id="sa" class="auth-screen"><div class="app-card"><h1 id="authTitle" class="title">Connexion</h1><p id="authSubtitle" class="subtitle">Entre ton email et ton mot de passe.</p><div class="tabs"><button type="button" id="tabLogin" class="tab active" onclick="App.setMode('login')">Connexion</button><button type="button" id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="label">Email</label><input id="iEmail" class="input" type="email" placeholder="ton@email.com" autocomplete="email"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="label">Téléphone</label><input id="iPhone" class="input" type="tel" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="label">Immatriculation</label><input id="iPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hPlate" class="hint"></div></div><div class="field"><label class="label">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="label">Mot de passe</label><div class="pw-wrap"><input id="iPwd" class="input" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="show-pw" onclick="App.eye('iPwd',this)">Voir</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="field hidden"><label class="label">Confirmer</label><div class="pw-wrap"><input id="iConfirm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" onclick="App.eye('iConfirm',this)">Voir</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div><button type="button" id="authBtn" class="btn primary">Se connecter</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><button type="button" class="text-btn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button type="button" id="resendBtn" class="text-btn hidden" onclick="sendMessageDirect()">Renvoyer l'email de confirmation</button><div id="authSt" class="status-msg"></div></div></section>
 <section id="sp" class="auth-screen"><div class="app-card"><h1 class="title">Profil conducteur</h1><p class="subtitle">Infos nécessaires pour apparaître sur la carte.</p><div class="field"><label class="label">Pseudo</label><input id="iPseudo" class="input" type="text" placeholder="Ton pseudo"></div><div class="field"><label class="label">Immatriculation</label><input id="iProPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hProPlate" class="hint"></div></div><div class="field"><label class="label">Téléphone</label><input id="iProPhone" class="input" type="tel" placeholder="0612345678"><div id="hProPhone" class="hint"></div></div><div class="field"><label class="label">Couleur</label><select id="iProColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select></div><button type="button" class="btn primary" onclick="App.saveProfile()">Enregistrer et continuer</button><button type="button" class="btn secondary" onclick="App.logout()">Se déconnecter</button><div id="profileSt" class="status-msg"></div></div></section>
 <section id="sr" class="auth-screen"><div class="app-card"><h1 class="title">Nouveau mot de passe</h1><div class="field"><input id="iNewPwd" class="input" type="password" placeholder="Nouveau mot de passe"></div><div class="field"><input id="iNewCfm" class="input" type="password" placeholder="Confirmer"></div><button type="button" class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><div id="resetSt" class="status-msg"></div></div></section>
 <section id="appScreen"><div id="map"></div><div class="shade"></div><div class="top top-exact"><button type="button" class="round menu-round" onclick="App.openDrawer()" aria-label="Menu">☰</button><button type="button" class="top-mail-btn" onclick="App.openInboxBadge()" aria-label="Messages et signalements"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 6h52v36H6z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M8 8l24 20L56 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="topMsgBadge" class="top-msg-badge">0</span></button><div id="communityStatus" class="top-status-pill" aria-label="Statut communauté"></div><div class="logo-top">Immat<span>Connect</span> Pro</div></div><div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div><div class="actions" id="actions"><button type="button" title="Recherche" onclick="App.openGps()">🔍</button><button type="button" class="report-btn" title="Signaler" onclick="App.openReport()">⚠️</button><button type="button" title="Conducteurs" onclick="App.openNearby()">👥</button><button type="button" class="center-btn" title="Carte" onclick="App.cycleView()">🗺</button></div><div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button type="button" onclick="App.contactFrontVehicle()">Contacter</button></div><div id="vehicleContextMenu" class="vehicle-context-menu"><div id="vehicleContextPlate" class="vehicle-context-plate">Véhicule</div><button type="button" class="vehicle-bubble contact-main" onclick="App.vehicleContextAction('contact')">☎ Contacter</button><button type="button" class="vehicle-bubble alert-main" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button></div><div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
@@ -755,7 +755,7 @@
 <div id="panelAltet" class="panel altet-panel on"><div class="altet-card"><div class="altet-my-head"><span>⚠️ Mes alertes</span><button type="button" onclick="App.panel('altet')">Gérer</button></div><div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div></div><div id="signalRecapCard" class="signal-recap-card"><div class="signal-recap-head"><span>✉️ Récapitulatif du dernier signalement</span><span class="chev">⌃</span></div><div class="signal-recap-body"><div class="signal-recap-top"><div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div><div id="recapStatus" class="signal-state">En attente</div></div><div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div><div id="recapTime" class="signal-time">◷ Aucun message.</div><div class="signal-actions"><button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('merci')">✅ Merci</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button><button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button><button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button></div></div></div><div class="altet-active-card"><div class="altet-active-head"><h2>Alertes actives</h2><button type="button" class="altet-close" onclick="App.closeSheet()">×</button></div><div id="alertsToolbar" class="alert-filter-pills"></div><div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details></div><div class="quick-reply-row altet-quick"><button type="button" onclick="App.respondLastVehicleAlert('utile')"><span>👍</span>Info utile</button><button type="button" onclick="App.respondLastVehicleAlert('merci')"><span>✅</span>Merci</button><button type="button" onclick="App.respondLastVehicleAlert('recu')"><span>✓</span>Reçu</button></div></div>
 <div id="panelDrive" class="panel"><div class="section-lbl">Recherche GPS</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Limite</div><div class="nav-card"><b id="trafficVal">--</b>Trafic</div><div class="nav-card"><b id="laneVal">--</b>Voie</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
 <div id="panelContact" class="panel">
-<div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
+<div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="sendMessageDirect()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
 <div id="panelMessages" class="panel">
   <div id="icMessagesPro" class="ic-msg-shell">
     <div class="ic-msg-title">
@@ -2521,156 +2521,7 @@ function showReputationToast(){
 </script>
 
 
-<script id="sendMessageDirectFix">
-/* ===== ENVOI DIRECT MESSAGES — NE DÉPEND PAS DES ANCIENS PATCHS ===== */
-async function sendMessageDirect(){
-  function compact(v){ return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,""); }
-  function plate(v){
-    const s = compact(v).slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
-      return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
-    }
-    return String(v || "").toUpperCase().trim();
-  }
-  function say(m,t){
-    try{ if(window.toast) return toast(m,t || "ok"); }catch(e){}
-    alert(m);
-  }
 
-  const pInput = document.getElementById("icComposePlate");
-  const tInput = document.getElementById("icComposeText");
-
-  const targetPlate = plate(pInput ? pInput.value : "");
-  const msg = String(tInput ? tInput.value : "").trim();
-
-  if(pInput) pInput.value = targetPlate;
-
-  if(!targetPlate || !msg){
-    say("Plaque et message obligatoires.","bad");
-    return;
-  }
-
-  if(!window.sb){
-    say("Supabase n'est pas chargé.","bad");
-    return;
-  }
-
-  try{
-    const auth = await sb.auth.getUser();
-    const me = auth && auth.data && auth.data.user ? auth.data.user : null;
-    if(!me){
-      say("Utilisateur non connecté.","bad");
-      return;
-    }
-
-    let myPlate = "";
-    try{
-      myPlate = window.App && App.ownPlate ? App.ownPlate() : "";
-    }catch(e){}
-
-    if(compact(myPlate) && compact(myPlate) === compact(targetPlate)){
-      say("Impossible de t’envoyer un message à toi-même.","bad");
-      return;
-    }
-
-    let target = null;
-
-    // 1) cherche dans les véhicules proches visibles
-    try{
-      const all = []
-        .concat(window.S && Array.isArray(S.nearby) ? S.nearby : [])
-        .concat(window.S && Array.isArray(S.recent) ? S.recent : []);
-      const found = all.find(v => compact(v.plate) === compact(targetPlate));
-      if(found && found.uid){
-        target = { id: found.uid, owner_plate: plate(found.plate || targetPlate) };
-      }
-    }catch(e){}
-
-    // 2) cherche dans profiles avec plusieurs variantes
-    if(!target){
-      const variants = [...new Set([targetPlate, compact(targetPlate)])];
-      for(const v of variants){
-        try{
-          const r = await sb.from("profiles").select("id,owner_plate").eq("owner_plate", v).maybeSingle();
-          if(r && r.data){ target = r.data; break; }
-        }catch(e){}
-      }
-    }
-
-    // 3) recherche large
-    if(!target){
-      try{
-        const r = await sb.from("profiles").select("id,owner_plate").limit(1000);
-        const rows = Array.isArray(r.data) ? r.data : [];
-        target = rows.find(x => compact(x.owner_plate) === compact(targetPlate)) || null;
-      }catch(e){}
-    }
-
-    if(!target || !target.id){
-      say("Plaque introuvable : " + targetPlate + ". Le compte destinataire doit exister avec cette plaque.","bad");
-      return;
-    }
-
-    const realTargetPlate = plate(target.owner_plate || targetPlate);
-
-    const rich = {
-      sender_id: me.id,
-      receiver_id: target.id,
-      target_plate: realTargetPlate,
-      sender_plate: plate(myPlate),
-      receiver_plate: realTargetPlate,
-      message: msg,
-      status: "accepted"
-    };
-
-    const basic = {
-      sender_id: me.id,
-      receiver_id: target.id,
-      target_plate: realTargetPlate,
-      message: msg,
-      status: "accepted"
-    };
-
-    let insert = await sb.from("messages").insert(rich);
-
-    if(insert.error && /sender_plate|receiver_plate|column|schema/i.test(String(insert.error.message || ""))){
-      insert = await sb.from("messages").insert(basic);
-    }
-
-    if(insert.error){
-      console.warn("Erreur insert message", insert.error);
-      say("Erreur Supabase : " + (insert.error.message || "message refusé"),"bad");
-      return;
-    }
-
-    if(tInput) tInput.value = "";
-
-try{
-      if(window.ImmatMessages){
-        if(ImmatMessages.setMode) ImmatMessages.setMode("sent");
-        if(ImmatMessages.refresh) await ImmatMessages.refresh();
-      }
-
-      const sentBtn = document.querySelector('[data-mode="sent"]');
-      if(sentBtn) sentBtn.click();
-
-      setTimeout(async ()=>{
-        try{
-          if(window.ImmatMessages && ImmatMessages.refresh){
-            await ImmatMessages.refresh();
-          }
-        }catch(e){}
-      },500);
-
-    }catch(e){}
-
-    say("Message envoyé à " + realTargetPlate + ".","ok");
-  }catch(e){
-    console.warn("sendMessageDirect", e);
-    say("Erreur envoi : " + (e.message || e),"bad");
-  }
-}
-</script>
 
 
 <script id="versionVisibleCheck">
@@ -2682,6 +2533,81 @@ document.addEventListener("DOMContentLoaded", function(){
   d.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 8px;border-radius:999px;font:900 11px system-ui;opacity:.85";
   document.body.appendChild(d);
 });
+</script>
+
+
+<script id="restoreOriginalSendBridge">
+/* ===== RESTORE ORIGINAL App.sendMsg() ===== */
+(function(){
+
+  function compact(v){
+    return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  }
+
+  function formatPlate(v){
+    const s = compact(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
+      return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    }
+    return String(v || "").toUpperCase().trim();
+  }
+
+  async function sendMessageDirect(){
+
+    const composePlate = document.getElementById("icComposePlate");
+    const composeText  = document.getElementById("icComposeText");
+
+    const target = formatPlate(composePlate ? composePlate.value : "");
+    const msg = String(composeText ? composeText.value : "").trim();
+
+    if(!target || !msg){
+      alert("Plaque et message obligatoires");
+      return;
+    }
+
+    // utilise les anciens champs fiables
+    const oldTarget = document.getElementById("iTarget");
+    const oldMsg = document.getElementById("iMsg");
+
+    if(oldTarget) oldTarget.value = target;
+    if(oldMsg) oldMsg.value = msg;
+
+    // ancienne fonction qui marchait
+    if(window.App && typeof App.sendMsg === "function"){
+      try{
+        await App.sendMsg();
+
+        // vide le champ nouveau design
+        if(composeText) composeText.value = "";
+
+        // ouvre envoyés
+        try{
+          if(window.ImmatMessages){
+            if(ImmatMessages.setMode) ImmatMessages.setMode("sent");
+
+            const sentBtn = document.querySelector('[data-mode="sent"]');
+            if(sentBtn) sentBtn.click();
+
+            if(ImmatMessages.refresh){
+              setTimeout(()=>ImmatMessages.refresh(),300);
+              setTimeout(()=>ImmatMessages.refresh(),900);
+            }
+          }
+        }catch(e){}
+
+      }catch(e){
+        console.warn(e);
+        alert("Erreur envoi message");
+      }
+
+    }else{
+      alert("App.sendMsg introuvable");
+    }
+  }
+
+  window.sendMessageDirect = sendMessageDirect;
+
+})();
 </script>
 
 </body>
