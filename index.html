@@ -754,7 +754,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
+const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
 const get=(k,f)=>{try{let v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const jget=(k,f)=>{try{let v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
@@ -929,7 +929,7 @@ async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)re
 openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh()},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
-toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
+toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()))}}catch(e){}},
 locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
         await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
         if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
@@ -2208,11 +2208,117 @@ function showReputationToast(){
     ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
     ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
     ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
-    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="RECEPTION FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="FORCE FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
   setTimeout(install,600);setTimeout(install,1600);
+})();
+</script>
+
+
+<script id="cacheForceReceptionFix">
+(function(){
+  if(window.__CacheForceReceptionFix) return;
+  window.__CacheForceReceptionFix = true;
+
+  try{
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        rs.forEach(function(r){ try{r.unregister()}catch(e){} });
+      });
+    }
+    if(window.caches){
+      caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); });
+    }
+  }catch(e){}
+
+  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function plate(v){
+    const s=compact(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
+  function ownPlate(){try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
+  async function getUser(){try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}}
+  async function findProfileByPlate(raw){
+    const wanted=compact(raw);
+    const variants=[plate(raw),wanted,String(raw||"").toUpperCase().trim()].filter(Boolean);
+    for(const v of [...new Set(variants)]){
+      try{
+        const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle();
+        if(r&&r.data)return r.data;
+      }catch(e){}
+    }
+    try{
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(2000);
+      return (r.data||[]).find(p=>compact(p.owner_plate)===wanted)||null;
+    }catch(e){return null}
+  }
+
+  async function forcedSend(){
+    const cp=document.getElementById("icComposePlate");
+    const ct=document.getElementById("icComposeText");
+    const oldP=document.getElementById("iTarget");
+    const oldT=document.getElementById("iMsg");
+    const targetPlate=plate((cp&&cp.value)||(oldP&&oldP.value)||(S&&S.selPlate)||"");
+    const text=String((ct&&ct.value)||(oldT&&oldT.value)||"").trim();
+
+    if(!targetPlate||!text)return say("Plaque et message obligatoires.","bad");
+    if(compact(targetPlate)===compact(ownPlate()))return say("Impossible de t’envoyer un message à toi-même.","bad");
+
+    const u=await getUser();
+    if(!u)return say("Reconnecte-toi.","bad");
+
+    const target=await findProfileByPlate(targetPlate);
+    if(!target||!target.id){
+      return say("Plaque introuvable dans profiles : "+targetPlate+" — vérifie que le compte destinataire a cette plaque.","bad");
+    }
+
+    const senderPlate=ownPlate();
+    const receiverPlate=plate(target.owner_plate||targetPlate);
+
+    const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:text,status:"accepted"};
+    const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate});
+
+    let r=await sb.from("messages").insert(rich);
+    if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||""))){
+      r=await sb.from("messages").insert(base);
+    }
+    if(r.error)return say("Erreur Supabase insert : "+(r.error.message||"message non envoyé"),"bad");
+
+    if(ct)ct.value="";
+    if(oldT)oldT.value="";
+    try{S.selPlate=receiverPlate;S.conv=receiverPlate}catch(e){}
+    say("Message réellement enregistré pour "+receiverPlate+".","ok");
+
+    try{
+      if(window.ImmatMessages){
+        ImmatMessages.setMode&&ImmatMessages.setMode("sent");
+        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),300);
+        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),900);
+      }
+    }catch(e){}
+  }
+
+  function install(){
+    if(!window.App||!window.sb){setTimeout(install,300);return}
+    App.sendMsg=forcedSend;
+    if(window.ImmatMessages) ImmatMessages.sendNew=forcedSend;
+
+    if(!document.getElementById("forceFixBadge")){
+      const b=document.createElement("div");
+      b.id="forceFixBadge";
+      b.textContent="FORCE FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+  setTimeout(install,700);
+  setTimeout(install,1800);
 })();
 </script>
 
