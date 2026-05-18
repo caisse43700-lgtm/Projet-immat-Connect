@@ -754,7 +754,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
+const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
 const get=(k,f)=>{try{let v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const jget=(k,f)=>{try{let v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
@@ -2208,7 +2208,7 @@ function showReputationToast(){
     ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
     ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
     ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
-    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DEBUG MSG";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DEBUG SB";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
@@ -2241,8 +2241,9 @@ function showReputationToast(){
     box.innerHTML=html;
   }
   async function runDebug(){
+    if(!window.sb && typeof sb !== "undefined") window.sb = sb;
     if(!window.sb){
-      showBox("<b>DEBUG</b><br>Supabase non chargé.");
+      showBox("<b>DEBUG</b><br>Supabase non chargé : CDN Supabase bloqué ou fichier ouvert trop tôt.");
       return;
     }
     let u=null, prof=null, msgs=[], profs=[];
@@ -2324,7 +2325,7 @@ function showReputationToast(){
     if(!document.getElementById("icDebugBtn")){
       const b=document.createElement("button");
       b.id="icDebugBtn";
-      b.textContent="DEBUG MSG";
+      b.textContent="DEBUG SB";
       b.onclick=runDebug;
       b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;border:0;border-radius:999px;padding:7px 10px;font:900 11px system-ui";
       document.body.appendChild(b);
