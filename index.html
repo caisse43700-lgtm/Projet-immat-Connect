@@ -2069,7 +2069,7 @@ function showReputationToast(){
 </script>
 
 <script id="messagesCleanFinalJs">
-/* ===== MESSAGES RECEIVED FIX : UN SEUL PATCH ===== */
+/* ===== MESSAGES PLATE FIX : UN SEUL PATCH ===== */
 (function(){
   if(window.__MessagesCleanFinal) return;
   window.__MessagesCleanFinal = true;
@@ -2436,7 +2436,7 @@ function showReputationToast(){
     if(!document.getElementById("icVersionMessagesClean")){
       const badge = document.createElement("div");
       badge.id = "icVersionMessagesClean";
-      badge.textContent = "RECEIVED FIX";
+      badge.textContent = "PLATE FIX";
       document.body.appendChild(badge);
     }
 
@@ -2448,6 +2448,183 @@ function showReputationToast(){
   setTimeout(install,600);
   setTimeout(install,1600);
   setTimeout(install,3000);
+})();
+</script>
+
+
+<script id="plateLookupExactFix">
+/* ===== FIX PLAQUE : recherche BE521MM = BE-521-MM ===== */
+(function(){
+  if(window.__PlateLookupExactFix) return;
+  window.__PlateLookupExactFix = true;
+
+  function compactPlate(v){
+    return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  }
+
+  function formatPlate(v){
+    const s = compactPlate(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
+      return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    }
+    return String(v || "").toUpperCase().trim();
+  }
+
+  function toastSafe(m,t){
+    try{ if(window.toast) return toast(m,t || "ok"); }catch(e){}
+    alert(m);
+  }
+
+  async function findProfileByPlate(inputPlate){
+    const wanted = compactPlate(inputPlate);
+    if(!wanted || !window.sb) return null;
+
+    const variants = Array.from(new Set([
+      formatPlate(inputPlate),
+      wanted,
+      String(inputPlate || "").toUpperCase().trim()
+    ])).filter(Boolean);
+
+    // 1) recherche exacte sur toutes les variantes
+    for(const v of variants){
+      try{
+        const r = await sb.from("profiles")
+          .select("id,owner_plate,pseudo")
+          .eq("owner_plate", v)
+          .maybeSingle();
+        if(r && r.data) return r.data;
+      }catch(e){}
+    }
+
+    // 2) fallback robuste : on lit les profils et on compare sans tirets
+    try{
+      const r = await sb.from("profiles")
+        .select("id,owner_plate,pseudo")
+        .limit(1000);
+
+      const rows = Array.isArray(r.data) ? r.data : [];
+      return rows.find(function(p){
+        return compactPlate(p.owner_plate) === wanted;
+      }) || null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function install(){
+    if(!window.App || !window.sb){
+      setTimeout(install,300);
+      return;
+    }
+    if(window.__PlateLookupExactFixInstalled) return;
+    window.__PlateLookupExactFixInstalled = true;
+
+    App.sendMsg = async function(){
+      try{
+        const oldTarget = document.getElementById("iTarget");
+        const oldMsg = document.getElementById("iMsg");
+        const composePlate = document.getElementById("icComposePlate");
+        const composeText = document.getElementById("icComposeText");
+
+        const myPlate = formatPlate(this.ownPlate ? this.ownPlate() : (S.profile && S.profile.owner_plate));
+        const rawPlate = (oldTarget && oldTarget.value) || (composePlate && composePlate.value) || (S && S.selPlate) || "";
+        const plate = formatPlate(rawPlate);
+        const msg = String((oldMsg && oldMsg.value) || (composeText && composeText.value) || "").trim();
+
+        if(oldTarget) oldTarget.value = plate;
+        if(composePlate) composePlate.value = plate;
+
+        if(!myPlate) return toastSafe("Profil conducteur introuvable.","bad");
+        if(!plate) return toastSafe("Sélectionne le véhicule destinataire.","bad");
+        if(compactPlate(plate) === compactPlate(myPlate)) return toastSafe("Impossible de t’envoyer un message à toi-même.","bad");
+        if(!msg) return toastSafe("Ajoute un message.","bad");
+
+        const auth = await sb.auth.getUser();
+        const u = auth && auth.data ? auth.data.user : null;
+        if(!u) return toastSafe("Reconnecte-toi.","bad");
+
+        const meRes = await sb.from("profiles").select("id,owner_plate").eq("id",u.id).maybeSingle();
+        const senderPlate = formatPlate((meRes.data && meRes.data.owner_plate) || myPlate);
+        if(!senderPlate) return toastSafe("Profil conducteur incomplet.","bad");
+
+        const target = await findProfileByPlate(plate);
+        if(!target || !target.id){
+          return toastSafe("Aucun utilisateur avec cette plaque : " + plate,"bad");
+        }
+        if(target.id === u.id){
+          return toastSafe("Impossible de t’envoyer un message à toi-même.","bad");
+        }
+
+        const receiverPlate = formatPlate(target.owner_plate || plate);
+
+        let accepted = true;
+        try{
+          const conv = await sb.from("messages")
+            .select("status")
+            .or("and(sender_id.eq."+u.id+",receiver_id.eq."+target.id+"),and(sender_id.eq."+target.id+",receiver_id.eq."+u.id+")");
+          const rows = conv.data || [];
+          accepted = rows.some(x=>x.status==="accepted") || !rows.some(x=>x.status==="pending");
+        }catch(e){}
+
+        const basePayload = {
+          sender_id:u.id,
+          receiver_id:target.id,
+          target_plate:receiverPlate,
+          message:msg,
+          status:accepted ? "accepted" : "pending"
+        };
+
+        const richPayload = Object.assign({},basePayload,{
+          sender_plate:senderPlate,
+          receiver_plate:receiverPlate,
+          from_plate:senderPlate,
+          to_plate:receiverPlate
+        });
+
+        let ins = await sb.from("messages").insert(richPayload);
+        if(ins.error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema/i.test(String(ins.error.message || ""))){
+          ins = await sb.from("messages").insert(basePayload);
+        }
+        if(ins.error){
+          console.warn(ins.error);
+          return toastSafe("Erreur envoi message : " + (ins.error.message || ""),"bad");
+        }
+
+        if(oldMsg) oldMsg.value = "";
+        if(composeText) composeText.value = "";
+        try{ S.conv = receiverPlate; S.selPlate = receiverPlate; }catch(e){}
+        if(oldTarget) oldTarget.value = receiverPlate;
+        if(composePlate) composePlate.value = receiverPlate;
+
+        toastSafe("Message envoyé à " + receiverPlate + ".","ok");
+
+        try{
+          if(window.ImmatMessages){
+            ImmatMessages.setMode && ImmatMessages.setMode("sent");
+            setTimeout(()=>ImmatMessages.refresh && ImmatMessages.refresh(),300);
+            setTimeout(()=>ImmatMessages.refresh && ImmatMessages.refresh(),900);
+          }
+        }catch(e){}
+      }catch(e){
+        console.warn("plateLookupExactFix sendMsg",e);
+        toastSafe("Erreur message.","bad");
+      }
+    };
+
+    if(!document.getElementById("icVersionPlateLookupFix")){
+      const b=document.createElement("div");
+      b.id="icVersionPlateLookupFix";
+      b.textContent="PLATE FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
+  else install();
+
+  setTimeout(install,600);
+  setTimeout(install,1600);
 })();
 </script>
 
