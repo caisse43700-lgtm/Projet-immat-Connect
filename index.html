@@ -289,80 +289,7 @@
 
 </style>
 
-<style id="finalMessageFixes">
-/* ===== FINAL MESSAGE UI FIX ===== */
-#panelMessages{
-  background:#f4f5f7!important;
-  border-radius:28px!important;
-  padding:18px!important;
-}
 
-#panelMessages .ic-msg-shell,
-#panelMessages .messages-shell{
-  background:#08152b!important;
-  border-radius:28px!important;
-  padding:18px!important;
-  color:#fff!important;
-}
-
-#panelMessages textarea,
-#panelMessages input{
-  border-radius:18px!important;
-  border:2px solid #e8ebf0!important;
-  background:#fff!important;
-  color:#111827!important;
-  min-height:54px!important;
-  font-size:18px!important;
-}
-
-#panelMessages textarea{
-  min-height:120px!important;
-}
-
-#panelMessages .send-btn,
-#panelMessages button.primary,
-#panelMessages .btn-send{
-  background:#12f7a5!important;
-  color:#03111f!important;
-  border:none!important;
-  border-radius:18px!important;
-  font-weight:800!important;
-}
-
-#panelMessages .quick-replies{
-  display:flex!important;
-  gap:10px!important;
-  flex-wrap:wrap!important;
-}
-
-#panelMessages .quick-replies button{
-  border-radius:14px!important;
-  background:#132238!important;
-  color:#fff!important;
-  border:none!important;
-  padding:10px 14px!important;
-}
-
-#panelMessages .conversation-card{
-  background:#09172b!important;
-  border-radius:24px!important;
-  padding:18px!important;
-  color:#fff!important;
-  border:1px solid rgba(255,255,255,.08)!important;
-}
-
-#panelMessages .empty-state{
-  opacity:.7!important;
-  text-align:center!important;
-  padding:30px 10px!important;
-}
-
-/* supprimer anciens doubles tabs */
-#panelMessages .legacy-tabs,
-#panelMessages .old-messages-tabs{
-  display:none!important;
-}
-</style>
 
 <style id="messagesCssInline">
 /* ===== MESSAGES PRO PAR IMMATRICULATION ===== */
@@ -745,27 +672,48 @@
 </style>
 
 
-<style id="alertToMessageCss">
-#panelAltet .signal-recap-card,
-#panelAltet .altet-card,
-#panelAltet .altet-active-card,
-#panelAltet .quick-reply-row{
-  display:none!important;
+
+
+
+<style id="cleanMessagesAlertsCss">
+/* ===== STRUCTURE PROPRE ALERTES + MESSAGES ===== */
+.final-tabs{grid-template-columns:repeat(4,1fr)!important}
+#panelContact{
+  position:absolute!important;
+  left:-9999px!important;
+  top:auto!important;
+  width:1px!important;
+  height:1px!important;
+  overflow:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#panelMessages.on{display:block!important}
+#icVersionCleanFinal{
+  position:fixed;
+  right:8px;
+  bottom:8px;
+  z-index:99999;
+  background:#00ffb3;
+  color:#06140f;
+  padding:5px 9px;
+  border-radius:999px;
+  font:900 11px system-ui;
 }
 </style>
 
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Connecte-toi ou crée ton compte pour accéder à ton espace conducteur.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte</button></div></section>
-<section id="sa" class="auth-screen"><div class="app-card"><h1 id="authTitle" class="title">Connexion</h1><p id="authSubtitle" class="subtitle">Entre ton email et ton mot de passe.</p><div class="tabs"><button type="button" id="tabLogin" class="tab active" onclick="App.setMode('login')">Connexion</button><button type="button" id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="label">Email</label><input id="iEmail" class="input" type="email" placeholder="ton@email.com" autocomplete="email"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="label">Téléphone</label><input id="iPhone" class="input" type="tel" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="label">Immatriculation</label><input id="iPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hPlate" class="hint"></div></div><div class="field"><label class="label">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="label">Mot de passe</label><div class="pw-wrap"><input id="iPwd" class="input" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="show-pw" onclick="App.eye('iPwd',this)">Voir</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="field hidden"><label class="label">Confirmer</label><div class="pw-wrap"><input id="iConfirm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" onclick="App.eye('iConfirm',this)">Voir</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div><button type="button" id="authBtn" class="btn primary">Se connecter</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><button type="button" class="text-btn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button type="button" id="resendBtn" class="text-btn hidden" onclick="sendMessageDirect()">Renvoyer l'email de confirmation</button><div id="authSt" class="status-msg"></div></div></section>
+<section id="sa" class="auth-screen"><div class="app-card"><h1 id="authTitle" class="title">Connexion</h1><p id="authSubtitle" class="subtitle">Entre ton email et ton mot de passe.</p><div class="tabs"><button type="button" id="tabLogin" class="tab active" onclick="App.setMode('login')">Connexion</button><button type="button" id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="label">Email</label><input id="iEmail" class="input" type="email" placeholder="ton@email.com" autocomplete="email"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="label">Téléphone</label><input id="iPhone" class="input" type="tel" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="label">Immatriculation</label><input id="iPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hPlate" class="hint"></div></div><div class="field"><label class="label">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="label">Mot de passe</label><div class="pw-wrap"><input id="iPwd" class="input" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="show-pw" onclick="App.eye('iPwd',this)">Voir</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="field hidden"><label class="label">Confirmer</label><div class="pw-wrap"><input id="iConfirm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" onclick="App.eye('iConfirm',this)">Voir</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div><button type="button" id="authBtn" class="btn primary">Se connecter</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><button type="button" class="text-btn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button type="button" id="resendBtn" class="text-btn hidden" onclick="ImmatMessages.sendNew()">Renvoyer l'email de confirmation</button><div id="authSt" class="status-msg"></div></div></section>
 <section id="sp" class="auth-screen"><div class="app-card"><h1 class="title">Profil conducteur</h1><p class="subtitle">Infos nécessaires pour apparaître sur la carte.</p><div class="field"><label class="label">Pseudo</label><input id="iPseudo" class="input" type="text" placeholder="Ton pseudo"></div><div class="field"><label class="label">Immatriculation</label><input id="iProPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hProPlate" class="hint"></div></div><div class="field"><label class="label">Téléphone</label><input id="iProPhone" class="input" type="tel" placeholder="0612345678"><div id="hProPhone" class="hint"></div></div><div class="field"><label class="label">Couleur</label><select id="iProColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select></div><button type="button" class="btn primary" onclick="App.saveProfile()">Enregistrer et continuer</button><button type="button" class="btn secondary" onclick="App.logout()">Se déconnecter</button><div id="profileSt" class="status-msg"></div></div></section>
 <section id="sr" class="auth-screen"><div class="app-card"><h1 class="title">Nouveau mot de passe</h1><div class="field"><input id="iNewPwd" class="input" type="password" placeholder="Nouveau mot de passe"></div><div class="field"><input id="iNewCfm" class="input" type="password" placeholder="Confirmer"></div><button type="button" class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><div id="resetSt" class="status-msg"></div></div></section>
 <section id="appScreen"><div id="map"></div><div class="shade"></div><div class="top top-exact"><button type="button" class="round menu-round" onclick="App.openDrawer()" aria-label="Menu">☰</button><button type="button" class="top-mail-btn" onclick="App.openInboxBadge()" aria-label="Messages et signalements"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 6h52v36H6z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M8 8l24 20L56 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="topMsgBadge" class="top-msg-badge">0</span></button><div id="communityStatus" class="top-status-pill" aria-label="Statut communauté"></div><div class="logo-top">Immat<span>Connect</span> Pro</div></div><div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div><div class="actions" id="actions"><button type="button" title="Recherche" onclick="App.openGps()">🔍</button><button type="button" class="report-btn" title="Signaler" onclick="App.openReport()">⚠️</button><button type="button" title="Conducteurs" onclick="App.openNearby()">👥</button><button type="button" class="center-btn" title="Carte" onclick="App.cycleView()">🗺</button></div><div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button type="button" onclick="App.contactFrontVehicle()">Contacter</button></div><div id="vehicleContextMenu" class="vehicle-context-menu"><div id="vehicleContextPlate" class="vehicle-context-plate">Véhicule</div><button type="button" class="vehicle-bubble contact-main" onclick="App.vehicleContextAction('contact')">☎ Contacter</button><button type="button" class="vehicle-bubble alert-main" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button></div><div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
-<div id="sheet" class="sheet mini"><button type="button" id="sheetArrowOpen" onclick="App.openSheet()">⌃</button><button type="button" class="sheet-close" onclick="App.closeSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile-row"><div><div id="tbPlate" class="plate-lbl"></div><div id="tbPseudo" class="pseudo-lbl"></div></div><select id="radiusSel" class="radius-sel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="sheet-nav alert-tabs final-tabs"><button type="button" id="tabAltet" class="on" onclick="App.openAlertMessageCompose()">Alerte</button><button type="button" id="tabDrive" onclick="App.panel('drive')">GPS</button><button type="button" id="tabMessages" onclick="App.panel('messages')">Messages</button><button type="button" id="tabSettings" onclick="App.panel('settings')">Options</button></div>
+<div id="sheet" class="sheet mini"><button type="button" id="sheetArrowOpen" onclick="App.openSheet()">⌃</button><button type="button" class="sheet-close" onclick="App.closeSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile-row"><div><div id="tbPlate" class="plate-lbl"></div><div id="tbPseudo" class="pseudo-lbl"></div></div><select id="radiusSel" class="radius-sel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="sheet-nav alert-tabs final-tabs"><button type="button" id="tabAltet" class="on" onclick="App.panel('altet')">Alerte</button><button type="button" id="tabDrive" onclick="App.panel('drive')">GPS</button><button type="button" id="tabMessages" onclick="App.panel('messages')">Messages</button><button type="button" id="tabSettings" onclick="App.panel('settings')">Options</button></div>
 <div id="panelAltet" class="panel altet-panel on"><div class="altet-card"><div class="altet-my-head"><span>⚠️ Mes alertes</span><button type="button" onclick="App.panel('altet')">Gérer</button></div><div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div></div><div id="signalRecapCard" class="signal-recap-card"><div class="signal-recap-head"><span>✉️ Récapitulatif du dernier signalement</span><span class="chev">⌃</span></div><div class="signal-recap-body"><div class="signal-recap-top"><div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div><div id="recapStatus" class="signal-state">En attente</div></div><div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div><div id="recapTime" class="signal-time">◷ Aucun message.</div><div class="signal-actions"><button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('merci')">✅ Merci</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button><button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button><button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button></div></div></div><div class="altet-active-card"><div class="altet-active-head"><h2>Alertes actives</h2><button type="button" class="altet-close" onclick="App.closeSheet()">×</button></div><div id="alertsToolbar" class="alert-filter-pills"></div><div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details></div><div class="quick-reply-row altet-quick"><button type="button" onclick="App.respondLastVehicleAlert('utile')"><span>👍</span>Info utile</button><button type="button" onclick="App.respondLastVehicleAlert('merci')"><span>✅</span>Merci</button><button type="button" onclick="App.respondLastVehicleAlert('recu')"><span>✓</span>Reçu</button></div></div>
 <div id="panelDrive" class="panel"><div class="section-lbl">Recherche GPS</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Limite</div><div class="nav-card"><b id="trafficVal">--</b>Trafic</div><div class="nav-card"><b id="laneVal">--</b>Voie</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
 <div id="panelContact" class="panel">
-<div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="sendMessageDirect()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
+<div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="ImmatMessages.sendNew()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
 <div id="panelMessages" class="panel">
   <div id="icMessagesPro" class="ic-msg-shell">
     <div class="ic-msg-title">
@@ -784,7 +732,7 @@
     <div id="icComposePanel" class="ic-compose-panel">
       <div class="ic-compose-row">
         <input id="icComposePlate" maxlength="9" placeholder="Plaque destinataire">
-        <button type="button" class="ic-send-btn" aria-label="Envoyer le nouveau message" onclick="sendMessageDirect()">➤</button>
+        <button type="button" class="ic-send-btn" aria-label="Envoyer le nouveau message" onclick="ImmatMessages.sendNew()">➤</button>
       </div>
       <textarea id="icComposeText" placeholder="Écrire un message…"></textarea>
     </div>
@@ -1646,89 +1594,7 @@ function showReputationToast(){
 })();
 </script>
 
-<script id="finalMessageLogicFix">
-/* ===== FINAL MESSAGE LOGIC FIX ===== */
-(function(){
-  function boot(){
 
-    const tabs = document.querySelectorAll('[onclick*="contact"],[onclick*="messages"]');
-
-    tabs.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        try{
-          if(window.ImmatMessages){
-            ImmatMessages.refresh?.();
-          }
-        }catch(e){}
-      });
-    });
-
-    // Toujours ouvrir le même panneau
-    if(window.App){
-      const oldPanel = App.panel?.bind(App);
-
-      App.panel = function(name){
-        if(name === 'contact' || name === 'message' || name === 'received'){
-          name = 'messages';
-        }
-
-        const r = oldPanel ? oldPanel(name) : null;
-
-        setTimeout(()=>{
-          try{
-            const panel = document.getElementById('panelMessages');
-            if(panel){
-              panel.style.display = 'block';
-              panel.classList.add('on');
-            }
-
-            // masquer anciens panneaux incohérents
-            [
-              'panelContact',
-              'panelInbox',
-              'panelReceived',
-              'legacyMessagePanel'
-            ].forEach(id=>{
-              const el=document.getElementById(id);
-              if(el) el.style.display='none';
-            });
-
-          }catch(e){}
-        },50);
-
-        return r;
-      };
-    }
-
-    // Message reçu vide => placeholder cohérent
-    setTimeout(()=>{
-      const conv = document.querySelector('#panelMessages .conversation-card');
-      if(conv && conv.innerText.includes('Aucun signalement reçu')){
-        conv.innerHTML = `
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-            <div style="font-size:42px">📨</div>
-            <div>
-              <div style="font-size:24px;font-weight:800">Boîte de réception</div>
-              <div style="opacity:.7">Aucun message reçu pour le moment</div>
-            </div>
-          </div>
-
-          <div class="empty-state">
-            Les messages reçus apparaîtront ici automatiquement.
-          </div>
-        `;
-      }
-    },400);
-
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot);
-  }else{
-    boot();
-  }
-})();
-</script>
 
 <script id="messagesJsInline">
 /* ===== MESSAGES PRO PAR IMMATRICULATION ===== */
@@ -2217,238 +2083,173 @@ function showReputationToast(){
 
 </script>
 
-<script id="receivedPanelFinalFix">
-/* ===== FIX FINAL REÇUS : CHARGE ET AFFICHE LA MESSAGERIE ===== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script id="cleanMessagesAlertsJs">
+/* ===== PATCH UNIQUE FINAL : ALERTES + MESSAGES ===== */
 (function(){
-  function boot(){
-    if(!window.App) return;
+  if(window.__CleanMessagesAlertsFinal) return;
+  window.__CleanMessagesAlertsFinal = true;
 
-    const oldPanel = App.panel ? App.panel.bind(App) : null;
-
-    App.panel = function(name){
-      if(name === "contact" || name === "message" || name === "received" || name === "reçus"){
-        name = "messages";
-      }
-
-      let result = oldPanel ? oldPanel(name) : undefined;
-
-      if(name === "messages"){
-        setTimeout(function(){
-          try{
-            ["Altet","Drive","Contact","Settings"].forEach(function(x){
-              const p = document.getElementById("panel" + x);
-              if(p) p.classList.remove("on");
-            });
-
-            const panel = document.getElementById("panelMessages");
-            if(panel){
-              panel.classList.add("on");
-              panel.style.display = "block";
-            }
-
-            const tab = document.getElementById("tabMessages");
-            if(tab){
-              document.querySelectorAll(".sheet-nav button").forEach(b=>b.classList.remove("on"));
-              tab.classList.add("on");
-            }
-
-            if(window.ImmatMessages){
-              ImmatMessages.setMode?.("inbox");
-              ImmatMessages.refresh?.();
-            }
-          }catch(e){ console.warn("messages display fix", e); }
-        }, 80);
-      }
-
-      return result;
-    };
-
-    App.openInboxBadge = function(){
-      App.panel("messages");
-      App.openSheet?.();
-      setTimeout(function(){
-        try{
-          window.ImmatMessages?.setMode?.("inbox");
-          window.ImmatMessages?.refresh?.();
-        }catch(e){}
-      }, 120);
-    };
-
-    // Quand la page charge, si Reçus/Messages est ouvert, on rafraîchit.
-    setTimeout(function(){
-      try{
-        if(document.getElementById("panelMessages")?.classList.contains("on")){
-          window.ImmatMessages?.setMode?.("inbox");
-          window.ImmatMessages?.refresh?.();
-        }
-      }catch(e){}
-    }, 600);
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", boot);
-  }else{
-    boot();
-  }
-  setTimeout(boot, 1000);
-})();
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<script id="versionVisibleCheck">
-document.addEventListener("DOMContentLoaded", function(){
-  if(document.getElementById("icVersionCheck")) return;
-  const d=document.createElement("div");
-  d.id="icVersionCheck";
-  d.textContent="ALERTE MSG";
-  d.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 8px;border-radius:999px;font:900 11px system-ui;opacity:.85";
-  document.body.appendChild(d);
-});
-</script>
-
-
-
-
-
-<script id="messagesFinalFlow">
-/* ===== MESSAGES FINAL FLOW : ALERTE -> NOUVEAU, ENVOI, REÇUS, ENVOYÉS, SUPPRESSION ===== */
-(function(){
-  if(window.__MessagesFinalFlow) return;
-  window.__MessagesFinalFlow = true;
-
-  const LOCAL_KEY = "ic_messages_local_mirror_v1";
-
-  function compact(v){ return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+  function compactPlate(v){ return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,""); }
 
   function formatPlate(v){
-    const s = compact(v).slice(0,7);
+    const s = compactPlate(v).slice(0,7);
     if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
       return s.slice(0,2) + "-" + s.slice(2,5) + "-" + s.slice(5);
     }
     return String(v || "").toUpperCase().trim();
   }
 
-  function safeToast(msg,type){
+  function say(msg,type){
     try{ if(window.toast) return toast(msg,type || "ok"); }catch(e){}
     alert(msg);
   }
 
-  function getLocal(){
-    try{ return JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"); }catch(e){ return []; }
+  function ownPlate(){
+    try{ return formatPlate(App.ownPlate ? App.ownPlate() : (S.profile && S.profile.owner_plate)); }
+    catch(e){ return ""; }
   }
 
-  function setLocal(rows){
-    try{ localStorage.setItem(LOCAL_KEY, JSON.stringify((rows || []).slice(-300))); }catch(e){}
-  }
-
-  function addLocal(row){
-    const rows = getLocal();
-    rows.push(row);
-    setLocal(rows);
-  }
-
-  function myPlate(){
-    try{ return formatPlate(App.ownPlate ? App.ownPlate() : (S.profile && S.profile.owner_plate)); }catch(e){ return ""; }
-  }
-
-  function selectedPlate(){
+  function selectedVehiclePlate(){
+    const mine = compactPlate(ownPlate());
     const candidates = [
-      document.getElementById("icComposePlate") && document.getElementById("icComposePlate").value,
       window.S && S.selPlate,
       window.S && S.contextVehicle && S.contextVehicle.plate,
-      document.getElementById("iTarget") && document.getElementById("iTarget").value
+      window.S && S.frontVehicle && S.frontVehicle.plate,
+      document.getElementById("iTarget") && document.getElementById("iTarget").value,
+      document.getElementById("icComposePlate") && document.getElementById("icComposePlate").value
     ];
-    const mine = compact(myPlate());
     for(const c of candidates){
       const p = formatPlate(c);
-      if(p && compact(p) !== mine) return p;
+      if(p && compactPlate(p) !== mine) return p;
     }
     return "";
   }
 
-  function openCompose(plate,msg){
-    plate = formatPlate(plate || selectedPlate());
+  function alertMessage(label){
+    const text = String(label || "Pouvez-vous vérifier votre véhicule ?").trim();
+    const urgent = /pneu|roue|fumée|feu|incendie|danger/i.test(text);
+    return (urgent ? "🚨 SIGNALEMENT URGENT : " : "⚠️ SIGNALEMENT : ") +
+      text.replace(/\.$/,"") + ". Pouvez-vous vérifier votre véhicule ?";
+  }
+
+  function syncOldFields(plate,message){
+    const p = document.getElementById("iTarget");
+    const m = document.getElementById("iMsg");
+    if(p) p.value = formatPlate(plate);
+    if(m) m.value = String(message || "").trim();
+    try{ S.selPlate = formatPlate(plate); S.conv = formatPlate(plate); }catch(e){}
+  }
+
+  function openMessagesCompose(plate,message){
+    plate = formatPlate(plate || selectedVehiclePlate());
+
     try{ App.panel("messages"); App.openSheet && App.openSheet(); }catch(e){}
     try{ ImmatMessages.setMode && ImmatMessages.setMode("compose"); }catch(e){}
 
     setTimeout(function(){
-      const p = document.getElementById("icComposePlate");
-      const t = document.getElementById("icComposeText");
-      if(p && plate) p.value = plate;
-      if(t && msg) t.value = msg;
-      if(t) t.focus();
+      const cp = document.getElementById("icComposePlate");
+      const ct = document.getElementById("icComposeText");
+      if(cp && plate) cp.value = plate;
+      if(ct && message) ct.value = message;
+      syncOldFields(plate, message || "");
+      if(ct) ct.focus();
     },120);
   }
 
-  async function sendThroughOriginal(plate,message){
-    plate = formatPlate(plate);
-    message = String(message || "").trim();
+  async function sendFromNewMessages(){
+    const cp = document.getElementById("icComposePlate");
+    const ct = document.getElementById("icComposeText");
+    const plate = formatPlate(cp && cp.value ? cp.value : selectedVehiclePlate());
+    const message = String(ct && ct.value ? ct.value : "").trim();
 
-    if(!plate || !message){
-      safeToast("Plaque et message obligatoires.","bad");
-      return false;
-    }
+    if(!plate || !message){ say("Plaque et message obligatoires.","bad"); return false; }
+    if(compactPlate(plate) === compactPlate(ownPlate())){ say("Impossible de t’envoyer un message à toi-même.","bad"); return false; }
 
-    const oldTarget = document.getElementById("iTarget");
-    const oldMsg = document.getElementById("iMsg");
-
-    if(oldTarget) oldTarget.value = plate;
-    if(oldMsg) oldMsg.value = message;
+    syncOldFields(plate,message);
 
     if(!window.App || typeof App.sendMsg !== "function"){
-      safeToast("Fonction d'envoi introuvable.","bad");
+      say("Fonction d’envoi introuvable.","bad");
       return false;
     }
 
     try{
       await App.sendMsg();
 
-      addLocal({
-        id:"local_" + Date.now() + "_" + Math.random().toString(16).slice(2),
-        plate:plate,
-        message:message,
-        direction:"sent",
-        created_at:new Date().toISOString(),
-        status:"accepted"
-      });
-
-      const composeText = document.getElementById("icComposeText");
-      const replyText = document.getElementById("icReplyText");
-      if(composeText) composeText.value = "";
-      if(replyText) replyText.value = "";
-
-      safeToast("Message envoyé à " + plate + ".","ok");
-
+      // Miroir local d’affichage Envoyés pour confirmer immédiatement l’envoi
       try{
-        ImmatMessages.setMode && ImmatMessages.setMode("sent");
-        ImmatMessages.refresh && await ImmatMessages.refresh();
+        const key = "ic_messages_local_mirror_v1";
+        const rows = JSON.parse(localStorage.getItem(key) || "[]");
+        rows.push({
+          id:"local_" + Date.now(),
+          direction:"sent",
+          plate:plate,
+          message:message,
+          created_at:new Date().toISOString(),
+          status:"accepted"
+        });
+        localStorage.setItem(key, JSON.stringify(rows.slice(-300)));
       }catch(e){}
 
-      setTimeout(function(){
-        try{
-          ImmatMessages.setMode && ImmatMessages.setMode("sent");
-          ImmatMessages.refresh && ImmatMessages.refresh();
-        }catch(e){}
-      },500);
-
+      if(ct) ct.value = "";
+      try{ ImmatMessages.setMode && ImmatMessages.setMode("sent"); }catch(e){}
+      try{ ImmatMessages.refresh && await ImmatMessages.refresh(); }catch(e){}
+      say("Message envoyé à " + plate + ".","ok");
       return true;
     }catch(e){
-      console.warn("sendThroughOriginal", e);
-      safeToast("Erreur envoi message.","bad");
+      console.warn("sendFromNewMessages", e);
+      say("Erreur envoi : " + (e.message || "message non envoyé"),"bad");
       return false;
     }
+  }
+
+  function renderLocalMirror(mode){
+    const list = document.getElementById("icMsgList");
+    if(!list) return false;
+
+    let rows = [];
+    try{ rows = JSON.parse(localStorage.getItem("ic_messages_local_mirror_v1") || "[]"); }catch(e){}
+    rows = rows.filter(r => mode === "sent" ? r.direction === "sent" : r.direction === "received");
+
+    if(!rows.length) return false;
+
+    list.innerHTML = rows.slice().reverse().map(r => `
+      <div class="ic-mail-row" onclick="ImmatMessages.openLocalThread('${r.id}')">
+        <div class="ic-avatar">${r.direction === "sent" ? "↗️" : "📩"}</div>
+        <div class="ic-main">
+          <div class="ic-plate">${String(r.plate || "").replace(/[<>&]/g,"")}</div>
+          <div class="ic-preview">${String(r.message || "").replace(/[<>&]/g,"").slice(0,90)}</div>
+        </div>
+        <div class="ic-meta">${new Date(r.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</div>
+      </div>
+    `).join("");
+    return true;
   }
 
   function install(){
@@ -2456,121 +2257,95 @@ document.addEventListener("DOMContentLoaded", function(){
       setTimeout(install,300);
       return;
     }
+    if(window.__CleanMessagesAlertsFinalInstalled) return;
+    window.__CleanMessagesAlertsFinalInstalled = true;
 
-    if(window.__MessagesFinalFlowInstalled) return;
-    window.__MessagesFinalFlowInstalled = true;
-
-    const oldPanel = App.panel ? App.panel.bind(App) : null;
+    const originalPanel = App.panel ? App.panel.bind(App) : null;
     App.panel = function(name){
       if(name === "contact" || name === "message" || name === "received" || name === "reçus") name = "messages";
-      const r = oldPanel ? oldPanel(name) : undefined;
+      const result = originalPanel ? originalPanel(name) : undefined;
       if(name === "messages"){
-        setTimeout(function(){
-          try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
-        },150);
+        setTimeout(function(){ try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){} },120);
       }
-      return r;
-    };
-
-    const oldPickPlate = App.pickPlate ? App.pickPlate.bind(App) : null;
-    App.pickPlate = function(plate){
-      const p = formatPlate(plate);
-      try{ S.selPlate = p; S.conv = p; }catch(e){}
-      openCompose(p,"");
-      return undefined;
-    };
-
-    const oldContactFront = App.contactFrontVehicle ? App.contactFrontVehicle.bind(App) : null;
-    App.contactFrontVehicle = function(){
-      const p = formatPlate((S.frontVehicle && S.frontVehicle.plate) || selectedPlate());
-      if(!p && oldContactFront) return oldContactFront();
-      openCompose(p,"");
+      return result;
     };
 
     App.openInboxBadge = function(){
       try{
         App.panel("messages");
+        App.openSheet && App.openSheet();
         ImmatMessages.setMode && ImmatMessages.setMode("inbox");
         ImmatMessages.refresh && ImmatMessages.refresh();
       }catch(e){}
     };
 
-    App.vehicleAlert = function(label){
-      const p = formatPlate(selectedPlate());
-      if(!p){
-        safeToast("Sélectionne d'abord un véhicule.","bad");
+    const originalPickPlate = App.pickPlate ? App.pickPlate.bind(App) : null;
+    App.pickPlate = function(plate){
+      const p = formatPlate(plate);
+      try{ S.selPlate = p; S.conv = p; }catch(e){}
+      openMessagesCompose(p,"");
+      return undefined;
+    };
+
+    // Alerter depuis le menu flottant véhicule : ouvre le panneau Signaler avec choix.
+    const originalOpenReport = App.openReport ? App.openReport.bind(App) : null;
+    App.vehicleContextAction = function(action){
+      if(action === "signal" || action === "alert"){
+        if(originalOpenReport) originalOpenReport();
+        else App.panel("altet");
         return;
       }
-      const urgent = /pneu|roue|fumée|feu|incendie/i.test(label);
-      const msg = (urgent ? "🚨 SIGNALEMENT URGENT : " : "⚠️ SIGNALEMENT : ") +
-        label + ". Pouvez-vous vérifier votre véhicule ?";
-      openCompose(p,msg);
+      if(action === "contact") return openMessagesCompose(selectedVehiclePlate(),"");
+    };
+
+    // Quand un choix d’alerte véhicule est cliqué, il prépare un nouveau message.
+    App.vehicleAlert = function(label){
+      const p = selectedVehiclePlate();
+      if(!p){ say("Sélectionne d’abord le véhicule concerné.","bad"); return; }
       try{ App.closeOverlay && App.closeOverlay("reportPanel"); }catch(e){}
-      safeToast("Message préparé pour " + p + ".","ok");
+      openMessagesCompose(p, alertMessage(label));
+      say("Alerte préparée pour " + p + ". Appuie sur envoyer.","ok");
     };
 
-    const oldReportVehicleOrDrivers = App.reportVehicleOrDrivers ? App.reportVehicleOrDrivers.bind(App) : null;
+    const originalReportVehicleOrDrivers = App.reportVehicleOrDrivers ? App.reportVehicleOrDrivers.bind(App) : null;
     App.reportVehicleOrDrivers = function(label){
-      const p = formatPlate(selectedPlate());
+      const p = selectedVehiclePlate();
       if(p) return App.vehicleAlert(label);
-      if(oldReportVehicleOrDrivers) return oldReportVehicleOrDrivers(label);
+      return originalReportVehicleOrDrivers ? originalReportVehicleOrDrivers(label) : undefined;
     };
 
-    ImmatMessages.sendNew = async function(){
-      const plate = formatPlate((document.getElementById("icComposePlate") || {}).value || selectedPlate());
-      const text = String((document.getElementById("icComposeText") || {}).value || "").trim();
-      return sendThroughOriginal(plate,text);
+    ImmatMessages.sendNew = sendFromNewMessages;
+    ImmatMessages.quick = async function(text){
+      const plate = formatPlate(ImmatMessages.plate || selectedVehiclePlate());
+      openMessagesCompose(plate,text);
+      return sendFromNewMessages();
     };
-
     ImmatMessages.reply = async function(){
       const text = String((document.getElementById("icReplyText") || {}).value || "").trim();
-      const plate = formatPlate(ImmatMessages.plate || (window.S && S.conv) || selectedPlate());
-      return sendThroughOriginal(plate,text);
+      const plate = formatPlate(ImmatMessages.plate || selectedVehiclePlate());
+      syncOldFields(plate,text);
+      const cp = document.getElementById("icComposePlate");
+      const ct = document.getElementById("icComposeText");
+      if(cp) cp.value = plate;
+      if(ct) ct.value = text;
+      return sendFromNewMessages();
     };
 
-    ImmatMessages.quick = async function(text){
-      const plate = formatPlate(ImmatMessages.plate || (window.S && S.conv) || selectedPlate());
-      return sendThroughOriginal(plate,text);
-    };
-
-    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
+    const originalRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
     ImmatMessages.refresh = async function(){
-      if(oldRefresh) await oldRefresh();
-
-      const local = getLocal();
-      const list = document.getElementById("icMsgList");
-      if(!list) return;
-
-      const modeBtn = document.querySelector(".ic-msg-tabs button.on");
-      const mode = modeBtn ? modeBtn.dataset.mode : "inbox";
-
-      let rows = local.filter(r => mode === "sent" ? r.direction === "sent" : r.direction === "received");
-
-      if(mode === "compose") return;
-
-      if(!rows.length && !list.innerHTML.trim()){
-        list.innerHTML = '<div class="ic-empty">Aucun message.</div>';
-        return;
-      }
-
-      if(rows.length){
-        list.innerHTML = rows.slice().reverse().map(r => `
-          <div class="ic-mail-row" onclick="ImmatMessages.openLocalThread('${r.id}')">
-            <div class="ic-avatar">${r.direction === "sent" ? "↗️" : "📩"}</div>
-            <div class="ic-main">
-              <div class="ic-plate">${r.plate}</div>
-              <div class="ic-preview">${String(r.message || "").replace(/[<>&]/g,"").slice(0,90)}</div>
-            </div>
-            <div class="ic-meta">${new Date(r.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</div>
-          </div>
-        `).join("");
-      }
+      if(originalRefresh) await originalRefresh();
+      const active = document.querySelector(".ic-msg-tabs button.on");
+      const mode = active ? active.dataset.mode : "inbox";
+      if(mode === "sent") renderLocalMirror("sent");
+      if(mode === "inbox") renderLocalMirror("inbox");
     };
 
     ImmatMessages.openLocalThread = function(id){
-      const rows = getLocal();
+      let rows = [];
+      try{ rows = JSON.parse(localStorage.getItem("ic_messages_local_mirror_v1") || "[]"); }catch(e){}
       const r = rows.find(x => x.id === id);
       if(!r) return;
+
       ImmatMessages.plate = r.plate;
       const thread = document.getElementById("icThread");
       const body = document.getElementById("icThreadBody");
@@ -2582,38 +2357,38 @@ document.addEventListener("DOMContentLoaded", function(){
           <div class="ic-bubble ${r.direction === "sent" ? "sent" : "recv"}">
             ${String(r.message || "").replace(/[<>&]/g,"")}
             <span class="ic-time">${r.direction === "sent" ? "✓ Envoyé" : "Nouveau"} · ${new Date(r.created_at).toLocaleString("fr-FR")}</span>
-          </div>
-        `;
+          </div>`;
       }
     };
 
+    const originalDeleteThread = ImmatMessages.deleteThread ? ImmatMessages.deleteThread.bind(ImmatMessages) : null;
     ImmatMessages.deleteThread = async function(){
-      const p = formatPlate(ImmatMessages.plate || selectedPlate());
+      const p = formatPlate(ImmatMessages.plate || selectedVehiclePlate());
       if(!p || !confirm("Supprimer cette conversation ?")) return;
-      setLocal(getLocal().filter(r => formatPlate(r.plate) !== p));
-      try{ ImmatMessages.closeThread && ImmatMessages.closeThread(); }catch(e){}
+      try{
+        const key = "ic_messages_local_mirror_v1";
+        const rows = JSON.parse(localStorage.getItem(key) || "[]").filter(r => formatPlate(r.plate) !== p);
+        localStorage.setItem(key, JSON.stringify(rows));
+      }catch(e){}
+      if(originalDeleteThread) try{ await originalDeleteThread(); }catch(e){}
       try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
-      safeToast("Conversation supprimée.","ok");
-    };
-
-    ImmatMessages.deleteMessage = async function(id){
-      if(!id || !confirm("Supprimer ce message ?")) return;
-      setLocal(getLocal().filter(r => r.id !== id));
-      try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
-      safeToast("Message supprimé.","ok");
+      say("Conversation supprimée.","ok");
     };
 
     const plateInput = document.getElementById("icComposePlate");
-    if(plateInput && !plateInput.__finalFlowFormat){
-      plateInput.__finalFlowFormat = true;
+    if(plateInput && !plateInput.__cleanFinalFormat){
+      plateInput.__cleanFinalFormat = true;
       plateInput.addEventListener("input", function(){
-        const s = compact(plateInput.value);
+        const s = compactPlate(plateInput.value);
         if(s.length >= 7) plateInput.value = formatPlate(s);
       });
-      plateInput.addEventListener("blur", function(){
-        plateInput.value = formatPlate(plateInput.value);
-      });
+      plateInput.addEventListener("blur", function(){ plateInput.value = formatPlate(plateInput.value); });
     }
+
+    const badge = document.createElement("div");
+    badge.id = "icVersionCleanFinal";
+    badge.textContent = "CLEAN FINAL";
+    document.body.appendChild(badge);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", install);
@@ -2622,91 +2397,6 @@ document.addEventListener("DOMContentLoaded", function(){
   setTimeout(install,500);
   setTimeout(install,1500);
   setTimeout(install,3000);
-})();
-</script>
-
-
-<script id="alertToMessageFinalPatch">
-(function(){
-  if(window.__AlertToMessageFinalPatch) return;
-  window.__AlertToMessageFinalPatch = true;
-
-  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
-  function formatPlate(v){
-    const s=compact(v).slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
-    return String(v||"").toUpperCase().trim();
-  }
-  function toastMsg(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
-  function ownPlate(){try{return formatPlate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
-  function selectedPlate(){
-    const mine=compact(ownPlate());
-    const c=[window.S&&S.selPlate,window.S&&S.contextVehicle&&S.contextVehicle.plate,window.S&&S.frontVehicle&&S.frontVehicle.plate,document.getElementById("iTarget")&&document.getElementById("iTarget").value,document.getElementById("icComposePlate")&&document.getElementById("icComposePlate").value];
-    for(const x of c){const p=formatPlate(x); if(p&&compact(p)!==mine) return p}
-    return "";
-  }
-  function defaultText(label){
-    const l=label||"Pouvez-vous vérifier votre véhicule ?";
-    const urgent=/pneu|roue|fumée|feu|incendie|danger/i.test(l);
-    return (urgent?"🚨 SIGNALEMENT URGENT : ":"⚠️ SIGNALEMENT : ")+l;
-  }
-  function openCompose(plate,text){
-    plate=formatPlate(plate||selectedPlate());
-    if(!plate){
-      toastMsg("Sélectionne d’abord un véhicule sur la carte.","bad");
-      try{App.panel("messages");ImmatMessages.setMode("compose")}catch(e){}
-      return;
-    }
-    try{S.selPlate=plate;S.conv=plate}catch(e){}
-    try{App.panel("messages");App.openSheet&&App.openSheet();ImmatMessages.setMode&&ImmatMessages.setMode("compose")}catch(e){}
-    setTimeout(function(){
-      const p=document.getElementById("icComposePlate"), t=document.getElementById("icComposeText");
-      if(p)p.value=plate;
-      if(t&&text)t.value=text;
-      if(t)t.focus();
-    },120);
-  }
-
-  function install(){
-    if(!window.App||!window.ImmatMessages){setTimeout(install,300);return}
-    if(window.__AlertToMessageFinalPatchInstalled)return;
-    window.__AlertToMessageFinalPatchInstalled=true;
-
-    App.openAlertMessageCompose=function(label){openCompose(selectedPlate(),defaultText(label||"Pouvez-vous vérifier votre véhicule ?"))};
-    App.vehicleAlert=function(label){openCompose(selectedPlate(),defaultText((label||"Pouvez-vous vérifier votre véhicule ?")+(String(label||"").includes("?")?"":". Pouvez-vous vérifier votre véhicule ?")))};
-
-    const oldReport=App.reportVehicleOrDrivers?App.reportVehicleOrDrivers.bind(App):null;
-    App.reportVehicleOrDrivers=function(label){
-      const p=selectedPlate();
-      if(p)return App.vehicleAlert(label);
-      if(oldReport)return oldReport(label);
-      return App.openAlertMessageCompose(label);
-    };
-
-    App.vehicleContextAction=function(action){
-      if(action==="signal"||action==="alert")return App.openAlertMessageCompose("Pouvez-vous vérifier votre véhicule ?");
-      if(action==="contact")return openCompose(selectedPlate(),"");
-    };
-
-    App.pickPlate=function(plate){
-      const p=formatPlate(plate);
-      try{S.selPlate=p;S.conv=p}catch(e){}
-      openCompose(p,"");
-    };
-
-    App.openInboxBadge=function(){
-      try{App.panel("messages");App.openSheet&&App.openSheet();ImmatMessages.setMode&&ImmatMessages.setMode("inbox");ImmatMessages.refresh&&ImmatMessages.refresh()}catch(e){}
-    };
-
-    const oldPanel=App.panel?App.panel.bind(App):null;
-    App.panel=function(name){
-      if(name==="altet"||name==="alert"||name==="alerte"){App.openAlertMessageCompose();return}
-      if(name==="contact"||name==="message"||name==="received"||name==="reçus")name="messages";
-      return oldPanel?oldPanel(name):undefined;
-    };
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-  setTimeout(install,500);setTimeout(install,1500);setTimeout(install,3000);
 })();
 </script>
 
