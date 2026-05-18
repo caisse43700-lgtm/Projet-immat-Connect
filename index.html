@@ -2645,11 +2645,23 @@ async function sendMessageDirect(){
 
     if(tInput) tInput.value = "";
 
-    try{
+try{
       if(window.ImmatMessages){
-        ImmatMessages.setMode && ImmatMessages.setMode("sent");
-        ImmatMessages.refresh && await ImmatMessages.refresh();
+        if(ImmatMessages.setMode) ImmatMessages.setMode("sent");
+        if(ImmatMessages.refresh) await ImmatMessages.refresh();
       }
+
+      const sentBtn = document.querySelector('[data-mode="sent"]');
+      if(sentBtn) sentBtn.click();
+
+      setTimeout(async ()=>{
+        try{
+          if(window.ImmatMessages && ImmatMessages.refresh){
+            await ImmatMessages.refresh();
+          }
+        }catch(e){}
+      },500);
+
     }catch(e){}
 
     say("Message envoyé à " + realTargetPlate + ".","ok");
