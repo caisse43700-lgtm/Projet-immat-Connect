@@ -2208,7 +2208,7 @@ function showReputationToast(){
     ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
     ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
     ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
-    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DELETE FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="READ ROAD FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
@@ -2310,7 +2310,7 @@ function showReputationToast(){
     if(!document.getElementById("forceFixBadge")){
       const b=document.createElement("div");
       b.id="forceFixBadge";
-      b.textContent="DELETE FIX";
+      b.textContent="READ ROAD FIX";
       b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
       document.body.appendChild(b);
     }
@@ -2324,7 +2324,7 @@ function showReputationToast(){
 
 
 <script id="historyConversationFix">
-/* ===== DELETE FIX : les anciens messages restent dans la conversation ===== */
+/* ===== READ ROAD FIX : les anciens messages restent dans la conversation ===== */
 (function(){
   if(window.__HistoryConversationFix) return;
   window.__HistoryConversationFix = true;
@@ -2381,7 +2381,7 @@ function showReputationToast(){
     if(!document.getElementById("historyFixBadge")){
       const b=document.createElement("div");
       b.id="historyFixBadge";
-      b.textContent="DELETE FIX";
+      b.textContent="READ ROAD FIX";
       b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
       document.body.appendChild(b);
     }
@@ -2397,7 +2397,7 @@ function showReputationToast(){
 
 
 <script id="deleteMessagesFix">
-/* ===== DELETE FIX : suppression message ou conversation ===== */
+/* ===== READ ROAD FIX : suppression message ou conversation ===== */
 (function(){
   if(window.__DeleteMessagesFix) return;
   window.__DeleteMessagesFix = true;
@@ -2557,7 +2557,304 @@ function showReputationToast(){
     if(!document.getElementById("deleteFixBadge")){
       const b=document.createElement("div");
       b.id="deleteFixBadge";
-      b.textContent="DELETE FIX";
+      b.textContent="READ ROAD FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
+  else install();
+
+  setTimeout(install,800);
+  setTimeout(install,1800);
+})();
+</script>
+
+
+<script id="readAndRoadReportsFix">
+/* ===== READ + ROAD FIX : décompte messages lus + signalements route visibles ===== */
+(function(){
+  if(window.__ReadAndRoadReportsFix) return;
+  window.__ReadAndRoadReportsFix = true;
+
+  function plate(v){
+    const s=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function esc(v){
+    return String(v||"").replace(/[&<>"']/g,function(m){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
+    });
+  }
+  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
+  async function me(){
+    try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}
+  }
+  function ownPlate(){
+    try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}
+  }
+
+  async function markThreadRead(convPlate){
+    const u = await me();
+    if(!u || !window.sb) return;
+
+    convPlate = plate(convPlate || (window.ImmatMessages && ImmatMessages.plate));
+    const myP = ownPlate();
+
+    // 1) récupère les messages reçus de cette conversation
+    const buckets = [];
+    async function q(fn){
+      try{
+        const r = await fn();
+        if(r && Array.isArray(r.data)) buckets.push.apply(buckets,r.data);
+      }catch(e){}
+    }
+
+    await q(function(){
+      return sb.from("messages")
+        .select("*")
+        .eq("receiver_id",u.id)
+        .neq("status","rejected")
+        .limit(500);
+    });
+
+    if(myP){
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("target_plate",myP)
+          .neq("status","rejected")
+          .limit(500);
+      });
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("receiver_plate",myP)
+          .neq("status","rejected")
+          .limit(500);
+      });
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("to_plate",myP)
+          .neq("status","rejected")
+          .limit(500);
+      });
+    }
+
+    const ids = [];
+    const seen = new Set();
+
+    buckets.forEach(function(m){
+      if(!m || !m.id || seen.has(m.id)) return;
+      seen.add(m.id);
+
+      const senderP = plate(m.sender_plate || m.from_plate || "");
+      const possibleConv = [
+        senderP,
+        plate(m.target_plate),
+        plate(m.receiver_plate),
+        plate(m.to_plate)
+      ].filter(Boolean);
+
+      const isReceived = m.receiver_id === u.id || compact(m.target_plate) === compact(myP) || compact(m.receiver_plate) === compact(myP) || compact(m.to_plate) === compact(myP);
+      const isThisConv = !convPlate || possibleConv.includes(convPlate) || compact(senderP) === compact(convPlate);
+
+      if(isReceived && isThisConv && m.status !== "read"){
+        ids.push(m.id);
+      }
+    });
+
+    if(!ids.length){
+      try{ if(typeof setUnreadMsgCount === "function") setUnreadMsgCount(0); }catch(e){}
+      return;
+    }
+
+    for(const id of ids){
+      try{ await sb.from("messages").update({status:"read"}).eq("id",id); }catch(e){}
+    }
+
+    // 2) recalcule le badge immédiatement
+    try{
+      const r = await sb.from("messages")
+        .select("id,status")
+        .eq("receiver_id",u.id)
+        .neq("status","rejected")
+        .neq("status","read")
+        .limit(500);
+      const n = r && r.data ? r.data.length : 0;
+      if(typeof setUnreadMsgCount === "function") setUnreadMsgCount(n);
+      else {
+        const b=document.getElementById("topMsgBadge");
+        if(b){b.textContent=String(n);b.style.display=n>0?"flex":"none";}
+      }
+    }catch(e){
+      if(typeof setUnreadMsgCount === "function") setUnreadMsgCount(0);
+    }
+  }
+
+  function routeMeta(type){
+    const map = {
+      accident:{label:"Accident",icon:"💥",level:"urgent"},
+      bouchon:{label:"Bouchon",icon:"🚦",level:"important"},
+      obstacle:{label:"Obstacle",icon:"⚠️",level:"urgent"},
+      travaux:{label:"Travaux",icon:"🚧",level:"info"},
+      controle:{label:"Contrôle",icon:"👮",level:"info"},
+      danger:{label:"Danger",icon:"❗",level:"urgent"}
+    };
+    return map[type] || {label:String(type||"Signalement"),icon:"⚠️",level:"important"};
+  }
+
+  async function sendRoadReport(type){
+    if(window.S && (S.myLat == null || S.myLng == null)){
+      say("Localise-toi avant de signaler sur la carte.","bad");
+      try{ App.locate && App.locate(); }catch(e){}
+      return;
+    }
+
+    const meta = routeMeta(type);
+    const payload = {
+      plate:"ROUTE",
+      reason:"[ROUTE] " + meta.label,
+      latitude:S.myLat,
+      longitude:S.myLng,
+      created_at:new Date().toISOString()
+    };
+
+    try{
+      const u = await me();
+      if(u) payload.reporter_id = u.id;
+    }catch(e){}
+
+    // Insertion Supabase robuste : si reporter_id n'existe pas, on réessaie sans.
+    try{
+      let r = await sb.from("reports").insert(payload);
+      if(r.error && /column|schema|reporter_id/i.test(String(r.error.message||""))){
+        delete payload.reporter_id;
+        r = await sb.from("reports").insert(payload);
+      }
+      if(r.error) throw r.error;
+    }catch(e){
+      console.warn("road report insert",e);
+      say("Signalement local seulement : vérifie les droits Supabase reports.","bad");
+    }
+
+    // Affichage immédiat chez l'émetteur.
+    try{
+      if(App.addCommunityAlert){
+        App.addCommunityAlert({
+          type:type,
+          label:meta.label,
+          reason:payload.reason,
+          plate:"ROUTE",
+          lat:S.myLat,
+          lng:S.myLng,
+          level:meta.level,
+          group:"route",
+          at:Date.now()
+        },{notify:false});
+      }
+    }catch(e){}
+
+    try{ App.closeOverlay && App.closeOverlay("reportPanel"); }catch(e){}
+    say(meta.icon+" Signalement route envoyé : "+meta.label,"ok");
+  }
+
+  async function syncRoadReports(){
+    if(!window.sb || !window.App || !App.addCommunityAlert) return;
+
+    try{
+      const since = new Date(Date.now() - 3*60*60*1000).toISOString();
+      const r = await sb.from("reports")
+        .select("id,plate,reason,latitude,longitude,created_at")
+        .gte("created_at",since)
+        .order("created_at",{ascending:false})
+        .limit(200);
+
+      if(r.error) throw r.error;
+
+      (r.data||[]).forEach(function(rep){
+        const reason = String(rep.reason || "");
+        let type = "danger";
+        if(/bouchon/i.test(reason)) type="bouchon";
+        else if(/accident/i.test(reason)) type="accident";
+        else if(/obstacle/i.test(reason)) type="obstacle";
+        else if(/travaux/i.test(reason)) type="travaux";
+        else if(/contrôle|controle/i.test(reason)) type="controle";
+
+        const meta = routeMeta(type);
+
+        App.addCommunityAlert({
+          id:String(rep.id),
+          remoteId:String(rep.id),
+          type:type,
+          label:meta.label,
+          reason:reason,
+          plate:rep.plate || "ROUTE",
+          lat:rep.latitude,
+          lng:rep.longitude,
+          level:meta.level,
+          group:"route",
+          created_at:rep.created_at
+        },{notify:false});
+      });
+
+      try{ App.renderAlerts && App.renderAlerts(); }catch(e){}
+    }catch(e){
+      console.warn("syncRoadReports",e);
+    }
+  }
+
+  function install(){
+    if(!window.App || !window.ImmatMessages || !window.sb){
+      setTimeout(install,300);
+      return;
+    }
+    if(window.__ReadAndRoadReportsFixInstalled) return;
+    window.__ReadAndRoadReportsFixInstalled = true;
+
+    // Décompte : ouverture enveloppe = ne marque pas tout lu, ouverture conversation = marque cette conversation lue.
+    const oldOpenInbox = App.openInboxBadge ? App.openInboxBadge.bind(App) : null;
+    App.openInboxBadge = function(){
+      if(oldOpenInbox) oldOpenInbox();
+      try{
+        App.panel("messages");
+        App.openSheet && App.openSheet();
+        ImmatMessages.setMode && ImmatMessages.setMode("inbox");
+        ImmatMessages.refresh && ImmatMessages.refresh();
+      }catch(e){}
+    };
+
+    const oldOpenThread = ImmatMessages.openThread ? ImmatMessages.openThread.bind(ImmatMessages) : null;
+    ImmatMessages.openThread = function(p){
+      if(oldOpenThread) oldOpenThread(p);
+      ImmatMessages.plate = plate(p);
+      setTimeout(function(){
+        markThreadRead(p).then(function(){
+          try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
+        });
+      },250);
+    };
+
+    // Signalements route visibles pour les autres.
+    App.roadReport = sendRoadReport;
+
+    const oldSync = App.syncCommunityAlerts ? App.syncCommunityAlerts.bind(App) : null;
+    App.syncCommunityAlerts = async function(){
+      if(oldSync) try{ await oldSync(); }catch(e){}
+      await syncRoadReports();
+    };
+
+    syncRoadReports();
+    setInterval(syncRoadReports,20000);
+
+    if(!document.getElementById("readRoadFixBadge")){
+      const b=document.createElement("div");
+      b.id="readRoadFixBadge";
+      b.textContent="READ ROAD FIX";
       b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
       document.body.appendChild(b);
     }
