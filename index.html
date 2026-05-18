@@ -2076,400 +2076,143 @@ function showReputationToast(){
 
 </script>
 
-<script id="messagesCleanFinalJs">
-/* ===== MESSAGES RECEIVED FIX : UN SEUL PATCH ===== */
+<script id="receptionRealFix">
 (function(){
-  if(window.__MessagesCleanFinal) return;
-  window.__MessagesCleanFinal = true;
+  if(window.__ReceptionRealFix) return;
+  window.__ReceptionRealFix = true;
 
-  function compactPlate(v){
-    return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function plate(v){
+    const s=compact(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
   }
+  function esc(v){return String(v||"").replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]})}
+  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
+  function ownPlate(){try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
+  async function getUser(){try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}}
 
-  function formatPlate(v){
-    const s = compactPlate(v).slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)){
-      return s.slice(0,2) + "-" + s.slice(2,5) + "-" + s.slice(5);
+  async function findProfileByPlate(raw){
+    const wanted=compact(raw);
+    if(!wanted||!window.sb)return null;
+    const variants=Array.from(new Set([plate(raw),wanted,String(raw||"").toUpperCase().trim()])).filter(Boolean);
+    for(const v of variants){
+      try{const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle();if(r&&r.data)return r.data}catch(e){}
     }
-    return String(v || "").toUpperCase().trim();
-  }
-
-  function esc(v){
-    return String(v || "").replace(/[&<>"']/g, function(m){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
-    });
-  }
-
-  function textOnly(v){
-    return String(v || "").replace(/<[^>]*>/g,"").trim();
-  }
-
-  function toastSafe(msg,type){
-    try{ if(window.toast) return toast(msg,type || "ok"); }catch(e){}
-    alert(msg);
-  }
-
-  function ownPlate(){
-    try{ return formatPlate(App.ownPlate ? App.ownPlate() : (S.profile && S.profile.owner_plate)); }
-    catch(e){ return ""; }
-  }
-
-  function selectedPlate(){
-    const mine = compactPlate(ownPlate());
-    const candidates = [
-      window.S && S.selPlate,
-      window.S && S.contextVehicle && S.contextVehicle.plate,
-      window.S && S.frontVehicle && S.frontVehicle.plate,
-      document.getElementById("iTarget") && document.getElementById("iTarget").value,
-      document.getElementById("icComposePlate") && document.getElementById("icComposePlate").value
-    ];
-    for(const c of candidates){
-      const p = formatPlate(c);
-      if(p && compactPlate(p) !== mine) return p;
-    }
-    return "";
-  }
-
-  function syncOldMessageFields(plate,msg){
-    const target = document.getElementById("iTarget");
-    const body = document.getElementById("iMsg");
-    if(target) target.value = formatPlate(plate);
-    if(body) body.value = String(msg || "").trim();
     try{
-      S.selPlate = formatPlate(plate);
-      S.conv = formatPlate(plate);
-    }catch(e){}
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(1000);
+      return (r.data||[]).find(p=>compact(p.owner_plate)===wanted)||null;
+    }catch(e){return null}
   }
 
-  function alertText(label){
-    const l = String(label || "Pouvez-vous vérifier votre véhicule ?").trim();
-    const urgent = /pneu|roue|fumée|feu|incendie|danger/i.test(l);
-    return (urgent ? "🚨 SIGNALEMENT URGENT : " : "⚠️ SIGNALEMENT : ") +
-      l.replace(/\.$/,"") + ". Pouvez-vous vérifier votre véhicule ?";
-  }
-
-  function openCompose(plate,msg){
-    const p = formatPlate(plate || selectedPlate());
-    try{ App.panel("messages"); App.openSheet && App.openSheet(); }catch(e){}
-    try{ ImmatMessages.setMode && ImmatMessages.setMode("compose"); }catch(e){}
-    setTimeout(function(){
-      const cp = document.getElementById("icComposePlate");
-      const ct = document.getElementById("icComposeText");
-      if(cp && p) cp.value = p;
-      if(ct && msg) ct.value = msg;
-      if(p) syncOldMessageFields(p,msg || "");
-      if(ct) ct.focus();
-    },120);
-  }
-
-  async function fetchSupabaseMessages(){
-    if(!window.sb) return [];
-    let user = null;
+  async function profilesMap(ids){
+    ids=Array.from(new Set((ids||[]).filter(Boolean)));
+    if(!ids.length)return {};
     try{
-      const u = await sb.auth.getUser();
-      user = u && u.data ? u.data.user : null;
-    }catch(e){}
-    if(!user) return [];
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").in("id",ids);
+      const out={};(r.data||[]).forEach(p=>out[p.id]=p);return out;
+    }catch(e){return {}}
+  }
 
-    const myP = ownPlate();
-    const buckets = [];
+  async function fetchMessages(){
+    const u=await getUser(); if(!u||!window.sb)return [];
+    const myP=ownPlate(), mine=compact(myP), buckets=[];
+    async function q(fn){try{const r=await fn(); if(r&&Array.isArray(r.data)) buckets.push(...r.data)}catch(e){}}
 
-    async function q(fn){
-      try{
-        const r = await fn();
-        if(r && Array.isArray(r.data)) buckets.push.apply(buckets,r.data);
-      }catch(e){}
-    }
-
-    await q(function(){
-      return sb.from("messages")
-        .select("*")
-        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-        .neq("status","rejected")
-        .order("created_at",{ascending:true})
-        .limit(500);
-    });
+    await q(()=>sb.from("messages").select("*").or("sender_id.eq."+u.id+",receiver_id.eq."+u.id).neq("status","rejected").order("created_at",{ascending:true}).limit(500));
 
     if(myP){
-      const myPCompact = compactPlate(myP);
-      const platesToTry = myP !== myPCompact ? [myP, myPCompact] : [myP];
-      for(const col of ["target_plate","receiver_plate","to_plate","sender_plate","from_plate"]){
-        for(const plateVal of platesToTry){
-          await q(function(){
-            return sb.from("messages")
-              .select("*")
-              .eq(col,plateVal)
-              .neq("status","rejected")
-              .order("created_at",{ascending:true})
-              .limit(300);
-          });
-        }
+      for(const col of ["target_plate","receiver_plate","to_plate"]){
+        await q(()=>sb.from("messages").select("*").eq(col,myP).neq("status","rejected").order("created_at",{ascending:true}).limit(300));
       }
     }
 
-    const unique = new Map();
-    buckets.forEach(function(m){
-      const key = m.id || [m.sender_id,m.receiver_id,m.target_plate,m.message,m.created_at].join("|");
-      if(!unique.has(key)) unique.set(key,m);
-    });
+    const uniq=new Map();
+    buckets.forEach(m=>{if(!m)return; const k=m.id||[m.sender_id,m.receiver_id,m.target_plate,m.message,m.created_at].join("|"); if(!uniq.has(k))uniq.set(k,m)});
+    const rows=Array.from(uniq.values()).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+    const profs=await profilesMap(rows.flatMap(m=>[m.sender_id,m.receiver_id]));
 
-    const rows = Array.from(unique.values()).sort(function(a,b){
-      return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-    });
-
-    let profs = {};
-    try{
-      if(typeof profilesByIds === "function"){
-        profs = await profilesByIds(rows.flatMap(function(m){ return [m.sender_id,m.receiver_id]; }));
-      }
-    }catch(e){}
-
-    const mine = compactPlate(myP);
-
-    return rows.map(function(m){
-      const senderPlate = formatPlate(m.sender_plate || m.from_plate || (profs[m.sender_id] && profs[m.sender_id].owner_plate) || "");
-      const receiverPlate = formatPlate(m.receiver_plate || m.to_plate || (profs[m.receiver_id] && profs[m.receiver_id].owner_plate) || m.target_plate || "");
-      const sent = m.sender_id === user.id || (senderPlate && compactPlate(senderPlate) === mine);
-      const received =
-        m.receiver_id === user.id ||
-        (receiverPlate && compactPlate(receiverPlate) === mine) ||
-        (m.target_plate && compactPlate(m.target_plate) === mine) ||
-        (m.to_plate && compactPlate(m.to_plate) === mine) ||
-        (m.receiver_plate && compactPlate(m.receiver_plate) === mine);
-      const display = received && !sent
-        ? (senderPlate || formatPlate(m.from_plate) || formatPlate(m.sender_plate) || "PLAQUE")
-        : (receiverPlate || formatPlate(m.to_plate) || formatPlate(m.receiver_plate) || formatPlate(m.target_plate) || "PLAQUE");
-      return Object.assign({},m,{
-        _sent:!!sent,
-        _received:!!received,
-        _plate:display
-      });
+    return rows.map(m=>{
+      const senderPlate=plate(m.sender_plate||m.from_plate||(profs[m.sender_id]&&profs[m.sender_id].owner_plate)||"");
+      const receiverPlate=plate(m.receiver_plate||m.to_plate||(profs[m.receiver_id]&&profs[m.receiver_id].owner_plate)||m.target_plate||"");
+      const sent=m.sender_id===u.id || (senderPlate&&compact(senderPlate)===mine);
+      const received=m.receiver_id===u.id || (receiverPlate&&compact(receiverPlate)===mine) || (m.target_plate&&compact(m.target_plate)===mine);
+      const display=(received&&!sent)?(senderPlate||plate(m.from_plate)||plate(m.sender_plate)||"PLAQUE"):(receiverPlate||plate(m.to_plate)||plate(m.receiver_plate)||plate(m.target_plate)||"PLAQUE");
+      return Object.assign({},m,{_sent:!!sent,_received:!!received,_plate:display});
     });
   }
 
+  let lastRows=[];
   function group(rows){
-    const map = new Map();
-    rows.forEach(function(r){
-      const p = formatPlate(r._plate || r.plate || r.target_plate || "PLAQUE");
-      if(!map.has(p)) map.set(p,[]);
-      map.get(p).push(r);
-    });
-    return Array.from(map.entries()).map(function(pair){
-      const list = pair[1].sort(function(a,b){ return new Date(a.created_at||0)-new Date(b.created_at||0); });
-      return {plate:pair[0], list:list, last:list[list.length-1]};
-    }).sort(function(a,b){ return new Date(b.last.created_at||0)-new Date(a.last.created_at||0); });
+    const map=new Map();
+    rows.forEach(r=>{const p=plate(r._plate||r.target_plate||"PLAQUE"); if(!map.has(p))map.set(p,[]); map.get(p).push(r)});
+    return Array.from(map.entries()).map(([p,list])=>{list.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));return {plate:p,list,last:list[list.length-1]}}).sort((a,b)=>new Date(b.last.created_at||0)-new Date(a.last.created_at||0));
   }
-
-  let lastRows = [];
-
-  function renderList(mode,rows){
-    const list = document.getElementById("icMsgList");
-    if(!list) return;
-    const groups = group(rows);
-    if(!groups.length){
-      list.innerHTML = '<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';
-      return;
-    }
-    list.innerHTML = groups.map(function(g){
-      const preview = textOnly(g.last.message).slice(0,90) || "Message";
-      const time = g.last.created_at ? new Date(g.last.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
-      return '<div class="ic-mail-row" data-plate="' + esc(g.plate) + '" onclick="ImmatMessages.openThread(this.dataset.plate)">' +
-        '<div class="ic-avatar">' + (mode === "sent" ? "↗️" : "📩") + '</div>' +
-        '<div class="ic-main"><div class="ic-plate">' + esc(g.plate) + '</div><div class="ic-preview">' + esc(preview) + '</div></div>' +
-        '<div class="ic-meta">' + esc(time) + '</div></div>';
+  function render(mode,rows){
+    const list=document.getElementById("icMsgList"); if(!list)return;
+    const gs=group(rows);
+    if(!gs.length){list.innerHTML='<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';return}
+    list.innerHTML=gs.map(g=>{
+      const msg=String(g.last.message||"").replace(/<[^>]*>/g,"").slice(0,100);
+      const time=g.last.created_at?new Date(g.last.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):"";
+      return '<div class="ic-mail-row" onclick="ImmatMessages.openThread(\''+String(g.plate).replace(/'/g,"\\'")+'\')"><div class="ic-avatar">'+(mode==="sent"?"↗️":"📩")+'</div><div class="ic-main"><div class="ic-plate">'+esc(g.plate)+'</div><div class="ic-preview">'+esc(msg)+'</div></div><div class="ic-meta">'+esc(time)+'</div></div>';
     }).join("");
   }
-
   async function refresh(){
-    const active = document.querySelector(".ic-msg-tabs button.on");
-    const mode = active ? active.dataset.mode : "inbox";
-    lastRows = await fetchSupabaseMessages();
-
-    const unread = lastRows.filter(function(r){ return r._received && r.status !== "read"; }).length;
-    try{
-      if(typeof setUnreadMsgCount === "function") setUnreadMsgCount(unread);
-      else {
-        const b = document.getElementById("topMsgBadge");
-        if(b){ b.textContent = unread > 99 ? "99+" : String(unread); b.style.display = unread > 0 ? "flex" : "none"; }
-      }
-    }catch(e){}
-
-    if(mode === "compose") return;
-
-    const shown = lastRows.filter(function(r){
-      if(mode === "sent") return r._sent;
-      // inbox: show received + sent (so sender sees their own messages)
-      return r._received || r._sent;
-    });
-    renderList(mode,shown);
+    const active=document.querySelector(".ic-msg-tabs button.on");
+    const mode=active?active.dataset.mode:"inbox";
+    lastRows=await fetchMessages();
+    const unread=lastRows.filter(r=>r._received&&r.status!=="read").length;
+    try{if(typeof setUnreadMsgCount==="function")setUnreadMsgCount(unread)}catch(e){}
+    if(mode==="compose")return;
+    render(mode,lastRows.filter(r=>mode==="sent"?r._sent:r._received));
   }
-
   async function sendNew(){
-    const cp = document.getElementById("icComposePlate");
-    const ct = document.getElementById("icComposeText");
-    const p = formatPlate((cp && cp.value) || selectedPlate());
-    const m = String((ct && ct.value) || "").trim();
-
-    if(!p){ toastSafe("Saisis la plaque destinataire (ex: AB-123-CD).","bad"); if(cp) cp.focus(); return false; }
-    if(!m){ toastSafe("Ecris un message avant d'envoyer.","bad"); if(ct) ct.focus(); return false; }
-    if(compactPlate(p) === compactPlate(ownPlate())){ toastSafe("Impossible de t'envoyer un message à toi-même.","bad"); return false; }
-
-    syncOldMessageFields(p,m);
-
-    if(!App.sendMsg){
-      toastSafe("Fonction d'envoi introuvable.","bad");
-      return false;
-    }
-
-    try{
-      await App.sendMsg();
-      if(ct) ct.value = "";
-      ImmatMessages.setMode("sent");
-      setTimeout(refresh,300);
-      setTimeout(refresh,900);
-      toastSafe("Message envoyé à " + p + ".","ok");
-      return true;
-    }catch(e){
-      console.warn(e);
-      toastSafe("Erreur envoi : " + (e.message || "message non envoyé"),"bad");
-      return false;
-    }
+    const cp=document.getElementById("icComposePlate"), ct=document.getElementById("icComposeText");
+    const p=plate((cp&&cp.value)||""), m=String((ct&&ct.value)||"").trim();
+    if(!p||!m)return say("Plaque et message obligatoires.","bad");
+    if(compact(p)===compact(ownPlate()))return say("Impossible de t’envoyer un message à toi-même.","bad");
+    const u=await getUser(); if(!u)return say("Reconnecte-toi.","bad");
+    const target=await findProfileByPlate(p);
+    if(!target||!target.id)return say("Aucun utilisateur avec cette plaque : "+p,"bad");
+    const senderPlate=ownPlate(), receiverPlate=plate(target.owner_plate||p);
+    const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:m,status:"accepted"};
+    const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate});
+    let r=await sb.from("messages").insert(rich);
+    if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||"")))r=await sb.from("messages").insert(base);
+    if(r.error)return say("Erreur envoi : "+(r.error.message||"message non envoyé"),"bad");
+    if(ct)ct.value="";
+    try{S.selPlate=receiverPlate;S.conv=receiverPlate}catch(e){}
+    ImmatMessages.setMode("sent");setTimeout(refresh,250);setTimeout(refresh,900);
+    say("Message envoyé à "+receiverPlate+".","ok");
   }
-
+  function openCompose(p,m){
+    try{App.panel("messages");App.openSheet&&App.openSheet()}catch(e){}
+    ImmatMessages.setMode("compose");
+    setTimeout(()=>{const cp=document.getElementById("icComposePlate"),ct=document.getElementById("icComposeText");if(cp&&p)cp.value=plate(p);if(ct&&m)ct.value=m;if(ct)ct.focus()},100);
+  }
   function install(){
-    if(!window.App || !window.ImmatMessages){
-      setTimeout(install,300);
-      return;
-    }
-    if(window.__MessagesCleanFinalInstalled) return;
-    window.__MessagesCleanFinalInstalled = true;
-
-    const originalPanel = App.panel ? App.panel.bind(App) : null;
-    App.panel = function(name){
-      if(name === "contact" || name === "message" || name === "received" || name === "reçus") name = "messages";
-      const out = originalPanel ? originalPanel(name) : undefined;
-      if(name === "messages") setTimeout(refresh,120);
-      return out;
-    };
-
-    App.openInboxBadge = function(){
-      App.panel("messages");
-      try{ App.openSheet && App.openSheet(); }catch(e){}
-      ImmatMessages.setMode("inbox");
-      refresh();
-    };
-
-    const oldReport = App.reportVehicleOrDrivers ? App.reportVehicleOrDrivers.bind(App) : null;
-    App.reportVehicleOrDrivers = function(label){
-      const p = selectedPlate();
-      if(!p) return oldReport ? oldReport(label) : undefined;
-      try{ App.closeOverlay && App.closeOverlay("reportPanel"); }catch(e){}
-      openCompose(p,alertText(label));
-      toastSafe("Alerte préparée pour " + p + ". Appuie sur envoyer.","ok");
-    };
-
-    App.vehicleAlert = function(label){
-      return App.reportVehicleOrDrivers(label);
-    };
-
-    const oldVehicleContextAction = App.vehicleContextAction ? App.vehicleContextAction.bind(App) : null;
-    App.vehicleContextAction = function(action){
-      if(action === "contact") return openCompose(selectedPlate(),"");
-      if(action === "signal" || action === "alert"){
-        try{ return App.openReport ? App.openReport() : App.panel("altet"); }catch(e){}
-      }
-      return oldVehicleContextAction ? oldVehicleContextAction(action) : undefined;
-    };
-
-    App.pickPlate = function(p){
-      const fp = formatPlate(p);
-      try{ S.selPlate = fp; S.conv = fp; }catch(e){}
-      openCompose(fp,"");
-    };
-
-    const oldSetMode = ImmatMessages.setMode ? ImmatMessages.setMode.bind(ImmatMessages) : null;
-    ImmatMessages.setMode = function(mode){
-      if(oldSetMode) oldSetMode(mode);
-      setTimeout(refresh,80);
-    };
-    ImmatMessages.refresh = refresh;
-    ImmatMessages.sendNew = sendNew;
-    ImmatMessages.reply = async function(){
-      const t = String((document.getElementById("icReplyText") || {}).value || "").trim();
-      const cp = document.getElementById("icComposePlate");
-      const ct = document.getElementById("icComposeText");
-      if(cp) cp.value = formatPlate(ImmatMessages.plate || selectedPlate());
-      if(ct) ct.value = t;
-      return sendNew();
-    };
-    ImmatMessages.quick = async function(t){
-      const cp = document.getElementById("icComposePlate");
-      const ct = document.getElementById("icComposeText");
-      if(cp) cp.value = formatPlate(ImmatMessages.plate || selectedPlate());
-      if(ct) ct.value = t;
-      return sendNew();
-    };
-    ImmatMessages.openThread = function(p){
-      ImmatMessages.plate = formatPlate(p);
-      const rows = lastRows.filter(function(r){ return formatPlate(r._plate) === formatPlate(p); });
-      const thread = document.getElementById("icThread");
-      const body = document.getElementById("icThreadBody");
-      const title = document.getElementById("icThreadTitle");
-      if(!thread || !body || !title) return;
-      title.textContent = "🚗 " + formatPlate(p);
-      thread.classList.add("show");
-      body.innerHTML = rows.map(function(r){
-        const sent = !!r._sent;
-        const time = r.created_at ? new Date(r.created_at).toLocaleString("fr-FR") : "";
-        return '<div class="ic-bubble ' + (sent ? "sent" : "recv") + '">' + esc(textOnly(r.message)) +
-          '<span class="ic-time">' + (sent ? "✓ Envoyé" : "Nouveau") + " · " + esc(time) + '</span></div>';
-      }).join("");
-    };
-    ImmatMessages.deleteThread = async function(){
-      const p = formatPlate(ImmatMessages.plate || selectedPlate());
-      if(!p || !confirm("Supprimer cette conversation ?")) return;
-      const rows = lastRows.filter(function(r){ return formatPlate(r._plate) === p && r.id; });
-      try{
-        for(const r of rows){
-          await sb.from("messages").update({status:"rejected"}).eq("id",r.id);
-        }
-      }catch(e){}
-      await refresh();
-      toastSafe("Conversation supprimée.","ok");
-    };
-
-    const cp = document.getElementById("icComposePlate");
-    if(cp && !cp.__cleanFinalFormat){
-      cp.__cleanFinalFormat = true;
-      cp.addEventListener("input",function(){
-        const s = compactPlate(cp.value);
-        // Format progressively: add first dash after 2 letters, second dash after 5 chars
-        if(s.length >= 7){
-          cp.value = formatPlate(s);
-        } else if(s.length > 5){
-          cp.value = s.slice(0,2) + "-" + s.slice(2,5) + "-" + s.slice(5);
-        } else if(s.length > 2){
-          cp.value = s.slice(0,2) + "-" + s.slice(2);
-        }
-      });
-      cp.addEventListener("blur",function(){ cp.value = formatPlate(cp.value); });
-    }
-
-    if(!document.getElementById("icVersionMessagesClean")){
-      const badge = document.createElement("div");
-      badge.id = "icVersionMessagesClean";
-      badge.textContent = "RECEIVED FIX";
-      document.body.appendChild(badge);
-    }
-
+    if(!window.App||!window.ImmatMessages||!window.sb){setTimeout(install,300);return}
+    if(window.__ReceptionRealFixInstalled)return; window.__ReceptionRealFixInstalled=true;
+    const oldPanel=App.panel?App.panel.bind(App):null;
+    App.panel=function(name){if(name==="contact"||name==="message"||name==="received"||name==="reçus")name="messages";const out=oldPanel?oldPanel(name):undefined;if(name==="messages")setTimeout(refresh,100);return out};
+    App.openInboxBadge=function(){App.panel("messages");try{App.openSheet&&App.openSheet()}catch(e){} ImmatMessages.setMode("inbox");refresh()};
+    App.pickPlate=function(p){try{S.selPlate=plate(p);S.conv=plate(p)}catch(e){} openCompose(p,"")};
+    const oldReport=App.reportVehicleOrDrivers?App.reportVehicleOrDrivers.bind(App):null;
+    App.reportVehicleOrDrivers=function(label){const p=(S&&(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)))||""; if(!p)return oldReport?oldReport(label):undefined; const urgent=/pneu|roue|fumée|feu|incendie|danger/i.test(String(label||"")); try{App.closeOverlay&&App.closeOverlay("reportPanel")}catch(e){} openCompose(p,(urgent?"🚨 SIGNALEMENT URGENT : ":"⚠️ SIGNALEMENT : ")+String(label||"Signalement").replace(/\.$/,"")+". Pouvez-vous vérifier votre véhicule ?")};
+    App.vehicleAlert=function(label){return App.reportVehicleOrDrivers(label)};
+    const oldSet=ImmatMessages.setMode?ImmatMessages.setMode.bind(ImmatMessages):null;
+    ImmatMessages.setMode=function(mode){if(oldSet)oldSet(mode);setTimeout(refresh,80)};
+    ImmatMessages.refresh=refresh; ImmatMessages.sendNew=sendNew;
+    ImmatMessages.openThread=function(p){ImmatMessages.plate=plate(p);const rows=lastRows.filter(r=>plate(r._plate)===plate(p));const thread=document.getElementById("icThread"),body=document.getElementById("icThreadBody"),title=document.getElementById("icThreadTitle");if(!thread||!body||!title)return;title.textContent="🚗 "+plate(p);thread.classList.add("show");body.innerHTML=rows.map(r=>'<div class="ic-bubble '+(r._sent?"sent":"recv")+'">'+esc(String(r.message||""))+'<span class="ic-time">'+(r._sent?"✓ Envoyé":"Reçu")+' · '+esc(r.created_at?new Date(r.created_at).toLocaleString("fr-FR"):"")+'</span></div>').join("")};
+    ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
+    ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
+    ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="RECEPTION FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",install);
-  else install();
-  setTimeout(install,600);
-  setTimeout(install,1600);
-  setTimeout(install,3000);
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+  setTimeout(install,600);setTimeout(install,1600);
 })();
 </script>
 
