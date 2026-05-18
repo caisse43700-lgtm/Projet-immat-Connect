@@ -754,7 +754,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
+const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null;
 const get=(k,f)=>{try{let v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const jget=(k,f)=>{try{let v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
@@ -2208,131 +2208,11 @@ function showReputationToast(){
     ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
     ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
     ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
-    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DEBUG SB";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="RECEPTION FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
   setTimeout(install,600);setTimeout(install,1600);
-})();
-</script>
-
-
-<script id="messagesDebugPanel">
-/* ===== DEBUG MESSAGES : affiche pourquoi Reçus est vide ===== */
-(function(){
-  if(window.__MessagesDebugPanel) return;
-  window.__MessagesDebugPanel = true;
-
-  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
-  function plate(v){
-    const s=compact(v).slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
-    return String(v||"").toUpperCase().trim();
-  }
-  function esc(v){return String(v||"").replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]})}
-  function showBox(html){
-    let box=document.getElementById("icDebugBox");
-    if(!box){
-      box=document.createElement("div");
-      box.id="icDebugBox";
-      box.style.cssText="position:fixed;left:8px;right:8px;bottom:44px;z-index:999999;background:#071018;color:#eef6ff;border:1px solid #00ffb3;border-radius:14px;padding:10px;font:12px system-ui;max-height:46vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.45)";
-      document.body.appendChild(box);
-    }
-    box.innerHTML=html;
-  }
-  async function runDebug(){
-    if(!window.sb && typeof sb !== "undefined") window.sb = sb;
-    if(!window.sb){
-      showBox("<b>DEBUG</b><br>Supabase non chargé : CDN Supabase bloqué ou fichier ouvert trop tôt.");
-      return;
-    }
-    let u=null, prof=null, msgs=[], profs=[];
-    try{const r=await sb.auth.getUser();u=r&&r.data?r.data.user:null;}catch(e){}
-    if(!u){showBox("<b>DEBUG</b><br>Aucun utilisateur connecté.");return;}
-
-    try{
-      const r=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
-      prof=r.data||null;
-    }catch(e){}
-
-    const myPlate=plate(prof&&prof.owner_plate);
-    let html="<b>DEBUG MESSAGES</b><br>";
-    html+="Compte connecté : <b>"+esc(u.email||u.id)+"</b><br>";
-    html+="User id : <b>"+esc(u.id)+"</b><br>";
-    html+="Plaque profil : <b>"+esc(myPlate||"VIDE")+"</b><br><br>";
-
-    async function query(label,fn){
-      try{
-        const r=await fn();
-        html+="<b>"+esc(label)+"</b> : ";
-        if(r.error){
-          html+="ERREUR → "+esc(r.error.message)+"<br>";
-        }else{
-          html+=(r.data||[]).length+" ligne(s)<br>";
-          msgs=msgs.concat(r.data||[]);
-        }
-      }catch(e){
-        html+="<b>"+esc(label)+"</b> : EXCEPTION "+esc(e.message||e)+"<br>";
-      }
-    }
-
-    await query("messages receiver_id = moi",()=>sb.from("messages").select("*").eq("receiver_id",u.id).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
-    await query("messages sender_id = moi",()=>sb.from("messages").select("*").eq("sender_id",u.id).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
-
-    if(myPlate){
-      await query("messages target_plate = ma plaque",()=>sb.from("messages").select("*").eq("target_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
-      await query("messages receiver_plate = ma plaque",()=>sb.from("messages").select("*").eq("receiver_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
-      await query("messages to_plate = ma plaque",()=>sb.from("messages").select("*").eq("to_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
-    }
-
-    try{
-      const r=await sb.from("profiles").select("id,owner_plate,pseudo,email").limit(50);
-      if(r.error){
-        html+="<br><b>Lecture profiles</b> : ERREUR → "+esc(r.error.message)+"<br>";
-      }else{
-        profs=r.data||[];
-        html+="<br><b>Profiles lisibles</b> : "+profs.length+"<br>";
-        html+="Plaques visibles : "+esc(profs.map(p=>p.owner_plate).filter(Boolean).slice(0,12).join(", ")||"aucune")+"<br>";
-      }
-    }catch(e){}
-
-    const uniq=new Map();
-    msgs.forEach(m=>{if(m&&m.id&&!uniq.has(m.id))uniq.set(m.id,m)});
-    const rows=[...uniq.values()].slice(0,8);
-    html+="<br><b>Dernières lignes messages visibles</b><br>";
-    if(!rows.length){
-      html+="Aucune ligne visible depuis ce compte.<br>";
-    }else{
-      rows.forEach(m=>{
-        html+="<div style='border-top:1px solid #26364d;margin-top:6px;padding-top:6px'>";
-        html+="id: "+esc(m.id)+"<br>";
-        html+="sender_id: "+esc(m.sender_id)+"<br>";
-        html+="receiver_id: "+esc(m.receiver_id)+"<br>";
-        html+="target_plate: "+esc(m.target_plate)+" / receiver_plate: "+esc(m.receiver_plate)+" / to_plate: "+esc(m.to_plate)+"<br>";
-        html+="status: "+esc(m.status)+"<br>";
-        html+="message: "+esc(String(m.message||'').slice(0,80));
-        html+="</div>";
-      });
-    }
-
-    html+="<br><button onclick='document.getElementById(\"icDebugBox\").remove()' style='border:0;border-radius:10px;padding:8px 10px;background:#00ffb3;color:#06140f;font-weight:900'>Fermer</button>";
-    showBox(html);
-  }
-
-  function install(){
-    if(!window.App){setTimeout(install,300);return}
-    App.debugMessages = runDebug;
-    if(!document.getElementById("icDebugBtn")){
-      const b=document.createElement("button");
-      b.id="icDebugBtn";
-      b.textContent="DEBUG SB";
-      b.onclick=runDebug;
-      b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;border:0;border-radius:999px;padding:7px 10px;font:900 11px system-ui";
-      document.body.appendChild(b);
-    }
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-  setTimeout(install,800);
 })();
 </script>
 
