@@ -780,7 +780,7 @@ const js=s=>String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/
 const nPlate=v=>String(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');
 const nPhone=v=>String(v||'').replace(/\D/g,'');
 const vPhone=v=>/^0\d{9}$/.test(nPhone(v));
-const vPlate=v=>/^[A-Z]{2}-\d{3}-[A-Z]{2}$/.test(nPlate(v));
+const vPlate=v=>/^[A-Z]{2}-\d{3}-[A-Z]{2}$/.test(fPlate(v));
 const sPwd=v=>String(v||'').length>=8&&/[A-Z]/.test(v)&&/[^A-Za-z0-9]/.test(v);
 const isEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim());
 function fPlate(r){let s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);return s.length<=2?s:s.length<=5?s.slice(0,2)+'-'+s.slice(2):s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5)}
@@ -885,7 +885,7 @@ async handleAuth(){
     authResetButton();
   }
 },
-async signup(email,pwd){let ph=nPhone($('iPhone').value),pl=nPlate($('iPlate').value),c=$('iColor').value,cf=$('iConfirm').value;if(!vPhone(ph)){hint('hPhone','error','Format : 0612345678');return}if(!vPlate(pl)){hint('hPlate','error','Format : AB-123-CD');return}if(!c){hint('hColor','error','Choisis une couleur.');return}if(!sPwd(pwd)){hint('hPwd','error','Mot de passe trop faible (8 car., 1 maj., 1 spécial).');return}if(pwd!==cf){hint('hConfirm','error','Les mots de passe ne correspondent pas.');return}if(!await this.plateAvailable(pl,null)){hint('hPlate','error','Plaque déjà utilisée.');return}this.pending(email,pl,ph,c);let{data,error}=await sb.auth.signUp({email,password:pwd,options:{emailRedirectTo:CFG.site}});if(error){st('authSt',error.message,'error');return}if(data?.user)await sb.from('profiles').upsert({id:data.user.id,email,pseudo:email.split('@')[0],owner_plate:pl,phone:ph,vehicle_color:c});st('authSt','✅ Compte créé. Vérifie ton email.','success')},
+async signup(email,pwd){let ph=nPhone($('iPhone').value),pl=fPlate($('iPlate').value),c=$('iColor').value,cf=$('iConfirm').value;if(!vPhone(ph)){hint('hPhone','error','Format : 0612345678');return}if(!vPlate(pl)){hint('hPlate','error','Format : AB-123-CD');return}if(!c){hint('hColor','error','Choisis une couleur.');return}if(!sPwd(pwd)){hint('hPwd','error','Mot de passe trop faible (8 car., 1 maj., 1 spécial).');return}if(pwd!==cf){hint('hConfirm','error','Les mots de passe ne correspondent pas.');return}if(!await this.plateAvailable(pl,null)){hint('hPlate','error','Plaque déjà utilisée.');return}this.pending(email,pl,ph,c);let{data,error}=await sb.auth.signUp({email,password:pwd,options:{emailRedirectTo:CFG.site}});if(error){st('authSt',error.message,'error');return}if(data?.user)await sb.from('profiles').upsert({id:data.user.id,email,pseudo:email.split('@')[0],owner_plate:pl,phone:ph,vehicle_color:c});st('authSt','✅ Compte créé. Vérifie ton email.','success')},
 async login(email,pwd){let{data,error}=await withTimeout(sb.auth.signInWithPassword({email,password:pwd}),15000,'Délai dépassé : Supabase Auth ne répond pas.');if(error){st('authSt',authMessage(error),'error');return}S.uid=data?.user?.id||null;st('authSt','Connexion réussie. Chargement du profil…','success');await withTimeout(this.afterAuth(),15000,'Connexion réussie, mais le chargement du profil prend trop de temps. Vérifie la table profiles/RLS.')},
 async forgotPwd(){try{if(!sb)return st('authSt','Supabase non chargé.','error');let email=$('iEmail').value.trim();if(!email||!isEmail(email)){hint('hEmail','error','Entre ton email.');return}let{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:CFG.site});st('authSt',error?error.message:'Email de réinitialisation envoyé.',error?'error':'success')}catch(e){st('authSt',e?.message||'Erreur reset.','error')}},
 async resendConfirm(){try{let email=$('iEmail').value.trim();if(email){let{error}=await sb.auth.resend({type:'signup',email,options:{emailRedirectTo:CFG.site}});st('authSt',error?error.message:'Email renvoyé.',error?'error':'success')}}catch(e){st('authSt',e?.message||'Erreur envoi email.','error')}},
@@ -925,7 +925,7 @@ async afterAuth(){
     st('profileSt','Connecté, mais impossible de charger le profil. Complète ou vérifie RLS.','error');
   }
 },
-async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=nPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo||!vPlate(pl)||!vPhone(ph)||!c)return st('profileSt','Complète tous les champs correctement.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
+async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo||!vPlate(pl)||!vPhone(ph)||!c)return st('profileSt','Complète tous les champs correctement.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
 openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh()},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
@@ -1088,7 +1088,13 @@ async sendMsg(){try{
   if(!senderPlate)return toast('Profil conducteur incomplet.','bad');
   if(plate===senderPlate)return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");
 
-  const {data:target,error:te}=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plate).maybeSingle();
+  // Cherche la plaque avec tirets ET sans tirets pour compatibilité
+  let {data:target,error:te}=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plate).maybeSingle();
+  if(!target?.id){
+    const plateCompact=nPlate(plate);
+    const r2=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plateCompact).maybeSingle();
+    if(r2.data?.id){target=r2.data;te=r2.error;}
+  }
   if(te)console.warn(te);
   if(!target?.id)return toast('Aucun utilisateur avec cette plaque.','bad');
   if(target.id===u.id)return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");
@@ -1098,11 +1104,11 @@ async sendMsg(){try{
 
   const {data:a}=await sb.from('messages').select('status').or('and(sender_id.eq.'+u.id+',receiver_id.eq.'+target.id+'),and(sender_id.eq.'+target.id+',receiver_id.eq.'+u.id+')');
   const rows=a||[],acc=rows.some(x=>x.status==='accepted'),pend=rows.some(x=>x.status==='pending');
-  if(pend&&!acc)return toast('Demande déjà en attente.','ok');
+  // Plus de blocage pending — on autorise toujours l'envoi
 
   // On tente d'abord avec les plaques explicites. Si ta table n'a pas encore
   // sender_plate/receiver_plate, fallback automatique sans casser l'envoi.
-  const basePayload={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:msg,status:acc?'accepted':'pending'};
+  const basePayload={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:msg,status:'accepted'};
   const richPayload={...basePayload,sender_plate:senderPlate,receiver_plate:receiverPlate};
   let {error}=await sb.from('messages').insert(richPayload);
   if(error&&/sender_plate|receiver_plate|column|schema cache/i.test(String(error.message||''))){
@@ -1621,7 +1627,9 @@ function showReputationToast(){
 
   const ownPlate = () => {
     try {
-      return np(App.ownPlate?.() || S.profile?.owner_plate || "");
+      // Use formatPlate to get dashes — but also try compact for BDD compatibility
+      const raw = (App.ownPlate && App.ownPlate()) || (window.S && S.profile && S.profile.owner_plate) || "";
+      return typeof formatPlate === "function" ? formatPlate(raw) : np(raw);
     } catch(e) {
       return "";
     }
@@ -2183,15 +2191,19 @@ function showReputationToast(){
     });
 
     if(myP){
+      const myPCompact = compactPlate(myP);
+      const platesToTry = myP !== myPCompact ? [myP, myPCompact] : [myP];
       for(const col of ["target_plate","receiver_plate","to_plate","sender_plate","from_plate"]){
-        await q(function(){
-          return sb.from("messages")
-            .select("*")
-            .eq(col,myP)
-            .neq("status","rejected")
-            .order("created_at",{ascending:true})
-            .limit(300);
-        });
+        for(const plateVal of platesToTry){
+          await q(function(){
+            return sb.from("messages")
+              .select("*")
+              .eq(col,plateVal)
+              .neq("status","rejected")
+              .order("created_at",{ascending:true})
+              .limit(300);
+          });
+        }
       }
     }
 
@@ -2285,7 +2297,9 @@ function showReputationToast(){
     if(mode === "compose") return;
 
     const shown = lastRows.filter(function(r){
-      return mode === "sent" ? r._sent : r._received;
+      if(mode === "sent") return r._sent;
+      // inbox: show received + sent (so sender sees their own messages)
+      return r._received || r._sent;
     });
     renderList(mode,shown);
   }
@@ -2296,7 +2310,8 @@ function showReputationToast(){
     const p = formatPlate((cp && cp.value) || selectedPlate());
     const m = String((ct && ct.value) || "").trim();
 
-    if(!p || !m){ toastSafe("Plaque et message obligatoires.","bad"); return false; }
+    if(!p){ toastSafe("Saisis la plaque destinataire (ex: AB-123-CD).","bad"); if(cp) cp.focus(); return false; }
+    if(!m){ toastSafe("Ecris un message avant d'envoyer.","bad"); if(ct) ct.focus(); return false; }
     if(compactPlate(p) === compactPlate(ownPlate())){ toastSafe("Impossible de t'envoyer un message à toi-même.","bad"); return false; }
 
     syncOldMessageFields(p,m);
@@ -2428,7 +2443,14 @@ function showReputationToast(){
       cp.__cleanFinalFormat = true;
       cp.addEventListener("input",function(){
         const s = compactPlate(cp.value);
-        if(s.length >= 7) cp.value = formatPlate(s);
+        // Format progressively: add first dash after 2 letters, second dash after 5 chars
+        if(s.length >= 7){
+          cp.value = formatPlate(s);
+        } else if(s.length > 5){
+          cp.value = s.slice(0,2) + "-" + s.slice(2,5) + "-" + s.slice(5);
+        } else if(s.length > 2){
+          cp.value = s.slice(0,2) + "-" + s.slice(2);
+        }
       });
       cp.addEventListener("blur",function(){ cp.value = formatPlate(cp.value); });
     }
