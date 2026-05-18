@@ -2572,14 +2572,13 @@ function showReputationToast(){
 </script>
 
 
-<script id="splitBaseBadge">
+<script id="htmlAutoUiBadge">
 (function(){
-  if(document.getElementById("splitBaseBadgeView")) return;
   function add(){
-    if(document.getElementById("splitBaseBadgeView")) return;
+    if(document.getElementById("htmlAutoUiBadgeView")) return;
     const b=document.createElement("div");
-    b.id="splitBaseBadgeView";
-    b.textContent="BEST1 + UI.JS";
+    b.id="htmlAutoUiBadgeView";
+    b.textContent="HTML + UI AUTO";
     b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
     document.body.appendChild(b);
   }
@@ -2588,6 +2587,6 @@ function showReputationToast(){
 })();
 </script>
 
-  <script src="ui.js"></script>
+  <script src="ui.js?v=2"></script>
 </body>
 </html>
