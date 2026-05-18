@@ -1,11 +1,9 @@
 /* ===== UI.JS — gestion propre des panneaux ImmatConnect ===== */
 (function(){
-  if(window.__ImmatConnectUIInstalled) return;
-  window.__ImmatConnectUIInstalled = true;
+  if(window.__ImmatConnectUIInstalledV2) return;
+  window.__ImmatConnectUIInstalledV2 = true;
 
-  function byId(id){
-    return document.getElementById(id);
-  }
+  function byId(id){ return document.getElementById(id); }
 
   function hide(el){
     if(!el) return;
@@ -56,27 +54,36 @@
     });
   }
 
+  function minimizeSheet(){
+    const sheet = byId("sheet");
+    if(!sheet) return;
+    sheet.classList.add("mini");
+    sheet.classList.remove("full");
+  }
+
+  function openOverlayClean(id){
+    closeSheetPanels(null);
+    minimizeSheet();
+    closeFloatingPanels(id);
+    const el = byId(id);
+    if(el) el.classList.add("show");
+  }
+
   window.UIManager = {
     closeFloatingPanels: closeFloatingPanels,
     closeSheetPanels: closeSheetPanels,
-
+    minimizeSheet: minimizeSheet,
     openSheetPanel: function(name){
       name = normalizePanelName(name);
       closeFloatingPanels(null);
       closeSheetPanels(name);
       try{ window.App && App.openSheet && App.openSheet(); }catch(e){}
     },
-
-    openOverlay: function(id){
-      closeSheetPanels(null);
-      closeFloatingPanels(id);
-      const el = byId(id);
-      if(el) el.classList.add("show");
-    },
-
+    openOverlay: openOverlayClean,
     closeAll: function(){
       closeFloatingPanels(null);
       closeSheetPanels(null);
+      minimizeSheet();
     }
   };
 
@@ -85,8 +92,9 @@
       setTimeout(installAppHooks, 300);
       return;
     }
-    if(window.__ImmatConnectUIHooksInstalled) return;
-    window.__ImmatConnectUIHooksInstalled = true;
+
+    if(window.__ImmatConnectUIHooksInstalledV2) return;
+    window.__ImmatConnectUIHooksInstalledV2 = true;
 
     const originalPanel = App.panel ? App.panel.bind(App) : null;
     App.panel = function(name){
@@ -119,22 +127,39 @@
 
     const originalOpenReport = App.openReport ? App.openReport.bind(App) : null;
     App.openReport = function(){
-      closeSheetPanels(null);
-      closeFloatingPanels("reportPanel");
-      if(originalOpenReport) originalOpenReport();
-      else UIManager.openOverlay("reportPanel");
+      openOverlayClean("reportPanel");
+      if(originalOpenReport){
+        setTimeout(function(){
+          const p = byId("reportPanel");
+          if(p) p.classList.add("show");
+        }, 10);
+      }
     };
 
     const originalOpenNearby = App.openNearby ? App.openNearby.bind(App) : null;
     App.openNearby = function(){
-      closeSheetPanels(null);
-      closeFloatingPanels("nearbyPanel");
-      if(originalOpenNearby) originalOpenNearby();
-      else UIManager.openOverlay("nearbyPanel");
+      openOverlayClean("nearbyPanel");
+      if(originalOpenNearby){
+        originalOpenNearby();
+        setTimeout(function(){
+          minimizeSheet();
+          closeSheetPanels(null);
+          const p = byId("nearbyPanel");
+          if(p) p.classList.add("show");
+        }, 40);
+      }
+    };
+
+    const originalOpenAlerts = App.openAlerts ? App.openAlerts.bind(App) : null;
+    App.openAlerts = function(){
+      closeFloatingPanels(null);
+      if(originalOpenAlerts) originalOpenAlerts();
+      App.panel("altet");
     };
 
     const originalOpenDrawer = App.openDrawer ? App.openDrawer.bind(App) : null;
     App.openDrawer = function(){
+      minimizeSheet();
       closeFloatingPanels("drawer");
       if(originalOpenDrawer) originalOpenDrawer();
       else {
@@ -150,6 +175,7 @@
       try{
         window.ImmatMessages && ImmatMessages.setMode && ImmatMessages.setMode("inbox");
       }catch(e){}
+
       if(originalOpenInbox){
         try{ originalOpenInbox(); }catch(e){}
       }
@@ -164,6 +190,14 @@
         if(parent) parent.classList.remove("show","open","active");
       }
     }, true);
+
+    if(!document.getElementById("uiV2Badge")){
+      const b = document.createElement("div");
+      b.id = "uiV2Badge";
+      b.textContent = "UI FIX 2";
+      b.style.cssText = "position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
   }
 
   if(document.readyState === "loading"){
