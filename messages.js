@@ -1,9 +1,9 @@
-/* ===== IMMATCONNECT MESSAGES — VERSION UNIFIÉE PROPRE ===== */
+/* ===== IMMATCONNECT MESSAGES — VERSION UNIFIÉE PROPRE V10 ===== */
 (function () {
   'use strict';
 
-  if (window.__ImmatMessagesUnifiedClean) return;
-  window.__ImmatMessagesUnifiedClean = true;
+  if (window.__ImmatMessagesUnifiedCleanV10) return;
+  window.__ImmatMessagesUnifiedCleanV10 = true;
 
   const el = id => document.getElementById(id);
 
@@ -201,6 +201,7 @@
       );
 
       const isSender = message.sender_id === user.id || Boolean(myCompactPlate && compact(senderPlate) === myCompactPlate);
+
       const isReceiver = message.receiver_id === user.id || Boolean(myCompactPlate && (
         compact(receiverPlate) === myCompactPlate ||
         compact(message.target_plate) === myCompactPlate ||
@@ -251,7 +252,9 @@
     });
 
     try {
-      if (window.App && typeof App.updateCommunityStatus === 'function') App.updateCommunityStatus();
+      if (window.App && typeof App.updateCommunityStatus === 'function') {
+        App.updateCommunityStatus();
+      }
     } catch (e) {}
   }
 
@@ -260,6 +263,10 @@
     plate: null,
     rows: []
   };
+
+  function unreadCount() {
+    return State.rows.filter(message => !message.sent && !message.read).length;
+  }
 
   function conversations() {
     const grouped = {};
@@ -316,11 +323,11 @@
 
     if (State.mode === 'compose') {
       list.innerHTML = '';
+      setBadge(unreadCount());
       return;
     }
 
-    const unreadCount = State.rows.filter(message => !message.sent && !message.read).length;
-    setBadge(unreadCount);
+    setBadge(unreadCount());
 
     const items = conversations();
 
@@ -404,12 +411,17 @@
 
     if (!ids.length) return;
 
+    ids.forEach(id => {
+      const row = State.rows.find(message => message.id === id);
+      if (row) row.read = true;
+    });
+
+    setBadge(unreadCount());
+    renderList();
+    renderThread();
+
     try {
       await sb.from('messages').update({ status: 'read' }).in('id', ids);
-      ids.forEach(id => {
-        const row = State.rows.find(message => message.id === id);
-        if (row) row.read = true;
-      });
     } catch (e) {}
   }
 
@@ -419,6 +431,7 @@
     renderThread();
     renderCompose();
     updateTabs();
+    setBadge(unreadCount());
   }
 
   function setMode(mode) {
@@ -435,10 +448,17 @@
 
   async function openThread(selectedPlate) {
     State.plate = plate(selectedPlate);
+
     renderList();
     renderThread();
+
     await markReadInDb();
-    setBadge(State.rows.filter(message => !message.sent && !message.read).length);
+    await refresh();
+
+    State.plate = plate(selectedPlate);
+    renderList();
+    renderThread();
+    setBadge(unreadCount());
   }
 
   function closeThread() {
@@ -446,6 +466,7 @@
     const thread = el('icThread');
     if (thread) thread.classList.remove('show');
     renderList();
+    setBadge(unreadCount());
   }
 
   async function sendTo(targetPlate, text) {
@@ -554,6 +575,7 @@
       State.rows = State.rows.filter(message => message.id !== id);
       renderList();
       renderThread();
+      setBadge(unreadCount());
       say('Message supprimé.', 'ok');
     } catch (e) {
       say('Erreur suppression.', 'bad');
@@ -576,6 +598,7 @@
       State.plate = null;
       renderList();
       renderThread();
+      setBadge(unreadCount());
       say('Conversation supprimée.', 'ok');
     } catch (e) {
       say('Erreur suppression conversation.', 'bad');
@@ -583,25 +606,39 @@
   }
 
   function patchApp() {
-    if (!window.App || App.__messagesUnifiedPatched) return;
-    App.__messagesUnifiedPatched = true;
+    if (!window.App || App.__messagesUnifiedPatchedV10) return;
+    App.__messagesUnifiedPatchedV10 = true;
 
     const originalPanel = typeof App.panel === 'function' ? App.panel.bind(App) : null;
     App.panel = function (name) {
       if (name === 'contact') name = 'messages';
+
       const result = originalPanel ? originalPanel(name) : undefined;
-      if (name === 'messages') setTimeout(refresh, 100);
+
+      if (name === 'messages') {
+        try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
+        setTimeout(function () {
+          setMode('inbox');
+          refresh();
+        }, 100);
+      }
+
       return result;
     };
 
     App.openInboxBadge = function () {
-      App.panel('messages');
       try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
+      App.panel('messages');
       setMode('inbox');
+
+      setTimeout(function () {
+        refresh();
+      }, 100);
     };
 
     App.pickPlate = function (selectedPlate) {
       const formatted = plate(selectedPlate);
+
       try {
         if (window.S) {
           S.selPlate = formatted;
@@ -657,6 +694,23 @@
       const result = originalLoadMsgs ? await originalLoadMsgs() : undefined;
       try { await refresh(); } catch (e) {}
       return result;
+    };
+
+    const originalUpdateCommunityStatus = typeof App.updateCommunityStatus === 'function'
+      ? App.updateCommunityStatus.bind(App)
+      : null;
+
+    App.updateCommunityStatus = function () {
+      if (originalUpdateCommunityStatus) originalUpdateCommunityStatus();
+
+      try {
+        const count = window.S ? Number(S.unreadMsgCount || 0) : unreadCount();
+        const badge = el('topMsgBadge');
+        if (badge) {
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+      } catch (e) {}
     };
   }
 
