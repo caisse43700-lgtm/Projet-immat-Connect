@@ -7,43 +7,34 @@
 
   const el = id => document.getElementById(id);
 
-  const esc = value => String(value || '').replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[char]));
+  const esc = v => String(v || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[c]));
 
-  const clean = value => String(value || '').replace(/<[^>]*>/g, '').trim();
+  const clean = v => String(v || '').replace(/<[^>]*>/g, '').trim();
+  const compact = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  const compact = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-  function plate(value) {
-    const raw = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
-    if (/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(raw)) {
-      return raw.slice(0, 2) + '-' + raw.slice(2, 5) + '-' + raw.slice(5);
+  function plate(v) {
+    const s = compact(v).slice(0, 7);
+    if (/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) {
+      return s.slice(0, 2) + '-' + s.slice(2, 5) + '-' + s.slice(5);
     }
-    return String(value || '').toUpperCase().trim();
+    return String(v || '').toUpperCase().trim();
   }
 
-  function say(message, type) {
-    try {
-      if (window.toast) return window.toast(message, type || 'ok');
-    } catch (e) {}
-    console.log(message);
+  function say(msg, type) {
+    try { if (window.toast) return toast(msg, type || 'ok'); } catch (e) {}
+    console.log(msg);
   }
 
-  function shortTime(value) {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-
-    if (date.toDateString() === new Date().toDateString()) {
-      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  function shortTime(v) {
+    if (!v) return '';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return '';
+    if (d.toDateString() === new Date().toDateString()) {
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
-
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   }
 
   function ownPlate() {
@@ -55,15 +46,15 @@
       if (window.S && S.profile && S.profile.owner_plate) return plate(S.profile.owner_plate);
     } catch (e) {}
 
-    const node = el('tbPlate');
-    return node ? plate(node.textContent) : '';
+    const n = el('tbPlate');
+    return n ? plate(n.textContent) : '';
   }
 
   async function getUser() {
     try {
       if (!window.sb) return null;
-      const result = await sb.auth.getUser();
-      return result && result.data ? result.data.user : null;
+      const r = await sb.auth.getUser();
+      return r && r.data ? r.data.user : null;
     } catch (e) {
       return null;
     }
@@ -74,16 +65,14 @@
     if (!window.sb || !ids.length) return {};
 
     try {
-      const result = await sb
+      const { data } = await sb
         .from('profiles')
         .select('id,owner_plate,pseudo')
         .in('id', ids);
 
-      const output = {};
-      (result.data || []).forEach(profile => {
-        output[profile.id] = profile;
-      });
-      return output;
+      const out = {};
+      (data || []).forEach(p => { out[p.id] = p; });
+      return out;
     } catch (e) {
       return {};
     }
@@ -92,32 +81,32 @@
   async function findProfileByPlate(rawPlate) {
     if (!window.sb) return null;
 
-    const targetCompact = compact(rawPlate);
+    const wanted = compact(rawPlate);
     const variants = Array.from(new Set([
       plate(rawPlate),
-      targetCompact,
+      wanted,
       String(rawPlate || '').toUpperCase().trim()
     ])).filter(Boolean);
 
-    for (const variant of variants) {
+    for (const v of variants) {
       try {
-        const result = await sb
+        const { data } = await sb
           .from('profiles')
           .select('id,owner_plate,pseudo')
-          .eq('owner_plate', variant)
+          .eq('owner_plate', v)
           .maybeSingle();
 
-        if (result.data) return result.data;
+        if (data) return data;
       } catch (e) {}
     }
 
     try {
-      const result = await sb
+      const { data } = await sb
         .from('profiles')
         .select('id,owner_plate,pseudo')
         .limit(2000);
 
-      return (result.data || []).find(profile => compact(profile.owner_plate) === targetCompact) || null;
+      return (data || []).find(p => compact(p.owner_plate) === wanted) || null;
     } catch (e) {
       return null;
     }
@@ -130,19 +119,18 @@
     if (!user) return [];
 
     const myPlate = ownPlate();
-    const myCompactPlate = compact(myPlate);
-    const buckets = [];
+    const mine = compact(myPlate);
+    const bucket = [];
 
-    async function query(builder) {
+    async function q(fn) {
       try {
-        const result = await builder();
-        if (Array.isArray(result.data)) buckets.push(...result.data);
+        const r = await fn();
+        if (r && Array.isArray(r.data)) bucket.push(...r.data);
       } catch (e) {}
     }
 
-    await query(() =>
-      sb
-        .from('messages')
+    await q(() =>
+      sb.from('messages')
         .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .neq('status', 'rejected')
@@ -151,12 +139,11 @@
     );
 
     if (myPlate) {
-      for (const column of ['target_plate', 'sender_plate', 'receiver_plate', 'from_plate', 'to_plate']) {
-        await query(() =>
-          sb
-            .from('messages')
+      for (const col of ['target_plate', 'sender_plate', 'receiver_plate', 'from_plate', 'to_plate']) {
+        await q(() =>
+          sb.from('messages')
             .select('*')
-            .eq(column, myPlate)
+            .eq(col, myPlate)
             .neq('status', 'rejected')
             .order('created_at', { ascending: true })
             .limit(300)
@@ -165,71 +152,68 @@
     }
 
     const unique = new Map();
-    buckets.forEach(message => {
-      if (!message) return;
-      const key = message.id || [
-        message.sender_id,
-        message.receiver_id,
-        message.target_plate,
-        message.message,
-        message.created_at
-      ].join('|');
-
-      if (!unique.has(key)) unique.set(key, message);
+    bucket.forEach(m => {
+      if (!m) return;
+      const key = m.id || [m.sender_id, m.receiver_id, m.target_plate, m.message, m.created_at].join('|');
+      if (!unique.has(key)) unique.set(key, m);
     });
 
     const rows = Array.from(unique.values()).sort((a, b) =>
       new Date(a.created_at || 0) - new Date(b.created_at || 0)
     );
 
-    const profiles = await profilesMap(rows.flatMap(message => [message.sender_id, message.receiver_id]));
+    const profiles = await profilesMap(rows.flatMap(m => [m.sender_id, m.receiver_id]));
 
-    return rows.map(message => {
+    return rows.map(m => {
       const senderPlate = plate(
-        message.sender_plate ||
-        message.from_plate ||
-        (profiles[message.sender_id] && profiles[message.sender_id].owner_plate) ||
+        m.sender_plate ||
+        m.from_plate ||
+        (profiles[m.sender_id] && profiles[m.sender_id].owner_plate) ||
         ''
       );
 
       const receiverPlate = plate(
-        message.receiver_plate ||
-        message.to_plate ||
-        (profiles[message.receiver_id] && profiles[message.receiver_id].owner_plate) ||
-        message.target_plate ||
+        m.receiver_plate ||
+        m.to_plate ||
+        (profiles[m.receiver_id] && profiles[m.receiver_id].owner_plate) ||
+        m.target_plate ||
         ''
       );
 
-      const isSender = message.sender_id === user.id || Boolean(myCompactPlate && compact(senderPlate) === myCompactPlate);
+      const isSender = m.sender_id === user.id || Boolean(mine && compact(senderPlate) === mine);
 
-      const isReceiver = message.receiver_id === user.id || Boolean(myCompactPlate && (
-        compact(receiverPlate) === myCompactPlate ||
-        compact(message.target_plate) === myCompactPlate ||
-        compact(message.to_plate) === myCompactPlate ||
-        compact(message.receiver_plate) === myCompactPlate
+      const isReceiver = m.receiver_id === user.id || Boolean(mine && (
+        compact(receiverPlate) === mine ||
+        compact(m.target_plate) === mine ||
+        compact(m.to_plate) === mine ||
+        compact(m.receiver_plate) === mine
       ));
 
-      const sent = isSender && isReceiver ? message.sender_id === user.id : isSender && !isReceiver;
+      const sent = isSender && isReceiver ? m.sender_id === user.id : isSender && !isReceiver;
 
       const displayPlate = sent
-        ? (receiverPlate || plate(message.target_plate) || 'VEHICULE')
-        : (senderPlate || plate(message.from_plate) || plate(message.sender_plate) || 'VEHICULE');
+        ? (receiverPlate || plate(m.target_plate) || 'VEHICULE')
+        : (senderPlate || plate(m.from_plate) || plate(m.sender_plate) || 'VEHICULE');
 
       return {
-        id: message.id,
-        raw: message,
+        id: m.id,
+        raw: m,
         plate: displayPlate,
-        text: clean(message.message || message.text || ''),
+        text: clean(m.message || m.text || ''),
         sent: Boolean(sent),
         received: !sent,
-        read: Boolean(sent || message.status === 'read'),
-        created_at: message.created_at,
-        time: shortTime(message.created_at),
-        sender_id: message.sender_id,
-        receiver_id: message.receiver_id,
-        status: message.status
+        read: Boolean(sent || m.status === 'read'),
+        created_at: m.created_at,
+        time: shortTime(m.created_at),
+        sender_id: m.sender_id,
+        receiver_id: m.receiver_id,
+        status: m.status
       };
     });
+  }
+
+  function unreadMessagesCount() {
+    return State.rows.filter(m => !m.sent && !m.read).length;
   }
 
   function setBadge(count) {
@@ -252,9 +236,7 @@
     });
 
     try {
-      if (window.App && typeof App.updateCommunityStatus === 'function') {
-        App.updateCommunityStatus();
-      }
+      if (window.App && typeof App.updateCommunityStatus === 'function') App.updateCommunityStatus();
     } catch (e) {}
   }
 
@@ -264,41 +246,31 @@
     rows: []
   };
 
-  function unreadCount() {
-    return State.rows.filter(message => !message.sent && !message.read).length;
-  }
-
   function conversations() {
-    const grouped = {};
+    const map = {};
 
-    State.rows.forEach(message => {
-      if (State.mode === 'inbox' && message.sent) return;
-      if (State.mode === 'sent' && !message.sent) return;
+    State.rows.forEach(m => {
+      if (State.mode === 'inbox' && m.sent) return;
+      if (State.mode === 'sent' && !m.sent) return;
 
-      const currentPlate = plate(message.plate);
-      if (!grouped[currentPlate]) {
-        grouped[currentPlate] = {
-          plate: currentPlate,
-          text: '',
-          time: '',
-          date: 0,
-          unread: false
-        };
+      const p = plate(m.plate);
+      if (!map[p]) {
+        map[p] = { plate: p, text: '', time: '', date: 0, unread: false };
       }
 
-      grouped[currentPlate].text = message.text;
-      grouped[currentPlate].time = message.time;
-      grouped[currentPlate].date = new Date(message.created_at || 0).getTime();
+      map[p].text = m.text;
+      map[p].time = m.time;
+      map[p].date = new Date(m.created_at || 0).getTime();
 
-      if (!message.sent && !message.read) grouped[currentPlate].unread = true;
+      if (!m.sent && !m.read) map[p].unread = true;
     });
 
-    return Object.values(grouped).sort((a, b) => b.date - a.date);
+    return Object.values(map).sort((a, b) => b.date - a.date);
   }
 
   function updateTabs() {
-    document.querySelectorAll('.ic-msg-tabs button').forEach(button => {
-      button.classList.toggle('on', button.dataset.mode === State.mode);
+    document.querySelectorAll('.ic-msg-tabs button').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.mode === State.mode);
     });
   }
 
@@ -310,9 +282,9 @@
 
     if (State.mode === 'compose') {
       try {
-        const selectedPlate = window.S && S.selPlate ? plate(S.selPlate) : '';
+        const selected = window.S && S.selPlate ? plate(S.selPlate) : '';
         const input = el('icComposePlate');
-        if (selectedPlate && input && !input.value) input.value = selectedPlate;
+        if (selected && input && !input.value) input.value = selected;
       } catch (e) {}
     }
   }
@@ -321,31 +293,27 @@
     const list = el('icMsgList');
     if (!list) return;
 
-    if (State.mode === 'compose') {
-      list.innerHTML = '';
-      setBadge(unreadCount());
-      return;
-    }
+    if (State.mode === 'compose') return;
 
-    setBadge(unreadCount());
+    setBadge(unreadMessagesCount());
 
-    const items = conversations();
+    const convs = conversations();
 
-    if (!items.length) {
+    if (!convs.length) {
       list.innerHTML = '<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';
       return;
     }
 
-    list.innerHTML = items.map(item => `
-      <div class="ic-mail-row ${item.unread ? 'unread' : ''} ${State.plate === item.plate ? 'active' : ''}" data-plate="${esc(item.plate)}">
-        <div class="ic-avatar">${State.mode === 'sent' ? '↗️' : (item.unread ? '📩' : '🚗')}</div>
+    list.innerHTML = convs.map(c => `
+      <div class="ic-mail-row ${c.unread ? 'unread' : ''} ${State.plate === c.plate ? 'active' : ''}" data-plate="${esc(c.plate)}">
+        <div class="ic-avatar">${State.mode === 'sent' ? '↗️' : (c.unread ? '📩' : '🚗')}</div>
         <div class="ic-main">
-          <div class="ic-plate">${esc(item.plate)}</div>
-          <div class="ic-preview">${esc(item.text.slice(0, 80))}</div>
+          <div class="ic-plate">${esc(c.plate)}</div>
+          <div class="ic-preview">${esc(c.text.slice(0, 80))}</div>
         </div>
         <div class="ic-meta">
-          ${item.unread ? '<div class="ic-badge">●</div>' : ''}
-          <div>${esc(item.time)}</div>
+          ${c.unread ? '<div class="ic-badge">●</div>' : ''}
+          <div>${esc(c.time)}</div>
         </div>
       </div>
     `).join('');
@@ -367,35 +335,40 @@
       return;
     }
 
-    const messages = State.rows.filter(message => plate(message.plate) === State.plate);
+    const messages = State.rows.filter(m => plate(m.plate) === State.plate);
+
+    if (!messages.length) {
+      thread.classList.remove('show');
+      return;
+    }
 
     title.textContent = '🚗 ' + State.plate;
     thread.classList.add('show');
 
-    body.innerHTML = messages.map(message => {
-      const isSystem = /fiabilité|confirmé utile|signalement confirmé|réceptionné|bien reçu/i.test(message.text);
+    body.innerHTML = messages.map(m => {
+      const isSystem = /fiabilité|confirmé utile|signalement confirmé|réceptionné|bien reçu/i.test(m.text);
 
       if (isSystem) {
-        return `<div class="ic-system">${esc(message.text)}<span class="ic-time">${esc(message.time)}</span></div>`;
+        return `<div class="ic-system">${esc(m.text)}<span class="ic-time">${esc(m.time)}</span></div>`;
       }
 
-      const statusLabel = message.sent
-        ? (message.status === 'read' ? '✓✓ Lu' : '✓ Envoyé')
+      const statusLabel = m.sent
+        ? (m.status === 'read' ? '✓✓ Lu' : '✓ Envoyé')
         : 'Reçu';
 
       return `
-        <div class="ic-bubble ${message.sent ? 'sent' : 'recv'}">
-          <button type="button" class="ic-delete-msg" data-message-id="${esc(message.id || '')}">×</button>
-          ${esc(message.text)}
-          <span class="ic-time">${esc(statusLabel)} · ${esc(message.time)}</span>
+        <div class="ic-bubble ${m.sent ? 'sent' : 'recv'}">
+          <button type="button" class="ic-delete-msg" data-id="${esc(m.id || '')}">×</button>
+          ${esc(m.text)}
+          <span class="ic-time">${esc(statusLabel)} · ${esc(m.time)}</span>
         </div>
       `;
     }).join('');
 
-    body.querySelectorAll('.ic-delete-msg').forEach(button => {
-      button.onclick = event => {
-        event.stopPropagation();
-        deleteMessage(button.dataset.messageId);
+    body.querySelectorAll('.ic-delete-msg').forEach(btn => {
+      btn.onclick = ev => {
+        ev.stopPropagation();
+        deleteMessage(btn.dataset.id);
       };
     });
 
@@ -406,32 +379,30 @@
     if (!window.sb || !State.plate) return;
 
     const ids = State.rows
-      .filter(message => plate(message.plate) === State.plate && !message.sent && !message.read && message.id)
-      .map(message => message.id);
+      .filter(m => plate(m.plate) === State.plate && !m.sent && !m.read && m.id)
+      .map(m => m.id);
 
     if (!ids.length) return;
 
-    ids.forEach(id => {
-      const row = State.rows.find(message => message.id === id);
-      if (row) row.read = true;
-    });
-
-    setBadge(unreadCount());
-    renderList();
-    renderThread();
-
     try {
       await sb.from('messages').update({ status: 'read' }).in('id', ids);
+
+      ids.forEach(id => {
+        const row = State.rows.find(m => m.id === id);
+        if (row) row.read = true;
+      });
     } catch (e) {}
   }
 
   async function refresh() {
     State.rows = await fetchMessages();
-    renderList();
+
+    if (State.mode !== 'compose') renderList();
+
     renderThread();
     renderCompose();
     updateTabs();
-    setBadge(unreadCount());
+    setBadge(unreadMessagesCount());
   }
 
   function setMode(mode) {
@@ -440,10 +411,15 @@
 
     updateTabs();
     renderCompose();
+
+    if (State.mode === 'compose') {
+      renderThread();
+      return;
+    }
+
     renderList();
     renderThread();
-
-    if (State.mode !== 'compose') refresh();
+    refresh();
   }
 
   async function openThread(selectedPlate) {
@@ -453,12 +429,14 @@
     renderThread();
 
     await markReadInDb();
+    setBadge(unreadMessagesCount());
+
     await refresh();
 
     State.plate = plate(selectedPlate);
     renderList();
     renderThread();
-    setBadge(unreadCount());
+    setBadge(unreadMessagesCount());
   }
 
   function closeThread() {
@@ -466,7 +444,6 @@
     const thread = el('icThread');
     if (thread) thread.classList.remove('show');
     renderList();
-    setBadge(unreadCount());
   }
 
   async function sendTo(targetPlate, text) {
@@ -477,6 +454,7 @@
     if (!text) return say('Message vide.', 'bad');
 
     const senderPlate = ownPlate();
+
     if (senderPlate && compact(targetPlate) === compact(senderPlate)) {
       return say("Impossible de t'envoyer un message à toi-même.", 'bad');
     }
@@ -537,7 +515,9 @@
 
     updateTabs();
     renderCompose();
+
     await refresh();
+
     State.plate = targetPlate;
     renderThread();
   }
@@ -572,10 +552,10 @@
 
     try {
       await sb.from('messages').update({ status: 'rejected' }).eq('id', id);
-      State.rows = State.rows.filter(message => message.id !== id);
+      State.rows = State.rows.filter(m => m.id !== id);
       renderList();
       renderThread();
-      setBadge(unreadCount());
+      setBadge(unreadMessagesCount());
       say('Message supprimé.', 'ok');
     } catch (e) {
       say('Erreur suppression.', 'bad');
@@ -586,19 +566,21 @@
     if (!State.plate || !confirm('Supprimer toute la conversation avec ' + State.plate + ' ?')) return;
 
     const ids = State.rows
-      .filter(message => plate(message.plate) === State.plate && message.id)
-      .map(message => message.id);
+      .filter(m => plate(m.plate) === State.plate && m.id)
+      .map(m => m.id);
 
     try {
       for (const id of ids) {
         await sb.from('messages').update({ status: 'rejected' }).eq('id', id);
       }
 
-      State.rows = State.rows.filter(message => plate(message.plate) !== State.plate);
+      State.rows = State.rows.filter(m => plate(m.plate) !== State.plate);
       State.plate = null;
+
       renderList();
       renderThread();
-      setBadge(unreadCount());
+      setBadge(unreadMessagesCount());
+
       say('Conversation supprimée.', 'ok');
     } catch (e) {
       say('Erreur suppression conversation.', 'bad');
@@ -606,10 +588,11 @@
   }
 
   function patchApp() {
-    if (!window.App || App.__messagesUnifiedPatchedV10) return;
-    App.__messagesUnifiedPatchedV10 = true;
+    if (!window.App || App.__messagesUnifiedCleanV10Patched) return;
+    App.__messagesUnifiedCleanV10Patched = true;
 
     const originalPanel = typeof App.panel === 'function' ? App.panel.bind(App) : null;
+
     App.panel = function (name) {
       if (name === 'contact') name = 'messages';
 
@@ -617,23 +600,17 @@
 
       if (name === 'messages') {
         try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
-        setTimeout(function () {
-          setMode('inbox');
-          refresh();
-        }, 100);
+        setTimeout(refresh, 100);
       }
 
       return result;
     };
 
     App.openInboxBadge = function () {
-      try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
       App.panel('messages');
+      try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
       setMode('inbox');
-
-      setTimeout(function () {
-        refresh();
-      }, 100);
+      setTimeout(refresh, 100);
     };
 
     App.pickPlate = function (selectedPlate) {
@@ -682,6 +659,7 @@
       setTimeout(() => {
         const plateInput = el('icComposePlate');
         const textInput = el('icComposeText');
+
         if (plateInput) plateInput.value = target;
         if (textInput) textInput.value = message;
       }, 120);
@@ -690,43 +668,18 @@
     };
 
     const originalLoadMsgs = typeof App.loadMsgs === 'function' ? App.loadMsgs.bind(App) : null;
+
     App.loadMsgs = async function () {
       const result = originalLoadMsgs ? await originalLoadMsgs() : undefined;
       try { await refresh(); } catch (e) {}
       return result;
     };
-
-    const originalUpdateCommunityStatus = typeof App.updateCommunityStatus === 'function'
-      ? App.updateCommunityStatus.bind(App)
-      : null;
-
-    App.updateCommunityStatus = function () {
-      if (originalUpdateCommunityStatus) originalUpdateCommunityStatus();
-
-      try {
-        const count = window.S ? Number(S.unreadMsgCount || 0) : unreadCount();
-        const badge = el('topMsgBadge');
-        if (badge) {
-          badge.textContent = count > 99 ? '99+' : String(count);
-          badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-      } catch (e) {}
-    };
   }
 
   function init() {
     patchApp();
-    setTimeout(refresh, 50);
+    setTimeout(refresh, 80);
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  setTimeout(patchApp, 800);
-  setTimeout(patchApp, 2000);
 
   window.ImmatMessages = {
     setMode,
@@ -739,4 +692,13 @@
     deleteMessage,
     deleteThread
   };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  setTimeout(patchApp, 800);
+  setTimeout(patchApp, 2000);
 })();
