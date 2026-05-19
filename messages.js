@@ -211,3 +211,48 @@ document.addEventListener(
   setTimeout(install, 1000);
 
 })();
+/* ===== FIX VISUEL MESSAGE LU / NON LU ===== */
+(function(){
+
+  if(window.__MsgBoldReadFix) return;
+  window.__MsgBoldReadFix = true;
+
+  function markThreadVisualRead(){
+    try{
+      document.querySelectorAll(".ic-mail-row.unread").forEach(function(row){
+        row.classList.remove("unread");
+      });
+
+      document.querySelectorAll(".ic-mail-row").forEach(function(row){
+        row.style.fontWeight = "500";
+
+        const plate = row.querySelector(".ic-plate");
+        const preview = row.querySelector(".ic-preview");
+
+        if(plate) plate.style.fontWeight = "800";
+        if(preview) preview.style.fontWeight = "500";
+      });
+    }catch(e){}
+  }
+
+  function install(){
+    if(!window.ImmatMessages){
+      setTimeout(install, 300);
+      return;
+    }
+
+    const oldOpenThread = ImmatMessages.openThread?.bind(ImmatMessages);
+
+    ImmatMessages.openThread = function(threadId){
+      if(oldOpenThread) oldOpenThread(threadId);
+
+      setTimeout(function(){
+        markThreadVisualRead();
+      }, 200);
+    };
+  }
+
+  install();
+  setTimeout(install, 1000);
+
+})();
