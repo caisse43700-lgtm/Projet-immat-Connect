@@ -2571,15 +2571,14 @@ function showReputationToast(){
 })();
 </script>
 
-
 <script id="htmlAutoUiBadge">
 (function(){
   function add(){
     if(document.getElementById("htmlAutoUiBadgeView")) return;
     const b=document.createElement("div");
     b.id="htmlAutoUiBadgeView";
-    b.textContent="HTML + UI AUTO";
-    b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+    b.textContent="HTML + UI V3";
+    b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
     document.body.appendChild(b);
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
@@ -2587,6 +2586,23 @@ function showReputationToast(){
 })();
 </script>
 
+  
+<script id="htmlMessagesV1Badge">
+(function(){
+  function add(){
+    if(document.getElementById("htmlMessagesV1BadgeView")) return;
+    const b=document.createElement("div");
+    b.id="htmlMessagesV1BadgeView";
+    b.textContent="HTML MSG V1";
+    b.style.cssText="position:fixed;right:8px;bottom:42px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+    document.body.appendChild(b);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
+  else add();
+})();
+</script>
+
+  <script src="messages.js?v=1"></script>
   <script src="ui.js?v=3"></script>
 </body>
 </html>
