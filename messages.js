@@ -653,7 +653,15 @@
 
       try { if (typeof App.closeOverlay === 'function') App.closeOverlay('reportPanel'); } catch (e) {}
 
-      App.panel('messages');
+      try {
+  App.openSheet && App.openSheet();
+} catch(e) {}
+
+document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+document.getElementById('panelMessages')?.classList.add('on');
+
+document.querySelectorAll('.sheet-nav button').forEach(b => b.classList.remove('on'));
+document.getElementById('tabMessages')?.classList.add('on');
       setMode('compose');
 
       setTimeout(() => {
