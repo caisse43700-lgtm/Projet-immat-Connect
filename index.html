@@ -1467,10 +1467,56 @@ function showReputationToast(){
 <script src="ui.js?v=3"></script>
   <script id="fixBadgeMessagesFinal">
 (function(){
-  function fixBadge(){
-    try{
-      var unread = 0;
 
-      if(window.ImmatMessages && typeof ImmatMessages.refresh === "function
+  function setTopBadge(n){
+    n = Math.max(0, Number(n) || 0);
+
+    try{
+      if(window.S){
+        S.unreadMsgCount = n;
+      }
+
+      localStorage.setItem("ic_unread_msg_count", String(n));
+    }catch(e){}
+
+    const badge = document.getElementById("topMsgBadge");
+
+    if(badge){
+      badge.textContent = n > 99 ? "99+" : String(n);
+      badge.style.display = n > 0 ? "flex" : "none";
+    }
+
+    document.querySelectorAll(".status-mail-badge").forEach(function(b){
+      b.textContent = n > 99 ? "99+" : String(n);
+      b.style.display = n > 0 ? "inline-grid" : "none";
+    });
+  }
+
+  document.addEventListener("click", function(e){
+
+    const row =
+      e.target.closest(".ic-mail-row") ||
+      e.target.closest(".thread") ||
+      e.target.closest(".conversation") ||
+      e.target.closest(".msg");
+
+    if(row){
+
+      let current = 0;
+
+      try{
+        current = Number(window.S && S.unreadMsgCount || 0);
+      }catch(err){}
+
+      if(current > 0){
+        setTopBadge(current - 1);
+      }
+    }
+
+  });
+
+})();
+</script>
+
 </body>
 </html>
