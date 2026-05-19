@@ -1465,5 +1465,12 @@ function showReputationToast(){
 
 <script src="messages.js?v=8"></script>
 <script src="ui.js?v=3"></script>
+  <script id="fixBadgeMessagesFinal">
+(function(){
+  function fixBadge(){
+    try{
+      var unread = 0;
+
+      if(window.ImmatMessages && typeof ImmatMessages.refresh === "function
 </body>
 </html>
