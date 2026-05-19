@@ -1,7 +1,7 @@
-/* ===== MESSAGES.JS V7 PRO ===== */
+/* ===== MESSAGES.JS V7 PRO CORRIGÉ ===== */
 (function(){
-  if(window.__ImmatMessagesProV7) return;
-  window.__ImmatMessagesProV7 = true;
+  if(window.__ImmatMessagesProV7Fixed) return;
+  window.__ImmatMessagesProV7Fixed = true;
 
   function $(id){ return document.getElementById(id); }
 
@@ -16,6 +16,14 @@
       .toUpperCase()
       .replace(/[^A-Z0-9]/g,"")
       .replace(/^([A-Z]{2})([0-9]{3})([A-Z]{2})$/,"$1-$2-$3");
+  }
+
+  function myPlate(){
+    return plate(
+      (window.S && S.profile && S.profile.owner_plate) ||
+      document.getElementById("tbPlate")?.textContent ||
+      ""
+    );
   }
 
   function shortTime(v){
@@ -57,23 +65,82 @@
     var user = await getUser();
     if(!user) return [];
 
-    var r = await sb.from("messages")
-      .select("*")
-      .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-      .neq("status","rejected")
-      .order("created_at",{ascending:true})
-      .limit(300);
+    var mine = myPlate();
+    var bucket = [];
 
-    if(r.error) return [];
+    async function q(req){
+      try{
+        var r = await req();
+        if(!r.error && Array.isArray(r.data)){
+          bucket = bucket.concat(r.data);
+        }
+      }catch(e){}
+    }
 
-    return (r.data || []).map(function(m){
-      var sent = m.sender_id === user.id;
+    await q(function(){
+      return sb.from("messages")
+        .select("*")
+        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
+        .neq("status","rejected")
+        .order("created_at",{ascending:true})
+        .limit(300);
+    });
+
+    if(mine){
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("target_plate", mine)
+          .neq("status","rejected")
+          .order("created_at",{ascending:true})
+          .limit(300);
+      });
+
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("receiver_plate", mine)
+          .neq("status","rejected")
+          .order("created_at",{ascending:true})
+          .limit(300);
+      });
+
+      await q(function(){
+        return sb.from("messages")
+          .select("*")
+          .eq("to_plate", mine)
+          .neq("status","rejected")
+          .order("created_at",{ascending:true})
+          .limit(300);
+      });
+    }
+
+    var unique = {};
+    bucket.forEach(function(m){
+      if(m && m.id) unique[m.id] = m;
+    });
+
+    return Object.values(unique).map(function(m){
+      var sender = m.sender_id === user.id;
+      var targetMatch =
+        plate(m.target_plate || "") === mine ||
+        plate(m.receiver_plate || "") === mine ||
+        plate(m.to_plate || "") === mine;
+
+      var sent = sender && !targetMatch;
+      var received = !sent;
+
+      var displayPlate = sent
+        ? plate(m.target_plate || m.receiver_plate || m.to_plate || "VEHICULE")
+        : plate(m.sender_plate || m.from_plate || m.target_plate || "VEHICULE");
 
       return {
         id:m.id,
-        plate:plate(m.target_plate || m.sender_plate || m.receiver_plate || "VEHICULE"),
+        plate:displayPlate,
         text:m.message || m.text || "",
         sent:sent,
+        received:received,
+        targetMatch:targetMatch,
         read:sent || m.status === "read",
         created_at:m.created_at,
         time:shortTime(m.created_at)
