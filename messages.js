@@ -1,738 +1,688 @@
-/* ===== MESSAGES.JS V7 PRO CORRIGÉ ===== */
-(function(){
-  if(window.__ImmatMessagesProV7Fixed) return;
-  window.__ImmatMessagesProV7Fixed = true;
+/* ===== IMMATCONNECT MESSAGES — VERSION UNIFIÉE PROPRE ===== */
+(function () {
+  'use strict';
 
-  function $(id){ return document.getElementById(id); }
+  if (window.__ImmatMessagesUnifiedClean) return;
+  window.__ImmatMessagesUnifiedClean = true;
 
-  function esc(v){
-    return String(v || "").replace(/[&<>"']/g,function(m){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
-    });
-  }
+  const el = id => document.getElementById(id);
 
-  function plate(v){
-    return String(v || "")
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g,"")
-      .replace(/^([A-Z]{2})([0-9]{3})([A-Z]{2})$/,"$1-$2-$3");
-  }
+  const esc = value => String(value || '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[char]));
 
-  function myPlate(){
-    return plate(
-      (window.S && S.profile && S.profile.owner_plate) ||
-      document.getElementById("tbPlate")?.textContent ||
-      ""
-    );
-  }
+  const clean = value => String(value || '').replace(/<[^>]*>/g, '').trim();
 
-  function shortTime(v){
-    if(!v) return "";
-    var d = new Date(v);
-    if(isNaN(d)) return String(v || "");
-    if(d.toDateString() === new Date().toDateString()){
-      return d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  const compact = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  function plate(value) {
+    const raw = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+    if (/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(raw)) {
+      return raw.slice(0, 2) + '-' + raw.slice(2, 5) + '-' + raw.slice(5);
     }
-    return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+    return String(value || '').toUpperCase().trim();
   }
 
-  function setBadge(n){
-    n = Math.max(0, Number(n) || 0);
-    var b = $("topMsgBadge");
-    if(b){
-      b.textContent = String(n);
-      b.style.display = n > 0 ? "flex" : "none";
+  function say(message, type) {
+    try {
+      if (window.toast) return window.toast(message, type || 'ok');
+    } catch (e) {}
+    console.log(message);
+  }
+
+  function shortTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    if (date.toDateString() === new Date().toDateString()) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
-    try{
-      if(window.S) S.unreadMsgCount = n;
-      localStorage.setItem("ic_unread_msg_count", String(n));
-    }catch(e){}
+
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   }
 
-  async function getUser(){
-    try{
-      if(!window.sb) return null;
-      var r = await sb.auth.getUser();
-      return r && r.data ? r.data.user : null;
-    }catch(e){
+  function ownPlate() {
+    try {
+      if (window.App && typeof App.ownPlate === 'function') return plate(App.ownPlate());
+    } catch (e) {}
+
+    try {
+      if (window.S && S.profile && S.profile.owner_plate) return plate(S.profile.owner_plate);
+    } catch (e) {}
+
+    const node = el('tbPlate');
+    return node ? plate(node.textContent) : '';
+  }
+
+  async function getUser() {
+    try {
+      if (!window.sb) return null;
+      const result = await sb.auth.getUser();
+      return result && result.data ? result.data.user : null;
+    } catch (e) {
       return null;
     }
   }
 
-  async function fetchMessages(){
-    if(!window.sb) return [];
+  async function profilesMap(ids) {
+    ids = Array.from(new Set((ids || []).filter(Boolean)));
+    if (!window.sb || !ids.length) return {};
 
-    var user = await getUser();
-    if(!user) return [];
+    try {
+      const result = await sb
+        .from('profiles')
+        .select('id,owner_plate,pseudo')
+        .in('id', ids);
 
-    var mine = myPlate();
-    var bucket = [];
+      const output = {};
+      (result.data || []).forEach(profile => {
+        output[profile.id] = profile;
+      });
+      return output;
+    } catch (e) {
+      return {};
+    }
+  }
 
-    async function q(req){
-      try{
-        var r = await req();
-        if(!r.error && Array.isArray(r.data)){
-          bucket = bucket.concat(r.data);
-        }
-      }catch(e){}
+  async function findProfileByPlate(rawPlate) {
+    if (!window.sb) return null;
+
+    const targetCompact = compact(rawPlate);
+    const variants = Array.from(new Set([
+      plate(rawPlate),
+      targetCompact,
+      String(rawPlate || '').toUpperCase().trim()
+    ])).filter(Boolean);
+
+    for (const variant of variants) {
+      try {
+        const result = await sb
+          .from('profiles')
+          .select('id,owner_plate,pseudo')
+          .eq('owner_plate', variant)
+          .maybeSingle();
+
+        if (result.data) return result.data;
+      } catch (e) {}
     }
 
-    await q(function(){
-      return sb.from("messages")
-        .select("*")
-        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
-        .neq("status","rejected")
-        .order("created_at",{ascending:true})
-        .limit(300);
-    });
+    try {
+      const result = await sb
+        .from('profiles')
+        .select('id,owner_plate,pseudo')
+        .limit(2000);
 
-    if(mine){
-      await q(function(){
-        return sb.from("messages")
-          .select("*")
-          .eq("target_plate", mine)
-          .neq("status","rejected")
-          .order("created_at",{ascending:true})
-          .limit(300);
-      });
+      return (result.data || []).find(profile => compact(profile.owner_plate) === targetCompact) || null;
+    } catch (e) {
+      return null;
+    }
+  }
 
-      await q(function(){
-        return sb.from("messages")
-          .select("*")
-          .eq("receiver_plate", mine)
-          .neq("status","rejected")
-          .order("created_at",{ascending:true})
-          .limit(300);
-      });
+  async function fetchMessages() {
+    if (!window.sb) return [];
 
-      await q(function(){
-        return sb.from("messages")
-          .select("*")
-          .eq("to_plate", mine)
-          .neq("status","rejected")
-          .order("created_at",{ascending:true})
-          .limit(300);
-      });
+    const user = await getUser();
+    if (!user) return [];
+
+    const myPlate = ownPlate();
+    const myCompactPlate = compact(myPlate);
+    const buckets = [];
+
+    async function query(builder) {
+      try {
+        const result = await builder();
+        if (Array.isArray(result.data)) buckets.push(...result.data);
+      } catch (e) {}
     }
 
-    var unique = {};
-    bucket.forEach(function(m){
-      if(m && m.id) unique[m.id] = m;
+    await query(() =>
+      sb
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .neq('status', 'rejected')
+        .order('created_at', { ascending: true })
+        .limit(500)
+    );
+
+    if (myPlate) {
+      for (const column of ['target_plate', 'sender_plate', 'receiver_plate', 'from_plate', 'to_plate']) {
+        await query(() =>
+          sb
+            .from('messages')
+            .select('*')
+            .eq(column, myPlate)
+            .neq('status', 'rejected')
+            .order('created_at', { ascending: true })
+            .limit(300)
+        );
+      }
+    }
+
+    const unique = new Map();
+    buckets.forEach(message => {
+      if (!message) return;
+      const key = message.id || [
+        message.sender_id,
+        message.receiver_id,
+        message.target_plate,
+        message.message,
+        message.created_at
+      ].join('|');
+
+      if (!unique.has(key)) unique.set(key, message);
     });
 
-    return Object.values(unique).map(function(m){
-      var sender = m.sender_id === user.id;
-      var targetMatch =
-        plate(m.target_plate || "") === mine ||
-        plate(m.receiver_plate || "") === mine ||
-        plate(m.to_plate || "") === mine;
+    const rows = Array.from(unique.values()).sort((a, b) =>
+      new Date(a.created_at || 0) - new Date(b.created_at || 0)
+    );
 
-      var sent = sender && !targetMatch;
-      var received = !sent;
+    const profiles = await profilesMap(rows.flatMap(message => [message.sender_id, message.receiver_id]));
 
-      var displayPlate = sent
-        ? plate(m.target_plate || m.receiver_plate || m.to_plate || "VEHICULE")
-        : plate(m.sender_plate || m.from_plate || m.target_plate || "VEHICULE");
+    return rows.map(message => {
+      const senderPlate = plate(
+        message.sender_plate ||
+        message.from_plate ||
+        (profiles[message.sender_id] && profiles[message.sender_id].owner_plate) ||
+        ''
+      );
+
+      const receiverPlate = plate(
+        message.receiver_plate ||
+        message.to_plate ||
+        (profiles[message.receiver_id] && profiles[message.receiver_id].owner_plate) ||
+        message.target_plate ||
+        ''
+      );
+
+      const isSender = message.sender_id === user.id || Boolean(myCompactPlate && compact(senderPlate) === myCompactPlate);
+      const isReceiver = message.receiver_id === user.id || Boolean(myCompactPlate && (
+        compact(receiverPlate) === myCompactPlate ||
+        compact(message.target_plate) === myCompactPlate ||
+        compact(message.to_plate) === myCompactPlate ||
+        compact(message.receiver_plate) === myCompactPlate
+      ));
+
+      const sent = isSender && isReceiver ? message.sender_id === user.id : isSender && !isReceiver;
+
+      const displayPlate = sent
+        ? (receiverPlate || plate(message.target_plate) || 'VEHICULE')
+        : (senderPlate || plate(message.from_plate) || plate(message.sender_plate) || 'VEHICULE');
 
       return {
-        id:m.id,
-        plate:displayPlate,
-        text:m.message || m.text || "",
-        sent:sent,
-        received:received,
-        targetMatch:targetMatch,
-        read:sent || m.status === "read",
-        created_at:m.created_at,
-        time:shortTime(m.created_at)
+        id: message.id,
+        raw: message,
+        plate: displayPlate,
+        text: clean(message.message || message.text || ''),
+        sent: Boolean(sent),
+        received: !sent,
+        read: Boolean(sent || message.status === 'read'),
+        created_at: message.created_at,
+        time: shortTime(message.created_at),
+        sender_id: message.sender_id,
+        receiver_id: message.receiver_id,
+        status: message.status
       };
     });
   }
 
-  function injectCss(){
-    if($("messagesProV7Css")) return;
-
-    var s = document.createElement("style");
-    s.id = "messagesProV7Css";
-    s.textContent = `
-      #icMessagesPro{
-        background:linear-gradient(180deg,#071322,#0a1628);
-        border-radius:30px;
-        padding:18px 14px;
-        color:#f3f8ff;
-        border:1px solid rgba(148,163,184,.22);
-      }
-
-      .ic-pro-head{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        margin-bottom:14px;
-      }
-
-      .ic-pro-title{
-        font-size:28px;
-        font-weight:950;
-      }
-
-      .ic-pro-sub{
-        color:#9aa8bb;
-        font-size:14px;
-        margin-top:4px;
-      }
-
-      .ic-pro-compose-btn{
-        width:46px;
-        height:46px;
-        border-radius:16px;
-        border:1px solid rgba(0,255,179,.4);
-        background:rgba(0,255,179,.12);
-        color:#00ffb3;
-        font-size:22px;
-        font-weight:900;
-      }
-
-      .ic-pro-tabs{
-        display:grid;
-        grid-template-columns:1fr 1fr 1fr;
-        background:rgba(255,255,255,.06);
-        border-radius:24px;
-        padding:5px;
-        margin:14px 0;
-      }
-
-      .ic-pro-tabs button{
-        border:0;
-        border-radius:20px;
-        background:transparent;
-        color:#aab7c8;
-        font-weight:900;
-        padding:12px 6px;
-      }
-
-      .ic-pro-tabs button.on{
-        background:#00ffb3;
-        color:#06140f;
-      }
-
-      .ic-pro-list{
-        display:grid;
-        gap:10px;
-      }
-
-      .ic-pro-row{
-        display:grid;
-        grid-template-columns:54px 1fr auto;
-        gap:12px;
-        align-items:center;
-        padding:13px;
-        border-radius:24px;
-        background:rgba(255,255,255,.06);
-        border:1px solid rgba(148,163,184,.22);
-      }
-
-      .ic-pro-row.unread{
-        background:rgba(0,255,179,.10);
-        border-color:rgba(0,255,179,.35);
-      }
-
-      .ic-pro-avatar{
-        width:50px;
-        height:50px;
-        border-radius:18px;
-        display:grid;
-        place-items:center;
-        background:rgba(255,255,255,.10);
-        font-size:25px;
-      }
-
-      .ic-pro-plate{
-        color:#00ffb3;
-        font-size:20px;
-        font-weight:950;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-
-      .ic-pro-preview{
-        color:#b6c2d1;
-        font-size:14px;
-        margin-top:4px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-
-      .ic-pro-dot{
-        width:11px;
-        height:11px;
-        border-radius:50%;
-        background:#0a84ff;
-        display:block;
-        margin-left:auto;
-      }
-
-      .ic-pro-meta{
-        color:#b6c2d1;
-        font-size:12px;
-        text-align:right;
-      }
-
-      .ic-pro-thread{
-        display:none;
-      }
-
-      .ic-pro-thread.show{
-        display:block;
-      }
-
-      .ic-pro-thread-head{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        border-bottom:1px solid rgba(148,163,184,.2);
-        padding-bottom:14px;
-      }
-
-      .ic-pro-back{
-        background:transparent;
-        border:0;
-        color:#00ffb3;
-        font-size:17px;
-        font-weight:900;
-      }
-
-      .ic-pro-thread-title{
-        font-size:22px;
-        font-weight:950;
-      }
-
-      .ic-pro-trash{
-        width:44px;
-        height:44px;
-        border-radius:16px;
-        border:1px solid rgba(255,58,78,.35);
-        background:rgba(255,58,78,.12);
-        color:#ff4b5f;
-        font-size:20px;
-      }
-
-      .ic-pro-body{
-        max-height:360px;
-        overflow:auto;
-        padding:16px 2px;
-        display:grid;
-        gap:12px;
-      }
-
-      .ic-pro-bubble{
-        max-width:80%;
-        padding:12px 14px;
-        border-radius:20px;
-        line-height:1.35;
-        font-size:15px;
-      }
-
-      .ic-pro-bubble.recv{
-        justify-self:start;
-        background:rgba(255,255,255,.09);
-        color:#f3f8ff;
-        border-bottom-left-radius:8px;
-      }
-
-      .ic-pro-bubble.sent{
-        justify-self:end;
-        background:#00ffb3;
-        color:#06140f;
-        font-weight:800;
-        border-bottom-right-radius:8px;
-      }
-
-      .ic-pro-time{
-        display:block;
-        font-size:11px;
-        opacity:.65;
-        margin-top:6px;
-        text-align:right;
-      }
-
-      .ic-pro-reply{
-        display:grid;
-        grid-template-columns:1fr 54px;
-        gap:10px;
-        border-top:1px solid rgba(148,163,184,.2);
-        padding-top:12px;
-      }
-
-      .ic-pro-reply input{
-        border:1px solid rgba(148,163,184,.25);
-        background:rgba(255,255,255,.06);
-        color:#fff;
-        border-radius:20px;
-        padding:0 14px;
-        min-height:52px;
-        font-size:15px;
-      }
-
-      .ic-pro-send{
-        border:0;
-        border-radius:18px;
-        background:#00ffb3;
-        color:#06140f;
-        font-size:22px;
-        font-weight:950;
-      }
-
-      .ic-pro-compose{
-        display:grid;
-        gap:12px;
-      }
-
-      .ic-pro-compose input,
-      .ic-pro-compose textarea{
-        width:100%;
-        box-sizing:border-box;
-        border:1px solid rgba(148,163,184,.25);
-        background:rgba(255,255,255,.06);
-        color:#fff;
-        border-radius:20px;
-        padding:14px;
-        font-size:15px;
-      }
-
-      .ic-pro-compose textarea{
-        min-height:110px;
-      }
-
-      .ic-pro-compose button{
-        border:0;
-        border-radius:20px;
-        background:#00ffb3;
-        color:#06140f;
-        padding:14px;
-        font-weight:950;
-      }
-    `;
-    document.head.appendChild(s);
-  }
-
-  function buildShell(){
-    var panel = $("panelMessages");
-    if(!panel) return;
-
-    panel.innerHTML = `
-      <div id="icMessagesPro">
-        <div id="icProInbox">
-          <div class="ic-pro-head">
-            <div>
-              <div class="ic-pro-title">Messages</div>
-              <div class="ic-pro-sub">Conversations par immatriculation</div>
-            </div>
-            <button class="ic-pro-compose-btn" id="icComposeBtn">✎</button>
-          </div>
-
-          <div class="ic-pro-tabs">
-            <button data-mode="inbox" class="on">Reçus</button>
-            <button data-mode="sent">Envoyés</button>
-            <button data-mode="compose">Nouveau</button>
-          </div>
-
-          <div id="icProList" class="ic-pro-list"></div>
-        </div>
-
-        <div id="icProThread" class="ic-pro-thread">
-          <div class="ic-pro-thread-head">
-            <button class="ic-pro-back" id="icBackBtn">‹ Retour</button>
-            <div class="ic-pro-thread-title" id="icThreadTitle">Conversation</div>
-            <button class="ic-pro-trash" id="icDeleteBtn">🗑</button>
-          </div>
-
-          <div id="icThreadBody" class="ic-pro-body"></div>
-
-          <div class="ic-pro-reply">
-            <input id="icReplyText" placeholder="Votre message...">
-            <button class="ic-pro-send" id="icSendReply">➤</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.querySelectorAll(".ic-pro-tabs button").forEach(function(btn){
-      btn.onclick = function(){
-        ImmatMessages.setMode(btn.dataset.mode);
-      };
-    });
-
-    $("icComposeBtn").onclick = function(){
-      ImmatMessages.setMode("compose");
-    };
-
-    $("icBackBtn").onclick = function(){
-      ImmatMessages.closeThread();
-    };
-
-    $("icDeleteBtn").onclick = function(){
-      ImmatMessages.deleteThread();
-    };
-
-    $("icSendReply").onclick = function(){
-      ImmatMessages.reply();
-    };
-  }
-
-  window.ImmatMessages = {
-    mode:"inbox",
-    rows:[],
-    plate:null,
-    open:false,
-
-    async refresh(){
-      injectCss();
-      if(!$("icMessagesPro")) buildShell();
-
-      if(this.mode !== "compose"){
-        this.rows = await fetchMessages();
-      }
-
-      this.render();
-      this.updateBadge();
-    },
-
-    setMode(mode){
-      this.mode = mode || "inbox";
-      this.open = false;
-
-      document.querySelectorAll(".ic-pro-tabs button").forEach(function(btn){
-        btn.classList.toggle("on", btn.dataset.mode === ImmatMessages.mode);
-      });
-
-      this.render();
-
-      if(this.mode !== "compose"){
-        this.refresh();
-      }
-    },
-
-    conversations(){
-      var map = {};
-
-      this.rows.forEach(function(m){
-        if(ImmatMessages.mode === "inbox" && m.sent) return;
-        if(ImmatMessages.mode === "sent" && !m.sent) return;
-
-        var p = plate(m.plate);
-        if(!map[p]){
-          map[p] = {
-            plate:p,
-            text:"",
-            time:"",
-            date:0,
-            unread:false
-          };
-        }
-
-        map[p].text = m.text;
-        map[p].time = m.time;
-        map[p].date = new Date(m.created_at || 0).getTime();
-
-        if(!m.sent && !m.read) map[p].unread = true;
-      });
-
-      return Object.values(map).sort(function(a,b){
-        return b.date - a.date;
-      });
-    },
-
-    render(){
-      var inbox = $("icProInbox");
-      var thread = $("icProThread");
-      var list = $("icProList");
-
-      if(!inbox || !thread || !list) return;
-
-      if(this.open){
-        inbox.style.display = "none";
-        thread.classList.add("show");
-        return;
-      }
-
-      inbox.style.display = "block";
-      thread.classList.remove("show");
-
-      if(this.mode === "compose"){
-        list.innerHTML = `
-          <div class="ic-pro-compose">
-            <input id="icComposePlate" placeholder="Plaque destinataire">
-            <textarea id="icComposeText" placeholder="Écrire un message..."></textarea>
-            <button id="icSendNew">Envoyer</button>
-          </div>
-        `;
-
-        $("icSendNew").onclick = function(){
-          ImmatMessages.sendNew();
-        };
-
-        return;
-      }
-
-      var convs = this.conversations();
-
-      if(!convs.length){
-        list.innerHTML = `<div style="text-align:center;color:#9aa8bb;padding:30px">Aucun message.</div>`;
-        return;
-      }
-
-      list.innerHTML = convs.map(function(c){
-        return `
-          <div class="ic-pro-row ${c.unread ? "unread" : ""}" data-plate="${esc(c.plate)}">
-            <div class="ic-pro-avatar">${c.unread ? "📩" : "🚗"}</div>
-            <div>
-              <div class="ic-pro-plate">${esc(c.plate)}</div>
-              <div class="ic-pro-preview">${esc(c.text)}</div>
-            </div>
-            <div class="ic-pro-meta">
-              ${c.unread ? '<span class="ic-pro-dot"></span>' : ""}
-              <div>${esc(c.time)}</div>
-              <div style="font-size:20px">›</div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      list.querySelectorAll(".ic-pro-row").forEach(function(row){
-        row.onclick = function(){
-          ImmatMessages.openThread(row.dataset.plate);
-        };
-      });
-    },
-
-    async openThread(p){
-      this.plate = plate(p);
-      this.open = true;
-
-      var title = $("icThreadTitle");
-      var body = $("icThreadBody");
-
-      if(title) title.textContent = this.plate;
-
-      var msgs = this.rows.filter(function(m){
-        return plate(m.plate) === ImmatMessages.plate;
-      });
-
-      body.innerHTML = msgs.map(function(m){
-        m.read = true;
-
-        return `
-          <div class="ic-pro-bubble ${m.sent ? "sent" : "recv"}">
-            ${esc(m.text)}
-            <span class="ic-pro-time">${esc(m.time)}</span>
-          </div>
-        `;
-      }).join("");
-
-      this.render();
-      this.updateBadge();
-      await this.markRead();
-      this.updateBadge();
-    },
-
-    closeThread(){
-      this.open = false;
-      this.plate = null;
-      this.render();
-    },
-
-    async markRead(){
-      if(!window.sb || !this.plate) return;
-
-      var ids = this.rows
-        .filter(function(m){
-          return plate(m.plate) === ImmatMessages.plate && !m.sent;
-        })
-        .map(function(m){ return m.id; })
-        .filter(Boolean);
-
-      if(!ids.length) return;
-
-      try{
-        await sb.from("messages")
-          .update({status:"read"})
-          .in("id",ids);
-      }catch(e){}
-    },
-
-    async sendNew(){
-      var p = plate($("icComposePlate").value);
-      var text = $("icComposeText").value.trim();
-
-      if(!p || !text){
-        if(window.toast) toast("Ajoute une plaque et un message.","bad");
-        return;
-      }
-
-      if(window.App && App.sendMsg){
-        if($("iTarget")) $("iTarget").value = p;
-        if($("iMsg")) $("iMsg").value = text;
-        await App.sendMsg();
-      }
-
-      this.mode = "sent";
-      await this.refresh();
-    },
-
-    reply(){
-      var text = $("icReplyText").value.trim();
-      if(!text || !this.plate) return;
-
-      if($("icComposePlate")) $("icComposePlate").value = this.plate;
-      if($("icComposeText")) $("icComposeText").value = text;
-
-      this.sendNew();
-    },
-
-    async deleteThread(){
-      if(!this.plate) return;
-      if(!confirm("Supprimer cette conversation ?")) return;
-
-      var ids = this.rows
-        .filter(function(m){
-          return plate(m.plate) === ImmatMessages.plate;
-        })
-        .map(function(m){ return m.id; });
-
-      try{
-        if(window.sb && ids.length){
-          await sb.from("messages")
-            .update({status:"rejected"})
-            .in("id",ids);
-        }
-      }catch(e){}
-
-      this.rows = this.rows.filter(function(m){
-        return plate(m.plate) !== ImmatMessages.plate;
-      });
-
-      this.closeThread();
-      this.updateBadge();
-    },
-
-    updateBadge(){
-      var n = this.rows.filter(function(m){
-        return !m.sent && !m.read;
-      }).length;
-
-      setBadge(n);
+  function setBadge(count) {
+    count = Math.max(0, Number(count) || 0);
+
+    try {
+      if (window.S) S.unreadMsgCount = count;
+      localStorage.setItem('ic_unread_msg_count', String(count));
+    } catch (e) {}
+
+    const badge = el('topMsgBadge');
+    if (badge) {
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.style.display = count > 0 ? 'flex' : 'none';
     }
+
+    document.querySelectorAll('.status-mail-badge').forEach(node => {
+      node.textContent = count > 99 ? '99+' : String(count);
+      node.style.display = count > 0 ? 'inline-grid' : 'none';
+    });
+
+    try {
+      if (window.App && typeof App.updateCommunityStatus === 'function') App.updateCommunityStatus();
+    } catch (e) {}
+  }
+
+  const State = {
+    mode: 'inbox',
+    plate: null,
+    rows: []
   };
 
-  document.addEventListener("DOMContentLoaded",function(){
-    injectCss();
-    buildShell();
-    ImmatMessages.refresh();
-  });
+  function conversations() {
+    const grouped = {};
 
-  setTimeout(function(){
-    ImmatMessages.refresh();
-  },1000);
+    State.rows.forEach(message => {
+      if (State.mode === 'inbox' && message.sent) return;
+      if (State.mode === 'sent' && !message.sent) return;
 
+      const currentPlate = plate(message.plate);
+      if (!grouped[currentPlate]) {
+        grouped[currentPlate] = {
+          plate: currentPlate,
+          text: '',
+          time: '',
+          date: 0,
+          unread: false
+        };
+      }
+
+      grouped[currentPlate].text = message.text;
+      grouped[currentPlate].time = message.time;
+      grouped[currentPlate].date = new Date(message.created_at || 0).getTime();
+
+      if (!message.sent && !message.read) grouped[currentPlate].unread = true;
+    });
+
+    return Object.values(grouped).sort((a, b) => b.date - a.date);
+  }
+
+  function updateTabs() {
+    document.querySelectorAll('.ic-msg-tabs button').forEach(button => {
+      button.classList.toggle('on', button.dataset.mode === State.mode);
+    });
+  }
+
+  function renderCompose() {
+    const panel = el('icComposePanel');
+    if (!panel) return;
+
+    panel.classList.toggle('show', State.mode === 'compose');
+
+    if (State.mode === 'compose') {
+      try {
+        const selectedPlate = window.S && S.selPlate ? plate(S.selPlate) : '';
+        const input = el('icComposePlate');
+        if (selectedPlate && input && !input.value) input.value = selectedPlate;
+      } catch (e) {}
+    }
+  }
+
+  function renderList() {
+    const list = el('icMsgList');
+    if (!list) return;
+
+    if (State.mode === 'compose') {
+      list.innerHTML = '';
+      return;
+    }
+
+    const unreadCount = State.rows.filter(message => !message.sent && !message.read).length;
+    setBadge(unreadCount);
+
+    const items = conversations();
+
+    if (!items.length) {
+      list.innerHTML = '<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';
+      return;
+    }
+
+    list.innerHTML = items.map(item => `
+      <div class="ic-mail-row ${item.unread ? 'unread' : ''} ${State.plate === item.plate ? 'active' : ''}" data-plate="${esc(item.plate)}">
+        <div class="ic-avatar">${State.mode === 'sent' ? '↗️' : (item.unread ? '📩' : '🚗')}</div>
+        <div class="ic-main">
+          <div class="ic-plate">${esc(item.plate)}</div>
+          <div class="ic-preview">${esc(item.text.slice(0, 80))}</div>
+        </div>
+        <div class="ic-meta">
+          ${item.unread ? '<div class="ic-badge">●</div>' : ''}
+          <div>${esc(item.time)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.ic-mail-row').forEach(row => {
+      row.onclick = () => openThread(row.dataset.plate);
+    });
+  }
+
+  function renderThread() {
+    const thread = el('icThread');
+    const body = el('icThreadBody');
+    const title = el('icThreadTitle');
+
+    if (!thread || !body || !title) return;
+
+    if (!State.plate) {
+      thread.classList.remove('show');
+      return;
+    }
+
+    const messages = State.rows.filter(message => plate(message.plate) === State.plate);
+
+    title.textContent = '🚗 ' + State.plate;
+    thread.classList.add('show');
+
+    body.innerHTML = messages.map(message => {
+      const isSystem = /fiabilité|confirmé utile|signalement confirmé|réceptionné|bien reçu/i.test(message.text);
+
+      if (isSystem) {
+        return `<div class="ic-system">${esc(message.text)}<span class="ic-time">${esc(message.time)}</span></div>`;
+      }
+
+      const statusLabel = message.sent
+        ? (message.status === 'read' ? '✓✓ Lu' : '✓ Envoyé')
+        : 'Reçu';
+
+      return `
+        <div class="ic-bubble ${message.sent ? 'sent' : 'recv'}">
+          <button type="button" class="ic-delete-msg" data-message-id="${esc(message.id || '')}">×</button>
+          ${esc(message.text)}
+          <span class="ic-time">${esc(statusLabel)} · ${esc(message.time)}</span>
+        </div>
+      `;
+    }).join('');
+
+    body.querySelectorAll('.ic-delete-msg').forEach(button => {
+      button.onclick = event => {
+        event.stopPropagation();
+        deleteMessage(button.dataset.messageId);
+      };
+    });
+
+    body.scrollTop = body.scrollHeight;
+  }
+
+  async function markReadInDb() {
+    if (!window.sb || !State.plate) return;
+
+    const ids = State.rows
+      .filter(message => plate(message.plate) === State.plate && !message.sent && !message.read && message.id)
+      .map(message => message.id);
+
+    if (!ids.length) return;
+
+    try {
+      await sb.from('messages').update({ status: 'read' }).in('id', ids);
+      ids.forEach(id => {
+        const row = State.rows.find(message => message.id === id);
+        if (row) row.read = true;
+      });
+    } catch (e) {}
+  }
+
+  async function refresh() {
+    State.rows = await fetchMessages();
+    renderList();
+    renderThread();
+    renderCompose();
+    updateTabs();
+  }
+
+  function setMode(mode) {
+    State.mode = mode || 'inbox';
+    State.plate = null;
+
+    updateTabs();
+    renderCompose();
+    renderList();
+    renderThread();
+
+    if (State.mode !== 'compose') refresh();
+  }
+
+  async function openThread(selectedPlate) {
+    State.plate = plate(selectedPlate);
+    renderList();
+    renderThread();
+    await markReadInDb();
+    setBadge(State.rows.filter(message => !message.sent && !message.read).length);
+  }
+
+  function closeThread() {
+    State.plate = null;
+    const thread = el('icThread');
+    if (thread) thread.classList.remove('show');
+    renderList();
+  }
+
+  async function sendTo(targetPlate, text) {
+    targetPlate = plate(targetPlate);
+    text = String(text || '').trim();
+
+    if (!targetPlate) return say('Plaque destinataire manquante.', 'bad');
+    if (!text) return say('Message vide.', 'bad');
+
+    const senderPlate = ownPlate();
+    if (senderPlate && compact(targetPlate) === compact(senderPlate)) {
+      return say("Impossible de t'envoyer un message à toi-même.", 'bad');
+    }
+
+    const user = await getUser();
+    if (!user) return say('Reconnecte-toi.', 'bad');
+
+    const target = await findProfileByPlate(targetPlate);
+    if (!target || !target.id) return say('Aucun utilisateur avec cette plaque : ' + targetPlate, 'bad');
+
+    const receiverPlate = plate(target.owner_plate || targetPlate);
+
+    const basePayload = {
+      sender_id: user.id,
+      receiver_id: target.id,
+      target_plate: receiverPlate,
+      message: text,
+      status: 'accepted'
+    };
+
+    const richPayload = {
+      ...basePayload,
+      sender_plate: senderPlate,
+      receiver_plate: receiverPlate,
+      from_plate: senderPlate,
+      to_plate: receiverPlate
+    };
+
+    let result = await sb.from('messages').insert(richPayload);
+
+    if (result.error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema/i.test(result.error.message || '')) {
+      result = await sb.from('messages').insert(basePayload);
+    }
+
+    if (result.error) {
+      say('Erreur envoi : ' + (result.error.message || 'message non envoyé'), 'bad');
+      return false;
+    }
+
+    say('Message envoyé à ' + receiverPlate + '.', 'ok');
+    return true;
+  }
+
+  async function sendNew() {
+    const plateInput = el('icComposePlate');
+    const textInput = el('icComposeText');
+
+    const targetPlate = plate((plateInput && plateInput.value) || '');
+    const text = (textInput && textInput.value.trim()) || '';
+
+    const ok = await sendTo(targetPlate, text);
+    if (!ok) return;
+
+    if (textInput) textInput.value = '';
+
+    State.mode = 'sent';
+    State.plate = targetPlate;
+
+    updateTabs();
+    renderCompose();
+    await refresh();
+    State.plate = targetPlate;
+    renderThread();
+  }
+
+  async function reply() {
+    const input = el('icReplyText');
+    if (!input || !State.plate) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const ok = await sendTo(State.plate, text);
+    if (!ok) return;
+
+    input.value = '';
+    await refresh();
+    renderThread();
+  }
+
+  async function quick(text) {
+    if (!State.plate) return;
+
+    const ok = await sendTo(State.plate, text);
+    if (!ok) return;
+
+    await refresh();
+    renderThread();
+  }
+
+  async function deleteMessage(id) {
+    if (!id || !confirm('Supprimer ce message ?')) return;
+
+    try {
+      await sb.from('messages').update({ status: 'rejected' }).eq('id', id);
+      State.rows = State.rows.filter(message => message.id !== id);
+      renderList();
+      renderThread();
+      say('Message supprimé.', 'ok');
+    } catch (e) {
+      say('Erreur suppression.', 'bad');
+    }
+  }
+
+  async function deleteThread() {
+    if (!State.plate || !confirm('Supprimer toute la conversation avec ' + State.plate + ' ?')) return;
+
+    const ids = State.rows
+      .filter(message => plate(message.plate) === State.plate && message.id)
+      .map(message => message.id);
+
+    try {
+      for (const id of ids) {
+        await sb.from('messages').update({ status: 'rejected' }).eq('id', id);
+      }
+
+      State.rows = State.rows.filter(message => plate(message.plate) !== State.plate);
+      State.plate = null;
+      renderList();
+      renderThread();
+      say('Conversation supprimée.', 'ok');
+    } catch (e) {
+      say('Erreur suppression conversation.', 'bad');
+    }
+  }
+
+  function patchApp() {
+    if (!window.App || App.__messagesUnifiedPatched) return;
+    App.__messagesUnifiedPatched = true;
+
+    const originalPanel = typeof App.panel === 'function' ? App.panel.bind(App) : null;
+    App.panel = function (name) {
+      if (name === 'contact') name = 'messages';
+      const result = originalPanel ? originalPanel(name) : undefined;
+      if (name === 'messages') setTimeout(refresh, 100);
+      return result;
+    };
+
+    App.openInboxBadge = function () {
+      App.panel('messages');
+      try { if (typeof App.openSheet === 'function') App.openSheet(); } catch (e) {}
+      setMode('inbox');
+    };
+
+    App.pickPlate = function (selectedPlate) {
+      const formatted = plate(selectedPlate);
+      try {
+        if (window.S) {
+          S.selPlate = formatted;
+          S.conv = formatted;
+        }
+      } catch (e) {}
+
+      App.panel('messages');
+      setMode('compose');
+
+      setTimeout(() => {
+        const input = el('icComposePlate');
+        if (input) {
+          input.value = formatted;
+          input.focus();
+        }
+      }, 120);
+    };
+
+    App.vehicleAlert = function (label) {
+      const senderPlate = ownPlate();
+      let target = '';
+
+      try {
+        target = plate(S.selPlate || (S.contextVehicle && S.contextVehicle.plate) || '');
+      } catch (e) {}
+
+      if (!target || compact(target) === compact(senderPlate)) {
+        return say("Clique d'abord le véhicule concerné sur la carte.", 'bad');
+      }
+
+      const urgent = /pneu|roue|fumée|feu|incendie/i.test(label);
+      const message = (urgent ? '🚨 SIGNALEMENT URGENT : ' : '⚠️ SIGNALEMENT : ')
+        + label + '. Pouvez-vous vérifier votre véhicule ?';
+
+      try { if (typeof App.closeOverlay === 'function') App.closeOverlay('reportPanel'); } catch (e) {}
+
+      App.panel('messages');
+      setMode('compose');
+
+      setTimeout(() => {
+        const plateInput = el('icComposePlate');
+        const textInput = el('icComposeText');
+        if (plateInput) plateInput.value = target;
+        if (textInput) textInput.value = message;
+      }, 120);
+
+      say('Signalement préparé pour ' + target + '.', 'ok');
+    };
+
+    const originalLoadMsgs = typeof App.loadMsgs === 'function' ? App.loadMsgs.bind(App) : null;
+    App.loadMsgs = async function () {
+      const result = originalLoadMsgs ? await originalLoadMsgs() : undefined;
+      try { await refresh(); } catch (e) {}
+      return result;
+    };
+  }
+
+  function init() {
+    patchApp();
+    setTimeout(refresh, 50);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  setTimeout(patchApp, 800);
+  setTimeout(patchApp, 2000);
+
+  window.ImmatMessages = {
+    setMode,
+    refresh,
+    openThread,
+    closeThread,
+    sendNew,
+    reply,
+    quick,
+    deleteMessage,
+    deleteThread
+  };
 })();
