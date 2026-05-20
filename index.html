@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ImmatConnect Pro - index nettoyé : suppression des patchs doublons et badges DEBUG/DELETE FIX -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -267,6 +268,7 @@
   }
 }
 
+.reputation-toast{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:9000;background:#10161d;color:#00ffb3;border:1px solid rgba(0,255,179,.22);border-radius:18px;padding:13px 16px;box-shadow:0 18px 60px rgba(0,0,0,.25);transform:translateY(120px);opacity:0;transition:.28s}.reputation-toast.show{transform:none;opacity:1}
 </style>
 
 <style id="messagesCssInline">
@@ -665,17 +667,6 @@
 }
 #panelMessages.on{
   display:block!important;
-}
-#icVersionMessagesClean{
-  position:fixed;
-  right:8px;
-  bottom:8px;
-  z-index:99999;
-  background:#00ffb3;
-  color:#06140f;
-  padding:5px 9px;
-  border-radius:999px;
-  font:900 11px system-ui;
 }
 </style>
 
@@ -1349,7 +1340,7 @@ function showReputationToast(){
 </script>
 
 <script>
-/* ===== Fiabilité PRO ===== */
+/* ===== Fiabilité PRO : récompense l'expéditeur du signalement ===== */
 (function(){
   function reliabilityLevel(score){
     score = Number(score || 0);
@@ -1367,10 +1358,26 @@ function showReputationToast(){
       try{
         if(!window.sb || !reporterId) return null;
 
+        // Anti-spam : si ce message a déjà un feedback, on ne recompte pas.
+        try{
+          const already = await sb.from("messages")
+            .select("id,feedback,feedback_at")
+            .eq("id", messageId)
+            .maybeSingle();
+          if(already && already.data && already.data.feedback){
+            if(window.toast) toast("Retour déjà enregistré.", "ok");
+            return null;
+          }
+        }catch(e){}
+
         const positive = feedbackKind === "utile";
         const neutral = feedbackKind === "regle" || feedbackKind === "inutile";
         const delta = positive ? 1 : (neutral ? 0 : -1);
 
+        let oldScore = 50;
+        let newScore = oldScore;
+
+        // 1) Lire le profil du conducteur qui a envoyé l'information
         let profile = null;
         try{
           const r = await sb.from("profiles")
@@ -1380,13 +1387,21 @@ function showReputationToast(){
           profile = r && r.data ? r.data : null;
         }catch(e){}
 
-        const oldPoints = Number(profile?.reliability_points || 0);
+        const oldPoints = Number(profile && profile.reliability_points != null ? profile.reliability_points : 0);
         const nextPoints = Math.max(0, oldPoints + delta);
 
-        const oldScore = Number(profile?.reliability_score || Math.max(0, Math.min(100, 50 + oldPoints)));
-        const newScore = Math.max(0, Math.min(100, oldScore + (positive ? 1 : feedbackKind === "faux" ? -2 : 0)));
-        const lvl = reliabilityLevel(newScore);
+        if(profile && profile.reliability_score != null){
+          oldScore = Number(profile.reliability_score || 50);
+          newScore = Math.max(0, Math.min(100, oldScore + (positive ? 1 : (feedbackKind === "faux" ? -2 : 0))));
+        }else{
+          oldScore = Math.max(0, Math.min(100, 50 + oldPoints));
+          newScore = Math.max(0, Math.min(100, 50 + nextPoints));
+        }
 
+        const lvl = reliabilityLevel(newScore);
+        const plateTxt = targetPlate ? (" concernant " + targetPlate) : "";
+
+        // 2) Essayer de mettre à jour le compteur persistant du reporter
         try{
           await sb.from("profiles")
             .update({
@@ -1397,6 +1412,7 @@ function showReputationToast(){
             .eq("id", reporterId);
         }catch(e){}
 
+        // 3) Marquer le feedback sur le message original si les colonnes existent
         try{
           await sb.from("messages")
             .update({
@@ -1407,27 +1423,34 @@ function showReputationToast(){
             .eq("id", messageId);
         }catch(e){}
 
-        const auth = await sb.auth.getUser();
-        const me = auth?.data?.user || null;
-
-        if(me){
-          const plateTxt = targetPlate ? " concernant " + targetPlate : "";
-          const text = positive
-            ? "🏆 Votre signalement" + plateTxt + " a été confirmé utile. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + "."
-            : feedbackKind === "faux"
-              ? "⚠️ Votre signalement" + plateTxt + " a été marqué comme faux. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + "."
-              : "ℹ️ Retour reçu pour votre signalement" + plateTxt + ". Fiabilité : " + newScore + "%. Niveau : " + lvl + ".";
-
-          await sb.from("messages").insert({
-            sender_id: me.id,
-            receiver_id: reporterId,
-            target_plate: targetPlate || "",
-            message: text,
-            status: "accepted"
-          });
+        // 4) Envoyer une notification/message au conducteur qui a aidé
+        let text;
+        if(positive){
+          text = "🏆 Votre signalement" + plateTxt + " a été confirmé utile. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else if(feedbackKind === "faux"){
+          text = "⚠️ Votre signalement" + plateTxt + " a été marqué comme faux. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else{
+          text = "ℹ️ Retour reçu pour votre signalement" + plateTxt + ". Fiabilité : " + newScore + "%. Niveau : " + lvl + ".";
         }
 
-        if(window.toast) toast("Retour envoyé au conducteur · " + lvl + " " + newScore + "%", "ok");
+        try{
+          const auth = await sb.auth.getUser();
+          const me = auth && auth.data && auth.data.user ? auth.data.user : null;
+          if(me){
+            await sb.from("messages").insert({
+              sender_id: me.id,
+              receiver_id: reporterId,
+              target_plate: targetPlate || "",
+              message: text,
+              status: "accepted"
+            });
+          }
+        }catch(e){}
+
+        if(window.toast){
+          toast("Retour envoyé au conducteur · " + lvl + " " + newScore + "%", "ok");
+        }
+
         return {oldScore, newScore, level:lvl, points:nextPoints};
       }catch(e){
         console.warn("Reliability reward failed", e);
@@ -1436,20 +1459,17 @@ function showReputationToast(){
     }
   };
 
+  // Patch non destructif : on conserve la fonction existante, puis on ajoute la logique reporter_id.
   function install(){
     if(!window.App || !App.signalFeedback || App.signalFeedback.__reliabilityPatched) return;
     const original = App.signalFeedback.bind(App);
-
     App.signalFeedback = async function(id, sender, plate, kind){
       const result = await original(id, sender, plate, kind);
       try{
         await window.AppReliabilityPro.rewardReporter(id, sender, plate, kind);
-      }catch(e){
-        console.warn(e);
-      }
+      }catch(e){console.warn(e);}
       return result;
     };
-
     App.signalFeedback.__reliabilityPatched = true;
   }
 
@@ -1458,94 +1478,10 @@ function showReputationToast(){
   }else{
     install();
   }
-
   setTimeout(install, 1000);
 })();
 </script>
-
-<script src="messages.js?v=10"></script>
-<script src="ui.js?v=4"></script>
-  <script id="fixBadgeMessagesFinal">
-(function(){
-  if(window.__FixBadgeMessagesFinalClean) return;
-  window.__FixBadgeMessagesFinalClean = true;
-
-  function setTopBadge(n){
-    n = Math.max(0, Number(n) || 0);
-
-    try{
-      if(window.S) S.unreadMsgCount = n;
-      localStorage.setItem("ic_unread_msg_count", String(n));
-    }catch(e){}
-
-    const badge = document.getElementById("topMsgBadge");
-    if(badge){
-      badge.textContent = n > 99 ? "99+" : String(n);
-      badge.style.display = n > 0 ? "flex" : "none";
-    }
-
-    document.querySelectorAll(".status-mail-badge").forEach(function(b){
-      b.style.display = "none";
-      b.textContent = "";
-    });
-  }
-
-  window.setUnreadMsgCount = setTopBadge;
-
-  function openMessagesInbox(){
-    try{
-      App.panel("messages");
-      setTopBadge(0);
-
-      if(window.ImmatMessages){
-        if(ImmatMessages.setMode) ImmatMessages.setMode("inbox");
-        if(ImmatMessages.refresh) ImmatMessages.refresh();
-      }
-    }catch(e){}
-  }
-
-  function install(){
-    if(!window.App){
-      setTimeout(install, 300);
-      return;
-    }
-
-    App.openInboxBadge = openMessagesInbox;
-
-    const oldUpdate = App.updateCommunityStatus;
-    App.updateCommunityStatus = function(){
-      if(typeof oldUpdate === "function"){
-        try{ oldUpdate.call(App); }catch(e){}
-      }
-
-      setTopBadge(Number(window.S && S.unreadMsgCount || 0));
-
-      document.querySelectorAll(".status-mail-badge").forEach(function(b){
-        b.style.display = "none";
-        b.textContent = "";
-      });
-    };
-
-    setTopBadge(Number(localStorage.getItem("ic_unread_msg_count") || 0));
-  }
-
-  document.addEventListener("click", function(e){
-    const row = e.target.closest(".ic-mail-row");
-    if(!row) return;
-
-    const current = Number(window.S && S.unreadMsgCount || 0);
-    if(current > 0) setTopBadge(current - 1);
-  });
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", install);
-  }else{
-    install();
-  }
-
-  setTimeout(install, 700);
-})();
-</script>
-
+  <script src="messages.js?v=11"></script>
+  <script src="ui.js?v=5"></script>
 </body>
 </html>
