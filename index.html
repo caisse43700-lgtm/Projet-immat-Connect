@@ -1467,54 +1467,83 @@ function showReputationToast(){
 <script src="ui.js?v=4"></script>
   <script id="fixBadgeMessagesFinal">
 (function(){
+  if(window.__FixBadgeMessagesFinalClean) return;
+  window.__FixBadgeMessagesFinalClean = true;
 
   function setTopBadge(n){
     n = Math.max(0, Number(n) || 0);
 
     try{
-      if(window.S){
-        S.unreadMsgCount = n;
-      }
-
+      if(window.S) S.unreadMsgCount = n;
       localStorage.setItem("ic_unread_msg_count", String(n));
     }catch(e){}
 
     const badge = document.getElementById("topMsgBadge");
-
     if(badge){
       badge.textContent = n > 99 ? "99+" : String(n);
       badge.style.display = n > 0 ? "flex" : "none";
     }
 
     document.querySelectorAll(".status-mail-badge").forEach(function(b){
-      b.textContent = n > 99 ? "99+" : String(n);
-      b.style.display = n > 0 ? "inline-grid" : "none";
+      b.style.display = "none";
+      b.textContent = "";
     });
   }
 
-  document.addEventListener("click", function(e){
+  window.setUnreadMsgCount = setTopBadge;
 
-    const row =
-      e.target.closest(".ic-mail-row") ||
-      e.target.closest(".thread") ||
-      e.target.closest(".conversation") ||
-      e.target.closest(".msg");
+  function openMessagesInbox(){
+    try{
+      App.panel("messages");
+      setTopBadge(0);
 
-    if(row){
-
-      let current = 0;
-
-      try{
-        current = Number(window.S && S.unreadMsgCount || 0);
-      }catch(err){}
-
-      if(current > 0){
-        setTopBadge(current - 1);
+      if(window.ImmatMessages){
+        if(ImmatMessages.setMode) ImmatMessages.setMode("inbox");
+        if(ImmatMessages.refresh) ImmatMessages.refresh();
       }
+    }catch(e){}
+  }
+
+  function install(){
+    if(!window.App){
+      setTimeout(install, 300);
+      return;
     }
 
+    App.openInboxBadge = openMessagesInbox;
+
+    const oldUpdate = App.updateCommunityStatus;
+    App.updateCommunityStatus = function(){
+      if(typeof oldUpdate === "function"){
+        try{ oldUpdate.call(App); }catch(e){}
+      }
+
+      setTopBadge(Number(window.S && S.unreadMsgCount || 0));
+
+      document.querySelectorAll(".status-mail-badge").forEach(function(b){
+        b.style.display = "none";
+        b.textContent = "";
+      });
+    };
+
+    setTopBadge(Number(localStorage.getItem("ic_unread_msg_count") || 0));
+  }
+
+  document.addEventListener("click", function(e){
+    const row = e.target.closest(".ic-mail-row");
+    if(!row) return;
+
+    const current = Number(window.S && S.unreadMsgCount || 0);
+    if(current > 0) setTopBadge(current - 1);
   });
 
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", install);
+  }else{
+    install();
+  }
+
+  setTimeout(install, 700);
 })();
 </script>
 
