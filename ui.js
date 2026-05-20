@@ -1,216 +1,248 @@
-/* ===== UI.JS — gestion propre des panneaux ImmatConnect ===== */
-(function(){
-  if(window.__ImmatConnectUIInstalledV4) return;
-  window.__ImmatConnectUIInstalledV4 = true;
+/* ===== IMMATCONNECT UI — V6 CLEAN ===== */
+(function () {
+  'use strict';
 
-  function byId(id){ return document.getElementById(id); }
+  if (window.__ImmatConnectUIV6) return;
+  window.__ImmatConnectUIV6 = true;
 
-  function hide(el){
-    if(!el) return;
-    el.classList.remove("show","open","active");
-  }
+  const $ = id => document.getElementById(id);
 
-  function normalizePanelName(name){
-    name = String(name || "").toLowerCase();
-    if(name === "alert" || name === "alerte") return "altet";
-    if(name === "contact" || name === "message" || name === "received" || name === "reçus") return "messages";
+  function normalize(name) {
+    name = String(name || '').toLowerCase();
+    if (name === 'alert' || name === 'alerte') return 'altet';
+    if (name === 'contact' || name === 'message' || name === 'reçus' || name === 'received') return 'messages';
     return name;
   }
 
-  function closeFloatingPanels(exceptId){
-    ["reportPanel","nearbyPanel","alertsPanel","drawer","legal","blocked","recent","vehicleContextMenu"].forEach(function(id){
-      if(id !== exceptId) hide(byId(id));
+  function hide(el) {
+    if (!el) return;
+    el.classList.remove('show', 'open', 'active');
+  }
+
+  const floating = [
+    'reportPanel',
+    'nearbyPanel',
+    'alertsPanel',
+    'drawer',
+    'legal',
+    'blocked',
+    'recent',
+    'vehicleContextMenu'
+  ];
+
+  const panels = [
+    ['altet', 'Altet'],
+    ['drive', 'Drive'],
+    ['messages', 'Messages'],
+    ['settings', 'Settings']
+  ];
+
+  function closeFloating(except) {
+    floating.forEach(id => {
+      if (id !== except) hide($(id));
     });
   }
 
-  function closeSheetPanels(exceptName){
-    exceptName = normalizePanelName(exceptName);
+  function showSheet() {
+    const sheet = $('sheet');
+    if (!sheet) return;
+    sheet.style.display = '';
+    sheet.classList.remove('mini');
+    delete sheet.dataset.uiHidden;
+  }
 
-    [
-      ["altet","Altet"],
-      ["drive","Drive"],
-      ["contact","Contact"],
-      ["messages","Messages"],
-      ["settings","Settings"]
-    ].forEach(function(pair){
-      var keep = pair[0] === exceptName;
-      var panel = byId("panel" + pair[1]);
-      var tab = byId("tab" + pair[1]);
+  function hideSheet() {
+    const sheet = $('sheet');
+    if (!sheet) return;
+    sheet.dataset.uiHidden = '1';
+    sheet.style.display = 'none';
+    sheet.classList.add('mini');
+    sheet.classList.remove('full');
+  }
 
-      if(panel) panel.classList.toggle("on", keep);
-      if(tab) tab.classList.toggle("on", keep);
+  function setPanel(name) {
+    name = normalize(name);
+
+    panels.forEach(([key, id]) => {
+      const active = key === name;
+      const panel = $('panel' + id);
+      const tab = $('tab' + id);
+
+      if (panel) panel.classList.toggle('on', active);
+      if (tab) tab.classList.toggle('on', active);
     });
+
+    const oldContact = $('panelContact');
+    if (oldContact) oldContact.classList.remove('on');
+
+    showSheet();
+
+    try {
+      window.App?.openSheet?.();
+    } catch (e) {}
   }
 
-  function showSheetAgain(){
-    var sheet = byId("sheet");
-    if(!sheet) return;
-    sheet.style.display = "";
-    delete sheet.dataset.uiHiddenByOverlay;
-  }
+  function syncBadge() {
+    try {
+      const count = Number(
+        window.S?.unreadMsgCount ||
+        localStorage.getItem('ic_unread_msg_count') ||
+        0
+      );
 
-  function hideSheetCompletely(){
-    var sheet = byId("sheet");
-    if(!sheet) return;
-    sheet.dataset.uiHiddenByOverlay = "1";
-    sheet.style.display = "none";
-    sheet.classList.add("mini");
-    sheet.classList.remove("full");
-  }
-
-  function openMessages(){
-    showSheetAgain();
-    closeFloatingPanels(null);
-    closeSheetPanels("messages");
-
-    try{ App.openSheet && App.openSheet(); }catch(e){}
-    try{ ImmatMessages.setMode && ImmatMessages.setMode("inbox"); }catch(e){}
-    try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
-  }
-
-  function decrementBadgeOnce(row){
-    if(!row || row.dataset.badgeClicked === "1") return;
-    if(!row.classList.contains("unread")) return;
-
-    row.dataset.badgeClicked = "1";
-    row.classList.remove("unread");
-
-    try{
-      var current = Number(window.S && S.unreadMsgCount || 0);
-      var next = Math.max(0, current - 1);
-
-      if(window.S) S.unreadMsgCount = next;
-      localStorage.setItem("ic_unread_msg_count", String(next));
-
-      var badge = byId("topMsgBadge");
-      if(badge){
-        badge.textContent = next > 99 ? "99+" : String(next);
-        badge.style.display = next > 0 ? "flex" : "none";
+      if (typeof window.setUnreadMsgCount === 'function') {
+        window.setUnreadMsgCount(count);
+      } else {
+        const badge = $('topMsgBadge');
+        if (badge) {
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.style.display = count > 0 ? 'flex' : 'none';
+        }
       }
-    }catch(e){}
+
+      document.querySelectorAll('.status-mail-badge').forEach(b => {
+        b.textContent = '';
+        b.style.display = 'none';
+      });
+    } catch (e) {}
+  }
+
+  function openMessagesInbox() {
+    showSheet();
+    closeFloating(null);
+    setPanel('messages');
+
+    setTimeout(() => {
+      try { window.ImmatMessages?.setMode?.('inbox'); } catch (e) {}
+      try { window.ImmatMessages?.refresh?.(); } catch (e) {}
+      syncBadge();
+    }, 80);
   }
 
   window.UIManager = {
-    closeFloatingPanels: closeFloatingPanels,
-    closeSheetPanels: closeSheetPanels,
-    showSheetAgain: showSheetAgain,
-    hideSheetCompletely: hideSheetCompletely,
-    openSheetPanel: function(name){
-      name = normalizePanelName(name);
-      showSheetAgain();
-      closeFloatingPanels(null);
-      closeSheetPanels(name);
-      try{ App.openSheet && App.openSheet(); }catch(e){}
-    },
-    openMessages: openMessages
+    openSheetPanel: setPanel,
+    openMessagesInbox,
+    closeFloatingPanels: closeFloating,
+    hideSheetCompletely: hideSheet,
+    showSheetAgain: showSheet,
+    syncBadge
   };
 
-  function installAppHooks(){
-    if(!window.App){
-      setTimeout(installAppHooks,300);
+  function install() {
+    if (!window.App) {
+      setTimeout(install, 250);
       return;
     }
 
-    if(window.__ImmatConnectUIHooksInstalledV4) return;
-    window.__ImmatConnectUIHooksInstalledV4 = true;
+    if (App.__ImmatConnectUIV6Patched) return;
+    App.__ImmatConnectUIV6Patched = true;
 
-    var originalPanel = App.panel ? App.panel.bind(App) : null;
+    const oldPanel = typeof App.panel === 'function' ? App.panel.bind(App) : null;
 
-    App.panel = function(name){
-      name = normalizePanelName(name);
+    App.panel = function (name) {
+      name = normalize(name);
 
-      showSheetAgain();
-      closeFloatingPanels(null);
+      closeFloating(null);
+      showSheet();
 
-      if(originalPanel) originalPanel(name);
-      else{
-        closeSheetPanels(name);
-        try{ App.openSheet && App.openSheet(); }catch(e){}
+      if (oldPanel) {
+        try { oldPanel(name); } catch (e) {}
       }
 
-      if(name === "messages"){
-        setTimeout(function(){
-          try{ ImmatMessages.refresh && ImmatMessages.refresh(); }catch(e){}
-        },120);
+      setPanel(name);
+
+      if (name === 'messages') {
+        setTimeout(() => {
+          try { window.ImmatMessages?.refresh?.(); } catch (e) {}
+          syncBadge();
+        }, 100);
       }
 
-      if(name === "altet"){
-        setTimeout(function(){
-          try{ App.renderAlerts && App.renderAlerts(); }catch(e){}
-          try{ App.syncCommunityAlerts && App.syncCommunityAlerts(); }catch(e){}
-        },120);
-      }
-    };
-
-    App.openInboxBadge = function(){
-      openMessages();
-    };
-
-    var originalOpenReport = App.openReport ? App.openReport.bind(App) : null;
-    App.openReport = function(){
-      hideSheetCompletely();
-      closeFloatingPanels("reportPanel");
-      var p = byId("reportPanel");
-      if(p) p.classList.add("show");
-      if(originalOpenReport){
-        setTimeout(function(){ try{ originalOpenReport(); }catch(e){} },10);
+      if (name === 'altet') {
+        setTimeout(() => {
+          try { App.renderAlerts?.(); } catch (e) {}
+          try { App.renderMyAlertsBlock?.(); } catch (e) {}
+          syncBadge();
+        }, 100);
       }
     };
 
-    var originalOpenNearby = App.openNearby ? App.openNearby.bind(App) : null;
-    App.openNearby = function(){
-      hideSheetCompletely();
-      closeFloatingPanels("nearbyPanel");
-      var p = byId("nearbyPanel");
-      if(p) p.classList.add("show");
-      if(originalOpenNearby) originalOpenNearby();
+    App.openInboxBadge = function () {
+      openMessagesInbox();
     };
 
-    App.openAlerts = function(){
-      showSheetAgain();
-      closeFloatingPanels(null);
-      App.panel("altet");
-    };
+    const oldUpdate = typeof App.updateCommunityStatus === 'function'
+      ? App.updateCommunityStatus.bind(App)
+      : null;
 
-    var originalOpenDrawer = App.openDrawer ? App.openDrawer.bind(App) : null;
-    App.openDrawer = function(){
-      hideSheetCompletely();
-      closeFloatingPanels("drawer");
-      if(originalOpenDrawer) originalOpenDrawer();
-      else{
-        var d = byId("drawer");
-        if(d) d.classList.add("show");
+    App.updateCommunityStatus = function () {
+      if (oldUpdate) {
+        try { oldUpdate(); } catch (e) {}
       }
+      syncBadge();
     };
 
-    var originalCloseDrawer = App.closeDrawer ? App.closeDrawer.bind(App) : null;
-    App.closeDrawer = function(){
-      if(originalCloseDrawer) originalCloseDrawer();
-      else hide(byId("drawer"));
-      showSheetAgain();
+    const oldOpenReport = typeof App.openReport === 'function' ? App.openReport.bind(App) : null;
+    App.openReport = function () {
+      hideSheet();
+      closeFloating('reportPanel');
+      if (oldOpenReport) oldOpenReport();
+      $('reportPanel')?.classList.add('show');
     };
 
-    var originalCloseOverlay = App.closeOverlay ? App.closeOverlay.bind(App) : null;
-    App.closeOverlay = function(id){
-      if(originalCloseOverlay) originalCloseOverlay(id);
-      else hide(byId(id));
-
-      var stillOpen = document.querySelector(".overlay.show,.modal.show,.drawer.show");
-      if(!stillOpen) showSheetAgain();
+    const oldOpenNearby = typeof App.openNearby === 'function' ? App.openNearby.bind(App) : null;
+    App.openNearby = function () {
+      hideSheet();
+      closeFloating('nearbyPanel');
+      if (oldOpenNearby) oldOpenNearby();
+      $('nearbyPanel')?.classList.add('show');
     };
 
-    document.addEventListener("click",function(ev){
-      var row = ev.target.closest(".ic-mail-row");
-      if(row) decrementBadgeOnce(row);
-    },true);
+    const oldCloseOverlay = typeof App.closeOverlay === 'function' ? App.closeOverlay.bind(App) : null;
+    App.closeOverlay = function (id) {
+      if (oldCloseOverlay) oldCloseOverlay(id);
+      else hide($(id));
+
+      setTimeout(() => {
+        if (!document.querySelector('.overlay.show,.modal.show,.drawer.show')) {
+          showSheet();
+        }
+      }, 30);
+    };
+
+    const oldOpenDrawer = typeof App.openDrawer === 'function' ? App.openDrawer.bind(App) : null;
+    App.openDrawer = function () {
+      hideSheet();
+      closeFloating('drawer');
+      if (oldOpenDrawer) oldOpenDrawer();
+      $('drawer')?.classList.add('show');
+    };
+
+    const oldCloseDrawer = typeof App.closeDrawer === 'function' ? App.closeDrawer.bind(App) : null;
+    App.closeDrawer = function () {
+      if (oldCloseDrawer) oldCloseDrawer();
+      else hide($('drawer'));
+      showSheet();
+    };
+
+    document.addEventListener('click', function (e) {
+      const mailBtn = e.target.closest('.top-mail-btn');
+      if (mailBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        openMessagesInbox();
+      }
+    }, true);
+
+    syncBadge();
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded",installAppHooks);
-  }else{
-    installAppHooks();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', install);
+  } else {
+    install();
   }
 
-  setTimeout(installAppHooks,700);
-  setTimeout(installAppHooks,1800);
+  setTimeout(install, 500);
+  setTimeout(install, 1500);
 })();
