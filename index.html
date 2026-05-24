@@ -929,7 +929,7 @@ async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)re
 openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh()},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
-toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()))}}catch(e){}},
+toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
 locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
         await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
         if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
@@ -2208,7 +2208,7 @@ function showReputationToast(){
     ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
     ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
     ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
-    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DELETE FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DEBUG SB";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
     refresh();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
@@ -2217,21 +2217,11 @@ function showReputationToast(){
 </script>
 
 
-<script id="cacheForceReceptionFix">
+<script id="messagesDebugPanel">
+/* ===== DEBUG MESSAGES : affiche pourquoi Reçus est vide ===== */
 (function(){
-  if(window.__CacheForceReceptionFix) return;
-  window.__CacheForceReceptionFix = true;
-
-  try{
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.getRegistrations().then(function(rs){
-        rs.forEach(function(r){ try{r.unregister()}catch(e){} });
-      });
-    }
-    if(window.caches){
-      caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); });
-    }
-  }catch(e){}
+  if(window.__MessagesDebugPanel) return;
+  window.__MessagesDebugPanel = true;
 
   function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
   function plate(v){
@@ -2239,370 +2229,112 @@ function showReputationToast(){
     if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
     return String(v||"").toUpperCase().trim();
   }
-  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
-  function ownPlate(){try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
-  async function getUser(){try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}}
-  async function findProfileByPlate(raw){
-    const wanted=compact(raw);
-    const variants=[plate(raw),wanted,String(raw||"").toUpperCase().trim()].filter(Boolean);
-    for(const v of [...new Set(variants)]){
-      try{
-        const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle();
-        if(r&&r.data)return r.data;
-      }catch(e){}
+  function esc(v){return String(v||"").replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]})}
+  function showBox(html){
+    let box=document.getElementById("icDebugBox");
+    if(!box){
+      box=document.createElement("div");
+      box.id="icDebugBox";
+      box.style.cssText="position:fixed;left:8px;right:8px;bottom:44px;z-index:999999;background:#071018;color:#eef6ff;border:1px solid #00ffb3;border-radius:14px;padding:10px;font:12px system-ui;max-height:46vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.45)";
+      document.body.appendChild(box);
     }
-    try{
-      const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(2000);
-      return (r.data||[]).find(p=>compact(p.owner_plate)===wanted)||null;
-    }catch(e){return null}
+    box.innerHTML=html;
   }
-
-  async function forcedSend(){
-    const cp=document.getElementById("icComposePlate");
-    const ct=document.getElementById("icComposeText");
-    const oldP=document.getElementById("iTarget");
-    const oldT=document.getElementById("iMsg");
-    const targetPlate=plate((cp&&cp.value)||(oldP&&oldP.value)||(S&&S.selPlate)||"");
-    const text=String((ct&&ct.value)||(oldT&&oldT.value)||"").trim();
-
-    if(!targetPlate||!text)return say("Plaque et message obligatoires.","bad");
-    if(compact(targetPlate)===compact(ownPlate()))return say("Impossible de t’envoyer un message à toi-même.","bad");
-
-    const u=await getUser();
-    if(!u)return say("Reconnecte-toi.","bad");
-
-    const target=await findProfileByPlate(targetPlate);
-    if(!target||!target.id){
-      return say("Plaque introuvable dans profiles : "+targetPlate+" — vérifie que le compte destinataire a cette plaque.","bad");
+  async function runDebug(){
+    if(!window.sb && typeof sb !== "undefined") window.sb = sb;
+    if(!window.sb){
+      showBox("<b>DEBUG</b><br>Supabase non chargé : CDN Supabase bloqué ou fichier ouvert trop tôt.");
+      return;
     }
-
-    const senderPlate=ownPlate();
-    const receiverPlate=plate(target.owner_plate||targetPlate);
-
-    const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:text,status:"accepted"};
-    const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate});
-
-    let r=await sb.from("messages").insert(rich);
-    if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||""))){
-      r=await sb.from("messages").insert(base);
-    }
-    if(r.error)return say("Erreur Supabase insert : "+(r.error.message||"message non envoyé"),"bad");
-
-    if(ct)ct.value="";
-    if(oldT)oldT.value="";
-    try{S.selPlate=receiverPlate;S.conv=receiverPlate}catch(e){}
-    say("Message réellement enregistré pour "+receiverPlate+".","ok");
+    let u=null, prof=null, msgs=[], profs=[];
+    try{const r=await sb.auth.getUser();u=r&&r.data?r.data.user:null;}catch(e){}
+    if(!u){showBox("<b>DEBUG</b><br>Aucun utilisateur connecté.");return;}
 
     try{
-      if(window.ImmatMessages){
-        ImmatMessages.setMode&&ImmatMessages.setMode("sent");
-        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),300);
-        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),900);
+      const r=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
+      prof=r.data||null;
+    }catch(e){}
+
+    const myPlate=plate(prof&&prof.owner_plate);
+    let html="<b>DEBUG MESSAGES</b><br>";
+    html+="Compte connecté : <b>"+esc(u.email||u.id)+"</b><br>";
+    html+="User id : <b>"+esc(u.id)+"</b><br>";
+    html+="Plaque profil : <b>"+esc(myPlate||"VIDE")+"</b><br><br>";
+
+    async function query(label,fn){
+      try{
+        const r=await fn();
+        html+="<b>"+esc(label)+"</b> : ";
+        if(r.error){
+          html+="ERREUR → "+esc(r.error.message)+"<br>";
+        }else{
+          html+=(r.data||[]).length+" ligne(s)<br>";
+          msgs=msgs.concat(r.data||[]);
+        }
+      }catch(e){
+        html+="<b>"+esc(label)+"</b> : EXCEPTION "+esc(e.message||e)+"<br>";
+      }
+    }
+
+    await query("messages receiver_id = moi",()=>sb.from("messages").select("*").eq("receiver_id",u.id).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
+    await query("messages sender_id = moi",()=>sb.from("messages").select("*").eq("sender_id",u.id).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
+
+    if(myPlate){
+      await query("messages target_plate = ma plaque",()=>sb.from("messages").select("*").eq("target_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
+      await query("messages receiver_plate = ma plaque",()=>sb.from("messages").select("*").eq("receiver_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
+      await query("messages to_plate = ma plaque",()=>sb.from("messages").select("*").eq("to_plate",myPlate).neq("status","rejected").order("created_at",{ascending:false}).limit(20));
+    }
+
+    try{
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo,email").limit(50);
+      if(r.error){
+        html+="<br><b>Lecture profiles</b> : ERREUR → "+esc(r.error.message)+"<br>";
+      }else{
+        profs=r.data||[];
+        html+="<br><b>Profiles lisibles</b> : "+profs.length+"<br>";
+        html+="Plaques visibles : "+esc(profs.map(p=>p.owner_plate).filter(Boolean).slice(0,12).join(", ")||"aucune")+"<br>";
       }
     }catch(e){}
+
+    const uniq=new Map();
+    msgs.forEach(m=>{if(m&&m.id&&!uniq.has(m.id))uniq.set(m.id,m)});
+    const rows=[...uniq.values()].slice(0,8);
+    html+="<br><b>Dernières lignes messages visibles</b><br>";
+    if(!rows.length){
+      html+="Aucune ligne visible depuis ce compte.<br>";
+    }else{
+      rows.forEach(m=>{
+        html+="<div style='border-top:1px solid #26364d;margin-top:6px;padding-top:6px'>";
+        html+="id: "+esc(m.id)+"<br>";
+        html+="sender_id: "+esc(m.sender_id)+"<br>";
+        html+="receiver_id: "+esc(m.receiver_id)+"<br>";
+        html+="target_plate: "+esc(m.target_plate)+" / receiver_plate: "+esc(m.receiver_plate)+" / to_plate: "+esc(m.to_plate)+"<br>";
+        html+="status: "+esc(m.status)+"<br>";
+        html+="message: "+esc(String(m.message||'').slice(0,80));
+        html+="</div>";
+      });
+    }
+
+    html+="<br><button onclick='document.getElementById(\"icDebugBox\").remove()' style='border:0;border-radius:10px;padding:8px 10px;background:#00ffb3;color:#06140f;font-weight:900'>Fermer</button>";
+    showBox(html);
   }
 
   function install(){
-    if(!window.App||!window.sb){setTimeout(install,300);return}
-    App.sendMsg=forcedSend;
-    if(window.ImmatMessages) ImmatMessages.sendNew=forcedSend;
-
-    if(!document.getElementById("forceFixBadge")){
-      const b=document.createElement("div");
-      b.id="forceFixBadge";
-      b.textContent="DELETE FIX";
-      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+    if(!window.App){setTimeout(install,300);return}
+    App.debugMessages = runDebug;
+    if(!document.getElementById("icDebugBtn")){
+      const b=document.createElement("button");
+      b.id="icDebugBtn";
+      b.textContent="DEBUG SB";
+      b.onclick=runDebug;
+      b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;border:0;border-radius:999px;padding:7px 10px;font:900 11px system-ui";
       document.body.appendChild(b);
     }
   }
-
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-  setTimeout(install,700);
-  setTimeout(install,1800);
-})();
-</script>
-
-
-<script id="historyConversationFix">
-/* ===== DELETE FIX : les anciens messages restent dans la conversation ===== */
-(function(){
-  if(window.__HistoryConversationFix) return;
-  window.__HistoryConversationFix = true;
-
-  function plate(v){
-    const s=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
-    return String(v||"").toUpperCase().trim();
-  }
-  function esc(v){
-    return String(v||"").replace(/[&<>"']/g,function(m){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
-    });
-  }
-  function clean(v){return String(v||"").replace(/<[^>]*>/g,"").trim()}
-
-  function install(){
-    if(!window.ImmatMessages){
-      setTimeout(install,300);
-      return;
-    }
-    if(window.__HistoryConversationFixInstalled) return;
-    window.__HistoryConversationFixInstalled = true;
-
-    // On attend que le patch principal ait défini refresh/openThread.
-    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
-
-    ImmatMessages.refresh = async function(){
-      if(oldRefresh) await oldRefresh();
-
-      // Si une conversation est ouverte, on la rouvre après refresh pour garder l'historique visible.
-      try{
-        if(ImmatMessages.plate && document.getElementById("icThread")?.classList.contains("show")){
-          setTimeout(function(){
-            if(ImmatMessages.openThread) ImmatMessages.openThread(ImmatMessages.plate);
-          },120);
-        }
-      }catch(e){}
-
-      // Ajoute une indication visuelle : la ligne est une conversation, pas un message unique.
-      try{
-        document.querySelectorAll(".ic-mail-row").forEach(function(row){
-          const p = row.querySelector(".ic-plate")?.textContent || "";
-          const preview = row.querySelector(".ic-preview");
-          if(preview && !preview.dataset.historyFixed){
-            preview.dataset.historyFixed = "1";
-            preview.innerHTML = "Dernier message : " + preview.innerHTML;
-          }
-        });
-      }catch(e){}
-    };
-
-    // Badge visible de version.
-    if(!document.getElementById("historyFixBadge")){
-      const b=document.createElement("div");
-      b.id="historyFixBadge";
-      b.textContent="DELETE FIX";
-      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
-      document.body.appendChild(b);
-    }
-  }
-
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
-  else install();
-
   setTimeout(install,800);
-  setTimeout(install,1800);
 })();
 </script>
 
-
-<script id="deleteMessagesFix">
-/* ===== DELETE FIX : suppression message ou conversation ===== */
-(function(){
-  if(window.__DeleteMessagesFix) return;
-  window.__DeleteMessagesFix = true;
-
-  function plate(v){
-    const s=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
-    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
-    return String(v||"").toUpperCase().trim();
-  }
-  function esc(v){
-    return String(v||"").replace(/[&<>"']/g,function(m){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
-    });
-  }
-  function say(m,t){
-    try{ if(window.toast) return toast(m,t||"ok"); }catch(e){}
-    alert(m);
-  }
-
-  let rowsCache = [];
-
-  async function currentUser(){
-    try{
-      const r = await sb.auth.getUser();
-      return r && r.data ? r.data.user : null;
-    }catch(e){ return null; }
-  }
-
-  async function loadRows(){
-    const u = await currentUser();
-    if(!u || !window.sb) return [];
-    const buckets = [];
-    async function q(fn){
-      try{
-        const r = await fn();
-        if(r && Array.isArray(r.data)) buckets.push.apply(buckets,r.data);
-      }catch(e){}
-    }
-
-    await q(function(){
-      return sb.from("messages")
-        .select("*")
-        .or("sender_id.eq."+u.id+",receiver_id.eq."+u.id)
-        .neq("status","rejected")
-        .order("created_at",{ascending:true})
-        .limit(500);
-    });
-
-    const uniq = new Map();
-    buckets.forEach(function(m){
-      if(m && m.id && !uniq.has(m.id)) uniq.set(m.id,m);
-    });
-    rowsCache = Array.from(uniq.values());
-    return rowsCache;
-  }
-
-  async function deleteMessage(id){
-    if(!id) return;
-    if(!confirm("Supprimer ce message ?")) return;
-    try{
-      const r = await sb.from("messages").update({status:"rejected"}).eq("id",id);
-      if(r.error) throw r.error;
-      say("Message supprimé.","ok");
-      if(window.ImmatMessages && ImmatMessages.refresh) await ImmatMessages.refresh();
-      if(window.ImmatMessages && ImmatMessages.plate && ImmatMessages.openThread){
-        setTimeout(function(){ ImmatMessages.openThread(ImmatMessages.plate); },150);
-      }
-    }catch(e){
-      say("Erreur suppression : "+(e.message||"impossible"),"bad");
-    }
-  }
-
-  async function deleteConversation(p){
-    p = plate(p || (window.ImmatMessages && ImmatMessages.plate));
-    if(!p) return say("Aucune conversation sélectionnée.","bad");
-    if(!confirm("Supprimer toute la conversation avec "+p+" ?")) return;
-
-    try{
-      const rows = rowsCache.length ? rowsCache : await loadRows();
-      const ids = rows.filter(function(r){
-        const values = [r.target_plate,r.receiver_plate,r.to_plate,r.sender_plate,r.from_plate].map(plate);
-        return values.includes(p);
-      }).map(function(r){return r.id}).filter(Boolean);
-
-      if(!ids.length){
-        say("Aucun message à supprimer dans cette conversation.","bad");
-        return;
-      }
-
-      for(const id of ids){
-        await sb.from("messages").update({status:"rejected"}).eq("id",id);
-      }
-
-      say("Conversation supprimée.","ok");
-      if(window.ImmatMessages && ImmatMessages.closeThread) ImmatMessages.closeThread();
-      if(window.ImmatMessages && ImmatMessages.refresh) await ImmatMessages.refresh();
-    }catch(e){
-      say("Erreur suppression conversation.","bad");
-    }
-  }
-
-  function install(){
-    if(!window.ImmatMessages || !window.sb){
-      setTimeout(install,300);
-      return;
-    }
-    if(window.__DeleteMessagesFixInstalled) return;
-    window.__DeleteMessagesFixInstalled = true;
-
-    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
-    ImmatMessages.refresh = async function(){
-      await loadRows();
-      if(oldRefresh) await oldRefresh();
-    };
-
-    const oldOpenThread = ImmatMessages.openThread ? ImmatMessages.openThread.bind(ImmatMessages) : null;
-    ImmatMessages.openThread = async function(p){
-      p = plate(p);
-      ImmatMessages.plate = p;
-
-      if(oldOpenThread) oldOpenThread(p);
-
-      setTimeout(async function(){
-        const body = document.getElementById("icThreadBody");
-        const title = document.getElementById("icThreadTitle");
-        const delBtn = document.querySelector(".ic-delete-thread");
-        if(delBtn){
-          delBtn.onclick = function(){ deleteConversation(p); };
-          delBtn.title = "Supprimer toute la conversation";
-        }
-        if(title) title.textContent = "🚗 " + p;
-
-        const rows = rowsCache.length ? rowsCache : await loadRows();
-        const threadRows = rows.filter(function(r){
-          const values = [r.target_plate,r.receiver_plate,r.to_plate,r.sender_plate,r.from_plate].map(plate);
-          return values.includes(p);
-        }).sort(function(a,b){ return new Date(a.created_at||0)-new Date(b.created_at||0); });
-
-        if(body && threadRows.length){
-          body.innerHTML = threadRows.map(function(r){
-            const sent = r.sender_id && window.S && r.sender_id === S.uid;
-            const time = r.created_at ? new Date(r.created_at).toLocaleString("fr-FR") : "";
-            return '<div class="ic-bubble '+(sent?'sent':'recv')+'">'+
-              '<button type="button" class="ic-delete-msg" onclick="ImmatMessages.deleteMessage(\\''+String(r.id).replace(/'/g,"\\'")+'\\')" title="Supprimer ce message">×</button>'+
-              esc(r.message||"")+
-              '<span class="ic-time">'+(sent?'✓ Envoyé':'Reçu')+' · '+esc(time)+'</span>'+
-            '</div>';
-          }).join("");
-          body.scrollTop = body.scrollHeight;
-        }
-      },150);
-    };
-
-    ImmatMessages.deleteMessage = deleteMessage;
-    ImmatMessages.deleteThread = function(){ deleteConversation(ImmatMessages.plate); };
-
-    if(!document.getElementById("deleteFixBadge")){
-      const b=document.createElement("div");
-      b.id="deleteFixBadge";
-      b.textContent="DELETE FIX";
-      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
-      document.body.appendChild(b);
-    }
-  }
-
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
-  else install();
-
-  setTimeout(install,800);
-  setTimeout(install,1800);
-})();
-</script>
-
-<script id="htmlAutoUiBadge">
-(function(){
-  function add(){
-    if(document.getElementById("htmlAutoUiBadgeView")) return;
-    const b=document.createElement("div");
-    b.id="htmlAutoUiBadgeView";
-    b.textContent="HTML + UI V3";
-    b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
-    document.body.appendChild(b);
-  }
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
-  else add();
-})();
-</script>
-
-  
-<script id="htmlMessagesV1Badge">
-(function(){
-  function add(){
-    if(document.getElementById("htmlMessagesV1BadgeView")) return;
-    const b=document.createElement("div");
-    b.id="htmlMessagesV1BadgeView";
-    b.textContent="HTML MSG V1";
-    b.style.cssText="position:fixed;right:8px;bottom:42px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
-    document.body.appendChild(b);
-  }
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
-  else add();
-})();
-</script>
-
-  <script src="messages.js?v=1"></script>
-  <script src="ui.js?v=3"></script>
 </body>
 </html>
