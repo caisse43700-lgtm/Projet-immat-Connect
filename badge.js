@@ -1,22 +1,22 @@
-/* ===== IMMATCONNECT BADGE — V3 CLEAN ===== */
+/* ===== IMMATCONNECT BADGE — V4 UIManager SAFE ===== */
 (function () {
   'use strict';
 
-  if (window.__ImmatBadgeV3) return;
-  window.__ImmatBadgeV3 = true;
+  if (window.__ImmatBadgeV4) return;
+  window.__ImmatBadgeV4 = true;
 
   const $ = id => document.getElementById(id);
+  const STORE_KEY = 'ic_unread_msg_count';
 
   function setBadge(n) {
     n = Math.max(0, Number(n) || 0);
 
     try {
-      if (window.S) {
-        window.S.unreadMsgCount = n;
-      }
+      window.S = window.S || {};
+      window.S.unreadMsgCount = n;
 
       localStorage.setItem(
-        'ic_unread_msg_count',
+        STORE_KEY,
         String(n)
       );
     } catch (e) {}
@@ -29,24 +29,44 @@
 
       badge.style.display =
         n > 0 ? 'flex' : 'none';
+
+      badge.setAttribute(
+        'aria-label',
+        `${n} unread messages`
+      );
     }
+
+    document
+      .querySelectorAll('.status-mail-badge')
+      .forEach(b => {
+        b.textContent = '';
+        b.style.display = 'none';
+      });
+  }
+
+  function getBadge() {
+    try {
+      return Number(
+        localStorage.getItem(STORE_KEY) || 0
+      );
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function syncBadge() {
+    setBadge(getBadge());
   }
 
   function openInbox() {
     try {
-      window.UIManager?.openMessagesInbox?.();
-    } catch (e) {}
-
-    try {
-      window.App?.panel?.('messages');
-    } catch (e) {}
-
-    try {
-      window.ImmatMessages?.setMode?.('inbox');
-    } catch (e) {}
-
-    try {
-      window.ImmatMessages?.refresh?.();
+      if (window.UIManager?.openMessagesInbox) {
+        window.UIManager.openMessagesInbox();
+      } else {
+        window.App?.panel?.('messages');
+        window.ImmatMessages?.setMode?.('inbox');
+        window.ImmatMessages?.refresh?.();
+      }
     } catch (e) {}
   }
 
@@ -54,28 +74,13 @@
 
   window.ImmatBadge = {
     set: setBadge,
+    get: getBadge,
+    sync: syncBadge,
     open: openInbox
   };
 
   function install() {
-    const count = Number(
-      localStorage.getItem(
-        'ic_unread_msg_count'
-      ) || 0
-    );
-
-    setBadge(count);
-
-    document.addEventListener('click', function (e) {
-      const btn = e.target.closest('.top-mail-btn');
-
-      if (!btn) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      openInbox();
-    }, true);
+    syncBadge();
   }
 
   if (document.readyState === 'loading') {
