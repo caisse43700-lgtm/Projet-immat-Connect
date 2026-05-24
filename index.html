@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- ImmatConnect Pro - index nettoyé : suppression des patchs doublons et badges DEBUG/DELETE FIX -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -268,7 +267,6 @@
   }
 }
 
-.reputation-toast{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:9000;background:#10161d;color:#00ffb3;border:1px solid rgba(0,255,179,.22);border-radius:18px;padding:13px 16px;box-shadow:0 18px 60px rgba(0,0,0,.25);transform:translateY(120px);opacity:0;transition:.28s}.reputation-toast.show{transform:none;opacity:1}
 </style>
 
 <style id="messagesCssInline">
@@ -668,34 +666,16 @@
 #panelMessages.on{
   display:block!important;
 }
-  .top-mail-btn{
-  position:relative!important;
-  color:#fff!important;
-  display:grid!important;
-  place-items:center!important;
-}
-
-.top-mail-btn svg{
-  width:30px!important;
-  height:24px!important;
-}
-
-.top-msg-badge{
-  position:absolute;
-  top:5px;
-  right:5px;
-  min-width:20px;
-  height:20px;
-  padding:0 6px;
-  border-radius:999px;
+#icVersionMessagesClean{
+  position:fixed;
+  right:8px;
+  bottom:8px;
+  z-index:99999;
   background:#00ffb3;
   color:#06140f;
-  font-size:11px;
-  font-weight:950;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  line-height:1;
+  padding:5px 9px;
+  border-radius:999px;
+  font:900 11px system-ui;
 }
 </style>
 
@@ -1337,7 +1317,7 @@ markAlertPending(id){
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);if(S.alertMarkersById[id]){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('id,plate,reason,latitude,longitude,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(150);if(error)throw error;(data||[]).forEach(r=>{const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:false})})}catch(e){console.warn('sync alerts',e)}},
 subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},p=>{const r=p.new||{},type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||'r_'+Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:true})}).subscribe()}catch(e){console.warn('sub reports',e)}},
-updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=Number(S.unreadMsgCount)||0;el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
+updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=(Number(S.unreadMsgCount)||0)+pendingSignalCount();el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;await sb.from('reports').insert(payload)}catch(e){S.offlineReports.unshift(payload);S.offlineReports=S.offlineReports.slice(0,50);saveAlerts();toast('Signalement gardé hors ligne.','bad')}},async syncOfflineReports(){if(!S.networkOnline||!S.offlineReports?.length)return;const queue=[...S.offlineReports];S.offlineReports=[];for(const p of queue)await this.saveReportRemote(p);saveAlerts()},
 ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedVehiclePlate(){const own=this.ownPlate();const candidates=[S.contextVehicle?.plate,S.selPlate,$('iTarget')?.value,S.conv].map(nPlate).filter(Boolean).filter(p=>p!=='ALL'&&p!==own);return candidates[0]||''},updateReportTarget(){const p=this.selectedVehiclePlate();const panel=$('reportPanel'),line=$('reportTargetLine'),title=$('reportVehicleTitle'),ctx=$('vehicleContextPlate');const vehicleMode=panel?.classList.contains('vehicle-only');if(ctx)ctx.textContent=p?'Véhicule '+p:'Véhicule';if(title)title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'🚗 Informer les conducteurs';if(line){line.classList.toggle('warn',vehicleMode&&!p);line.innerHTML=vehicleMode?(p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.'):'Information générale envoyée aux véhicules proches.'}},setReportMode(mode){const p=$('reportPanel');if(!p)return;p.classList.toggle('vehicle-only',mode==='vehicle');p.classList.toggle('full-report',mode!=='vehicle');const title=p.querySelector('h2');const desc=p.querySelector('p');if(title)title.textContent=mode==='vehicle'?'Alerter le véhicule':'Signaler';if(desc)desc.textContent=mode==='vehicle'?'Choisis uniquement une information concernant le véhicule sélectionné.':"Informe les conducteurs proches, la route ou demande de l'aide.";this.updateReportTarget?.()},openReport(){this.closeAllOverlays();this.setReportMode('full');$('reportPanel').classList.add('show')},openVehicleReport(){this.closeAllOverlays();this.setReportMode('vehicle');$('reportPanel').classList.add('show')},reportVehicleOrDrivers(label){const panel=$('reportPanel');if(panel?.classList.contains('vehicle-only'))return this.vehicleAlert(label);return this.driverInfo(label)},async driverInfo(label){if(S.myLat===null)return toast('Localise-toi avant.','bad');const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);const reason='[CONDUCTEURS] '+label;this.addCommunityAlert({type:'vehicule',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'vehicle'},{notify:false});await this.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});this.closeOverlay('reportPanel');notifyAlert('🚗 Information envoyée',label,urgent?'urgent':'important')},vehicleAlert(label){let p=this.selectedVehiclePlate();const own=this.ownPlate();if(!p)return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');if(p===own)return toast("Impossible de te signaler toi-même.",'bad');if($('iTarget'))$('iTarget').value=p;const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';if($('iMsg'))$('iMsg').value=msg;S.selPlate=p;S.conv=p;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});this.updateReportTarget?.();this.closeOverlay('reportPanel');this.panel('contact');toast('Signalement préparé pour '+p+'. Appuie sur Envoyer pour le transmettre.','ok')},async roadReport(type){if(S.myLat===null)return toast('Localise-toi avant.','bad');const meta=cat(type);this.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'route'},{notify:false});await this.saveReportRemote({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});this.closeOverlay('reportPanel');notifyAlert(meta.icon+' Signalement',meta.label,meta.level)},async assist(type){if(S.myLat===null)return toast('Localise-toi avant.','bad');const meta=cat(type);this.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist'},{notify:false});await this.saveReportRemote({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});this.closeOverlay('reportPanel');notifyAlert(meta.icon+' Aide demandée',meta.label,meta.level)},openAssist(){this.openReport()},
@@ -1368,8 +1348,1261 @@ function showReputationToast(){
 }
 </script>
 
-<script src="messages.js?v=11"></script>
-<script src="ui.js?v=6"></script>
-<script src="badge.js?v=3"></script>
+<script>
+/* ===== Fiabilité PRO : récompense l'expéditeur du signalement ===== */
+(function(){
+  function reliabilityLevel(score){
+    score = Number(score || 0);
+    if(score >= 90) return "Expert communauté";
+    if(score >= 75) return "Conducteur fiable";
+    if(score >= 55) return "Contributeur confirmé";
+    if(score >= 35) return "Nouveau contributeur";
+    return "Fiabilité à construire";
+  }
+
+  window.AppReliabilityPro = {
+    level: reliabilityLevel,
+
+    async rewardReporter(messageId, reporterId, targetPlate, feedbackKind){
+      try{
+        if(!window.sb || !reporterId) return null;
+
+        // Anti-spam : si ce message a déjà un feedback, on ne recompte pas.
+        try{
+          const already = await sb.from("messages")
+            .select("id,feedback,feedback_at")
+            .eq("id", messageId)
+            .maybeSingle();
+          if(already && already.data && already.data.feedback){
+            if(window.toast) toast("Retour déjà enregistré.", "ok");
+            return null;
+          }
+        }catch(e){}
+
+        const positive = feedbackKind === "utile";
+        const neutral = feedbackKind === "regle" || feedbackKind === "inutile";
+        const delta = positive ? 1 : (neutral ? 0 : -1);
+
+        let oldScore = 50;
+        let newScore = oldScore;
+
+        // 1) Lire le profil du conducteur qui a envoyé l'information
+        let profile = null;
+        try{
+          const r = await sb.from("profiles")
+            .select("id,reliability_score,reliability_points,owner_plate")
+            .eq("id", reporterId)
+            .maybeSingle();
+          profile = r && r.data ? r.data : null;
+        }catch(e){}
+
+        const oldPoints = Number(profile && profile.reliability_points != null ? profile.reliability_points : 0);
+        const nextPoints = Math.max(0, oldPoints + delta);
+
+        if(profile && profile.reliability_score != null){
+          oldScore = Number(profile.reliability_score || 50);
+          newScore = Math.max(0, Math.min(100, oldScore + (positive ? 1 : (feedbackKind === "faux" ? -2 : 0))));
+        }else{
+          oldScore = Math.max(0, Math.min(100, 50 + oldPoints));
+          newScore = Math.max(0, Math.min(100, 50 + nextPoints));
+        }
+
+        const lvl = reliabilityLevel(newScore);
+        const plateTxt = targetPlate ? (" concernant " + targetPlate) : "";
+
+        // 2) Essayer de mettre à jour le compteur persistant du reporter
+        try{
+          await sb.from("profiles")
+            .update({
+              reliability_points: nextPoints,
+              reliability_score: newScore,
+              reliability_level: lvl
+            })
+            .eq("id", reporterId);
+        }catch(e){}
+
+        // 3) Marquer le feedback sur le message original si les colonnes existent
+        try{
+          await sb.from("messages")
+            .update({
+              feedback: feedbackKind,
+              feedback_score_delta: delta,
+              feedback_at: new Date().toISOString()
+            })
+            .eq("id", messageId);
+        }catch(e){}
+
+        // 4) Envoyer une notification/message au conducteur qui a aidé
+        let text;
+        if(positive){
+          text = "🏆 Votre signalement" + plateTxt + " a été confirmé utile. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else if(feedbackKind === "faux"){
+          text = "⚠️ Votre signalement" + plateTxt + " a été marqué comme faux. Fiabilité : " + oldScore + "% → " + newScore + "%. Niveau : " + lvl + ".";
+        }else{
+          text = "ℹ️ Retour reçu pour votre signalement" + plateTxt + ". Fiabilité : " + newScore + "%. Niveau : " + lvl + ".";
+        }
+
+        try{
+          const auth = await sb.auth.getUser();
+          const me = auth && auth.data && auth.data.user ? auth.data.user : null;
+          if(me){
+            await sb.from("messages").insert({
+              sender_id: me.id,
+              receiver_id: reporterId,
+              target_plate: targetPlate || "",
+              message: text,
+              status: "accepted"
+            });
+          }
+        }catch(e){}
+
+        if(window.toast){
+          toast("Retour envoyé au conducteur · " + lvl + " " + newScore + "%", "ok");
+        }
+
+        return {oldScore, newScore, level:lvl, points:nextPoints};
+      }catch(e){
+        console.warn("Reliability reward failed", e);
+        return null;
+      }
+    }
+  };
+
+  // Patch non destructif : on conserve la fonction existante, puis on ajoute la logique reporter_id.
+  function install(){
+    if(!window.App || !App.signalFeedback || App.signalFeedback.__reliabilityPatched) return;
+    const original = App.signalFeedback.bind(App);
+    App.signalFeedback = async function(id, sender, plate, kind){
+      const result = await original(id, sender, plate, kind);
+      try{
+        await window.AppReliabilityPro.rewardReporter(id, sender, plate, kind);
+      }catch(e){console.warn(e);}
+      return result;
+    };
+    App.signalFeedback.__reliabilityPatched = true;
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", install);
+  }else{
+    install();
+  }
+  setTimeout(install, 1000);
+})();
+</script>
+
+<script>
+/* ===== COMPATIBILITÉ FINALE MESSAGES ===== */
+(function(){
+  if(window.__FinalMessagesCompatibility) return;
+  window.__FinalMessagesCompatibility = true;
+
+  function install(){
+    if(!window.App || App.__finalMessagesCompatibilityInstalled) return;
+    App.__finalMessagesCompatibilityInstalled = true;
+
+    const oldPanel = App.panel ? App.panel.bind(App) : null;
+
+    App.panel = function(panel){
+      if(panel === "contact") panel = "messages";
+
+      const result = oldPanel ? oldPanel(panel) : undefined;
+
+      try{
+        if(panel === "messages"){
+          App.openSheet?.();
+          window.ImmatMessages?.refresh?.();
+        }
+      }catch(e){}
+
+      return result;
+    };
+
+    const oldPickPlate = App.pickPlate ? App.pickPlate.bind(App) : null;
+    App.pickPlate = function(plate){
+      const p = (window.nPlate ? nPlate(plate) : String(plate || "").toUpperCase().replace(/[^A-Z0-9]/g,""));
+      window.S && (S.selPlate = p, S.conv = p);
+
+      const composePlate = document.getElementById("icComposePlate");
+      if(composePlate) composePlate.value = p;
+
+      try{
+        App.panel("messages");
+        window.ImmatMessages?.setMode?.("compose");
+      }catch(e){
+        if(oldPickPlate) return oldPickPlate(plate);
+      }
+    };
+
+    const oldVehicleAlert = App.vehicleAlert ? App.vehicleAlert.bind(App) : null;
+    App.vehicleAlert = function(label){
+      const own = App.ownPlate?.() || "";
+      const p = App.selectedVehiclePlate?.() || (window.S && S.selPlate) || "";
+      const plate = window.nPlate ? nPlate(p) : String(p || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+
+      if(!plate || plate === own){
+        return oldVehicleAlert ? oldVehicleAlert(label) : undefined;
+      }
+
+      const urgent = /pneu|roue|fumée|feu|incendie/i.test(label);
+      const msg = (urgent ? "🚨 SIGNALEMENT URGENT : " : "⚠️ SIGNALEMENT : ") +
+        label + ". Pouvez-vous vérifier votre véhicule ?";
+
+      const composePlate = document.getElementById("icComposePlate");
+      const composeText = document.getElementById("icComposeText");
+
+      if(composePlate) composePlate.value = plate;
+      if(composeText) composeText.value = msg;
+
+      try{ App.closeOverlay?.("reportPanel"); }catch(e){}
+      App.panel("messages");
+      window.ImmatMessages?.setMode?.("compose");
+      toast?.("Signalement préparé pour " + plate + ". Appuie sur envoyer.", "ok");
+    };
+
+    const oldOpenInboxBadge = App.openInboxBadge ? App.openInboxBadge.bind(App) : null;
+    App.openInboxBadge = function(){
+      try{
+        App.panel("messages");
+        App.openSheet?.();
+        window.ImmatMessages?.refresh?.();
+      }catch(e){
+        if(oldOpenInboxBadge) return oldOpenInboxBadge();
+      }
+    };
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", install);
+  }else{
+    install();
+  }
+
+  setTimeout(install,800);
+})();
+</script>
+
+<script id="messagesJsInline">
+/* ===== MESSAGES PRO PAR IMMATRICULATION ===== */
+(function(){
+  if(window.__ImmatMessagesFinalUnique) return;
+  window.__ImmatMessagesFinalUnique = true;
+
+  const State = { mode:"inbox", plate:null, rows:[], opened:new Set() };
+
+  const el = id => document.getElementById(id);
+
+  const np = value => {
+    try {
+      return window.nPlate ? nPlate(value) : String(value || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    } catch(e) {
+      return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    }
+  };
+
+  const esc = value => String(value || "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  }[char]));
+
+  const clean = value => String(value || "").replace(/<[^>]*>/g,"").trim();
+
+  const jsq = value => String(value || "").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+
+  const tm = value => {
+    try {
+      return new Date(value || Date.now()).toLocaleTimeString("fr-FR", {
+        hour:"2-digit",
+        minute:"2-digit"
+      });
+    } catch(e) {
+      return "";
+    }
+  };
+
+  const isSystemMessage = value => /fiabilité|confirmé utile|signalement confirmé|réceptionné|bien reçu/i.test(value || "");
+
+  const ownPlate = () => {
+    try {
+      // Use formatPlate to get dashes — but also try compact for BDD compatibility
+      const raw = (App.ownPlate && App.ownPlate()) || (window.S && S.profile && S.profile.owner_plate) || "";
+      return typeof formatPlate === "function" ? formatPlate(raw) : np(raw);
+    } catch(e) {
+      return "";
+    }
+  };
+
+  const plateOf = msg =>
+    msg._displayPlate ||
+    msg._convPlate ||
+    msg._senderPlate ||
+    msg._receiverPlate ||
+    np(msg.target_plate) ||
+    "PLAQUE";
+
+  function setBadge(count){
+    const pending = typeof pendingSignalCount === "function" ? pendingSignalCount() : 0;
+    const total = Math.max(0, Number(count || 0)) + Math.max(0, Number(pending || 0));
+
+    if(window.S) S.unreadMsgCount = Math.max(0, Number(count || 0));
+
+    const top = el("topMsgBadge");
+    if(top){
+      top.textContent = total > 99 ? "99+" : String(total);
+      top.style.display = total > 0 ? "flex" : "none";
+    }
+
+    document.querySelectorAll(".status-mail-badge").forEach(badge => {
+      badge.textContent = total > 99 ? "99+" : String(total);
+      badge.style.display = total > 0 ? "inline-grid" : "none";
+    });
+
+    try { App.updateCommunityStatus?.(); } catch(e) {}
+  }
+
+  async function loadAll(){
+    if(!window.sb || !window.App || !window.S) return [];
+
+    const {data: userData} = await sb.auth.getUser();
+    const user = userData && userData.user;
+    if(!user) return [];
+
+    const myPlate = ownPlate();
+    const buckets = [];
+
+    async function query(fn){
+      try {
+        const {data} = await fn();
+        if(Array.isArray(data)) buckets.push(...data);
+      } catch(e) {}
+    }
+
+    await query(() =>
+      sb.from("messages")
+        .select("*")
+        .or("sender_id.eq." + user.id + ",receiver_id.eq." + user.id)
+        .neq("status","rejected")
+        .order("created_at",{ascending:true})
+        .limit(400)
+    );
+
+    if(myPlate){
+      for(const column of ["target_plate","sender_plate","receiver_plate","from_plate","to_plate"]){
+        await query(() =>
+          sb.from("messages")
+            .select("*")
+            .eq(column,myPlate)
+            .neq("status","rejected")
+            .order("created_at",{ascending:true})
+            .limit(200)
+        );
+      }
+    }
+
+    const unique = new Map();
+    buckets.forEach(msg => {
+      if(!msg) return;
+      const key = msg.id || [msg.sender_id,msg.receiver_id,msg.target_plate,msg.message,msg.created_at].join("|");
+      if(key && !unique.has(key)) unique.set(key,msg);
+    });
+
+    const rows = [...unique.values()].sort((a,b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+    let profiles = {};
+    try {
+      if(typeof profilesByIds === "function"){
+        profiles = await profilesByIds(rows.flatMap(msg => [msg.sender_id,msg.receiver_id]));
+      }
+    } catch(e) {}
+
+    return rows.map(msg => {
+      const senderPlate = np(msg.sender_plate || msg.from_plate || profiles[msg.sender_id]?.owner_plate || "");
+      const receiverPlate = np(msg.receiver_plate || msg.to_plate || profiles[msg.receiver_id]?.owner_plate || msg.target_plate || "");
+
+      const sent = msg.sender_id === user.id || (myPlate && senderPlate === myPlate);
+      const received = msg.receiver_id === user.id || (myPlate && (
+        receiverPlate === myPlate ||
+        np(msg.target_plate) === myPlate ||
+        np(msg.to_plate) === myPlate ||
+        np(msg.receiver_plate) === myPlate
+      ));
+
+      const displayPlate = sent
+        ? (receiverPlate || np(msg.target_plate) || "PLAQUE")
+        : (senderPlate || np(msg.from_plate) || np(msg.sender_plate) || "PLAQUE");
+
+      return Object.assign({}, msg, {
+        _sent: !!sent,
+        _received: !!received,
+        _senderPlate: senderPlate || "PLAQUE",
+        _receiverPlate: receiverPlate || np(msg.target_plate) || "PLAQUE",
+        _displayPlate: displayPlate,
+        _unread: !!received && !sent && !State.opened.has(msg.id) && msg.status !== "read"
+      });
+    });
+  }
+
+  function groupedRows(){
+    let rows = State.rows.slice();
+
+    if(State.mode === "inbox") rows = rows.filter(row => row._received);
+    if(State.mode === "sent") rows = rows.filter(row => row._sent);
+
+    const groups = {};
+    rows.forEach(row => {
+      const plate = plateOf(row);
+      (groups[plate] || (groups[plate] = [])).push(row);
+    });
+
+    return Object.keys(groups)
+      .map(plate => {
+        const list = groups[plate].sort((a,b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        const last = list[list.length - 1];
+        return {
+          plate,
+          list,
+          last,
+          unread: list.filter(item => item._unread).length
+        };
+      })
+      .sort((a,b) => new Date(b.last.created_at || 0) - new Date(a.last.created_at || 0));
+  }
+
+  function renderList(){
+    const listEl = el("icMsgList");
+    if(!listEl) return;
+
+    const groups = groupedRows();
+    setBadge(State.rows.filter(row => row._unread).length);
+
+    if(!groups.length){
+      listEl.innerHTML = '<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';
+      return;
+    }
+
+    listEl.innerHTML = groups.map(group => {
+      const preview = clean(group.last.message).slice(0,80) || "Nouveau message";
+
+      return `
+        <div class="ic-mail-row ${group.unread ? "unread" : ""} ${State.plate === group.plate ? "active" : ""}" onclick="ImmatMessages.openThread('${jsq(group.plate)}')">
+          <div class="ic-avatar">${State.mode === "sent" ? "↗️" : "🚗"}</div>
+          <div class="ic-main">
+            <div class="ic-plate">${esc(group.plate)}</div>
+            <div class="ic-preview">${esc(preview)}</div>
+          </div>
+          <div class="ic-meta">
+            <div class="ic-badge">${group.unread || ""}</div>
+            <div>${tm(group.last.created_at)}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderThread(){
+    const thread = el("icThread");
+    const body = el("icThreadBody");
+    const title = el("icThreadTitle");
+
+    if(!thread || !body || !title) return;
+
+    if(!State.plate){
+      thread.classList.remove("show");
+      return;
+    }
+
+    const rows = State.rows.filter(row => plateOf(row) === State.plate);
+
+    if(!rows.length){
+      thread.classList.remove("show");
+      return;
+    }
+
+    title.textContent = "🚗 " + State.plate;
+    thread.classList.add("show");
+
+    body.innerHTML = rows.map(row => {
+      const message = clean(row.message);
+
+      if(isSystemMessage(message)){
+        return `<div class="ic-system">${esc(message)}<span class="ic-time">${tm(row.created_at)}</span></div>`;
+      }
+
+      const status = row._sent
+        ? (row.status === "read" ? "✓✓ Lu" : "✓ Envoyé")
+        : (row.status === "read" ? "✓ Lu" : "Nouveau");
+
+      return `
+        <div class="ic-bubble ${row._sent ? "sent" : "recv"}">
+          <button type="button" class="ic-delete-msg" onclick="event.stopPropagation();ImmatMessages.deleteMessage('${jsq(row.id || "")}')">×</button>
+          ${esc(message)}
+          <span class="ic-time">${status} · ${tm(row.created_at)}</span>
+        </div>
+      `;
+    }).join("");
+
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function setMode(mode){
+    State.mode = mode || "inbox";
+    State.plate = null;
+
+    document.querySelectorAll(".ic-msg-tabs button").forEach(button => {
+      button.classList.toggle("on", button.dataset.mode === State.mode);
+    });
+
+    el("icComposePanel")?.classList.toggle("show", State.mode === "compose");
+
+    renderList();
+    renderThread();
+  }
+
+  async function refresh(){
+    State.rows = await loadAll();
+    renderList();
+    renderThread();
+  }
+
+  async function openThread(plate){
+    State.plate = plate;
+
+    const readRows = State.rows.filter(row =>
+      plateOf(row) === plate && row._received && !row._sent && row._unread
+    );
+
+    readRows.forEach(row => State.opened.add(row.id));
+
+    try {
+      for(const row of readRows){
+        await sb.from("messages").update({status:"read"}).eq("id",row.id);
+      }
+    } catch(e) {}
+
+    await refresh();
+    renderList();
+    renderThread();
+  }
+
+  async function sendMessageTo(plate,text){
+    plate = np(plate);
+    text = (text || "").trim();
+
+    if(!plate) return toast?.("Plaque destinataire manquante.","bad");
+    if(!text) return toast?.("Message vide.","bad");
+
+    const myPlate = ownPlate();
+    if(myPlate && plate === myPlate) return toast?.("Impossible de t'envoyer un message à toi-même.","bad");
+
+    const {data: userData} = await sb.auth.getUser();
+    const user = userData && userData.user;
+    if(!user) return toast?.("Reconnecte-toi.","bad");
+
+    const {data: target} = await sb.from("profiles").select("id,owner_plate").eq("owner_plate",plate).maybeSingle();
+    if(!target || !target.id) return toast?.("Aucun utilisateur avec cette plaque.","bad");
+
+    const richPayload = {
+      sender_id:user.id,
+      receiver_id:target.id,
+      target_plate:plate,
+      message:text,
+      status:"accepted",
+      sender_plate:myPlate,
+      receiver_plate:plate
+    };
+
+    const basePayload = {
+      sender_id:user.id,
+      receiver_id:target.id,
+      target_plate:plate,
+      message:text,
+      status:"accepted"
+    };
+
+    let {error} = await sb.from("messages").insert(richPayload);
+
+    if(error && /sender_plate|receiver_plate|column|schema/i.test(String(error.message || ""))){
+      ({error} = await sb.from("messages").insert(basePayload));
+    }
+
+    if(error) return toast?.("Erreur envoi message.","bad");
+
+    State.mode = "sent";
+    State.plate = plate;
+
+    await refresh();
+    setMode("sent");
+    State.plate = plate;
+    renderThread();
+
+    toast?.("Message envoyé.","ok");
+  }
+
+  async function quick(text){
+    if(!State.plate) return;
+    await sendMessageTo(State.plate,text);
+  }
+
+  async function reply(){
+    const input = el("icReplyText");
+    if(!input || !State.plate) return;
+
+    const message = input.value.trim();
+    if(!message) return;
+
+    input.value = "";
+    await sendMessageTo(State.plate,message);
+  }
+
+  async function sendNew(){
+    const plateInput = el("icComposePlate");
+    const textInput = el("icComposeText");
+
+    const plate = np(plateInput?.value || "");
+    const message = (textInput?.value || "").trim();
+
+    if(!plate || !message) return toast?.("Plaque et message obligatoires.","bad");
+
+    if(textInput) textInput.value = "";
+
+    await sendMessageTo(plate,message);
+  }
+
+  async function deleteMessage(id){
+    if(!id || !confirm("Supprimer ce message ?")) return;
+
+    try {
+      await sb.from("messages").delete().eq("id",id);
+      State.rows = State.rows.filter(row => String(row.id || "") !== String(id));
+      renderList();
+      renderThread();
+      toast?.("Message supprimé.","ok");
+    } catch(e) {
+      toast?.("Erreur suppression.","bad");
+    }
+  }
+
+  async function deleteThread(){
+    if(!State.plate || !confirm("Supprimer toute la conversation ?")) return;
+
+    try {
+      const rows = State.rows.filter(row => plateOf(row) === State.plate);
+
+      for(const row of rows){
+        if(row.id) await sb.from("messages").delete().eq("id",row.id);
+      }
+
+      State.rows = State.rows.filter(row => plateOf(row) !== State.plate);
+      State.plate = null;
+
+      renderList();
+      renderThread();
+
+      toast?.("Conversation supprimée.","ok");
+    } catch(e) {
+      toast?.("Erreur suppression conversation.","bad");
+    }
+  }
+
+  function closeThread(){
+    State.plate = null;
+    renderList();
+    renderThread();
+  }
+
+  function install(){
+    if(!window.App || !window.S || App.__messagesFinalUniqueInstalled) return;
+    App.__messagesFinalUniqueInstalled = true;
+
+    const oldPanel = App.panel ? App.panel.bind(App) : null;
+    App.panel = function(panel){
+      const result = oldPanel ? oldPanel(panel) : undefined;
+
+      if(panel === "messages" || panel === "contact"){
+        setTimeout(refresh,120);
+      }
+
+      return result;
+    };
+
+    const oldOpenInboxBadge = App.openInboxBadge ? App.openInboxBadge.bind(App) : null;
+    App.openInboxBadge = function(){
+      try {
+        App.panel("messages");
+        App.openSheet?.();
+        setTimeout(refresh,120);
+      } catch(e) {
+        if(oldOpenInboxBadge) oldOpenInboxBadge();
+      }
+    };
+
+    const oldLoadMsgs = App.loadMsgs ? App.loadMsgs.bind(App) : null;
+    App.loadMsgs = async function(){
+      const result = oldLoadMsgs ? await oldLoadMsgs() : undefined;
+
+      try {
+        await refresh();
+      } catch(e) {}
+
+      return result;
+    };
+
+    setTimeout(refresh,500);
+  }
+
+  window.ImmatMessages = {
+    setMode,
+    refresh,
+    openThread,
+    quick,
+    reply,
+    sendNew,
+    closeThread,
+    deleteMessage,
+    deleteThread
+  };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded",install);
+  } else {
+    install();
+  }
+
+  setTimeout(install,800);
+})();
+
+</script>
+
+<script id="receptionRealFix">
+(function(){
+  if(window.__ReceptionRealFix) return;
+  window.__ReceptionRealFix = true;
+
+  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function plate(v){
+    const s=compact(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function esc(v){return String(v||"").replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]})}
+  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
+  function ownPlate(){try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
+  async function getUser(){try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}}
+
+  async function findProfileByPlate(raw){
+    const wanted=compact(raw);
+    if(!wanted||!window.sb)return null;
+    const variants=Array.from(new Set([plate(raw),wanted,String(raw||"").toUpperCase().trim()])).filter(Boolean);
+    for(const v of variants){
+      try{const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle();if(r&&r.data)return r.data}catch(e){}
+    }
+    try{
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(1000);
+      return (r.data||[]).find(p=>compact(p.owner_plate)===wanted)||null;
+    }catch(e){return null}
+  }
+
+  async function profilesMap(ids){
+    ids=Array.from(new Set((ids||[]).filter(Boolean)));
+    if(!ids.length)return {};
+    try{
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").in("id",ids);
+      const out={};(r.data||[]).forEach(p=>out[p.id]=p);return out;
+    }catch(e){return {}}
+  }
+
+  async function fetchMessages(){
+    const u=await getUser(); if(!u||!window.sb)return [];
+    const myP=ownPlate(), mine=compact(myP), buckets=[];
+    async function q(fn){try{const r=await fn(); if(r&&Array.isArray(r.data)) buckets.push(...r.data)}catch(e){}}
+
+    await q(()=>sb.from("messages").select("*").or("sender_id.eq."+u.id+",receiver_id.eq."+u.id).neq("status","rejected").order("created_at",{ascending:true}).limit(500));
+
+    if(myP){
+      for(const col of ["target_plate","receiver_plate","to_plate"]){
+        await q(()=>sb.from("messages").select("*").eq(col,myP).neq("status","rejected").order("created_at",{ascending:true}).limit(300));
+      }
+    }
+
+    const uniq=new Map();
+    buckets.forEach(m=>{if(!m)return; const k=m.id||[m.sender_id,m.receiver_id,m.target_plate,m.message,m.created_at].join("|"); if(!uniq.has(k))uniq.set(k,m)});
+    const rows=Array.from(uniq.values()).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+    const profs=await profilesMap(rows.flatMap(m=>[m.sender_id,m.receiver_id]));
+
+    return rows.map(m=>{
+      const senderPlate=plate(m.sender_plate||m.from_plate||(profs[m.sender_id]&&profs[m.sender_id].owner_plate)||"");
+      const receiverPlate=plate(m.receiver_plate||m.to_plate||(profs[m.receiver_id]&&profs[m.receiver_id].owner_plate)||m.target_plate||"");
+      const sent=m.sender_id===u.id || (senderPlate&&compact(senderPlate)===mine);
+      const received=m.receiver_id===u.id || (receiverPlate&&compact(receiverPlate)===mine) || (m.target_plate&&compact(m.target_plate)===mine);
+      const display=(received&&!sent)?(senderPlate||plate(m.from_plate)||plate(m.sender_plate)||"PLAQUE"):(receiverPlate||plate(m.to_plate)||plate(m.receiver_plate)||plate(m.target_plate)||"PLAQUE");
+      return Object.assign({},m,{_sent:!!sent,_received:!!received,_plate:display});
+    });
+  }
+
+  let lastRows=[];
+  function group(rows){
+    const map=new Map();
+    rows.forEach(r=>{const p=plate(r._plate||r.target_plate||"PLAQUE"); if(!map.has(p))map.set(p,[]); map.get(p).push(r)});
+    return Array.from(map.entries()).map(([p,list])=>{list.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));return {plate:p,list,last:list[list.length-1]}}).sort((a,b)=>new Date(b.last.created_at||0)-new Date(a.last.created_at||0));
+  }
+  function render(mode,rows){
+    const list=document.getElementById("icMsgList"); if(!list)return;
+    const gs=group(rows);
+    if(!gs.length){list.innerHTML='<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';return}
+    list.innerHTML=gs.map(g=>{
+      const msg=String(g.last.message||"").replace(/<[^>]*>/g,"").slice(0,100);
+      const time=g.last.created_at?new Date(g.last.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):"";
+      return '<div class="ic-mail-row" onclick="ImmatMessages.openThread(\''+String(g.plate).replace(/'/g,"\\'")+'\')"><div class="ic-avatar">'+(mode==="sent"?"↗️":"📩")+'</div><div class="ic-main"><div class="ic-plate">'+esc(g.plate)+'</div><div class="ic-preview">'+esc(msg)+'</div></div><div class="ic-meta">'+esc(time)+'</div></div>';
+    }).join("");
+  }
+  async function refresh(){
+    const active=document.querySelector(".ic-msg-tabs button.on");
+    const mode=active?active.dataset.mode:"inbox";
+    lastRows=await fetchMessages();
+    const unread=lastRows.filter(r=>r._received&&r.status!=="read").length;
+    try{if(typeof setUnreadMsgCount==="function")setUnreadMsgCount(unread)}catch(e){}
+    if(mode==="compose")return;
+    render(mode,lastRows.filter(r=>mode==="sent"?r._sent:r._received));
+  }
+  async function sendNew(){
+    const cp=document.getElementById("icComposePlate"), ct=document.getElementById("icComposeText");
+    const p=plate((cp&&cp.value)||""), m=String((ct&&ct.value)||"").trim();
+    if(!p||!m)return say("Plaque et message obligatoires.","bad");
+    if(compact(p)===compact(ownPlate()))return say("Impossible de t’envoyer un message à toi-même.","bad");
+    const u=await getUser(); if(!u)return say("Reconnecte-toi.","bad");
+    const target=await findProfileByPlate(p);
+    if(!target||!target.id)return say("Aucun utilisateur avec cette plaque : "+p,"bad");
+    const senderPlate=ownPlate(), receiverPlate=plate(target.owner_plate||p);
+    const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:m,status:"accepted"};
+    const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate});
+    let r=await sb.from("messages").insert(rich);
+    if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||"")))r=await sb.from("messages").insert(base);
+    if(r.error)return say("Erreur envoi : "+(r.error.message||"message non envoyé"),"bad");
+    if(ct)ct.value="";
+    try{S.selPlate=receiverPlate;S.conv=receiverPlate}catch(e){}
+    ImmatMessages.setMode("sent");setTimeout(refresh,250);setTimeout(refresh,900);
+    say("Message envoyé à "+receiverPlate+".","ok");
+  }
+  function openCompose(p,m){
+    try{App.panel("messages");App.openSheet&&App.openSheet()}catch(e){}
+    ImmatMessages.setMode("compose");
+    setTimeout(()=>{const cp=document.getElementById("icComposePlate"),ct=document.getElementById("icComposeText");if(cp&&p)cp.value=plate(p);if(ct&&m)ct.value=m;if(ct)ct.focus()},100);
+  }
+  function install(){
+    if(!window.App||!window.ImmatMessages||!window.sb){setTimeout(install,300);return}
+    if(window.__ReceptionRealFixInstalled)return; window.__ReceptionRealFixInstalled=true;
+    const oldPanel=App.panel?App.panel.bind(App):null;
+    App.panel=function(name){if(name==="contact"||name==="message"||name==="received"||name==="reçus")name="messages";const out=oldPanel?oldPanel(name):undefined;if(name==="messages")setTimeout(refresh,100);return out};
+    App.openInboxBadge=function(){App.panel("messages");try{App.openSheet&&App.openSheet()}catch(e){} ImmatMessages.setMode("inbox");refresh()};
+    App.pickPlate=function(p){try{S.selPlate=plate(p);S.conv=plate(p)}catch(e){} openCompose(p,"")};
+    const oldReport=App.reportVehicleOrDrivers?App.reportVehicleOrDrivers.bind(App):null;
+    App.reportVehicleOrDrivers=function(label){const p=(S&&(S.selPlate||(S.contextVehicle&&S.contextVehicle.plate)))||""; if(!p)return oldReport?oldReport(label):undefined; const urgent=/pneu|roue|fumée|feu|incendie|danger/i.test(String(label||"")); try{App.closeOverlay&&App.closeOverlay("reportPanel")}catch(e){} openCompose(p,(urgent?"🚨 SIGNALEMENT URGENT : ":"⚠️ SIGNALEMENT : ")+String(label||"Signalement").replace(/\.$/,"")+". Pouvez-vous vérifier votre véhicule ?")};
+    App.vehicleAlert=function(label){return App.reportVehicleOrDrivers(label)};
+    const oldSet=ImmatMessages.setMode?ImmatMessages.setMode.bind(ImmatMessages):null;
+    ImmatMessages.setMode=function(mode){if(oldSet)oldSet(mode);setTimeout(refresh,80)};
+    ImmatMessages.refresh=refresh; ImmatMessages.sendNew=sendNew;
+    ImmatMessages.openThread=function(p){ImmatMessages.plate=plate(p);const rows=lastRows.filter(r=>plate(r._plate)===plate(p));const thread=document.getElementById("icThread"),body=document.getElementById("icThreadBody"),title=document.getElementById("icThreadTitle");if(!thread||!body||!title)return;title.textContent="🚗 "+plate(p);thread.classList.add("show");body.innerHTML=rows.map(r=>'<div class="ic-bubble '+(r._sent?"sent":"recv")+'">'+esc(String(r.message||""))+'<span class="ic-time">'+(r._sent?"✓ Envoyé":"Reçu")+' · '+esc(r.created_at?new Date(r.created_at).toLocaleString("fr-FR"):"")+'</span></div>').join("")};
+    ImmatMessages.reply=async function(){const rt=document.getElementById("icReplyText"),ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=String((rt&&rt.value)||"").trim();return sendNew()};
+    ImmatMessages.quick=async function(t){const ct=document.getElementById("icComposeText"),cp=document.getElementById("icComposePlate");if(cp)cp.value=plate(ImmatMessages.plate||"");if(ct)ct.value=t;return sendNew()};
+    ImmatMessages.deleteThread=async function(){const p=plate(ImmatMessages.plate||"");if(!p||!confirm("Supprimer cette conversation ?"))return;const rows=lastRows.filter(r=>plate(r._plate)===p&&r.id);for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id)}catch(e){}}await refresh();say("Conversation supprimée.","ok")};
+    const b=document.createElement("div");b.id="icVersionReceptionFix";b.textContent="DELETE FIX";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99999;background:#00ffb3;color:#06140f;padding:5px 9px;border-radius:999px;font:900 11px system-ui";document.body.appendChild(b);
+    refresh();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+  setTimeout(install,600);setTimeout(install,1600);
+})();
+</script>
+
+
+<script id="cacheForceReceptionFix">
+(function(){
+  if(window.__CacheForceReceptionFix) return;
+  window.__CacheForceReceptionFix = true;
+
+  try{
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        rs.forEach(function(r){ try{r.unregister()}catch(e){} });
+      });
+    }
+    if(window.caches){
+      caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); });
+    }
+  }catch(e){}
+
+  function compact(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function plate(v){
+    const s=compact(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function say(m,t){try{if(window.toast)return toast(m,t||"ok")}catch(e){} alert(m)}
+  function ownPlate(){try{return plate(App.ownPlate?App.ownPlate():(S.profile&&S.profile.owner_plate))}catch(e){return""}}
+  async function getUser(){try{const r=await sb.auth.getUser();return r&&r.data?r.data.user:null}catch(e){return null}}
+  async function findProfileByPlate(raw){
+    const wanted=compact(raw);
+    const variants=[plate(raw),wanted,String(raw||"").toUpperCase().trim()].filter(Boolean);
+    for(const v of [...new Set(variants)]){
+      try{
+        const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle();
+        if(r&&r.data)return r.data;
+      }catch(e){}
+    }
+    try{
+      const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(2000);
+      return (r.data||[]).find(p=>compact(p.owner_plate)===wanted)||null;
+    }catch(e){return null}
+  }
+
+  async function forcedSend(){
+    const cp=document.getElementById("icComposePlate");
+    const ct=document.getElementById("icComposeText");
+    const oldP=document.getElementById("iTarget");
+    const oldT=document.getElementById("iMsg");
+    const targetPlate=plate((cp&&cp.value)||(oldP&&oldP.value)||(S&&S.selPlate)||"");
+    const text=String((ct&&ct.value)||(oldT&&oldT.value)||"").trim();
+
+    if(!targetPlate||!text)return say("Plaque et message obligatoires.","bad");
+    if(compact(targetPlate)===compact(ownPlate()))return say("Impossible de t’envoyer un message à toi-même.","bad");
+
+    const u=await getUser();
+    if(!u)return say("Reconnecte-toi.","bad");
+
+    const target=await findProfileByPlate(targetPlate);
+    if(!target||!target.id){
+      return say("Plaque introuvable dans profiles : "+targetPlate+" — vérifie que le compte destinataire a cette plaque.","bad");
+    }
+
+    const senderPlate=ownPlate();
+    const receiverPlate=plate(target.owner_plate||targetPlate);
+
+    const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:text,status:"accepted"};
+    const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate});
+
+    let r=await sb.from("messages").insert(rich);
+    if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||""))){
+      r=await sb.from("messages").insert(base);
+    }
+    if(r.error)return say("Erreur Supabase insert : "+(r.error.message||"message non envoyé"),"bad");
+
+    if(ct)ct.value="";
+    if(oldT)oldT.value="";
+    try{S.selPlate=receiverPlate;S.conv=receiverPlate}catch(e){}
+    say("Message réellement enregistré pour "+receiverPlate+".","ok");
+
+    try{
+      if(window.ImmatMessages){
+        ImmatMessages.setMode&&ImmatMessages.setMode("sent");
+        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),300);
+        setTimeout(()=>ImmatMessages.refresh&&ImmatMessages.refresh(),900);
+      }
+    }catch(e){}
+  }
+
+  function install(){
+    if(!window.App||!window.sb){setTimeout(install,300);return}
+    App.sendMsg=forcedSend;
+    if(window.ImmatMessages) ImmatMessages.sendNew=forcedSend;
+
+    if(!document.getElementById("forceFixBadge")){
+      const b=document.createElement("div");
+      b.id="forceFixBadge";
+      b.textContent="DELETE FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#ffb020;color:#10161d;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+  setTimeout(install,700);
+  setTimeout(install,1800);
+})();
+</script>
+
+
+<script id="historyConversationFix">
+/* ===== DELETE FIX : les anciens messages restent dans la conversation ===== */
+(function(){
+  if(window.__HistoryConversationFix) return;
+  window.__HistoryConversationFix = true;
+
+  function plate(v){
+    const s=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function esc(v){
+    return String(v||"").replace(/[&<>"']/g,function(m){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
+    });
+  }
+  function clean(v){return String(v||"").replace(/<[^>]*>/g,"").trim()}
+
+  function install(){
+    if(!window.ImmatMessages){
+      setTimeout(install,300);
+      return;
+    }
+    if(window.__HistoryConversationFixInstalled) return;
+    window.__HistoryConversationFixInstalled = true;
+
+    // On attend que le patch principal ait défini refresh/openThread.
+    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
+
+    ImmatMessages.refresh = async function(){
+      if(oldRefresh) await oldRefresh();
+
+      // Si une conversation est ouverte, on la rouvre après refresh pour garder l'historique visible.
+      try{
+        if(ImmatMessages.plate && document.getElementById("icThread")?.classList.contains("show")){
+          setTimeout(function(){
+            if(ImmatMessages.openThread) ImmatMessages.openThread(ImmatMessages.plate);
+          },120);
+        }
+      }catch(e){}
+
+      // Ajoute une indication visuelle : la ligne est une conversation, pas un message unique.
+      try{
+        document.querySelectorAll(".ic-mail-row").forEach(function(row){
+          const p = row.querySelector(".ic-plate")?.textContent || "";
+          const preview = row.querySelector(".ic-preview");
+          if(preview && !preview.dataset.historyFixed){
+            preview.dataset.historyFixed = "1";
+            preview.innerHTML = "Dernier message : " + preview.innerHTML;
+          }
+        });
+      }catch(e){}
+    };
+
+    // Badge visible de version.
+    if(!document.getElementById("historyFixBadge")){
+      const b=document.createElement("div");
+      b.id="historyFixBadge";
+      b.textContent="DELETE FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
+  else install();
+
+  setTimeout(install,800);
+  setTimeout(install,1800);
+})();
+</script>
+
+
+<script id="deleteMessagesFix">
+/* ===== DELETE FIX : suppression message ou conversation ===== */
+(function(){
+  if(window.__DeleteMessagesFix) return;
+  window.__DeleteMessagesFix = true;
+
+  function plate(v){
+    const s=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5);
+    return String(v||"").toUpperCase().trim();
+  }
+  function esc(v){
+    return String(v||"").replace(/[&<>"']/g,function(m){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];
+    });
+  }
+  function say(m,t){
+    try{ if(window.toast) return toast(m,t||"ok"); }catch(e){}
+    alert(m);
+  }
+
+  let rowsCache = [];
+
+  async function currentUser(){
+    try{
+      const r = await sb.auth.getUser();
+      return r && r.data ? r.data.user : null;
+    }catch(e){ return null; }
+  }
+
+  async function loadRows(){
+    const u = await currentUser();
+    if(!u || !window.sb) return [];
+    const buckets = [];
+    async function q(fn){
+      try{
+        const r = await fn();
+        if(r && Array.isArray(r.data)) buckets.push.apply(buckets,r.data);
+      }catch(e){}
+    }
+
+    await q(function(){
+      return sb.from("messages")
+        .select("*")
+        .or("sender_id.eq."+u.id+",receiver_id.eq."+u.id)
+        .neq("status","rejected")
+        .order("created_at",{ascending:true})
+        .limit(500);
+    });
+
+    const uniq = new Map();
+    buckets.forEach(function(m){
+      if(m && m.id && !uniq.has(m.id)) uniq.set(m.id,m);
+    });
+    rowsCache = Array.from(uniq.values());
+    return rowsCache;
+  }
+
+  async function deleteMessage(id){
+    if(!id) return;
+    if(!confirm("Supprimer ce message ?")) return;
+    try{
+      const r = await sb.from("messages").update({status:"rejected"}).eq("id",id);
+      if(r.error) throw r.error;
+      say("Message supprimé.","ok");
+      if(window.ImmatMessages && ImmatMessages.refresh) await ImmatMessages.refresh();
+      if(window.ImmatMessages && ImmatMessages.plate && ImmatMessages.openThread){
+        setTimeout(function(){ ImmatMessages.openThread(ImmatMessages.plate); },150);
+      }
+    }catch(e){
+      say("Erreur suppression : "+(e.message||"impossible"),"bad");
+    }
+  }
+
+  async function deleteConversation(p){
+    p = plate(p || (window.ImmatMessages && ImmatMessages.plate));
+    if(!p) return say("Aucune conversation sélectionnée.","bad");
+    if(!confirm("Supprimer toute la conversation avec "+p+" ?")) return;
+
+    try{
+      const rows = rowsCache.length ? rowsCache : await loadRows();
+      const ids = rows.filter(function(r){
+        const values = [r.target_plate,r.receiver_plate,r.to_plate,r.sender_plate,r.from_plate].map(plate);
+        return values.includes(p);
+      }).map(function(r){return r.id}).filter(Boolean);
+
+      if(!ids.length){
+        say("Aucun message à supprimer dans cette conversation.","bad");
+        return;
+      }
+
+      for(const id of ids){
+        await sb.from("messages").update({status:"rejected"}).eq("id",id);
+      }
+
+      say("Conversation supprimée.","ok");
+      if(window.ImmatMessages && ImmatMessages.closeThread) ImmatMessages.closeThread();
+      if(window.ImmatMessages && ImmatMessages.refresh) await ImmatMessages.refresh();
+    }catch(e){
+      say("Erreur suppression conversation.","bad");
+    }
+  }
+
+  function install(){
+    if(!window.ImmatMessages || !window.sb){
+      setTimeout(install,300);
+      return;
+    }
+    if(window.__DeleteMessagesFixInstalled) return;
+    window.__DeleteMessagesFixInstalled = true;
+
+    const oldRefresh = ImmatMessages.refresh ? ImmatMessages.refresh.bind(ImmatMessages) : null;
+    ImmatMessages.refresh = async function(){
+      await loadRows();
+      if(oldRefresh) await oldRefresh();
+    };
+
+    const oldOpenThread = ImmatMessages.openThread ? ImmatMessages.openThread.bind(ImmatMessages) : null;
+    ImmatMessages.openThread = async function(p){
+      p = plate(p);
+      ImmatMessages.plate = p;
+
+      if(oldOpenThread) oldOpenThread(p);
+
+      setTimeout(async function(){
+        const body = document.getElementById("icThreadBody");
+        const title = document.getElementById("icThreadTitle");
+        const delBtn = document.querySelector(".ic-delete-thread");
+        if(delBtn){
+          delBtn.onclick = function(){ deleteConversation(p); };
+          delBtn.title = "Supprimer toute la conversation";
+        }
+        if(title) title.textContent = "🚗 " + p;
+
+        const rows = rowsCache.length ? rowsCache : await loadRows();
+        const threadRows = rows.filter(function(r){
+          const values = [r.target_plate,r.receiver_plate,r.to_plate,r.sender_plate,r.from_plate].map(plate);
+          return values.includes(p);
+        }).sort(function(a,b){ return new Date(a.created_at||0)-new Date(b.created_at||0); });
+
+        if(body && threadRows.length){
+          body.innerHTML = threadRows.map(function(r){
+            const sent = r.sender_id && window.S && r.sender_id === S.uid;
+            const time = r.created_at ? new Date(r.created_at).toLocaleString("fr-FR") : "";
+            return '<div class="ic-bubble '+(sent?'sent':'recv')+'">'+
+              '<button type="button" class="ic-delete-msg" onclick="ImmatMessages.deleteMessage(\\''+String(r.id).replace(/'/g,"\\'")+'\\')" title="Supprimer ce message">×</button>'+
+              esc(r.message||"")+
+              '<span class="ic-time">'+(sent?'✓ Envoyé':'Reçu')+' · '+esc(time)+'</span>'+
+            '</div>';
+          }).join("");
+          body.scrollTop = body.scrollHeight;
+        }
+      },150);
+    };
+
+    ImmatMessages.deleteMessage = deleteMessage;
+    ImmatMessages.deleteThread = function(){ deleteConversation(ImmatMessages.plate); };
+
+    if(!document.getElementById("deleteFixBadge")){
+      const b=document.createElement("div");
+      b.id="deleteFixBadge";
+      b.textContent="DELETE FIX";
+      b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999999;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+      document.body.appendChild(b);
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install);
+  else install();
+
+  setTimeout(install,800);
+  setTimeout(install,1800);
+})();
+</script>
+
+<script id="htmlAutoUiBadge">
+(function(){
+  function add(){
+    if(document.getElementById("htmlAutoUiBadgeView")) return;
+    const b=document.createElement("div");
+    b.id="htmlAutoUiBadgeView";
+    b.textContent="HTML + UI V3";
+    b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+    document.body.appendChild(b);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
+  else add();
+})();
+</script>
+
+  
+<script id="htmlMessagesV1Badge">
+(function(){
+  function add(){
+    if(document.getElementById("htmlMessagesV1BadgeView")) return;
+    const b=document.createElement("div");
+    b.id="htmlMessagesV1BadgeView";
+    b.textContent="HTML MSG V1";
+    b.style.cssText="position:fixed;right:8px;bottom:42px;z-index:999998;background:#00ffb3;color:#06140f;padding:6px 10px;border-radius:999px;font:900 12px system-ui";
+    document.body.appendChild(b);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",add);
+  else add();
+})();
+</script>
+
+  <script src="messages.js?v=1"></script>
+  <script src="ui.js?v=3"></script>
 </body>
 </html>
