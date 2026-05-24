@@ -1,4 +1,4 @@
-/* ===== MESSAGES PRO ===== */
+/* ===== MESSAGES PRO V2 ===== */
 
 .ic-msg-shell{
   background:#101b2b;
@@ -6,7 +6,12 @@
   border-radius:22px;
   padding:10px;
   color:#eef6ff;
+  overflow:hidden;
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
 }
+
+/* TABS */
 
 .ic-msg-tabs{
   display:grid;
@@ -16,22 +21,36 @@
 }
 
 .ic-msg-tabs button{
-  min-height:38px;
-  border-radius:13px;
+  min-height:40px;
+  border-radius:14px;
   border:none;
   background:#172335;
   color:#9aacc2;
   font-weight:900;
+  font-size:13px;
+  transition:.18s ease;
+  transform:translateZ(0);
+}
+
+.ic-msg-tabs button:active{
+  transform:scale(.97);
 }
 
 .ic-msg-tabs button.on{
   background:#00ffb3;
   color:#06140f;
+  box-shadow:0 0 18px rgba(0,255,179,.25);
 }
+
+/* MAIL LIST */
 
 .ic-mail-list{
   display:grid;
   gap:8px;
+  max-height:58vh;
+  overflow:auto;
+  padding-right:2px;
+  overscroll-behavior:contain;
 }
 
 .ic-mail-row{
@@ -43,6 +62,11 @@
   border-radius:18px;
   border:1px solid #2a3c56;
   background:#132033;
+  transition:.16s ease;
+}
+
+.ic-mail-row:active{
+  transform:scale(.985);
 }
 
 .ic-avatar{
@@ -52,57 +76,99 @@
   background:#0b1420;
   display:grid;
   place-items:center;
+  flex-shrink:0;
+  font-size:18px;
 }
 
 .ic-plate{
   color:#00ffb3;
   font-weight:900;
+  font-size:14px;
+  line-height:1.1;
 }
 
 .ic-preview{
   color:#c6d3e2;
   font-size:12px;
+  opacity:.92;
+  margin-top:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
+
+/* THREAD */
 
 .ic-thread{
   margin-top:10px;
   border-radius:18px;
   background:#0d1723;
   padding:10px;
+  max-height:60vh;
+  overflow:auto;
+  overscroll-behavior:contain;
 }
 
 .ic-bubble{
-  padding:10px;
-  border-radius:16px;
+  padding:10px 12px;
+  border-radius:18px;
   margin-bottom:8px;
   max-width:85%;
+  line-height:1.4;
+  font-size:14px;
+  word-break:break-word;
+  animation:msgIn .18s ease;
 }
 
 .ic-bubble.sent{
   margin-left:auto;
   background:#dcfff3;
   color:#06140f;
+  border-bottom-right-radius:6px;
 }
 
 .ic-bubble.recv{
   background:#172335;
   color:#fff;
+  border-bottom-left-radius:6px;
 }
+
+@keyframes msgIn{
+  from{
+    opacity:0;
+    transform:translateY(6px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+/* COMPOSER */
 
 .ic-thread-composer{
   display:grid;
   grid-template-columns:1fr 46px;
   gap:8px;
   margin-top:10px;
+  padding-bottom:env(safe-area-inset-bottom);
 }
 
 .ic-thread-composer textarea{
   min-height:44px;
+  max-height:120px;
+  resize:none;
   border-radius:14px;
   border:1px solid #26364d;
   background:#0b1420;
   color:#fff;
   padding:10px;
+  font:inherit;
+  outline:none;
+}
+
+.ic-thread-composer textarea:focus{
+  border-color:#00ffb3;
 }
 
 .ic-send-btn{
@@ -113,4 +179,22 @@
   background:#00ffb3;
   color:#06140f;
   font-weight:900;
+  transition:.15s ease;
+}
+
+.ic-send-btn:active{
+  transform:scale(.94);
+}
+
+/* SCROLLBAR */
+
+.ic-mail-list::-webkit-scrollbar,
+.ic-thread::-webkit-scrollbar{
+  width:6px;
+}
+
+.ic-mail-list::-webkit-scrollbar-thumb,
+.ic-thread::-webkit-scrollbar-thumb{
+  background:#29415d;
+  border-radius:10px;
 }
