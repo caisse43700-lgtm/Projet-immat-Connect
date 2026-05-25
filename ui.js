@@ -23,6 +23,10 @@
       return 'messages';
     }
 
+    if (name === 'activité' || name === 'activity') {
+      return 'activite';
+    }
+
     return name;
   }
 
@@ -51,7 +55,8 @@
     ['altet', 'Altet'],
     ['drive', 'Drive'],
     ['messages', 'Messages'],
-    ['settings', 'Settings']
+    ['settings', 'Settings'],
+    ['activite', 'Activite']
   ];
 
   function closeFloating(except) {
@@ -86,8 +91,8 @@
   }
 
   function syncNav(name) {
-    const map = { altet: 'navAlert', messages: 'navMsg' };
-    ['navMap', 'navAlert', 'navMsg'].forEach(id => {
+    const map = { altet: 'navSignaler', messages: 'navActivite', activite: 'navActivite' };
+    ['navMap', 'navSignaler', 'navActivite'].forEach(id => {
       const el = $(id);
       if (el) el.classList.toggle('on', map[name] === id);
     });
@@ -242,6 +247,18 @@
           syncBadge();
         }, 100);
       }
+
+      if (name === 'activite') {
+        setTimeout(() => {
+          try {
+            App.renderActivityFeed?.();
+          } catch (e) {}
+
+          try {
+            App.updateActBadge?.();
+          } catch (e) {}
+        }, 100);
+      }
     };
 
     App.openInboxBadge = function () {
@@ -269,15 +286,10 @@
         : null;
 
     App.openReport = function () {
-      hideSheet();
-
-      closeFloating('reportPanel');
-
-      if (oldOpenReport) {
-        oldOpenReport();
-      }
-
-      $('reportPanel')?.classList.add('show');
+      // Route to altet panel instead of old reportPanel overlay
+      try {
+        App.panel('altet');
+      } catch(e) {}
     };
 
     const oldOpenNearby =
