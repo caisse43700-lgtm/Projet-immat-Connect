@@ -85,8 +85,18 @@
     sheet.classList.remove('full');
   }
 
+  function syncNav(name) {
+    const map = { altet: 'navAlert', messages: 'navMsg' };
+    ['navMap', 'navAlert', 'navMsg'].forEach(id => {
+      const el = $(id);
+      if (el) el.classList.toggle('on', map[name] === id);
+    });
+  }
+
   function setPanel(name) {
     name = normalize(name);
+
+    syncNav(name);
 
     panels.forEach(([key, id]) => {
       const active = key === name;
