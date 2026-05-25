@@ -254,3 +254,28 @@ overflow:hidden!important;
 }
 }
 
+/* Onglet latéral pour ouvrir/fermer le sheet en mode paysage */
+#sheetPullTab { display:none; }
+#sheetPullTab::before { content:'›'; }
+.sheet.mini #sheetPullTab::before { content:'‹'; }
+@media (orientation:landscape) and (max-height:560px) {
+  #sheetPullTab {
+    display:grid;
+    position:absolute;
+    left:-28px;
+    top:50%;
+    transform:translateY(-50%);
+    width:28px;
+    height:56px;
+    background:#fff;
+    border-radius:10px 0 0 10px;
+    place-items:center;
+    font-size:20px;
+    font-weight:950;
+    box-shadow:-4px 0 14px rgba(0,0,0,.2);
+    border:0;
+    cursor:pointer;
+    color:#10161d;
+  }
+}
+
