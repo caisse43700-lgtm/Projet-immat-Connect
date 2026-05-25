@@ -672,3 +672,91 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .app-card { padding: 20px; }
   .alert-grid { grid-template-columns: repeat(2,1fr); }
 }
+
+/* ── FLOATING CARD ── */
+.floating-card {
+  position: absolute;
+  z-index: 200;
+  left: 12px; right: 12px;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+  background: rgba(16,22,29,.97);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  animation: fcSlideUp .3s cubic-bezier(.22,1,.36,1);
+  color: #eef6ff;
+}
+@keyframes fcSlideUp { from { transform: translateY(120px); opacity: 0; } to { transform: none; opacity: 1; } }
+.fc-icon { font-size: 28px; flex: 0 0 auto; }
+.fc-body { flex: 1; min-width: 0; }
+.fc-title { font-weight: 950; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.fc-btn { border-radius: 12px; padding: 8px 12px; font-size: 12px; font-weight: 950; }
+.fc-ok { background: rgba(255,255,255,.12); color: #eef6ff; }
+.fc-go { background: var(--green); color: #06140f; }
+
+/* ── PANNEAU SIGNALER 2 ÉTAPES ── */
+.sig-step { display: none; }
+.sig-step.active { display: block; }
+.sig-step-title { font-size: 16px; font-weight: 950; margin-bottom: 16px; color: #eef6ff; }
+.sig-cat-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.sig-cat-btn { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); text-align: left; }
+.sig-cat-btn:active { transform: scale(.98); }
+.cat-route { border-left: 4px solid var(--orange) !important; }
+.cat-vehicle { border-left: 4px solid var(--blue) !important; }
+.cat-aide { border-left: 4px solid var(--red) !important; }
+.sig-cat-icon { font-size: 28px; flex: 0 0 auto; }
+.sig-cat-label { font-size: 16px; font-weight: 950; color: #eef6ff; display: block; }
+.sig-cat-sub { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+.sig-back-btn { background: none; color: var(--blue); font-weight: 900; font-size: 14px; margin-bottom: 12px; padding: 0; }
+.sig-vehicle-input { margin-bottom: 12px; }
+.sig-vehicle-input input { width: 100%; border-radius: 14px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07); color: #eef6ff; outline: none; font-size: 16px; font-weight: 950; text-align: center; }
+.sig-vehicle-input input:focus { border-color: var(--green); }
+
+/* ── PANNEAU ACTIVITÉ ── */
+.act-filter-bar { display: flex; gap: 7px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; }
+.act-filter { white-space: nowrap; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--muted); padding: 8px 13px; font-size: 12px; font-weight: 950; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.1); }
+.act-filter.on { background: #eef6ff; color: #10161d; border-color: transparent; }
+.act-feed { display: grid; gap: 10px; }
+.act-card { border-radius: 18px; padding: 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); color: #eef6ff; }
+.act-card.unread { border-left: 3px solid var(--green); }
+.act-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.act-card-icon { font-size: 22px; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; }
+.act-icon-msg { background: rgba(52,120,255,.2); }
+.act-icon-vehicle { background: rgba(255,176,32,.2); }
+.act-icon-route { background: rgba(255,100,0,.2); }
+.act-icon-aide { background: rgba(255,59,92,.2); }
+.act-card-title { font-weight: 950; font-size: 14px; color: #eef6ff; }
+.act-card-plate { font-size: 12px; color: var(--blue); font-weight: 800; }
+.act-card-time { font-size: 11px; color: var(--muted); margin-left: auto; flex: 0 0 auto; }
+.act-card-body { font-size: 13px; color: var(--muted); line-height: 1.4; margin-bottom: 10px; }
+.act-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.act-card-actions button { border-radius: 12px; padding: 8px 14px; font-size: 12px; font-weight: 950; }
+.act-btn-ok { background: rgba(0,255,179,.1); color: var(--green); border: 1px solid rgba(0,255,179,.2); }
+.act-btn-done { background: rgba(255,255,255,.08); color: var(--muted); border: 1px solid rgba(255,255,255,.1); }
+.act-btn-reply { background: var(--green); color: #06140f; }
+.act-btn-danger { background: rgba(255,59,92,.1); color: var(--red); border: 1px solid rgba(255,59,92,.2); }
+.act-ttl-bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin-bottom: 8px; }
+.act-ttl-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--green), var(--orange)); transition: width 1s linear; }
+.act-reply-input { display: none; margin-top: 8px; }
+.act-reply-input.show { display: flex; gap: 8px; }
+.act-reply-input textarea { flex: 1; border-radius: 12px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07); resize: none; font-size: 13px; color: #eef6ff; min-height: 48px; outline: none; }
+.act-reply-input textarea:focus { border-color: var(--green); }
+.act-reply-input button { border-radius: 12px; background: var(--green); color: #06140f; padding: 8px 14px; font-weight: 950; align-self: flex-end; }
+
+/* ── HIDE REPORT PANEL ── */
+#reportPanel { display: none !important; }
+
+/* ── GPS ERROR ── */
+#gpsErrorMsg { display: none; background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.3); border-radius: 14px; padding: 12px; margin-top: 8px; font-size: 12px; color: #ff3b5c; line-height: 1.5; }
+#gpsErrorMsg.show { display: block; }
+
+/* ── NIGHT MODE additions ── */
+body.night .act-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+body.night .act-filter { background: rgba(255,255,255,.09); }
+body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }

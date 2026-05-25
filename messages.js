@@ -144,17 +144,25 @@ function normalizeRows(rows, profs){
   const mp = nPlate(myPlate());
   const uid = State.user?.id;
 
+  // Récupère les IDs supprimés localement
+  let deletedIds = [];
+  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+
   return (rows||[]).map(m=>{
     const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
     const rp = fPlate(m.receiver_plate || m.to_plate || profs[m.receiver_id]?.owner_plate || m.target_plate || '');
 
-    const sent = m.sender_id === uid || nPlate(sp) === mp;
-    const received =
+    // BUG 2 fix: si on est l'expéditeur, on ne peut pas être aussi récepteur (sauf conversation avec soi-même)
+    const sent = (m.sender_id === uid) || (mp && nPlate(sp) === mp);
+    const received = !sent && (
       m.receiver_id === uid ||
-      nPlate(rp) === mp ||
-      nPlate(m.target_plate) === mp ||
-      nPlate(m.receiver_plate) === mp ||
-      nPlate(m.to_plate) === mp;
+      (mp && (
+        nPlate(rp) === mp ||
+        nPlate(m.target_plate) === mp ||
+        nPlate(m.receiver_plate) === mp ||
+        nPlate(m.to_plate) === mp
+      ))
+    );
 
     const other = sent && !received ? rp : sp;
 
@@ -166,7 +174,7 @@ function normalizeRows(rows, profs){
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
       _otherPlate: fPlate(other || rp || sp || 'INCONNU')
     };
-  }).filter(m => m._otherPlate && m.status !== 'rejected');
+  }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(m.id));
 }
 
 async function refresh(){
@@ -209,14 +217,22 @@ async function refresh(){
   const profs = await profilesByIds(raw.flatMap(m=>[m.sender_id,m.receiver_id]));
   State.messages = normalizeRows(raw, profs);
 
+  // Connexion messages → Activité
+  try{ if(window.S) window.S._actMessages = State.messages; }catch(e){}
+  try{ window.App?.updateActBadge?.(); }catch(e){}
+
   buildThreads();
   render();
   subscribe();
 }
 
 function buildThreads(){
+  // BUG 3: filtrer les messages supprimés localement
+  let deletedIds = [];
+  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+
   const groups = {};
-  State.messages.forEach(m=>{
+  State.messages.filter(m => !deletedIds.includes(m.id)).forEach(m=>{
     const p = m._otherPlate || 'INCONNU';
     groups[p] = groups[p] || [];
     groups[p].push(m);
@@ -436,30 +452,32 @@ async function sendToPlate(plate,text){
 
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
-  const client = sb();
-  if(!client) return;
-
-  await client.from('messages').update({status:'rejected'}).eq('id',id);
+  // BUG 3: soft delete local uniquement, pas de modification Supabase
+  let deleted = [];
+  try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  if(!deleted.includes(id)) deleted.push(id);
+  try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
   await refresh();
+  try{ window.App?.updateActBadge?.(); }catch(e){}
 }
 
 async function deleteThread(){
   if(!State.activePlate) return;
   if(!confirm('Supprimer cette conversation ?')) return;
 
-  const client = sb();
-  if(!client) return;
-
+  // BUG 3: soft delete local uniquement
   const ids = State.messages
     .filter(m=>m._otherPlate===State.activePlate)
     .map(m=>m.id);
 
-  for(const id of ids){
-    await client.from('messages').update({status:'rejected'}).eq('id',id);
-  }
+  let deleted = [];
+  try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
+  try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
   closeThread();
   await refresh();
+  try{ window.App?.updateActBadge?.(); }catch(e){}
 }
 
 async function subscribe(){
@@ -495,6 +513,7 @@ window.ImmatMessages = {
   sendNew,
   reply,
   quick,
+  openThread,
   closeThread,
   deleteThread,
   deleteMessage,
