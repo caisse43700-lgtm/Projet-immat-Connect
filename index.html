@@ -659,55 +659,8 @@ async sendMsg(){try{
 }catch(e){console.error(e);toast('Erreur message.','bad')}},
 async startMsgs(){await this.loadMsgs();await this.subMsgs()},
 async loadMsgs(){
-  const box=$('chatBox');
-  const {data:ud}=await sb.auth.getUser();
-  const u=ud?.user;
-  if(!u||!box)return;
-  const myPlate=this.ownPlate();
-  const buckets=[];
-  async function q(label,build){
-    try{
-      const {data,error}=await build();
-      if(error){console.warn('loadMsgs '+label,error.message||error);return}
-      if(Array.isArray(data))buckets.push(...data);
-    }catch(e){console.warn('loadMsgs '+label,e)}
-  }
-  await q('ids',()=>sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-  if(myPlate){
-    await q('target_plate',()=>sb.from('messages').select('*').eq('target_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-    await q('sender_plate',()=>sb.from('messages').select('*').eq('sender_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-    await q('receiver_plate',()=>sb.from('messages').select('*').eq('receiver_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-    await q('from_plate',()=>sb.from('messages').select('*').eq('from_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-    await q('to_plate',()=>sb.from('messages').select('*').eq('to_plate',myPlate).neq('status','rejected').order('created_at',{ascending:true}).limit(200));
-  }
-  const byId=new Map();
-  buckets.forEach(m=>{if(m&&m.id&&!byId.has(m.id))byId.set(m.id,m)});
-  const data=[...byId.values()].sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
-  const profs=await profilesByIds(data.flatMap(m=>[m.sender_id,m.receiver_id]));
-  let rows=data.map(m=>{
-    const senderPlate=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
-    const receiverPlate=nPlate(m.receiver_plate||m.to_plate||profs[m.receiver_id]?.owner_plate||m.target_plate||'');
-    const sent=(m.sender_id===u.id)||(myPlate&&senderPlate===myPlate);
-    const received=(m.receiver_id===u.id)||(myPlate&&(
-      receiverPlate===myPlate||
-      nPlate(m.target_plate)===myPlate||
-      nPlate(m.to_plate)===myPlate||
-      nPlate(m.receiver_plate)===myPlate
-    ));
-    m._senderPlate=senderPlate||'PLAQUE INCONNUE';
-    m._receiverPlate=receiverPlate||nPlate(m.target_plate)||'PLAQUE INCONNUE';
-    m._sent=sent&&!received?true:sent;
-    m._received=received;
-    m._convPlate=(received&&!sent)?m._senderPlate:m._receiverPlate;
-    if(sent&&received)m._convPlate=m._receiverPlate!==myPlate?m._receiverPlate:m._senderPlate;
-    m._displayPlate=m._convPlate||'PLAQUE INCONNUE';
-    return m;
-  }).filter(m=>m._displayPlate&&!S.blocked.includes(m._displayPlate));
-  this.syncVehicleAlertsFromMessages(rows);
-  this.renderConv(rows);
-  if(S.conv!=='all')rows=rows.filter(m=>m._displayPlate===S.conv||m._convPlate===S.conv||m._senderPlate===S.conv||m._receiverPlate===S.conv);
-  box.innerHTML=rows.length?rows.map(m=>this.msgHtml(m,u.id)).join(''):'<div class="empty-msg">Aucun message.</div>';
-  box.scrollTop=box.scrollHeight;
+  try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')await p}catch(e){}
+  setTimeout(()=>{try{if(Array.isArray(window.S?._actMessages))this.syncVehicleAlertsFromMessages?.(S._actMessages)}catch(e){}},200);
 },
 renderConv(rows){
   const ps=[...new Set(rows.map(m=>m._displayPlate||m._convPlate).filter(Boolean))];
@@ -715,7 +668,7 @@ renderConv(rows){
   if(!bar)return;
   bar.innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('');
 },
-setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;this.loadMsgs()},
+setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;this.loadMsgs();if(p&&p!=='all')setTimeout(()=>{try{window.ImmatMessages?.openThread?.(p)}catch(e){}},150);},
 msgHtml(m,my){
   const sent=!!m._sent;
   const p=sent?m._receiverPlate:m._senderPlate;
@@ -732,8 +685,8 @@ msgHtml(m,my){
   return'<div class="msg-bubble '+(sent?'msg-sent':'msg-recv')+'"><div class="msg-lbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+feedback+rep+'<div><button type="button" class="tiny-btn tiny-no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button type="button" class="tiny-btn tiny-no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="msg-time">'+esc(time)+'</div></div>';
 },
 signalFeedback:async function(id,sender,plate,kind){let delta=0,label='Merci';if(kind==='utile'){delta=8;label='✅ Info utile'}else if(kind==='regle'){delta=3;label='👌 Déjà réglé'}else if(kind==='faux'){delta=-12;label='❌ Faux signalement'}const score=trustDelta(plate,delta);try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&sender)await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:sender,target_plate:plate,message:label+' — note confiance actuelle : '+score+'%',status:'accepted'})}catch(e){}toast(label+' · confiance '+score+'%','ok');this.loadMsgs()},
-async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact a été acceptée.',status:'accepted'});this.loadMsgs()},async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;await sb.from('messages').update({status:'rejected'}).eq('id',id);toast('Message supprimé.','ok');this.loadMsgs()},
-async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;let{data:ud}=await sb.auth.getUser(),u=ud.user;let{data:rows}=await sb.from('messages').select('*').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id);const profs=await profilesByIds((rows||[]).flatMap(m=>[m.sender_id,m.receiver_id]));const ids=(rows||[]).filter(m=>{const sent=m.sender_id===u.id;const senderPlate=nPlate(profs[m.sender_id]?.owner_plate);const receiverPlate=nPlate(profs[m.receiver_id]?.owner_plate||m.target_plate);const conv=sent?nPlate(m.receiver_plate||m.to_plate||m.target_plate||receiverPlate):nPlate(m.sender_plate||m.from_plate||senderPlate);return conv===S.conv}).map(m=>m.id);for(const id of ids)await sb.from('messages').update({status:'rejected'}).eq('id',id);S.conv='all';toast('Conversation supprimée.','ok');this.loadMsgs()},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');$('iTarget').value=S.conv;$('iMsg').value=t;this.panel('contact')},
+async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact a été acceptée.',status:'accepted'});this.loadMsgs()},async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;if(window.ImmatMessages?.deleteMessage){await ImmatMessages.deleteMessage(id);}else{let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}if(!d.includes(String(id)))d.push(String(id));try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}toast('Message supprimé.','ok');this.loadMsgs();}},
+async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;if(window.ImmatMessages?.deleteThread){await ImmatMessages.deleteThread(S.conv)}else{const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===S.conv||m._displayPlate===S.conv||m._convPlate===S.conv);let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}msgs.forEach(m=>{if(!d.includes(String(m.id)))d.push(String(m.id))});try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}}S.conv='all';toast('Conversation supprimée.','ok');this.renderActivityFeed?.();this.updateActBadge?.();},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');$('iTarget').value=S.conv;$('iMsg').value=t;this.panel('contact')},
 async subMsgs(){
   const {data:ud}=await sb.auth.getUser(),u=ud?.user;
   if(!u)return;
@@ -748,7 +701,7 @@ async subMsgs(){
       const profs=await profilesByIds([m.sender_id]);
       const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
       this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl);
-      try{this.showFloatingCard('💬','Message de '+pl,''+(( m.message||'').slice(0,40)),'Vu','Répondre →',null,()=>this.navActivite?.())}catch(e){}
+      try{this.showFloatingCard('💬','Message de '+pl,''+((m.message||'').slice(0,40)),'Vu','Répondre →',null,()=>{this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.openThread?.(pl)}catch(e){}},100)})}catch(e){}
     }
     this.loadMsgs();
   }).subscribe();
@@ -947,9 +900,9 @@ App.renderActivityFeed=function(){
   const now=Date.now();
 
   let deletedIds=[];
-  try{deletedIds=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
+  try{deletedIds=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String)}catch(e){}
 
-  const msgs=(S._actMessages||[]).filter(m=>!deletedIds.includes(m.id));
+  const msgs=(S._actMessages||[]).filter(m=>!deletedIds.includes(String(m.id)));
 
   const alerts=(S.alerts||[]).filter(a=>{
     const age=now-(Number(a.at)||now);
@@ -1069,13 +1022,17 @@ App.actOpenConv=function(plate){
 App.actDeleteConv=function(plate){
   if(!confirm('Supprimer cette conversation ?')) return;
   try{
-    const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===plate||m._displayPlate===plate);
-    let deleted=[];
-    try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
-    msgs.forEach(m=>{if(!deleted.includes(m.id))deleted.push(m.id)});
-    localStorage.setItem('ic_deleted_msgs',JSON.stringify(deleted.slice(-500)));
+    if(window.ImmatMessages?.deleteThread){
+      ImmatMessages.deleteThread(plate).catch(()=>{});
+    } else {
+      const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===plate||m._displayPlate===plate);
+      let deleted=[];
+      try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
+      msgs.forEach(m=>{if(!deleted.includes(String(m.id)))deleted.push(String(m.id))});
+      localStorage.setItem('ic_deleted_msgs',JSON.stringify(deleted.slice(-500)));
+    }
   }catch(e){}
-  this.renderActivityFeed();
+  setTimeout(()=>{this.renderActivityFeed();try{this.updateActBadge?.()}catch(e){}},300);
   toast('Conversation supprimée.','ok');
 };
 App.actHelpReply=function(plate){
