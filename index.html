@@ -855,7 +855,8 @@ markAlertPending(id){
 },
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);if(S.alertMarkersById[id]){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('id,plate,reason,latitude,longitude,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(150);if(error)throw error;(data||[]).forEach(r=>{const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:false})})}catch(e){console.warn('sync alerts',e)}},
-subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},p=>{const r=p.new||{},type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||'r_'+Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:true})}).subscribe()}catch(e){console.warn('sub reports',e)}},
+subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>{const r=p.new||{};if(!r.id)return;// Ne pas notifier l'expéditeur de sa propre alerte
+const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude,lng:r.longitude,created_at:r.created_at},{notify:true});this.updateActBadge?.();this.renderActivityFeed?.()}).subscribe()}catch(e){console.warn('sub reports',e)}},
 updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=(Number(S.unreadMsgCount)||0)+pendingSignalCount();el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;await sb.from('reports').insert(payload)}catch(e){S.offlineReports.unshift(payload);S.offlineReports=S.offlineReports.slice(0,50);saveAlerts();toast('Signalement gardé hors ligne.','bad')}},async syncOfflineReports(){if(!S.networkOnline||!S.offlineReports?.length)return;const queue=[...S.offlineReports];S.offlineReports=[];for(const p of queue)await this.saveReportRemote(p);saveAlerts()},
@@ -866,7 +867,10 @@ voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRe
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
 toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
-function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},30000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
+function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},30000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);
+// Sync alertes et badge quand l'app revient au premier plan
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&$('appScreen')?.classList.contains('active')){App.syncCommunityAlerts?.();App.updateActBadge?.();try{window.ImmatMessages?.refresh?.()}catch(e){}}});
+if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
 App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.classList.toggle('on',b.dataset.sigtab===name));const ids={route:'sigTabRoute',vehicule:'sigTabVehicule',aide:'sigTabAide'};Object.values(ids).forEach(id=>{const el=$(id);if(el)el.classList.remove('on')});const el=$(ids[name]);if(el)el.classList.add('on')};
 
 // ── Navigation
@@ -912,10 +916,21 @@ App.sigBack=function(){
 App.sigDone=function(){
   setTimeout(()=>{this.sigBack();this.navMap();toast('Signalement envoyé ✓','ok')},400);
 };
-App.vehicleAlertQuick=function(label){
+App.vehicleAlertQuick=async function(label){
   const plate=fPlate($('sigVehiclePlate')?.value||this.selectedVehiclePlate()||'');
   if(!plate) return toast("Indique la plaque du véhicule.",'bad');
-  this.vehicleAlert(label);
+  const own=this.ownPlate();
+  if(plate===own) return toast("Impossible de te signaler toi-même.",'bad');
+  const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
+  try{
+    if(window.ImmatMessages?.sendToPlate){
+      await ImmatMessages.sendToPlate(plate,msg);
+    } else {
+      if($('iTarget'))$('iTarget').value=plate;
+      if($('iMsg'))$('iMsg').value=msg;
+      await this.sendMsg?.();
+    }
+  }catch(e){toast('Erreur envoi signalement.','bad');return;}
   this.sigDone();
 };
 
@@ -1041,10 +1056,13 @@ App.actConfirmAlert=function(id,status){
   toast(status==='gone'||status==='resolved'?'Signalement retiré ✓':'Merci de la confirmation ✓','ok');
 };
 App.actOpenConv=function(plate){
+  this.panel('messages');
   try{
     if(window.ImmatMessages){
-      this.panel('messages');
-      window.ImmatMessages.openThread?.(plate);
+      ImmatMessages.setMode?.('inbox');
+      ImmatMessages.refresh?.().then?.(()=>{
+        setTimeout(()=>ImmatMessages.openThread?.(plate),200);
+      });
     }
   }catch(e){}
 };
