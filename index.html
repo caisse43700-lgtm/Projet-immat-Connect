@@ -668,7 +668,7 @@ renderConv(rows){
   if(!bar)return;
   bar.innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('');
 },
-setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;this.loadMsgs();if(p&&p!=='all')setTimeout(()=>{try{window.ImmatMessages?.openThread?.(p)}catch(e){}},150);},
+async setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;await this.loadMsgs();if(p&&p!=='all'){try{window.ImmatMessages?.openThread?.(p)}catch(e){}}},
 msgHtml(m,my){
   const sent=!!m._sent;
   const p=sent?m._receiverPlate:m._senderPlate;
@@ -700,8 +700,8 @@ async subMsgs(){
       setUnreadMsgCount((S.unreadMsgCount||0)+1);
       const profs=await profilesByIds([m.sender_id]);
       const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
-      this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl);
-      try{this.showFloatingCard('💬','Message de '+pl,''+((m.message||'').slice(0,40)),'Vu','Répondre →',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}
+      this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl||null);
+      try{this.showFloatingCard('💬','Message de '+(pl||'inconnu'),''+((m.message||'').slice(0,40)),'Vu','Répondre →',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}
     }
     this.loadMsgs();
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
@@ -1012,14 +1012,13 @@ App.actConfirmAlert=function(id,status){
   this.updateActBadge();
   toast(status==='gone'||status==='resolved'?'Signalement retiré ✓':'Merci de la confirmation ✓','ok');
 };
-App.actOpenConv=function(plate){
+App.actOpenConv=async function(plate){
   this.panel('messages');
   try{
     if(window.ImmatMessages){
       ImmatMessages.setMode?.('inbox');
-      ImmatMessages.refresh?.().then?.(()=>{
-        setTimeout(()=>ImmatMessages.openThread?.(plate),200);
-      });
+      await ImmatMessages.refresh?.();
+      ImmatMessages.openThread?.(plate);
     }
   }catch(e){}
 };
