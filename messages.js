@@ -223,6 +223,7 @@ async function refresh(){
 
   buildThreads();
   render();
+  refreshThread();
   subscribe();
 }
 
@@ -376,6 +377,26 @@ function closeThread(){
   State.activePlate = null;
 }
 
+function refreshThread(){
+  if(!State.activePlate) return;
+  const box = $('icThread');
+  const body = $('icThreadBody');
+  if(!box || !body || !box.classList.contains('show')) return;
+  const t = State.threads.find(x => x.plate === State.activePlate);
+  if(!t) return;
+  body.innerHTML = t.list.map(m=>{
+    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="ic-bubble ${m._sent?'sent':'recv'}">
+        <div class="ic-bubble-text">${esc(m.message || '')}</div>
+        <div class="ic-bubble-footer">
+          <span class="ic-time">${esc(timeStr)}</span>
+          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
+        </div>
+      </div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
 async function sendNew(){
   const plate = fPlate($('icComposePlate')?.value || $('iTarget')?.value || '');
   const text = ($('icComposeText')?.value || $('iMsg')?.value || '').trim();
@@ -493,7 +514,13 @@ async function subscribe(){
     .on('postgres_changes',{event:'*',schema:'public',table:'messages'},async()=>{
       await refresh();
     })
-    .subscribe();
+    .subscribe((status,err)=>{
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+        console.warn('Realtime messages KO', err);
+        State.channel = null;
+        setTimeout(subscribe, 5000);
+      }
+    });
 }
 
 function installInputs(){
