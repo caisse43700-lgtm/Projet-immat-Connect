@@ -164,15 +164,15 @@ function normalizeRows(rows, profs){
       ))
     );
 
-    const other = sent && !received ? rp : sp;
-
     return {
       ...m,
       _sent: sent,
       _received: received,
       _senderPlate: sp || 'INCONNU',
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
-      _otherPlate: fPlate(other || rp || sp || 'INCONNU')
+      // sent → other = receiver (rp) ; received → other = sender (sp)
+      // NE PAS tomber sur rp si reçu et sp vide (sinon _otherPlate = MA plaque)
+      _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
   }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)));
 }
