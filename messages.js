@@ -146,7 +146,7 @@ function normalizeRows(rows, profs){
 
   // Récupère les IDs supprimés localement
   let deletedIds = [];
-  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   return (rows||[]).map(m=>{
     const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
@@ -174,7 +174,7 @@ function normalizeRows(rows, profs){
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
       _otherPlate: fPlate(other || rp || sp || 'INCONNU')
     };
-  }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(m.id));
+  }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)));
 }
 
 async function refresh(){
@@ -229,10 +229,10 @@ async function refresh(){
 function buildThreads(){
   // BUG 3: filtrer les messages supprimés localement
   let deletedIds = [];
-  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(m.id)).forEach(m=>{
+  State.messages.filter(m => !deletedIds.includes(String(m.id))).forEach(m=>{
     const p = m._otherPlate || 'INCONNU';
     groups[p] = groups[p] || [];
     groups[p].push(m);
@@ -452,32 +452,33 @@ async function sendToPlate(plate,text){
 
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
-  // BUG 3: soft delete local uniquement, pas de modification Supabase
+  const sid = String(id);
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
-  if(!deleted.includes(id)) deleted.push(id);
+  if(!deleted.includes(sid)) deleted.push(sid);
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
 }
 
-async function deleteThread(){
-  if(!State.activePlate) return;
-  if(!confirm('Supprimer cette conversation ?')) return;
+async function deleteThread(plate){
+  const target = fPlate(plate || State.activePlate || '');
+  if(!target) return;
+  if(!plate && !confirm('Supprimer cette conversation ?')) return;
 
-  // BUG 3: soft delete local uniquement
   const ids = State.messages
-    .filter(m=>m._otherPlate===State.activePlate)
-    .map(m=>m.id);
+    .filter(m=>m._otherPlate===target)
+    .map(m=>String(m.id));
 
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
   ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
-  closeThread();
+  if(!plate) closeThread();
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
+  try{ window.App?.renderActivityFeed?.(); }catch(e){}
 }
 
 async function subscribe(){
