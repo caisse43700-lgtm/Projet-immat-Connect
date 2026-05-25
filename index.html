@@ -21,21 +21,119 @@
 <section id="sa" class="auth-screen"><div class="app-card"><h1 id="authTitle" class="title">Connexion</h1><p id="authSubtitle" class="subtitle">Entre ton email et ton mot de passe.</p><div class="tabs"><button type="button" id="tabLogin" class="tab active" onclick="App.setMode('login')">Connexion</button><button type="button" id="tabSignup" class="tab" onclick="App.setMode('signup')">Inscription</button></div><div class="field"><label class="label">Email</label><input id="iEmail" class="input" type="email" placeholder="ton@email.com" autocomplete="email"><div id="hEmail" class="hint"></div></div><div id="suExtras" class="hidden"><div class="field"><label class="label">Téléphone</label><input id="iPhone" class="input" type="tel" placeholder="0612345678"><div id="hPhone" class="hint"></div></div><div class="field"><label class="label">Immatriculation</label><input id="iPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hPlate" class="hint"></div></div><div class="field"><label class="label">Couleur véhicule</label><select id="iColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select><div id="hColor" class="hint"></div></div></div><div class="field"><label class="label">Mot de passe</label><div class="pw-wrap"><input id="iPwd" class="input" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="show-pw" onclick="App.eye('iPwd',this)">Voir</button></div><div id="hPwd" class="hint"></div></div><div id="confirmWrap" class="field hidden"><label class="label">Confirmer</label><div class="pw-wrap"><input id="iConfirm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" onclick="App.eye('iConfirm',this)">Voir</button></div><div id="hConfirm" class="hint">Min. 8 caractères, 1 majuscule, 1 spécial</div></div><button type="button" id="authBtn" class="btn primary">Se connecter</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><button type="button" class="text-btn" onclick="App.forgotPwd()">Mot de passe oublié ?</button><button type="button" id="resendBtn" class="text-btn hidden" onclick="App.resendConfirm()">Renvoyer l'email de confirmation</button><div id="authSt" class="status-msg"></div></div></section>
 <section id="sp" class="auth-screen"><div class="app-card"><h1 class="title">Profil conducteur</h1><p class="subtitle">Infos nécessaires pour apparaître sur la carte.</p><div class="field"><label class="label">Pseudo</label><input id="iPseudo" class="input" type="text" placeholder="Ton pseudo"></div><div class="field"><label class="label">Immatriculation</label><input id="iProPlate" class="input plate-input" placeholder="AB-123-CD" maxlength="9" autocapitalize="characters"><div id="hProPlate" class="hint"></div></div><div class="field"><label class="label">Téléphone</label><input id="iProPhone" class="input" type="tel" placeholder="0612345678"><div id="hProPhone" class="hint"></div></div><div class="field"><label class="label">Couleur</label><select id="iProColor" class="sel"><option value="">Choisir</option><option value="white">Blanc</option><option value="black">Noir</option><option value="gray">Gris</option><option value="blue">Bleu</option><option value="red">Rouge</option><option value="green">Vert</option><option value="yellow">Jaune / Orange</option><option value="other">Autre</option></select></div><button type="button" class="btn primary" onclick="App.saveProfile()">Enregistrer et continuer</button><button type="button" class="btn secondary" onclick="App.logout()">Se déconnecter</button><div id="profileSt" class="status-msg"></div></div></section>
 <section id="sr" class="auth-screen"><div class="app-card"><h1 class="title">Nouveau mot de passe</h1><div class="field"><input id="iNewPwd" class="input" type="password" placeholder="Nouveau mot de passe"></div><div class="field"><input id="iNewCfm" class="input" type="password" placeholder="Confirmer"></div><button type="button" class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><div id="resetSt" class="status-msg"></div></div></section>
-<section id="appScreen"><div id="map"></div><div class="shade"></div><div class="top top-exact"><button type="button" class="round menu-round" onclick="App.openDrawer()" aria-label="Menu">☰</button><button type="button" class="top-mail-btn" onclick="App.openInboxBadge()" aria-label="Messages et signalements"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 6h52v36H6z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M8 8l24 20L56 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="topMsgBadge" class="top-msg-badge">0</span></button><div id="communityStatus" class="top-status-pill" aria-label="Statut communauté"></div><div class="logo-top">Immat<span>Connect</span> Pro</div></div><div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div><div class="actions" id="actions"><button type="button" title="Recherche" onclick="App.openGps()">🔍</button><button type="button" class="report-btn" title="Signaler" onclick="App.openReport()">⚠️</button><button type="button" title="Conducteurs" onclick="App.openNearby()">👥</button><button type="button" class="center-btn" title="Carte" onclick="App.cycleView()">🗺</button></div><div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div><div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button type="button" onclick="App.contactFrontVehicle()">Contacter</button></div><div id="vehicleContextMenu" class="vehicle-context-menu"><div id="vehicleContextPlate" class="vehicle-context-plate">Véhicule</div><button type="button" class="vehicle-bubble contact-main" onclick="App.vehicleContextAction('contact')">☎ Contacter</button><button type="button" class="vehicle-bubble alert-main" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button></div><div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
-<div id="sheet" class="sheet mini"><button type="button" id="sheetArrowOpen" onclick="App.openSheet()">⌃</button><button type="button" class="sheet-close" onclick="App.closeSheet()">×</button><div class="handle" onclick="App.toggleSheet()"></div><div class="profile-row"><div><div id="tbPlate" class="plate-lbl"></div><div id="tbPseudo" class="pseudo-lbl"></div></div><select id="radiusSel" class="radius-sel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></div><div class="sheet-nav alert-tabs final-tabs"><button type="button" id="tabAltet" class="on" onclick="App.panel('altet')">Alerte</button><button type="button" id="tabDrive" onclick="App.panel('drive')">GPS</button><button type="button" id="tabMessages" onclick="App.panel('messages')">Messages</button><button type="button" id="tabSettings" onclick="App.panel('settings')">Options</button></div>
-<div id="panelAltet" class="panel altet-panel on"><div class="altet-card"><div class="altet-my-head"><span>⚠️ Mes alertes</span><button type="button" onclick="App.panel('altet')">Gérer</button></div><div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div></div><div id="signalRecapCard" class="signal-recap-card"><div class="signal-recap-head"><span>✉️ Récapitulatif du dernier signalement</span><span class="chev">⌃</span></div><div class="signal-recap-body"><div class="signal-recap-top"><div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div><div id="recapStatus" class="signal-state">En attente</div></div><div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div><div id="recapTime" class="signal-time">◷ Aucun message.</div><div class="signal-actions"><button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('merci')">✅ Merci</button><button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button><button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button><button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button></div></div></div><div class="altet-active-card"><div class="altet-active-head"><h2>Alertes actives</h2><button type="button" class="altet-close" onclick="App.closeSheet()">×</button></div><div id="alertsToolbar" class="alert-filter-pills"></div><div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details></div><div class="quick-reply-row altet-quick"><button type="button" onclick="App.respondLastVehicleAlert('utile')"><span>👍</span>Info utile</button><button type="button" onclick="App.respondLastVehicleAlert('merci')"><span>✅</span>Merci</button><button type="button" onclick="App.respondLastVehicleAlert('recu')"><span>✓</span>Reçu</button></div></div>
-<div id="panelDrive" class="panel"><div class="section-lbl">Recherche GPS</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Limite</div><div class="nav-card"><b id="trafficVal">--</b>Trafic</div><div class="nav-card"><b id="laneVal">--</b>Voie</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
+<section id="appScreen">
+<div id="map"></div>
+<div class="map-shade"></div>
+
+<div class="top-bar">
+  <button type="button" class="profile-chip" onclick="App.openDrawer()" aria-label="Menu profil">
+    <span class="chip-dot" id="topColorDot"></span>
+    <span class="chip-texts">
+      <span id="tbPlate" class="plate-lbl">--</span>
+      <span id="tbPseudo" class="pseudo-lbl">Conducteur</span>
+    </span>
+    <span class="chip-chevron">⌄</span>
+  </button>
+  <div id="communityStatus" aria-label="Statut communauté"></div>
+</div>
+
+<div id="inst" class="inst"><b id="instI">🧭</b><span id="instT">Navigation prête</span></div>
+<div id="frontCarBanner" class="front-car-banner"><span id="frontCarText">Véhicule devant détecté</span><button type="button" onclick="App.contactFrontVehicle()">Contacter</button></div>
+
+<div class="speed"><div><strong id="speedVal">0</strong><br><small>km/h</small></div></div>
+
+<div class="fab-stack">
+  <button type="button" class="fab" title="Recentrer" onclick="App.recenter()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+  <button type="button" class="fab" title="Conducteurs proches" onclick="App.openNearby()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 6-6"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-1a5 5 0 0 0-5-5"/></svg></button>
+  <button type="button" class="fab" title="Vue" onclick="App.cycleView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15M15 6v15"/></svg></button>
+  <button type="button" id="longSos" class="fab fab-sos long-sos" title="SOS" onpointerdown="App.startSosHold(event)" onpointerup="App.cancelSosHold()" onpointerleave="App.cancelSosHold()">SOS</button>
+</div>
+
+<div id="vehicleContextMenu" class="vehicle-context-menu"><div id="vehicleContextPlate" class="vehicle-context-plate">Véhicule</div><button type="button" class="vehicle-bubble contact-main" onclick="App.vehicleContextAction('contact')">☎ Contacter</button><button type="button" class="vehicle-bubble alert-main" onclick="App.vehicleContextAction('signal')">⚠️ Alerter</button></div>
+<div id="vehicleAlertOrbit" class="vehicle-alert-orbit"></div>
+<div id="sheet" class="sheet mini">
+<div class="handle" onclick="App.toggleSheet()"></div>
+<button type="button" class="sheet-close" onclick="App.closeSheet()">✕</button>
+<!-- IDs legacy requis par App.openMap() – non affichés -->
+<button type="button" id="sheetArrowOpen" style="display:none" onclick="App.openSheet()"></button>
+<button type="button" id="tabAltet" style="display:none"></button>
+<button type="button" id="tabDrive" style="display:none"></button>
+<button type="button" id="tabMessages" style="display:none"></button>
+<button type="button" id="tabSettings" style="display:none"></button>
+<div id="panelAltet" class="panel on">
+  <div class="sig-tabs">
+    <button type="button" class="sig-tab on" data-sigtab="route" onclick="App.sigTab('route')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 20h20L12 2z"/><path d="M12 9v5M12 16.5v.5" stroke-linecap="round"/></svg>Route
+    </button>
+    <button type="button" class="sig-tab" data-sigtab="vehicule" onclick="App.sigTab('vehicule')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="10" width="20" height="9" rx="2"/><path d="M5 10V8a7 7 0 0 1 14 0v2"/><circle cx="7" cy="14" r="1.5" fill="currentColor"/><circle cx="17" cy="14" r="1.5" fill="currentColor"/></svg>Véhicule
+    </button>
+    <button type="button" class="sig-tab" data-sigtab="aide" onclick="App.sigTab('aide')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke-linecap="round"/></svg>Aide
+    </button>
+  </div>
+
+  <!-- TAB ROUTE -->
+  <div id="sigTabRoute" class="sig-tab-content on">
+    <div class="alert-grid">
+      <button type="button" class="alert-card urgent" onclick="App.roadReport('accident')"><span class="icon">💥</span><span>Accident</span></button>
+      <button type="button" class="alert-card medium" onclick="App.roadReport('bouchon')"><span class="icon">🚦</span><span>Bouchon</span></button>
+      <button type="button" class="alert-card info" onclick="App.roadReport('controle')"><span class="icon">👮</span><span>Contrôle</span></button>
+      <button type="button" class="alert-card info" onclick="App.roadReport('travaux')"><span class="icon">🚧</span><span>Travaux</span></button>
+      <button type="button" class="alert-card medium" onclick="App.roadReport('obstacle')"><span class="icon">⚠️</span><span>Obstacle</span></button>
+      <button type="button" class="alert-card urgent" onclick="App.roadReport('danger')"><span class="icon">❗</span><span>Danger</span></button>
+    </div>
+    <div class="sig-section-hd">Alertes actives</div>
+    <div id="alertsToolbar" class="alert-filter-pills"></div>
+    <div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte.</div></div>
+    <details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details>
+  </div>
+
+  <!-- TAB VÉHICULE -->
+  <div id="sigTabVehicule" class="sig-tab-content">
+    <div class="sig-section-hd">Alertes reçues</div>
+    <div id="myAlertsList" class="altet-list"><div class="my-alert-empty">Aucune alerte active.</div></div>
+    <div id="signalRecapCard" class="signal-recap-card">
+      <div class="signal-recap-head"><span>✉️ Dernier signalement reçu</span><span class="chev">⌃</span></div>
+      <div class="signal-recap-body">
+        <div class="signal-recap-top">
+          <div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div>
+          <div id="recapStatus" class="signal-state">En attente</div>
+        </div>
+        <div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div>
+        <div id="recapTime" class="signal-time">◷ Aucun message.</div>
+        <div class="signal-actions">
+          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button>
+          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button>
+          <button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button>
+          <button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button>
+        </div>
+      </div>
+    </div>
+    <div class="quick-reply-row altet-quick">
+      <button type="button" onclick="App.respondLastVehicleAlert('utile')">👍 Utile</button>
+      <button type="button" onclick="App.respondLastVehicleAlert('merci')">✅ Merci</button>
+      <button type="button" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button>
+    </div>
+  </div>
+
+  <!-- TAB AIDE -->
+  <div id="sigTabAide" class="sig-tab-content">
+    <div class="alert-grid">
+      <button type="button" class="alert-card urgent" onclick="App.assist('panne')"><span class="icon">🚗</span><span>Panne</span></button>
+      <button type="button" class="alert-card medium" onclick="App.assist('carburant')"><span class="icon">⛽</span><span>Carburant</span></button>
+      <button type="button" class="alert-card medium" onclick="App.assist('batterie')"><span class="icon">🔋</span><span>Batterie</span></button>
+      <button type="button" class="alert-card urgent" onclick="App.assist('moteur')"><span class="icon">⚙️</span><span>Moteur</span></button>
+      <button type="button" class="alert-card fire" onclick="App.assist('incendie')"><span class="icon">🔥</span><span>Incendie</span></button>
+      <button type="button" class="alert-card info" onclick="App.assist('perdu')"><span class="icon">🧭</span><span>Perdu</span></button>
+    </div>
+  </div>
+</div>
+<div id="panelDrive" class="panel"><div class="panel-inner-hd"><span>Navigation GPS</span></div><div class="section-lbl">Recherche</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Limite</div><div class="nav-card"><b id="trafficVal">--</b>Trafic</div><div class="nav-card"><b id="laneVal">--</b>Voie</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
 <div id="panelContact" class="panel">
 <div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
 <div id="panelMessages" class="panel">
   <div id="icMessagesPro" class="ic-msg-shell">
-    <div class="ic-msg-title">
-      <div>
-        <b>Messages</b>
-        <small>Conversations par immatriculation</small>
-      </div>
-    </div>
-
     <div class="ic-msg-tabs">
       <button type="button" data-mode="inbox" class="on" onclick="ImmatMessages.setMode('inbox')">Reçus</button>
       <button type="button" data-mode="sent" onclick="ImmatMessages.setMode('sent')">Envoyés</button>
@@ -80,10 +178,51 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="section-lbl">Options</div><div class="act-grid"><button type="button" class="act-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="act-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="act-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="act-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="act-btn" onclick="App.sheetFull()">⬆️ Plein écran</button><button type="button" class="act-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="act-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="act-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div></div></div>
+
+<nav class="bottom-nav">
+  <button type="button" class="nav-btn on" id="navMap" onclick="App.navMap()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15M15 6v15"/></svg>
+    <span>Carte</span>
+  </button>
+  <button type="button" class="nav-btn" id="navAlert" onclick="App.panel('altet')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 20h20L12 2z"/><path d="M12 9v5M12 16.5v.5"/></svg>
+    <span>Signaler</span>
+  </button>
+  <button type="button" class="nav-btn" id="navMsg" onclick="App.panel('messages')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Messages</span>
+    <span id="topMsgBadge" class="nav-badge" style="display:none">0</span>
+  </button>
+</nav>
 <div id="reportPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Informe les conducteurs proches, la route ou demande de l'aide.</p><div id="reportTargetLine" class="report-target-line">Information générale envoyée aux véhicules proches.</div><div id="reportVehicleBlock" class="report-block"><h3 id="reportVehicleTitle">🚗 Informer les conducteurs</h3><div class="report-grid"><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Feux restés allumés')">💡 Feux allumés</button><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Problème d\'éclairage')">💡 Éclairage</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Élément semble se détacher')">🔧 Élément détaché</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div><div id="reportRouteBlock" class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button type="button" class="report-route" onclick="App.roadReport('accident')">🚗 Accident</button><button type="button" class="report-route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button type="button" class="report-route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button type="button" class="report-route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button type="button" class="report-route" onclick="App.roadReport('controle')">👮 Contrôle</button><button type="button" class="report-route" onclick="App.roadReport('danger')">❗ Danger</button></div></div><div id="reportAssistBlock" class="report-block"><h3>🆘 Demander de l'aide</h3><div class="report-grid"><button type="button" class="report-help" onclick="App.assist('panne')">🚗 Panne</button><button type="button" class="report-help" onclick="App.assist('carburant')">⛽ Carburant</button><button type="button" class="report-help" onclick="App.assist('batterie')">🔋 Batterie</button><button type="button" class="report-help" onclick="App.assist('moteur')">⚙️ Moteur</button><button type="button" class="report-urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button type="button" class="report-help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div></div>
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div><div id="alertsPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('alertsPanel')">×</button><h2>Alertes actives</h2><div id="alertsToolbarOverlay" style="display:flex;gap:6px;overflow:auto;margin:10px 0;padding-bottom:4px"></div><div id="alertsListOverlay" class="list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBoxOverlay" style="margin-top:12px"><summary style="font-weight:900;cursor:pointer">Historique des signalements</summary><div id="alertHistoryListOverlay" class="list"></div></details></div></section>
-<div id="drawer" class="drawer"><div class="drawer-back" onclick="App.closeDrawer()"></div><div class="drawer-card"><h2>Menu</h2><p style="color:#667383;margin-bottom:16px;font-size:13px">GPS, communication et sécurité.</p><div class="menu-list"><button type="button" onclick="App.closeDrawer();App.panel('drive')">GPS <span>🧭</span></button><button type="button" onclick="App.closeDrawer();App.panel('messages')">Contacter <span>💬</span></button><button type="button" onclick="App.closeDrawer();App.panel('messages')">Messages <span>📩</span></button><button type="button" onclick="App.closeDrawer();App.openNearby()">Conducteurs <span>👥</span></button><button type="button" onclick="App.closeDrawer();App.openAlerts()">Alertes <span>✅</span></button><button type="button" onclick="App.closeDrawer();App.logout()">Déconnexion <span>⏻</span></button></div></div></div>
+<div id="drawer" class="drawer"><div class="drawer-back" onclick="App.closeDrawer()"></div><div class="drawer-card">
+  <div class="drawer-profile">
+    <div class="drawer-vehicle-icon">🚗</div>
+    <div>
+      <div class="drawer-plate" id="drawerPlate">--</div>
+      <div class="drawer-pseudo" id="drawerPseudo">Conducteur</div>
+    </div>
+  </div>
+  <div class="drawer-section">Rayon de détection</div>
+  <select id="radiusSel" class="drawer-sel" onchange="App.setRadius(this.value)"><option value="1">1 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="25">25 km</option></select>
+  <div class="drawer-section">Navigation</div>
+  <div class="menu-list">
+    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.panel('drive')"><span>Navigation GPS</span><span class="menu-icon">🧭</span></button>
+    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.openNearby()"><span>Conducteurs proches</span><span class="menu-icon">👥</span></button>
+    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.toggleInvisible()" id="invisBtn"><span>Mode invisible</span><span class="menu-icon">👻</span></button>
+  </div>
+  <div class="drawer-section">Préférences</div>
+  <div class="menu-list">
+    <button type="button" class="menu-btn" onclick="App.toggleVoice()"><span>Voix GPS</span><span class="menu-icon">🔊</span></button>
+    <button type="button" class="menu-btn" onclick="App.toggleSounds()"><span>Sons</span><span class="menu-icon">🔔</span></button>
+    <button type="button" class="menu-btn" onclick="App.toggleReduceEffects()"><span>Performance</span><span class="menu-icon">⚡</span></button>
+    <button type="button" class="menu-btn" onclick="App.clearOfflineCache()"><span>Vider le cache</span><span class="menu-icon">🧹</span></button>
+    <button type="button" class="menu-btn" onclick="App.openLegal()"><span>Confidentialité</span><span class="menu-icon">⚖️</span></button>
+    <button type="button" class="menu-btn danger-btn" onclick="App.logout()"><span>Déconnexion</span><span class="menu-icon">⏻</span></button>
+  </div>
+</div></div>
 <div id="legal" class="modal"><div class="modal-back" onclick="App.closeLegal()"></div><div class="modal-card"><h2>Confidentialité</h2><p>Ton téléphone n'est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button type="button" class="btn primary" style="margin-top:14px" onclick="App.closeLegal()">J'ai compris</button></div></div><div id="blocked" class="modal"><div class="modal-back" onclick="App.closeBlocked()"></div><div class="modal-card"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="modal-back" onclick="App.closeRecent()"></div><div class="modal-card"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div>
 <div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
 <script>
@@ -123,7 +262,7 @@ function fPlate(r){let s=String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'').sl
 function colorHex(c){return{white:'#f5f5f5',black:'#111',gray:'#8e8e93',blue:'#2979ff',red:'#ff3b5c',green:'#00c853',yellow:'#ffb300',other:'#b388ff'}[c||'other']||'#b388ff'}
 function colorLabel(c){return{white:'Blanc',black:'Noir',gray:'Gris',blue:'Bleu',red:'Rouge',green:'Vert',yellow:'Jaune / Orange',other:'Autre'}[c||'']||'Couleur non renseignée'}
 function dot(c){return'<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:'+colorHex(c)+';border:2px solid white;vertical-align:-1px"></span>'}
-function icon(c,self=false){let fill=colorHex(c),stroke=c==='white'?'#555':'#fff',cls=self?'car-pin self':'car-pin other';return L.divIcon({html:'<div class="'+cls+'" style="background:'+fill+';border-color:'+stroke+'">🚗</div>',iconSize:self?[42,42]:[46,46],iconAnchor:self?[21,21]:[23,23],className:''})}
+function icon(c,self=false,heading=null){const fill=colorHex(c),size=self?44:38,half=size/2,hasH=heading!==null&&!isNaN(Number(heading));const arrow=hasH?'<polygon points="'+half+','+(half*.28)+' '+(half*.7)+','+(half*.78)+' '+half+','+(half*.58)+' '+(half*1.3)+','+(half*.78)+'" fill="'+(c==='white'?'#555':'rgba(255,255,255,.95)')+'" transform="rotate('+heading+','+half+','+half+')"/>'  :'';const emoji=hasH?''  :'<text x="'+half+'" y="'+(half+6)+'" text-anchor="middle" font-size="'+(half*.9)+'">🚗</text>';const dot=self?'<circle cx="'+half+'" cy="'+half+'" r="3.5" fill="rgba(255,255,255,.9)"/>'  :'';const svg='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+half+'" cy="'+half+'" r="'+(half-1.5)+'" fill="'+fill+'" stroke="'+(self?'#fff':'rgba(255,255,255,.7)')+'" stroke-width="'+(self?2.5:2)+'"/>'+arrow+emoji+dot+'</svg>';return L.divIcon({html:'<div class="'+(self?'car-pin self':'car-pin other')+'" style="filter:drop-shadow(0 3px 8px rgba(0,0,0,.4));width:'+size+'px;height:'+size+'px">'+svg+'</div>',iconSize:[size,size],iconAnchor:[half,half],className:''})}
 function km(a,b,c,d){let R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,z=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
 function toast(m,t=''){let e=$('toast');if(!e)return;e.textContent=m;e.className='toast '+(t||'');requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),3200)}
 function hint(id,t,m){let e=$(id);if(e){e.className='hint '+(t||'');e.textContent=m||''}}
@@ -262,11 +401,11 @@ async afterAuth(){
   }
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo||!vPlate(pl)||!vPhone(ph)||!c)return st('profileSt','Complète tous les champs correctement.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh()},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
+openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh()},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
-locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
+locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed,heading}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true,heading!=null&&!isNaN(heading)?heading:null),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
         await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
         if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
       }},()=>toast('Erreur GPS ou permission refusée.','bad'),{enableHighAccuracy:S.driveMode,timeout:15000,maximumAge:S.driveMode?4000:12000})},
@@ -664,10 +803,56 @@ startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S
 toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
 function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))document.body.classList.add('keyboard-open')});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},120000);setInterval(()=>App.cacheState(),10000);setInterval(()=>App.reconnectSafe(),6000);setInterval(()=>App.updateNavPremium(),2500);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effects')}
+App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.classList.toggle('on',b.dataset.sigtab===name));const ids={route:'sigTabRoute',vehicule:'sigTabVehicule',aide:'sigTabAide'};Object.values(ids).forEach(id=>{const el=$(id);if(el)el.classList.remove('on')});const el=$(ids[name]);if(el)el.classList.add('on')};
+App.navMap=function(){this.closeSheet();document.getElementById('navMap')?.classList.add('on');document.getElementById('navAlert')?.classList.remove('on');document.getElementById('navMsg')?.classList.remove('on')};
 window.App=App;
 if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT')App.show('sw')});
 async function boot(){try{window.App=App;bind();App.setMode('login');if(!sb){toast('Supabase non chargé.','bad');App.show('sw');return}if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');let{data}=await withTimeout(sb.auth.getSession(),10000,'Session Supabase indisponible.');if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){console.error('BOOT_ERROR',e);App.show('sw');toast('Erreur de démarrage.','bad');st('authSt',authMessage(e),'error')}}
+
+// Ferme overlays et mini le sheet quand on touche la carte
+document.addEventListener('DOMContentLoaded', function() {
+  var mapEl = document.getElementById('map');
+  if (!mapEl) return;
+  mapEl.addEventListener('click', function(e) {
+    if (e.target.closest('.leaflet-interactive,.leaflet-popup-content-wrapper,.leaflet-control,.vehicle-context-menu')) return;
+    ['reportPanel','nearbyPanel','alertsPanel'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    var drawer = document.getElementById('drawer');
+    if (drawer && drawer.classList.contains('show')) {
+      try { App.closeDrawer(); } catch(e) {}
+    }
+    // Mini le sheet si il est ouvert (pas déjà mini)
+    var sheet = document.getElementById('sheet');
+    if (sheet && !sheet.classList.contains('mini')) {
+      try { App.closeSheet(); } catch(e) {}
+    }
+  });
+});
+
 boot();
+
+// Ferme les overlays et réduit le sheet quand on touche la carte
+document.addEventListener('DOMContentLoaded', function() {
+  var mapEl = document.getElementById('map');
+  if (!mapEl) return;
+  mapEl.addEventListener('click', function(e) {
+    if (e.target.closest('.leaflet-interactive,.leaflet-popup-content-wrapper,.leaflet-control,.vehicle-context-menu')) return;
+    ['reportPanel','nearbyPanel','alertsPanel'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    var drawer = document.getElementById('drawer');
+    if (drawer && drawer.classList.contains('show')) {
+      try { App.closeDrawer(); } catch(e) {}
+    }
+    var sheet = document.getElementById('sheet');
+    if (sheet && !sheet.classList.contains('mini')) {
+      try { App.closeSheet(); } catch(e) {}
+    }
+  });
+});
 </script>
 
 <div id="reputationToast" class="reputation-toast">

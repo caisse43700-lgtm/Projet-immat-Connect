@@ -283,17 +283,20 @@ function render(){
 
   list.innerHTML = threads.map(t=>{
     const last = t.last || {};
+    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     return `
       <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
            data-plate="${esc(t.plate)}">
         <div class="ic-avatar">🚗</div>
-        <div class="ic-main">
-          <div class="ic-plate">${esc(t.plate)}</div>
-          <div class="ic-preview">${esc(last.message || '')}</div>
-        </div>
-        <div class="ic-meta">
-          <div class="ic-badge">${t.unread}</div>
-          ${esc(timeFR(last.created_at))}
+        <div class="ic-row-body">
+          <div class="ic-row-top">
+            <span class="ic-plate">${esc(t.plate)}</span>
+            <span class="ic-row-time">${esc(timeStr)}</span>
+          </div>
+          <div class="ic-row-bot">
+            <span class="ic-preview">${esc(last.message || '')}</span>
+            <span class="ic-unread-dot"></span>
+          </div>
         </div>
       </div>
     `;
@@ -331,14 +334,17 @@ async function openThread(plate){
 
   if(!box || !body || !t) return;
 
-  if(title) title.textContent = 'Conversation ' + State.activePlate;
+  if(title) title.textContent = State.activePlate;
 
   body.innerHTML = t.list.map(m=>{
+    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     return `
       <div class="ic-bubble ${m._sent?'sent':'recv'}">
-        ${esc(m.message || '')}
-        <span class="ic-time">${esc(timeFR(m.created_at))}</span>
-        <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
+        <div class="ic-bubble-text">${esc(m.message || '')}</div>
+        <div class="ic-bubble-footer">
+          <span class="ic-time">${esc(timeStr)}</span>
+          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
+        </div>
       </div>
     `;
   }).join('');
