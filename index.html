@@ -684,6 +684,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 boot();
+
+// Ferme les overlays et réduit le sheet quand on touche la carte
+document.addEventListener('DOMContentLoaded', function() {
+  var mapEl = document.getElementById('map');
+  if (!mapEl) return;
+  mapEl.addEventListener('click', function(e) {
+    if (e.target.closest('.leaflet-interactive,.leaflet-popup-content-wrapper,.leaflet-control,.vehicle-context-menu')) return;
+    ['reportPanel','nearbyPanel','alertsPanel'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    var drawer = document.getElementById('drawer');
+    if (drawer && drawer.classList.contains('show')) {
+      try { App.closeDrawer(); } catch(e) {}
+    }
+    var sheet = document.getElementById('sheet');
+    if (sheet && !sheet.classList.contains('mini')) {
+      try { App.closeSheet(); } catch(e) {}
+    }
+  });
+});
 </script>
 
 <div id="reputationToast" class="reputation-toast">
