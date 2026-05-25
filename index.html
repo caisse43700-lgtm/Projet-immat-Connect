@@ -2335,6 +2335,311 @@ function showReputationToast(){
   setTimeout(install,800);
 })();
 </script>
+<script id="immatconnect-final-clean-fix">
+/* ===== IMMATCONNECT FINAL CLEAN FIX — à coller juste avant </body> ===== */
+(function(){
+  "use strict";
+  if(window.__ImmatConnectFinalCleanFix) return;
+  window.__ImmatConnectFinalCleanFix = true;
+
+  const $ = id => document.getElementById(id);
+  const cleanPlate = v => String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const formatPlate = v => {
+    const s = cleanPlate(v).slice(0,7);
+    return /^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s) ? s.slice(0,2)+"-"+s.slice(2,5)+"-"+s.slice(5) : String(v||"").toUpperCase().trim();
+  };
+  const esc = v => String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  const jsq = v => String(v||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+  const toastSafe = (m,t) => { try{ window.toast ? toast(m,t||"ok") : alert(m); }catch(e){ alert(m); } };
+
+  function removeDebug(){
+    ["icDebugBtn","icDebugBox","icVersionReceptionFix","icVersionMessagesClean"].forEach(id => { const el=$(id); if(el) el.remove(); });
+  }
+  function ownPlate(){ try{return formatPlate(App?.ownPlate?.() || S?.profile?.owner_plate || $("tbPlate")?.textContent || "");}catch(e){return "";} }
+  async function currentUser(){ try{const r=await sb.auth.getUser();return r?.data?.user||null;}catch(e){return null;} }
+
+  async function findProfileByPlate(raw){
+    if(!window.sb) return null;
+    const wanted = cleanPlate(raw);
+    if(!wanted) return null;
+    const variants = Array.from(new Set([formatPlate(raw), wanted, String(raw||"").toUpperCase().trim()].filter(Boolean)));
+    for(const v of variants){
+      try{ const r=await sb.from("profiles").select("id,owner_plate,pseudo").eq("owner_plate",v).maybeSingle(); if(r?.data?.id) return r.data; }catch(e){}
+    }
+    try{ const r=await sb.from("profiles").select("id,owner_plate,pseudo").limit(1000); return (r.data||[]).find(p=>cleanPlate(p.owner_plate)===wanted)||null; }catch(e){return null;}
+  }
+  async function profilesMap(ids){
+    ids=Array.from(new Set((ids||[]).filter(Boolean)));
+    if(!ids.length||!window.sb) return {};
+    try{ const r=await sb.from("profiles").select("id,owner_plate,pseudo,vehicle_color").in("id",ids); const out={}; (r.data||[]).forEach(p=>out[p.id]=p); return out; }catch(e){return {};}
+  }
+  function setBadge(n){
+    n=Math.max(0,Number(n)||0);
+    try{window.S=window.S||{};S.unreadMsgCount=n;localStorage.setItem("ic_unread_msg_count",String(n));}catch(e){}
+    const badge=$("topMsgBadge"); if(badge){badge.textContent=n>99?"99+":String(n);badge.style.display=n>0?"flex":"none";}
+  }
+
+  async function fetchMessages(){
+    if(!window.sb) return [];
+    const u=await currentUser(); if(!u) return [];
+    const mine=cleanPlate(ownPlate()), myP=formatPlate(mine), buckets=[];
+    async function q(label,fn){try{const r=await fn(); if(r?.error){console.warn("[messages query]",label,r.error.message||r.error);return;} if(Array.isArray(r?.data)) buckets.push(...r.data);}catch(e){console.warn("[messages query exception]",label,e);}}
+    await q("ids",()=>sb.from("messages").select("*").or("sender_id.eq."+u.id+",receiver_id.eq."+u.id).neq("status","rejected").order("created_at",{ascending:true}).limit(500));
+    if(myP){ for(const col of ["target_plate","sender_plate","receiver_plate","from_plate","to_plate"]){ await q(col,()=>sb.from("messages").select("*").eq(col,myP).neq("status","rejected").order("created_at",{ascending:true}).limit(300)); } }
+    const uniq=new Map(); buckets.forEach(m=>{if(!m)return;const key=m.id||[m.sender_id,m.receiver_id,m.target_plate,m.message,m.created_at].join("|"); if(!uniq.has(key)) uniq.set(key,m);});
+    const rows=Array.from(uniq.values()).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+    const profs=await profilesMap(rows.flatMap(m=>[m.sender_id,m.receiver_id]));
+    return rows.map(m=>{
+      const senderPlate=formatPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||"");
+      const receiverPlate=formatPlate(m.receiver_plate||m.to_plate||profs[m.receiver_id]?.owner_plate||m.target_plate||"");
+      const sent=m.sender_id===u.id || (!!senderPlate && cleanPlate(senderPlate)===mine);
+      const received=m.receiver_id===u.id || cleanPlate(receiverPlate)===mine || cleanPlate(m.target_plate)===mine;
+      const displayPlate=received&&!sent ? (senderPlate||"PLAQUE") : (receiverPlate||formatPlate(m.target_plate)||"PLAQUE");
+      return Object.assign({},m,{_sent:!!sent,_received:!!received,_senderPlate:senderPlate||"PLAQUE",_receiverPlate:receiverPlate||formatPlate(m.target_plate)||"PLAQUE",_displayPlate:displayPlate,_unread:!!received&&!sent&&m.status!=="read"});
+    });
+  }
+
+  const Msg={mode:"inbox",plate:"",rows:[],
+    async refresh(){removeDebug();this.rows=await fetchMessages();this.render();},
+    setMode(mode){this.mode=mode||"inbox";this.plate="";document.querySelectorAll(".ic-msg-tabs button").forEach(b=>b.classList.toggle("on",b.dataset.mode===this.mode));$("icComposePanel")?.classList.toggle("show",this.mode==="compose");this.render();},
+    grouped(){let rows=this.rows.slice(); if(this.mode==="inbox") rows=rows.filter(r=>r._received); if(this.mode==="sent") rows=rows.filter(r=>r._sent); const map=new Map(); rows.forEach(r=>{const p=formatPlate(r._displayPlate||r.target_plate||"PLAQUE"); if(!map.has(p)) map.set(p,[]); map.get(p).push(r);}); return Array.from(map.entries()).map(([plate,list])=>{list.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0)); const last=list[list.length-1]; return {plate,list,last,unread:list.filter(x=>x._unread).length};}).sort((a,b)=>new Date(b.last.created_at||0)-new Date(a.last.created_at||0));},
+    render(){const list=$("icMsgList"); if(!list)return; const unread=this.rows.filter(r=>r._unread).length; setBadge(unread); if(this.mode==="compose"){list.innerHTML='<div class="ic-empty">Écris un nouveau message avec la plaque destinataire.</div>';this.renderThread();return;} const groups=this.grouped(); if(!groups.length){list.innerHTML='<div class="ic-empty">Aucun message.<br><small>Les conversations apparaîtront ici par immatriculation.</small></div>';this.renderThread();return;} list.innerHTML=groups.map(g=>{const preview=String(g.last.message||"").replace(/<[^>]*>/g,"").slice(0,90); const time=g.last.created_at?new Date(g.last.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):""; return `<div class="ic-mail-row ${g.unread?'unread':''} ${this.plate===g.plate?'active':''}" onclick="ImmatMessages.openThread('${jsq(g.plate)}')"><div class="ic-avatar">${this.mode==="sent"?"↗️":"📩"}</div><div class="ic-main"><div class="ic-plate">${esc(g.plate)}</div><div class="ic-preview">${esc(preview)}</div></div><div class="ic-meta"><div class="ic-badge">${g.unread||""}</div><div>${esc(time)}</div></div></div>`;}).join("");this.renderThread();},
+    async openThread(p){this.plate=formatPlate(p); const rows=this.rows.filter(r=>formatPlate(r._displayPlate)===this.plate&&r._received&&!r._sent&&r.status!=="read"); for(const r of rows){try{if(r.id)await sb.from("messages").update({status:"read"}).eq("id",r.id);}catch(e){}} await this.refresh(); this.plate=formatPlate(p); this.renderThread();},
+    renderThread(){const thread=$("icThread"),body=$("icThreadBody"),title=$("icThreadTitle"); if(!thread||!body||!title)return; if(!this.plate){thread.classList.remove("show");return;} const rows=this.rows.filter(r=>formatPlate(r._displayPlate)===this.plate); if(!rows.length){thread.classList.remove("show");return;} title.textContent="🚗 "+this.plate; thread.classList.add("show"); body.innerHTML=rows.map(r=>{const time=r.created_at?new Date(r.created_at).toLocaleString("fr-FR"):""; return `<div class="ic-bubble ${r._sent?"sent":"recv"}"><button type="button" class="ic-delete-msg" onclick="event.stopPropagation();ImmatMessages.deleteMessage('${jsq(r.id||"")}')">×</button>${esc(r.message)}<span class="ic-time">${r._sent?"✓ Envoyé":"Reçu"} · ${esc(time)}</span></div>`;}).join(""); body.scrollTop=body.scrollHeight;},
+    async sendMessageTo(rawPlate,rawText){const p=formatPlate(rawPlate), text=String(rawText||"").trim(); if(!p)return toastSafe("Plaque destinataire manquante.","bad"); if(!text)return toastSafe("Message vide.","bad"); if(cleanPlate(p)===cleanPlate(ownPlate()))return toastSafe("Impossible de t’envoyer un message à toi-même.","bad"); const u=await currentUser(); if(!u)return toastSafe("Reconnecte-toi.","bad"); const target=await findProfileByPlate(p); if(!target?.id)return toastSafe("Aucun utilisateur avec cette plaque : "+p,"bad"); if(target.id===u.id)return toastSafe("Impossible de t’envoyer un message à toi-même.","bad"); const senderPlate=ownPlate(), receiverPlate=formatPlate(target.owner_plate||p); const base={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:text,status:"accepted"}; const rich=Object.assign({},base,{sender_plate:senderPlate,receiver_plate:receiverPlate,from_plate:senderPlate,to_plate:receiverPlate}); let r=await sb.from("messages").insert(rich); if(r.error&&/column|schema|sender_plate|receiver_plate|from_plate|to_plate/i.test(String(r.error.message||""))) r=await sb.from("messages").insert(base); if(r.error)return toastSafe("Erreur envoi : "+(r.error.message||"message non envoyé"),"bad"); this.mode="sent"; this.plate=receiverPlate; await this.refresh(); this.setMode("sent"); this.plate=receiverPlate; this.renderThread(); toastSafe("Message envoyé à "+receiverPlate+".","ok");},
+    async sendNew(){const p=$("icComposePlate")?.value||"", t=$("icComposeText")?.value||""; if($("icComposeText"))$("icComposeText").value=""; await this.sendMessageTo(p,t);},
+    async reply(){const t=$("icReplyText")?.value||""; if($("icReplyText"))$("icReplyText").value=""; await this.sendMessageTo(this.plate,t);},
+    async quick(t){await this.sendMessageTo(this.plate,t);},
+    closeThread(){this.plate="";this.renderThread();this.render();},
+    async deleteMessage(id){if(!id||!confirm("Supprimer ce message ?"))return; try{await sb.from("messages").update({status:"rejected"}).eq("id",id); await this.refresh(); toastSafe("Message supprimé.","ok");}catch(e){toastSafe("Erreur suppression.","bad");}},
+    async deleteThread(){if(!this.plate||!confirm("Supprimer toute la conversation ?"))return; const rows=this.rows.filter(r=>formatPlate(r._displayPlate)===this.plate&&r.id); for(const r of rows){try{await sb.from("messages").update({status:"rejected"}).eq("id",r.id);}catch(e){}} this.plate=""; await this.refresh(); toastSafe("Conversation supprimée.","ok");}
+  };
+  window.ImmatMessages=Msg;
+
+  function openCompose(plate,text){try{App.panel("messages");App.openSheet?.();}catch(e){} Msg.setMode("compose"); setTimeout(()=>{if($("icComposePlate")&&plate)$("icComposePlate").value=formatPlate(plate); if($("icComposeText")&&text)$("icComposeText").value=text; $("icComposeText")?.focus();},80);}
+  function install(){
+    removeDebug();
+    if(!window.App||!window.sb){setTimeout(install,300);return;}
+    if(App.__finalCleanFixInstalled)return; App.__finalCleanFixInstalled=true;
+    const oldPanel=App.panel?App.panel.bind(App):null;
+    App.panel=function(name){if(name==="contact"||name==="message"||name==="reçus"||name==="received")name="messages"; const out=oldPanel?oldPanel(name):undefined; if(name==="messages")setTimeout(()=>Msg.refresh(),100); return out;};
+    App.openInboxBadge=function(){App.panel("messages");App.openSheet?.();Msg.setMode("inbox");Msg.refresh();};
+    App.pickPlate=function(p){try{S.selPlate=formatPlate(p);S.conv=formatPlate(p);}catch(e){} openCompose(p,"");};
+    const oldReport=App.reportVehicleOrDrivers?App.reportVehicleOrDrivers.bind(App):null;
+    App.reportVehicleOrDrivers=function(label){const p=S?.selPlate||S?.contextVehicle?.plate||$("icComposePlate")?.value||""; if(!p&&oldReport)return oldReport(label); const urgent=/pneu|roue|fumée|feu|incendie|danger/i.test(String(label||"")); const msg=(urgent?"🚨 SIGNALEMENT URGENT : ":"⚠️ SIGNALEMENT : ")+String(label||"Signalement").replace(/\.$/,"")+". Pouvez-vous vérifier votre véhicule ?"; try{App.closeOverlay?.("reportPanel");}catch(e){} openCompose(p,msg);};
+    App.vehicleAlert=function(label){return App.reportVehicleOrDrivers(label);};
+    setTimeout(()=>Msg.refresh(),250);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install); else install();
+  setTimeout(install,800); setTimeout(install,1800);
+  setInterval(()=>{if(document.getElementById("appScreen")?.classList.contains("active"))Msg.refresh();},15000);
+})();
+</script>
+<!-- =========================================================
+  CORRECTION IMMATCONNECT — MULTI-COMPTES / CACHE / SESSION
+  À coller juste AVANT </body>, après tous les autres scripts.
+  Ne supprime rien : ce bloc écrase proprement les fonctions sensibles.
+========================================================= -->
+<script id="fixMultiComptesSessionCache">
+(function(){
+  'use strict';
+  if(window.__FixMultiComptesSessionCacheV1) return;
+  window.__FixMultiComptesSessionCacheV1 = true;
+
+  const $ = id => document.getElementById(id);
+  const RAW_SITE = (window.CFG && CFG.site) || location.origin + location.pathname;
+
+  function normEmail(v){ return String(v||'').trim().toLowerCase(); }
+  function compactPlate(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function formatPlate(v){
+    const s = compactPlate(v).slice(0,7);
+    if(/^([A-Z]{2})(\d{3})([A-Z]{2})$/.test(s)) return s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5);
+    return String(v||'').toUpperCase().trim();
+  }
+  function safeGet(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:v; }catch(e){ return f; } }
+  function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function safeRemove(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  function toastMsg(m,t){ try{ if(window.toast) return toast(m,t||'ok'); }catch(e){} console.log(m); }
+  function status(id,m,t){
+    const e=$(id); if(!e) return;
+    e.textContent=m||'';
+    e.className='status-msg '+(t||'')+(m?' visible':'');
+  }
+  function currentAuthBtnText(){
+    try{ return window.S && S.mode === 'signup' ? 'Créer mon compte' : 'Se connecter'; }catch(e){ return 'Se connecter'; }
+  }
+  function unlockAuth(){
+    const b=$('authBtn');
+    if(b){ b.disabled=false; b.textContent=currentAuthBtnText(); }
+  }
+
+  async function clearSessionBeforeSwitch(email){
+    if(!window.sb) return;
+    try{
+      const {data} = await sb.auth.getUser();
+      const current = normEmail(data && data.user && data.user.email);
+      const wanted = normEmail(email);
+      if(current && wanted && current !== wanted){
+        await sb.auth.signOut();
+        try{ sessionStorage.clear(); }catch(e){}
+        toastMsg('Ancienne session fermée. Connexion au nouveau compte…','ok');
+      }
+    }catch(e){}
+  }
+
+  function pendingKey(email){ return 'ic_pending_profile__' + normEmail(email); }
+
+  function install(){
+    if(!window.App || !window.sb){ setTimeout(install,250); return; }
+    if(App.__multiAccountPatchInstalled) return;
+    App.__multiAccountPatchInstalled = true;
+
+    /* 1) Pending profile séparé par email : évite qu’un second compte récupère la plaque du premier. */
+    App.pending = function(email,p,ph,c){
+      const payload = {
+        email:normEmail(email),
+        pseudo:String(email||'').split('@')[0] || 'Conducteur',
+        owner_plate:formatPlate(p),
+        phone:String(ph||'').replace(/\D/g,''),
+        vehicle_color:c || 'other',
+        created_at:Date.now()
+      };
+      safeSet(pendingKey(email), JSON.stringify(payload));
+      safeSet('ic_pending_profile_last_email', normEmail(email));
+    };
+
+    App.pendingGet = function(email){
+      try{
+        const raw = safeGet(pendingKey(email),'');
+        if(!raw) return null;
+        const p = JSON.parse(raw);
+        return normEmail(p.email) === normEmail(email) ? p : null;
+      }catch(e){ return null; }
+    };
+
+    /* 2) Connexion : si un autre compte est déjà en session, on le déconnecte AVANT. */
+    const oldHandleAuth = App.handleAuth ? App.handleAuth.bind(App) : null;
+    App.handleAuth = async function(){
+      const email = normEmail(($('iEmail') && $('iEmail').value) || '');
+      await clearSessionBeforeSwitch(email);
+      try{
+        return oldHandleAuth ? await oldHandleAuth() : undefined;
+      }finally{
+        unlockAuth();
+      }
+    };
+
+    /* 3) Signup renforcé : ne jamais écraser le profil d’un autre user. */
+    const oldSignup = App.signup ? App.signup.bind(App) : null;
+    App.signup = async function(email,pwd){
+      email = normEmail(email);
+      await clearSessionBeforeSwitch(email);
+      return oldSignup ? await oldSignup(email,pwd) : undefined;
+    };
+
+    /* 4) afterAuth sécurisé : charge uniquement le profil de user.id, puis nettoie l’état local incompatible. */
+    const oldAfterAuth = App.afterAuth ? App.afterAuth.bind(App) : null;
+    App.afterAuth = async function(){
+      const r = await sb.auth.getUser();
+      const u = r && r.data && r.data.user;
+      if(!u){ try{ App.show('sw'); }catch(e){} return; }
+
+      if(window.S) S.uid = u.id;
+
+      let prof = null;
+      try{
+        const p = await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();
+        prof = p && p.data ? p.data : null;
+      }catch(e){ console.warn('profile read',e); }
+
+      /* Si profil absent, on n’utilise QUE le pending du même email. */
+      if(!prof || !prof.owner_plate){
+        const pp = App.pendingGet ? App.pendingGet(u.email) : null;
+        if(pp && normEmail(pp.email) === normEmail(u.email)){
+          try{
+            await sb.from('profiles').upsert({
+              id:u.id,
+              email:u.email,
+              pseudo:pp.pseudo,
+              owner_plate:formatPlate(pp.owner_plate),
+              phone:pp.phone,
+              vehicle_color:pp.vehicle_color
+            });
+            prof = {id:u.id,email:u.email,...pp,owner_plate:formatPlate(pp.owner_plate)};
+          }catch(e){ console.warn('profile upsert pending',e); }
+        }
+      }
+
+      /* Nettoie les états qui peuvent faire croire qu’on est encore sur l’ancien compte. */
+      try{
+        const currentPlate = formatPlate(prof && prof.owner_plate);
+        const lastPlate = safeGet('ic_current_profile_plate','');
+        const lastUid = safeGet('ic_current_user_id','');
+        if((lastUid && lastUid !== u.id) || (lastPlate && currentPlate && lastPlate !== currentPlate)){
+          ['ic_unread_msg_count','ic_last_state','ic_alerts','ic_alert_history','ic_recent_vehicles'].forEach(safeRemove);
+          if(window.S){
+            S.unreadMsgCount=0; S.alerts=[]; S.alertHistory=[]; S.recent=[]; S.nearby=[]; S.selPlate=null; S.conv='all';
+          }
+        }
+        safeSet('ic_current_user_id',u.id);
+        if(currentPlate) safeSet('ic_current_profile_plate',currentPlate);
+      }catch(e){}
+
+      if(prof && prof.owner_plate && prof.phone && prof.vehicle_color){
+        return App.openMap(prof,u.email);
+      }
+
+      if(oldAfterAuth){
+        return oldAfterAuth();
+      }
+      try{ App.show('sp'); status('profileSt','Connecté. Complète ce profil conducteur.','success'); }catch(e){}
+    };
+
+    /* 5) saveProfile verrouillé sur le user connecté. */
+    const oldSaveProfile = App.saveProfile ? App.saveProfile.bind(App) : null;
+    App.saveProfile = async function(){
+      const r = await sb.auth.getUser();
+      const u = r && r.data && r.data.user;
+      if(!u){ toastMsg('Reconnecte-toi.','bad'); return; }
+      return oldSaveProfile ? await oldSaveProfile() : undefined;
+    };
+
+    /* 6) Déconnexion complète : supprime la position et la session persistée. */
+    const oldLogout = App.logout ? App.logout.bind(App) : null;
+    App.logout = async function(){
+      try{ if(window.S && S.watchId!==null) navigator.geolocation.clearWatch(S.watchId); }catch(e){}
+      try{ await App.deleteMyLocation?.(); }catch(e){}
+      try{ await sb.auth.signOut(); }catch(e){}
+      ['ic_current_user_id','ic_current_profile_plate','ic_unread_msg_count','ic_last_state'].forEach(safeRemove);
+      try{ sessionStorage.clear(); }catch(e){}
+      location.href = RAW_SITE;
+    };
+
+    /* 7) Bouton pratique pour changer de compte proprement. */
+    window.ImmatSwitchAccount = async function(){
+      try{ await sb.auth.signOut(); }catch(e){}
+      ['ic_current_user_id','ic_current_profile_plate','ic_unread_msg_count','ic_last_state'].forEach(safeRemove);
+      try{ sessionStorage.clear(); }catch(e){}
+      try{ App.show('sa'); App.setMode('login'); }catch(e){}
+      toastMsg('Session fermée. Connecte le deuxième compte.','ok');
+    };
+
+    /* 8) GPS : message plus clair quand iOS refuse la permission. */
+    const oldLocate = App.locate ? App.locate.bind(App) : null;
+    App.locate = function(){
+      if(!navigator.geolocation){ toastMsg('GPS indisponible sur ce navigateur.','bad'); return; }
+      return oldLocate ? oldLocate() : undefined;
+    };
+
+    console.info('[ImmatConnect] Correctif multi-comptes/session/cache installé');
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',install);
+  else install();
+  setTimeout(install,800);
+  setTimeout(install,1800);
+})();
+</script>
 
 </body>
 </html>
