@@ -222,7 +222,7 @@ button { border: 0; cursor: pointer; }
 /* ── VEHICLE CONTEXT MENU ── */
 .vehicle-context-menu { position: absolute; z-index: 1400; pointer-events: none; transform: translate(-50%,-50%); display: none; }
 .vehicle-context-menu.show { display: block; }
-.vehicle-bubble { position: absolute; min-width: 72px; min-height: 40px; padding: 8px 12px; border-radius: 999px; border: 2px solid #fff; background: #10161d; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.25); font-size: 12px; font-weight: 950; pointer-events: auto; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; transition: .14s ease; }
+.vehicle-bubble { position: absolute; min-width: 72px; min-height: 44px; padding: 10px 14px; border-radius: 999px; border: 2px solid #fff; background: #10161d; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.25); font-size: 12px; font-weight: 950; pointer-events: auto; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; transition: .14s ease; }
 .vehicle-bubble:active { transform: scale(.94); }
 .vehicle-bubble.contact-main { background: var(--green) !important; color: #06140f !important; left: -72px; top: -68px; }
 .vehicle-bubble.alert-main { background: var(--red) !important; color: #fff !important; left: 20px; top: -68px; }
@@ -331,8 +331,8 @@ button { border: 0; cursor: pointer; }
 }
 .sheet-close {
   position: absolute;
-  top: 10px; right: 14px;
-  width: 30px; height: 30px;
+  top: 8px; right: 12px;
+  width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(255,255,255,.08);
   color: var(--muted);
@@ -462,7 +462,7 @@ button { border: 0; cursor: pointer; }
 .quick-reply-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin-top: 8px; }
 .quick-reply-row button { border-radius: 13px; background: rgba(255,255,255,.07); color: var(--text); padding: 9px 5px; font-size: 11px; font-weight: 950; border: 1px solid rgba(255,255,255,.1); }
 .altet-quick button { background: rgba(0,255,179,.08) !important; color: var(--green) !important; border-color: rgba(0,255,179,.2) !important; }
-.tiny-btn { border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 950; min-height: 36px; }
+.tiny-btn { border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 950; min-height: 44px; }
 .tiny-ok { background: rgba(0,255,179,.1); color: var(--green); border: 1px solid rgba(0,255,179,.2); }
 .tiny-no { background: rgba(255,59,92,.1); color: var(--red); border: 1px solid rgba(255,59,92,.2); }
 
@@ -536,7 +536,7 @@ button { border: 0; cursor: pointer; }
   overscroll-behavior: contain;
 }
 .overlay.show { display: block; }
-.close-x { position: absolute; right: 10px; top: 10px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--muted); font-size: 16px; display: grid; place-items: center; transition: .14s; }
+.close-x { position: absolute; right: 10px; top: 10px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--muted); font-size: 16px; display: grid; place-items: center; transition: .14s; }
 .close-x:active { color: var(--red); }
 .overlay h2 { font-size: 20px; margin-right: 36px; margin-bottom: 6px; color: var(--text); }
 .overlay p, .overlay small { color: var(--muted); line-height: 1.35; font-size: 13px; }
@@ -606,7 +606,7 @@ button { border: 0; cursor: pointer; }
   position: fixed;
   left: 16px; right: 16px;
   top: calc(var(--safe-top) + 12px);
-  z-index: 10000;
+  z-index: 10500;
   border-radius: 16px;
   padding: 12px 16px;
   font-weight: 950;
@@ -690,8 +690,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 
 /* ── FLOATING CARD ── */
 .floating-card {
-  position: absolute;
-  z-index: 200;
+  position: fixed;
+  z-index: 10200;
   left: 12px; right: 12px;
   bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
   background: rgba(16,22,29,.97);
@@ -738,7 +738,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .sig-cat-icon { font-size: 32px; flex: 0 0 auto; }
 .sig-cat-label { font-size: 16px; font-weight: 950; color: #eef6ff; display: block; }
 .sig-cat-sub { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
-.sig-back-btn { background: rgba(52,120,255,.12); color: var(--blue); font-weight: 900; font-size: 13px; margin-bottom: 12px; padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(52,120,255,.2); }
+.sig-back-btn { background: rgba(52,120,255,.12); color: var(--blue); font-weight: 900; font-size: 13px; margin-bottom: 12px; padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(52,120,255,.2); min-height: 44px; }
 .sig-vehicle-input { margin-bottom: 12px; }
 .sig-vehicle-input input { width: 100%; border-radius: 14px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07); color: #eef6ff; outline: none; font-size: 16px; font-weight: 950; text-align: center; }
 .sig-vehicle-input input:focus { border-color: var(--green); }
@@ -820,6 +820,42 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
 .ic-msg-tabs button.on {
   box-shadow: 0 0 18px rgba(0,255,179,.25);
 }
+
+/* ── REPUTATION TOAST ── */
+.reputation-toast {
+  position: fixed;
+  z-index: 10600;
+  left: 16px; right: 16px;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 80px);
+  background: linear-gradient(135deg, #00ffb3, #00d491);
+  color: #06140f;
+  border-radius: 18px;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 950;
+  box-shadow: 0 16px 48px rgba(0,255,179,.35);
+  transform: translateY(140px);
+  opacity: 0;
+  transition: .32s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+.reputation-toast.show {
+  transform: none;
+  opacity: 1;
+}
+.reputation-toast b { display: block; margin-bottom: 4px; font-size: 15px; }
+
+/* ── EMPTY STATE AIDE ── */
+.ic-empty-help small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+/* ── SIGNAL ACTIONS min-height ── */
+.signal-actions button { min-height: 44px; }
 
 /* Media query : garder 3 colonnes sur grands écrans */
 @media (min-width: 400px) {

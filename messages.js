@@ -294,7 +294,10 @@ function render(){
   }
 
   if(!threads.length){
-    list.innerHTML = `<div class="ic-empty">Aucun message.</div>`;
+    const helpText = State.mode === 'sent'
+      ? 'Aucun message envoyé.'
+      : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
+    list.innerHTML = `<div class="ic-empty">${helpText}</div>`;
     closeThread();
     return;
   }
@@ -399,17 +402,31 @@ function refreshThread(){
 }
 
 async function sendNew(){
-  const plate = fPlate($('icComposePlate')?.value || $('iTarget')?.value || '');
-  const text = ($('icComposeText')?.value || $('iMsg')?.value || '').trim();
-  await sendToPlate(plate,text);
-  if($('icComposeText')) $('icComposeText').value = '';
+  // Désactiver le bouton pendant l'envoi pour éviter les doubles clics
+  const btn = document.querySelector('#icComposePanel .ic-send-btn');
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  try{
+    const plate = fPlate($('icComposePlate')?.value || $('iTarget')?.value || '');
+    const text = ($('icComposeText')?.value || $('iMsg')?.value || '').trim();
+    await sendToPlate(plate,text);
+    if($('icComposeText')) $('icComposeText').value = '';
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='➤'; }
+  }
 }
 
 async function reply(){
   if(!State.activePlate) return toast('Choisis une conversation.','bad');
   const text = ($('icReplyText')?.value || '').trim();
-  await sendToPlate(State.activePlate,text);
-  if($('icReplyText')) $('icReplyText').value = '';
+  // Désactiver le bouton pendant l'envoi
+  const btn = document.querySelector('#icThread .ic-send-btn');
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  try{
+    await sendToPlate(State.activePlate,text);
+    if($('icReplyText')) $('icReplyText').value = '';
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='➤'; }
+  }
 }
 
 async function quick(text){
@@ -505,10 +522,14 @@ async function deleteThread(plate){
 
 async function subscribe(){
   const client = sb();
-  const u = State.user;
+  const u = State.user || await getUser();
   if(!client || !u) return;
 
-  if(State.channel) return;
+  // Si un channel existe déjà et est actif, ne pas recréer
+  if(State.channel) {
+    try{ client.removeChannel(State.channel); }catch(e){}
+    State.channel = null;
+  }
 
   State.channel = client
     .channel('immat_messages_v12_' + u.id)
