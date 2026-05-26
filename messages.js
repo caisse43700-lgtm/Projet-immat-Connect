@@ -561,7 +561,4 @@ if(document.readyState === 'loading'){
   boot();
 }
 
-setTimeout(boot,800);
-setTimeout(boot,2000);
-
 })();
