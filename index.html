@@ -1004,7 +1004,7 @@ App._actMsgCard=function(item){
     </div>
     <div class="act-card-body">${lastSent?'→ ':''} ${esc(item.body)}</div>
     <div class="act-card-actions">
-      <button class="act-btn-reply" onclick="App.actOpenConv('${esc(item.plate)}')">Ouvrir →</button>
+      <button class="act-btn-reply" onclick="App.actOpenConv('${esc(item.plate)}')">${lastSent?'Voir →':'Répondre →'}</button>
       <button class="act-btn-danger" onclick="App.actDeleteConv('${esc(item.plate)}')">Supprimer</button>
     </div>
   </div>`;
