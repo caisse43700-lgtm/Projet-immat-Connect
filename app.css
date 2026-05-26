@@ -263,6 +263,18 @@ button { border: 0; cursor: pointer; }
 .nav-btn span { line-height: 1; letter-spacing: .2px; }
 .nav-btn.on { color: var(--green); }
 .nav-btn.on svg { filter: drop-shadow(0 0 6px rgba(0,255,179,.4)); }
+.nav-btn.on::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(0,255,179,.5);
+}
 .nav-badge {
   position: absolute;
   top: 6px;
@@ -307,11 +319,13 @@ button { border: 0; cursor: pointer; }
 .sheet.dragging { transition: none !important; }
 .handle {
   width: 48px; height: 5px;
-  background: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.32);
   border-radius: 999px;
-  margin: 0 auto 10px;
+  margin: 0 auto 12px;
   cursor: grab;
+  transition: background .2s;
 }
+.handle:active { background: var(--green); }
 #sheetArrowOpen {
   display: none; /* replaced by bottom nav */
 }
@@ -376,8 +390,8 @@ button { border: 0; cursor: pointer; }
 /* Grille d'alertes */
 .alert-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
   margin-bottom: 14px;
 }
 .alert-card {
@@ -385,10 +399,11 @@ button { border: 0; cursor: pointer; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   border-radius: 18px;
-  padding: 14px 6px;
-  font-size: 11px;
+  padding: 16px 8px;
+  min-height: 72px;
+  font-size: 12px;
   font-weight: 950;
   border: 1px solid transparent;
   transition: .15s ease;
@@ -396,7 +411,7 @@ button { border: 0; cursor: pointer; }
   color: var(--text);
 }
 .alert-card:active { transform: scale(.93); }
-.alert-card .icon { font-size: 24px; line-height: 1; }
+.alert-card .icon { font-size: 28px; line-height: 1; }
 .alert-card.urgent { background: rgba(255,59,92,.12); border-color: rgba(255,59,92,.25); color: #ff8a9d; }
 .alert-card.medium { background: rgba(255,176,32,.1); border-color: rgba(255,176,32,.2); color: #ffc95a; }
 .alert-card.info { background: rgba(52,120,255,.1); border-color: rgba(52,120,255,.2); color: #82aaff; }
@@ -411,7 +426,7 @@ button { border: 0; cursor: pointer; }
   padding: 12px;
   margin-bottom: 10px;
 }
-.altet-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #0d1b2b; border: 1px solid #2a3c56; border-radius: 14px; padding: 10px; margin-bottom: 6px; }
+.altet-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #0d1b2b; border: 1px solid #2a3c56; border-radius: 16px; padding: 12px; margin-bottom: 6px; }
 .altet-row-main { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .altet-row-icon { font-size: 18px; flex-shrink: 0; }
 .altet-row-title { font-weight: 950; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -447,7 +462,7 @@ button { border: 0; cursor: pointer; }
 .quick-reply-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin-top: 8px; }
 .quick-reply-row button { border-radius: 13px; background: rgba(255,255,255,.07); color: var(--text); padding: 9px 5px; font-size: 11px; font-weight: 950; border: 1px solid rgba(255,255,255,.1); }
 .altet-quick button { background: rgba(0,255,179,.08) !important; color: var(--green) !important; border-color: rgba(0,255,179,.2) !important; }
-.tiny-btn { border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 950; }
+.tiny-btn { border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 950; min-height: 36px; }
 .tiny-ok { background: rgba(0,255,179,.1); color: var(--green); border: 1px solid rgba(0,255,179,.2); }
 .tiny-no { background: rgba(255,59,92,.1); color: var(--red); border: 1px solid rgba(255,59,92,.2); }
 
@@ -703,17 +718,27 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 /* ── PANNEAU SIGNALER 2 ÉTAPES ── */
 .sig-step { display: none; }
 .sig-step.active { display: block; }
-.sig-step-title { font-size: 16px; font-weight: 950; margin-bottom: 16px; color: #eef6ff; }
+.sig-step-title { font-size: 17px; font-weight: 950; margin-bottom: 18px; color: #eef6ff; }
 .sig-cat-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-.sig-cat-btn { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); text-align: left; }
-.sig-cat-btn:active { transform: scale(.98); }
-.cat-route { border-left: 4px solid var(--orange) !important; }
-.cat-vehicle { border-left: 4px solid var(--blue) !important; }
-.cat-aide { border-left: 4px solid var(--red) !important; }
-.sig-cat-icon { font-size: 28px; flex: 0 0 auto; }
+.sig-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  text-align: left;
+  transition: .16s ease;
+}
+.sig-cat-btn:active { transform: scale(.97); background: rgba(255,255,255,.1); }
+.cat-route { border-left: 4px solid var(--orange) !important; background: rgba(255,176,32,.06) !important; }
+.cat-vehicle { border-left: 4px solid var(--blue) !important; background: rgba(52,120,255,.06) !important; }
+.cat-aide { border-left: 4px solid var(--red) !important; background: rgba(255,59,92,.06) !important; }
+.sig-cat-icon { font-size: 32px; flex: 0 0 auto; }
 .sig-cat-label { font-size: 16px; font-weight: 950; color: #eef6ff; display: block; }
 .sig-cat-sub { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
-.sig-back-btn { background: none; color: var(--blue); font-weight: 900; font-size: 14px; margin-bottom: 12px; padding: 0; }
+.sig-back-btn { background: rgba(52,120,255,.12); color: var(--blue); font-weight: 900; font-size: 13px; margin-bottom: 12px; padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(52,120,255,.2); }
 .sig-vehicle-input { margin-bottom: 12px; }
 .sig-vehicle-input input { width: 100%; border-radius: 14px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07); color: #eef6ff; outline: none; font-size: 16px; font-weight: 950; text-align: center; }
 .sig-vehicle-input input:focus { border-color: var(--green); }
@@ -760,3 +785,43 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 body.night .act-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
 body.night .act-filter { background: rgba(255,255,255,.09); }
 body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
+
+/* ── FINITIONS UX V2 ── */
+
+/* Floating card : urgence */
+.floating-card.alert-urgent {
+  border-color: rgba(255,59,92,.5);
+  background: rgba(30,10,15,.97);
+  box-shadow: 0 20px 60px rgba(255,59,92,.25), 0 0 0 1px rgba(255,59,92,.2);
+}
+.floating-card.alert-urgent .fc-go {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Act-card : pointer sur les actions */
+.act-card-actions button { cursor: pointer; }
+
+/* Scrollbar discrète sur les panels */
+.panel::-webkit-scrollbar { width: 3px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+/* Ligne de séparation douce entre sections dans les panels */
+.panel-section-sep {
+  height: 1px;
+  background: rgba(255,255,255,.07);
+  margin: 12px 0;
+}
+
+/* Améliore le tab msg dans le ic-msg-tabs */
+.ic-msg-tabs button { font-size: 13px; }
+
+/* active tab sur msg */
+.ic-msg-tabs button.on {
+  box-shadow: 0 0 18px rgba(0,255,179,.25);
+}
+
+/* Media query : garder 3 colonnes sur grands écrans */
+@media (min-width: 400px) {
+  .alert-grid { grid-template-columns: repeat(3, 1fr); }
+}
