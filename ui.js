@@ -388,7 +388,4 @@
     install();
   }
 
-  setTimeout(install, 500);
-  setTimeout(install, 1500);
-
 })();
