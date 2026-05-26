@@ -220,6 +220,7 @@ async function refresh(){
   // Connexion messages → Activité
   try{ if(window.S) window.S._actMessages = State.messages; }catch(e){}
   try{ window.App?.updateActBadge?.(); }catch(e){}
+  try{ window.App?.renderActivityFeed?.(); }catch(e){}
 
   buildThreads();
   render();
