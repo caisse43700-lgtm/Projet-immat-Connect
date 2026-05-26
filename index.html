@@ -792,7 +792,7 @@ markAlertPending(id){
 },
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);if(S.alertMarkersById[id]){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}saveAlerts();this.renderAlerts();this.renderMyAlertsBlock();toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('*').gte('created_at',since).order('created_at',{ascending:false}).limit(150);if(error)throw error;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));const myUid=ud?.user?.id;(data||[]).forEach(r=>{if(myUid&&r.reporter_id&&r.reporter_id===myUid)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:false})});this.syncAlertMarkers?.()}catch(e){console.warn('sync alerts',e)}},
-subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});this.updateActBadge?.();this.renderActivityFeed?.();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||d.id||'');const localId=rid?((S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid)?.id||rid):rid;if(localId)this.dismissAlert?.(localId);this.renderActivityFeed?.();this.updateActBadge?.();}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
+subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});this.updateActBadge?.();this.renderActivityFeed?.();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||d.id||'');const localId=rid?((S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid)?.id||rid):rid;if(localId)this.dismissAlert?.(localId);this.renderActivityFeed?.();this.updateActBadge?.();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?..()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+'\nSignalé par : '+(d.sender_plate||'Conducteur proche'),'Vu','Répondre',()=>{this.updateActBadge?.()},()=>{S.selPlate=nPlate(d.sender_plate||'');S.conv=S.selPlate;this.panel('messages');try{ImmatMessages?.setMode?.('inbox');ImmatMessages?.refresh?.();}catch(e){}},'urgent');}catch(e){}this.updateActBadge?.();try{window.ImmatMessages?.refresh?.();}catch(e){};}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
 updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=(Number(S.unreadMsgCount)||0)+pendingSignalCount();el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;const _bcast=p=>{try{if(S.chCommunityReports){const bp={id:String(p.id||Date.now()),type:p.type||inferType((p.reason||'')+' '+(p.plate||'')),plate:p.plate||null,reason:p.reason||null,latitude:p.latitude??p.lat??null,longitude:p.longitude??p.lng??null,lat:p.lat??p.latitude??null,lng:p.lng??p.longitude??null,created_at:p.created_at||new Date().toISOString(),reporter_id:p.reporter_id||null};S.chCommunityReports.send({type:'broadcast',event:'new_report',payload:bp})}}catch(e){console.warn('bcast',e)}};try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;
@@ -871,8 +871,8 @@ App.vehicleAlertQuick=async function(label){
   if(!plate) return toast("Indique la plaque du véhicule dans le champ ci-dessus.",'bad');
   const own=this.ownPlate();
   if(plate===own) return toast("Impossible de te signaler toi-même.",'bad');
-  const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
-  // Désactiver les boutons pendant l'envoi
+  const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);
+  const msg=(urgent?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
   const btns=document.querySelectorAll('#sigStep2Vehicle .alert-card');
   btns.forEach(b=>{b.disabled=true;b.style.opacity='.5';});
   try{
@@ -883,6 +883,19 @@ App.vehicleAlertQuick=async function(label){
       if($('iMsg'))$('iMsg').value=msg;
       await this.sendMsg?.();
     }
+    // Broadcast temps réel pour notification immédiate chez le destinataire
+    try{
+      if(S.chCommunityReports){
+        S.chCommunityReports.send({type:'broadcast',event:'vehicle_alert',payload:{
+          target_plate:plate,
+          sender_plate:own,
+          label,
+          msg,
+          urgent,
+          at:Date.now()
+        }});
+      }
+    }catch(e){}
     toast('✅ Alerte envoyée au conducteur '+plate,'ok');
   }catch(e){toast('Erreur envoi signalement.','bad');return;}finally{
     btns.forEach(b=>{b.disabled=false;b.style.opacity='';});
