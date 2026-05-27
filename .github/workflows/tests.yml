@@ -1,0 +1,19 @@
+name: Tests unitaires
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    name: Logique métier (node tests.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Exécuter les 67 tests unitaires
+        run: node tests.js
