@@ -5,9 +5,10 @@
   "scripts": {
     "test": "node tests.js",
     "test:e2e": "playwright test",
-    "serve": "npx serve . -p 4000 --no-clipboard"
+    "serve": "serve . -l 4000"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0"
+    "@playwright/test": "^1.44.0",
+    "serve": "^14.2.0"
   }
 }
