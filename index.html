@@ -719,7 +719,6 @@ async subMsgs(){
     const mine=m.sender_id===u.id||m.receiver_id===u.id||nPlate(m.target_plate)===myPlate||nPlate(m.receiver_plate)===myPlate||nPlate(m.to_plate)===myPlate||nPlate(m.sender_plate)===myPlate||nPlate(m.from_plate)===myPlate;
     if(!mine)return;
     if(p.eventType==='INSERT'&&(m.receiver_id===u.id||nPlate(m.target_plate)===myPlate||nPlate(m.receiver_plate)===myPlate||nPlate(m.to_plate)===myPlate)){
-      setUnreadMsgCount((S.unreadMsgCount||0)+1);
       const profs=await profilesByIds([m.sender_id]);
       const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
       this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl||null);
