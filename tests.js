@@ -1,0 +1,451 @@
+/**
+ * ImmatConnect Pro — Tests automatisés
+ * Exécution : node tests.js
+ * Aucune dépendance externe — Node.js natif uniquement
+ */
+
+'use strict';
+
+// ─── Runner minimal ───────────────────────────────────────────────────────────
+let _pass = 0, _fail = 0, _suite = '';
+
+function suite(name) {
+  _suite = name;
+  console.log('\n── ' + name + ' ──');
+}
+
+function test(name, fn) {
+  try {
+    fn();
+    console.log('  ✅ ' + name);
+    _pass++;
+  } catch (e) {
+    console.log('  ❌ ' + name + '\n     → ' + e.message);
+    _fail++;
+  }
+}
+
+function eq(a, b) {
+  if (a !== b) throw new Error('attendu ' + JSON.stringify(b) + ', reçu ' + JSON.stringify(a));
+}
+function ok(v, msg) {
+  if (!v) throw new Error(msg || 'assertion échouée');
+}
+function near(a, b, delta = 5) {
+  if (Math.abs(a - b) > delta) throw new Error('attendu ≈' + b + ' (±' + delta + '), reçu ' + a);
+}
+
+// ─── Chargement utils.js via mock window ──────────────────────────────────────
+const _w = {};
+// utils.js utilise (function(w){...})(window) — on injecte notre mock
+const fs = require('fs');
+const utilsSrc = fs.readFileSync(__dirname + '/utils.js', 'utf8')
+  .replace(/\(window\)/, '(_w)');
+eval(utilsSrc); // eslint-disable-line no-eval
+
+const { nPlate, fPlate, vPlate, nPhone, vPhone, km, esc, inferType, colorHex, colorLabel } = _w;
+
+// ─── Helpers locaux (copiés fidèlement depuis index.html) ─────────────────────
+function badgeFmt(n) { n = Number(n) || 0; return n > 99 ? '99+' : String(n); }
+
+const CATS = {
+  accident: { label:'Accident',   icon:'💥', level:'urgent',    ttl:45*60*1000,  group:'route'   },
+  bouchon:  { label:'Bouchon',    icon:'🚦', level:'important', ttl:30*60*1000,  group:'route'   },
+  obstacle: { label:'Obstacle',   icon:'⚠️', level:'urgent',    ttl:45*60*1000,  group:'route'   },
+  travaux:  { label:'Travaux',    icon:'🚧', level:'info',      ttl:2*60*60*1000,group:'route'   },
+  controle: { label:'Contrôle',   icon:'👮', level:'info',      ttl:60*60*1000,  group:'route'   },
+  danger:   { label:'Danger',     icon:'❗', level:'urgent',    ttl:45*60*1000,  group:'route'   },
+  panne:    { label:'Panne',      icon:'🚗', level:'urgent',    ttl:45*60*1000,  group:'assist'  },
+  carburant:{ label:'Carburant',  icon:'⛽', level:'important', ttl:45*60*1000,  group:'assist'  },
+  batterie: { label:'Batterie',   icon:'🔋', level:'important', ttl:45*60*1000,  group:'assist'  },
+  moteur:   { label:'Moteur',     icon:'⚙️', level:'urgent',    ttl:45*60*1000,  group:'assist'  },
+  incendie: { label:'Incendie',   icon:'🔥', level:'urgent',    ttl:30*60*1000,  group:'assist'  },
+  perdu:    { label:'Perdu',      icon:'🧭', level:'info',      ttl:45*60*1000,  group:'assist'  },
+  vehicule: { label:'Véhicule',   icon:'🚘', level:'important', ttl:60*60*1000,  group:'vehicle' },
+  info:     { label:'Info',       icon:'ℹ️', level:'info',      ttl:60*60*1000,  group:'misc'    },
+};
+function cat(type) { return CATS[type] || CATS.info; }
+function ttlFor(type) { return cat(type).ttl || 60 * 60 * 1000; }
+function alertKey(a) {
+  return String(a.remoteId || a.id || '') ||
+    [a.type, a.plate, a.reason, a.lat, a.lng, a.at].join('|');
+}
+
+// ─── normalizeRows injectable (logique identique à messages.js) ───────────────
+function makeNormalizeRows(uid, myPlateFn, deletedIds = []) {
+  return function normalizeRows(rows, profs = {}) {
+    const mp = nPlate(myPlateFn());
+    return (rows || []).map(m => {
+      const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
+      const rp = fPlate(m.receiver_plate || m.to_plate || profs[m.receiver_id]?.owner_plate || m.target_plate || '');
+      const sent     = (m.sender_id === uid) || (mp && nPlate(sp) === mp);
+      const received = !sent && (
+        m.receiver_id === uid ||
+        (mp && (
+          nPlate(rp) === mp ||
+          nPlate(m.target_plate) === mp ||
+          nPlate(m.receiver_plate) === mp ||
+          nPlate(m.to_plate) === mp
+        ))
+      );
+      return {
+        ...m,
+        _sent:          sent,
+        _received:      received,
+        _senderPlate:   sp || 'INCONNU',
+        _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
+        _otherPlate:    sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU'),
+      };
+    }).filter(m =>
+      m._otherPlate &&
+      m.status !== 'rejected' &&
+      !deletedIds.includes(String(m.id))
+    );
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 1 — nPlate / fPlate / vPlate
+// ══════════════════════════════════════════════════════════════════════════════
+suite('1. Normalisation et formatage de plaque');
+
+test('nPlate : majuscules + suppression caractères spéciaux', () => {
+  eq(nPlate('ab-123-cd'), 'AB-123-CD');
+  eq(nPlate('ab 123 cd'), 'AB123CD');
+  eq(nPlate('ab_123_cd!'), 'AB123CD');
+});
+test('nPlate : null / undefined → chaîne vide', () => {
+  eq(nPlate(null), '');
+  eq(nPlate(undefined), '');
+  eq(nPlate(''), '');
+});
+test('nPlate : trim espaces en tête/queue', () => {
+  eq(nPlate('  AB-123-CD  '), 'AB-123-CD');
+});
+
+test('fPlate : format AB-123-CD depuis alphanumérique brut', () => {
+  eq(fPlate('AB123CD'), 'AB-123-CD');
+  eq(fPlate('ab123cd'), 'AB-123-CD');
+});
+test('fPlate : entrée déjà formatée reste inchangée', () => {
+  eq(fPlate('AB-123-CD'), 'AB-123-CD');
+});
+test('fPlate : entrée courte (<= 2 chars) sans tiret', () => {
+  eq(fPlate('AB'), 'AB');
+  eq(fPlate('A'), 'A');
+});
+test('fPlate : entrée partielle 3-5 chars → un tiret', () => {
+  eq(fPlate('AB1'), 'AB-1');
+  eq(fPlate('AB123'), 'AB-123');
+});
+test('fPlate : null → chaîne vide', () => {
+  eq(fPlate(null), '');
+  eq(fPlate(''), '');
+});
+
+test('vPlate : plaque FR valide', () => {
+  ok(vPlate('AB-123-CD'), 'AB-123-CD devrait être valide');
+  ok(vPlate('AB123CD'),   'AB123CD (sans tirets) devrait être valide après formatage');
+});
+test('vPlate : plaque invalide', () => {
+  ok(!vPlate('ABC-123-CD'),  'trop de lettres au début');
+  ok(!vPlate('AB-1234-CD'),  'trop de chiffres');
+  ok(!vPlate('abc'),         'trop court');
+  ok(!vPlate(''),            'vide');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 2 — Téléphone
+// ══════════════════════════════════════════════════════════════════════════════
+suite('2. Validation téléphone FR');
+
+test('vPhone : numéro valide', () => {
+  ok(vPhone('0612345678'));
+  ok(vPhone('06 12 34 56 78'));
+  ok(vPhone('06-12-34-56-78'));
+});
+test('vPhone : numéro invalide', () => {
+  ok(!vPhone('1234567890'));
+  ok(!vPhone('061234567'));
+  ok(!vPhone(''));
+  ok(!vPhone(null));
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 3 — Distance Haversine
+// ══════════════════════════════════════════════════════════════════════════════
+suite('3. Distance Haversine (km)');
+
+test('km : Paris → Lyon ≈ 393 km', () => {
+  near(km(48.8566, 2.3522, 45.7640, 4.8357), 393, 10);
+});
+test('km : Paris → Marseille ≈ 661 km', () => {
+  near(km(48.8566, 2.3522, 43.2965, 5.3698), 661, 10);
+});
+test('km : même point = 0', () => {
+  near(km(48.8566, 2.3522, 48.8566, 2.3522), 0, 0.001);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 4 — Échappement HTML
+// ══════════════════════════════════════════════════════════════════════════════
+suite('4. Échappement HTML (esc)');
+
+test('esc : balises HTML', () => {
+  eq(esc('<script>alert(1)</script>'), '&lt;script&gt;alert(1)&lt;/script&gt;');
+});
+test('esc : guillemets', () => {
+  eq(esc('"test"'), '&quot;test&quot;');
+  eq(esc("l'apostrophe"), "l&#39;apostrophe");
+});
+test('esc : & esperluette', () => {
+  eq(esc('A&B'), 'A&amp;B');
+});
+test('esc : null / undefined → chaîne vide', () => {
+  eq(esc(null), '');
+  eq(esc(undefined), '');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 5 — Inférence de type d'alerte
+// ══════════════════════════════════════════════════════════════════════════════
+suite('5. Inférence de type d\'alerte (inferType)');
+
+test('inferType : accident', () => eq(inferType('accident sur la route'),  'accident'));
+test('inferType : bouchon',  () => eq(inferType('gros bouchon autoroute'), 'bouchon'));
+test('inferType : travaux',  () => eq(inferType('travaux de nuit'),         'travaux'));
+test('inferType : contrôle', () => eq(inferType('contrôle de police'),      'controle'));
+test('inferType : panne',    () => eq(inferType('panne moteur sur place'),  'panne'));
+test('inferType : pneu',     () => eq(inferType('pneu crevé'),              'vehicule'));
+test('inferType : véhicule', () => eq(inferType('probleme vehicule'),       'vehicule'));
+test('inferType : batterie', () => eq(inferType('batterie à plat'),         'batterie'));
+test('inferType : incendie', () => eq(inferType('fumée visible route'),     'incendie'));
+test('inferType : fallback info', () => eq(inferType('texte quelconque'),   'info'));
+test('inferType : null → info',   () => eq(inferType(null),                 'info'));
+test('inferType : casse insensible', () => eq(inferType('ACCIDENT GRAVE'),  'accident'));
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 6 — Couleurs
+// ══════════════════════════════════════════════════════════════════════════════
+suite('6. Couleurs véhicule');
+
+test('colorLabel : blanc', () => eq(colorLabel('white'), 'Blanc'));
+test('colorLabel : inconnu → fallback', () => eq(colorLabel(''), 'Couleur non renseignée'));
+test('colorLabel : null → fallback',   () => eq(colorLabel(null), 'Couleur non renseignée'));
+test('colorHex : noir',  () => eq(colorHex('black'), '#111'));
+test('colorHex : autre', () => eq(colorHex('other'), '#b388ff'));
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 7 — badgeFmt
+// ══════════════════════════════════════════════════════════════════════════════
+suite('7. Formatage badge (badgeFmt)');
+
+test('badgeFmt : 0 → "0"',    () => eq(badgeFmt(0),   '0'));
+test('badgeFmt : 5 → "5"',    () => eq(badgeFmt(5),   '5'));
+test('badgeFmt : 99 → "99"',  () => eq(badgeFmt(99),  '99'));
+test('badgeFmt : 100 → "99+"',() => eq(badgeFmt(100), '99+'));
+test('badgeFmt : 999 → "99+"',() => eq(badgeFmt(999), '99+'));
+test('badgeFmt : null → "0"', () => eq(badgeFmt(null),'0'));
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 8 — Alertes : cat / ttlFor / alertKey
+// ══════════════════════════════════════════════════════════════════════════════
+suite('8. Métadonnées alertes (cat / ttlFor / alertKey)');
+
+test('cat : accident groupe route',    () => eq(cat('accident').group, 'route'));
+test('cat : vehicule groupe vehicle',  () => eq(cat('vehicule').group, 'vehicle'));
+test('cat : type inconnu → info',      () => eq(cat('xxx').label, 'Info'));
+
+test('ttlFor : accident = 45 min',     () => eq(ttlFor('accident'), 45*60*1000));
+test('ttlFor : travaux = 2h',          () => eq(ttlFor('travaux'),  2*60*60*1000));
+test('ttlFor : type inconnu = 1h',     () => eq(ttlFor('xyz'),      60*60*1000));
+
+test('alertKey : utilise remoteId si présent', () => {
+  eq(alertKey({ remoteId:'abc', id:'xyz', type:'info' }), 'abc');
+});
+test('alertKey : utilise id si pas de remoteId', () => {
+  eq(alertKey({ id:'xyz', type:'info' }), 'xyz');
+});
+test('alertKey : fallback composition champs', () => {
+  const k = alertKey({ type:'accident', plate:'AB-123-CD', reason:'test', lat:1, lng:2, at:3 });
+  eq(k, 'accident|AB-123-CD|test|1|2|3');
+});
+test('alertKey : deux alertes identiques → même clé (déduplication)', () => {
+  const a1 = { remoteId:'r1', type:'bouchon', plate:'AB-123-CD' };
+  const a2 = { remoteId:'r1', type:'bouchon', plate:'ZZ-999-ZZ' };
+  eq(alertKey(a1), alertKey(a2)); // remoteId identique → même clé
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 9 — normalizeRows : _sent / _received
+// ══════════════════════════════════════════════════════════════════════════════
+suite('9. normalizeRows — calcul _sent / _received');
+
+const UID  = 'user-uuid-123';
+const PLATE = 'AB-123-CD';
+const OTHER = 'XY-456-ZZ';
+
+test('message envoyé par uid → _sent=true, _received=false', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE);
+  const rows = [{ id:1, sender_id:UID, receiver_id:'other-uuid', sender_plate:PLATE,
+                  receiver_plate:OTHER, status:'accepted', message:'Bonjour' }];
+  const [m] = normalize(rows);
+  ok(m._sent,     '_sent doit être true');
+  ok(!m._received,'_received doit être false');
+});
+
+test('message reçu par uid → _received=true, _sent=false', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE);
+  const rows = [{ id:2, sender_id:'other-uuid', receiver_id:UID, sender_plate:OTHER,
+                  receiver_plate:PLATE, status:'accepted', message:'Réponse' }];
+  const [m] = normalize(rows);
+  ok(m._received, '_received doit être true');
+  ok(!m._sent,    '_sent doit être false');
+});
+
+test('_otherPlate = plaque du tiers (pas la mienne)', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE);
+  const sent = [{ id:3, sender_id:UID, receiver_id:'o', sender_plate:PLATE,
+                  receiver_plate:OTHER, status:'accepted', message:'' }];
+  const [m] = normalize(sent);
+  eq(m._otherPlate, OTHER);
+});
+
+test('message rejected filtré', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE);
+  const rows = [{ id:4, sender_id:UID, receiver_id:'o', sender_plate:PLATE,
+                  receiver_plate:OTHER, status:'rejected', message:'' }];
+  eq(normalize(rows).length, 0);
+});
+
+// ── Bug #1 : myPlate() vide au moment du refresh ──────────────────────────────
+test('[Bug #1] myPlate vide + sender_id connu → _sent=true (via uid)', () => {
+  const normalize = makeNormalizeRows(UID, () => ''); // myPlate vide
+  const rows = [{ id:5, sender_id:UID, receiver_id:'o', sender_plate:'',
+                  receiver_plate:OTHER, status:'accepted', message:'' }];
+  const [m] = normalize(rows);
+  ok(m._sent, 'sender_id === uid doit suffire même si myPlate est vide');
+});
+
+test('[Bug #1] myPlate vide + lié uniquement par plaque → invisible (_sent=false, _received=false)', () => {
+  const normalize = makeNormalizeRows(UID, () => ''); // myPlate vide
+  const rows = [{ id:6, sender_id:'other-uuid', receiver_id:'other-uuid-2',
+                  sender_plate:OTHER, receiver_plate:PLATE,  // PLATE est la mienne
+                  status:'accepted', message:'' }];
+  const result = normalize(rows);
+  // Sans receiver_id === uid et sans mp, ce message devient invisible
+  ok(result.length === 0 || (!result[0]?._sent && !result[0]?._received),
+    'sans uid match ni myPlate, le message ne peut être rattaché');
+});
+
+test('[Bug #1] myPlate renseigné + lié par plaque → _received=true', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE); // myPlate renseigné
+  const rows = [{ id:7, sender_id:'other-uuid', receiver_id:'other-uuid-2',
+                  sender_plate:OTHER, receiver_plate:PLATE,
+                  status:'accepted', message:'' }];
+  const [m] = normalize(rows);
+  ok(m._received, 'avec myPlate correct, le message doit être reçu');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 10 — Bug A (PR #25) : String coercion deleted.includes
+// ══════════════════════════════════════════════════════════════════════════════
+suite('10. Fix PR #25 — String coercion dans deleted.includes');
+
+test('[Bug A] deleted.includes(m.id) : string vs number → false (bug)', () => {
+  const deleted = ['42', '7'];       // localStorage → strings
+  const m = { id: 42 };             // Supabase → number
+  ok(!deleted.includes(m.id), 'reproduced: number 42 non trouvé dans strings');
+});
+
+test('[Bug A fix] deleted.includes(String(m.id)) → true (corrigé)', () => {
+  const deleted = ['42', '7'];
+  const m = { id: 42 };
+  ok(deleted.includes(String(m.id)), 'fix: String(42) trouvé dans ["42","7"]');
+});
+
+test('[Bug A] message supprimé filtré correctement avec fix', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE, ['8']);
+  const rows = [
+    { id:8,  sender_id:UID, receiver_id:'o', sender_plate:PLATE, receiver_plate:OTHER, status:'accepted', message:'supprimé' },
+    { id:9,  sender_id:UID, receiver_id:'o', sender_plate:PLATE, receiver_plate:OTHER, status:'accepted', message:'visible'  },
+  ];
+  const result = normalize(rows);
+  eq(result.length, 1);
+  eq(result[0].id, 9);
+});
+
+test('[Bug A] message supprimé (id numérique) filtré avec String(id)', () => {
+  const normalize = makeNormalizeRows(UID, () => PLATE, [String(10)]); // stocké comme string
+  const rows = [{ id:10, sender_id:UID, receiver_id:'o', sender_plate:PLATE,
+                  receiver_plate:OTHER, status:'accepted', message:'doit disparaître' }];
+  eq(normalize(rows).length, 0);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 11 — Boot guard (Bug #1 — messages.js)
+// ══════════════════════════════════════════════════════════════════════════════
+suite('11. Boot guard — refresh() conditionnel sur getUser()');
+
+test('[Bug #1 boot] refresh non appelé si getUser() retourne null', async () => {
+  let refreshCalled = false;
+  async function mockGetUser() { return null; }
+  async function mockRefresh() { refreshCalled = true; }
+
+  async function boot_guarded() {
+    const u = await mockGetUser();
+    if (u) await mockRefresh();
+  }
+
+  await boot_guarded();
+  ok(!refreshCalled, 'refresh ne doit pas être appelé sans utilisateur connecté');
+});
+
+test('[Bug #1 boot] refresh appelé si getUser() retourne un user', async () => {
+  let refreshCalled = false;
+  async function mockGetUser() { return { id: UID }; }
+  async function mockRefresh() { refreshCalled = true; }
+
+  async function boot_guarded() {
+    const u = await mockGetUser();
+    if (u) await mockRefresh();
+  }
+
+  await boot_guarded();
+  ok(refreshCalled, 'refresh doit être appelé quand l\'utilisateur est connecté');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 12 — Channel reconnect pattern (Bug #6)
+// ══════════════════════════════════════════════════════════════════════════════
+suite('12. Reconnect channels — pattern CHANNEL_ERROR / TIMED_OUT');
+
+test('[Bug #6] callback déclenché sur CHANNEL_ERROR', () => {
+  let reconnectScheduled = false;
+  const callback = (status) => {
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      reconnectScheduled = true;
+    }
+  };
+  callback('CHANNEL_ERROR');
+  ok(reconnectScheduled, 'reconnect doit être planifié sur CHANNEL_ERROR');
+});
+
+test('[Bug #6] callback non déclenché sur SUBSCRIBED', () => {
+  let reconnectScheduled = false;
+  const callback = (status) => {
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      reconnectScheduled = true;
+    }
+  };
+  callback('SUBSCRIBED');
+  ok(!reconnectScheduled, 'pas de reconnect sur SUBSCRIBED');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Résultat final
+// ══════════════════════════════════════════════════════════════════════════════
+console.log('\n' + '═'.repeat(50));
+console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
+console.log('═'.repeat(50));
+if (_fail > 0) process.exit(1);

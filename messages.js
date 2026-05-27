@@ -573,9 +573,10 @@ window.ImmatMessages = {
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
 
-function boot(){
+async function boot(){
   installInputs();
-  refresh();
+  const u = await getUser();
+  if(u) await refresh();
 }
 
 if(document.readyState === 'loading'){
