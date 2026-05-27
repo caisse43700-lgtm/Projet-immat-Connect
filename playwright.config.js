@@ -19,9 +19,21 @@ module.exports = defineConfig({
   },
 
   projects: [
+    // Desktop — tous les tests
     {
-      name: 'chromium',
+      name: 'Desktop Chrome',
       use: { ...devices['Desktop Chrome'] },
+    },
+    // Mobile — smoke uniquement (PWA mobile)
+    {
+      name: 'iPhone 14',
+      use: { ...devices['iPhone 14'] },
+      testMatch: '**/smoke.spec.js',
+    },
+    {
+      name: 'Pixel 7',
+      use: { ...devices['Pixel 7'] },
+      testMatch: '**/smoke.spec.js',
     },
   ],
 
