@@ -1,0 +1,241 @@
+/* calls.css — Système appels internes ImmatConnect Phase 1 */
+
+/* ── Modal overlay (Contacter + Not Allowed) ──────────────────────── */
+.call-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  z-index: 3000;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.call-modal-overlay.show { display: flex; }
+
+.call-modal-sheet {
+  background: var(--bg, #0d1b2a);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 36px;
+  width: 100%;
+  max-width: 480px;
+  animation: cmSlideUp .22s cubic-bezier(.22,1,.36,1);
+}
+@keyframes cmSlideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.call-modal-title {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}
+.call-modal-plate {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary, #2979ff);
+  margin-bottom: 22px;
+  letter-spacing: 1px;
+}
+.call-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+.call-modal-btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.call-modal-btn:active { opacity: .75; }
+.call-modal-btn-msg {
+  background: var(--surface, #10161d);
+  color: var(--fg, #e8eaf0);
+  border: 1.5px solid rgba(255,255,255,0.1);
+}
+.call-modal-btn-call {
+  background: var(--primary, #2979ff);
+  color: #fff;
+}
+.call-modal-close {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ── Modal "appels non autorisés" ─────────────────────────────────── */
+.call-not-allowed-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+.call-not-allowed-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg, #e8eaf0);
+  margin-bottom: 6px;
+}
+.call-not-allowed-sub {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 22px;
+  line-height: 1.45;
+}
+.call-modal-btn-msg-only {
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 14px;
+  background: var(--primary, #2979ff);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.call-modal-btn-msg-only:active { opacity: .75; }
+
+/* ── Popup appel entrant ──────────────────────────────────────────── */
+.call-incoming-popup {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-130%);
+  width: calc(100% - 32px);
+  max-width: 400px;
+  background: #0f2035;
+  border: 1.5px solid rgba(41,121,255,.35);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  z-index: 3100;
+  box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  transition: transform .28s cubic-bezier(.22,1,.36,1);
+}
+.call-incoming-popup.show {
+  transform: translateX(-50%) translateY(16px);
+}
+.call-incoming-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.call-incoming-icon { font-size: 30px; }
+.call-incoming-info strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg, #e8eaf0);
+}
+.call-incoming-info span {
+  font-size: 12px;
+  color: #888;
+}
+.call-incoming-actions {
+  display: flex;
+  gap: 10px;
+}
+.call-incoming-refuse {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 12px;
+  background: rgba(255,45,85,.14);
+  color: #ff2d55;
+  border: 1.5px solid rgba(255,45,85,.3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.call-incoming-refuse:active { opacity: .7; }
+.call-incoming-accept {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 12px;
+  background: #2979ff;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.call-incoming-accept:active { opacity: .8; }
+
+/* ── Bannière "Demande d'appel envoyée" ──────────────────────────── */
+.call-sent-banner {
+  position: fixed;
+  bottom: 82px;
+  left: 50%;
+  transform: translateX(-50%) translateY(140%);
+  background: #0f2035;
+  border: 1.5px solid rgba(41,121,255,.3);
+  border-radius: 14px;
+  padding: 12px 14px;
+  z-index: 2900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  max-width: 360px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  transition: transform .25s ease;
+}
+.call-sent-banner.show {
+  transform: translateX(-50%) translateY(0);
+}
+.call-sent-icon { font-size: 20px; }
+.call-sent-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--fg, #e8eaf0);
+  line-height: 1.35;
+}
+.call-sent-text strong { color: var(--primary, #2979ff); }
+.call-sent-cancel {
+  background: none;
+  border: 1px solid rgba(255,255,255,.14);
+  color: #888;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Boutons quick reply dans l'activité véhicule ────────────────── */
+.act-mod-btn-quick {
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: var(--fg, #e8eaf0);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s;
+}
+.act-mod-btn-quick:active {
+  background: rgba(41,121,255,.2);
+  border-color: rgba(41,121,255,.5);
+}
+.act-mod-btn-contact {
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--primary, #2979ff);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .12s;
+}
+.act-mod-btn-contact:active { opacity: .8; }
