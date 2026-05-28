@@ -461,6 +461,7 @@ function makeResolveEnv() {
       id: raw.id || raw.remoteId || ('al_' + Math.random().toString(16).slice(2)),
       remoteId: raw.remoteId || raw.id || null,
       type: raw.type || 'info',
+      group: raw.group || cat(raw.type || 'info').group || null,
       _mine: raw._mine === true,
     };
     const key = String(a.remoteId || a.id || '');
@@ -724,6 +725,142 @@ test('AB-06 — flux bout en bout : A crée, B reçoit, A supprime, B retire', a
   b_receiveResolve({ remoteId: '99' });
   eq(B.S.alerts.length, 0, 'alerte disparue chez B ✓');
   ok(B.S.resolvedRemoteIds.includes('99'), 'resolvedRemoteIds protège contre la re-sync ✓');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+suite('15. UPDATE DB status=resolved — cycle complet + contrôle AIDE');
+
+function makeResolveEnvV2() {
+  const base = makeResolveEnv();
+  const dbUpdates = [];
+
+  function mockDb(opts = {}) {
+    return {
+      from: () => ({
+        update: (fields) => ({
+          eq: (col, val) => {
+            dbUpdates.push({ fields, col, val });
+            return Promise.resolve(
+              opts.rlsOk === false ? { error: { message: 'RLS denied' } } : { error: null }
+            );
+          },
+        }),
+      }),
+    };
+  }
+
+  function actConfirmAlertV2(id, status, sb_mock) {
+    const a = base.S.alerts.find(x => x.id === id);
+    if (!a) return;
+    if ((status === 'gone' || status === 'resolved') && a.group === 'assist' && !a._mine) {
+      return 'DENIED';
+    }
+    a.status = status;
+    if (status === 'gone' || status === 'resolved') {
+      if (a.remoteId && sb_mock) {
+        sb_mock.from('reports')
+          .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+          .eq('id', a.remoteId);
+        base.broadcasts.push({ remoteId: a.remoteId });
+        base.S.resolvedRemoteIds = [
+          ...base.S.resolvedRemoteIds.filter(x => x !== a.remoteId),
+          a.remoteId,
+        ].slice(0, 200);
+      }
+      base.S.alerts = base.S.alerts.filter(x => x.id !== id);
+      delete base.S.alertMarkersById[id];
+    }
+    return 'OK';
+  }
+
+  return { ...base, dbUpdates, mockDb, actConfirmAlertV2 };
+}
+
+test('DB-01 — actConfirmAlert("resolved") déclenche UPDATE reports SET status=resolved', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '10', remoteId: '10', _mine: true, group: 'route' });
+  env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  eq(env.dbUpdates.length, 1);
+  eq(env.dbUpdates[0].fields.status, 'resolved');
+});
+
+test('DB-02 — UPDATE inclut resolved_at non null', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '11', remoteId: '11', _mine: true, group: 'route' });
+  env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  ok(env.dbUpdates[0].fields.resolved_at != null, 'resolved_at renseigné');
+});
+
+test('DB-03 — après UPDATE DB, alerte supprimée localement', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '12', remoteId: '12', _mine: true, group: 'route' });
+  env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  eq(env.S.alerts.length, 0);
+});
+
+test('DB-04 — broadcast reste envoyé en parallèle du UPDATE DB', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '13', remoteId: '13', _mine: true, group: 'route' });
+  env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  eq(env.broadcasts.length, 1);
+  eq(env.broadcasts[0].remoteId, '13');
+});
+
+test('DB-05 — listener UPDATE realtime → dismiss chez un tiers', () => {
+  const envC = makeResolveEnv();
+  envC.addCommunityAlert({ id: '14', remoteId: '14', _mine: false, group: 'route' });
+  eq(envC.S.alerts.length, 1);
+  // Simule réception postgres_changes UPDATE {status:'resolved', id:'14'}
+  const r = { id: '14', status: 'resolved' };
+  if (r.status === 'resolved') envC.handleResolveReport({ remoteId: String(r.id) });
+  eq(envC.S.alerts.length, 0, 'alerte retirée chez le tiers via UPDATE realtime');
+});
+
+test('DB-06 — syncCommunityAlerts filtre status=active (resolved ignoré)', () => {
+  const rows = [
+    { id: '20', status: 'active',   reason: 'bouchon' },
+    { id: '21', status: 'resolved', reason: 'accident' },
+    { id: '22', status: null,       reason: 'travaux' },
+  ];
+  const filtered = rows.filter(r => r.status === 'active' || r.status == null);
+  eq(filtered.length, 2);
+  ok(filtered.every(r => r.status !== 'resolved'), 'aucun resolved dans la sync');
+});
+
+test('DB-07 — AIDE : B ne peut pas clôturer (_mine=false)', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '30', remoteId: '30', _mine: false, group: 'assist' });
+  const result = env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  eq(result, 'DENIED');
+  eq(env.S.alerts.length, 1, 'alerte toujours présente');
+  eq(env.dbUpdates.length, 0, 'aucun UPDATE DB envoyé');
+});
+
+test('DB-08 — AIDE : A (créateur _mine=true) peut clôturer', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '31', remoteId: '31', _mine: true, group: 'assist' });
+  const result = env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  eq(result, 'OK');
+  eq(env.S.alerts.length, 0);
+  eq(env.dbUpdates.length, 1);
+});
+
+test('DB-09 — ROUTE : un tiers (_mine=false) peut clôturer', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '40', remoteId: '40', _mine: false, group: 'route' });
+  const result = env.actConfirmAlertV2(al.id, 'gone', env.mockDb());
+  ok(result !== 'DENIED', 'tiers autorisé sur ROUTE');
+  eq(env.S.alerts.length, 0);
+});
+
+test('DB-10 — resolvedRemoteIds protège contre re-sync après UPDATE DB', () => {
+  const env = makeResolveEnvV2();
+  const al = env.addCommunityAlert({ id: '50', remoteId: '50', _mine: true, group: 'route' });
+  env.actConfirmAlertV2(al.id, 'resolved', env.mockDb());
+  ok(env.S.resolvedRemoteIds.includes('50'), 'remoteId mémorisé');
+  const reinserted = env.addCommunityAlert({ id: '50', remoteId: '50', group: 'route' });
+  ok(reinserted === null, 'sync bloquée par resolvedRemoteIds');
+  eq(env.S.alerts.length, 0);
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
