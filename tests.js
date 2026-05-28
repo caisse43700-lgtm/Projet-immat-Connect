@@ -1013,6 +1013,56 @@ test('V9-10 — upsertAlert rejette alerte expired (status:resolved)', () => {
   eq(env.S.alerts.length, 0);
 });
 
+test('V9-11 — dismissAlert ROUTE non-mine déclenche broadcast (propagation bidirectionnelle)', () => {
+  const env = makeV9Env();
+  const broadcasts = [];
+  const fakeCh = { send: (msg) => { broadcasts.push(msg); } };
+  env.S.chCommunityReports = fakeCh;
+  const isRouteAlertLocal = a => a?.group === 'route';
+  // Ajout d'une alerte ROUTE reçue (non-mine)
+  const saved = env.addAlert({ id: 'r99', remoteId: 'remote-99', type: 'bouchon', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte ROUTE sauvegardée');
+  // dismiss étendu avec broadcast
+  const rid = String(saved.key || '');
+  const removed = [];
+  env.S.alerts = env.S.alerts.filter(a => {
+    const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+    const match = keys.includes(rid);
+    if (match) removed.push(a);
+    return !match;
+  });
+  removed.forEach(a => {
+    if (a.remoteId && (a._mine || isRouteAlertLocal(a))) fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
+  });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(broadcasts.length, 1, 'broadcast envoyé même si _mine=false sur ROUTE');
+  eq(broadcasts[0].payload.remoteId, 'remote-99');
+});
+
+test('V9-12 — dismissAlert AIDE non-mine ne déclenche PAS broadcast (créateur seul peut résoudre)', () => {
+  const env = makeV9Env();
+  const broadcasts = [];
+  const fakeCh = { send: (msg) => { broadcasts.push(msg); } };
+  env.S.chCommunityReports = fakeCh;
+  const isRouteAlertLocal = a => a?.group === 'route';
+  // Ajout d'une alerte AIDE reçue (non-mine)
+  const saved = env.addAlert({ id: 'h10', remoteId: 'remote-10', type: 'panne', group: 'assist', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte AIDE sauvegardée');
+  const rid = String(saved.key || '');
+  const removed = [];
+  env.S.alerts = env.S.alerts.filter(a => {
+    const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+    const match = keys.includes(rid);
+    if (match) removed.push(a);
+    return !match;
+  });
+  removed.forEach(a => {
+    if (a.remoteId && (a._mine || isRouteAlertLocal(a))) fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
+  });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(broadcasts.length, 0, 'pas de broadcast pour AIDE non-mine');
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  Résultat final
 // ══════════════════════════════════════════════════════════════════════════════
