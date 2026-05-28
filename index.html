@@ -14,6 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="app.css">
   <link rel="stylesheet" href="messages.css">
+  <link rel="stylesheet" href="calls.css">
   <script src="utils.js"></script>
 </head>
 <body>
@@ -283,6 +284,58 @@
     <button class="fc-btn fc-go" id="fcBtn2" onclick="App.fcAction(2)">→</button>
   </div>
 </div>
+<!-- ── Modaux système d'appels Phase 1 ──────────────────────────── -->
+<!-- Modal : Comment souhaitez-vous contacter ce conducteur ? -->
+<div id="callContactModal" class="call-modal-overlay" onclick="if(event.target===this)CallManager.closeContactModal()">
+  <div class="call-modal-sheet">
+    <div class="call-modal-title">Comment souhaitez-vous contacter</div>
+    <div class="call-modal-plate" id="callContactPlate">?</div>
+    <div class="call-modal-actions">
+      <button class="call-modal-btn call-modal-btn-msg"
+        onclick="CallManager.contactByMessage(document.getElementById('callContactModal').dataset.plate)">💬 Message</button>
+      <button class="call-modal-btn call-modal-btn-call"
+        onclick="CallManager.contactByCall(document.getElementById('callContactModal').dataset.plate,document.getElementById('callContactModal').dataset.uid)">📞 Appel</button>
+    </div>
+    <button class="call-modal-close" onclick="CallManager.closeContactModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- Modal : appels non autorisés -->
+<div id="callNotAllowedModal" class="call-modal-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="call-modal-sheet">
+    <div class="call-not-allowed-icon">🔕</div>
+    <div class="call-not-allowed-title">Appels non autorisés</div>
+    <div class="call-not-allowed-sub" id="callNotAllowedSub">Ce conducteur n'a pas activé les appels internes.</div>
+    <button class="call-modal-btn-msg-only" onclick="CallManager.closeNotAllowedModal()">💬 Envoyer un message</button>
+    <button class="call-modal-close" onclick="document.getElementById('callNotAllowedModal').classList.remove('show')">Fermer</button>
+  </div>
+</div>
+
+<!-- Popup : appel entrant -->
+<div id="callIncomingPopup" class="call-incoming-popup">
+  <div class="call-incoming-header">
+    <div class="call-incoming-icon">📞</div>
+    <div class="call-incoming-info">
+      <strong id="callIncomingPlate">Conducteur</strong>
+      <span>souhaite vous appeler</span>
+    </div>
+  </div>
+  <div class="call-incoming-actions">
+    <button class="call-incoming-refuse"
+      onclick="CallManager.refuseCall(document.getElementById('callIncomingPopup').dataset.requestId)">Refuser</button>
+    <button class="call-incoming-accept"
+      onclick="CallManager.acceptCall(document.getElementById('callIncomingPopup').dataset.requestId)">Accepter</button>
+  </div>
+</div>
+
+<!-- Bannière : demande d'appel envoyée -->
+<div id="callSentBanner" class="call-sent-banner">
+  <div class="call-sent-icon">📞</div>
+  <div class="call-sent-text">Demande envoyée à <strong id="callSentPlate">?</strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
+  <button class="call-sent-cancel"
+    onclick="CallManager.cancelCallRequest(document.getElementById('callSentBanner').dataset.requestId)">Annuler</button>
+</div>
+
 </section>
 <div id="drawer" class="drawer"><div class="drawer-back" onclick="App.closeDrawer()"></div><div class="drawer-card">
   <div class="drawer-profile">
@@ -480,7 +533,7 @@ async afterAuth(){
   }
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
+openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
@@ -1076,8 +1129,7 @@ App._actModCard=function(item,cat){
         </div>
       </div>
       <div class="act-mod-actions">
-        <button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button>
-        <button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>
+        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Merci.')">Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${e(item.plate)}')">Contacter</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
       </div>
     </div>`;
   }
@@ -1098,7 +1150,7 @@ App._actModCard=function(item,cat){
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
   if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(a.group==='vehicle'||a.type==='vehicule')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(a.plate||'')}')">💬 Répondre</button>`;
+  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_vp}')">Contacter</button>`;}
   else if(a.group==='route')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;
   else if(a.group==='assist')actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`;
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}">
@@ -1249,6 +1301,19 @@ App.actDeleteConv=function(plate){
   }catch(e){}
   setTimeout(()=>{this.renderActivityFeed();try{this.updateActBadge?.()}catch(e){}},300);
   toast('Conversation supprimée.','ok');
+};
+App.actQuickReply=async function(plate,msg){
+  if(!plate||!msg)return;
+  try{
+    if(window.ImmatMessages?.sendToPlate){
+      await ImmatMessages.sendToPlate(plate,msg);
+      toast('Message envoyé à '+plate+'.','ok');
+    }else{
+      if($('iTarget'))$('iTarget').value=plate;
+      if($('iMsg'))$('iMsg').value=msg;
+      this.panel('contact');
+    }
+  }catch(e){toast('Erreur lors de l\'envoi.','bad');}
 };
 App.actHelpReply=function(plate){
   if(!plate) return;
@@ -1795,6 +1860,7 @@ function showReputationToast(){
 </script>
 
 
+<script src="calls.js"></script>
 <script src="badge.js"></script>
 <script src="messages.js?v=12"></script>
 <script src="ui.js?v=6"></script>
