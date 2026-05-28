@@ -443,6 +443,164 @@ test('[Bug #6] callback non déclenché sur SUBSCRIBED', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+suite('13. Flux resolve_report — synchronisation alertes route');
+
+// Mini-implémentation locale reproduisant la logique corrigée
+function makeResolveEnv() {
+  const S_loc = { alerts: [], alertMarkersById: {}, resolvedRemoteIds: [] };
+  const broadcasts = [];
+  const toasts = [];
+
+  function saveAlerts() { /* no-op en test */ }
+  function isNetworkNoise() { return false; }
+
+  function addCommunityAlert(raw) {
+    const rId = String(raw.remoteId || raw.id || '');
+    if (rId && S_loc.resolvedRemoteIds.includes(rId)) return null;
+    const a = {
+      id: raw.id || raw.remoteId || ('al_' + Math.random().toString(16).slice(2)),
+      remoteId: raw.remoteId || raw.id || null,
+      type: raw.type || 'info',
+      _mine: raw._mine === true,
+    };
+    const key = String(a.remoteId || a.id || '');
+    if (S_loc.alerts.some(x => String(x.remoteId || x.id || '') === key)) return a;
+    S_loc.alerts.unshift(a);
+    return a;
+  }
+
+  function dismissAlert(id, opts) {
+    const _a = S_loc.alerts.find(x => x.id === id);
+    if (_a?._mine && _a.remoteId) broadcasts.push({ remoteId: _a.remoteId });
+    if (_a?.remoteId) {
+      S_loc.resolvedRemoteIds = [
+        ...S_loc.resolvedRemoteIds.filter(x => x !== _a.remoteId),
+        _a.remoteId,
+      ].slice(0, 200);
+    }
+    S_loc.alerts = S_loc.alerts.filter(a => a.id !== id);
+    delete S_loc.alertMarkersById[id];
+    saveAlerts();
+    if (!opts?.silent) toasts.push('Alerte retirée.');
+  }
+
+  function actConfirmAlert(id, status) {
+    const a = S_loc.alerts.find(x => x.id === id);
+    if (a) {
+      a.status = status;
+      if (status === 'gone' || status === 'resolved') {
+        if (a.remoteId) {
+          broadcasts.push({ remoteId: a.remoteId });
+          S_loc.resolvedRemoteIds = [
+            ...S_loc.resolvedRemoteIds.filter(x => x !== a.remoteId),
+            a.remoteId,
+          ].slice(0, 200);
+        }
+        S_loc.alerts = S_loc.alerts.filter(x => x.id !== id);
+        delete S_loc.alertMarkersById[id];
+      }
+      saveAlerts();
+    }
+    toasts.push(status === 'gone' || status === 'resolved' ? 'Signalement retiré ✓' : 'Merci ✓');
+  }
+
+  function handleResolveReport(payload) {
+    const rid = String(payload.remoteId || '');
+    if (!rid) return;
+    const found = S_loc.alerts.find(a =>
+      String(a.remoteId || '') === rid || String(a.id || '') === rid
+    );
+    if (found) dismissAlert(found.id, { silent: true });
+    if (!S_loc.resolvedRemoteIds.includes(rid)) {
+      S_loc.resolvedRemoteIds.push(rid);
+      S_loc.resolvedRemoteIds = S_loc.resolvedRemoteIds.slice(0, 200);
+      saveAlerts();
+    }
+  }
+
+  return { S: S_loc, addCommunityAlert, dismissAlert, actConfirmAlert, handleResolveReport, broadcasts, toasts };
+}
+
+test('RT-R01 — actConfirmAlert("gone") supprime immédiatement de S.alerts', () => {
+  const env = makeResolveEnv();
+  const al = env.addCommunityAlert({ id: 'al_abc', remoteId: '42', _mine: true, type: 'route' });
+  ok(al !== null, 'alerte créée');
+  env.actConfirmAlert(al.id, 'gone');
+  eq(env.S.alerts.length, 0);
+});
+
+test('RT-R02 — actConfirmAlert("gone") broadcast avec remoteId et non id local', () => {
+  const env = makeResolveEnv();
+  const al = env.addCommunityAlert({ id: 'al_local', remoteId: '99', _mine: true, type: 'route' });
+  env.actConfirmAlert(al.id, 'gone');
+  eq(env.broadcasts.length, 1);
+  eq(env.broadcasts[0].remoteId, '99');
+  ok(!env.broadcasts[0].id, 'pas d\'id local dans le payload');
+});
+
+test('RT-R03 — actConfirmAlert("gone") sans remoteId ne broadcast pas', () => {
+  const env = makeResolveEnv();
+  // Alerte créée offline : raw sans id ni remoteId → remoteId reste null
+  const al = env.addCommunityAlert({ _mine: true, type: 'route' });
+  ok(al.remoteId === null, 'remoteId doit être null (alerte offline)');
+  env.actConfirmAlert(al.id, 'gone');
+  eq(env.broadcasts.length, 0);
+  eq(env.S.alerts.length, 0); // supprimé localement quand même
+});
+
+test('RT-R04 — handleResolveReport retire l\'alerte chez B par remoteId', () => {
+  const env = makeResolveEnv();
+  // B reçoit une alerte d'A via sync
+  env.addCommunityAlert({ id: '42', remoteId: '42', _mine: false, type: 'route' });
+  eq(env.S.alerts.length, 1);
+  env.handleResolveReport({ remoteId: '42' });
+  eq(env.S.alerts.length, 0);
+});
+
+test('RT-R05 — handleResolveReport sans remoteId ne fait rien', () => {
+  const env = makeResolveEnv();
+  env.addCommunityAlert({ id: 'al_xyz', remoteId: null, _mine: false, type: 'route' });
+  env.handleResolveReport({ remoteId: '' });
+  eq(env.S.alerts.length, 1); // alerte toujours là
+});
+
+test('RT-R06 — handleResolveReport silencieux : pas de toast chez B', () => {
+  const env = makeResolveEnv();
+  env.addCommunityAlert({ id: '55', remoteId: '55', _mine: false, type: 'route' });
+  env.handleResolveReport({ remoteId: '55' });
+  ok(!env.toasts.includes('Alerte retirée.'), 'pas de toast côté récepteur');
+});
+
+test('RT-R07 — resolvedRemoteIds empêche la re-sync depuis Supabase', () => {
+  const env = makeResolveEnv();
+  const al = env.addCommunityAlert({ id: '77', remoteId: '77', _mine: true, type: 'route' });
+  env.actConfirmAlert(al.id, 'gone');
+  ok(env.S.resolvedRemoteIds.includes('77'), 'remoteId mémorisé');
+  // La sync tente de réinsérer depuis DB
+  const reinserted = env.addCommunityAlert({ id: '77', remoteId: '77', type: 'route' });
+  ok(reinserted === null, 'addCommunityAlert retourne null car déjà résolu');
+  eq(env.S.alerts.length, 0); // pas de réinsertion
+});
+
+test('RT-R08 — chez B, resolvedRemoteIds aussi bloqué après resolve_report', () => {
+  const env = makeResolveEnv();
+  env.addCommunityAlert({ id: '88', remoteId: '88', _mine: false, type: 'route' });
+  env.handleResolveReport({ remoteId: '88' });
+  ok(env.S.resolvedRemoteIds.includes('88'), 'remoteId mémorisé chez B');
+  // syncCommunityAlerts essaie de re-ajouter
+  const reinserted = env.addCommunityAlert({ id: '88', remoteId: '88', type: 'route' });
+  ok(reinserted === null, 'sync ne re-ajoute pas');
+});
+
+test('RT-R09 — actConfirmAlert("present") ne supprime pas l\'alerte', () => {
+  const env = makeResolveEnv();
+  const al = env.addCommunityAlert({ id: '11', remoteId: '11', _mine: false, type: 'route' });
+  env.actConfirmAlert(al.id, 'present');
+  eq(env.S.alerts.length, 1); // toujours présente
+  eq(env.broadcasts.length, 0); // pas de broadcast
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 //  Résultat final
 // ══════════════════════════════════════════════════════════════════════════════
 console.log('\n' + '═'.repeat(50));
