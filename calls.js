@@ -23,6 +23,7 @@ const CallManager = (function () {
   let _myPlate = null;
   let _chCalls = null;
   let _pendingCallId = null;
+  let _visibilityBound = false;
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -31,9 +32,12 @@ const CallManager = (function () {
     _myPlate = String(myPlate || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
     subscribeIncomingCalls(uid);
     _recoverPendingRequest();
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') _recoverPendingRequest();
-    });
+    if (!_visibilityBound) {
+      _visibilityBound = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') _recoverPendingRequest();
+      });
+    }
   }
 
   // ── Recovery : restaure la bannière après refresh ────────────────
