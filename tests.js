@@ -601,6 +601,132 @@ test('RT-R09 — actConfirmAlert("present") ne supprime pas l\'alerte', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+suite('14. Flux A→B complet — saveReportRemote + resolve_report');
+
+// Simule deux utilisateurs indépendants avec leurs propres états
+function makeAbEnv() {
+  // Environnement de A (créateur)
+  const A = makeResolveEnv();
+  // Environnement de B (récepteur)
+  const B = makeResolveEnv();
+  // Canal Realtime partagé : broadcast de A vers B
+  const channel = {
+    broadcastsSent: [],
+    send(msg) { this.broadcastsSent.push(msg); },
+  };
+  A.S.chCommunityReports = channel;
+
+  // Simule roadReport de A : crée l'alerte puis assigne remoteId après save
+  async function roadReport_A(type, mockDbId) {
+    const meta = cat(type);
+    const _al = A.addCommunityAlert({
+      type, label: meta.label, reason: '[ROUTE] ' + meta.label,
+      plate: 'ROUTE', lat: 48.8, lng: 2.3, level: meta.level,
+      group: 'route', _mine: true,
+    });
+    // Simule saveReportRemote : retourne mockDbId (null = Supabase sans .select())
+    const _dbId = mockDbId != null ? mockDbId : null;
+    if (_al && _dbId) _al.remoteId = String(_dbId);
+    return _al;
+  }
+
+  // Simule B recevant new_report via Realtime (postgres_changes ou broadcast)
+  function b_receiveNewReport(dbId, type) {
+    B.addCommunityAlert({
+      remoteId: dbId,
+      id: String(dbId),
+      type: type || 'bouchon',
+      plate: 'ROUTE',
+      _mine: false,
+    });
+  }
+
+  // Simule B recevant le broadcast resolve_report de A
+  function b_receiveResolve(payload) {
+    B.handleResolveReport(payload);
+  }
+
+  return { A, B, channel, roadReport_A, b_receiveNewReport, b_receiveResolve };
+}
+
+test('AB-01 — saveReportRemote retourne id → _al.remoteId assigné (fix .select)', async () => {
+  const { roadReport_A } = makeAbEnv();
+  const al = await roadReport_A('bouchon', 42);
+  eq(al.remoteId, '42');
+});
+
+test('AB-02 — saveReportRemote retourne null → remoteId null → pas de broadcast (ancien bug)', async () => {
+  const { A, roadReport_A } = makeAbEnv();
+  const al = await roadReport_A('bouchon', null); // simule insert sans .select()
+  eq(al.remoteId, null);
+  A.actConfirmAlert(al.id, 'gone');
+  eq(A.broadcasts.length, 0, 'aucun broadcast sans remoteId');
+});
+
+test('AB-03 — A crée bouchon → B reçoit via new_report', async () => {
+  const { roadReport_A, b_receiveNewReport, B } = makeAbEnv();
+  await roadReport_A('bouchon', 55);
+  b_receiveNewReport(55, 'bouchon');
+  eq(B.S.alerts.length, 1);
+  eq(String(B.S.alerts[0].remoteId), '55');
+});
+
+test('AB-04 — A supprime → broadcast resolve_report → B retire l\'alerte', async () => {
+  const { A, B, channel, roadReport_A, b_receiveNewReport, b_receiveResolve } = makeAbEnv();
+  const al = await roadReport_A('bouchon', 66);
+  b_receiveNewReport(66, 'bouchon');
+  eq(B.S.alerts.length, 1);
+
+  // A supprime
+  A.actConfirmAlert(al.id, 'gone');
+  eq(A.broadcasts.length, 1);
+  eq(A.broadcasts[0].remoteId, '66');
+
+  // B reçoit le broadcast
+  b_receiveResolve(A.broadcasts[0]);
+  eq(B.S.alerts.length, 0, 'alerte retirée chez B');
+});
+
+test('AB-05 — syncCommunityAlerts ne réinsère pas chez B après résolution', async () => {
+  const { A, B, roadReport_A, b_receiveNewReport, b_receiveResolve } = makeAbEnv();
+  const al = await roadReport_A('bouchon', 77);
+  b_receiveNewReport(77, 'bouchon');
+  A.actConfirmAlert(al.id, 'gone');
+  b_receiveResolve(A.broadcasts[0]);
+  eq(B.S.alerts.length, 0);
+
+  // sync tente de réinsérer depuis Supabase (id DB = 77)
+  const reinserted = B.addCommunityAlert({ id: '77', remoteId: '77', type: 'bouchon' });
+  ok(reinserted === null, 'addCommunityAlert bloqué par resolvedRemoteIds');
+  eq(B.S.alerts.length, 0, 'toujours vide après sync');
+});
+
+test('AB-06 — flux bout en bout : A crée, B reçoit, A supprime, B retire', async () => {
+  const { A, B, roadReport_A, b_receiveNewReport, b_receiveResolve } = makeAbEnv();
+
+  // 1. A signale un bouchon → DB retourne id=99
+  const al = await roadReport_A('bouchon', 99);
+  eq(al._mine, true);
+  eq(al.remoteId, '99');
+  eq(A.S.alerts.length, 1);
+
+  // 2. B reçoit via Realtime new_report
+  b_receiveNewReport(99, 'bouchon');
+  eq(B.S.alerts.length, 1);
+
+  // 3. A clique "Disparu"
+  A.actConfirmAlert(al.id, 'gone');
+  eq(A.S.alerts.length, 0);
+  eq(A.broadcasts.length, 1);
+  eq(A.broadcasts[0].remoteId, '99');
+
+  // 4. B reçoit le broadcast resolve_report
+  b_receiveResolve({ remoteId: '99' });
+  eq(B.S.alerts.length, 0, 'alerte disparue chez B ✓');
+  ok(B.S.resolvedRemoteIds.includes('99'), 'resolvedRemoteIds protège contre la re-sync ✓');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 //  Résultat final
 // ══════════════════════════════════════════════════════════════════════════════
 console.log('\n' + '═'.repeat(50));
