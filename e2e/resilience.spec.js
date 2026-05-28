@@ -59,8 +59,8 @@ test.describe('Résilience — patterns reconnect définis', () => {
 // SUITE 2 — Tests avec auth réelle
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('Résilience — comportement runtime authentifié', () => {
-  test.beforeEach(({ skip }) => {
-    skip(!EMAIL_A || !PWD_A, 'Secrets TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD non définis');
+  test.beforeEach(() => {
+    test.skip(!EMAIL_A || !PWD_A, 'Secrets TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD non définis');
   });
 
   test('R05 — blocage Supabase → console.warn "Realtime KO" capturé', async ({ page }) => {

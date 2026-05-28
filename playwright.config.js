@@ -27,7 +27,7 @@ module.exports = defineConfig({
     // Mobile — smoke uniquement (PWA mobile)
     {
       name: 'iPhone 14',
-      use: { ...devices['iPhone 14'] },
+      use: { ...devices['iPhone 14'], browserName: 'chromium' },
       testMatch: '**/smoke.spec.js',
     },
     {
