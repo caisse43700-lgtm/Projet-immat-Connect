@@ -6,10 +6,6 @@ const EMAIL_A = process.env.TEST_USER_A_EMAIL;
 const PWD_A   = process.env.TEST_USER_A_PASSWORD;
 const PLATE_A = 'ZZ-001-TT';
 
-function skipIfNoAuth({ skip }) {
-  skip(!EMAIL_A || !PWD_A, 'Secrets TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD non définis');
-}
-
 /** Connecte le compte A et attend que appScreen soit actif. */
 async function loginA(page) {
   await page.goto('/');
@@ -24,7 +20,9 @@ async function loginA(page) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('Auth — connexion et session', () => {
-  test.beforeEach(skipIfNoAuth);
+  test.beforeEach(() => {
+    test.skip(!EMAIL_A || !PWD_A, 'Secrets TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD non définis');
+  });
 
   test.afterAll(async ({ browser }) => {
     const ctx  = await browser.newContext();

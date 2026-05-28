@@ -14,8 +14,8 @@ const PWD_B   = process.env.TEST_USER_B_PASSWORD;
 const PLATE_A = 'ZZ-001-TT';
 const PLATE_B = 'ZZ-002-TT';
 
-function skipIfNoBoth({ skip }) {
-  skip(!EMAIL_A || !PWD_A || !EMAIL_B || !PWD_B,
+function skipIfNoBoth() {
+  test.skip(!EMAIL_A || !PWD_A || !EMAIL_B || !PWD_B,
     'Secrets TEST_USER_A_* et TEST_USER_B_* requis pour les tests Realtime');
 }
 
