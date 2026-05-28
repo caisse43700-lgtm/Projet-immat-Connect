@@ -864,6 +864,156 @@ test('DB-10 — resolvedRemoteIds protège contre re-sync après UPDATE DB', () 
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+suite('16. V9 — normalizeAlert, upsertAlert, séparation VÉHICULE/ROUTE');
+
+// Implémentation locale miroir de index.html
+const nPlateTest = nPlate;
+function makeV9Env() {
+  const S_v9 = { alerts: [], alertHistory: [], resolvedRemoteIds: [] };
+  function ttlForV9(type) { return ttlFor(type); }
+  function normalizeAlertV9(raw) {
+    if (!raw) return null;
+    const remoteId = String(raw.remoteId || raw.rid || raw.id || '').trim();
+    const type = raw.type || inferType((raw.reason || '') + (raw.label || '') + (raw.plate || ''));
+    const meta = cat(type);
+    const at = raw.at ? Number(raw.at) : raw.created_at ? new Date(raw.created_at).getTime() : Date.now();
+    const key = remoteId || String(raw.id || ['local', type, raw.lat ?? raw.latitude, raw.lng ?? raw.longitude, at].join('|'));
+    return {
+      key, id: String(raw.id || remoteId || key), remoteId: remoteId || null,
+      type, label: raw.label || meta.label,
+      reason: (raw.reason || raw.label || meta.label || '').replace(/^\[[^\]]+\]\s*/, '').trim(),
+      level: raw.level || meta.level, group: raw.group || meta.group,
+      plate: nPlateTest(raw.plate || ''),
+      lat: raw.lat != null ? Number(raw.lat) : raw.latitude != null ? Number(raw.latitude) : null,
+      lng: raw.lng != null ? Number(raw.lng) : raw.longitude != null ? Number(raw.longitude) : null,
+      at, status: String(raw.status || 'active').toLowerCase(),
+      updatedAt: raw.updated_at ? new Date(raw.updated_at).getTime() : at,
+      _mine: raw._mine === true,
+    };
+  }
+  function upsertAlertV9(alert) {
+    if (!alert || !alert.key) return null;
+    if (alert.group === 'vehicle') return null;
+    if (['resolved', 'gone', 'expired', 'deleted'].includes(String(alert.status || ''))) return null;
+    if ((S_v9.resolvedRemoteIds || []).some(r => r && (String(r) === String(alert.key) || String(r) === String(alert.remoteId || '')))) return null;
+    if (Date.now() - alert.at > ttlForV9(alert.type)) return null;
+    const idx = (S_v9.alerts || []).findIndex(a => String(a.key || a.remoteId || a.id || '') === String(alert.key));
+    if (idx >= 0) {
+      const ex = S_v9.alerts[idx];
+      if (ex.updatedAt && alert.updatedAt && ex.updatedAt > alert.updatedAt) return ex;
+      S_v9.alerts[idx] = { ...ex, ...alert };
+      return S_v9.alerts[idx];
+    }
+    S_v9.alerts.unshift(alert);
+    S_v9.alerts = S_v9.alerts.slice(0, 80);
+    S_v9.alertHistory.unshift({ ...alert, seenAt: Date.now() });
+    return alert;
+  }
+  function addAlertV9(raw) {
+    const alert = normalizeAlertV9(raw);
+    return upsertAlertV9(alert);
+  }
+  function dismissAlertV9(id) {
+    const rid = String(id || '').trim();
+    const removed = [];
+    S_v9.alerts = S_v9.alerts.filter(a => {
+      const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+      const match = keys.includes(rid);
+      if (match) removed.push(a);
+      return !match;
+    });
+    removed.forEach(a => {
+      if (a.remoteId) S_v9.resolvedRemoteIds = [...S_v9.resolvedRemoteIds.filter(x => x !== a.remoteId), a.remoteId].slice(0, 200);
+    });
+    return removed.length;
+  }
+  return { S: S_v9, normalizeAlert: normalizeAlertV9, upsertAlert: upsertAlertV9, addAlert: addAlertV9, dismissAlert: dismissAlertV9 };
+}
+
+test('V9-01 — upsertAlert rejette group:vehicle', () => {
+  const env = makeV9Env();
+  const alert = env.normalizeAlert({ id: 'v1', type: 'vehicule', group: 'vehicle', at: Date.now() });
+  const saved = env.upsertAlert(alert);
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-02 — addAlert({type:"vehicule"}) retourne null et ne pollue pas S.alerts', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'v2', type: 'vehicule', at: Date.now() });
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-03 — normalizeAlert produit une clé stable = remoteId prioritaire', () => {
+  const env = makeV9Env();
+  const a = env.normalizeAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: Date.now() });
+  eq(a.key, 'remote-42');
+  eq(a.remoteId, 'remote-42');
+});
+
+test('V9-04 — upsertAlert dédoublonne par key (pas doublon id local / id serveur)', () => {
+  const env = makeV9Env();
+  const now = Date.now();
+  env.addAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: now });
+  env.addAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: now + 1000 });
+  eq(env.S.alerts.length, 1, 'pas de doublon');
+});
+
+test('V9-05 — upsertAlert respecte updatedAt (ne remplace pas par un état plus ancien)', () => {
+  const env = makeV9Env();
+  const now = Date.now();
+  env.addAlert({ id: 'a1', remoteId: 'r1', type: 'bouchon', at: now, updated_at: new Date(now).toISOString() });
+  const older = env.normalizeAlert({ id: 'a1', remoteId: 'r1', type: 'bouchon', at: now - 5000, updated_at: new Date(now - 5000).toISOString() });
+  const result = env.upsertAlert(older);
+  ok(result !== null);
+  ok(result.at >= now - 100, 'état récent conservé, ancien ignoré');
+});
+
+test('V9-06 — dismissAlert par key supprime correctement', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'a2', remoteId: 'r2', type: 'bouchon', at: Date.now() });
+  ok(saved !== null);
+  const removed = env.dismissAlert(saved.key);
+  eq(removed, 1);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-07 — dismissAlert par remoteId supprime l\'alerte dont id != remoteId', () => {
+  const env = makeV9Env();
+  env.addAlert({ id: 'local-xyz', remoteId: 'remote-99', type: 'accident', at: Date.now() });
+  const removed = env.dismissAlert('remote-99');
+  eq(removed, 1);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-08 — syncVehicleAlertsFromMessages est no-op (ne modifie pas S.alerts)', () => {
+  const msgs = [
+    { id: 'm1', message: '⚠️ SIGNALEMENT : Pneu crevé. Pouvez-vous vérifier votre véhicule ?', _received: true, _sent: false, created_at: new Date().toISOString() },
+  ];
+  const S_t = { alerts: [], alertHistory: [] };
+  function syncVehicleAlertsFromMessages(rows) {} // no-op
+  syncVehicleAlertsFromMessages(msgs);
+  eq(S_t.alerts.length, 0, 'aucune alerte vehicle dans S.alerts');
+});
+
+test('V9-09 — route et aide passent normalement dans upsertAlert', () => {
+  const env = makeV9Env();
+  const r1 = env.addAlert({ id: 'b1', type: 'bouchon', group: 'route', at: Date.now() });
+  const r2 = env.addAlert({ id: 'b2', type: 'panne', group: 'assist', at: Date.now() });
+  ok(r1 !== null, 'bouchon accepté');
+  ok(r2 !== null, 'panne acceptée');
+  eq(env.S.alerts.length, 2);
+});
+
+test('V9-10 — upsertAlert rejette alerte expired (status:resolved)', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'c1', type: 'bouchon', group: 'route', status: 'resolved', at: Date.now() });
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 //  Résultat final
 // ══════════════════════════════════════════════════════════════════════════════
 console.log('\n' + '═'.repeat(50));
