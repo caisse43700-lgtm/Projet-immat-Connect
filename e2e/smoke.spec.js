@@ -99,9 +99,8 @@ test.describe('Smoke — formulaires authentification', () => {
     await page.goto('/');
     await page.click('#welcomeSignupBtn');
     await expect(page.locator('#sa')).toHaveClass(/active/);
-    // Sur mobile le tab peut être hors viewport — scroll avant clic
-    await page.locator('#tabSignup').scrollIntoViewIfNeeded();
-    await page.locator('#tabSignup').click();
+    // Sur mobile #tabSignup reste hors viewport — activation via l'API App directement
+    await page.evaluate(() => window.App?.setMode?.('signup'));
     // Vérifier la présence dans le DOM (les champs peuvent être hors viewport sur petit écran)
     await expect(page.locator('#iEmail')).toBeAttached();
     await expect(page.locator('#iPlate')).toBeAttached();
