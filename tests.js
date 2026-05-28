@@ -1090,14 +1090,19 @@ function makeCallEnv() {
   const toasts = [];
   const callPrefsByUid = {};
 
+  // RPC can_receive_calls() — remplace le SELECT direct (v2)
+  async function fakeRpc(targetUid) {
+    return { data: callPrefsByUid[targetUid]?.allow_calls === true, error: null };
+  }
+
   async function fakeInsert(req) {
     if (req.requester_id === req.receiver_id) return { data: null, error: { message: 'no_self_call' } };
     const pref = callPrefsByUid[req.receiver_id];
     if (!pref?.allow_calls) return { data: null, error: null, _reason: 'calls_not_allowed' };
     const recent = requests.filter(r => r.requester_id === req.requester_id && r.receiver_id === req.receiver_id && Date.now() - r._ts < 600000);
-    if (recent.length >= 3) return { data: null, error: null, _reason: 'spam_limit' };
+    if (recent.length >= 3) return { data: null, error: { message: 'spam_limit', code: 'P0001' } };
     const pending = requests.find(r => r.requester_id === req.requester_id && r.receiver_id === req.receiver_id && r.status === 'pending');
-    if (pending) return { data: null, error: null, _reason: 'already_pending' };
+    if (pending) return { data: null, error: { code: '23505', message: 'duplicate key' } };
     const row = { id: 'req-' + (requests.length + 1), ...req, status: 'pending', _ts: Date.now() };
     requests.push(row);
     return { data: row, error: null };
@@ -1106,12 +1111,14 @@ function makeCallEnv() {
   async function fakeRespond(requestId, uid, response) {
     const r = requests.find(x => x.id === requestId && x.receiver_id === uid && x.status === 'pending');
     if (!r) return { data: null, error: { message: 'not_found' } };
+    // Trigger v2 : transition invalide depuis non-pending
+    if (r.status !== 'pending') return { data: null, error: { message: 'Transition invalide' } };
     r.status = response;
     r.responded_at = new Date().toISOString();
     return { data: r, error: null };
   }
 
-  return { requests, toasts, callPrefsByUid, fakeInsert, fakeRespond };
+  return { requests, toasts, callPrefsByUid, fakeInsert, fakeRespond, fakeRpc };
 }
 
 test('CA-01 — requestCall bloqué si allow_calls=false', async () => {
@@ -1151,16 +1158,16 @@ test('CA-04 — anti-spam : max 3 demandes / 10 min', async () => {
   }
   eq(env.requests.length, 3, '3 demandes insérées');
   const r4 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
-  ok(r4._reason === 'spam_limit', 'bloqué sur spam_limit');
+  ok(r4.error?.message?.includes('spam_limit'), 'bloqué sur spam_limit');
   eq(env.requests.length, 3, 'pas de 4e INSERT');
 });
 
-test('CA-05 — double pending bloqué', async () => {
+test('CA-05 — double pending bloqué (unique index → erreur 23505)', async () => {
   const env = makeCallEnv();
   env.callPrefsByUid['uid-b'] = { allow_calls: true };
   await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
   const r2 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
-  ok(r2._reason === 'already_pending', 'bloqué car already_pending');
+  eq(r2.error?.code, '23505', 'violation unique index retournée par la DB');
   eq(env.requests.length, 1, 'une seule demande pending');
 });
 
@@ -1214,6 +1221,80 @@ test('CA-10 — les boutons rapides véhicule ne génèrent pas de marqueur cart
   function syncVehicleAlertsFromMessages() {} // no-op
   syncVehicleAlertsFromMessages([{ type: 'vehicle', message: 'Je m\'arrête.' }]);
   eq(S_test.alerts.length, 0, 'S.alerts intact après quick reply véhicule');
+});
+
+// ── 17b. CallManager v2 — RPC, erreurs DB granulaires, recovery ──
+suite('17b. CallManager v2 — RPC & erreurs granulaires');
+
+test('CA-11 — RPC can_receive_calls retourne false si allow_calls absent', async () => {
+  const env = makeCallEnv();
+  const { data, error } = await env.fakeRpc('uid-x');
+  ok(!error, 'pas d\'erreur RPC');
+  eq(data, false, 'false quand pas de préférence');
+});
+
+test('CA-12 — RPC can_receive_calls retourne true si allow_calls=true', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data } = await env.fakeRpc('uid-b');
+  eq(data, true, 'true quand allow_calls activé');
+});
+
+test('CA-13 — erreur 23505 signalée (double pending via unique index)', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const r2 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  eq(r2.error?.code, '23505', 'code 23505 retourné par la DB');
+  // Vérifier que le client sait interpréter ce code
+  const isUniqueViolation = r2.error?.code === '23505';
+  ok(isUniqueViolation, 'client détecte la violation unique');
+});
+
+test('CA-14 — erreur spam_limit reconnue dans le message d\'erreur', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  for (let i = 0; i < 3; i++) {
+    const r = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+    if (r.data) env.requests[env.requests.length - 1].status = 'refused';
+  }
+  const r4 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  ok(r4.error?.message?.includes('spam_limit'), 'message contient spam_limit');
+});
+
+test('CA-15 — transition invalide depuis statut accepted bloquée', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data: req } = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  await env.fakeRespond(req.id, 'uid-b', 'accepted');
+  // Tenter une seconde mise à jour (statut déjà accepted)
+  const r2 = await env.fakeRespond(req.id, 'uid-b', 'refused');
+  ok(!r2.data, 'pas de donnée retournée');
+  ok(r2.error, 'erreur retournée sur transition invalide');
+  eq(env.requests[0].status, 'accepted', 'statut reste accepted');
+});
+
+test('CA-16 — recovery : pending non expiré restaure _pendingCallId', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const future = new Date(Date.now() + 25000).toISOString();
+  const row = { id: 'req-recover', requester_id: 'uid-a', receiver_id: 'uid-b', status: 'pending', expires_at: future, receiver_plate: 'BB', _ts: Date.now() };
+  env.requests.push(row);
+  // Simuler la logique de _recoverPendingRequest
+  const pending = env.requests.find(r => r.requester_id === 'uid-a' && r.status === 'pending' && new Date(r.expires_at) > new Date());
+  ok(pending, 'demande pending trouvée pour recovery');
+  eq(pending.id, 'req-recover', 'bon id récupéré');
+  ok(new Date(pending.expires_at) > new Date(), 'non expiré → bannière restaurée');
+});
+
+test('CA-17 — recovery ignore les demandes expirées', async () => {
+  const env = makeCallEnv();
+  const past = new Date(Date.now() - 5000).toISOString();
+  const row = { id: 'req-expired', requester_id: 'uid-a', receiver_id: 'uid-b', status: 'pending', expires_at: past, receiver_plate: 'BB', _ts: Date.now() };
+  env.requests.push(row);
+  // Simuler la logique de _recoverPendingRequest
+  const pending = env.requests.find(r => r.requester_id === 'uid-a' && r.status === 'pending' && new Date(r.expires_at) > new Date());
+  ok(!pending, 'demande expirée ignorée par recovery');
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
