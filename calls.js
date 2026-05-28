@@ -8,10 +8,11 @@
  *   acceptCall(id)            → UPDATE accepted → ouvre conversation
  *   refuseCall(id)            → UPDATE refused
  *
- * Anti-abus (frontend) :
- *   - Vérifie allow_calls avant tout INSERT
- *   - Max 3 demandes / 10 min entre les mêmes utilisateurs
- *   - Bloque si une demande pending existe déjà
+ * Anti-abus :
+ *   - Vérifie allow_calls via RPC can_receive_calls() (SECURITY DEFINER)
+ *   - Anti-spam + unicité pending garantis par triggers DB (backend)
+ *   - Gestion erreurs 23505 / spam_limit / cooldown_active
+ *   - Recovery bannière après refresh + visibilitychange
  *   - Expiration auto 30 s côté UI
  */
 const CallManager = (function () {
@@ -29,6 +30,27 @@ const CallManager = (function () {
     _uid = uid;
     _myPlate = String(myPlate || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
     subscribeIncomingCalls(uid);
+    _recoverPendingRequest();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') _recoverPendingRequest();
+    });
+  }
+
+  // ── Recovery : restaure la bannière après refresh ────────────────
+  async function _recoverPendingRequest() {
+    if (!_sb || !_uid) return;
+    const { data } = await _sb
+      .from('call_requests')
+      .select('id, receiver_plate, expires_at')
+      .eq('requester_id', _uid)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return;
+    if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
+    _pendingCallId = data.id;
+    _showSentBanner(data.receiver_plate, data.id);
   }
 
   // ── Ouvrir modal "Contacter" ─────────────────────────────────────
@@ -79,44 +101,20 @@ const CallManager = (function () {
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
 
-    // Vérifier call_preferences
-    const { data: pref } = await _sb
-      .from('call_preferences')
-      .select('allow_calls')
-      .eq('user_id', receiverId)
-      .maybeSingle();
-    if (!pref?.allow_calls) {
+    // Vérifier call_preferences via RPC sécurisée (évite d'exposer la table)
+    const { data: canCall, error: rpcErr } = await _sb
+      .rpc('can_receive_calls', { target_uid: receiverId });
+    if (rpcErr) {
+      console.warn('can_receive_calls RPC error', rpcErr);
+      _showError("Impossible de vérifier les préférences d'appel.");
+      return;
+    }
+    if (!canCall) {
       _showCallsNotAllowed(receiverPlate);
       return;
     }
 
-    // Anti-spam : max 3 / 10 min
-    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const { count } = await _sb
-      .from('call_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('requester_id', _uid)
-      .eq('receiver_id', receiverId)
-      .gte('created_at', since);
-    if ((count ?? 0) >= 3) {
-      _showError('Trop de demandes. Réessaie dans quelques minutes.');
-      return;
-    }
-
-    // Une seule demande pending entre les mêmes utilisateurs
-    const { data: existing } = await _sb
-      .from('call_requests')
-      .select('id')
-      .eq('requester_id', _uid)
-      .eq('receiver_id', receiverId)
-      .eq('status', 'pending')
-      .maybeSingle();
-    if (existing) {
-      _showError('Une demande est déjà en attente de réponse.');
-      return;
-    }
-
-    // Créer la demande
+    // Créer la demande (anti-spam et unicité garantis par triggers DB)
     const { data, error } = await _sb
       .from('call_requests')
       .insert({
@@ -129,9 +127,21 @@ const CallManager = (function () {
       .select()
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      if (error.code === '23505') {
+        _showError('Une demande est déjà en attente de réponse.');
+      } else if (error.message?.includes('spam_limit')) {
+        _showError('Trop de demandes. Réessaie dans quelques minutes.');
+      } else if (error.message?.includes('cooldown_active')) {
+        _showError('Demande refusée récemment. Réessaie dans quelques minutes.');
+      } else {
+        _showError("Impossible d'envoyer la demande d'appel.");
+        console.warn('call_requests INSERT error', error);
+      }
+      return;
+    }
+    if (!data) {
       _showError("Impossible d'envoyer la demande d'appel.");
-      console.warn('call_requests INSERT error', error);
       return;
     }
 
