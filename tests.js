@@ -1013,54 +1013,71 @@ test('V9-10 — upsertAlert rejette alerte expired (status:resolved)', () => {
   eq(env.S.alerts.length, 0);
 });
 
-test('V9-11 — dismissAlert ROUTE non-mine déclenche broadcast (propagation bidirectionnelle)', () => {
+// Helper pour simuler dismissAlert complet avec broadcast tracker
+function makeDismissEnv() {
   const env = makeV9Env();
   const broadcasts = [];
   const fakeCh = { send: (msg) => { broadcasts.push(msg); } };
   env.S.chCommunityReports = fakeCh;
   const isRouteAlertLocal = a => a?.group === 'route';
-  // Ajout d'une alerte ROUTE reçue (non-mine)
+  function dismissFull(id, opts = {}) {
+    const rid = String(id || '').trim();
+    const removed = [];
+    env.S.alerts = env.S.alerts.filter(a => {
+      const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+      const match = keys.includes(rid);
+      if (match) removed.push(a);
+      return !match;
+    });
+    removed.forEach(a => {
+      // Broadcast seulement si pas silent ET (_mine OU ROUTE)
+      if (a.remoteId && !opts?.silent && (a._mine || isRouteAlertLocal(a)))
+        fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
+    });
+    return removed.length;
+  }
+  env.dismissFull = dismissFull;
+  env.broadcasts = broadcasts;
+  return env;
+}
+
+test('V9-11 — dismissAlert ROUTE non-mine (silent=false) déclenche broadcast (propagation bidirectionnelle)', () => {
+  const env = makeDismissEnv();
   const saved = env.addAlert({ id: 'r99', remoteId: 'remote-99', type: 'bouchon', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
   ok(saved !== null, 'alerte ROUTE sauvegardée');
-  // dismiss étendu avec broadcast
-  const rid = String(saved.key || '');
-  const removed = [];
-  env.S.alerts = env.S.alerts.filter(a => {
-    const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
-    const match = keys.includes(rid);
-    if (match) removed.push(a);
-    return !match;
-  });
-  removed.forEach(a => {
-    if (a.remoteId && (a._mine || isRouteAlertLocal(a))) fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
-  });
+  env.dismissFull(saved.key, { silent: false });
   eq(env.S.alerts.length, 0, 'alerte retirée localement');
-  eq(broadcasts.length, 1, 'broadcast envoyé même si _mine=false sur ROUTE');
-  eq(broadcasts[0].payload.remoteId, 'remote-99');
+  eq(env.broadcasts.length, 1, 'broadcast envoyé même si _mine=false sur ROUTE');
+  eq(env.broadcasts[0].payload.remoteId, 'remote-99');
 });
 
 test('V9-12 — dismissAlert AIDE non-mine ne déclenche PAS broadcast (créateur seul peut résoudre)', () => {
-  const env = makeV9Env();
-  const broadcasts = [];
-  const fakeCh = { send: (msg) => { broadcasts.push(msg); } };
-  env.S.chCommunityReports = fakeCh;
-  const isRouteAlertLocal = a => a?.group === 'route';
-  // Ajout d'une alerte AIDE reçue (non-mine)
+  const env = makeDismissEnv();
   const saved = env.addAlert({ id: 'h10', remoteId: 'remote-10', type: 'panne', group: 'assist', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
   ok(saved !== null, 'alerte AIDE sauvegardée');
-  const rid = String(saved.key || '');
-  const removed = [];
-  env.S.alerts = env.S.alerts.filter(a => {
-    const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
-    const match = keys.includes(rid);
-    if (match) removed.push(a);
-    return !match;
-  });
-  removed.forEach(a => {
-    if (a.remoteId && (a._mine || isRouteAlertLocal(a))) fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
-  });
+  env.dismissFull(saved.key, { silent: false });
   eq(env.S.alerts.length, 0, 'alerte retirée localement');
-  eq(broadcasts.length, 0, 'pas de broadcast pour AIDE non-mine');
+  eq(env.broadcasts.length, 0, 'pas de broadcast pour AIDE non-mine');
+});
+
+test('V9-13 — dismissAlert ROUTE avec opts.silent=true ne re-broadcast pas (évite boucle infinie)', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'r88', remoteId: 'remote-88', type: 'accident', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte ROUTE sauvegardée');
+  // Simule la réception d'un broadcast : dismissAlert appelé avec silent:true
+  env.dismissFull(saved.key, { silent: true });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(env.broadcasts.length, 0, 'aucun re-broadcast quand silent=true (empêche boucle)');
+});
+
+test('V9-14 — dismissAlert ROUTE mine (silent=false) déclenche broadcast', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'r77', remoteId: 'remote-77', type: 'bouchon', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: true });
+  ok(saved !== null, 'alerte ROUTE créateur sauvegardée');
+  env.dismissFull(saved.key, { silent: false });
+  eq(env.S.alerts.length, 0, 'alerte retirée');
+  eq(env.broadcasts.length, 1, 'broadcast envoyé par le créateur');
+  eq(env.broadcasts[0].payload.remoteId, 'remote-77');
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
