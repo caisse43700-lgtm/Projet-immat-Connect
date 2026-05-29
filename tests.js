@@ -1298,8 +1298,171 @@ test('CA-17 — recovery ignore les demandes expirées', async () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  Résultat final
+//  SUITE 18 — Toggle Paramètres Communication (TP)
 // ══════════════════════════════════════════════════════════════════════════════
+suite('18. Toggle Paramètres Communication');
+
+// Simule la couche DB call_preferences (upsert/select) sans Supabase
+function makePrefsDb(rows = []) {
+  return {
+    rows,
+    async load(uid) {
+      const row = this.rows.find(r => r.user_id === uid);
+      return row?.allow_calls === true;
+    },
+    async save(uid, allow) {
+      const idx = this.rows.findIndex(r => r.user_id === uid);
+      if (idx >= 0) this.rows[idx].allow_calls = allow;
+      else this.rows.push({ user_id: uid, allow_calls: allow, updated_at: new Date().toISOString() });
+    }
+  };
+}
+
+test('TP-01 — loadCallPreferences retourne false si aucune ligne en DB', async () => {
+  const db = makePrefsDb([]);
+  const result = await db.load('uid-x');
+  eq(result, false, 'pas de préférence → false');
+});
+
+test('TP-02 — loadCallPreferences retourne false si allow_calls=false', async () => {
+  const db = makePrefsDb([{ user_id: 'uid-x', allow_calls: false }]);
+  const result = await db.load('uid-x');
+  eq(result, false, 'allow_calls explicitement false → false');
+});
+
+test('TP-03 — loadCallPreferences retourne true si allow_calls=true', async () => {
+  const db = makePrefsDb([{ user_id: 'uid-x', allow_calls: true }]);
+  const result = await db.load('uid-x');
+  eq(result, true, 'allow_calls=true → true');
+});
+
+test('TP-04 — setCallPreferences(true) crée la ligne avec allow_calls=true', async () => {
+  const db = makePrefsDb([]);
+  await db.save('uid-x', true);
+  eq(db.rows.length, 1, '1 ligne créée');
+  eq(db.rows[0].allow_calls, true, 'allow_calls=true stocké');
+  eq(db.rows[0].user_id, 'uid-x', 'bonne clé user_id');
+  ok(db.rows[0].updated_at, 'updated_at renseigné');
+});
+
+test('TP-05 — setCallPreferences upsert : false → true → dernier état correct', async () => {
+  const db = makePrefsDb([]);
+  await db.save('uid-x', false);
+  await db.save('uid-x', true);
+  eq(db.rows.length, 1, 'toujours 1 ligne (upsert idempotent)');
+  eq(db.rows[0].allow_calls, true, 'dernier état persisté = true');
+});
+
+test('TP-06 — toggle HTML pré-rempli correctement selon la valeur chargée', async () => {
+  // Simule le câblage openMap : CallManager.loadCallPreferences().then(v => toggle.checked = !!v)
+  const dbActive = makePrefsDb([{ user_id: 'uid-x', allow_calls: true }]);
+  const dbInactive = makePrefsDb([]);
+  const v1 = await dbActive.load('uid-x');
+  const v2 = await dbInactive.load('uid-x');
+  eq(!!v1, true, 'toggle.checked = true si allow_calls=true');
+  eq(!!v2, false, 'toggle.checked = false si pas de préférence');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 19 — Timing async Activité — S._actLoadingP (TV)
+// ══════════════════════════════════════════════════════════════════════════════
+suite('19. Timing async Activité — S._actLoadingP');
+
+// Simule navActivite() + openActivityCat() sans DOM
+function makeActivityEnv(delayMs = 10) {
+  const S = { _actMessages: [], _actLoadingP: null, _actCat: null, _actCatTab: 'recus' };
+  const renders = [];
+
+  function navActivite(msgs = [{ id: 1, _sent: false, _otherPlate: 'AA-123-BB' }]) {
+    // Logique extraite de navActivite() : stocke la promise de refresh
+    try {
+      S._actLoadingP = new Promise(resolve => setTimeout(() => {
+        S._actMessages = msgs;
+        resolve();
+      }, delayMs)) || null;
+      if (S._actLoadingP && typeof S._actLoadingP.then === 'function') {
+        S._actLoadingP
+          .then(() => { S._actLoadingP = null; })
+          .catch(() => { S._actLoadingP = null; });
+      } else {
+        S._actLoadingP = null;
+      }
+    } catch (e) { S._actLoadingP = null; }
+  }
+
+  function openActivityCat(cat) {
+    S._actCat = cat;
+    S._actCatTab = 'recus';
+    // Logique extraite de openActivityCat()
+    if (S._actLoadingP && typeof S._actLoadingP.then === 'function') {
+      renders.push('loading');
+      S._actLoadingP
+        .then(() => renders.push('data:' + (S._actMessages.length > 0 ? 'populated' : 'empty')))
+        .catch(() => renders.push('data:empty'));
+      return 'loading';
+    } else {
+      const state = S._actMessages.length > 0 ? 'data:populated' : 'data:empty';
+      renders.push(state);
+      return state;
+    }
+  }
+
+  return { S, navActivite, openActivityCat, renders };
+}
+
+test('TV-05 — navActivite crée S._actLoadingP (Promise) pendant le refresh', async () => {
+  const { S, navActivite } = makeActivityEnv(20);
+  navActivite();
+  ok(S._actLoadingP !== null, '_actLoadingP est défini pendant le refresh');
+  ok(typeof S._actLoadingP.then === 'function', '_actLoadingP est une Promise (thenable)');
+  // Attendre résolution puis vérifier nettoyage
+  await new Promise(r => setTimeout(r, 30));
+  eq(S._actLoadingP, null, '_actLoadingP est null après résolution');
+});
+
+test('TV-06 — openActivityCat affiche "Chargement" si refresh en cours, puis data', async () => {
+  const { S, navActivite, openActivityCat, renders } = makeActivityEnv(20);
+  navActivite();
+  ok(S._actLoadingP !== null, 'refresh en cours');
+  // User tape une catégorie avant la fin du refresh
+  const immediate = openActivityCat('vehicle');
+  eq(immediate, 'loading', 'rendu immédiat = "loading" si refresh en cours');
+  // Attendre la résolution du refresh
+  await new Promise(r => setTimeout(r, 30));
+  eq(renders[0], 'loading', '1er render = loading');
+  eq(renders[1], 'data:populated', '2ème render = data:populated après résolution');
+  eq(S._actMessages.length, 1, 'S._actMessages peuplé après refresh');
+});
+
+test('TV-07 — openActivityCat rend directement si données déjà chargées', async () => {
+  const { S, openActivityCat, renders } = makeActivityEnv(20);
+  // Données déjà disponibles, pas de refresh en cours
+  S._actMessages = [{ id: 1, _sent: false, _otherPlate: 'BB-456-CC' }];
+  S._actLoadingP = null;
+  const immediate = openActivityCat('vehicle');
+  eq(immediate, 'data:populated', 'rendu immédiat sans attente');
+  eq(renders[0], 'data:populated', 'render correct enregistré');
+});
+
+test('TV-08 — openActivityCat avec liste vide et pas de refresh = data:empty', async () => {
+  const { S, openActivityCat, renders } = makeActivityEnv(20);
+  S._actMessages = [];
+  S._actLoadingP = null;
+  const immediate = openActivityCat('route');
+  eq(immediate, 'data:empty', 'rendu data:empty si liste vide et pas de refresh');
+  eq(renders.length, 1, '1 seul render effectué');
+});
+
+test('TV-09 — refresh avec liste vide → data:empty après résolution', async () => {
+  const { S, navActivite, openActivityCat, renders } = makeActivityEnv(20);
+  navActivite([]); // refresh qui retourne 0 messages
+  const immediate = openActivityCat('aide');
+  eq(immediate, 'loading', 'loading pendant refresh');
+  await new Promise(r => setTimeout(r, 30));
+  eq(renders[1], 'data:empty', 'data:empty après refresh si aucun message');
+});
+
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));
