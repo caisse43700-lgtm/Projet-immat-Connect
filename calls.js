@@ -45,7 +45,7 @@ const CallManager = (function () {
     if (!_sb || !_uid) return;
     const { data } = await _sb
       .from('call_requests')
-      .select('id, receiver_plate, expires_at')
+      .select('id, receiver_plate, receiver_id, expires_at')
       .eq('requester_id', _uid)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -53,8 +53,17 @@ const CallManager = (function () {
       .maybeSingle();
     if (!data) return;
     if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
+    let receiverPlate = data.receiver_plate;
+    if (!receiverPlate && data.receiver_id) {
+      const { data: prof } = await _sb
+        .from('profiles')
+        .select('owner_plate')
+        .eq('id', data.receiver_id)
+        .maybeSingle();
+      receiverPlate = prof?.owner_plate || null;
+    }
     _pendingCallId = data.id;
-    _showSentBanner(data.receiver_plate, data.id);
+    _showSentBanner(receiverPlate, data.id);
   }
 
   // ── Ouvrir modal "Contacter" ─────────────────────────────────────
@@ -261,7 +270,7 @@ const CallManager = (function () {
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
-    if (el) el.textContent = (plate && plate.trim()) ? plate.trim() : 'le conducteur';
+    if (el) el.textContent = (plate && plate.trim()) ? plate.trim().toUpperCase() : '';
     banner.dataset.requestId = requestId;
     banner.classList.add('show');
     setTimeout(() => {

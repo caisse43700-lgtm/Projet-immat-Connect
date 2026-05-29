@@ -331,7 +331,7 @@
 <!-- Bannière : demande d'appel envoyée -->
 <div id="callSentBanner" class="call-sent-banner">
   <div class="call-sent-icon">🤝</div>
-  <div class="call-sent-text">Demande de contact envoyée à <strong id="callSentPlate">le conducteur</strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
+  <div class="call-sent-text">Demande de contact envoyée à <strong id="callSentPlate" style="color:var(--primary,#2979ff)"></strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
   <button class="call-sent-cancel"
     onclick="CallManager.cancelCallRequest(document.getElementById('callSentBanner').dataset.requestId)">Annuler</button>
 </div>
@@ -1150,7 +1150,7 @@ App._actModCard=function(item,cat){
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
   if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_vp}')">Contacter</button>`;}
+  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button>${_vp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_vp}')">Contacter</button>`:''}`; }
   else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_rp}')">Contacter</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
   else if(a.group==='assist')actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`;
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}">
