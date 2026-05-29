@@ -258,11 +258,10 @@ const CallManager = (function () {
   }
 
   function _showSentBanner(plate, requestId) {
-    try { if (typeof toast === 'function') toast('Demande de contact envoyée à ' + (plate || 'le conducteur') + '.', 'ok'); } catch (e) {}
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
-    if (el) el.textContent = plate || 'le conducteur';
+    if (el) el.textContent = (plate && plate.trim()) ? plate.trim() : 'le conducteur';
     banner.dataset.requestId = requestId;
     banner.classList.add('show');
     setTimeout(() => {
