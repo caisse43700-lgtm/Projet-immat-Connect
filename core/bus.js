@@ -2,25 +2,46 @@
  *
  * Canal de communication entre organes.
  * Phase 1 : observe et journalise. Ne bloque rien.
+ *
+ * Règle : le bus transporte, il ne décide pas.
+ * Les événements sont groupés par domaine pour faciliter l'extension.
+ * Ajouter un organe = ajouter un groupe de constantes ici, rien d'autre.
  */
 'use strict';
 
 const EVENTS = Object.freeze({
-  ROAD_CREATED:            'ROAD_CREATED',
-  ROAD_RESOLVED:           'ROAD_RESOLVED',
-  HELP_CREATED:            'HELP_CREATED',
-  HELP_RESOLVED:           'HELP_RESOLVED',
-  VEHICLE_MESSAGE_SENT:    'VEHICLE_MESSAGE_SENT',
-  VEHICLE_MESSAGE_RECEIVED:'VEHICLE_MESSAGE_RECEIVED',
-  QUICK_REPLY_SENT:        'QUICK_REPLY_SENT',
-  CONTACT_OPENED:          'CONTACT_OPENED',
-  CALL_REQUESTED:          'CALL_REQUESTED',
-  CALL_ACCEPTED:           'CALL_ACCEPTED',
-  CALL_REFUSED:            'CALL_REFUSED',
-  CALL_EXPIRED:            'CALL_EXPIRED',
-  SETTINGS_UPDATED:        'SETTINGS_UPDATED',
-  BADGE_RECOMPUTED:        'BADGE_RECOMPUTED',
-  INVARIANT_VIOLATED:      'INVARIANT_VIOLATED',
+
+  // ── Domaine Route ─────────────────────────────────────────────────
+  ROAD_CREATED:                'ROAD_CREATED',
+  ROAD_RESOLVED:               'ROAD_RESOLVED',
+
+  // ── Domaine Aide ──────────────────────────────────────────────────
+  HELP_CREATED:                'HELP_CREATED',
+  HELP_RESOLVED:               'HELP_RESOLVED',
+
+  // ── Domaine Véhicule — cycle de vie du signalement ────────────────
+  VEHICLE_ALERT_CREATED:       'VEHICLE_ALERT_CREATED',
+  VEHICLE_ALERT_PERSISTED:     'VEHICLE_ALERT_PERSISTED',
+  VEHICLE_ALERT_STATUS_CHANGED:'VEHICLE_ALERT_STATUS_CHANGED',
+  VEHICLE_MESSAGE_SENT:        'VEHICLE_MESSAGE_SENT',
+  VEHICLE_MESSAGE_RECEIVED:    'VEHICLE_MESSAGE_RECEIVED',
+  VEHICLE_QUICK_REPLY_SENT:    'VEHICLE_QUICK_REPLY_SENT',
+  VEHICLE_MESSAGE_DELETED:     'VEHICLE_MESSAGE_DELETED',
+  VEHICLE_DELETION_PROPAGATED: 'VEHICLE_DELETION_PROPAGATED',
+
+  // ── Domaine Contact / Appels ──────────────────────────────────────
+  QUICK_REPLY_SENT:            'QUICK_REPLY_SENT',
+  CONTACT_OPENED:              'CONTACT_OPENED',
+  CALL_REQUESTED:              'CALL_REQUESTED',
+  CALL_ACCEPTED:               'CALL_ACCEPTED',
+  CALL_REFUSED:                'CALL_REFUSED',
+  CALL_EXPIRED:                'CALL_EXPIRED',
+
+  // ── Système ───────────────────────────────────────────────────────
+  SETTINGS_UPDATED:            'SETTINGS_UPDATED',
+  BADGE_RECOMPUTED:            'BADGE_RECOMPUTED',
+  INVARIANT_VIOLATED:          'INVARIANT_VIOLATED',
+
 });
 
 const ImmatBus = (function () {

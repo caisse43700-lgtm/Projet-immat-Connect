@@ -1774,6 +1774,109 @@ test('VO-20 — getLog retourne une copie (pas la référence interne)', () => {
   eq(log1.length, log2.length);
 });
 
+// ─── Suite 22 — ImmatBus : contrat générique + extension Véhicule ────────────
+// Étape 1 VehicleOrgan : vérifie que les 6 nouveaux événements sont présents
+// et que le bus reste générique (transport pur, zero logique métier).
+
+suite('22. ImmatBus — contrat générique + extension Véhicule');
+
+test('IB-01 — 6 nouveaux événements Vehicle présents dans EVENTS', () => {
+  const required = [
+    'VEHICLE_ALERT_CREATED',
+    'VEHICLE_ALERT_PERSISTED',
+    'VEHICLE_ALERT_STATUS_CHANGED',
+    'VEHICLE_QUICK_REPLY_SENT',
+    'VEHICLE_MESSAGE_DELETED',
+    'VEHICLE_DELETION_PROPAGATED',
+  ];
+  required.forEach(name => {
+    ok(EVENTS[name] === name, 'EVENTS.' + name + ' manquant ou incorrect');
+  });
+});
+
+test('IB-02 — événements existants non cassés', () => {
+  const existing = [
+    'ROAD_CREATED', 'ROAD_RESOLVED',
+    'HELP_CREATED', 'HELP_RESOLVED',
+    'VEHICLE_MESSAGE_SENT', 'VEHICLE_MESSAGE_RECEIVED',
+    'QUICK_REPLY_SENT', 'CONTACT_OPENED',
+    'CALL_REQUESTED', 'CALL_ACCEPTED', 'CALL_REFUSED', 'CALL_EXPIRED',
+    'SETTINGS_UPDATED', 'BADGE_RECOMPUTED', 'INVARIANT_VIOLATED',
+  ];
+  existing.forEach(name => {
+    ok(EVENTS[name] === name, 'EVENTS.' + name + ' régressé');
+  });
+});
+
+test('IB-03 — EVENTS est immuable (Object.freeze)', () => {
+  let threw = false;
+  try { EVENTS.FAKE_EVENT = 'FAKE'; } catch (e) { threw = true; }
+  ok(!EVENTS.FAKE_EVENT, 'EVENTS accepte des ajouts — non gelé');
+});
+
+test('IB-04 — aucun doublon de valeur dans EVENTS', () => {
+  const values = Object.values(EVENTS);
+  const unique = new Set(values);
+  eq(unique.size, values.length);
+});
+
+test('IB-05 — VEHICLE_QUICK_REPLY_SENT distinct de QUICK_REPLY_SENT', () => {
+  ok(EVENTS.VEHICLE_QUICK_REPLY_SENT !== EVENTS.QUICK_REPLY_SENT,
+    'VEHICLE_QUICK_REPLY_SENT et QUICK_REPLY_SENT doivent être distincts');
+});
+
+test('IB-06 — VEHICLE_ALERT_CREATED : emit + on retransmet le payload intact', () => {
+  let received = null;
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_CREATED, e => { received = e; });
+  ImmatBus.emit(EVENTS.VEHICLE_ALERT_CREATED, { alertId: 'uuid-1', plate: 'AB-123-CD', urgent: false });
+  unsub();
+  ok(received !== null, 'handler non appelé');
+  eq(received.payload.alertId, 'uuid-1');
+  eq(received.payload.plate, 'AB-123-CD');
+});
+
+test('IB-07 — VEHICLE_ALERT_PERSISTED : emit + on retransmet le payload intact', () => {
+  let received = null;
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_PERSISTED, e => { received = e; });
+  ImmatBus.emit(EVENTS.VEHICLE_ALERT_PERSISTED, { alertId: 'uuid-1', senderPlate: 'AB-123-CD' });
+  unsub();
+  ok(received !== null, 'handler non appelé');
+  eq(received.payload.alertId, 'uuid-1');
+});
+
+test('IB-08 — VEHICLE_ALERT_STATUS_CHANGED : payload previousState/newState conservés', () => {
+  let received = null;
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_STATUS_CHANGED, e => { received = e; });
+  ImmatBus.emit(EVENTS.VEHICLE_ALERT_STATUS_CHANGED, {
+    alertId: 'uuid-2', previousState: 'PERSISTED', newState: 'DELIVERED',
+  });
+  unsub();
+  eq(received.payload.previousState, 'PERSISTED');
+  eq(received.payload.newState, 'DELIVERED');
+});
+
+test('IB-09 — VEHICLE_MESSAGE_DELETED + VEHICLE_DELETION_PROPAGATED : payload intact', () => {
+  const results = {};
+  const u1 = ImmatBus.on(EVENTS.VEHICLE_MESSAGE_DELETED, e => { results.deleted = e.payload; });
+  const u2 = ImmatBus.on(EVENTS.VEHICLE_DELETION_PROPAGATED, e => { results.propagated = e.payload; });
+  ImmatBus.emit(EVENTS.VEHICLE_MESSAGE_DELETED, { messageId: 'mid-1', deletedBy: 'AB-123-CD' });
+  ImmatBus.emit(EVENTS.VEHICLE_DELETION_PROPAGATED, { messageId: 'mid-1', propagatedAt: 123456 });
+  u1(); u2();
+  eq(results.deleted.messageId, 'mid-1');
+  eq(results.propagated.propagatedAt, 123456);
+});
+
+test('IB-10 — le bus ne modifie jamais le payload (transport pur)', () => {
+  const original = { alertId: 'uuid-x', data: { nested: true }, arr: [1, 2, 3] };
+  let received = null;
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_CREATED, e => { received = e.payload; });
+  ImmatBus.emit(EVENTS.VEHICLE_ALERT_CREATED, original);
+  unsub();
+  eq(received.alertId, original.alertId);
+  eq(received.data.nested, original.data.nested);
+  eq(received.arr.length, original.arr.length);
+});
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));
