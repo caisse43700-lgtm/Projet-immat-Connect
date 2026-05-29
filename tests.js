@@ -25,6 +25,10 @@ function test(name, fn) {
   }
 }
 
+const _asyncTests = [];
+function suiteAsync(name) { _suite = name; }
+function testAsync(name, fn) { _asyncTests.push({ suite: _suite, name, fn }); }
+
 function eq(a, b) {
   if (a !== b) throw new Error('attendu ' + JSON.stringify(b) + ', reçu ' + JSON.stringify(a));
 }
@@ -1877,7 +1881,112 @@ test('IB-10 — le bus ne modifie jamais le payload (transport pur)', () => {
   eq(received.arr.length, original.arr.length);
 });
 
-console.log('\n' + '═'.repeat(50));
-console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
-console.log('═'.repeat(50));
-if (_fail > 0) process.exit(1);
+// ─── Suite 23 — VehicleOrgan : createAlert() — VEHICLE-001 ───────────────────
+// Étape 2a : implémentation de createAlert() avec persist-before-notify.
+// Le runner async exécute ces tests après toutes les suites synchrones.
+
+suiteAsync('23. VehicleOrgan — createAlert() — VEHICLE-001 Persist before notify');
+
+function _makeVehicleClient(fail) {
+  return {
+    from: () => ({
+      insert: () => Promise.resolve(
+        fail ? { error: { message: 'DB_ERROR' } } : { error: null }
+      ),
+    }),
+  };
+}
+
+testAsync('VL-02a — VEHICLE_ALERT_CREATED émis synchroniquement avant INSERT DB', async () => {
+  VehicleOrgan.clearLog();
+  const events = [];
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_CREATED, e => events.push(e));
+
+  VehicleOrgan.init(_makeVehicleClient(false), { myPlate: 'AB-123-CD', bus: ImmatBus });
+  const p = VehicleOrgan.createAlert('XY-456-ZA', '⚠️ SIGNALEMENT : pneu plat.');
+
+  // Émission synchrone — vérifiable avant await
+  unsub();
+  ok(events.length === 1, 'VEHICLE_ALERT_CREATED non émis avant DB (count=' + events.length + ')');
+  eq(events[0].payload.plate, 'XY-456-ZA');
+
+  await p;
+});
+
+testAsync('VL-02b — DB OK : alertId retourné, VEHICLE_ALERT_PERSISTED émis', async () => {
+  VehicleOrgan.clearLog();
+  const events = [];
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_PERSISTED, e => events.push(e));
+
+  VehicleOrgan.init(_makeVehicleClient(false), { myPlate: 'AB-123-CD', bus: ImmatBus });
+  const result = await VehicleOrgan.createAlert('XY-456-ZA', '⚠️ SIGNALEMENT : pneu plat.');
+  unsub();
+
+  ok(result.alertId !== null, 'alertId absent');
+  ok(!result.error, 'error inattendu : ' + JSON.stringify(result.error));
+  ok(typeof result.alertId === 'string' && result.alertId.length > 0, 'alertId invalide');
+  ok(events.length === 1, 'VEHICLE_ALERT_PERSISTED non émis sur le bus');
+  eq(events[0].payload.alertId, result.alertId);
+  eq(events[0].payload.plate, 'XY-456-ZA');
+});
+
+testAsync('VL-02c — DB KO : error retourné, VEHICLE_ALERT_PERSISTED PAS émis (VEHICLE-001)', async () => {
+  VehicleOrgan.clearLog();
+  let persistedFired = false;
+  const unsub = ImmatBus.on(EVENTS.VEHICLE_ALERT_PERSISTED, () => { persistedFired = true; });
+
+  VehicleOrgan.init(_makeVehicleClient(true), { myPlate: 'AB-123-CD', bus: ImmatBus });
+  const result = await VehicleOrgan.createAlert('XY-456-ZA', '⚠️ SIGNALEMENT : pneu plat.');
+  unsub();
+
+  ok(result.error, 'error attendu mais absent');
+  ok(result.alertId === null, 'alertId doit être null si DB échoue');
+  ok(!persistedFired, 'VEHICLE_ALERT_PERSISTED NE DOIT PAS être émis si INSERT DB échoue');
+});
+
+testAsync('VL-02d — DB KO : VEHICLE_ALERT_PERSISTED absent du log interne (no ghost state)', async () => {
+  VehicleOrgan.clearLog();
+
+  VehicleOrgan.init(_makeVehicleClient(true), { myPlate: 'AB-123-CD', bus: ImmatBus });
+  await VehicleOrgan.createAlert('XY-456-ZA', '⚠️ SIGNALEMENT : pneu plat.');
+
+  const log = VehicleOrgan.getLog();
+  const hasPersisted = log.some(e => e.type === 'VEHICLE_ALERT_PERSISTED');
+  ok(!hasPersisted, 'VEHICLE_ALERT_PERSISTED dans le log malgré DB KO — état fantôme');
+
+  const hasFailed = log.some(e => e.type === 'VEHICLE_ALERT_FAILED');
+  ok(hasFailed, 'VEHICLE_ALERT_FAILED absent du log — échec non tracé');
+});
+
+testAsync('VL-02e — sans client : retourne NO_CLIENT, aucun crash', async () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.init(null, { myPlate: 'AB-123-CD', bus: ImmatBus });
+  const result = await VehicleOrgan.createAlert('XY-456-ZA', '⚠️ SIGNALEMENT : pneu plat.');
+
+  ok(result.error === 'NO_CLIENT', 'error attendu NO_CLIENT, reçu : ' + result.error);
+  ok(result.alertId === null, 'alertId doit être null sans client');
+});
+
+// ─── Exécution finale : suites synchrones terminées + async ──────────────────
+(async () => {
+  let currentSuite = '';
+  for (const t of _asyncTests) {
+    if (t.suite !== currentSuite) {
+      currentSuite = t.suite;
+      console.log('\n── ' + currentSuite + ' ──');
+    }
+    try {
+      await t.fn();
+      console.log('  ✅ ' + t.name);
+      _pass++;
+    } catch (e) {
+      console.log('  ❌ ' + t.name + '\n     → ' + e.message);
+      _fail++;
+    }
+  }
+
+  console.log('\n' + '═'.repeat(50));
+  console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
+  console.log('═'.repeat(50));
+  if (_fail > 0) process.exit(1);
+})();
