@@ -170,12 +170,13 @@
 }
 .call-incoming-accept:active { opacity: .8; }
 
-/* ── Bannière "Demande d'appel envoyée" ──────────────────────────── */
+/* ── Bannière "Demande de contact envoyée" ───────────────────────── */
 .call-sent-banner {
   position: fixed;
-  bottom: 82px;
+  top: 72px;
+  bottom: auto;
   left: 50%;
-  transform: translateX(-50%) translateY(140%);
+  transform: translateX(-50%) translateY(-130%);
   background: #0f2035;
   border: 1.5px solid rgba(41,121,255,.3);
   border-radius: 14px;
@@ -187,7 +188,7 @@
   width: calc(100% - 32px);
   max-width: 360px;
   box-shadow: 0 4px 24px rgba(0,0,0,.4);
-  transition: transform .25s ease;
+  transition: transform .28s cubic-bezier(.22,1,.36,1);
 }
 .call-sent-banner.show {
   transform: translateX(-50%) translateY(0);
