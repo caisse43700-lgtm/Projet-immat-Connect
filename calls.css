@@ -191,7 +191,7 @@
   transition: transform .28s cubic-bezier(.22,1,.36,1);
 }
 .call-sent-banner.show {
-  transform: translateX(-50%) translateY(calc(env(safe-area-inset-top, 44px) + 80px));
+  transform: translateX(-50%) translateY(calc(env(safe-area-inset-top, 44px) + 110px));
 }
 .call-sent-icon { font-size: 20px; }
 .call-sent-text {

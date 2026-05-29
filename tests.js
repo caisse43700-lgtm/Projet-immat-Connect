@@ -1463,6 +1463,193 @@ test('TV-09 — refresh avec liste vide → data:empty après résolution', asyn
 });
 
 
+// ═══════════════════════════════════════════════════════════════════
+// Suite 20 — ImmatOrganism V1 : invariants, bus, brain, governance
+// ═══════════════════════════════════════════════════════════════════
+
+const { INVARIANTS }        = require('./core/invariants');
+const { ImmatBus, EVENTS }  = require('./core/bus');
+const { ImmatBrain }        = require('./core/brain');
+const { ImmatGovernance }   = require('./core/governance');
+// ImmatOrganism dépend des globals window.ImmatBus / window.ImmatBrain
+// → testé via les modules directs ci-dessus
+
+suite('20. ImmatOrganism V1 — invariants.js');
+
+test('IO-01 — 14 invariants déclarés', () => {
+  eq(Object.keys(INVARIANTS).length, 14);
+});
+
+test('IO-02 — INV-001 présent et critique', () => {
+  eq(INVARIANTS['INV-001'].severity, 'critical');
+  eq(INVARIANTS['INV-001'].id, 'INV-001');
+});
+
+test('IO-03 — INV-010 (no phone) critique', () => {
+  eq(INVARIANTS['INV-010'].severity, 'critical');
+});
+
+test('IO-04 — INV-014 (IA ne décide pas seule) critique', () => {
+  eq(INVARIANTS['INV-014'].severity, 'critical');
+});
+
+test('IO-05 — invariants sont immuables (Object.freeze)', () => {
+  let threw = false;
+  try {
+    INVARIANTS['INV-001'].severity = 'low';
+  } catch (e) {
+    threw = true;
+  }
+  // strict mode lance une TypeError, sinon la valeur reste inchangée
+  if (!threw) eq(INVARIANTS['INV-001'].severity, 'critical');
+});
+
+suite('20b. ImmatOrganism V1 — bus.js');
+
+test('IO-06 — emit + on : handler reçoit l\'événement', () => {
+  let received = null;
+  ImmatBus.on('TEST_EVENT', e => { received = e; });
+  ImmatBus.emit('TEST_EVENT', { foo: 'bar' });
+  if (!received) throw new Error('handler non appelé');
+  eq(received.payload.foo, 'bar');
+  eq(received.event, 'TEST_EVENT');
+});
+
+test('IO-07 — wildcard * reçoit tous les événements', () => {
+  let count = 0;
+  const unsub = ImmatBus.on('*', () => count++);
+  ImmatBus.emit('EVT_A', {});
+  ImmatBus.emit('EVT_B', {});
+  if (count < 2) throw new Error('wildcard manqué, count=' + count);
+  unsub();
+});
+
+test('IO-08 — journal enregistre les événements', () => {
+  ImmatBus.clearJournal();
+  ImmatBus.emit('JOURNAL_TEST', { x: 1 });
+  const j = ImmatBus.getJournal();
+  eq(j.length, 1);
+  eq(j[0].event, 'JOURNAL_TEST');
+});
+
+test('IO-09 — off() supprime le handler', () => {
+  let count = 0;
+  const fn = () => count++;
+  ImmatBus.on('OFF_TEST', fn);
+  ImmatBus.emit('OFF_TEST', {});
+  ImmatBus.off('OFF_TEST', fn);
+  ImmatBus.emit('OFF_TEST', {});
+  eq(count, 1);
+});
+
+test('IO-10 — journal limité à 200 entrées', () => {
+  ImmatBus.clearJournal();
+  for (let i = 0; i < 210; i++) ImmatBus.emit('FLOOD', { i });
+  const j = ImmatBus.getJournal();
+  if (j.length > 200) throw new Error('journal dépasse 200 : ' + j.length);
+});
+
+suite('20c. ImmatOrganism V1 — brain.js Phase 1');
+
+test('IO-11 — getPhase() = 1 par défaut', () => {
+  eq(ImmatBrain.getPhase(), 1);
+});
+
+test('IO-12 — canDisplayVehicleOnMap phase 1 = true (observe seulement)', () => {
+  eq(ImmatBrain.canDisplayVehicleOnMap({ plate: 'AB-123-CD' }), true);
+});
+
+test('IO-13 — canDisplayVehicleOnMap phase 3 = false (bloque)', () => {
+  ImmatBrain.setPhase(3);
+  eq(ImmatBrain.canDisplayVehicleOnMap({ plate: 'AB-123-CD' }), false);
+  ImmatBrain.setPhase(1);
+});
+
+test('IO-14 — canRequestCall avec contexte valide = true', () => {
+  eq(ImmatBrain.canRequestCall({ plate: 'AB-123-CD', source: 'vehicle_contact' }), true);
+});
+
+test('IO-15 — canRequestCall sans contexte phase 1 = true (observe)', () => {
+  eq(ImmatBrain.canRequestCall(null), true);
+});
+
+test('IO-16 — canRequestCall sans contexte phase 3 = false', () => {
+  ImmatBrain.setPhase(3);
+  eq(ImmatBrain.canRequestCall(null), false);
+  ImmatBrain.setPhase(1);
+});
+
+test('IO-17 — computeBadge : nombre réel, jamais négatif', () => {
+  eq(ImmatBrain.computeBadge(5), 5);
+  eq(ImmatBrain.computeBadge(-1), 0);
+  eq(ImmatBrain.computeBadge(null), 0);
+  eq(ImmatBrain.computeBadge('abc'), 0);
+});
+
+test('IO-18 — classifyEntity : route → RouteOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'route' }), 'RouteOrgan');
+});
+
+test('IO-19 — classifyEntity : vehicle → VehicleOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'vehicle' }), 'VehicleOrgan');
+});
+
+test('IO-20 — classifyEntity : assist → HelpOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'assist' }), 'HelpOrgan');
+});
+
+test('IO-21 — classifyEntity : inconnu → unknown', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'foo' }), 'unknown');
+  eq(ImmatBrain.classifyEntity(null), 'unknown');
+});
+
+test('IO-22 — validateInvariant émit violation si passes=false', () => {
+  let violated = null;
+  const unsub = ImmatBus.on(EVENTS.INVARIANT_VIOLATED, e => { violated = e; });
+  ImmatBrain.validateInvariant('INV-001', false, { test: true });
+  unsub();
+  if (!violated) throw new Error('violation non émise');
+  eq(violated.payload.invariant, 'INV-001');
+});
+
+test('IO-23 — validateInvariant ne viole pas si passes=true', () => {
+  let violated = false;
+  const unsub = ImmatBus.on(EVENTS.INVARIANT_VIOLATED, () => { violated = true; });
+  ImmatBrain.validateInvariant('INV-001', true, {});
+  unsub();
+  eq(violated, false);
+});
+
+suite('20d. ImmatOrganism V1 — governance.js');
+
+test('IO-24 — phase 1 (Observateur) : aucun prérequis', () => {
+  const r = ImmatGovernance.canTransitionTo(1, {});
+  eq(r.allowed, true);
+});
+
+test('IO-25 — phase 3 sans prérequis : refusé', () => {
+  const r = ImmatGovernance.canTransitionTo(3, {});
+  eq(r.allowed, false);
+});
+
+test('IO-26 — phase 3 avec tous les prérequis : accordé', () => {
+  const evidence = { journal_ok: true, no_regressions: true, tests_green: true, invariants_stable: true };
+  const r = ImmatGovernance.canTransitionTo(3, evidence);
+  eq(r.allowed, true);
+});
+
+test('IO-27 — phase inconnue : refusée', () => {
+  const r = ImmatGovernance.canTransitionTo(99, {});
+  eq(r.allowed, false);
+});
+
+test('IO-28 — listPhases retourne 5 phases', () => {
+  const phases = ImmatGovernance.listPhases();
+  eq(phases.length, 5);
+  eq(phases[0].phase, 1);
+  eq(phases[4].phase, 5);
+});
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));
