@@ -173,7 +173,7 @@
 /* ── Bannière "Demande de contact envoyée" ───────────────────────── */
 .call-sent-banner {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 44px) + 80px);
+  top: 0;
   bottom: auto;
   left: 50%;
   transform: translateX(-50%) translateY(-130%);
@@ -191,7 +191,7 @@
   transition: transform .28s cubic-bezier(.22,1,.36,1);
 }
 .call-sent-banner.show {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(calc(env(safe-area-inset-top, 44px) + 80px));
 }
 .call-sent-icon { font-size: 20px; }
 .call-sent-text {
