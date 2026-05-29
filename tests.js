@@ -1650,6 +1650,130 @@ test('IO-28 — listPhases retourne 5 phases', () => {
   eq(phases[4].phase, 5);
 });
 
+// ─── Suite 21. VehicleOrgan ───────────────────────────────────────────────────
+const { VehicleOrgan } = require('./core/organs/vehicleOrgan');
+
+suite('21. VehicleOrgan — classification');
+
+test('VO-01 — entité avec plaque réelle → véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'AB-123-CD' }), true);
+});
+
+test('VO-02 — entité plaque ROUTE → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'ROUTE' }), false);
+});
+
+test('VO-03 — entité plaque ASSISTANCE → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'ASSISTANCE' }), false);
+});
+
+test('VO-04 — entité plaque CONDUCTEURS → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'CONDUCTEURS' }), false);
+});
+
+test('VO-05 — entité group route → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'AB-123-CD', group: 'route' }), false);
+});
+
+test('VO-06 — entité group assist → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ plate: 'AB-123-CD', group: 'assist' }), false);
+});
+
+test('VO-07 — entité null → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity(null), false);
+});
+
+test('VO-08 — entité sans plaque → pas véhicule', () => {
+  eq(VehicleOrgan.isVehicleEntity({ group: 'vehicle' }), false);
+});
+
+suite('21. VehicleOrgan — INV-001 guardMapMarker');
+
+test('VO-09 — véhicule → marqueur bloqué (INV-001)', () => {
+  const r = VehicleOrgan.guardMapMarker({ plate: 'AB-123-CD' });
+  eq(r.allowed, false);
+  eq(r.invariant, 'INV-001');
+});
+
+test('VO-10 — alerte route → marqueur autorisé', () => {
+  const r = VehicleOrgan.guardMapMarker({ plate: 'ROUTE', group: 'route' });
+  eq(r.allowed, true);
+});
+
+test('VO-11 — guardMapMarker véhicule ajoute au log', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.guardMapMarker({ plate: 'XY-456-ZA' });
+  const log = VehicleOrgan.getLog();
+  eq(log.length, 1);
+  eq(log[0].type, 'INV-001-BLOCKED');
+});
+
+suite('21. VehicleOrgan — INV-002 guardChannel');
+
+test('VO-12 — véhicule + canal map → bloqué (INV-002)', () => {
+  const r = VehicleOrgan.guardChannel({ plate: 'AB-123-CD' }, 'map');
+  eq(r.allowed, false);
+  eq(r.invariant, 'INV-002');
+});
+
+test('VO-13 — véhicule + canal messages → autorisé', () => {
+  const r = VehicleOrgan.guardChannel({ plate: 'AB-123-CD' }, 'messages');
+  eq(r.allowed, true);
+});
+
+test('VO-14 — entité route + canal map → autorisé (pas véhicule)', () => {
+  const r = VehicleOrgan.guardChannel({ plate: 'ROUTE', group: 'route' }, 'map');
+  eq(r.allowed, true);
+});
+
+test('VO-15 — guardChannel bloqué ajoute au log', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.guardChannel({ plate: 'AB-123-CD' }, 'alerts');
+  const log = VehicleOrgan.getLog();
+  eq(log.length, 1);
+  eq(log[0].type, 'INV-002-BLOCKED');
+});
+
+suite('21. VehicleOrgan — événements');
+
+test('VO-16 — onMessageSent ajoute au log', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.onMessageSent('AB-123-CD', 'Pneu à plat');
+  const log = VehicleOrgan.getLog();
+  eq(log.length, 1);
+  eq(log[0].type, 'VEHICLE_MESSAGE_SENT');
+  eq(log[0].payload.plate, 'AB-123-CD');
+});
+
+test('VO-17 — onMessageReceived ajoute au log', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.onMessageReceived('XY-456-ZA', 'Je vérifie.');
+  const log = VehicleOrgan.getLog();
+  eq(log.length, 1);
+  eq(log[0].type, 'VEHICLE_MESSAGE_RECEIVED');
+});
+
+test('VO-18 — onMessageSent sans plaque → ignoré', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.onMessageSent('', 'message');
+  eq(VehicleOrgan.getLog().length, 0);
+});
+
+test('VO-19 — clearLog vide le log', () => {
+  VehicleOrgan.onMessageSent('AB-123-CD', 'test');
+  VehicleOrgan.clearLog();
+  eq(VehicleOrgan.getLog().length, 0);
+});
+
+test('VO-20 — getLog retourne une copie (pas la référence interne)', () => {
+  VehicleOrgan.clearLog();
+  VehicleOrgan.onMessageSent('AB-123-CD', 'test');
+  const log1 = VehicleOrgan.getLog();
+  const log2 = VehicleOrgan.getLog();
+  eq(log1 !== log2, true);
+  eq(log1.length, log2.length);
+});
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));
