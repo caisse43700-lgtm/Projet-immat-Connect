@@ -201,7 +201,7 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div></div>
 <div id="panelActivite" class="panel">
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
@@ -294,7 +294,7 @@
       <button class="call-modal-btn call-modal-btn-msg"
         onclick="CallManager.contactByMessage(document.getElementById('callContactModal').dataset.plate)">💬 Message</button>
       <button class="call-modal-btn call-modal-btn-call"
-        onclick="CallManager.contactByCall(document.getElementById('callContactModal').dataset.plate,document.getElementById('callContactModal').dataset.uid)">📞 Appel</button>
+        onclick="CallManager.contactByCall(document.getElementById('callContactModal').dataset.plate,document.getElementById('callContactModal').dataset.uid)">🤝 Contact</button>
     </div>
     <button class="call-modal-close" onclick="CallManager.closeContactModal()">Annuler</button>
   </div>
@@ -304,8 +304,8 @@
 <div id="callNotAllowedModal" class="call-modal-overlay" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="call-modal-sheet">
     <div class="call-not-allowed-icon">🔕</div>
-    <div class="call-not-allowed-title">Appels non autorisés</div>
-    <div class="call-not-allowed-sub" id="callNotAllowedSub">Ce conducteur n'a pas activé les appels internes.</div>
+    <div class="call-not-allowed-title">Contact non autorisé</div>
+    <div class="call-not-allowed-sub" id="callNotAllowedSub">Ce conducteur n'a pas activé les demandes de contact.</div>
     <button class="call-modal-btn-msg-only" onclick="CallManager.closeNotAllowedModal()">💬 Envoyer un message</button>
     <button class="call-modal-close" onclick="document.getElementById('callNotAllowedModal').classList.remove('show')">Fermer</button>
   </div>
@@ -314,10 +314,10 @@
 <!-- Popup : appel entrant -->
 <div id="callIncomingPopup" class="call-incoming-popup">
   <div class="call-incoming-header">
-    <div class="call-incoming-icon">📞</div>
+    <div class="call-incoming-icon">🤝</div>
     <div class="call-incoming-info">
       <strong id="callIncomingPlate">Conducteur</strong>
-      <span>souhaite vous appeler</span>
+      <span>vous demande un contact</span>
     </div>
   </div>
   <div class="call-incoming-actions">
@@ -330,8 +330,8 @@
 
 <!-- Bannière : demande d'appel envoyée -->
 <div id="callSentBanner" class="call-sent-banner">
-  <div class="call-sent-icon">📞</div>
-  <div class="call-sent-text">Demande envoyée à <strong id="callSentPlate">?</strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
+  <div class="call-sent-icon">🤝</div>
+  <div class="call-sent-text">Demande de contact envoyée à <strong id="callSentPlate">?</strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
   <button class="call-sent-cancel"
     onclick="CallManager.cancelCallRequest(document.getElementById('callSentBanner').dataset.requestId)">Annuler</button>
 </div>
@@ -533,7 +533,7 @@ async afterAuth(){
   }
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}toast('Connecté à ImmatConnect.','ok')},
+openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
@@ -915,7 +915,7 @@ App.navActivite=function(){
   document.getElementById('navActivite')?.classList.add('on');
   this.panel('activite');
   this.renderActivityMain?.();
-  try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderActivityFeed?.()}catch(e){}})}catch(e){}
+  try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
   const now=Date.now();let changed=false;
   (S.alerts||[]).forEach(a=>{
     const st=a.status;if(st==='gone'||st==='resolved') return;
@@ -1044,7 +1044,7 @@ App.openActivityCat=function(cat){
   if(iconEl)iconEl.textContent=m.icon;if(titleEl)titleEl.textContent=m.title;if(subEl)subEl.textContent=m.sub;
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
   const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=cat==='all'?'none':'';
-  this.renderCategoryFeed(cat,'recus');
+  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,'recus');}
 };
 App.closeActivityCat=function(){
   S._actCat=null;

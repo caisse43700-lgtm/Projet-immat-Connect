@@ -23,6 +23,7 @@ const CallManager = (function () {
   let _myPlate = null;
   let _chCalls = null;
   let _pendingCallId = null;
+  let _visibilityBound = false;
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -31,9 +32,12 @@ const CallManager = (function () {
     _myPlate = String(myPlate || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
     subscribeIncomingCalls(uid);
     _recoverPendingRequest();
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') _recoverPendingRequest();
-    });
+    if (!_visibilityBound) {
+      _visibilityBound = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') _recoverPendingRequest();
+      });
+    }
   }
 
   // ── Recovery : restaure la bannière après refresh ────────────────
@@ -222,10 +226,10 @@ const CallManager = (function () {
         _hideSentBanner();
         _pendingCallId = null;
         if (r.status === 'accepted') {
-          try { if (typeof toast === 'function') toast('Appel accepté ! Ouverture de la conversation…', 'ok'); } catch (e) {}
+          try { if (typeof toast === 'function') toast('Demande de contact acceptée. Ouverture de la conversation…', 'ok'); } catch (e) {}
           if (r.receiver_plate) try { window.App?.actOpenConv?.(r.receiver_plate); } catch (e) {}
         } else if (r.status === 'refused') {
-          try { if (typeof toast === 'function') toast("Demande d'appel refusée.", 'bad'); } catch (e) {}
+          try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
         }
       })
       .subscribe((status, err) => {
@@ -254,6 +258,7 @@ const CallManager = (function () {
   }
 
   function _showSentBanner(plate, requestId) {
+    try { if (typeof toast === 'function') toast('Demande de contact envoyée à ' + (plate || 'le conducteur') + '.', 'ok'); } catch (e) {}
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
@@ -263,7 +268,7 @@ const CallManager = (function () {
     setTimeout(() => {
       banner.classList.remove('show');
       if (_pendingCallId === requestId) _pendingCallId = null;
-    }, 31000);
+    }, 8000);
   }
 
   function _hideSentBanner() {
@@ -274,7 +279,7 @@ const CallManager = (function () {
     const modal = document.getElementById('callNotAllowedModal');
     if (!modal) return;
     const el = document.getElementById('callNotAllowedSub');
-    if (el) el.textContent = (plate ? plate + ' n' : 'Ce conducteur n') + '\'a pas activé les appels internes.';
+    if (el) el.textContent = (plate ? plate + ' n' : 'Ce conducteur n') + '\'a pas activé les demandes de contact.';
     modal.dataset.plate = plate || '';
     modal.classList.add('show');
   }
