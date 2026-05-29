@@ -1094,64 +1094,98 @@ Les éléments suivants ne peuvent pas être automatisés sans browser réel :
 
 ## Modèle Anti-Dérive
 
+ImmatConnect ne doit jamais devenir ce qu'il n'est pas. Cette section documente explicitement les dérives interdites pour préserver son identité au fil des évolutions.
+
 ### D-001 — Réseau social
-**Interdit** : profils sociaux, abonnements, likes, fils d'actualité sociaux, interactions sans contexte.
+
+**Conséquences interdites :**
+- profils sociaux
+- abonnements
+- likes
+- fils d'actualité sociaux
+- interactions sans contexte réel
 
 ### D-002 — WhatsApp
-**Interdit** : discussions libres sans contexte, conversations initiées sans événement conducteur, messagerie généraliste.
+
+**Conséquences interdites :**
+- discussions libres sans contexte
+- conversations initiées sans événement conducteur
+- messagerie généraliste
 
 ### D-003 — Application d'appels
-**Interdit** : appel comme point d'entrée, téléphone mis en avant, bouton appel global, appel sans contexte.
+
+**Conséquences interdites :**
+- appel comme point d'entrée
+- téléphone mis en avant
+- bouton appel global
+- appel sans contexte
 
 ### D-004 — Mélange Route/Aide/Véhicule
-**Interdit** : véhicule dans `reports`, dans `S.alerts`, sur la carte. Route dans conversations privées.
+
+**Conséquences interdites :**
+- véhicule dans `reports`
+- véhicule dans `S.alerts`
+- véhicule sur la carte
+- route dans conversations privées
 
 ### D-005 — Sources de vérité multiples
-**Interdit** : même donnée stockée et pilotée à plusieurs endroits, logique critique uniquement DOM, badges utilisés comme source métier.
+
+**Conséquences interdites :**
+- même donnée stockée et pilotée à plusieurs endroits
+- logique critique uniquement DOM
+- badges utilisés comme source métier
 
 ### D-006 — États invisibles
-**Interdit** : bannière sans action, badge sans contenu réel, état incompréhensible persistant.
+
+**Conséquences interdites :**
+- interface affichant un état incompréhensible
+- bannière sans action
+- badge sans contenu réel
 
 ### D-007 — Fonctionnalité sans invariant
-Toute nouvelle fonctionnalité doit définir ses invariants, ses états et ses tests **avant** toute implémentation.
+
+Toute nouvelle fonctionnalité doit définir **avant toute implémentation** :
+- ses invariants
+- ses états
+- ses tests
 
 ---
 
-## Gouvernance
+## Gouvernance des Futures Évolutions
 
-Avant toute PR, refactor ou nouvelle fonctionnalité :
+Avant toute PR, refactor ou nouvelle fonctionnalité, effectuer une revue de conformité sur ces 10 points :
 
-| Check | Question | Bloquant si NON |
-|---|---|:---:|
-| G-001 | La modification respecte-t-elle la Vision Produit ? | ✅ |
-| G-002 | La modification viole-t-elle un invariant ? | ✅ |
-| G-003 | La modification crée-t-elle une nouvelle source de vérité ? (justification obligatoire) | ⚠️ |
-| G-004 | La modification crée-t-elle une ambiguïté UX ? | ⚠️ |
-| G-005 | La modification respecte-t-elle les parcours officiels ? | ✅ |
-| G-006 | La modification respecte-t-elle les règles de visibilité ? | ✅ |
-| G-007 | La séparation Route / Aide / Véhicule / Messages / Appels est-elle préservée ? | ✅ |
-| G-008 | Chaque nouvel état a-t-il un propriétaire, une source de vérité, une transition, un test ? | ✅ |
-| G-009 | Chaque nouvelle fonctionnalité a-t-elle un objectif métier, un invariant, un parcours, un test ? | ✅ |
-| G-010 | Le comportement reste-t-il compréhensible pour un utilisateur qui découvre l'application ? | ✅ |
+| Check | Question | Réponse | Bloquant |
+|---|---|:---:|:---:|
+| **G-001** | La modification respecte-t-elle la Vision Produit ? | OUI / NON | ✅ si NON |
+| **G-002** | La modification viole-t-elle un invariant ? | OUI / NON | ✅ si OUI |
+| **G-003** | La modification crée-t-elle une nouvelle source de vérité ? | OUI / NON | ⚠️ justification obligatoire |
+| **G-004** | La modification crée-t-elle une ambiguïté UX ? | OUI / NON | ⚠️ si OUI |
+| **G-005** | La modification respecte-t-elle les parcours officiels ? | OUI / NON | ✅ si NON |
+| **G-006** | La modification respecte-t-elle les règles de visibilité ? | OUI / NON | ✅ si NON |
+| **G-007** | La séparation Route / Aide / Véhicule / Messages / Appels est-elle préservée ? | OUI / NON | ✅ si NON |
+| **G-008** | Chaque nouvel état a-t-il un propriétaire, une source de vérité, une transition, un test ? | OUI / NON | ✅ si NON |
+| **G-009** | Chaque nouvelle fonctionnalité a-t-elle un objectif métier, un invariant, un parcours, un test ? | OUI / NON | ✅ si NON |
+| **G-010** | Le comportement reste-t-il compréhensible pour un utilisateur qui découvre l'application ? | OUI / NON | ✅ si NON |
 
 ---
 
 ## Critères de Validation PR
 
-Une PR est acceptable si et seulement si :
+Une PR ne peut être considérée comme acceptable que si **tous** ces critères sont satisfaits :
 
-1. Aucun invariant n'est violé
-2. Aucun parcours officiel n'est cassé
-3. Aucun test existant ne régresse
-4. Les nouveaux tests sont présents
-5. Les règles de visibilité sont respectées
-6. Les badges restent cohérents
-7. Les sources de vérité restent uniques
-8. Les comportements observés sur mobile sont expliqués
-9. Les comportements Realtime sont vérifiés
-10. La fonctionnalité reste alignée avec la raison d'être du produit
+1. Aucun invariant n'est violé.
+2. Aucun parcours officiel n'est cassé.
+3. Aucun test existant ne régresse.
+4. Les nouveaux tests sont présents.
+5. Les règles de visibilité sont respectées.
+6. Les badges restent cohérents.
+7. Les sources de vérité restent uniques.
+8. Les comportements observés sur mobile sont expliqués.
+9. Les comportements Realtime sont vérifiés.
+10. La fonctionnalité reste alignée avec la raison d'être du produit.
 
-**Si l'un de ces critères échoue : PR non conforme.**
+**Si l'un de ces critères échoue : la PR doit être considérée comme non conforme.**
 
 ---
 
