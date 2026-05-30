@@ -7,10 +7,11 @@
 
 ## ACTE FONDATEUR (3 propositions irréductibles)
 
-AF-IRR-1 : Des conducteurs de véhicules existent dans le réel.
+AF-IRR-1 : Des entités responsables de véhicules existent dans le réel.
 AF-IRR-2 : Chaque véhicule possède un identifiant unique (la plaque).
-AF-IRR-3 : Des situations créent un besoin de communication
-           bidirectionnelle entre conducteurs.
+AF-IRR-3 : Des situations créent un besoin de notification entre le
+           système et les entités responsables. Cette obligation est
+           unilatérale : le système notifie, pas l'inverse.
 
 Propriété : aucune des 3 ne se dérive des 2 autres.
 Test : supprimer AF-IRR-1 → plus d'utilisateurs réels.
@@ -30,7 +31,8 @@ La réalité extérieure précède et juge le système.
 
 A-00 — LÉGITIMITÉ PAR LE SERVICE
 L'organisme n'existe que par et pour le service rendu
-aux conducteurs.
+aux utilisateurs, sans nuire à des tiers non-utilisateurs
+du système.
 
 ### Preuve d'indépendance (CRITIQUE — ne pas perdre)
 
@@ -59,8 +61,13 @@ A-(-1). Tout système suffisamment expressif pour se juger
 rencontre une proposition sur lui-même qu'il ne peut ni prouver
 ni réfuter depuis l'intérieur.
 
-Corollaire (MPNA) : toute Constitution doit externaliser sa
-validation ultime.
+Note sur l'incertitude (CORR-6) : les 8% d'incertitude portent sur
+la complétude de la chaîne de dérivation A-(-1) → Gödel → T-01,
+pas sur la vérité de l'énoncé lui-même.
+
+Corollaire MPNA (fusionné — CORR-8) : toute Constitution doit
+externaliser sa validation ultime. MPNA n'est pas une proposition
+autonome — c'est une reformulation directe de T-01. Voir ARCHIVE.md.
 
 ---
 
@@ -227,10 +234,13 @@ Un seuil franchi = révision constitutionnelle obligatoire.
 
 ---
 
-## CORRECTIONS EN ATTENTE (NE PAS OUBLIER)
+## CORRECTIONS APPLIQUÉES (GEL Ω∞.1 + Ω∞.2)
 
-1. INV-011 : severity 'high' → 'critical' dans core/invariants.js
-2. F-22 : nom canonique = "Préservation des Conditions de
-   Souveraineté" (pas "Mortalité constitutionnelle")
-3. Commits techniques sur immatv2 au lieu de
-   claude/immatconnect-pro-app-dEKGR — à normaliser
+CORR-1 : INV-011 severity 'critical' ✅ (core/invariants.js)
+CORR-2 : AF-IRR-3 "bidirectionnelle" supprimé ✅
+CORR-3 : A-00 clause tiers ajoutée ✅
+CORR-4 : F-22 nom canonique "Préservation des Conditions de Souveraineté" ✅
+CORR-5 : TGSC théorèmes/conjectures séparés ✅ (RESEARCH.md)
+CORR-6 : T-01 note propagation 8% ajoutée ✅
+CORR-7 : TEC renommé "complémentaire" ✅ (RESEARCH.md)
+CORR-8 : MPNA fusionné dans T-01 ✅

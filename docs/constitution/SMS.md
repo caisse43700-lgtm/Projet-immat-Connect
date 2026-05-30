@@ -26,10 +26,15 @@ La SMS est la plus petite structure permettant à un système de :
 L'ensemble des éléments dont la destruction entraîne la perte d'identité irréversible du système.
 
 ### Contenu
-- **ADN constitutionnel** (7 éléments — voir ADN.md)
+- **Référence à l'ADN constitutionnel** (7 éléments — voir ADN.md)
 - **Axiomes** (A-(-1), A-01, A-00)
 - **Théorèmes fondateurs** (T-01)
 - **Propositions fondatrices empiriques** (AF-IRR-1, AF-IRR-2, AF-IRR-3)
+
+**Note architecturale (Ω∞.2) :** N ne *contient* pas l'ADN — N *référence et protège* l'ADN.
+L'ADN est la fondation depuis laquelle SMS (N, F, P) est dérivée.
+N est la composante de SMS la plus proche de l'ADN, pas l'ADN lui-même.
+Analogie : N est le chromosome qui porte l'ADN, pas l'ADN lui-même.
 
 ### Propriétés
 - **Immuabilité fonctionnelle** : N ne change que si une révision majeure est justifiée et documentée
@@ -159,7 +164,7 @@ P ←——— opère dans N∩F   |
 | SMS entière | ADN + PAI combinés | Confirmé |
 
 **La SMS unifie ADN et PAI** :
-- ADN = contenu de N
+- ADN = fondation de N (N référence et protège l'ADN — voir note architecturale ci-dessus)
 - PAI = mécanisme fondamental de F (l'écart irréductible entre N et réalité)
 - PCP = mécanisme fondamental de P (comment P évolue sans corrompre N)
 

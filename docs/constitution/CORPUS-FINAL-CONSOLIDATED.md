@@ -216,12 +216,14 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 
 | Élément | Statut | Description |
 |---------|--------|-------------|
+| T-02 | Théorème [80%] | Loi de Découverte de l'ADN (Ω∞.2) |
 | PAI | Conjecture [70%] | Écart irréductible normes/réalité |
 | PEC | Conjecture [60%] | Incomplétude constitutive |
 | HCC | Hypothèse [55%] | Complétude possible (négation de PAI) |
 | TEC | Complémentaire [70%] | Équivalence entre constitutions |
 | I-α, I-δ, I-ζ | Théorèmes [85-98%] | TGSC (partie démontrée) |
 | I-β, I-γ, I-ε | Conjectures [60-65%] | TGSC (partie non démontrée) |
+| Modèle mortalité | Confirmé | 7 types de mort constitutionnelle (Ω∞.2) |
 
 **Fichier détaillé :** RESEARCH.md
 
@@ -263,21 +265,31 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 | Formaliser PAI (→ 85%) | RESEARCH.md | HAUTE |
 | Résoudre DEP-1 (méthode statuts) | FRONTIER.md §VI | MOYENNE |
 
+### Ajouts Gel Ω∞.2 (appliqués)
+
+| Élément | Statut | Fichier |
+|---------|--------|---------|
+| CORR-2 à CORR-8 | ✅ Appliquées | CORE.md, NUCLEUS.md |
+| Correction architecturale ADN/N | ✅ Appliquée | SMS.md |
+| T-02 (Loi de Découverte de l'ADN) | ✅ Formalisé | RESEARCH.md |
+| Modèle de mortalité (7 types) | ✅ Créé | RESEARCH.md |
+| MMV (Mutation Minimale Viable) | ✅ Créé | LIFECYCLE.md |
+
 **Fichier détaillé :** CANDIDATES.md
 
 ---
 
-## ÉTAT DE SANTÉ CONSTITUTIONNELLE V1
+## ÉTAT DE SANTÉ CONSTITUTIONNELLE V1 (post-Gel Ω∞.2)
 
 | Indicateur | Valeur | Seuil | État |
 |-----------|--------|-------|------|
 | Contradictions internes | 0 | 0 | VERT |
-| Score épistémique moyen | ~75% | >75% | ORANGE |
+| Score épistémique moyen | ~76% | >75% | VERT |
 | Hypothèses silencieuses non documentées | 0 | 0 | VERT |
 | Corrections urgentes non appliquées | 0 | 0 | VERT |
 | Blocages humains critiques | 3 | 0 | ROUGE |
 
-**Diagnostic global : ORANGE** — opérationnel. Démarrage V3 possible sous réserve de résoudre A-2, A-5, A-11.
+**Diagnostic global : VERT (sauf gouvernance)** — V1 complète. Démarrage V3 possible sous réserve de résoudre A-2, A-5, A-11.
 
 ---
 
@@ -319,6 +331,6 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 
 ---
 
-*Gel Ω∞.1 — Version de référence — 2026-05-30*
+*Gel Ω∞.2 — V1 complète — 2026-05-30*
 *Fichier: docs/constitution/CORPUS-FINAL-CONSOLIDATED.md*
 *Branche: claude/immatconnect-pro-app-dEKGR*

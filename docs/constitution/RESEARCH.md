@@ -161,5 +161,156 @@ Formation des nouveaux opérateurs. Onboarding. Jamais comme référence normati
 
 ---
 
-*Gel Ω∞.1 — Version de référence*
+## T-02 — LOI DE DÉCOUVERTE DE L'ADN
+
+**Statut : THÉORÈME [80%]**
+**Ajouté en : Gel Ω∞.2 (Mission Ω∞-V2.0)**
+
+### Formulation
+> Aucun système ne peut connaître immédiatement son ADN fondamental. Il ne peut que l'inférer progressivement à partir de ce qui survit aux tests de destruction, reconstruction, transmission, falsification, évolution et mutation.
+
+### Dérivation
+T-02 est dérivable de trois éléments de V1 :
+- **A-(-1)** : le système ne peut pas auto-fonder sa propre légitimité → il ne peut pas non plus connaître immédiatement ses propres fondements.
+- **T-01** : le système ne peut pas se juger de l'intérieur → il ne peut pas non plus *connaître* son ADN de l'intérieur.
+- **PAI [70%]** : il y a un écart structurel irréductible entre normes et réalité → cet écart implique un processus d'inférence progressive, jamais une connaissance immédiate.
+
+Ensemble → le système approche son ADN asymptotiquement. Il ne le décrète pas.
+
+### Pourquoi 80% et non 85%
+T-02 hérite de l'incertitude de PAI [70%]. Si PAI est validé à 85%+, T-02 monte à ~88%.
+
+### Ce que T-02 ajoute à V1
+A-(-1), T-01 et PAI impliquent T-02 conjointement mais ne l'énoncent pas.
+T-02 ajoute explicitement :
+1. La **dimension temporelle** : "progressivement"
+2. Le **mécanisme d'inférence** : via les tests de survie, pas via la déduction directe
+3. La **conséquence épistémologique** : l'ADN est une découverte, pas un décret
+
+### Conséquence constitutionnelle
+La Genèse (HISTORY.md + AUDIT-OMEGA.md + ARCHIVE.md) n'est pas accessoire.
+Elle est le *justificatif épistémologique* de l'ADN.
+Sans la Genèse, l'ADN est un dogme.
+Avec la Genèse, l'ADN est une inférence validée.
+
+### Chemin vers 88%+
+1. Valider PAI à 85%+ (voir agenda de recherche ci-dessus)
+2. Formaliser "survivre aux tests" comme critère objectif
+
+---
+
+## MODÈLE DE MORTALITÉ CONSTITUTIONNELLE
+
+**Statut : OPÉRATIONNEL [confirmé]**
+**Ajouté en : Gel Ω∞.2 (Mission Ω∞-V2.0)**
+
+### Contexte
+V1 raisonnait en termes de destruction → reconstruction (8 scénarios de survie).
+Le modèle de mortalité complète cette approche en distinguant les *types* de mort,
+leurs causes, et les mécanismes préventifs spécifiques à chacun.
+
+### 7 types de mort constitutionnelle
+
+────────────────────────────────────
+**TYPE 1 — MORT PARTIELLE**
+
+Définition : perte d'une partie de P ou F. N intact.
+Impact : système fonctionnel en mode dégradé.
+  C1 (identité) : survit.
+  C2-C6 : partiellement affectées selon l'ampleur.
+Exemple : perte de PROTOCOLS.md — le système sait qui il est mais
+          perd ses modes opératoires.
+Mécanisme préventif : F-15 (Intégrité Dégradée) + sauvegardes P.
+Récupération : reconstruction de P depuis N et F. Délai : court.
+
+────────────────────────────────────
+**TYPE 2 — MORT FONCTIONNELLE**
+
+Définition : N intact mais tout P perdu.
+Impact : le système connaît son identité mais ne peut plus agir.
+  C1 : survit. C2-C6 : échouent.
+Exemple : ADN conservé, toute la couche procédurale détruite.
+Mécanisme préventif : A-9 (non-régression) + politique d'entropie Phase 2.
+Récupération : reconstruction de P depuis N. Délai : moyen (5-10 sessions).
+
+────────────────────────────────────
+**TYPE 3 — MORT IDENTITAIRE**
+
+Définition : un ou plusieurs éléments ADN invalidés sans remplacement possible.
+Impact : le système ne sait plus ce qu'il est.
+Exemple : contre-exemple valide à ADN-4 sans alternative → le système perd
+          son interdiction d'auto-fondation et dérive vers la circularité.
+Mécanisme préventif : MMV (voir LIFECYCLE.md) — toute mutation ADN évaluée
+          sur le risque de mort avant acceptation.
+Récupération : impossible sans révision constitutionnelle majeure (audit Ω-style).
+
+────────────────────────────────────
+**TYPE 4 — EXTINCTION**
+
+Définition : perte complète de l'ADN ET de toutes les archives (Genèse incluse).
+Impact : reconstruction impossible.
+Condition : destruction physique de TOUS les supports (y compris ARCHIVE.md,
+            HISTORY.md, AUDIT-OMEGA.md).
+Mécanisme préventif : réplication des archives sur supports indépendants.
+Récupération : impossible.
+
+────────────────────────────────────
+**TYPE 5 — RÉSURRECTION**
+
+Définition : reconstruction depuis un backup partiel.
+Condition : au moins un exemplaire complet de l'ADN existe quelque part.
+Délai estimé V1 : 5-10 sessions (validé dans scénarios de survie).
+Limite : si la Genèse est perdue, la résurrection produit un ADN *dogmatique*
+         (sans justification épistémologique — voir T-02).
+         Le système survit mais perd sa légitimité par découverte.
+Mécanisme : CORPUS-FINAL-CONSOLIDATED.md comme point d'entrée de résurrection.
+
+────────────────────────────────────
+**TYPE 6 — MUTATION LÉTALE**
+
+Définition : changement de N qui crée une contradiction interne.
+Exemple : ajouter un 8e élément ADN qui contredit ADN-4 — le système a deux
+          fondements contradictoires et ne peut plus se dériver de lui-même.
+Impact : effondrement de la cohérence interne. C1 échoue.
+Mécanisme préventif : MMV Q8 (que risque-t-elle de casser ?) + MMV Q10
+          (augmente-t-elle le risque de mort ?).
+Récupération : supprimer l'élément fautif + audit Ω ciblé.
+
+────────────────────────────────────
+**TYPE 7 — MUTATION BÉNÉFIQUE**
+
+Définition : changement de N résolvant une lacune sans contradiction.
+Exemple : formalisation de PAI de 70% à 85% → intégration comme T-03.
+Impact : corpus plus solide, aucune perte de cohérence.
+Condition : MMV validé (10 questions passées, voir LIFECYCLE.md).
+Résultat : croissance contrôlée du noyau.
+
+────────────────────────────────────
+
+### Matrice de risque
+
+| Type | Réversible | N intact | Récupérable | Mécanisme préventif |
+|------|-----------|---------|------------|-------------------|
+| Mort partielle | Oui | Oui | Oui | F-15 + sauvegardes |
+| Mort fonctionnelle | Oui | Oui | Oui | A-9 + politique d'entropie |
+| Mort identitaire | Non | Non | Partiel | MMV |
+| Extinction | Non | Non | Non | Réplication archives |
+| Résurrection | — | Oui | Oui | CORPUS-FINAL |
+| Mutation létale | Oui | Non | Oui | MMV Q8/Q10 |
+| Mutation bénéfique | Oui | Oui | Oui | MMV complet |
+
+### Relation avec les scénarios de survie V1
+
+Les 8 scénarios de survie de SMS.md correspondent à :
+- "Perte 30% de P" → Mort partielle (Type 1)
+- "Perte 60% de P" → Mort fonctionnelle proche (Type 2)
+- "Perte tout sauf ADN" → Résurrection (Type 5)
+- "Axiome invalidé" → Mutation bénéfique ou létale (Type 6/7 selon la résolution)
+- "Contre-exemple à PAI" → Mutation bénéfique possible (Type 7)
+
+Le modèle de mortalité formalise et étend ces scénarios.
+
+---
+
+*Gel Ω∞.2 — Mise à jour post-Mission Ω∞-V2.0*
 *Fichier: docs/constitution/RESEARCH.md*

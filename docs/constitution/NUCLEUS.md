@@ -11,10 +11,11 @@
 
 Trois faits incontournables du réel :
 
-  AF-1 : Des conducteurs de véhicules existent.
+  AF-1 : Des entités responsables de véhicules existent dans le réel.
   AF-2 : Chaque véhicule a un identifiant unique : la plaque.
-  AF-3 : Des situations créent un besoin de communication
-          bidirectionnelle entre ces conducteurs.
+  AF-3 : Des situations créent un besoin de notification entre le
+          système et les entités responsables. Cette obligation est
+          unilatérale : le système notifie, pas l'inverse.
 
 Test d'irréductibilité : supprimer l'un des trois détruit le projet —
 il n'y a plus d'utilisateurs, plus d'adressage, ou plus de raison
@@ -36,9 +37,10 @@ les trois simultanément — c'est ce que prouvent M₁/M₂/M₃.
     La réalité extérieure précède et juge le système.
 
   A-00 LÉGITIMITÉ PAR LE SERVICE
-    L'organisme n'existe que pour le service rendu aux conducteurs.
-    Dès que le service cesse d'être la finalité première, la
-    légitimité cesse.
+    L'organisme n'existe que pour le service rendu aux utilisateurs,
+    sans nuire à des tiers non-utilisateurs du système.
+    Dès que le service cesse d'être la finalité première, ou que le
+    service nuit à des tiers, la légitimité cesse.
 
 ### Preuve de minimalité — NE PAS PERDRE
 
@@ -69,8 +71,13 @@ pour être accepté.
   une proposition vraie qu'il ne peut ni prouver ni réfuter depuis
   l'intérieur.
 
-  Corollaire MPNA : toute validation ultime de la Constitution doit
-  être externe au système qu'elle gouverne.
+  Note (CORR-6) : les 8% d'incertitude portent sur la complétude de
+  la chaîne de dérivation, pas sur la vérité de l'énoncé.
+
+  Corollaire MPNA (fusionné — CORR-8) : toute validation ultime de
+  la Constitution doit être externe au système qu'elle gouverne.
+  MPNA n'est pas une proposition autonome — reformulation directe
+  de T-01. Voir ARCHIVE.md.
 
   Conséquence architecturale directe (F-16) :
     Chaîne obligatoire — Réalité → Observation → Interprétation
@@ -196,12 +203,16 @@ L'irréfutabilité est la mort d'une théorie vivante.
 
 ---
 
-## VIII. CORRECTIONS EN ATTENTE
+## VIII. CORRECTIONS APPLIQUÉES (GEL Ω∞.1 + Ω∞.2)
 
-  1. core/invariants.js ligne 80 : severity 'high' → 'critical' (INV-011)
-  2. F-22 dans tous les documents : "Préservation des Conditions de
-     Souveraineté" (pas "Mortalité constitutionnelle")
-  3. I-β, I-γ, I-ε : ajouter "CONJECTURE — non démontrée" partout
-  4. Θ : ajouter "CONDITIONNEL à D_os — non théorème" partout
-  5. CRC : lacune Γ-2 ouverte — à construire depuis A-(-1)+F-06+F-16
-  6. A-02 et définition du Souverain : décision humaine requise
+  CORR-1 : INV-011 severity 'critical' ✅ (core/invariants.js)
+  CORR-2 : AF-3 "bidirectionnelle" supprimé ✅
+  CORR-3 : A-00 clause tiers ajoutée ✅
+  CORR-4 : F-22 nom canonique "Préservation des Conditions de Souveraineté" ✅
+  CORR-5 : TGSC théorèmes/conjectures séparés ✅ (RESEARCH.md)
+  CORR-6 : T-01 note propagation 8% ajoutée ✅
+  CORR-7 : TEC renommé "complémentaire" ✅ (RESEARCH.md)
+  CORR-8 : MPNA fusionné dans T-01 ✅
+
+  DÉCISION HUMAINE ENCORE REQUISE :
+  - A-02 : définition du Souverain (bloque tout l'axe gouvernance)

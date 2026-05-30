@@ -218,16 +218,78 @@ L'entropie constitutionnelle est la tendance naturelle du corpus à se dégrader
 | Hypothèses silencieuses non documentées | 0 | 1-5 | 6+ |
 | Corrections urgentes non appliquées | 0 | 1 | 2+ |
 
-**État actuel de V1 :**
-- Contradictions internes : 0 (DR-2 est une tension, pas une contradiction)
-- Normes sans dérivation : 0 (toutes dérivées de N)
-- Score épistémique moyen : ~75% (dans la zone verte)
-- Hypothèses silencieuses non documentées : 5 (H-9 à H-13 → seuil orange)
-- Corrections urgentes non appliquées : 1 (CORR-1 → seuil orange)
+**État actuel de V1 (post-Gel Ω∞.2) :**
+- Contradictions internes : 0
+- Normes sans dérivation : 0
+- Score épistémique moyen : ~76%
+- Hypothèses silencieuses non documentées : 0 (H-9 à H-13 documentées dans FRONTIER.md)
+- Corrections urgentes non appliquées : 0 (CORR-1 à CORR-8 toutes appliquées)
 
-**Diagnostic global V1 : ORANGE** — opérationnel mais maintenance requise avant V3.
+**Diagnostic global V1 : VERT** — post-Gel Ω∞.2. Blocages restants : A-2, A-5, DR-3 (décision humaine).
 
 ---
 
-*Gel Ω∞.1 — Version de référence*
+## MMV — MUTATION MINIMALE VIABLE
+
+**Ajouté en : Gel Ω∞.2 (Mission Ω∞-V2.0)**
+**Rôle : gouverner les mutations de niveau ADN (modifications de N)**
+
+### Distinction MMV / PCP
+
+PCP (Protocole de Parcimonie Constitutionnelle) gouverne les changements à **F** et **P**.
+MMV gouverne les changements à **N** (noyau) et à **l'ADN** lui-même.
+
+Ce sont deux protocoles complémentaires, non concurrents.
+
+| Type de changement | Protocole |
+|-------------------|-----------|
+| Modification de ADN / N | **MMV** |
+| Ajout à F ou P | **PCP** |
+| Correction technique (bug) | Directe |
+
+### Les 10 questions MMV
+
+Toute mutation candidate de niveau N doit répondre aux 10 questions suivantes.
+Une réponse insatisfaisante à Q4, Q8 ou Q10 est éliminatoire.
+
+```
+Q1  : Quel problème réel cette mutation résout-elle ?
+Q2  : Quelle partie de N touche-t-elle ? (ADN-X, axiome, théorème, AF-IRR ?)
+Q3  : Est-elle nécessaire ? Peut-on résoudre le problème sans toucher à N ?
+Q4  : Respecte-t-elle l'ADN existant ? (aucune contradiction avec ADN-1/7)
+Q5  : Respecte-t-elle F ? (cohérente avec les frontières reconnues)
+Q6  : Respecte-t-elle P ? (implémentable sans réécrire tous les protocoles)
+Q7  : Existe-t-il une mutation plus petite qui résout le même problème ?
+Q8  : Que risque-t-elle de casser ? (liste explicite des dépendances impactées)
+Q9  : Peut-on revenir en arrière ? (réversibilité — archivage de l'état avant)
+Q10 : Augmente-t-elle ou réduit-elle le risque de mort constitutionnelle ?
+      (référence au modèle de mortalité dans RESEARCH.md)
+```
+
+### 6 décisions possibles
+
+| Décision | Condition | Action |
+|----------|-----------|--------|
+| **ACCEPTER** | 10 questions passées, Q4/Q8/Q10 satisfaisantes | Appliquer MMV, documenter MC-ID |
+| **REFUSER** | Q4 ou Q8 ou Q10 éliminatoire | Archiver la proposition avec justification |
+| **LABORATOIRE** | Q3-Q9 ok mais Q10 incertain | Tester en isolation, réévaluer après |
+| **EXPRESSION NON ADN** | Q2 : ne touche pas vraiment N | Rediriger vers PCP |
+| **MUTATION ADN** | Q2 confirme changement d'un élément ADN | Appliquer MMV complet + vote humain |
+| **ARCHIVAGE** | Mutation valide mais différée | Documenter dans CANDIDATES.md |
+
+### Règle de validation
+
+- **MUTATION ADN** requiert toujours un vote humain explicite (A-2 doit être résolu avant).
+- **ACCEPTER** sans vote humain n'est autorisé que pour N hors ADN (axiomes dérivés, protocoles de N).
+- Tout résultat MMV génère une entrée MC-ID dans MEMORY.md.
+
+### Relation avec le modèle de mortalité
+
+Q10 connecte directement MMV au modèle de mortalité (RESEARCH.md) :
+- Mutation létale (Type 6) = mutation qui échoue à Q4 ou Q10
+- Mutation bénéfique (Type 7) = mutation qui passe les 10 questions
+
+---
+
+*Gel Ω∞.2 — Mise à jour post-Mission Ω∞-V2.0*
 *Fichier: docs/constitution/LIFECYCLE.md*

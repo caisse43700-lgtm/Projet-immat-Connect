@@ -145,6 +145,59 @@ Le noyau (N) résiste. La frontière (F) est partiellement documentée. Les prot
 
 ---
 
+## SESSION 3 — GEL Ω∞.2 (V1 COMPLÈTE)
+
+**Date :** 2026-05-30
+**Type :** Complétion de V1 — corrections + nouveaux éléments post-Mission Ω∞-V2.0
+**Objectif :** Appliquer toutes les corrections restantes et intégrer les découvertes validées de Ω∞-V2.0 dans V1 sans démarrer V2
+
+### Corrections appliquées (CORR-2 à CORR-8)
+
+| Correction | Fichiers modifiés | Changement |
+|-----------|-----------------|-----------|
+| CORR-2 | CORE.md, NUCLEUS.md | AF-IRR-3 : "bidirectionnelle" supprimé |
+| CORR-3 | CORE.md, NUCLEUS.md | A-00 : clause tiers non-utilisateurs ajoutée |
+| CORR-4 | Déjà correct dans les fichiers | F-22 : nom canonique "Préservation des Conditions de Souveraineté" |
+| CORR-5 | RESEARCH.md | TGSC : théorèmes et conjectures séparés visuellement |
+| CORR-6 | CORE.md, NUCLEUS.md | T-01 : note propagation 8% ajoutée |
+| CORR-7 | RESEARCH.md | TEC : renommé "complémentaire" |
+| CORR-8 | CORE.md, NUCLEUS.md | MPNA : fusionné dans T-01 avec référence à ARCHIVE.md |
+
+### Correction architecturale ADN/N
+
+| Fichier | Changement |
+|---------|-----------|
+| SMS.md | Note architecturale : N référence et protège l'ADN, N n'est pas l'ADN |
+| SMS.md | "ADN = contenu de N" → "ADN = fondation de N" |
+
+### Nouveaux éléments intégrés
+
+| Élément | Fichier | Contenu |
+|---------|---------|---------|
+| T-02 | RESEARCH.md | Loi de Découverte de l'ADN [Théorème 80%] |
+| Modèle de mortalité | RESEARCH.md | 7 types (partielle, fonctionnelle, identitaire, extinction, résurrection, létale, bénéfique) |
+| MMV | LIFECYCLE.md | Mutation Minimale Viable — 10 questions, 6 décisions |
+
+### État après Gel Ω∞.2
+
+| Composante SMS | État |
+|---------------|------|
+| N (Noyau) | FORT — toutes corrections appliquées |
+| F (Frontière) | BON — complet |
+| P (Protocoles) | INSUFFISANT — PROTOCOLS.md documente l'état, MMV ajouté |
+
+### Conditions de démarrage V3 (mise à jour)
+- ✅ CORR-1 à CORR-8 toutes appliquées
+- ✅ Correction architecturale ADN/N
+- ✅ T-02 formalisé
+- ✅ Modèle de mortalité créé
+- ✅ MMV créé
+- ⚠️ A-2 (Souverain) non résolu — décision humaine requise
+- ⚠️ A-5 (Conflits axiomes) non résolu — décision humaine requise
+- ⚠️ DR-3 (Transition fondateur) non résolu — décision humaine requise
+
+---
+
 ## RÈGLES DE MISE À JOUR
 
 1. Toute session constitutionnelle de type Majeur ou Critique génère une entrée ici
