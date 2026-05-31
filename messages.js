@@ -389,6 +389,7 @@ function refreshThread(){
   if(!box || !body || !box.classList.contains('show')) return;
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
+  if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
   body.innerHTML = t.list.map(m=>{
     const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     return `<div class="ic-bubble ${m._sent?'sent':'recv'}">
@@ -530,7 +531,7 @@ async function subscribe(){
 
   // Si un channel existe déjà et est actif, ne pas recréer
   if(State.channel) {
-    try{ client.removeChannel(State.channel); }catch(e){}
+    try{ await client.removeChannel(State.channel); }catch(e){}
     State.channel = null;
   }
 
