@@ -9,9 +9,9 @@ const { INVARIANTS } = typeof require !== 'undefined'
   ? require('./invariants')
   : { INVARIANTS: (typeof window !== 'undefined' && window._INVARIANTS) || {} };
 
-const { ImmatBus, EVENTS } = typeof require !== 'undefined'
+const { ImmatBus: _ImmatBus, EVENTS: _EVENTS } = typeof require !== 'undefined'
   ? require('./bus')
-  : { ImmatBus: (typeof window !== 'undefined' && window.ImmatBus), EVENTS: {} };
+  : { ImmatBus: (typeof window !== 'undefined' ? window.ImmatBus : null), EVENTS: (typeof window !== 'undefined' && window.ImmatBus ? window.ImmatBus.EVENTS : {}) };
 
 const ImmatBrain = (function () {
   let _phase = 1; // 1=Observateur 2=Conseiller 3=Gardien
@@ -20,8 +20,8 @@ const ImmatBrain = (function () {
   function _audit(invId, context, violation) {
     const inv = INVARIANTS[invId];
     if (!inv) return;
-    if (violation && ImmatBus) {
-      ImmatBus.emit(EVENTS.INVARIANT_VIOLATED, {
+    if (violation && _ImmatBus) {
+      _ImmatBus.emit(_EVENTS.INVARIANT_VIOLATED, {
         invariant: invId,
         label: inv.label,
         severity: inv.severity,
@@ -116,8 +116,8 @@ const ImmatBrain = (function () {
    * Émet un audit complet de l'état courant.
    */
   function audit(context) {
-    if (ImmatBus) {
-      ImmatBus.emit('AUDIT_REQUESTED', { context, phase: _phase, at: Date.now() });
+    if (_ImmatBus) {
+      _ImmatBus.emit('AUDIT_REQUESTED', { context, phase: _phase, at: Date.now() });
     }
     return { phase: _phase, invariants: Object.keys(INVARIANTS).length };
   }
