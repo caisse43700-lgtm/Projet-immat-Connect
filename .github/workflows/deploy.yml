@@ -1,0 +1,51 @@
+name: Déploiement GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  administration: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Déployer sur GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Activer GitHub Pages automatiquement
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/pages \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -f build_type=workflow 2>/dev/null || \
+          gh api repos/${{ github.repository }}/pages \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            -f build_type=workflow 2>/dev/null || true
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Uploader les fichiers statiques
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Déployer
+        id: deployment
+        uses: actions/deploy-pages@v4

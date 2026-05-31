@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immatconnect-pro-v1';
+const CACHE_NAME = 'immatconnect-pro-v4';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

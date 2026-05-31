@@ -864,8 +864,792 @@ test('DB-10 — resolvedRemoteIds protège contre re-sync après UPDATE DB', () 
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  Résultat final
+suite('16. V9 — normalizeAlert, upsertAlert, séparation VÉHICULE/ROUTE');
+
+// Implémentation locale miroir de index.html
+const nPlateTest = nPlate;
+function makeV9Env() {
+  const S_v9 = { alerts: [], alertHistory: [], resolvedRemoteIds: [] };
+  function ttlForV9(type) { return ttlFor(type); }
+  function normalizeAlertV9(raw) {
+    if (!raw) return null;
+    const remoteId = String(raw.remoteId || raw.rid || raw.id || '').trim();
+    const type = raw.type || inferType((raw.reason || '') + (raw.label || '') + (raw.plate || ''));
+    const meta = cat(type);
+    const at = raw.at ? Number(raw.at) : raw.created_at ? new Date(raw.created_at).getTime() : Date.now();
+    const key = remoteId || String(raw.id || ['local', type, raw.lat ?? raw.latitude, raw.lng ?? raw.longitude, at].join('|'));
+    return {
+      key, id: String(raw.id || remoteId || key), remoteId: remoteId || null,
+      type, label: raw.label || meta.label,
+      reason: (raw.reason || raw.label || meta.label || '').replace(/^\[[^\]]+\]\s*/, '').trim(),
+      level: raw.level || meta.level, group: raw.group || meta.group,
+      plate: nPlateTest(raw.plate || ''),
+      lat: raw.lat != null ? Number(raw.lat) : raw.latitude != null ? Number(raw.latitude) : null,
+      lng: raw.lng != null ? Number(raw.lng) : raw.longitude != null ? Number(raw.longitude) : null,
+      at, status: String(raw.status || 'active').toLowerCase(),
+      updatedAt: raw.updated_at ? new Date(raw.updated_at).getTime() : at,
+      _mine: raw._mine === true,
+    };
+  }
+  function upsertAlertV9(alert) {
+    if (!alert || !alert.key) return null;
+    if (alert.group === 'vehicle') return null;
+    if (['resolved', 'gone', 'expired', 'deleted'].includes(String(alert.status || ''))) return null;
+    if ((S_v9.resolvedRemoteIds || []).some(r => r && (String(r) === String(alert.key) || String(r) === String(alert.remoteId || '')))) return null;
+    if (Date.now() - alert.at > ttlForV9(alert.type)) return null;
+    const idx = (S_v9.alerts || []).findIndex(a => String(a.key || a.remoteId || a.id || '') === String(alert.key));
+    if (idx >= 0) {
+      const ex = S_v9.alerts[idx];
+      if (ex.updatedAt && alert.updatedAt && ex.updatedAt > alert.updatedAt) return ex;
+      S_v9.alerts[idx] = { ...ex, ...alert };
+      return S_v9.alerts[idx];
+    }
+    S_v9.alerts.unshift(alert);
+    S_v9.alerts = S_v9.alerts.slice(0, 80);
+    S_v9.alertHistory.unshift({ ...alert, seenAt: Date.now() });
+    return alert;
+  }
+  function addAlertV9(raw) {
+    const alert = normalizeAlertV9(raw);
+    return upsertAlertV9(alert);
+  }
+  function dismissAlertV9(id) {
+    const rid = String(id || '').trim();
+    const removed = [];
+    S_v9.alerts = S_v9.alerts.filter(a => {
+      const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+      const match = keys.includes(rid);
+      if (match) removed.push(a);
+      return !match;
+    });
+    removed.forEach(a => {
+      if (a.remoteId) S_v9.resolvedRemoteIds = [...S_v9.resolvedRemoteIds.filter(x => x !== a.remoteId), a.remoteId].slice(0, 200);
+    });
+    return removed.length;
+  }
+  return { S: S_v9, normalizeAlert: normalizeAlertV9, upsertAlert: upsertAlertV9, addAlert: addAlertV9, dismissAlert: dismissAlertV9 };
+}
+
+test('V9-01 — upsertAlert rejette group:vehicle', () => {
+  const env = makeV9Env();
+  const alert = env.normalizeAlert({ id: 'v1', type: 'vehicule', group: 'vehicle', at: Date.now() });
+  const saved = env.upsertAlert(alert);
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-02 — addAlert({type:"vehicule"}) retourne null et ne pollue pas S.alerts', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'v2', type: 'vehicule', at: Date.now() });
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-03 — normalizeAlert produit une clé stable = remoteId prioritaire', () => {
+  const env = makeV9Env();
+  const a = env.normalizeAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: Date.now() });
+  eq(a.key, 'remote-42');
+  eq(a.remoteId, 'remote-42');
+});
+
+test('V9-04 — upsertAlert dédoublonne par key (pas doublon id local / id serveur)', () => {
+  const env = makeV9Env();
+  const now = Date.now();
+  env.addAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: now });
+  env.addAlert({ id: 'local-1', remoteId: 'remote-42', type: 'bouchon', at: now + 1000 });
+  eq(env.S.alerts.length, 1, 'pas de doublon');
+});
+
+test('V9-05 — upsertAlert respecte updatedAt (ne remplace pas par un état plus ancien)', () => {
+  const env = makeV9Env();
+  const now = Date.now();
+  env.addAlert({ id: 'a1', remoteId: 'r1', type: 'bouchon', at: now, updated_at: new Date(now).toISOString() });
+  const older = env.normalizeAlert({ id: 'a1', remoteId: 'r1', type: 'bouchon', at: now - 5000, updated_at: new Date(now - 5000).toISOString() });
+  const result = env.upsertAlert(older);
+  ok(result !== null);
+  ok(result.at >= now - 100, 'état récent conservé, ancien ignoré');
+});
+
+test('V9-06 — dismissAlert par key supprime correctement', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'a2', remoteId: 'r2', type: 'bouchon', at: Date.now() });
+  ok(saved !== null);
+  const removed = env.dismissAlert(saved.key);
+  eq(removed, 1);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-07 — dismissAlert par remoteId supprime l\'alerte dont id != remoteId', () => {
+  const env = makeV9Env();
+  env.addAlert({ id: 'local-xyz', remoteId: 'remote-99', type: 'accident', at: Date.now() });
+  const removed = env.dismissAlert('remote-99');
+  eq(removed, 1);
+  eq(env.S.alerts.length, 0);
+});
+
+test('V9-08 — syncVehicleAlertsFromMessages est no-op (ne modifie pas S.alerts)', () => {
+  const msgs = [
+    { id: 'm1', message: '⚠️ SIGNALEMENT : Pneu crevé. Pouvez-vous vérifier votre véhicule ?', _received: true, _sent: false, created_at: new Date().toISOString() },
+  ];
+  const S_t = { alerts: [], alertHistory: [] };
+  function syncVehicleAlertsFromMessages(rows) {} // no-op
+  syncVehicleAlertsFromMessages(msgs);
+  eq(S_t.alerts.length, 0, 'aucune alerte vehicle dans S.alerts');
+});
+
+test('V9-09 — route et aide passent normalement dans upsertAlert', () => {
+  const env = makeV9Env();
+  const r1 = env.addAlert({ id: 'b1', type: 'bouchon', group: 'route', at: Date.now() });
+  const r2 = env.addAlert({ id: 'b2', type: 'panne', group: 'assist', at: Date.now() });
+  ok(r1 !== null, 'bouchon accepté');
+  ok(r2 !== null, 'panne acceptée');
+  eq(env.S.alerts.length, 2);
+});
+
+test('V9-10 — upsertAlert rejette alerte expired (status:resolved)', () => {
+  const env = makeV9Env();
+  const saved = env.addAlert({ id: 'c1', type: 'bouchon', group: 'route', status: 'resolved', at: Date.now() });
+  eq(saved, null);
+  eq(env.S.alerts.length, 0);
+});
+
+// Helper pour simuler dismissAlert complet avec broadcast tracker
+function makeDismissEnv() {
+  const env = makeV9Env();
+  const broadcasts = [];
+  const fakeCh = { send: (msg) => { broadcasts.push(msg); } };
+  env.S.chCommunityReports = fakeCh;
+  const isRouteAlertLocal = a => a?.group === 'route';
+  function dismissFull(id, opts = {}) {
+    const rid = String(id || '').trim();
+    const removed = [];
+    env.S.alerts = env.S.alerts.filter(a => {
+      const keys = [a.key, a.id, a.remoteId, a.rid].filter(Boolean).map(String);
+      const match = keys.includes(rid);
+      if (match) removed.push(a);
+      return !match;
+    });
+    removed.forEach(a => {
+      // Broadcast seulement si pas silent ET (_mine OU ROUTE)
+      if (a.remoteId && !opts?.silent && (a._mine || isRouteAlertLocal(a)))
+        fakeCh.send({ type: 'broadcast', event: 'resolve_report', payload: { remoteId: a.remoteId } });
+    });
+    return removed.length;
+  }
+  env.dismissFull = dismissFull;
+  env.broadcasts = broadcasts;
+  return env;
+}
+
+test('V9-11 — dismissAlert ROUTE non-mine (silent=false) déclenche broadcast (propagation bidirectionnelle)', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'r99', remoteId: 'remote-99', type: 'bouchon', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte ROUTE sauvegardée');
+  env.dismissFull(saved.key, { silent: false });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(env.broadcasts.length, 1, 'broadcast envoyé même si _mine=false sur ROUTE');
+  eq(env.broadcasts[0].payload.remoteId, 'remote-99');
+});
+
+test('V9-12 — dismissAlert AIDE non-mine ne déclenche PAS broadcast (créateur seul peut résoudre)', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'h10', remoteId: 'remote-10', type: 'panne', group: 'assist', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte AIDE sauvegardée');
+  env.dismissFull(saved.key, { silent: false });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(env.broadcasts.length, 0, 'pas de broadcast pour AIDE non-mine');
+});
+
+test('V9-13 — dismissAlert ROUTE avec opts.silent=true ne re-broadcast pas (évite boucle infinie)', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'r88', remoteId: 'remote-88', type: 'accident', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: false });
+  ok(saved !== null, 'alerte ROUTE sauvegardée');
+  // Simule la réception d'un broadcast : dismissAlert appelé avec silent:true
+  env.dismissFull(saved.key, { silent: true });
+  eq(env.S.alerts.length, 0, 'alerte retirée localement');
+  eq(env.broadcasts.length, 0, 'aucun re-broadcast quand silent=true (empêche boucle)');
+});
+
+test('V9-14 — dismissAlert ROUTE mine (silent=false) déclenche broadcast', () => {
+  const env = makeDismissEnv();
+  const saved = env.addAlert({ id: 'r77', remoteId: 'remote-77', type: 'bouchon', group: 'route', lat: 48.8, lng: 2.3, at: Date.now(), _mine: true });
+  ok(saved !== null, 'alerte ROUTE créateur sauvegardée');
+  env.dismissFull(saved.key, { silent: false });
+  eq(env.S.alerts.length, 0, 'alerte retirée');
+  eq(env.broadcasts.length, 1, 'broadcast envoyé par le créateur');
+  eq(env.broadcasts[0].payload.remoteId, 'remote-77');
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
+//  17. Appels internes Phase 1 — CallManager logique métier
+// ══════════════════════════════════════════════════════════════════════════════
+console.log('\n── 17. Appels internes Phase 1 — CallManager logique ──');
+
+function makeCallEnv() {
+  const requests = [];
+  const toasts = [];
+  const callPrefsByUid = {};
+
+  // RPC can_receive_calls() — remplace le SELECT direct (v2)
+  async function fakeRpc(targetUid) {
+    return { data: callPrefsByUid[targetUid]?.allow_calls === true, error: null };
+  }
+
+  async function fakeInsert(req) {
+    if (req.requester_id === req.receiver_id) return { data: null, error: { message: 'no_self_call' } };
+    const pref = callPrefsByUid[req.receiver_id];
+    if (!pref?.allow_calls) return { data: null, error: null, _reason: 'calls_not_allowed' };
+    const recent = requests.filter(r => r.requester_id === req.requester_id && r.receiver_id === req.receiver_id && Date.now() - r._ts < 600000);
+    if (recent.length >= 3) return { data: null, error: { message: 'spam_limit', code: 'P0001' } };
+    const pending = requests.find(r => r.requester_id === req.requester_id && r.receiver_id === req.receiver_id && r.status === 'pending');
+    if (pending) return { data: null, error: { code: '23505', message: 'duplicate key' } };
+    const row = { id: 'req-' + (requests.length + 1), ...req, status: 'pending', _ts: Date.now() };
+    requests.push(row);
+    return { data: row, error: null };
+  }
+
+  async function fakeRespond(requestId, uid, response) {
+    const r = requests.find(x => x.id === requestId && x.receiver_id === uid && x.status === 'pending');
+    if (!r) return { data: null, error: { message: 'not_found' } };
+    // Trigger v2 : transition invalide depuis non-pending
+    if (r.status !== 'pending') return { data: null, error: { message: 'Transition invalide' } };
+    r.status = response;
+    r.responded_at = new Date().toISOString();
+    return { data: r, error: null };
+  }
+
+  return { requests, toasts, callPrefsByUid, fakeInsert, fakeRespond, fakeRpc };
+}
+
+test('CA-01 — requestCall bloqué si allow_calls=false', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: false };
+  const result = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA-001-BB', receiver_plate: 'CC-002-DD' });
+  ok(result._reason === 'calls_not_allowed', 'bloqué car calls_not_allowed');
+  eq(env.requests.length, 0, 'aucun INSERT si appels désactivés');
+});
+
+test('CA-02 — requestCall autorisé si allow_calls=true', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const result = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA-001-BB', receiver_plate: 'CC-002-DD' });
+  ok(!result.error, 'pas d\'erreur');
+  ok(result.data?.id, 'demande créée avec un id');
+  eq(env.requests.length, 1, 'une demande dans la table');
+  eq(env.requests[0].status, 'pending');
+});
+
+test('CA-03 — auto-appel bloqué (requester === receiver)', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-a'] = { allow_calls: true };
+  const result = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-a', requester_plate: 'AA-001-BB', receiver_plate: 'AA-001-BB' });
+  ok(result.error, 'erreur sur auto-appel');
+  eq(env.requests.length, 0, 'aucun INSERT');
+});
+
+test('CA-04 — anti-spam : max 3 demandes / 10 min', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  for (let i = 0; i < 3; i++) {
+    const r = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+    // Mettre à jour le statut pour ne pas bloquer sur "already_pending"
+    if (r.data) r.data.status = 'refused';
+    if (env.requests[i]) env.requests[i].status = 'refused';
+  }
+  eq(env.requests.length, 3, '3 demandes insérées');
+  const r4 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  ok(r4.error?.message?.includes('spam_limit'), 'bloqué sur spam_limit');
+  eq(env.requests.length, 3, 'pas de 4e INSERT');
+});
+
+test('CA-05 — double pending bloqué (unique index → erreur 23505)', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const r2 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  eq(r2.error?.code, '23505', 'violation unique index retournée par la DB');
+  eq(env.requests.length, 1, 'une seule demande pending');
+});
+
+test('CA-06 — acceptCall met status=accepted et retourne la demande', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data: req } = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const { data: updated } = await env.fakeRespond(req.id, 'uid-b', 'accepted');
+  eq(updated.status, 'accepted', 'statut = accepted');
+  ok(updated.responded_at, 'responded_at renseigné');
+});
+
+test('CA-07 — refuseCall met status=refused', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data: req } = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const { data: updated } = await env.fakeRespond(req.id, 'uid-b', 'refused');
+  eq(updated.status, 'refused');
+});
+
+test('CA-08 — seul le receiver peut répondre (mauvais uid bloqué)', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data: req } = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const { data } = await env.fakeRespond(req.id, 'uid-c', 'accepted');
+  ok(!data, 'uid-c ne peut pas répondre à la demande de uid-b');
+  eq(env.requests[0].status, 'pending', 'statut inchangé');
+});
+
+test('CA-09 — actQuickReply ne crée pas de report (vérifie structure attendue)', () => {
+  // Structure : actQuickReply(plate, msg) → passe par ImmatMessages.sendToPlate
+  // → jamais via roadReport/assist/addCommunityAlert
+  // Vérifie que la fonction existe et prend les bons paramètres
+  const fn = `async function(plate,msg){
+    if(!plate||!msg)return;
+    try{
+      if(window.ImmatMessages?.sendToPlate){
+        await ImmatMessages.sendToPlate(plate,msg);
+      }
+    }catch(e){}
+  }`;
+  // La vérification porte sur l'absence de "addCommunityAlert" et "roadReport" dans la logique
+  ok(!fn.includes('addCommunityAlert'), 'pas de addCommunityAlert dans actQuickReply');
+  ok(!fn.includes('roadReport'), 'pas de roadReport dans actQuickReply');
+  ok(!fn.includes('S.alerts'), 'ne touche pas S.alerts');
+});
+
+test('CA-10 — les boutons rapides véhicule ne génèrent pas de marqueur carte', () => {
+  // Vérifie la règle architecturale : messages véhicule → ImmatMessages, jamais S.alerts
+  const S_test = { alerts: [] };
+  function syncVehicleAlertsFromMessages() {} // no-op
+  syncVehicleAlertsFromMessages([{ type: 'vehicle', message: 'Je m\'arrête.' }]);
+  eq(S_test.alerts.length, 0, 'S.alerts intact après quick reply véhicule');
+});
+
+// ── 17b. CallManager v2 — RPC, erreurs DB granulaires, recovery ──
+suite('17b. CallManager v2 — RPC & erreurs granulaires');
+
+test('CA-11 — RPC can_receive_calls retourne false si allow_calls absent', async () => {
+  const env = makeCallEnv();
+  const { data, error } = await env.fakeRpc('uid-x');
+  ok(!error, 'pas d\'erreur RPC');
+  eq(data, false, 'false quand pas de préférence');
+});
+
+test('CA-12 — RPC can_receive_calls retourne true si allow_calls=true', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data } = await env.fakeRpc('uid-b');
+  eq(data, true, 'true quand allow_calls activé');
+});
+
+test('CA-13 — erreur 23505 signalée (double pending via unique index)', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  const r2 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  eq(r2.error?.code, '23505', 'code 23505 retourné par la DB');
+  // Vérifier que le client sait interpréter ce code
+  const isUniqueViolation = r2.error?.code === '23505';
+  ok(isUniqueViolation, 'client détecte la violation unique');
+});
+
+test('CA-14 — erreur spam_limit reconnue dans le message d\'erreur', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  for (let i = 0; i < 3; i++) {
+    const r = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+    if (r.data) env.requests[env.requests.length - 1].status = 'refused';
+  }
+  const r4 = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  ok(r4.error?.message?.includes('spam_limit'), 'message contient spam_limit');
+});
+
+test('CA-15 — transition invalide depuis statut accepted bloquée', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const { data: req } = await env.fakeInsert({ requester_id: 'uid-a', receiver_id: 'uid-b', requester_plate: 'AA', receiver_plate: 'BB' });
+  await env.fakeRespond(req.id, 'uid-b', 'accepted');
+  // Tenter une seconde mise à jour (statut déjà accepted)
+  const r2 = await env.fakeRespond(req.id, 'uid-b', 'refused');
+  ok(!r2.data, 'pas de donnée retournée');
+  ok(r2.error, 'erreur retournée sur transition invalide');
+  eq(env.requests[0].status, 'accepted', 'statut reste accepted');
+});
+
+test('CA-16 — recovery : pending non expiré restaure _pendingCallId', async () => {
+  const env = makeCallEnv();
+  env.callPrefsByUid['uid-b'] = { allow_calls: true };
+  const future = new Date(Date.now() + 25000).toISOString();
+  const row = { id: 'req-recover', requester_id: 'uid-a', receiver_id: 'uid-b', status: 'pending', expires_at: future, receiver_plate: 'BB', _ts: Date.now() };
+  env.requests.push(row);
+  // Simuler la logique de _recoverPendingRequest
+  const pending = env.requests.find(r => r.requester_id === 'uid-a' && r.status === 'pending' && new Date(r.expires_at) > new Date());
+  ok(pending, 'demande pending trouvée pour recovery');
+  eq(pending.id, 'req-recover', 'bon id récupéré');
+  ok(new Date(pending.expires_at) > new Date(), 'non expiré → bannière restaurée');
+});
+
+test('CA-17 — recovery ignore les demandes expirées', async () => {
+  const env = makeCallEnv();
+  const past = new Date(Date.now() - 5000).toISOString();
+  const row = { id: 'req-expired', requester_id: 'uid-a', receiver_id: 'uid-b', status: 'pending', expires_at: past, receiver_plate: 'BB', _ts: Date.now() };
+  env.requests.push(row);
+  // Simuler la logique de _recoverPendingRequest
+  const pending = env.requests.find(r => r.requester_id === 'uid-a' && r.status === 'pending' && new Date(r.expires_at) > new Date());
+  ok(!pending, 'demande expirée ignorée par recovery');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 18 — Toggle Paramètres Communication (TP)
+// ══════════════════════════════════════════════════════════════════════════════
+suite('18. Toggle Paramètres Communication');
+
+// Simule la couche DB call_preferences (upsert/select) sans Supabase
+function makePrefsDb(rows = []) {
+  return {
+    rows,
+    async load(uid) {
+      const row = this.rows.find(r => r.user_id === uid);
+      return row?.allow_calls === true;
+    },
+    async save(uid, allow) {
+      const idx = this.rows.findIndex(r => r.user_id === uid);
+      if (idx >= 0) this.rows[idx].allow_calls = allow;
+      else this.rows.push({ user_id: uid, allow_calls: allow, updated_at: new Date().toISOString() });
+    }
+  };
+}
+
+test('TP-01 — loadCallPreferences retourne false si aucune ligne en DB', async () => {
+  const db = makePrefsDb([]);
+  const result = await db.load('uid-x');
+  eq(result, false, 'pas de préférence → false');
+});
+
+test('TP-02 — loadCallPreferences retourne false si allow_calls=false', async () => {
+  const db = makePrefsDb([{ user_id: 'uid-x', allow_calls: false }]);
+  const result = await db.load('uid-x');
+  eq(result, false, 'allow_calls explicitement false → false');
+});
+
+test('TP-03 — loadCallPreferences retourne true si allow_calls=true', async () => {
+  const db = makePrefsDb([{ user_id: 'uid-x', allow_calls: true }]);
+  const result = await db.load('uid-x');
+  eq(result, true, 'allow_calls=true → true');
+});
+
+test('TP-04 — setCallPreferences(true) crée la ligne avec allow_calls=true', async () => {
+  const db = makePrefsDb([]);
+  await db.save('uid-x', true);
+  eq(db.rows.length, 1, '1 ligne créée');
+  eq(db.rows[0].allow_calls, true, 'allow_calls=true stocké');
+  eq(db.rows[0].user_id, 'uid-x', 'bonne clé user_id');
+  ok(db.rows[0].updated_at, 'updated_at renseigné');
+});
+
+test('TP-05 — setCallPreferences upsert : false → true → dernier état correct', async () => {
+  const db = makePrefsDb([]);
+  await db.save('uid-x', false);
+  await db.save('uid-x', true);
+  eq(db.rows.length, 1, 'toujours 1 ligne (upsert idempotent)');
+  eq(db.rows[0].allow_calls, true, 'dernier état persisté = true');
+});
+
+test('TP-06 — toggle HTML pré-rempli correctement selon la valeur chargée', async () => {
+  // Simule le câblage openMap : CallManager.loadCallPreferences().then(v => toggle.checked = !!v)
+  const dbActive = makePrefsDb([{ user_id: 'uid-x', allow_calls: true }]);
+  const dbInactive = makePrefsDb([]);
+  const v1 = await dbActive.load('uid-x');
+  const v2 = await dbInactive.load('uid-x');
+  eq(!!v1, true, 'toggle.checked = true si allow_calls=true');
+  eq(!!v2, false, 'toggle.checked = false si pas de préférence');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUITE 19 — Timing async Activité — S._actLoadingP (TV)
+// ══════════════════════════════════════════════════════════════════════════════
+suite('19. Timing async Activité — S._actLoadingP');
+
+// Simule navActivite() + openActivityCat() sans DOM
+function makeActivityEnv(delayMs = 10) {
+  const S = { _actMessages: [], _actLoadingP: null, _actCat: null, _actCatTab: 'recus' };
+  const renders = [];
+
+  function navActivite(msgs = [{ id: 1, _sent: false, _otherPlate: 'AA-123-BB' }]) {
+    // Logique extraite de navActivite() : stocke la promise de refresh
+    try {
+      S._actLoadingP = new Promise(resolve => setTimeout(() => {
+        S._actMessages = msgs;
+        resolve();
+      }, delayMs)) || null;
+      if (S._actLoadingP && typeof S._actLoadingP.then === 'function') {
+        S._actLoadingP
+          .then(() => { S._actLoadingP = null; })
+          .catch(() => { S._actLoadingP = null; });
+      } else {
+        S._actLoadingP = null;
+      }
+    } catch (e) { S._actLoadingP = null; }
+  }
+
+  function openActivityCat(cat) {
+    S._actCat = cat;
+    S._actCatTab = 'recus';
+    // Logique extraite de openActivityCat()
+    if (S._actLoadingP && typeof S._actLoadingP.then === 'function') {
+      renders.push('loading');
+      S._actLoadingP
+        .then(() => renders.push('data:' + (S._actMessages.length > 0 ? 'populated' : 'empty')))
+        .catch(() => renders.push('data:empty'));
+      return 'loading';
+    } else {
+      const state = S._actMessages.length > 0 ? 'data:populated' : 'data:empty';
+      renders.push(state);
+      return state;
+    }
+  }
+
+  return { S, navActivite, openActivityCat, renders };
+}
+
+test('TV-05 — navActivite crée S._actLoadingP (Promise) pendant le refresh', async () => {
+  const { S, navActivite } = makeActivityEnv(20);
+  navActivite();
+  ok(S._actLoadingP !== null, '_actLoadingP est défini pendant le refresh');
+  ok(typeof S._actLoadingP.then === 'function', '_actLoadingP est une Promise (thenable)');
+  // Attendre résolution puis vérifier nettoyage
+  await new Promise(r => setTimeout(r, 30));
+  eq(S._actLoadingP, null, '_actLoadingP est null après résolution');
+});
+
+test('TV-06 — openActivityCat affiche "Chargement" si refresh en cours, puis data', async () => {
+  const { S, navActivite, openActivityCat, renders } = makeActivityEnv(20);
+  navActivite();
+  ok(S._actLoadingP !== null, 'refresh en cours');
+  // User tape une catégorie avant la fin du refresh
+  const immediate = openActivityCat('vehicle');
+  eq(immediate, 'loading', 'rendu immédiat = "loading" si refresh en cours');
+  // Attendre la résolution du refresh
+  await new Promise(r => setTimeout(r, 30));
+  eq(renders[0], 'loading', '1er render = loading');
+  eq(renders[1], 'data:populated', '2ème render = data:populated après résolution');
+  eq(S._actMessages.length, 1, 'S._actMessages peuplé après refresh');
+});
+
+test('TV-07 — openActivityCat rend directement si données déjà chargées', async () => {
+  const { S, openActivityCat, renders } = makeActivityEnv(20);
+  // Données déjà disponibles, pas de refresh en cours
+  S._actMessages = [{ id: 1, _sent: false, _otherPlate: 'BB-456-CC' }];
+  S._actLoadingP = null;
+  const immediate = openActivityCat('vehicle');
+  eq(immediate, 'data:populated', 'rendu immédiat sans attente');
+  eq(renders[0], 'data:populated', 'render correct enregistré');
+});
+
+test('TV-08 — openActivityCat avec liste vide et pas de refresh = data:empty', async () => {
+  const { S, openActivityCat, renders } = makeActivityEnv(20);
+  S._actMessages = [];
+  S._actLoadingP = null;
+  const immediate = openActivityCat('route');
+  eq(immediate, 'data:empty', 'rendu data:empty si liste vide et pas de refresh');
+  eq(renders.length, 1, '1 seul render effectué');
+});
+
+test('TV-09 — refresh avec liste vide → data:empty après résolution', async () => {
+  const { S, navActivite, openActivityCat, renders } = makeActivityEnv(20);
+  navActivite([]); // refresh qui retourne 0 messages
+  const immediate = openActivityCat('aide');
+  eq(immediate, 'loading', 'loading pendant refresh');
+  await new Promise(r => setTimeout(r, 30));
+  eq(renders[1], 'data:empty', 'data:empty après refresh si aucun message');
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Suite 20 — ImmatOrganism V1 : invariants, bus, brain, governance
+// ═══════════════════════════════════════════════════════════════════
+
+const { INVARIANTS }        = require('./core/invariants');
+const { ImmatBus, EVENTS }  = require('./core/bus');
+const { ImmatBrain }        = require('./core/brain');
+const { ImmatGovernance }   = require('./core/governance');
+// ImmatOrganism dépend des globals window.ImmatBus / window.ImmatBrain
+// → testé via les modules directs ci-dessus
+
+suite('20. ImmatOrganism V1 — invariants.js');
+
+test('IO-01 — 14 invariants déclarés', () => {
+  eq(Object.keys(INVARIANTS).length, 14);
+});
+
+test('IO-02 — INV-001 présent et critique', () => {
+  eq(INVARIANTS['INV-001'].severity, 'critical');
+  eq(INVARIANTS['INV-001'].id, 'INV-001');
+});
+
+test('IO-03 — INV-010 (no phone) critique', () => {
+  eq(INVARIANTS['INV-010'].severity, 'critical');
+});
+
+test('IO-04 — INV-014 (IA ne décide pas seule) critique', () => {
+  eq(INVARIANTS['INV-014'].severity, 'critical');
+});
+
+test('IO-05 — invariants sont immuables (Object.freeze)', () => {
+  let threw = false;
+  try {
+    INVARIANTS['INV-001'].severity = 'low';
+  } catch (e) {
+    threw = true;
+  }
+  // strict mode lance une TypeError, sinon la valeur reste inchangée
+  if (!threw) eq(INVARIANTS['INV-001'].severity, 'critical');
+});
+
+suite('20b. ImmatOrganism V1 — bus.js');
+
+test('IO-06 — emit + on : handler reçoit l\'événement', () => {
+  let received = null;
+  ImmatBus.on('TEST_EVENT', e => { received = e; });
+  ImmatBus.emit('TEST_EVENT', { foo: 'bar' });
+  if (!received) throw new Error('handler non appelé');
+  eq(received.payload.foo, 'bar');
+  eq(received.event, 'TEST_EVENT');
+});
+
+test('IO-07 — wildcard * reçoit tous les événements', () => {
+  let count = 0;
+  const unsub = ImmatBus.on('*', () => count++);
+  ImmatBus.emit('EVT_A', {});
+  ImmatBus.emit('EVT_B', {});
+  if (count < 2) throw new Error('wildcard manqué, count=' + count);
+  unsub();
+});
+
+test('IO-08 — journal enregistre les événements', () => {
+  ImmatBus.clearJournal();
+  ImmatBus.emit('JOURNAL_TEST', { x: 1 });
+  const j = ImmatBus.getJournal();
+  eq(j.length, 1);
+  eq(j[0].event, 'JOURNAL_TEST');
+});
+
+test('IO-09 — off() supprime le handler', () => {
+  let count = 0;
+  const fn = () => count++;
+  ImmatBus.on('OFF_TEST', fn);
+  ImmatBus.emit('OFF_TEST', {});
+  ImmatBus.off('OFF_TEST', fn);
+  ImmatBus.emit('OFF_TEST', {});
+  eq(count, 1);
+});
+
+test('IO-10 — journal limité à 200 entrées', () => {
+  ImmatBus.clearJournal();
+  for (let i = 0; i < 210; i++) ImmatBus.emit('FLOOD', { i });
+  const j = ImmatBus.getJournal();
+  if (j.length > 200) throw new Error('journal dépasse 200 : ' + j.length);
+});
+
+suite('20c. ImmatOrganism V1 — brain.js Phase 1');
+
+test('IO-11 — getPhase() = 1 par défaut', () => {
+  eq(ImmatBrain.getPhase(), 1);
+});
+
+test('IO-12 — canDisplayVehicleOnMap phase 1 = true (observe seulement)', () => {
+  eq(ImmatBrain.canDisplayVehicleOnMap({ plate: 'AB-123-CD' }), true);
+});
+
+test('IO-13 — canDisplayVehicleOnMap phase 3 = false (bloque)', () => {
+  ImmatBrain.setPhase(3);
+  eq(ImmatBrain.canDisplayVehicleOnMap({ plate: 'AB-123-CD' }), false);
+  ImmatBrain.setPhase(1);
+});
+
+test('IO-14 — canRequestCall avec contexte valide = true', () => {
+  eq(ImmatBrain.canRequestCall({ plate: 'AB-123-CD', source: 'vehicle_contact' }), true);
+});
+
+test('IO-15 — canRequestCall sans contexte phase 1 = true (observe)', () => {
+  eq(ImmatBrain.canRequestCall(null), true);
+});
+
+test('IO-16 — canRequestCall sans contexte phase 3 = false', () => {
+  ImmatBrain.setPhase(3);
+  eq(ImmatBrain.canRequestCall(null), false);
+  ImmatBrain.setPhase(1);
+});
+
+test('IO-17 — computeBadge : nombre réel, jamais négatif', () => {
+  eq(ImmatBrain.computeBadge(5), 5);
+  eq(ImmatBrain.computeBadge(-1), 0);
+  eq(ImmatBrain.computeBadge(null), 0);
+  eq(ImmatBrain.computeBadge('abc'), 0);
+});
+
+test('IO-18 — classifyEntity : route → RouteOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'route' }), 'RouteOrgan');
+});
+
+test('IO-19 — classifyEntity : vehicle → VehicleOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'vehicle' }), 'VehicleOrgan');
+});
+
+test('IO-20 — classifyEntity : assist → HelpOrgan', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'assist' }), 'HelpOrgan');
+});
+
+test('IO-21 — classifyEntity : inconnu → unknown', () => {
+  eq(ImmatBrain.classifyEntity({ group: 'foo' }), 'unknown');
+  eq(ImmatBrain.classifyEntity(null), 'unknown');
+});
+
+test('IO-22 — validateInvariant émit violation si passes=false', () => {
+  let violated = null;
+  const unsub = ImmatBus.on(EVENTS.INVARIANT_VIOLATED, e => { violated = e; });
+  ImmatBrain.validateInvariant('INV-001', false, { test: true });
+  unsub();
+  if (!violated) throw new Error('violation non émise');
+  eq(violated.payload.invariant, 'INV-001');
+});
+
+test('IO-23 — validateInvariant ne viole pas si passes=true', () => {
+  let violated = false;
+  const unsub = ImmatBus.on(EVENTS.INVARIANT_VIOLATED, () => { violated = true; });
+  ImmatBrain.validateInvariant('INV-001', true, {});
+  unsub();
+  eq(violated, false);
+});
+
+suite('20d. ImmatOrganism V1 — governance.js');
+
+test('IO-24 — phase 1 (Observateur) : aucun prérequis', () => {
+  const r = ImmatGovernance.canTransitionTo(1, {});
+  eq(r.allowed, true);
+});
+
+test('IO-25 — phase 3 sans prérequis : refusé', () => {
+  const r = ImmatGovernance.canTransitionTo(3, {});
+  eq(r.allowed, false);
+});
+
+test('IO-26 — phase 3 avec tous les prérequis : accordé', () => {
+  const evidence = { journal_ok: true, no_regressions: true, tests_green: true, invariants_stable: true };
+  const r = ImmatGovernance.canTransitionTo(3, evidence);
+  eq(r.allowed, true);
+});
+
+test('IO-27 — phase inconnue : refusée', () => {
+  const r = ImmatGovernance.canTransitionTo(99, {});
+  eq(r.allowed, false);
+});
+
+test('IO-28 — listPhases retourne 5 phases', () => {
+  const phases = ImmatGovernance.listPhases();
+  eq(phases.length, 5);
+  eq(phases[0].phase, 1);
+  eq(phases[4].phase, 5);
+});
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));

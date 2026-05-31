@@ -273,6 +273,82 @@ function renderEmpty(text){
   if(list) list.innerHTML = `<div class="ic-empty">${esc(text||'Aucun message.')}</div>`;
 }
 
+// ── Swipe-to-delete helpers ─────────────────────────────────────
+const SWIPE_W = 76;
+
+function _closeSwipeWrap(wrap) {
+  const r = wrap.querySelector('.ic-mail-row');
+  const d = wrap.querySelector('.ic-swipe-del');
+  const T = 'transform .22s cubic-bezier(.22,1,.36,1)';
+  if(r){ r.style.transition = T; r.style.transform = 'translateX(0)'; }
+  if(d){ d.style.transition = T; d.style.transform = 'translateX(100%)'; }
+  wrap.dataset.swipeOpen = '0';
+}
+
+function _openSwipeWrap(wrap) {
+  const r = wrap.querySelector('.ic-mail-row');
+  const d = wrap.querySelector('.ic-swipe-del');
+  const T = 'transform .22s cubic-bezier(.22,1,.36,1)';
+  if(r){ r.style.transition = T; r.style.transform = `translateX(-${SWIPE_W}px)`; }
+  if(d){ d.style.transition = T; d.style.transform = 'translateX(0)'; }
+  wrap.dataset.swipeOpen = '1';
+}
+
+function _initRowSwipe(wrap) {
+  const row = wrap.querySelector('.ic-mail-row');
+  const del = wrap.querySelector('.ic-swipe-del');
+  if(!row) return;
+  let startX = 0, startY = 0, curX = 0, tracking = false;
+
+  if(del) del.style.transform = 'translateX(100%)';
+
+  row.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    curX = startX;
+    tracking = false;
+    row.style.transition = 'none';
+    if(del) del.style.transition = 'none';
+  }, { passive: true });
+
+  row.addEventListener('touchmove', e => {
+    curX = e.touches[0].clientX;
+    const dx = curX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if(!tracking) {
+      if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if(Math.abs(dy) > Math.abs(dx)) return;
+      tracking = true;
+      document.querySelectorAll('.ic-swipe-wrap').forEach(w => {
+        if(w !== wrap && w.dataset.swipeOpen === '1') _closeSwipeWrap(w);
+      });
+    }
+    if(!tracking) return;
+    const isOpen = wrap.dataset.swipeOpen === '1';
+    const clamped = Math.max(Math.min((isOpen ? -SWIPE_W : 0) + dx, 0), -SWIPE_W);
+    e.preventDefault();
+    row.style.transform = `translateX(${clamped}px)`;
+    if(del) del.style.transform = `translateX(${100 + (clamped * 100 / SWIPE_W)}%)`;
+  }, { passive: false });
+
+  row.addEventListener('touchend', () => {
+    if(!tracking) return;
+    tracking = false;
+    const dx = curX - startX;
+    const isOpen = wrap.dataset.swipeOpen === '1';
+    if(!isOpen && dx < -40) _openSwipeWrap(wrap);
+    else if(isOpen && dx > 30) _closeSwipeWrap(wrap);
+    else if(isOpen) _openSwipeWrap(wrap);
+    else _closeSwipeWrap(wrap);
+  });
+
+  if(del) del.addEventListener('click', e => {
+    e.stopPropagation();
+    _closeSwipeWrap(wrap);
+    deleteThread(row.dataset.plate);
+  });
+}
+
 function render(){
   const list = $('icMsgList');
   if(!list) return;
@@ -306,25 +382,33 @@ function render(){
     const last = t.last || {};
     const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     return `
-      <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
-           data-plate="${esc(t.plate)}">
-        <div class="ic-avatar">🚗</div>
-        <div class="ic-row-body">
-          <div class="ic-row-top">
-            <span class="ic-plate">${esc(t.plate)}</span>
-            <span class="ic-row-time">${esc(timeStr)}</span>
-          </div>
-          <div class="ic-row-bot">
-            <span class="ic-preview">${esc(last.message || '')}</span>
-            <span class="ic-unread-dot"></span>
+      <div class="ic-swipe-wrap">
+        <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
+             data-plate="${esc(t.plate)}">
+          <div class="ic-avatar">🚗</div>
+          <div class="ic-row-body">
+            <div class="ic-row-top">
+              <span class="ic-plate">${esc(t.plate)}</span>
+              <span class="ic-row-time">${esc(timeStr)}</span>
+            </div>
+            <div class="ic-row-bot">
+              <span class="ic-preview">${esc(last.message || '')}</span>
+              <span class="ic-unread-dot"></span>
+            </div>
           </div>
         </div>
+        <button class="ic-swipe-del" data-plate="${esc(t.plate)}">Supprimer</button>
       </div>
     `;
   }).join('');
 
-  list.querySelectorAll('.ic-mail-row').forEach(row=>{
-    row.onclick = () => openThread(row.dataset.plate);
+  list.querySelectorAll('.ic-swipe-wrap').forEach(wrap => {
+    const row = wrap.querySelector('.ic-mail-row');
+    if(row) row.addEventListener('click', () => {
+      if(wrap.dataset.swipeOpen === '1'){ _closeSwipeWrap(wrap); return; }
+      openThread(row.dataset.plate);
+    });
+    _initRowSwipe(wrap);
   });
 }
 
