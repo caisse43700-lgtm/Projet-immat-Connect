@@ -130,6 +130,7 @@
           <button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button>
           <button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button>
           <button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button>
+          <button type="button" class="seen" onclick="App.callSignalPlate()">📞 Appeler</button>
         </div>
       </div>
     </div>
@@ -146,6 +147,10 @@
       <button class="alert-card urgent" onclick="App.assist('moteur');App.sigDone()"><span class="icon">⚙️</span><span>Moteur</span></button>
       <button class="alert-card fire" onclick="App.assist('incendie');App.sigDone()"><span class="icon">🔥</span><span>Incendie</span></button>
       <button class="alert-card info" onclick="App.assist('perdu');App.sigDone()"><span class="icon">🧭</span><span>Perdu</span></button>
+    </div>
+    <div id="aideCallSection" style="display:none;margin-top:12px">
+      <div class="sig-section-hd">Conducteurs proches demandant de l'aide</div>
+      <div id="aideCallList" class="altet-list"></div>
     </div>
   </div>
   <!-- GPS Error helper -->
@@ -272,6 +277,7 @@
 <span id="topMsgBadge" class="nav-badge" style="display:none;position:fixed;top:-9999px">0</span>
 <div id="reportPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Informe les conducteurs proches, la route ou demande de l'aide.</p><div id="reportTargetLine" class="report-target-line">Information générale envoyée aux véhicules proches.</div><div id="reportVehicleBlock" class="report-block"><h3 id="reportVehicleTitle">🚗 Informer les conducteurs</h3><div class="report-grid"><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Feux restés allumés')">💡 Feux allumés</button><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Problème d\'éclairage')">💡 Éclairage</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Élément semble se détacher')">🔧 Élément détaché</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div><div id="reportRouteBlock" class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button type="button" class="report-route" onclick="App.roadReport('accident')">🚗 Accident</button><button type="button" class="report-route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button type="button" class="report-route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button type="button" class="report-route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button type="button" class="report-route" onclick="App.roadReport('controle')">👮 Contrôle</button><button type="button" class="report-route" onclick="App.roadReport('danger')">❗ Danger</button></div></div><div id="reportAssistBlock" class="report-block"><h3>🆘 Demander de l'aide</h3><div class="report-grid"><button type="button" class="report-help" onclick="App.assist('panne')">🚗 Panne</button><button type="button" class="report-help" onclick="App.assist('carburant')">⛽ Carburant</button><button type="button" class="report-help" onclick="App.assist('batterie')">🔋 Batterie</button><button type="button" class="report-help" onclick="App.assist('moteur')">⚙️ Moteur</button><button type="button" class="report-urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button type="button" class="report-help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div></div>
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div><div id="alertsPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('alertsPanel')">×</button><h2>Alertes actives</h2><div id="alertsToolbarOverlay" style="display:flex;gap:6px;overflow:auto;margin:10px 0;padding-bottom:4px"></div><div id="alertsListOverlay" class="list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBoxOverlay" style="margin-top:12px"><summary style="font-weight:900;cursor:pointer">Historique des signalements</summary><div id="alertHistoryListOverlay" class="list"></div></details></div>
+<div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
 <div id="floatingCard" class="floating-card" style="display:none">
   <div class="fc-icon" id="fcIcon">🚘</div>
   <div class="fc-body">
@@ -469,7 +475,7 @@ async afterAuth(){
   }
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();toast('Connecté à ImmatConnect.','ok')},
+openMap(p,email){S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();App.ImmatCall?.init?.(nPlate(p.owner_plate||''));toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
@@ -899,6 +905,7 @@ App.sigStepVehicle=function(){
 App.sigStepAide=function(){
   $('sigStep1')?.classList.remove('active');
   $('sigStep2Aide')?.classList.add('active');
+  App.renderAideCallSection?.();
 };
 App.sigBack=function(){
   ['sigStep2Route','sigStep2Vehicle','sigStep2Aide'].forEach(id=>$(id)?.classList.remove('active'));
@@ -1101,9 +1108,9 @@ App._actModCard=function(item,cat){
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
   if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(a.group==='vehicle'||a.type==='vehicule')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(a.plate||'')}')">💬 Répondre</button>`;
+  else if(a.group==='vehicle'||a.type==='vehicule')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(a.plate||'')}')">💬 Répondre</button><button class="act-mod-btn-reply" onclick="App.ImmatCall?.call?.('${e(a.plate||'')}')">📞 Appeler</button>`;
   else if(a.group==='route')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;
-  else if(a.group==='assist')actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`;
+  else if(a.group==='assist'){const rid=js(String(a.remoteId||''));actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`+(rid?`<button class="act-mod-btn-reply" onclick="App.callAideAlert('${rid}')">📞 Appeler</button>`:'')};
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}">
     ${isNew?'<div class="act-mod-badge-row"><span class="act-mod-new-badge">NOUVEAU</span></div>':''}
     <div class="act-mod-body">
@@ -1799,6 +1806,159 @@ function showReputationToast(){
 </script>
 
 
+<script>
+/* ===== ImmatCall — appel audio WebRTC via Supabase Broadcast ===== */
+App.callSignalPlate=function(){
+  const plate=nPlate(document.getElementById('recapPlate')?.textContent||'');
+  if(!plate||plate==='--')return toast('Aucune plaque disponible.','bad');
+  App.ImmatCall?.call?.(plate);
+};
+App.callAideAlert=async function(remoteId){
+  if(!remoteId||!window.sb)return toast('Conducteur introuvable.','bad');
+  try{
+    const{data:r,error:e1}=await sb.from('reports').select('reporter_id').eq('id',remoteId).maybeSingle();
+    if(e1||!r?.reporter_id)return toast('Conducteur introuvable.','bad');
+    const{data:prof,error:e2}=await sb.from('profiles').select('owner_plate').eq('id',r.reporter_id).maybeSingle();
+    if(e2||!prof?.owner_plate)return toast('Profil non disponible.','bad');
+    App.ImmatCall?.call?.(nPlate(prof.owner_plate));
+  }catch(e){toast('Erreur de connexion.','bad');}
+};
+App.renderAideCallSection=function(){
+  const sec=document.getElementById('aideCallSection'),list=document.getElementById('aideCallList');
+  if(!sec||!list)return;
+  const aids=(S.alerts||[]).filter(a=>a.group==='assist'&&a.status!=='gone'&&a.status!=='resolved'&&!a._mine&&a.remoteId);
+  if(!aids.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML=aids.map(a=>{
+    const rid=js(String(a.remoteId||''));
+    const reason=esc((a.reason||'').replace('[ASSISTANCE] ',''));
+    return'<div class="list-item"><span><small>'+reason+'</small></span><button type="button" onclick="App.callAideAlert(\''+rid+'\')">📞 Appeler</button></div>';
+  }).join('');
+};
+App.ImmatCall=(function(){
+  const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+  let _pc=null,_state='idle',_remote=null,_stream=null,_myPlate=null,_sigCh=null;
+  function _plate(){return _myPlate||nPlate(S?.profile?.owner_plate||'');}
+  function _ov(){return document.getElementById('callOverlay');}
+  function _ui(state,plate){
+    const ov=_ov();if(!ov)return;
+    ov.style.display='flex';
+    const pl=document.getElementById('callOvPlate'),st=document.getElementById('callOvStatus'),ac=document.getElementById('callOvActions');
+    if(pl)pl.textContent='🚗 '+plate;
+    if(st)st.textContent=state==='calling'?'Appel en cours…':state==='ringing'?'📞 Appel entrant':'✅ En communication';
+    if(ac){
+      if(state==='calling')
+        ac.innerHTML='<button onclick="App.ImmatCall.hangup()" style="background:#e53935;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-size:15px;cursor:pointer">✕ Annuler</button>';
+      else if(state==='ringing')
+        ac.innerHTML='<button onclick="App.ImmatCall.accept()" style="background:#43a047;color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:15px;cursor:pointer">✓ Accepter</button> <button onclick="App.ImmatCall.reject()" style="background:#e53935;color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:15px;cursor:pointer">✕ Refuser</button>';
+      else
+        ac.innerHTML='<button onclick="App.ImmatCall.hangup()" style="background:#e53935;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-size:15px;cursor:pointer">📵 Raccrocher</button>';
+    }
+  }
+  function _hide(){const ov=_ov();if(ov)ov.style.display='none';}
+  function _cleanup(){
+    try{_pc?.close();}catch(e){}
+    try{_stream?.getTracks().forEach(t=>t.stop());}catch(e){}
+    try{const a=document.getElementById('callAudio');if(a)a.srcObject=null;}catch(e){}
+    _pc=null;_stream=null;_state='idle';_remote=null;
+    delete window._pendingOffer;
+    _hide();
+  }
+  function _send(payload){
+    if(!_sigCh)return;
+    try{_sigCh.send({type:'broadcast',event:'voip',payload:{...payload,from:_plate()}});}catch(e){}
+  }
+  function _createPc(){
+    _pc=new RTCPeerConnection(ICE);
+    _pc.onicecandidate=ev=>{if(ev.candidate)_send({type:'ice',to:_remote,candidate:ev.candidate});};
+    _pc.ontrack=ev=>{try{const a=document.getElementById('callAudio');if(a&&ev.streams?.[0]){a.srcObject=ev.streams[0];a.play().catch(()=>{});}}catch(ex){}};
+    _pc.onconnectionstatechange=()=>{
+      const s=_pc?.connectionState;
+      if(s==='connected'){_state='active';_ui('active',_remote);}
+      else if(s==='failed'||s==='disconnected'){try{toast('Appel interrompu.','bad');}catch(e){} _cleanup();}
+    };
+    return _pc;
+  }
+  async function _onSignal(msg){
+    if(!msg||!msg.type)return;
+    const my=_plate();
+    if(msg.type==='call_offer'&&msg.to===my&&_state==='idle'){
+      _state='ringing';_remote=msg.from;window._pendingOffer={sdp:msg.sdp};
+      _ui('ringing',msg.from);try{toast('📞 Appel de '+msg.from,'ok');}catch(e){}
+    }
+    if(msg.type==='call_answer'&&msg.to===my&&_state==='calling'){
+      try{await _pc?.setRemoteDescription({type:'answer',sdp:msg.sdp});_state='active';_ui('active',_remote);}catch(e){console.warn('call_answer',e);}
+    }
+    if(msg.type==='ice'&&msg.to===my&&_state!=='idle'){
+      try{if(msg.candidate)await _pc?.addIceCandidate(msg.candidate);}catch(e){}
+    }
+    if(msg.type==='call_reject'&&msg.to===my&&_state==='calling'){
+      try{toast('Appel refusé.','bad');}catch(e){} _cleanup();
+    }
+    if(msg.type==='call_end'&&msg.to===my&&_state!=='idle'){
+      try{toast('Appel terminé.','ok');}catch(e){} _cleanup();
+    }
+  }
+  async function call(targetPlate){
+    if(!window.sb){try{toast('Service indisponible.','bad');}catch(e){}return;}
+    if(_state!=='idle'){try{toast('Appel déjà en cours.','bad');}catch(e){}return;}
+    const my=_plate();
+    if(!my){try{toast('Profil non chargé.','bad');}catch(e){}return;}
+    if(!targetPlate||targetPlate===my){try{toast('Véhicule non disponible.','bad');}catch(e){}return;}
+    _state='calling';_remote=targetPlate;_ui('calling',targetPlate);
+    try{
+      _stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      _createPc();
+      _stream.getTracks().forEach(t=>_pc.addTrack(t,_stream));
+      const offer=await _pc.createOffer({offerToReceiveAudio:true});
+      await _pc.setLocalDescription(offer);
+      _send({type:'call_offer',to:targetPlate,sdp:offer.sdp});
+    }catch(e){
+      try{toast(e.name==='NotAllowedError'?'Accès micro refusé.':'Appel impossible.','bad');}catch(ex){}
+      _cleanup();
+    }
+  }
+  async function accept(){
+    if(_state!=='ringing')return;
+    const offer=window._pendingOffer;
+    if(!offer){try{toast('Appel expiré.','bad');}catch(e){} _cleanup();return;}
+    try{
+      _stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      _createPc();
+      _stream.getTracks().forEach(t=>_pc.addTrack(t,_stream));
+      await _pc.setRemoteDescription({type:'offer',sdp:offer.sdp});
+      const ans=await _pc.createAnswer();
+      await _pc.setLocalDescription(ans);
+      _send({type:'call_answer',to:_remote,sdp:ans.sdp});
+      _state='active';_ui('active',_remote);
+      delete window._pendingOffer;
+    }catch(e){
+      try{toast(e.name==='NotAllowedError'?'Accès micro refusé.':'Impossible d\'accepter.','bad');}catch(ex){}
+      _cleanup();
+    }
+  }
+  function reject(){
+    if(_state!=='ringing')return;
+    _send({type:'call_reject',to:_remote});
+    delete window._pendingOffer;
+    _cleanup();
+  }
+  function hangup(){
+    if(_state==='idle')return;
+    if(_remote)_send({type:'call_end',to:_remote});
+    _cleanup();
+  }
+  function init(plate){
+    _myPlate=plate;
+    if(!window.sb)return;
+    try{if(_sigCh)window.sb.removeChannel(_sigCh);}catch(e){}
+    _sigCh=window.sb.channel('ic_voip_live')
+      .on('broadcast',{event:'voip'},p=>_onSignal(p.payload||{}))
+      .subscribe((s,err)=>{if(s==='CHANNEL_ERROR')console.warn('VoIP ch error',err);});
+  }
+  return{init,call,accept,reject,hangup};
+})();
+</script>
 <script src="badge.js"></script>
 <script src="messages.js?v=12"></script>
 <script src="ui.js?v=6"></script>
