@@ -153,4 +153,4 @@ const invariants = Object.freeze({
 
 });
 
-module.exports = invariants;
+module.exports = { INVARIANTS: invariants };
