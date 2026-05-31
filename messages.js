@@ -234,8 +234,8 @@ function buildThreads(){
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(String(m.id))).forEach(m=>{
-    const p = m._otherPlate || 'INCONNU';
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate).forEach(m=>{
+    const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);
   });
@@ -426,20 +426,24 @@ async function markThreadRead(plate){
 
   buildThreads();
   setBadge(State.threads.reduce((s,t)=>s+t.unread,0));
+  try{window.App?.updateActBadge?.()}catch(e){}
 }
 
 async function openThread(plate){
-  State.activePlate = fPlate(plate);
-  await markThreadRead(State.activePlate);
+  const localPlate = fPlate(plate);
+  State.activePlate = localPlate;
+  await markThreadRead(localPlate);
 
-  const t = State.threads.find(x=>x.plate===State.activePlate);
+  if(State.activePlate !== localPlate) return;
+
+  const t = State.threads.find(x=>x.plate===localPlate);
   const box = $('icThread');
   const body = $('icThreadBody');
   const title = $('icThreadTitle');
 
   if(!box || !body || !t) return;
 
-  if(title) title.textContent = State.activePlate;
+  if(title) title.textContent = localPlate;
 
   body.innerHTML = t.list.map(m=>{
     const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
@@ -472,6 +476,7 @@ function refreshThread(){
   if(!box || !body || !box.classList.contains('show')) return;
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
+  if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
   body.innerHTML = t.list.map(m=>{
     const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     return `<div class="ic-bubble ${m._sent?'sent':'recv'}">
@@ -526,15 +531,15 @@ async function sendToPlate(plate,text){
   plate = fPlate(plate);
   const senderPlate = fPlate(me?.owner_plate || myPlate());
 
-  if(!client || !u) return toast('Reconnecte-toi.','bad');
-  if(!senderPlate) return toast('Profil conducteur incomplet.','bad');
-  if(!plate) return toast('Plaque destinataire manquante.','bad');
-  if(plate === senderPlate) return toast("Impossible de t'envoyer un message à toi-même.",'bad');
-  if(!text) return toast('Message vide.','bad');
+  if(!client || !u){ toast('Reconnecte-toi.','bad'); return false; }
+  if(!senderPlate){ toast('Profil conducteur incomplet.','bad'); return false; }
+  if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
+  if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
+  if(!text){ toast('Message vide.','bad'); return false; }
 
   const target = await findProfileByPlate(plate);
-  if(!target?.id) return toast('Aucun utilisateur avec cette plaque.','bad');
-  if(target.id === u.id) return toast("Impossible de t'envoyer un message à toi-même.",'bad');
+  if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
+  if(target.id === u.id){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
 
   const receiverPlate = fPlate(target.owner_plate || plate);
 
@@ -563,7 +568,8 @@ async function sendToPlate(plate,text){
 
   if(error){
     console.error(error);
-    return toast('Erreur envoi message.','bad');
+    toast('Erreur envoi message.','bad');
+    return false;
   }
 
   State.activePlate = receiverPlate;
@@ -571,6 +577,7 @@ async function sendToPlate(plate,text){
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);
+  return true;
 }
 
 async function deleteMessage(id){
@@ -611,7 +618,7 @@ async function subscribe(){
 
   // Si un channel existe déjà et est actif, ne pas recréer
   if(State.channel) {
-    try{ client.removeChannel(State.channel); }catch(e){}
+    try{ await client.removeChannel(State.channel); }catch(e){}
     State.channel = null;
   }
 
@@ -652,7 +659,7 @@ window.ImmatMessages = {
   deleteThread,
   deleteMessage,
   sendToPlate,
-  unsubscribe:function(){if(State.channel){try{client.removeChannel(State.channel)}catch(e){}State.channel=null;}}
+  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

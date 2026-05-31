@@ -1,103 +1,156 @@
-/* core/invariants.js — Invariants fondateurs ImmatOrganism V1
+/**
+ * Invariants constitutionnels d'ImmatConnect — deepFrozen
+ * Dérivés de : ADN + F-01/F-22 + VEHICLE-001
+ * Toute modification requiert une révision constitutionnelle de type Majeur (voir LIFECYCLE.md)
  *
- * Source de vérité des règles constitutionnelles.
- * Aucune logique métier ici — uniquement des déclarations.
+ * CORR-1 appliquée : INV-011 severity = 'critical' (était 'high' — erreur de sévérité détectée en Audit Ω+)
  */
-'use strict';
 
-function _deepFreeze(obj) {
-  Object.getOwnPropertyNames(obj).forEach(k => {
-    const v = obj[k];
-    if (v && typeof v === 'object') _deepFreeze(v);
-  });
-  return Object.freeze(obj);
-}
+const invariants = Object.freeze({
 
-const INVARIANTS = _deepFreeze({
-  'INV-001': {
+  // INV-001 — Cloisonnement canal véhicule
+  // Dérivé de : F-03 (Cloisonnement des domaines)
+  'INV-001': Object.freeze({
     id: 'INV-001',
-    label: 'Véhicule jamais carte',
-    description: 'Un signalement véhicule ne crée jamais de marqueur, report ou entrée dans S.alerts.',
+    name: 'Cloisonnement canal véhicule',
+    rule: 'Les alertes véhicule transitent exclusivement par le canal véhicule.',
+    derivedFrom: ['F-03'],
     severity: 'critical',
-  },
-  'INV-002': {
+  }),
+
+  // INV-002 — Cloisonnement canal route
+  // Dérivé de : F-03
+  'INV-002': Object.freeze({
     id: 'INV-002',
-    label: 'Véhicule = messages uniquement',
-    description: 'Les données véhicule transitent uniquement par messages / ImmatMessages / S._actMessages.',
+    name: 'Cloisonnement canal route',
+    rule: 'Les alertes route transitent exclusivement par le canal route.',
+    derivedFrom: ['F-03'],
     severity: 'critical',
-  },
-  'INV-003': {
+  }),
+
+  // INV-003 — Cloisonnement canal aide
+  // Dérivé de : F-03
+  'INV-003': Object.freeze({
     id: 'INV-003',
-    label: 'Route et Aide = reports / S.alerts',
-    description: 'Les signalements route et aide ne passent jamais par le canal messages.',
+    name: 'Cloisonnement canal aide',
+    rule: 'Les demandes d\'aide transitent exclusivement par le canal aide.',
+    derivedFrom: ['F-03'],
     severity: 'critical',
-  },
-  'INV-004': {
+  }),
+
+  // INV-004 — Atomicité des transactions
+  // Dérivé de : F-01 (Primauté de la réalité persistée)
+  'INV-004': Object.freeze({
     id: 'INV-004',
-    label: 'Activité est une vue dérivée',
-    description: 'Le panneau Activité ne produit aucune donnée — il les reflète uniquement.',
-    severity: 'high',
-  },
-  'INV-005': {
+    name: 'Atomicité des transactions',
+    rule: 'Toute transaction est atomique — elle réussit entièrement ou échoue entièrement.',
+    derivedFrom: ['F-01'],
+    severity: 'critical',
+  }),
+
+  // INV-005 — Fidélité interface
+  // Dérivé de : F-07 (Fidélité de l'interface)
+  'INV-005': Object.freeze({
     id: 'INV-005',
-    label: 'Badge = contenu réel',
-    description: 'Un badge ne peut jamais indiquer un élément absent de la liste correspondante.',
-    severity: 'high',
-  },
-  'INV-006': {
+    name: 'Fidélité interface',
+    rule: 'L\'interface affiche uniquement ce qui est persisté en base. Aucun état calculé ou estimé.',
+    derivedFrom: ['F-07'],
+    severity: 'critical',
+  }),
+
+  // INV-006 — Immuabilité des identifiants
+  // Dérivé de : ADN-2 (Primauté de l'identifiant officiel)
+  'INV-006': Object.freeze({
     id: 'INV-006',
-    label: 'Réponse rapide = message',
-    description: 'Je m\'arrête / Je vérifie / Merci créent un message réel en base.',
-    severity: 'high',
-  },
-  'INV-007': {
+    name: 'Immuabilité des identifiants',
+    rule: 'Un identifiant de véhicule ne peut pas être modifié après création. Seule une révision constitutionnelle peut autoriser une exception.',
+    derivedFrom: ['ADN-2'],
+    severity: 'critical',
+  }),
+
+  // INV-007 — Consentement explicite
+  // Dérivé de : F-04 (Consentement explicite)
+  'INV-007': Object.freeze({
     id: 'INV-007',
-    label: 'Appel uniquement via Contacter',
-    description: 'Aucune demande de contact sans interaction conducteur contextualisée.',
-    severity: 'critical',
-  },
-  'INV-008': {
+    name: 'Consentement explicite',
+    rule: 'Aucune action engageante n\'est effectuée sans confirmation explicite de l\'utilisateur.',
+    derivedFrom: ['F-04'],
+    severity: 'high',
+  }),
+
+  // INV-008 — Miroir d'état
+  // Dérivé de : F-07
+  'INV-008': Object.freeze({
     id: 'INV-008',
-    label: 'Aucune bannière d\'appel persistante sur l\'accueil',
-    description: 'La bannière de demande de contact est non-bloquante et temporaire.',
-    severity: 'high',
-  },
-  'INV-009': {
+    name: 'Miroir d\'état',
+    rule: 'L\'interface ne peut pas modifier l\'état du système sans passer par la couche de persistance.',
+    derivedFrom: ['F-07', 'F-01'],
+    severity: 'critical',
+  }),
+
+  // INV-009 — Confirmation avant action irréversible
+  // Dérivé de : F-04, F-10
+  'INV-009': Object.freeze({
     id: 'INV-009',
-    label: 'Une demande d\'appel n\'est pas un appel',
-    description: 'Toute demande de contact requiert acceptation explicite du destinataire.',
-    severity: 'critical',
-  },
-  'INV-010': {
+    name: 'Confirmation avant action irréversible',
+    rule: 'Toute action irréversible requiert une confirmation supplémentaire.',
+    derivedFrom: ['F-04', 'F-10'],
+    severity: 'high',
+  }),
+
+  // INV-010 — Protection données personnelles
+  // Dérivé de : F-05
+  'INV-010': Object.freeze({
     id: 'INV-010',
-    label: 'Aucun numéro exposé',
-    description: 'Aucun numéro de téléphone n\'est transmis ou affiché à aucun stade.',
+    name: 'Protection données personnelles',
+    rule: 'Les données personnelles ne circulent jamais sans consentement explicite et documenté.',
+    derivedFrom: ['F-05'],
     severity: 'critical',
-  },
-  'INV-011': {
+  }),
+
+  // INV-011 — Unicité de source de vérité
+  // Dérivé de : F-02
+  // CORR-1 : severity corrigée de 'high' à 'critical' (Audit Ω+)
+  // Raison : une violation de l'unicité de source de vérité pour les données
+  // d'immatriculation produit une incohérence irréversible dans les notifications.
+  'INV-011': Object.freeze({
     id: 'INV-011',
-    label: 'Une seule source de vérité',
-    description: 'Chaque donnée a une et une seule source canonique.',
-    severity: 'high',
-  },
-  'INV-012': {
+    name: 'Unicité de source de vérité',
+    rule: 'Chaque donnée a exactement une source canonique. Toute duplication non contrôlée est une violation.',
+    derivedFrom: ['F-02'],
+    severity: 'critical',
+  }),
+
+  // INV-012 — Persistance avant affichage
+  // Dérivé de : F-01, VEHICLE-001
+  'INV-012': Object.freeze({
     id: 'INV-012',
-    label: 'Toute donnée visible existe réellement',
-    description: 'Aucune donnée fictive ou estimée ne peut être présentée comme réelle.',
+    name: 'Persistance avant affichage',
+    rule: 'Un état n\'est affiché que s\'il est confirmé en base de données.',
+    derivedFrom: ['F-01', 'VEHICLE-001'],
     severity: 'critical',
-  },
-  'INV-013': {
+  }),
+
+  // INV-013 — Traçabilité complète
+  // Dérivé de : F-06
+  'INV-013': Object.freeze({
     id: 'INV-013',
-    label: 'Toute interaction a un contexte réel',
-    description: 'Aucune interaction hors contexte conducteur/véhicule/route.',
+    name: 'Traçabilité complète',
+    rule: 'Toute action est associée à un contexte identifiable (utilisateur, timestamp, session).',
+    derivedFrom: ['F-06'],
     severity: 'high',
-  },
-  'INV-014': {
+  }),
+
+  // INV-014 — Non-transfert de données sans consentement
+  // Dérivé de : F-04, F-05
+  'INV-014': Object.freeze({
     id: 'INV-014',
-    label: 'L\'IA ne décide jamais seule',
-    description: 'Toute action critique nécessite le consentement explicite de l\'humain.',
+    name: 'Non-transfert de données sans consentement',
+    rule: 'Aucune donnée relative à un utilisateur n\'est transférée à un tiers sans son consentement explicite.',
+    derivedFrom: ['F-04', 'F-05'],
     severity: 'critical',
-  },
+  }),
+
 });
 
-if (typeof module !== 'undefined') module.exports = { INVARIANTS };
+module.exports = invariants;
