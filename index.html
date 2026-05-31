@@ -874,14 +874,6 @@ App.navActivite=function(){
   this.panel('activite');
   this.renderActivityMain?.();
   try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderActivityFeed?.()}catch(e){}})}catch(e){}
-  const now=Date.now();let changed=false;
-  (S.alerts||[]).forEach(a=>{
-    const st=a.status;if(st==='gone'||st==='resolved') return;
-    const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null) return;
-    const age=now-ts;const ttl=typeof ttlFor==='function'?ttlFor(a.type):3600000;
-    if(age<ttl&&isNearby(a)&&st!=='seen'){a.status='seen';changed=true;}
-  });
-  if(changed&&typeof saveAlerts==='function')saveAlerts();
   this.updateActBadge?.();
 };
 App.navMap=function(){
@@ -1005,9 +997,20 @@ App.openActivityCat=function(cat){
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
   const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=cat==='all'?'none':'';
   this.renderCategoryFeed(cat,'recus');
-  if(cat==='vehicle'||cat==='all'){
-    try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}
+  // Marquer les alertes de cette catégorie comme vues (l'utilisateur les consulte)
+  const _now=Date.now();let _changed=false;
+  (S.alerts||[]).forEach(a=>{
+    const st=a.status;if(st==='gone'||st==='resolved'||st==='seen') return;
+    const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null) return;
+    if(_now-ts>=(typeof ttlFor==='function'?ttlFor(a.type):3600000)) return;
+    const match=cat==='all'||(cat==='route'&&a.group==='route')||(cat==='vehicle'&&(a.group==='vehicle'||a.type==='vehicule'))||(cat==='aide'&&a.group==='assist');
+    if(match&&isNearby(a)){a.status='seen';_changed=true;}
+  });
+  if(_changed&&typeof saveAlerts==='function')saveAlerts();
+  if((cat==='vehicle'||cat==='all')&&window.ImmatMessages?.refresh){
+    try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}
   }
+  try{this.updateActBadge?.()}catch(e){};
 };
 App.closeActivityCat=function(){
   S._actCat=null;

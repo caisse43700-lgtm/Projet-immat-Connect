@@ -342,6 +342,7 @@ async function markThreadRead(plate){
 
   buildThreads();
   setBadge(State.threads.reduce((s,t)=>s+t.unread,0));
+  try{window.App?.updateActBadge?.()}catch(e){}
 }
 
 async function openThread(plate){
