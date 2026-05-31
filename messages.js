@@ -234,8 +234,8 @@ function buildThreads(){
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(String(m.id))).forEach(m=>{
-    const p = m._otherPlate || 'INCONNU';
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate).forEach(m=>{
+    const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);
   });
@@ -346,17 +346,20 @@ async function markThreadRead(plate){
 }
 
 async function openThread(plate){
-  State.activePlate = fPlate(plate);
-  await markThreadRead(State.activePlate);
+  const localPlate = fPlate(plate);
+  State.activePlate = localPlate;
+  await markThreadRead(localPlate);
 
-  const t = State.threads.find(x=>x.plate===State.activePlate);
+  if(State.activePlate !== localPlate) return;
+
+  const t = State.threads.find(x=>x.plate===localPlate);
   const box = $('icThread');
   const body = $('icThreadBody');
   const title = $('icThreadTitle');
 
   if(!box || !body || !t) return;
 
-  if(title) title.textContent = State.activePlate;
+  if(title) title.textContent = localPlate;
 
   body.innerHTML = t.list.map(m=>{
     const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
