@@ -72,11 +72,13 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 ### A-5 — RÉSOLUTION DES CONFLITS AXIOMATIQUES
 
 **Classe :** Γ-1 CRITIQUE
-**Statut :** DÉCISION HUMAINE REQUISE
-**Description :** Que se passe-t-il quand deux axiomes pointent vers des décisions contradictoires ?
-**Proposition initiale :** Ordre de priorité ADN-4 > ADN-5 > ADN-1 > ADN-2 > ADN-3 > ADN-7 > ADN-6 (non validée).
-**Blocage :** Décision humaine requise pour valider ou réviser l'ordre.
-**Priorité V3 :** CRITIQUE
+**Statut :** RÉSOLU — voir MC-006 et HISTORY.md SESSION 5
+**Décision :** Quand deux axiomes divergent, le Gardien consulte le Coran pour identifier lequel est le plus aligné avec le bien révélé. La règle de priorité est externe au système — A-(-1) respecté.
+**Niveaux de recours :**
+1. Conscience du Gardien (bon sens du bien) — cas courants
+2. Coran traduit + IA comme outil d'accès — cas nécessitant une source
+3. Savant — cas complexes
+**Priorité V3 :** RÉSOLU — non bloquant
 
 ---
 
@@ -121,25 +123,25 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 
 ---
 
-### A-10 — PROTOCOLE DE REMPLACEMENT DE FONDATEUR
+### A-10 — PROTOCOLE DE TRANSMISSION DU GARDIEN
 
 **Classe :** Γ-1 CRITIQUE
-**Statut :** EN ATTENTE
-**Description :** Comment transmettre les droits et responsabilités d'un fondateur à un successeur ?
-**Lien :** DR-3, A-2, DEP-4, DEP-6
-**Priorité V3 :** HAUTE (dépendance orale critique)
+**Statut :** DESIGN EN COURS (DR-3 et A-2 résolus — débloqué)
+**Description :** Comment transmettre le rôle de serviteur d'un Gardien à un successeur ?
+**Note SESSION 5 :** Ce n'est pas une transmission d'autorité (le Gardien n'en a pas). C'est une transmission de rôle. Ce qui se transmet : la Conscience — capacité de reconnaître, comprendre et rechercher le bien révélé.
+**Lien :** A-2 (résolu), DR-3 (résolu), DEP-4, DEP-6
+**Priorité V3 :** HAUTE
 
 ---
 
 ### A-11 — LÉGITIMITÉ DU MOMENT FONDATEUR
 
 **Classe :** Γ-1 CRITIQUE (reclassifié depuis Γ-4a en Audit Ω+)
-**Statut :** EN ATTENTE
+**Statut :** PARTIELLEMENT RÉSOLU — A-2 et DR-3 résolus
 **Description :** Qui avait le droit de fonder ImmatConnect V1 ? Sur quelle base les propositions AF-IRR ont-elles autorité ?
-**Note :** Plus critique que A-8. La légitimité rétrospective du moment fondateur n'est pas documentée.
-**Lien :** A-2 (Souverain), DR-3 (transition fondateur)
-**Blocage :** Décision humaine requise.
-**Priorité V3 :** CRITIQUE — dépend aussi de A-2
+**Résolution partielle (SESSION 5) :** Kacem n'a pas fondé par autorité propre — il a servi. La légitimité du moment fondateur est déléguée par le Souverain. AF-IRR tire son autorité de sa cohérence avec le bien révélé, pas de la personne qui l'a proposé.
+**Résidu :** Documenter formellement ce raisonnement dans FRONTIER.md ou ADN.md.
+**Priorité V3 :** MOYENNE (partiellement débloqué)
 
 ---
 
@@ -177,12 +179,10 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 
 ### DR-3 — TRANSITION FONDATEUR → GOUVERNÉ NON DOCUMENTÉE
 
-**Statut :** DÉCISION HUMAINE REQUISE
-**Description :** À quel moment ImmatConnect sort-il de la phase fondatrice ?
-**Critères proposés (non validés) :** déploiement production / conseil constitué / révision majeure par non-fondateurs
-**Blocage :** Décision humaine requise.
-**Lien :** A-2, A-10, A-11, DEP-6
-**Priorité V3 :** HAUTE
+**Statut :** RÉSOLU — voir MC-007 et HISTORY.md SESSION 5
+**Décision :** Il n'y a pas de transition fondateur → gouverné parce que Kacem n'a jamais été fondateur-souverain. Il est serviteur dès le début — du Souverain (Dieu), du Coran, de l'ADN.
+**Conséquence :** A-10 transmet un rôle de serviteur, pas une autorité. Il n'y a pas de "phase fondatrice" à quitter — il n'y a que le service continu.
+**Priorité V3 :** RÉSOLU — non bloquant
 
 ---
 
@@ -191,13 +191,13 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 | ID | Type | Classe | Statut | Blocage | Priorité |
 |----|------|--------|--------|---------|----------|
 | A-2 | Lacune | Γ-1 | RÉSOLU | MC-005 | — |
-| A-5 | Lacune | Γ-1 | Décision humaine | Humain | CRITIQUE |
-| A-11 | Lacune | Γ-1 | En attente | A-2 résolu — partiellement débloqué | HAUTE |
-| DR-3 | Dépendance | — | Décision humaine | Humain | HAUTE |
+| A-5 | Lacune | Γ-1 | RÉSOLU | MC-006 | — |
+| A-11 | Lacune | Γ-1 | Partiellement résolu | A-2 + DR-3 résolus | MOYENNE |
+| DR-3 | Dépendance | — | RÉSOLU | MC-007 | — |
 | A-8 | Lacune | Γ-2 | Prêt à intégrer | Aucun | HAUTE |
 | A-1 | Lacune | Γ-2 | Design en cours | Aucun (A-2 résolu) | HAUTE |
 | A-3 | Lacune | Γ-2 | Design en cours | Aucun | HAUTE |
-| A-10 | Lacune | Γ-1 | En attente | A-2 | HAUTE |
+| A-10 | Lacune | Γ-1 | Design en cours | Aucun (débloqué) | HAUTE |
 | DR-1 | Dépendance | — | Design résolu | A-8 implem. | HAUTE |
 | A-7 | Lacune | Γ-2 | Design en cours | Aucun | MOYENNE |
 | A-4 | Lacune | Γ-2 | En attente | Aucun | MOYENNE |

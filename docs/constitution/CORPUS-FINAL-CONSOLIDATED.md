@@ -255,13 +255,20 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 |----|-------|----------|
 | A-2 | Le Souverain | Dieu / Coran / Gardien de l'ADN — voir MC-005 |
 
-### Blocages humains restants avant V3
+### Résolu (SESSION 5 — 2026-05-31)
+
+| ID | Sujet | Décision |
+|----|-------|----------|
+| A-5 | Conflits axiomatiques | Arbitrage via le Coran — voir MC-006 |
+| DR-3 | Transition fondateur | Kacem est serviteur — pas de phase fondatrice — voir MC-007 |
+| Conscience | Propriété du Gardien | Reconnaître, comprendre, rechercher le bien révélé |
+
+### Blocages restants avant V3
 
 | ID | Sujet | Urgence |
 |----|-------|---------|
-| A-5 | Protocole conflits axiomes | CRITIQUE |
-| A-11 | Légitimité du moment fondateur | HAUTE (partiellement débloqué par A-2) |
-| DR-3 | Transition fondateur → gouverné | HAUTE |
+| A-11 | Légitimité du moment fondateur | MOYENNE (partiellement résolu) |
+| A-10 | Protocole de transmission du Gardien | HAUTE (débloqué, design requis) |
 
 ### À implémenter sans blocage
 
@@ -283,6 +290,9 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 | Modèle de mortalité (7 types) | ✅ Créé | RESEARCH.md |
 | MMV (Mutation Minimale Viable) | ✅ Créé | LIFECYCLE.md |
 | A-2 résolu (SESSION 4) | ✅ Résolu | CANDIDATES.md, MEMORY.md, HISTORY.md |
+| A-5 résolu (SESSION 5) | ✅ Résolu | CANDIDATES.md, MEMORY.md, HISTORY.md |
+| DR-3 résolu (SESSION 5) | ✅ Résolu | CANDIDATES.md, MEMORY.md, HISTORY.md |
+| Conscience définie (SESSION 5) | ✅ Défini | RESEARCH.md, MEMORY.md |
 
 **Fichier détaillé :** CANDIDATES.md
 
@@ -296,9 +306,9 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 | Score épistémique moyen | ~76% | >75% | VERT |
 | Hypothèses silencieuses non documentées | 0 | 0 | VERT |
 | Corrections urgentes non appliquées | 0 | 0 | VERT |
-| Blocages humains critiques | 2 | 0 | ORANGE |
+| Blocages humains critiques | 0 | 0 | VERT |
 
-**Diagnostic global : VERT (sauf gouvernance partielle)** — V1 complète. A-2 résolu (SESSION 4). Démarrage V3 possible sous réserve de résoudre A-5 et DR-3.
+**Diagnostic global : VERT** — V1 complète. A-2, A-5, DR-3 résolus (SESSIONS 4 et 5). Conscience définie. Démarrage V3 possible.
 
 ---
 

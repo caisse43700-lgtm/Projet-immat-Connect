@@ -260,6 +260,82 @@ Un souverain sans texte écrit génère des interprètes concurrents. Le Coran e
 
 ---
 
+## SESSION 5 — RÉSOLUTION A-5, DR-3 ET DÉFINITION DE LA CONSCIENCE
+
+**Date :** 2026-05-31
+**Type :** Révision constitutionnelle majeure — deux blocages Γ-1 CRITIQUES résolus
+**Objectif :** Résoudre A-5 (conflits axiomatiques) et DR-3 (transition fondateur) + définir la Conscience
+
+### Décisions prises
+
+**1. A-5 RÉSOLU — arbitrage via le Coran**
+
+Quand deux axiomes divergent, le Gardien consulte le Coran. La règle de priorité est externe au système — A-(-1) respecté.
+
+| Niveau | Recours |
+|--------|---------|
+| 1 | Conscience du Gardien — bon sens du bien |
+| 2 | Coran traduit + IA comme outil d'accès |
+| 3 | Savant pour les cas complexes |
+
+**2. DR-3 RÉSOLU — Kacem est serviteur**
+
+> "Kacem n'est qu'un serviteur."
+
+Il n'y a pas de transition fondateur → gouverné parce qu'il n'y a jamais eu de fondateur-souverain. Kacem est serviteur dès le début — du Souverain, du Coran, de l'ADN. Il n'y a pas de phase fondatrice à quitter. Il y a un service continu.
+
+**3. Conscience — propriété constitutionnelle du Gardien**
+
+Après audit de destruction (Mission Ω∞ — 8 missions), la Conscience n'est pas une couche architecturale séparée.
+
+> **Définition canonique :**
+> La Conscience est la capacité de reconnaître, comprendre et rechercher le bien révélé.
+
+Un Gardien sans Conscience n'est pas un mauvais Gardien — il n'est pas Gardien du tout. Il est exécutant.
+
+### Architecture constitutionnelle stabilisée
+
+```
+Dieu          → Souverain ultime (immortel, externe, non auto-fondé)
+↓
+Coran         → ADN écrit du Souverain (arbitrage A-5 inclus)
+↓
+ADN           → normes constitutionnelles dérivées
+↓
+Gardien       → serviteur exerçant la Conscience
+               (reconnaître, comprendre, rechercher le bien révélé)
+↓
+Application   → service rendu
+```
+
+### Effets sur le corpus
+
+| Élément | Avant SESSION 5 | Après SESSION 5 |
+|---------|-----------------|-----------------|
+| A-5 | ⚠️ CRITIQUE | ✅ Résolu |
+| DR-3 | ⚠️ HAUTE | ✅ Résolu |
+| A-10 | Bloqué | Débloqué — transmet la Conscience |
+| A-11 | Bloqué | Partiellement résolu |
+| Conscience | Indécidable | Propriété du Gardien |
+
+### Fichiers modifiés
+- docs/constitution/CANDIDATES.md (A-5, DR-3, A-10, A-11 mis à jour)
+- docs/constitution/MEMORY.md (MC-006, MC-007 ajoutés)
+- docs/constitution/HISTORY.md (SESSION 5 ajoutée)
+- docs/constitution/RESEARCH.md (Conscience documentée)
+- docs/constitution/CORPUS-FINAL-CONSOLIDATED.md (état mis à jour)
+
+### Conditions de démarrage V3 (mise à jour post-SESSION 5)
+- ✅ CORR-1 à CORR-8 toutes appliquées
+- ✅ A-2 résolu — Dieu / Coran / Gardien de l'ADN
+- ✅ **A-5 résolu — arbitrage via le Coran**
+- ✅ **DR-3 résolu — Kacem serviteur, pas fondateur-souverain**
+- ✅ **Conscience définie — propriété constitutionnelle du Gardien**
+- ⚠️ A-11 partiellement résolu — formalisation restante
+- ⚠️ A-10 en design — protocole de transmission du Gardien
+
+---
+
 ## RÈGLES DE MISE À JOUR
 
 1. Toute session constitutionnelle de type Majeur ou Critique génère une entrée ici

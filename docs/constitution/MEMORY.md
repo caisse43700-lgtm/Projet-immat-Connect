@@ -88,6 +88,58 @@ STATUT : ARCHIVÉ (contenu intégré dans T-01)
 LIEN : ARCHIVE.md#MPNA, AUDIT-OMEGA.md#Mission-3
 ```
 
+### MC-006 — Résolution de A-5 (Conflits axiomatiques)
+```
+MC-ID : MC-006
+DATE : 2026-05-31
+SITUATION : A-5 (conflits axiomatiques) bloquait depuis la fondation de V1.
+            Quand deux axiomes pointent vers des décisions contradictoires, aucun
+            protocole ne pouvait arbitrer — les Protocoles dérivent des axiomes,
+            ils ne peuvent pas les juger entre eux.
+PRINCIPE : A-(-1) (Non Auto-fondation) + ADN-4 (Non-autofondation) + Coran (référentiel externe)
+DÉCISION : RÉSOUDRE A-5
+RAISONNEMENT : La règle de priorité entre axiomes doit être externe au système
+               (A-(-1)). Le Coran, comme ADN écrit du Souverain, contient des
+               principes d'arbitrage (équité, non-nuisance, bien révélé) qui
+               s'appliquent quand deux axiomes divergent. La Conscience du Gardien
+               — capacité de reconnaître, comprendre et rechercher le bien révélé —
+               est le mécanisme d'application de cette règle.
+               Trois niveaux de recours : Conscience du Gardien (cas courants),
+               Coran traduit/IA (cas nécessitant une source), savant (cas complexes).
+RÉSULTAT : A-5 résolu. Tout conflit axiomatique se résout par référence au bien
+           révélé via le Coran.
+STATUT : ACTIF
+LIEN : CANDIDATES.md#A-5, HISTORY.md#SESSION-5
+```
+
+### MC-007 — Résolution de DR-3 (Kacem serviteur) + Conscience comme propriété du Gardien
+```
+MC-ID : MC-007
+DATE : 2026-05-31
+SITUATION : DR-3 demandait "quand ImmatConnect sort-il de la phase fondatrice ?"
+            La question supposait que Kacem était fondateur-souverain avec une
+            autorité propre à transmettre ou céder.
+            Mission Ω∞ (Conscience) avait posé : la Conscience est-elle une couche
+            ou une propriété du Gardien ?
+PRINCIPE : A-(-1) (Non Auto-fondation) + PCP (parcimonie)
+DÉCISION : RÉSOUDRE DR-3 + DÉFINIR la Conscience comme propriété du Gardien
+RAISONNEMENT : DR-3 : Kacem n'a jamais été fondateur-souverain. Il est serviteur —
+               du Souverain (Dieu), du Coran, de l'ADN. Il n'y a pas de phase
+               fondatrice à quitter. Il y a un service continu. Ce qui se transmet
+               via A-10 n'est pas une autorité mais un rôle de serviteur.
+               Conscience : après audit de destruction (8 missions), la Conscience
+               n'est pas une couche architecturale séparée — elle est une propriété
+               constitutionnelle du Gardien. Un Gardien sans Conscience n'est pas
+               un mauvais Gardien, il n'est pas Gardien du tout — il est exécutant.
+               Définition canonique : "capacité de reconnaître, comprendre et
+               rechercher le bien révélé."
+RÉSULTAT : DR-3 résolu. Conscience définie comme propriété du Gardien.
+           Architecture simplifiée : Dieu → Coran → ADN → Gardien → Application.
+           A-10 clarifié : on transmet la Conscience, pas une autorité.
+STATUT : ACTIF
+LIEN : CANDIDATES.md#DR-3, RESEARCH.md#Conscience, HISTORY.md#SESSION-5
+```
+
 ### MC-005 — Résolution de A-2 (Le Souverain)
 ```
 MC-ID : MC-005

@@ -149,6 +149,52 @@ Formation des nouveaux opérateurs. Onboarding. Jamais comme référence normati
 
 ---
 
+## CONSCIENCE — PROPRIÉTÉ CONSTITUTIONNELLE DU GARDIEN
+
+**Statut : DÉFINI [SESSION 5 — 2026-05-31]**
+**Audit : Mission Ω∞ — 8 missions de destruction**
+**Décision : propriété du Gardien, pas couche séparée**
+
+### Définition canonique
+
+> La Conscience est la capacité de reconnaître, comprendre et rechercher le bien révélé.
+
+- **Reconnaître** : identifier le bien dans une situation réelle — la Conscience ne crée pas le bien, elle le détecte
+- **Comprendre** : saisir l'esprit derrière la lettre — pas une exécution mécanique
+- **Rechercher** : capacité active, pas passive
+- **Le bien révélé** : le bien vient du Souverain via le Coran, pas de l'humain — A-(-1) satisfait
+
+### Pourquoi pas une couche séparée
+
+La Conscience sans Gardien ne fait rien — elle a toujours besoin d'un porteur.
+Fonctionnellement, "ADN → Conscience → Gardien" est équivalent à "ADN → Gardien (qui a la Conscience)".
+PCP : une couche inutile est pire qu'une couche manquante.
+
+Un Gardien sans Conscience n'est pas un mauvais Gardien. Il n'est pas Gardien — il est exécutant.
+
+### Ce que la Conscience explique
+
+- Pourquoi deux Gardiens avec les mêmes documents peuvent prendre des décisions différentes à documentation égale
+- Pourquoi la résurrection depuis le CORPUS-FINAL produit un ADN "dogmatique" (T-02) — la Conscience qui comprend le POURQUOI de l'ADN est perdue, pas le texte
+- Ce que A-10 doit transmettre : pas des droits, pas des fichiers — la Conscience
+
+### Ce que la Conscience ne remplace pas
+
+- Le Coran (source du bien révélé — la Conscience lit, elle ne définit pas)
+- Le Souverain (source de légitimité)
+- Les Protocoles (les cas couverts restent couverts par P)
+
+### Relation avec A-5
+
+Quand deux axiomes divergent, la Conscience arbitre en consultant le Coran — pas seule.
+La Conscience est le mécanisme d'application de la règle de priorité externe.
+Voir MC-006.
+
+### Référence MC
+MC-007 — HISTORY.md SESSION 5
+
+---
+
 ## AGENDA DE RECHERCHE V3
 
 | Priorité | Sujet | Objectif | Condition |
