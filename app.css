@@ -228,7 +228,7 @@ button { border: 0; cursor: pointer; }
 .vehicle-bubble span { font-size: 10px; }
 .vehicle-bubble:active { transform: scale(.94); }
 .vehicle-bubble.contact-main { background: var(--green) !important; color: #06140f !important; border-color: transparent !important; }
-.vehicle-bubble.alert-main { background: var(--orange) !important; color: #1a0e00 !important; border-color: transparent !important; }
+.vehicle-bubble.alert-main { background: var(--red) !important; color: #fff !important; border-color: transparent !important; }
 .vehicle-bubble.block-main { background: rgba(255,255,255,.1) !important; }
 .vehicle-context-plate { font-size: 14px; font-weight: 950; text-align: center; color: #eef6ff; padding: 0 4px 10px; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 10px; letter-spacing: 1px; }
 .vehicle-alert-orbit { position: absolute; z-index: 60; pointer-events: none; }
@@ -280,10 +280,6 @@ button { border: 0; cursor: pointer; }
   box-shadow: 0 0 8px rgba(0,255,179,.5);
 }
 /* navSignaler = couleur alerte orange (⚠️) — même famille que le bouton Signaler du menu contextuel */
-#navSignaler { color: rgba(255,176,32,.6); }
-#navSignaler.on { color: var(--orange); }
-#navSignaler.on svg { filter: drop-shadow(0 0 6px rgba(255,176,32,.5)); }
-#navSignaler.on::before { background: var(--orange); box-shadow: 0 0 8px rgba(255,176,32,.5); }
 .nav-badge {
   position: absolute;
   top: 6px;
