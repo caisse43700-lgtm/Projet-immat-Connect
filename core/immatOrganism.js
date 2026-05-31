@@ -129,6 +129,34 @@ const ImmatOrganism = (function () {
     }
   }
 
+  function query(intent) {
+    try {
+      const what  = intent && intent.what   != null ? String(intent.what)  : 'all';
+      const win   = intent && intent.window != null ? intent.window         : null;
+      const limit = intent && intent.max    != null ? Number(intent.max)    : 10;
+
+      const _winMap = { '5m': 300000, '1h': 3600000, '24h': 86400000 };
+      const since = win != null
+        ? (_winMap[String(win)] || (Number(win) || null))
+        : null;
+
+      const event = what === 'all'        ? null
+                  : what === 'violations' ? 'INVARIANT_VIOLATED'
+                  : what;
+
+      const q = { what, event: event || 'all', since, limit };
+      const result = diagnose({ event, since, limit });
+      return Object.assign({}, result, { query: q });
+    } catch (e) {
+      return {
+        phase: 1, initialized: _initialized, health: 'degraded',
+        events: [], violations: [],
+        summary: 'Erreur interne query().',
+        query: { what: null, event: null, since: null, limit: 10 },
+      };
+    }
+  }
+
   function _anonymize(payload) {
     if (!payload || typeof payload !== 'object') return payload;
     const out = {};
@@ -178,6 +206,7 @@ const ImmatOrganism = (function () {
     validateInvariant,
     getJournal,
     diagnose,
+    query,
   };
 })();
 
