@@ -188,8 +188,11 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 - A-1 (Autorisation), A-3 (Notification), A-6 (Dépréciation), A-7 (Urgence), A-9 (Non-régression)
 - A-8 (Mémoire Constitutionnelle) — PRÊT À INTÉGRER (voir MEMORY.md)
 
+### Résolu (SESSION 4)
+- A-2 (Souverain) — RÉSOLU : Dieu / Coran / Gardien de l'ADN (voir MC-005 + HISTORY.md SESSION 4)
+
 ### En attente de décision humaine
-- A-2 (Souverain), A-5 (Conflits axiomes), DR-3 (Transition fondateur)
+- A-5 (Conflits axiomes), DR-3 (Transition fondateur)
 
 **Fichier détaillé :** PROTOCOLS.md, LIFECYCLE.md, MEMORY.md
 
@@ -246,13 +249,18 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 
 ## SECTION IX — CANDIDATS ET PROCHAINES ÉTAPES
 
-### Blocages humains urgents avant V3
+### Résolu (SESSION 4 — 2026-05-31)
+
+| ID | Sujet | Décision |
+|----|-------|----------|
+| A-2 | Le Souverain | Dieu / Coran / Gardien de l'ADN — voir MC-005 |
+
+### Blocages humains restants avant V3
 
 | ID | Sujet | Urgence |
 |----|-------|---------|
-| A-2 | Qui est le Souverain ? | CRITIQUE |
 | A-5 | Protocole conflits axiomes | CRITIQUE |
-| A-11 | Légitimité du moment fondateur | CRITIQUE |
+| A-11 | Légitimité du moment fondateur | HAUTE (partiellement débloqué par A-2) |
 | DR-3 | Transition fondateur → gouverné | HAUTE |
 
 ### À implémenter sans blocage
@@ -274,6 +282,7 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 | T-02 (Loi de Découverte de l'ADN) | ✅ Formalisé | RESEARCH.md |
 | Modèle de mortalité (7 types) | ✅ Créé | RESEARCH.md |
 | MMV (Mutation Minimale Viable) | ✅ Créé | LIFECYCLE.md |
+| A-2 résolu (SESSION 4) | ✅ Résolu | CANDIDATES.md, MEMORY.md, HISTORY.md |
 
 **Fichier détaillé :** CANDIDATES.md
 
@@ -287,9 +296,9 @@ Unifie : HCC = PAI(légitimité), PEC = PAI(temporalité), PRA = PAI(méthode).
 | Score épistémique moyen | ~76% | >75% | VERT |
 | Hypothèses silencieuses non documentées | 0 | 0 | VERT |
 | Corrections urgentes non appliquées | 0 | 0 | VERT |
-| Blocages humains critiques | 3 | 0 | ROUGE |
+| Blocages humains critiques | 2 | 0 | ORANGE |
 
-**Diagnostic global : VERT (sauf gouvernance)** — V1 complète. Démarrage V3 possible sous réserve de résoudre A-2, A-5, A-11.
+**Diagnostic global : VERT (sauf gouvernance partielle)** — V1 complète. A-2 résolu (SESSION 4). Démarrage V3 possible sous réserve de résoudre A-5 et DR-3.
 
 ---
 

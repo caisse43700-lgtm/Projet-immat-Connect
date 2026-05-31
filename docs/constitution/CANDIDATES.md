@@ -35,11 +35,17 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 ### A-2 — LE SOUVERAIN
 
 **Classe :** Γ-1 CRITIQUE
-**Statut :** DÉCISION HUMAINE REQUISE
-**Description :** Qui a l'autorité ultime sur N (noyau) ? Options : fondateurs / conseil / vote opérateurs / règle algorithmique.
-**Blocage :** Ne peut pas être décidé sans intervention humaine explicite.
-**Conséquence actuelle :** Toute révision de N est bloquée.
-**Priorité V3 :** CRITIQUE — bloquer le démarrage V3 si non résolu
+**Statut :** RÉSOLU — voir MC-005 et HISTORY.md SESSION 4
+**Décision :** Souverain ultime = Dieu. ADN écrit du souverain = le Coran. Opérateur humain = Gardien de l'ADN.
+**Architecture souveraine :**
+- Dieu : source d'autorité externe, immuable, non auto-fondé, immortel — satisfait A-(-1), T-01, T-02, PAI
+- Le Coran : ADN écrit du souverain — fixé, préservé dans sa formulation originale, testé 14 siècles — résout le problème de l'interprétation
+- Gardien de l'ADN : opérateur humain — transmissible, révocable, responsable devant le Coran
+**Conséquences :**
+- A-1 (autorisation) : débloqué — design possible depuis cette décision
+- A-11 (légitimité fondateur) : partiellement débloqué
+- Toute révision de N doit rester cohérente avec le Coran
+**Priorité V3 :** RÉSOLU — non bloquant
 
 ---
 
@@ -184,12 +190,12 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 
 | ID | Type | Classe | Statut | Blocage | Priorité |
 |----|------|--------|--------|---------|----------|
-| A-2 | Lacune | Γ-1 | Décision humaine | Humain | CRITIQUE |
+| A-2 | Lacune | Γ-1 | RÉSOLU | MC-005 | — |
 | A-5 | Lacune | Γ-1 | Décision humaine | Humain | CRITIQUE |
-| A-11 | Lacune | Γ-1 | En attente | A-2 | CRITIQUE |
+| A-11 | Lacune | Γ-1 | En attente | A-2 résolu — partiellement débloqué | HAUTE |
 | DR-3 | Dépendance | — | Décision humaine | Humain | HAUTE |
 | A-8 | Lacune | Γ-2 | Prêt à intégrer | Aucun | HAUTE |
-| A-1 | Lacune | Γ-2 | Design en cours | A-2 | HAUTE |
+| A-1 | Lacune | Γ-2 | Design en cours | Aucun (A-2 résolu) | HAUTE |
 | A-3 | Lacune | Γ-2 | Design en cours | Aucun | HAUTE |
 | A-10 | Lacune | Γ-1 | En attente | A-2 | HAUTE |
 | DR-1 | Dépendance | — | Design résolu | A-8 implem. | HAUTE |

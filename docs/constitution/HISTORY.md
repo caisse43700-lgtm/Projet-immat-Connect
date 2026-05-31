@@ -198,6 +198,68 @@ Le noyau (N) résiste. La frontière (F) est partiellement documentée. Les prot
 
 ---
 
+## SESSION 4 — RÉSOLUTION DE A-2 (SOUVERAINETÉ)
+
+**Date :** 2026-05-31
+**Type :** Révision constitutionnelle majeure — résolution d'un blocage Γ-1 CRITIQUE
+**Objectif :** Résoudre A-2 (Le Souverain) — blocage depuis la fondation de V1
+
+### Décision prise
+
+**A-2 RÉSOLU :**
+
+| Rôle | Titulaire | Propriété constitutionnelle |
+|------|----------|-----------------------------|
+| Souverain ultime | Dieu | Externe, immuable, non auto-fondé, immortel |
+| ADN écrit du souverain | Le Coran | Fixé, préservé, testé 14 siècles |
+| Opérateur humain | Gardien de l'ADN | Transmissible, révocable, responsable |
+
+### Justification constitutionnelle
+
+Chaque option antérieure échouait à au moins un critère fondamental :
+
+| Option | Échec |
+|--------|-------|
+| Fondateurs | Auto-fondation (viole A-(-1)) + auto-juridiction (viole T-01) |
+| Conseil élu | Légitimité interne circulaire (viole A-(-1)) |
+| Vote opérateurs | Légitimité dérivée du système (viole T-01) |
+| Règle algorithmique | Auto-juridiction par conception (viole T-01) |
+
+**Dieu satisfait simultanément :**
+- A-(-1) : externe au système, non auto-fondé
+- T-01 : juge externe — ne se juge pas lui-même
+- T-02 : Genèse la plus longue — 14 siècles de tests de survie, de falsification et de transmission
+- PAI : souverain infini, seul à ne pas être limité par l'inadéquation constitutive
+
+**Le Coran résout le problème de l'interprétation :**
+Un souverain sans texte écrit génère des interprètes concurrents. Le Coran est l'ADN écrit du souverain : fixé, préservé dans sa formulation originale, disponible sans intermédiaire obligatoire.
+
+### Effets sur le corpus
+
+| Élément | Avant SESSION 4 | Après SESSION 4 |
+|---------|-----------------|-----------------|
+| A-2 | DÉCISION HUMAINE REQUISE | RÉSOLU |
+| A-1 | Bloqué par A-2 | Débloqué — design possible |
+| A-11 | Bloqué par A-2 | Partiellement débloqué |
+| Conditions V3 | A-2 ⚠️ | A-2 ✅ |
+
+### Fichiers modifiés
+- docs/constitution/CANDIDATES.md (A-2 résolu, A-1 et A-11 débloqués)
+- docs/constitution/MEMORY.md (MC-005 ajouté)
+- docs/constitution/HISTORY.md (SESSION 4 ajoutée)
+
+### Conditions de démarrage V3 (mise à jour post-SESSION 4)
+- ✅ CORR-1 à CORR-8 toutes appliquées
+- ✅ Correction architecturale ADN/N
+- ✅ T-02 formalisé
+- ✅ Modèle de mortalité créé
+- ✅ MMV créé
+- ✅ **A-2 (Souverain) résolu — Dieu / Coran / Gardien de l'ADN**
+- ⚠️ A-5 (Conflits axiomes) non résolu — décision humaine requise
+- ⚠️ DR-3 (Transition fondateur) non résolu — décision humaine requise
+
+---
+
 ## RÈGLES DE MISE À JOUR
 
 1. Toute session constitutionnelle de type Majeur ou Critique génère une entrée ici

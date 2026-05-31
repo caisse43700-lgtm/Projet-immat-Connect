@@ -88,6 +88,33 @@ STATUT : ARCHIVÉ (contenu intégré dans T-01)
 LIEN : ARCHIVE.md#MPNA, AUDIT-OMEGA.md#Mission-3
 ```
 
+### MC-005 — Résolution de A-2 (Le Souverain)
+```
+MC-ID : MC-005
+DATE : 2026-05-31
+SITUATION : A-2 (Souverain) bloquait toute révision de N depuis la fondation de V1.
+            Options explorées : fondateurs / conseil / vote opérateurs / règle algorithmique.
+            Toutes échouaient à A-(-1) (auto-fondation) ou T-01 (auto-juridiction).
+PRINCIPE : A-(-1) (Non Auto-fondation) + T-01 (Non Autojuridiction) + T-02 (Découverte
+           progressive de l'ADN) + PAI (Inadéquation constitutive)
+DÉCISION : RÉSOUDRE A-2
+RAISONNEMENT : Tout souverain humain ou algorithmique souffre d'auto-fondation (A-(-1))
+               ou d'auto-juridiction (T-01). Le seul souverain satisfaisant simultanément
+               A-(-1), T-01 et T-02 est un souverain externe, immuable, non auto-fondé,
+               et éprouvé sur la durée.
+               Dieu satisfait ces quatre critères : externe au système, non auto-fondé,
+               juge externe (ne se juge pas lui-même), et testé 14 siècles — Genèse la
+               plus longue connue, satisfaisant T-02.
+               Le Coran résout le problème de l'interprétation : texte écrit, fixé,
+               préservé dans sa formulation originale — il joue le rôle d'ADN écrit
+               du souverain, disponible sans intermédiaire obligatoire.
+               Le Gardien de l'ADN (opérateur humain) exécute sans détenir la souveraineté.
+RÉSULTAT : A-2 résolu. Architecture souveraine : Dieu → Coran → Gardien de l'ADN.
+           A-1 et A-11 partiellement débloqués.
+STATUT : ACTIF
+LIEN : CANDIDATES.md#A-2, HISTORY.md#SESSION-4
+```
+
 ---
 
 ## RÈGLES D'USAGE DE A-8
