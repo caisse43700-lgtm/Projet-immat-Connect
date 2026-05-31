@@ -1072,7 +1072,8 @@ App._actModCard=function(item,cat){
   if(item.kind==='msg'){
     const time=item.at?new Date(item.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
     const isNew=item.unread>0&&!item._sent;
-    return `<div class="act-mod-card${isNew?' act-mod-unread':''}">
+    const isSel=S.selPlate&&nPlate(item.plate)===S.selPlate;
+    return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSel?' act-mod-selected':''}">
       ${isNew?'<div class="act-mod-badge-row"><span class="act-mod-new-badge">NOUVEAU</span></div>':''}
       <div class="act-mod-body">
         <div class="act-mod-avatar act-av-vehicle">💬</div>
@@ -1111,7 +1112,8 @@ App._actModCard=function(item,cat){
   else if(a.group==='vehicle'||a.type==='vehicule')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(a.plate||'')}')">💬 Répondre</button><button class="act-mod-btn-reply" onclick="App.ImmatCall?.call?.('${e(a.plate||'')}')">📞 Appeler</button>`;
   else if(a.group==='route')actions=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir sur la carte</button><button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;
   else if(a.group==='assist'){const rid=js(String(a.remoteId||''));actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`+(rid?`<button class="act-mod-btn-reply" onclick="App.callAideAlert('${rid}')">📞 Appeler</button>`:'')};
-  return `<div class="act-mod-card${isNew?' act-mod-unread':''}">
+  const isSelAlert=S.selPlate&&nPlate(a.plate||a.sender_plate||a.from_plate||'')===S.selPlate;
+  return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSelAlert?' act-mod-selected':''}">
     ${isNew?'<div class="act-mod-badge-row"><span class="act-mod-new-badge">NOUVEAU</span></div>':''}
     <div class="act-mod-body">
       <div class="act-mod-avatar ${avCls}">${m.icon}</div>
