@@ -922,13 +922,17 @@ App.vehicleAlertQuick=async function(label){
   const msg=(urgent?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
   const btns=document.querySelectorAll('#sigStep2Vehicle .alert-card');
   btns.forEach(b=>{b.disabled=true;b.style.opacity='.5';});
+  let sent=false;
   try{
     if(window.ImmatMessages?.sendToPlate){
-      await ImmatMessages.sendToPlate(plate,msg);
+      const ok=await ImmatMessages.sendToPlate(plate,msg);
+      if(ok===false){return;}// sendToPlate a déjà affiché l'erreur
+      sent=true;
     } else {
       if($('iTarget'))$('iTarget').value=plate;
       if($('iMsg'))$('iMsg').value=msg;
       await this.sendMsg?.();
+      sent=true;
     }
     // Broadcast temps réel pour notification immédiate chez le destinataire
     try{
@@ -943,11 +947,11 @@ App.vehicleAlertQuick=async function(label){
         }});
       }
     }catch(e){}
-    toast('✅ Alerte envoyée au conducteur '+plate,'ok');
+    if(sent)toast('✅ Alerte envoyée au conducteur '+plate,'ok');
   }catch(e){toast('Erreur envoi signalement.','bad');return;}finally{
     btns.forEach(b=>{b.disabled=false;b.style.opacity='';});
   }
-  this.sigDone();
+  if(sent)this.sigDone();
 };
 
 // ── Activité
@@ -1001,6 +1005,9 @@ App.openActivityCat=function(cat){
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
   const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=cat==='all'?'none':'';
   this.renderCategoryFeed(cat,'recus');
+  if(cat==='vehicle'||cat==='all'){
+    try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}
+  }
 };
 App.closeActivityCat=function(){
   S._actCat=null;

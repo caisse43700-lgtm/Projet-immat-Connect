@@ -442,15 +442,15 @@ async function sendToPlate(plate,text){
   plate = fPlate(plate);
   const senderPlate = fPlate(me?.owner_plate || myPlate());
 
-  if(!client || !u) return toast('Reconnecte-toi.','bad');
-  if(!senderPlate) return toast('Profil conducteur incomplet.','bad');
-  if(!plate) return toast('Plaque destinataire manquante.','bad');
-  if(plate === senderPlate) return toast("Impossible de t'envoyer un message à toi-même.",'bad');
-  if(!text) return toast('Message vide.','bad');
+  if(!client || !u){ toast('Reconnecte-toi.','bad'); return false; }
+  if(!senderPlate){ toast('Profil conducteur incomplet.','bad'); return false; }
+  if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
+  if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
+  if(!text){ toast('Message vide.','bad'); return false; }
 
   const target = await findProfileByPlate(plate);
-  if(!target?.id) return toast('Aucun utilisateur avec cette plaque.','bad');
-  if(target.id === u.id) return toast("Impossible de t'envoyer un message à toi-même.",'bad');
+  if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
+  if(target.id === u.id){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
 
   const receiverPlate = fPlate(target.owner_plate || plate);
 
@@ -479,7 +479,8 @@ async function sendToPlate(plate,text){
 
   if(error){
     console.error(error);
-    return toast('Erreur envoi message.','bad');
+    toast('Erreur envoi message.','bad');
+    return false;
   }
 
   State.activePlate = receiverPlate;
@@ -487,6 +488,7 @@ async function sendToPlate(plate,text){
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);
+  return true;
 }
 
 async function deleteMessage(id){
