@@ -27,9 +27,9 @@ Ce document ne remplace pas les fichiers détaillés — il les relie.
 | Dimension | État | Dernière mise à jour |
 |-----------|------|---------------------|
 | Fondation constitutionnelle | ✅ VERT — tous blocages critiques résolus | SESSION 5 (2026-05-31) |
-| Application — stabilité | 🟡 EN COURS — P0 partiellement corrigés | 2026-05-31 |
+| Application — stabilité | 🟡 EN COURS — 3 P0 corrigés sur 9 | 2026-05-31 |
 | Documentation technique | 🟡 EN COURS — TERRAIN-INTEL créé | 2026-05-31 |
-| Incohérences connues | 7 actives, 2 corrigées | 2026-05-31 |
+| Incohérences connues | 6 actives, 3 corrigées | 2026-05-31 |
 | Questions ouvertes | 5 (voir section dédiée) | 2026-05-31 |
 
 ---
@@ -101,7 +101,7 @@ Application
 |----|----------|--------------------|--------|
 | INC-001 | MOYENNE | Double canal messages (postgres + broadcast) | Non corrigé |
 | INC-002 | MOYENNE | Double canal signalements → doublons possibles dans S.alerts | Non corrigé |
-| INC-003 | MOYENNE | Badge #topMsgBadge mis à jour par 3 logiques concurrentes | Non corrigé |
+| INC-003 | ✅ CORRIGÉ | Badge #topMsgBadge unifié sur updateActBadge() | 2026-05-31 |
 | INC-004 | FAIBLE | App.panel() patchée 2 fois — ordre de chargement critique | Non corrigé |
 | INC-005 | PERF | loadOthers() recrée tous les marqueurs à chaque update GPS | Non corrigé |
 | INC-006 | UX | S.selPlate (sélection carte) non visible dans panneau Activité | Non corrigé |
@@ -137,6 +137,12 @@ Missions :
 - A-10 design validé : 7 qualifications du Gardien + 5 étapes de transmission
 MC-006, MC-007, MC-008 créés. Tous fichiers constitution mis à jour.
 Diagnostic V1 : ROUGE → VERT.
+
+### SESSION 7 — SYSTEM-KERNEL + INC-003 corrigé (2026-05-31)
+Création de SYSTEM-KERNEL.md : noyau opérationnel, 10 domaines × 10 réponses précomputées.
+Correction INC-003 : badge #topMsgBadge unifié sur updateActBadge() (suppression du double calcul dans updateCommunityStatus).
+Réponse finale : le noyau est utile mais la vraie pièce manquante est la discipline d'exécution.
+Commits : [voir git log]
 
 ### SESSION 6 — Audit application + P0 + TERRAIN-INTEL (2026-05-31)
 Audit de l'application HTML (score 5.2/10).
