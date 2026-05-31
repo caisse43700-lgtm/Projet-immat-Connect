@@ -27,10 +27,10 @@ Ce document ne remplace pas les fichiers détaillés — il les relie.
 | Dimension | État | Dernière mise à jour |
 |-----------|------|---------------------|
 | Fondation constitutionnelle | ✅ VERT — tous blocages critiques résolus | SESSION 5 (2026-05-31) |
-| Application — stabilité | 🟡 EN COURS — 3 P0 corrigés sur 9 | 2026-05-31 |
+| Application — stabilité | 🟡 EN COURS — 8 corrections SESSION 8 + 3 P0 | 2026-05-31 |
 | Documentation technique | 🟡 EN COURS — TERRAIN-INTEL créé | 2026-05-31 |
-| Incohérences connues | 6 actives, 3 corrigées | 2026-05-31 |
-| Questions ouvertes | 5 (voir section dédiée) | 2026-05-31 |
+| Incohérences connues | 5 actives, 4 corrigées | 2026-05-31 |
+| Questions ouvertes | 4 (voir section dédiée) | 2026-05-31 |
 
 ---
 
@@ -89,7 +89,7 @@ Application
 
 | Fichier | Rôle | Lignes |
 |---------|------|--------|
-| `index.html` | App object, état S, tous les panneaux | 1807 |
+| `index.html` | App object, état S, tous les panneaux | ~1970 (SESSION 8) |
 | `messages.js` | Module ImmatMessages — messagerie P2P | 588 |
 | `utils.js` | Fonctions partagées (esc, nPlate, km…) | 62 |
 | `badge.js` | Module ImmatBadge — compteur non lus | 95 |
@@ -104,7 +104,7 @@ Application
 | INC-003 | ✅ CORRIGÉ | Badge #topMsgBadge unifié sur updateActBadge() | 2026-05-31 |
 | INC-004 | FAIBLE | App.panel() patchée 2 fois — ordre de chargement critique | Non corrigé |
 | INC-005 | PERF | loadOthers() recrée tous les marqueurs à chaque update GPS | Non corrigé |
-| INC-006 | UX | S.selPlate (sélection carte) non visible dans panneau Activité | Non corrigé |
+| INC-006 | ✅ CORRIGÉ | S.selPlate → classe act-mod-selected dans renderCategoryFeed | 2026-05-31 |
 | INC-007 | MOYENNE | vehicleAlertQuick() — double envoi possible | Non corrigé |
 | INC-008 | ✅ CORRIGÉ | messages.js unsubscribe() — scope client | 2026-05-31 |
 | INC-009 | ✅ CORRIGÉ | XSS Nominatim searchGps() | 2026-05-31 |
@@ -137,6 +137,19 @@ Missions :
 - A-10 design validé : 7 qualifications du Gardien + 5 étapes de transmission
 MC-006, MC-007, MC-008 créés. Tous fichiers constitution mis à jour.
 Diagnostic V1 : ROUGE → VERT.
+
+### SESSION 8 — 8 corrections produit + ImmatCall WebRTC (2026-05-31)
+Corrections réalisées :
+- B1-1 : Appel audio WebRTC in-app (App.ImmatCall) — Supabase Broadcast + RTCPeerConnection + STUN
+  - Bouton 📞 sur cartes Véhicule/Aide dans Activité, dans sigStep2Vehicle (recapCard), dans sigStep2Aide
+- B2-1 : Indicateurs navPremium temps réel : Vitesse GPS / Conducteurs proches / Alertes actives (remplace Limite/Trafic/Voie simulés)
+- B3-1 : Bouton × supprimer favori GPS individuel (renderFavs + deleteFav)
+- B3-2 : Bouton × supprimer historique GPS individuel (renderHistory + deleteHistEntry)
+- B4-1 : Bouton "Vider" liste véhicules récents (clearRecent)
+- B5-1 : Bouton 🚫 Bloquer dans vehicleContextMenu (vehicleContextAction 'block')
+- B6-1 : INC-006 corrigé — sélection carte → classe act-mod-selected dans renderCategoryFeed
+- B7-1 : Suppression onglet "Nouveau" dans actCatPanel (doublon navSignaler)
+Commits : 768a462, 6520ef3, 91ebeea, 8c2de9c, ed94590, 2648042, 8c5cc09, 3322e7b
 
 ### SESSION 7 — SYSTEM-KERNEL + INC-003 corrigé (2026-05-31)
 Création de SYSTEM-KERNEL.md : noyau opérationnel, 10 domaines × 10 réponses précomputées.
@@ -171,10 +184,8 @@ Badge #topMsgBadge mis à jour par badge.js, updateActBadge(), updateCommunitySt
 **Qui décide :** Gardien
 **Impact :** si unifié → choisir un seul chemin, risque de régression sur les 2 autres
 
-### Q-3 — INC-006 : sélection carte → mise en évidence dans Activité ?
-Quand un véhicule est sélectionné sur la carte, doit-il être visible dans Activité ?
-**Qui décide :** Gardien (décision UX)
-**Impact :** connexion directe carte↔activité, modification renderCategoryFeed
+### ~~Q-3~~ — RÉSOLUE (SESSION 8)
+INC-006 corrigé : classe act-mod-selected ajoutée dans renderCategoryFeed quand nPlate(item.plate) === S.selPlate.
 
 ### Q-4 — RLS Supabase
 La clé publishable est visible dans index.html. Acceptable seulement si Row Level Security est configuré.
@@ -192,7 +203,7 @@ A-8 est PRÊT À INTÉGRER depuis SESSION 5. Le format MC-ID existe dans MEMORY.
 
 ### P0 restants (application)
 - [ ] Vérifier RLS Supabase (Q-4) — aucun fichier à toucher, vérification dashboard
-- [ ] Investiguer pendingSignalCount() — localiser la définition dans index.html
+- [x] INC-006 corrigé (SESSION 8)
 
 ### V2 (corpus constitutionnel)
 - [ ] Créer MEMORY-REGISTER.md (A-8, Q-5)
@@ -200,11 +211,13 @@ A-8 est PRÊT À INTÉGRER depuis SESSION 5. Le format MC-ID existe dans MEMORY.
 - [ ] Résoudre Q-1 et Q-2 avec le Gardien
 
 ### V2 (application)
-- [ ] Décision Q-3 (carte↔activité)
 - [ ] Correction INC-002 (doublons signalements) si Q-1 tranchée accidentel
+- [ ] Modifier profil conducteur depuis le drawer (PROP-10)
+- [ ] Score fiabilité visible dans profil (PROP-09)
+- [ ] Tester App.ImmatCall en conditions réelles (deux conducteurs connectés)
 
 ---
 
 *Créé : SESSION 6, 2026-05-31*
-*Mise à jour : SESSION 6, 2026-05-31*
+*Mise à jour : SESSION 8, 2026-05-31*
 *Fichier : docs/PROJET-INTEL.md*

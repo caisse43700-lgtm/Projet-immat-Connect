@@ -1011,15 +1011,15 @@
 
 ### TOP 10 ACTIONS LES PLUS UTILES
 
-1. Bouton 📞 Appeler conducteur (si numéro) — B1-1
+1. ✅ Appel audio WebRTC in-app (ImmatCall) — B1-1 (SESSION 8)
 2. Modifier son profil depuis le drawer — B2-2
-3. Masquer navPremium champs simulés — B1-5
-4. Bouton × supprimer favori GPS — B1-4
-5. INC-006 : sélection carte → Activité (5 lignes) — B1-2
-6. Bloquer depuis contextMenu carte — B1-7
+3. ✅ navPremium temps réel (Vitesse/Autour/Alertes) — B2-1 (SESSION 8)
+4. ✅ Bouton × supprimer favori GPS — B3-1 (SESSION 8)
+5. ✅ INC-006 corrigé — sélection carte → act-mod-selected — B6-1 (SESSION 8)
+6. ✅ Bloquer depuis contextMenu carte — B5-1 (SESSION 8)
 7. FAB "Signaler ici" depuis la carte — B2-3
-8. Score fiabilité visible dans profil — B2-1
-9. Vider la liste "Véhicules récents" — B1-6
+8. Score fiabilité visible dans profil — PROP-09
+9. ✅ Vider la liste "Véhicules récents" — B4-1 (SESSION 8)
 10. Décider INC-001/002 (doubles canaux) — G-1
 
 ---
@@ -1030,11 +1030,11 @@
 2. reportPanel obsolète toujours dans le DOM
 3. alertsPanel (overlay) doublon de alertsList (panelAltet)
 4. panelSettings duplique entièrement le drawer
-5. Numéro de téléphone stocké mais jamais affiché
-6. navPremium avec données simulées présentées comme réelles
+5. Numéro de téléphone stocké mais jamais affiché (remplacé par ImmatCall WebRTC — SESSION 8)
+6. ✅ navPremium données temps réel — SESSION 8
 7. Deux systèmes de score (trust local + ReliabilityPro DB)
-8. INC-006 : sélection carte non reflétée dans Activité
-9. Tab "Nouveau" dans actCatPanel qui redirige juste vers navSignaler
+8. ✅ INC-006 corrigé — SESSION 8
+9. ✅ Tab "Nouveau" supprimé — SESSION 8
 10. _actMsgCard et _actAlertCard potentiellement du code mort
 
 ---
@@ -1056,13 +1056,13 @@
 
 ### TOP 10 BOUTONS / ACTIONS MANQUANTS
 
-1. 📞 Appeler conducteur (contextMenu + nearbyPanel + thread)
+1. ✅ 📞 Appel audio WebRTC in-app — SESSION 8 (Activité + sigStep2Vehicle + sigStep2Aide)
 2. ✏️ Modifier mon profil (drawer)
-3. × Supprimer favori GPS individuel
-4. × Supprimer historique GPS individuel
-5. 🗑 Vider la liste "Récents" en masse
+3. ✅ × Supprimer favori GPS individuel — SESSION 8
+4. ✅ × Supprimer historique GPS individuel — SESSION 8
+5. ✅ Vider la liste "Récents" en masse — SESSION 8
 6. ⚠️ Signaler ici (FAB carte ou tap long)
-7. 🚫 Bloquer depuis contextMenu carte
+7. ✅ 🚫 Bloquer depuis contextMenu carte — SESSION 8
 8. 🏆 Mon score de fiabilité (dans profil)
 9. Annuler navigation GPS (une fois commencée)
 10. Bouton "Supprimer" sur chaque item de la liste Bloqués (remplacer "Débloquer" qui est peu clair)
@@ -1089,6 +1089,7 @@
 ---
 
 *Inventaire généré : SESSION 7, 2026-05-31*
-*Basé sur : index.html (1807L), messages.js (588L), ui.js (391L), badge.js (95L), utils.js (62L)*
+*Mis à jour : SESSION 8, 2026-05-31 — 8 corrections appliquées (B1-1 à B7-1)*
+*Basé sur : index.html (1807L→~1970L), messages.js (588L), ui.js (391L), badge.js (95L), utils.js (62L)*
 *Total code analysé : 2943 lignes*
 *Fichier : INVENTAIRE-PRODUIT.md*
