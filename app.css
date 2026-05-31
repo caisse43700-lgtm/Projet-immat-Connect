@@ -220,13 +220,17 @@ button { border: 0; cursor: pointer; }
 .front-car-banner button { border-radius: 12px; background: var(--green); color: #06140f; padding: 8px 10px; font-size: 12px; font-weight: 950; }
 
 /* ── VEHICLE CONTEXT MENU ── */
-.vehicle-context-menu { position: absolute; z-index: 1400; pointer-events: none; transform: translate(-50%,-50%); display: none; }
+.vehicle-context-menu { position: absolute; z-index: 1400; pointer-events: none; transform: translate(-50%, calc(-100% - 22px)); display: none; background: rgba(10,16,26,.97); border: 1px solid rgba(255,255,255,.16); border-radius: 20px; padding: 12px; min-width: 210px; box-shadow: 0 16px 48px rgba(0,0,0,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.vehicle-context-menu::after { content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); border: 9px solid transparent; border-top-color: rgba(10,16,26,.97); border-bottom: 0; }
 .vehicle-context-menu.show { display: block; }
-.vehicle-bubble { position: absolute; min-width: 72px; min-height: 44px; padding: 10px 14px; border-radius: 999px; border: 2px solid #fff; background: #10161d; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.25); font-size: 12px; font-weight: 950; pointer-events: auto; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; transition: .14s ease; }
+.vehicle-actions { display: flex; gap: 7px; }
+.vehicle-bubble { flex: 1; min-height: 52px; padding: 9px 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08); color: #eef6ff; font-size: 11px; font-weight: 900; pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: .14s ease; white-space: nowrap; }
+.vehicle-bubble span { font-size: 10px; }
 .vehicle-bubble:active { transform: scale(.94); }
-.vehicle-bubble.contact-main { background: var(--green) !important; color: #06140f !important; left: -72px; top: -68px; }
-.vehicle-bubble.alert-main { background: var(--red) !important; color: #fff !important; left: 20px; top: -68px; }
-.vehicle-context-plate { position: absolute; top: -96px; left: 50%; transform: translateX(-50%); background: rgba(7,16,24,.9); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 950; white-space: nowrap; border: 1px solid var(--border); }
+.vehicle-bubble.contact-main { background: var(--green) !important; color: #06140f !important; border-color: transparent !important; }
+.vehicle-bubble.alert-main { background: var(--red) !important; color: #fff !important; border-color: transparent !important; }
+.vehicle-bubble.block-main { background: rgba(255,255,255,.1) !important; }
+.vehicle-context-plate { font-size: 14px; font-weight: 950; text-align: center; color: #eef6ff; padding: 0 4px 10px; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 10px; letter-spacing: 1px; }
 .vehicle-alert-orbit { position: absolute; z-index: 60; pointer-events: none; }
 
 /* ── BOTTOM NAV ── */
@@ -626,8 +630,9 @@ button { border: 0; cursor: pointer; }
 /* ── MARQUEURS CARTE ── */
 .car-pin { border-radius: 50%; overflow: hidden; }
 .road-pin { font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
-.car-pin.self { box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 6px 18px rgba(0,0,0,.3); }
-.car-pin.other { box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 4px 12px rgba(0,0,0,.25); }
+.car-pin.self { box-shadow: 0 0 0 5px rgba(255,255,255,.9), 0 8px 24px rgba(0,0,0,.35); animation: selfPing 2.4s ease-out infinite; }
+.car-pin.other { box-shadow: 0 0 0 2px rgba(255,255,255,.65), 0 5px 14px rgba(0,0,0,.3); }
+@keyframes selfPing { 0%,100% { box-shadow: 0 0 0 5px rgba(255,255,255,.9), 0 8px 24px rgba(0,0,0,.35); } 50% { box-shadow: 0 0 0 9px rgba(255,255,255,.35), 0 8px 24px rgba(0,0,0,.35); } }
 
 /* ── MODE NUIT ── */
 body.night #map { filter: brightness(.7) contrast(1.1) saturate(.8); }
