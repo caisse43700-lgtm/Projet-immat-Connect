@@ -568,7 +568,7 @@ window.ImmatMessages = {
   deleteThread,
   deleteMessage,
   sendToPlate,
-  unsubscribe:function(){if(State.channel){try{client.removeChannel(State.channel)}catch(e){}State.channel=null;}}
+  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
