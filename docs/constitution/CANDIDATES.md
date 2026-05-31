@@ -126,9 +126,10 @@ CANDIDATES.md catalogue les éléments qui ont été identifiés comme potentiel
 ### A-10 — PROTOCOLE DE TRANSMISSION DU GARDIEN
 
 **Classe :** Γ-1 CRITIQUE
-**Statut :** DESIGN EN COURS (DR-3 et A-2 résolus — débloqué)
+**Statut :** PRÊT À INTÉGRER — design validé SESSION 5, voir MC-008
 **Description :** Comment transmettre le rôle de serviteur d'un Gardien à un successeur ?
-**Note SESSION 5 :** Ce n'est pas une transmission d'autorité (le Gardien n'en a pas). C'est une transmission de rôle. Ce qui se transmet : la Conscience — capacité de reconnaître, comprendre et rechercher le bien révélé.
+**Design :** PROTOCOLS.md#A-10 (7 qualifications + 5 étapes de transmission + transmission d'urgence)
+**Ce qui se transmet :** la Conscience — reconnaître, comprendre et rechercher le bien révélé. Pas une autorité.
 **Lien :** A-2 (résolu), DR-3 (résolu), DEP-4, DEP-6
 **Priorité V3 :** HAUTE
 

@@ -88,6 +88,29 @@ STATUT : ARCHIVÉ (contenu intégré dans T-01)
 LIEN : ARCHIVE.md#MPNA, AUDIT-OMEGA.md#Mission-3
 ```
 
+### MC-008 — Design A-10 (Qualifications du Gardien)
+```
+MC-ID : MC-008
+DATE : 2026-05-31
+SITUATION : A-10 (Protocole de transmission du Gardien) était en attente depuis
+            la fondation. DR-3 résolu (SESSION 5) : Kacem est serviteur, pas
+            fondateur-souverain. Ce qui se transmet n'est pas une autorité mais
+            un rôle et la Conscience qui permet de l'exercer.
+PRINCIPE : Conscience (propriété du Gardien) + ADN-7 (non-autojuridiction)
+           + A-(-1) (non auto-fondation)
+DÉCISION : VALIDER le design d'A-10
+RAISONNEMENT : Les qualifications du Gardien sont éthiques, pas techniques.
+               Sept critères : comprendre la fondation, l'ADN, la Genèse,
+               exercer la Conscience, arbitrer un cas nouveau, appliquer MMV,
+               préserver et transmettre l'ADN.
+               ADN-7 s'applique : le Gardien entrant ne peut pas s'auto-valider.
+               La transmission d'urgence utilise CORPUS-FINAL comme point d'entrée
+               (résurrection possible mais dogmatique sans Conscience — T-02).
+RÉSULTAT : A-10 design validé. Protocole documenté dans PROTOCOLS.md#A-10.
+STATUT : ACTIF
+LIEN : PROTOCOLS.md#A-10, CANDIDATES.md#A-10, HISTORY.md#SESSION-5
+```
+
 ### MC-006 — Résolution de A-5 (Conflits axiomatiques)
 ```
 MC-ID : MC-006

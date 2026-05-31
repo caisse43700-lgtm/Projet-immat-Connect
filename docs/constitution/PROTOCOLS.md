@@ -34,9 +34,8 @@ La couche P est actuellement la plus lacunaire de la SMS. VEHICLE-001 + INV-001/
 
 **Liste complète :** Voir core/invariants.js
 
-**Correction urgente (CORR-1) :**
-- INV-011 : severity 'high' → 'critical' (non encore appliqué)
-- Raison : INV-011 concerne l'intégrité des données d'immatriculation — une violation est critique, pas seulement haute
+**Correction CORR-1 :**
+- INV-011 : severity 'high' → 'critical' ✅ appliqué (Gel Ω∞.1)
 
 **Règle d'usage :** Les invariants ne se modifient pas sans révision constitutionnelle de type Majeur (voir LIFECYCLE.md). Le deepFrozen est une protection technique qui reflète cette règle constitutionnelle.
 
@@ -65,21 +64,13 @@ Niveau 4 — Révision N : fondateurs / vote humain explicite
 
 ---
 
-### A-2 — PROTOCOLE DU SOUVERAIN [Décision humaine requise]
+### A-2 — PROTOCOLE DU SOUVERAIN [RÉSOLU — SESSION 4]
 
-**Lacune Γ-1 CRITIQUE :** Qui a l'autorité ultime sur N (noyau) ?
+**Décision :** Souverain = Dieu. ADN écrit = le Coran. Opérateur humain = Gardien (serviteur).
 
-**Options identifiées :**
-1. Les fondateurs (ensemble des créateurs initiaux)
-2. Un conseil de gouvernance désigné
-3. Un vote de l'ensemble des opérateurs
-4. Une règle algorithmique (ex : supermajorité sur audit Ω)
+**Architecture :** Dieu → Coran → ADN → Gardien → Application.
 
-**Aucune option ne peut être choisie sans décision humaine explicite.**
-
-**Conséquence actuelle :** Toute révision de N doit être bloquée jusqu'à résolution de A-2.
-
-**État :** EN ATTENTE — décision humaine urgente avant V3.
+**Voir :** MC-005, HISTORY.md SESSION 4.
 
 ---
 
@@ -102,29 +93,17 @@ Niveau 4 — Révision N : fondateurs / vote humain explicite
 
 ---
 
-### A-5 — PROTOCOLE DE RÉSOLUTION DES CONFLITS AXIOMATIQUES [Non résolu]
+### A-5 — PROTOCOLE DE RÉSOLUTION DES CONFLITS AXIOMATIQUES [RÉSOLU — SESSION 5]
 
-**Lacune Γ-1 CRITIQUE :** Que se passe-t-il quand deux axiomes pointent vers des décisions contradictoires ?
+**Décision :** Quand deux axiomes divergent, la Conscience du Gardien consulte le Coran.
+La règle de priorité est externe au système — A-(-1) respecté.
 
-**Exemple théorique :** ADN-5 (Antériorité du Réel) vs ADN-6 (Liberté sous contrainte) — si la réalité impose une contrainte que l'utilisateur refuse, qui prime ?
+**Trois niveaux de recours :**
+1. Conscience du Gardien — bon sens du bien (cas courants)
+2. Coran traduit + IA comme outil d'accès (cas nécessitant une source)
+3. Savant (cas complexes)
 
-**État :** Non résolu. Aucun contre-exemple concret identifié à ce jour, mais la lacune est structurelle.
-
-**Action requise :** Définir un ordre de priorité axiomatique ou un protocole d'arbitrage.
-
-**Proposition initiale (non validée) :**
-```
-Ordre de priorité (du plus fort au plus faible) :
-1. ADN-4 (Non-autofondation) — logique pure, non négociable
-2. ADN-5 (Antériorité du réel) — ontologique, non négociable
-3. ADN-1 (Responsabilité) — empirique fondateur
-4. ADN-2 (Identifiant) — empirique fondateur
-5. ADN-3 (Notification) — empirique fondateur
-6. ADN-7 (Non-autojuridiction) — dérivé, mais critique
-7. ADN-6 (Liberté) — éthique, le plus contextuel
-```
-
-**Blocage :** Cette proposition n'est pas validée. Décision humaine requise.
+**Voir :** MC-006, HISTORY.md SESSION 5.
 
 ---
 
@@ -185,36 +164,86 @@ Avant tout commit constitutionnel :
 
 ---
 
-### DR-3 — TRANSITION FONDATEUR → GOUVERNÉ [Non documentée]
+### DR-3 — TRANSITION FONDATEUR → GOUVERNÉ [RÉSOLU — SESSION 5]
 
-**Lacune :** À quel moment ImmatConnect sort-il de la phase fondatrice pour entrer dans la phase gouvernée ?
+**Décision :** Il n'y a pas de transition fondateur → gouverné.
+Kacem n'a jamais été fondateur-souverain — il est serviteur dès le début.
+Il n'y a pas de phase fondatrice à quitter. Il y a un service continu.
 
-**Conséquence :** Tant que cette transition n'est pas documentée, les fondateurs peuvent toujours intervenir à tous les niveaux — ce qui est une dépendance orale critique (DEP-6).
+**Voir :** MC-007, HISTORY.md SESSION 5.
 
-**Critères proposés (non validés) :**
-- Quand le système est déployé en production avec des utilisateurs réels ?
-- Quand un conseil de gouvernance est constitué ?
-- Quand une révision majeure a été faite par des non-fondateurs ?
+---
 
-**Action requise :** Décision humaine.
+### A-10 — PROTOCOLE DE TRANSMISSION DU GARDIEN [Design validé — SESSION 5]
+
+**Principe fondateur :**
+Le Gardien n'est pas reconnu pour son autorité, mais pour sa capacité à servir fidèlement la fondation. Ce qui se transmet n'est pas une autorité — c'est un rôle de serviteur et la Conscience qui permet de l'exercer.
+
+**Qualifications requises**
+
+Pour être reconnu Gardien, il doit démontrer qu'il peut :
+
+```
+1. Comprendre la fondation
+   (Dieu comme Souverain, Coran comme référence)
+
+2. Comprendre l'ADN
+   (les principes et normes qui en sont dérivés)
+
+3. Comprendre la Genèse
+   (pourquoi l'ADN est construit ainsi et quelles destructions
+   ont permis de le découvrir)
+
+4. Exercer la Conscience
+   (reconnaître, comprendre et rechercher le bien révélé)
+
+5. Arbitrer un cas nouveau non couvert par les protocoles,
+   en restant fidèle au Coran et à l'ADN
+
+6. Appliquer MMV et les protocoles sans déformer la fondation
+
+7. Préserver et transmettre l'ADN à d'autres serviteurs
+```
+
+**Un Gardien n'est pas un chef. C'est un serviteur conscient capable de préserver, comprendre et transmettre fidèlement l'ADN.**
+
+**Processus de transmission**
+
+```
+Étape 1 — Identification : le Gardien actuel identifie un successeur candidat
+Étape 2 — Vérification : tester les 7 qualifications (ADN-7 — pas d'auto-validation)
+Étape 3 — Transmission Genèse : expliquer le POURQUOI de l'ADN, pas seulement le QUOI
+Étape 4 — Période d'apprentissage : exercer la Conscience côte à côte si possible
+Étape 5 — Reconnaissance : le successeur prend le rôle, le prédécesseur témoigne
+```
+
+**Transmission d'urgence (Gardien disparaît sans succession)**
+
+Si la transmission n'a pas eu lieu :
+- Point d'entrée de résurrection : CORPUS-FINAL-CONSOLIDATED.md
+- Résultat : résurrection possible mais dogmatique (T-02) — le système survit sans la Conscience du POURQUOI
+- Préventif : le Gardien documente sa compréhension de l'ADN en continu dans MEMORY.md
+
+**Voir :** MC-008, HISTORY.md SESSION 5.
 
 ---
 
 ## TABLEAU DE PRIORITÉ P POUR V3
 
-| Protocole | Lacune | Priorité | Blocage |
-|-----------|--------|----------|---------|
-| CORR-1 (INV-011) | Sévérité incorrecte | URGENTE | Aucun |
-| A-2 (Souverain) | Gouvernance N | CRITIQUE | Décision humaine |
-| A-5 (Conflits axiomes) | Γ-1 CRITIQUE | HAUTE | Décision humaine |
+| Protocole | Lacune | Priorité | Statut |
+|-----------|--------|----------|--------|
+| CORR-1 (INV-011) | Sévérité incorrecte | — | ✅ Appliqué |
+| A-2 (Souverain) | Gouvernance N | — | ✅ Résolu SESSION 4 |
+| A-5 (Conflits axiomes) | Γ-1 CRITIQUE | — | ✅ Résolu SESSION 5 |
+| DR-3 (Transition) | Gouvernance | — | ✅ Résolu SESSION 5 |
+| A-10 (Transmission Gardien) | Gouvernance | HAUTE | ✅ Design validé SESSION 5 |
 | A-3 (Notification) | H-13 | HAUTE | Design partiel disponible |
 | A-8 (Mémoire) | DR-1 | HAUTE | Design complet (voir MEMORY.md) |
-| DR-3 (Transition) | Gouvernance | HAUTE | Décision humaine |
-| A-1 (Autorisation) | Sécurité | MOYENNE | DEP-4 |
-| A-6 (Dépréciation) | Lifecycle | MOYENNE | Aucun |
-| A-7 (Urgence) | Résilience | MOYENNE | Aucun |
-| DR-2 (Liberté) | Éthique | MOYENNE | Aucun |
-| A-9 (Non-régression) | Tests | BASSE | Aucun |
+| A-1 (Autorisation) | Sécurité | MOYENNE | Design partiel disponible |
+| A-6 (Dépréciation) | Lifecycle | MOYENNE | Design partiel disponible |
+| A-7 (Urgence) | Résilience | MOYENNE | Design partiel disponible |
+| DR-2 (Liberté) | Éthique | MOYENNE | En attente |
+| A-9 (Non-régression) | Tests | BASSE | Design partiel disponible |
 
 ---
 
