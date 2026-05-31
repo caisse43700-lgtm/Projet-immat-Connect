@@ -153,4 +153,5 @@ const invariants = Object.freeze({
 
 });
 
-module.exports = invariants;
+if (typeof window !== 'undefined') window._INVARIANTS = invariants;
+if (typeof module !== 'undefined') module.exports = { INVARIANTS: invariants };
