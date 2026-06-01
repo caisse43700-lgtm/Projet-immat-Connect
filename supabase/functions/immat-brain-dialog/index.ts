@@ -67,9 +67,8 @@ Traversée obligatoire pour technique : Signal→routing→organe→deps→entry
 Langue : français.`;
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
-function buildDynamicContext(manifest: string, snapshot: unknown, mode: string, feature: string): string {
+function buildDynamicContext(snapshot: unknown, mode: string, feature: string): string {
   return `Capacité : ${feature} | Mode : ${mode}
-Lois : ${anonymize(manifest) || '(aucune)'}
 Snapshot : ${anonymize(JSON.stringify(snapshot ?? {}))}`;
 }
 
@@ -189,7 +188,6 @@ Deno.serve(async (req) => {
     const message  = typeof body.message  === 'string' ? body.message.slice(0, 2000)  : '';
     const feature  = typeof body.feature  === 'string' ? body.feature.slice(0, 100)   : 'INCONNU';
     const mode     = typeof body.mode     === 'string' ? body.mode.slice(0, 50)       : 'consultation';
-    const manifest = typeof body.manifest === 'string' ? body.manifest.slice(0, 8000) : '';
     const snapshot = body.snapshot ?? {};
 
     if (!message.trim()) {
@@ -206,7 +204,7 @@ Deno.serve(async (req) => {
         max_tokens: 800,
         system: [
           { type: 'text', text: STATIC_SYSTEM, cache_control: { type: 'ephemeral' } },
-          { type: 'text', text: buildDynamicContext(manifest, snapshot, mode, feature) },
+          { type: 'text', text: buildDynamicContext(snapshot, mode, feature) },
         ],
         messages: [{ role: 'user', content: anonymize(message) }],
       });

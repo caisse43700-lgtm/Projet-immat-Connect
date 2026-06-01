@@ -1965,7 +1965,7 @@ const AngeDialog={
     btn.disabled=true;spin.style.display='block';resp.style.display='none';
     try{
       let snapshot={};
-      try{snapshot=window.ImmatOrganism?.diagnose?.()||{};}catch(e){}
+      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL'};}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
