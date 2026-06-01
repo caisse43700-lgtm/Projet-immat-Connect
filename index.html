@@ -510,7 +510,8 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
-    S.isGardien=(u.user_metadata?.role==='gardien');
+    S.isGardien=(u.user_metadata?.role==='gardien')||(u.app_metadata?.role==='gardien');
+    toast('Rôle: '+(u.user_metadata?.role||u.app_metadata?.role||'aucun'),'ok');
 
     let p=null;
     try{
