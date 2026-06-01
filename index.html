@@ -506,6 +506,7 @@ async resendConfirm(){try{let email=$('iEmail').value.trim();if(email){let{error
 async updatePwd(){let p=$('iNewPwd').value,c=$('iNewCfm').value;if(!sPwd(p))return st('resetSt','Mot de passe trop faible.','error');if(p!==c)return st('resetSt','Mots de passe différents.','error');let{error}=await sb.auth.updateUser({password:p});st('resetSt',error?error.message:'✅ Mot de passe mis à jour.',error?'error':'success')},
 async afterAuth(){
   try{
+    await sb.auth.refreshSession().catch(()=>{});
     const {data:ud}=await withTimeout(sb.auth.getUser(),8000,"Impossible de récupérer l'utilisateur connecté.");
     const u=ud?.user;
     if(!u){this.show('sw');return}
