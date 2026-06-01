@@ -426,6 +426,7 @@ async function markThreadRead(plate){
 
   buildThreads();
   setBadge(State.threads.reduce((s,t)=>s+t.unread,0));
+  try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_RECEIVED',{plate,count:unread.length,_src:'ImmatConnect/messages/markThreadRead'})}catch(e){}
   try{window.App?.updateActBadge?.()}catch(e){}
 }
 
@@ -574,6 +575,7 @@ async function sendToPlate(plate,text){
 
   State.activePlate = receiverPlate;
   toast('Message envoyé à ' + receiverPlate + '.','ok');
+  try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);

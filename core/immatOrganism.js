@@ -70,6 +70,119 @@ const ImmatOrganism = (function () {
     return _brain.validateInvariant(invId, passes, context);
   }
 
+  // ── Diagnostic OBD ──────────────────────────────────────────────
+  function diagnose(query) {
+    try {
+      const now = Date.now();
+      const FIVE_MIN = 5 * 60 * 1000;
+      const journal = _bus ? _bus.getJournal() : [];
+
+      const evFilter  = query && query.event ? String(query.event) : null;
+      const sinceMs   = query && query.since != null ? Number(query.since) : null;
+      const limitN    = query && query.limit != null ? Math.max(1, Number(query.limit)) : 20;
+
+      let filtered = journal;
+      if (evFilter)  filtered = filtered.filter(e => e.event === evFilter);
+      if (sinceMs)   filtered = filtered.filter(e => (now - e.at) <= sinceMs);
+      filtered = filtered.slice(-limitN);
+
+      const violations = journal
+        .filter(e => e.event === 'INVARIANT_VIOLATED')
+        .map(e => ({
+          invariant: e.payload.invariant || '?',
+          label:     e.payload.label || e.payload.name || '?',
+          severity:  e.payload.severity || 'unknown',
+          at:        e.at,
+        }));
+
+      const recent   = violations.filter(v => (now - v.at) <= FIVE_MIN);
+      const critical = recent.filter(v => v.severity === 'critical');
+
+      const health = critical.length > 0 ? 'violated'
+                   : (recent.length > 0 || journal.length === 0) ? 'degraded'
+                   : 'ok';
+
+      const events = filtered.map(e => ({
+        event:   e.event,
+        payload: _anonymize(e.payload),
+        at:      e.at,
+        ago:     now - e.at,
+      }));
+
+      const last = journal.length ? journal[journal.length - 1] : null;
+      const summary = _summary(health, journal.length, violations.length, last, now);
+
+      return {
+        phase:       _brain ? (_brain.getPhase ? _brain.getPhase() : 1) : 1,
+        initialized: _initialized,
+        health,
+        events,
+        violations,
+        summary,
+      };
+    } catch (e) {
+      return {
+        phase: 1, initialized: _initialized,
+        health: 'degraded', events: [], violations: [],
+        summary: 'Erreur interne diagnose() — journal inaccessible.',
+      };
+    }
+  }
+
+  function query(intent) {
+    try {
+      const what  = intent && intent.what   != null ? String(intent.what)  : 'all';
+      const win   = intent && intent.window != null ? intent.window         : null;
+      const limit = intent && intent.max    != null ? Number(intent.max)    : 10;
+
+      const _winMap = { '5m': 300000, '1h': 3600000, '24h': 86400000 };
+      const since = win != null
+        ? (_winMap[String(win)] || (Number(win) || null))
+        : null;
+
+      const event = what === 'all'        ? null
+                  : what === 'violations' ? 'INVARIANT_VIOLATED'
+                  : what;
+
+      const q = { what, event: event || 'all', since, limit };
+      const result = diagnose({ event, since, limit });
+      return Object.assign({}, result, { query: q });
+    } catch (e) {
+      return {
+        phase: 1, initialized: _initialized, health: 'degraded',
+        events: [], violations: [],
+        summary: 'Erreur interne query().',
+        query: { what: null, event: null, since: null, limit: 10 },
+      };
+    }
+  }
+
+  function _anonymize(payload) {
+    if (!payload || typeof payload !== 'object') return payload;
+    const out = {};
+    for (const k of Object.keys(payload)) {
+      let v = payload[k];
+      if (typeof v === 'string') {
+        v = v.replace(/\b[A-Z]{2}-\d{3}-[A-Z]{2}\b/g, '**-***-**');
+        v = v.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uid]');
+      } else if ((k === 'lat' || k === 'lng') && typeof v === 'number') {
+        v = Math.round(v * 100) / 100;
+      }
+      out[k] = v;
+    }
+    return out;
+  }
+
+  function _summary(health, total, violations, last, now) {
+    const h = health === 'ok' ? 'Système sain.'
+            : health === 'violated' ? 'Violation critique détectée.'
+            : 'Système dégradé ou en veille.';
+    const ev = total + ' événement(s) en mémoire.';
+    const vl = violations > 0 ? violations + ' violation(s) enregistrée(s).' : '';
+    const lg = last ? 'Dernier : ' + last.event + ' (il y a ' + Math.round((now - last.at) / 1000) + 's).' : '';
+    return [h, ev, vl, lg].filter(Boolean).join(' ');
+  }
+
   // ── Journal interne ──────────────────────────────────────────────
   function _log(level, msg, data) {
     const prefix = '[ImmatOrganism]';
@@ -92,6 +205,8 @@ const ImmatOrganism = (function () {
     classifyEntity,
     validateInvariant,
     getJournal,
+    diagnose,
+    query,
   };
 })();
 
