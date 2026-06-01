@@ -22,8 +22,8 @@ const NERVOUS_SYSTEM = {
     Auth:         { entry: { afterAuth: "index.html:507", signup: "index.html:502", boot: "index.html:1419" }, constraints: ["INV-010","INV-014"], deps: [], note: "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale" },
     Profil:       { entry: { saveProfile: "index.html:549", upsert_profil: "index.html:530" }, constraints: ["INV-006","INV-007","INV-011"], deps: ["Auth"], note: "owner_plate immuable (INV-006). colorHex() utils.js = source canonique couleur" },
     Carte:        { entry: { icon: "index.html:409", locate: "index.html:554", loadOthers: "index.html:652" }, constraints: ["INV-005","INV-011","INV-012"], deps: ["Profil"], note: "icon() consommé par locate():554 et loadOthers():652. colorHex() = source fill" },
-    Messages:     { entry: { startMsgs: "index.html:startMsgs", sendMsg: "index.html:sendMsg" }, constraints: ["INV-001","INV-004","INV-010"], deps: ["Auth"], note: "Canal INV-001 = véhicule uniquement" },
-    Signalements: { entry: { roadReport: "index.html:roadReport", vehicleAlert: "index.html:vehicleAlert", subscribeCommunityReports: "index.html:896" }, constraints: ["INV-001","INV-002","INV-003","INV-004"], deps: ["Carte","Auth"], note: "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser" },
+    Messages:     { entry: { startMsgs: "index.html:764", sendMsg: "index.html:703" }, constraints: ["INV-001","INV-004","INV-010"], deps: ["Auth"], note: "Canal INV-001 = véhicule uniquement" },
+    Signalements: { entry: { roadReport: "index.html:905", vehicleAlert: "index.html:905", subscribeCommunityReports: "index.html:896" }, constraints: ["INV-001","INV-002","INV-003","INV-004"], deps: ["Carte","Auth"], note: "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser" },
     Ange:         { entry: { angeFab_css: "index.html:1907", angeFab_afterAuth: "index.html:520", angeFab_openMap: "index.html:550", edge_function: "supabase/functions/immat-brain-dialog/index.ts" }, constraints: ["INV-010","INV-014"], deps: ["Auth"], note: "S.isGardien depuis get_my_role() jamais du JWT. Fallback openMap() si undefined" },
   },
   inhibitions: {

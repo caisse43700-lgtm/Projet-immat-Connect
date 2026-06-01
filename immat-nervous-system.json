@@ -57,8 +57,8 @@
     "Messages": {
       "desc": "Messagerie temps réel conducteur à conducteur via Supabase",
       "entry": {
-        "startMsgs":     "index.html:startMsgs",
-        "sendMsg":       "index.html:sendMsg",
+        "startMsgs":     "index.html:764",
+        "sendMsg":       "index.html:703",
         "ImmatMessages": "module externe"
       },
       "constraints": ["INV-001", "INV-004", "INV-010"],
@@ -70,8 +70,8 @@
     "Signalements": {
       "desc": "Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés",
       "entry": {
-        "roadReport":                "index.html:roadReport",
-        "vehicleAlert":              "index.html:vehicleAlert",
+        "roadReport":                "index.html:905",
+        "vehicleAlert":              "index.html:905",
         "subscribeCommunityReports": "index.html:896",
         "addCommunityAlertMarker":   "index.html:813"
       },
