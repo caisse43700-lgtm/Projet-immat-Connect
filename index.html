@@ -510,6 +510,7 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
+    S.isGardien=(u.user_metadata?.role==='gardien');
 
     let p=null;
     try{
@@ -543,7 +544,7 @@ async afterAuth(){
   }
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);toast('Connecté à ImmatConnect.','ok')},
+openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien&&$('angeFab'))$('angeFab').style.display='flex';toast('Connecté à ImmatConnect.','ok')},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
@@ -1898,5 +1899,93 @@ function showReputationToast(){
 <script src="badge.js"></script>
 <script src="messages.js?v=13"></script>
 <script src="ui.js?v=6"></script>
+
+<!-- ── Ange du Gardien ────────────────────────────────────────────────── -->
+<style>
+#angeFab{display:none;position:fixed;bottom:88px;right:16px;z-index:3000;width:52px;height:52px;border-radius:50%;background:#1a1a2e;border:2px solid #7c6af7;color:#c4b5fd;font-size:22px;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(124,106,247,.4)}
+#angeOverlay{display:none;position:fixed;inset:0;z-index:3001;background:rgba(0,0,0,.55)}
+#angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;max-height:80vh;overflow-y:auto;flex-direction:column;gap:12px}
+#angeHeader{display:flex;justify-content:space-between;align-items:center;color:#c4b5fd;font-weight:700;font-size:15px}
+#angeHeader button{background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px}
+#angeResponse{display:none;background:#1a1a2e;border-radius:10px;padding:12px;color:#e2e8f0;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.ange-section{margin-bottom:10px}
+.ange-label{color:#7c6af7;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ange-question{background:#1e1b4b;border-left:3px solid #7c6af7;padding:8px 10px;border-radius:0 6px 6px 0;color:#c4b5fd;font-style:italic}
+#angeInputArea{display:flex;flex-direction:column;gap:8px}
+#angeMsg{background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#e2e8f0;padding:10px;font-size:14px;resize:none;outline:none;font-family:inherit}
+#angeMsg:focus{border-color:#7c6af7}
+#angeSubmit{background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+#angeSubmit:disabled{opacity:.5;cursor:default}
+#angeSpin{text-align:center;color:#7c6af7;font-size:13px;display:none}
+</style>
+
+<button id="angeFab" onclick="AngeDialog.open()" title="L'Ange">✦</button>
+<div id="angeOverlay" onclick="AngeDialog.close()"></div>
+<div id="angePanel">
+  <div id="angeHeader">
+    <span>✦ L'Ange</span>
+    <button onclick="AngeDialog.close()">✕</button>
+  </div>
+  <div id="angeResponse"></div>
+  <div id="angeSpin">L'Ange observe…</div>
+  <div id="angeInputArea">
+    <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
+    <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
+  </div>
+</div>
+
+<script>
+const AngeDialog={
+  open(){
+    $('angePanel').style.display='flex';
+    $('angeOverlay').style.display='block';
+    setTimeout(()=>$('angeMsg')?.focus(),100);
+  },
+  close(){
+    $('angePanel').style.display='none';
+    $('angeOverlay').style.display='none';
+  },
+  renderResponse(r){
+    const el=$('angeResponse');
+    el.style.display='block';
+    let html='';
+    if(r.sources){html+=`<div class="ange-section"><div class="ange-label">Sources</div><div>${esc(r.sources)}</div></div>`;}
+    if(r.vois){html+=`<div class="ange-section"><div class="ange-label">Ce que je vois</div><div>${esc(r.vois)}</div></div>`;}
+    if(r.suppose?.length){html+=`<div class="ange-section"><div class="ange-label">Hypothèses</div><div>${r.suppose.map(s=>`• ${esc(s)}`).join('<br>')}</div></div>`;}
+    if(r.juste){html+=`<div class="ange-section"><div class="ange-label">Le juste</div><div>${esc(r.juste)}</div></div>`;}
+    if(r.options?.length){html+=`<div class="ange-section"><div class="ange-label">Options</div>${r.options.map(o=>`<div style="margin-bottom:8px;padding:8px;background:#0f0f1a;border-radius:8px"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
+    if(r.vigilance?.length){html+=`<div class="ange-section"><div class="ange-label">Vigilance</div><div>${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div></div>`;}
+    if(r.question){html+=`<div class="ange-section"><div class="ange-label">Question au Gardien</div><div class="ange-question">${esc(r.question)}</div></div>`;}
+    el.innerHTML=html;
+  },
+  async send(){
+    const msg=$('angeMsg').value.trim();
+    if(!msg)return;
+    const btn=$('angeSubmit'),spin=$('angeSpin'),resp=$('angeResponse');
+    btn.disabled=true;spin.style.display='block';resp.style.display='none';
+    try{
+      let snapshot={};
+      try{snapshot=window.ImmatOrganism?.diagnose?.()||{};}catch(e){}
+      const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
+        body:{
+          message:msg,
+          feature:S.panel||'GENERAL',
+          mode:'consultation',
+          snapshot
+        }
+      });
+      if(error)throw error;
+      this.renderResponse(data);
+      $('angeMsg').value='';
+    }catch(e){
+      $('angeResponse').style.display='block';
+      $('angeResponse').textContent='Erreur : '+(e?.message||String(e));
+    }finally{
+      btn.disabled=false;spin.style.display='none';
+    }
+  }
+};
+</script>
+<!-- ── /Ange du Gardien ─────────────────────────────────────────────── -->
 </body>
 </html>
