@@ -363,14 +363,9 @@
     <button type="button" class="menu-btn" onclick="App.closeDrawer();App.openNearby()"><span>Conducteurs proches</span><span class="menu-icon">👥</span></button>
     <button type="button" class="menu-btn" onclick="App.closeDrawer();App.toggleInvisible()" id="invisBtn"><span>Mode invisible</span><span class="menu-icon">👻</span></button>
   </div>
-  <div class="drawer-section">Préférences</div>
+  <div class="drawer-section">Paramètres</div>
   <div class="menu-list">
-    <button type="button" class="menu-btn" onclick="App.toggleVoice()"><span>Voix GPS</span><span class="menu-icon">🔊</span></button>
-    <button type="button" class="menu-btn" onclick="App.toggleSounds()"><span>Sons</span><span class="menu-icon">🔔</span></button>
-    <button type="button" class="menu-btn" onclick="App.toggleReduceEffects()"><span>Performance</span><span class="menu-icon">⚡</span></button>
-    <button type="button" class="menu-btn" onclick="App.clearOfflineCache()"><span>Vider le cache</span><span class="menu-icon">🧹</span></button>
-    <button type="button" class="menu-btn" onclick="App.openLegal()"><span>Confidentialité</span><span class="menu-icon">⚖️</span></button>
-    <button type="button" class="menu-btn danger-btn" onclick="App.logout()"><span>Déconnexion</span><span class="menu-icon">⏻</span></button>
+    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.panel('settings')"><span>Paramètres</span><span class="menu-icon">⚙️</span></button>
   </div>
 </div></div>
 <div id="legal" class="modal"><div class="modal-back" onclick="App.closeLegal()"></div><div class="modal-card"><h2>Confidentialité</h2><p>Ton téléphone n'est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button type="button" class="btn primary" style="margin-top:14px" onclick="App.closeLegal()">J'ai compris</button></div></div><div id="blocked" class="modal"><div class="modal-back" onclick="App.closeBlocked()"></div><div class="modal-card"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="modal-back" onclick="App.closeRecent()"></div><div class="modal-card"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn secondary" style="flex:1;color:#e53935" onclick="App.clearRecent()">Vider</button><button type="button" class="btn secondary" style="flex:1;color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div></div>
