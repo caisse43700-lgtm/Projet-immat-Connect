@@ -513,6 +513,7 @@ async afterAuth(){
     if(!u){this.show('sw');return}
     S.uid=u.id;
     try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');}catch(e){S.isGardien=false;}
+    if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
 
     let p=null;
     try{
