@@ -1,9 +1,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { corsHeaders } from '../_shared/cors.ts';
+import { NS } from '../_shared/nervous-system.ts';
 
 // ── Configuration ─────────────────────────────────────────────────────────
-// CLAUDE_MODEL peut être surchargé via secret Supabase pour éviter de toucher le code
+// CLAUDE_MODEL peut être surchargé via secret Supabase (CLAUDE_MODEL=claude-opus-4-8)
 const CLAUDE_MODEL = Deno.env.get('CLAUDE_MODEL') ?? 'claude-sonnet-4-6';
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 
@@ -14,57 +15,69 @@ function anonymize(text: string): string {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uid]');
 }
 
-// ── System prompt statique — mis en cache Anthropic (ephemeral) ───────────
-// Partie invariante : format, règles, organes. ~700 tokens, recalculés 0× après cache chaud.
-const STATIC_SYSTEM = `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
+// ── Transformation NS → prompt lisible (INV-015) ──────────────────────────
+// Source unique : _shared/nervous-system.ts (dérivé de immat-nervous-system.json)
+// Ne jamais écrire ce texte à la main — modifier la source, pas ce fichier.
+function nsToPrompt(): string {
+  // Guards : crash au démarrage plutôt qu'en production
+  const organs     = NS.organs     as Record<string, { entry?: Record<string, string>; constraints?: string[]; deps?: string[] }>;
+  const routing    = NS.routing    as Record<string, string>;
+  const inhibitions = NS.inhibitions as Record<string, string>;
+  const invariants = NS.invariants  as Record<string, { label: string; severity: string }>;
+  const id         = NS.ange_identity;
 
-CHAMPS OBLIGATOIRES :
-- "sources" · "question" · "requiresGuardianValidation": true
+  if (!organs || !routing || !inhibitions || !invariants || !id) {
+    throw new Error('[nsToPrompt] NS schema invalide — vérifier _shared/nervous-system.ts');
+  }
 
-CHAMPS SELON PERTINENCE :
-- "route" : {signal, organ, entry, constraints[]}
-- "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"
+  const organsText = Object.entries(organs).map(([name, o]) => {
+    const keywords = Object.entries(routing)
+      .filter(([, v]) => v === name)
+      .map(([k]) => k)
+      .join('|');
+    const entry = o.entry ?? {};
+    const entries = Object.entries(entry)
+      .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
+      .join(' · ');
+    const constraints = (o.constraints ?? []).join('·');
+    const deps = (o.deps ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]` : 'deps:[]';
+    return `${name} [${keywords}]\n  ${entries} · ${constraints} · ${deps}`;
+  }).join('\n\n');
 
-Tu es l'Ange d'ImmatConnect, assistant du Gardien.
-Tu analyses, tu routes, tu proposes. Le Gardien décide. Toujours.
-Tu ne décides jamais. Tu n'affirmes pas ce que tu ne vois pas.
+  const inhibitionsText = Object.entries(inhibitions)
+    .map(([k, v]) => `${k} → ${v}`)
+    .join('\n');
 
-RÈGLES ABSOLUES :
-- Jamais de décision à la place du Gardien
-- Jamais modification code/DB/invariants
-- requiresGuardianValidation toujours true
+  const invariantsText = Object.entries(invariants)
+    .map(([k, v]) => `${k}:${v.label} (${v.severity})`)
+    .join('\n');
+
+  return `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
+
+CHAMPS OBLIGATOIRES : "sources" · "question" · "requiresGuardianValidation": true
+CHAMPS SELON PERTINENCE : "route" · "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"
+
+${id.posture}
+${id.evaluation}
+${id.limite}
 
 ORGANES :
-Auth [login|signup|auth|connexion|session|afterAuth]
-  afterAuth@507 · signup@502 · boot@1419 · INV-010·014 · deps:[]
-
-Profil [profil|pseudo|plaque|couleur|vehicle_color|phone]
-  saveProfile@549 · upsert_profil@530 · INV-006·007·011 · deps:[Auth]
-
-Carte [marqueur|rond|icône|car-pin|voiture|icon|SVG|GPS|localisation|locate|heading]
-  icon@409 · locate@554 · loadOthers@652 · INV-005·011·012 · deps:[Profil]
-
-Messages [message|conversation|ImmatMessages|chMsg|envoi]
-  startMsgs@764 · sendMsg@703 · INV-001·004·010 · deps:[Auth]
-
-Signalements [alerte|signalement|route|report|SOS|urgence]
-  roadReport@905 · vehicleAlert@905 · subscribeCommunityReports@896 · INV-001·002·003·004 · deps:[Carte,Auth]
-
-Ange [bouton|✦|angeFab|ange|gardien|fab]
-  angeFab_css@1907 · angeFab_afterAuth@520 · angeFab_openMap@550 · INV-010·014 · deps:[Auth]
+${organsText}
 
 INHIBITIONS :
-S._authRunning → bloque ré-entrée afterAuth()
-S._reporting → bloque nouveau signalement en cours
+${inhibitionsText}
 
-INV-001:canal véhicule·INV-002:canal route·INV-003:canal aide·INV-004:atomicité
-INV-005:persisté=affiché·INV-006:plaque immuable·INV-007:confirmation·INV-008:persistance
-INV-009:irréversible+confirmation·INV-010:consentement·INV-011:source canonique
-INV-012:état confirmé·INV-013:contexte·INV-014:tiers sans consentement
+INVARIANTS :
+${invariantsText}
 
 Traversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.
 
 Langue : français.`;
+}
+
+// ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
+// Crash au démarrage si NS invalide : fail-fast > fail silencieux.
+const STATIC_SYSTEM = nsToPrompt();
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
 function buildDynamicContext(snapshot: unknown, mode: string, feature: string): string {
@@ -75,8 +88,8 @@ Snapshot : ${anonymize(JSON.stringify(snapshot ?? {}))}`;
 // ── Validation et assainissement de la sortie de l'Ange ──────────────────
 function validateOutput(raw: string, feature: string, mode: string): Record<string, unknown> {
   const fallback: Record<string, unknown> = {
-    sources: "L'Ange n'a pas pu produire une réponse structurée. Reformule ta demande.",
-    question: "Peux-tu reformuler ta demande avec plus de contexte ?",
+    sources:  "L'Ange n'a pas pu produire une réponse structurée. Reformule ta demande.",
+    question: 'Peux-tu reformuler ta demande avec plus de contexte ?',
     requiresGuardianValidation: true,
     feature,
     mode,
@@ -84,26 +97,23 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
   };
 
   try {
-    // L'Ange peut entourer sa réponse JSON de backticks ou de texte
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) return fallback;
 
-    const parsed = JSON.parse(match[0]);
+    const parsed = JSON.parse(match[0]) as Record<string, unknown>;
 
-    // Champs obligatoires — toujours présents
     const result: Record<string, unknown> = {
       sources:  typeof parsed.sources  === 'string' ? parsed.sources  : fallback.sources,
       question: typeof parsed.question === 'string' ? parsed.question : fallback.question,
-      requiresGuardianValidation: true, // jamais négociable
+      requiresGuardianValidation: true,
       feature,
       mode,
     };
 
-    // Champs omissibles — inclus uniquement si l'Ange les a fournis
-    if (typeof parsed.vois   === 'string' && parsed.vois.trim())   result.vois   = parsed.vois;
-    if (typeof parsed.juste  === 'string' && parsed.juste.trim())  result.juste  = parsed.juste;
-    if (Array.isArray(parsed.suppose)   && parsed.suppose.length)  result.suppose  = parsed.suppose;
-    if (Array.isArray(parsed.vigilance) && parsed.vigilance.length) result.vigilance = parsed.vigilance;
+    if (typeof parsed.vois   === 'string' && parsed.vois.trim())    result.vois      = parsed.vois;
+    if (typeof parsed.juste  === 'string' && parsed.juste.trim())   result.juste     = parsed.juste;
+    if (Array.isArray(parsed.suppose)    && parsed.suppose.length)  result.suppose   = parsed.suppose;
+    if (Array.isArray(parsed.vigilance)  && parsed.vigilance.length) result.vigilance = parsed.vigilance;
     if (Array.isArray(parsed.invariants) && parsed.invariants.length) result.invariants = parsed.invariants;
 
     if (parsed.route && typeof parsed.route === 'object' && !Array.isArray(parsed.route)) {
@@ -126,17 +136,18 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
       }));
     }
 
-    if (parsed.proposal && typeof parsed.proposal === 'object') {
+    if (parsed.proposal && typeof parsed.proposal === 'object' && !Array.isArray(parsed.proposal)) {
+      const p = parsed.proposal as Record<string, unknown>;
       result.proposal = {
-        id:          parsed.proposal.id       ?? `RULE-${feature}-${Date.now()}`,
-        feature:     parsed.proposal.feature  ?? feature.toLowerCase(),
-        rule:        parsed.proposal.rule     ?? '',
-        severity:    parsed.proposal.severity ?? 'medium',
-        obligations: Array.isArray(parsed.proposal.obligations) ? parsed.proposal.obligations : [],
-        forbidden:   Array.isArray(parsed.proposal.forbidden)   ? parsed.proposal.forbidden   : [],
-        invariants:  Array.isArray(parsed.proposal.invariants)  ? parsed.proposal.invariants  : [],
+        id:          typeof p.id       === 'string' ? p.id       : `RULE-${feature}-${Date.now()}`,
+        feature:     typeof p.feature  === 'string' ? p.feature  : feature.toLowerCase(),
+        rule:        typeof p.rule     === 'string' ? p.rule     : '',
+        severity:    typeof p.severity === 'string' ? p.severity : 'medium',
+        obligations: Array.isArray(p.obligations) ? p.obligations : [],
+        forbidden:   Array.isArray(p.forbidden)   ? p.forbidden   : [],
+        invariants:  Array.isArray(p.invariants)  ? p.invariants  : [],
         requiresGuardianValidation: true,
-        tests:       Array.isArray(parsed.proposal.tests)       ? parsed.proposal.tests       : [],
+        tests:       Array.isArray(p.tests)       ? p.tests       : [],
       };
     }
 
@@ -156,6 +167,8 @@ Deno.serve(async (req) => {
     return Response.json({ ok: false, reason: 'method_not_allowed' }, { status: 405, headers: corsHeaders });
   }
 
+  const t_total = Date.now();
+
   try {
     // ── 1. Clé Anthropic présente ──
     if (!ANTHROPIC_API_KEY) {
@@ -163,26 +176,33 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, reason: 'server_misconfigured' }, { status: 500, headers: corsHeaders });
     }
 
-    // ── 2. Auth Supabase + contrôle rôle ──
+    // ── 2. Auth Supabase ──
     const sb = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
     );
 
+    const t_auth = Date.now();
     const { data: { user }, error: authErr } = await sb.auth.getUser();
+    const auth_ms = Date.now() - t_auth;
 
     if (authErr || !user) {
       console.warn('[immat-brain-dialog] Auth échouée.', authErr?.message ?? 'user null');
       return Response.json({ ok: false, reason: 'unauthenticated' }, { status: 401, headers: corsHeaders });
     }
 
-    if (user.user_metadata?.role !== 'gardien') {
-      console.warn('[immat-brain-dialog] Rôle insuffisant :', user.user_metadata?.role ?? 'absent');
+    // ── 3. Contrôle rôle via RPC — évite le JWT stale (INV-010) ──
+    const t_role = Date.now();
+    const { data: role, error: roleErr } = await sb.rpc('get_my_role');
+    const role_ms = Date.now() - t_role;
+
+    if (roleErr || role !== 'gardien') {
+      console.warn('[immat-brain-dialog] Rôle insuffisant :', role ?? 'absent', roleErr?.message ?? '');
       return Response.json({ ok: false, reason: 'forbidden_role' }, { status: 403, headers: corsHeaders });
     }
 
-    // ── 3. Parse payload ──
+    // ── 4. Parse payload ──
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
 
     const message  = typeof body.message  === 'string' ? body.message.slice(0, 2000)  : '';
@@ -194,17 +214,23 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, reason: 'message_required' }, { status: 400, headers: corsHeaders });
     }
 
-    // ── 4. Appel Anthropic — prompt caching sur la partie statique ──
+    // ── 5. Contexte dynamique ──
+    const t_prompt = Date.now();
+    const dynamicContext = buildDynamicContext(snapshot, mode, feature);
+    const prompt_ms = Date.now() - t_prompt;
+
+    // ── 6. Appel Anthropic — cache sur la partie statique ──
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
     let rawContent: string;
+    const t_anthropic = Date.now();
     try {
       const completion = await anthropic.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: 800,
         system: [
           { type: 'text', text: STATIC_SYSTEM, cache_control: { type: 'ephemeral' } },
-          { type: 'text', text: buildDynamicContext(snapshot, mode, feature) },
+          { type: 'text', text: dynamicContext },
         ],
         messages: [{ role: 'user', content: anonymize(message) }],
       });
@@ -217,21 +243,28 @@ Deno.serve(async (req) => {
         { status: 502, headers: corsHeaders }
       );
     }
+    const anthropic_ms = Date.now() - t_anthropic;
 
-    // ── 5. Validation sortie ──
+    // ── 7. Validation sortie ──
+    const t_validation = Date.now();
     const result = validateOutput(rawContent, feature, mode);
+    const validation_ms = Date.now() - t_validation;
+
+    const total_ms = Date.now() - t_total;
 
     console.info('[immat-brain-dialog] OK', {
-      feature, mode,
-      hasProposal: result.proposal !== null,
+      feature,
+      mode,
+      hasProposal: Boolean(result.proposal),
       fallback: result._fallback ?? false,
+      timings: { auth_ms, role_ms, prompt_ms, anthropic_ms, validation_ms, total_ms },
     });
 
     return Response.json({ ok: true, ...result }, { headers: corsHeaders });
 
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : String(err);
-    console.error('[immat-brain-dialog] Erreur interne :', detail);
+    console.error('[immat-brain-dialog] Erreur interne :', detail, { total_ms: Date.now() - t_total });
     return Response.json({ ok: false, reason: 'server_error' }, { status: 500, headers: corsHeaders });
   }
 });
