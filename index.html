@@ -505,6 +505,8 @@ async forgotPwd(){try{if(!sb)return st('authSt','Supabase non chargé.','error')
 async resendConfirm(){try{let email=$('iEmail').value.trim();if(email){let{error}=await sb.auth.resend({type:'signup',email,options:{emailRedirectTo:CFG.site}});st('authSt',error?error.message:'Email renvoyé.',error?'error':'success')}}catch(e){st('authSt',e?.message||'Erreur envoi email.','error')}},
 async updatePwd(){let p=$('iNewPwd').value,c=$('iNewCfm').value;if(!sPwd(p))return st('resetSt','Mot de passe trop faible.','error');if(p!==c)return st('resetSt','Mots de passe différents.','error');let{error}=await sb.auth.updateUser({password:p});st('resetSt',error?error.message:'✅ Mot de passe mis à jour.',error?'error':'success')},
 async afterAuth(){
+  if(S._authRunning)return;
+  S._authRunning=true;
   try{
     const {data:ud}=await withTimeout(sb.auth.getUser(),8000,"Impossible de récupérer l'utilisateur connecté.");
     const u=ud?.user;
@@ -541,7 +543,7 @@ async afterAuth(){
     this.show('sp');
     try{const _pp=JSON.parse(localStorage.getItem('ic_pending_profile')||'null');if(_pp){if($('iPseudo')&&!$('iPseudo').value)$('iPseudo').value=_pp.pseudo||'';if($('iProPlate')&&!$('iProPlate').value)$('iProPlate').value=_pp.owner_plate||'';if($('iProPhone')&&!$('iProPhone').value)$('iProPhone').value=_pp.phone||'';if($('iProColor')&&!$('iProColor').value)$('iProColor').value=_pp.vehicle_color||'';}}catch(_){}
     st('profileSt','Connecté, mais impossible de charger le profil. Complète ou vérifie RLS.','error');
-  }
+  }finally{S._authRunning=false;}
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
 openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien&&$('angeFab'))$('angeFab').style.display='flex';toast('Connecté à ImmatConnect.','ok')},
