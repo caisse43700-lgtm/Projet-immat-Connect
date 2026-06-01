@@ -7,6 +7,31 @@ import { corsHeaders } from '../_shared/cors.ts';
 const CLAUDE_MODEL = Deno.env.get('CLAUDE_MODEL') ?? 'claude-sonnet-4-6';
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 
+// ── Système nerveux — graphe de navigation des organes ────────────────────
+const NERVOUS_SYSTEM = {
+  routing: {
+    "marqueur|rond|icône|car-pin|voiture|icon|SVG": "Carte",
+    "position|GPS|localisation|locate|watchPosition|heading": "Carte",
+    "bouton|✦|angeFab|ange|gardien|fab": "Ange",
+    "message|conversation|ImmatMessages|chMsg|envoi": "Messages",
+    "alerte|signalement|route|report|SOS|urgence": "Signalements",
+    "profil|pseudo|plaque|couleur|vehicle_color|phone": "Profil",
+    "login|signup|auth|connexion|session|afterAuth": "Auth",
+  },
+  organs: {
+    Auth:         { entry: { afterAuth: "index.html:507", signup: "index.html:502", boot: "index.html:1419" }, constraints: ["INV-010","INV-014"], deps: [], note: "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale" },
+    Profil:       { entry: { saveProfile: "index.html:549", upsert_profil: "index.html:530" }, constraints: ["INV-006","INV-007","INV-011"], deps: ["Auth"], note: "owner_plate immuable (INV-006). colorHex() utils.js = source canonique couleur" },
+    Carte:        { entry: { icon: "index.html:409", locate: "index.html:554", loadOthers: "index.html:652" }, constraints: ["INV-005","INV-011","INV-012"], deps: ["Profil"], note: "icon() consommé par locate():554 et loadOthers():652. colorHex() = source fill" },
+    Messages:     { entry: { startMsgs: "index.html:startMsgs", sendMsg: "index.html:sendMsg" }, constraints: ["INV-001","INV-004","INV-010"], deps: ["Auth"], note: "Canal INV-001 = véhicule uniquement" },
+    Signalements: { entry: { roadReport: "index.html:roadReport", vehicleAlert: "index.html:vehicleAlert", subscribeCommunityReports: "index.html:896" }, constraints: ["INV-001","INV-002","INV-003","INV-004"], deps: ["Carte","Auth"], note: "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser" },
+    Ange:         { entry: { angeFab_css: "index.html:1907", angeFab_afterAuth: "index.html:520", angeFab_openMap: "index.html:550", edge_function: "supabase/functions/immat-brain-dialog/index.ts" }, constraints: ["INV-010","INV-014"], deps: ["Auth"], note: "S.isGardien depuis get_my_role() jamais du JWT. Fallback openMap() si undefined" },
+  },
+  inhibitions: {
+    "S._authRunning": "Bloque ré-entrée dans afterAuth(). Libéré par finally{}.",
+    "S._reporting":   "Bloque nouveau signalement pendant envoi en cours.",
+  },
+} as const;
+
 // ── Anonymisation ─────────────────────────────────────────────────────────
 function anonymize(text: string): string {
   return text
@@ -60,6 +85,18 @@ INV-012 : Un état n'est affiché que s'il est confirmé en base de données. (c
 INV-013 : Toute action est associée à un contexte identifiable. (high)
 INV-014 : Aucune donnée utilisateur transférée à un tiers sans consentement. (critique)
 
+SYSTÈME DE NAVIGATION — ORGANES D'IMMATCONNECT :
+${JSON.stringify(NERVOUS_SYSTEM)}
+
+Pour toute demande technique, traverse ce graphe avant de répondre :
+1. Signal → routing (mots-clés) → organe identifié.
+2. Organe → deps → organes dont il dépend.
+3. Organe → entry → fichier:ligne exact du point d'intervention.
+4. Organe → constraints → invariants à vérifier.
+5. Si une seule interprétation survit → remplis le champ "route" et avance.
+6. Si plusieurs interprétations restent → une seule question.
+Ne parcours pas tout le code. Traverse le graphe.
+
 CONTEXTE REÇU :
 Capacité active : ${feature}
 Mode : ${mode}
@@ -76,6 +113,7 @@ CHAMPS OBLIGATOIRES (toujours présents) :
 - "requiresGuardianValidation" : true, sans exception
 
 CHAMPS OMISSIBLES (inclus uniquement s'ils apportent de la valeur) :
+- "route" : { signal, organ, entry, constraints[] } — pour les demandes techniques : organe identifié + point d'entrée code
 - "vois" : faits strictement observables dans les sources reçues — aucune interprétation dans ce champ
 - "suppose" : tableau d'hypothèses explicitement nommées ("Hypothèse A : ...", "Hypothèse B : ...")
 - "juste" : la piste qui te semble la plus cohérente avec l'identité de l'organisme et la valeur réelle pour les conducteurs
@@ -87,6 +125,7 @@ CHAMPS OMISSIBLES (inclus uniquement s'ils apportent de la valeur) :
 Structure JSON de référence (n'inclus que les champs pertinents) :
 {
   "sources": "Je travaille à partir de : [liste]. Je ne peux pas voir : [limites].",
+  "route": { "signal": "mot-clé identifié", "organ": "Carte", "entry": "icon()@index.html:409", "constraints": ["INV-011"] },
   "vois": "Observations factuelles uniquement.",
   "suppose": ["Hypothèse A : ...", "Hypothèse B : ..."],
   "juste": "Ce qui semble le plus cohérent avec l'identité de l'organisme.",
@@ -150,6 +189,16 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
     if (Array.isArray(parsed.suppose)   && parsed.suppose.length)  result.suppose  = parsed.suppose;
     if (Array.isArray(parsed.vigilance) && parsed.vigilance.length) result.vigilance = parsed.vigilance;
     if (Array.isArray(parsed.invariants) && parsed.invariants.length) result.invariants = parsed.invariants;
+
+    if (parsed.route && typeof parsed.route === 'object' && !Array.isArray(parsed.route)) {
+      const r = parsed.route as Record<string, unknown>;
+      result.route = {
+        signal:      typeof r.signal === 'string' ? r.signal : '',
+        organ:       typeof r.organ  === 'string' ? r.organ  : '',
+        entry:       typeof r.entry  === 'string' ? r.entry  : '',
+        constraints: Array.isArray(r.constraints) ? r.constraints : [],
+      };
+    }
 
     if (Array.isArray(parsed.options) && parsed.options.length) {
       result.options = parsed.options.slice(0, 3).map((o: Record<string, unknown>) => ({
