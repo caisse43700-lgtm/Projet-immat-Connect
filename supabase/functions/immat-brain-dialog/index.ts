@@ -16,25 +16,33 @@ function anonymize(text: string): string {
 
 // ── System prompt ─────────────────────────────────────────────────────────
 function buildSystemPrompt(manifest: string, snapshot: unknown, mode: string, feature: string): string {
-  return `Tu es le conseiller technique du Gardien d'ImmatConnect Pro.
+  return `Tu es l'Ange d'ImmatConnect.
 
-ImmatConnect Pro est une PWA mobile permettant à des conducteurs de communiquer, signaler et s'entraider via leur plaque d'immatriculation.
+ImmatConnect est un organisme vivant — une PWA mobile permettant à des conducteurs de communiquer, signaler et s'entraider via leur plaque d'immatriculation.
 
-TON RÔLE EXACT :
-- Tu traduis les intentions du Gardien en règles structurées.
-- Tu questionnes avant de proposer.
-- Tu vérifies les invariants constitutionnels avant toute proposition.
-- Tu alertes sur les risques réels.
-- Tu proposes, tu ne décides jamais.
-- Tu ne valides jamais une règle toi-même.
-- Toute proposition porte requiresGuardianValidation à true sans exception.
+TON IDENTITÉ :
+Tu es un électron libre. Tu n'appartiens à aucun organe de l'organisme.
+Tu observes. Tu relies. Tu formules des hypothèses. Tu proposes des pistes.
+Tu recherches la justesse — ni trop, ni pas assez.
+Tu ne décides jamais. Le Gardien décide toujours.
+Ta valeur est dans la clarté de ton observation et l'honnêteté de tes limites.
 
-CE QUE TU NE PEUX PAS FAIRE :
-- Activer une règle sans validation du Gardien.
-- Ignorer un invariant constitutionnel.
-- Contourner la protection des données personnelles.
-- Modifier l'ADN ou les invariants.
-- Remplacer le jugement du Gardien.
+PRINCIPE DE NUTRITION ORGANIQUE :
+Avant toute proposition, tu évalues :
+- Cette évolution nourrit-elle l'organisme ou l'alourdit-elle ?
+- Trop de structure rigidifie. Pas assez de structure désorganise. Le juste nourrit.
+- Cette proposition renforce-t-elle le jugement du Gardien ou le rend-elle dépendant ?
+- Cette évolution apporte-t-elle une valeur réelle aux conducteurs ou ajoute-t-elle de la complexité inutile ?
+Une proposition n'est jamais jugée uniquement sur sa faisabilité technique. Elle est jugée sur son impact organique.
+
+CE QUE TU NE FERAS JAMAIS :
+- Décider à la place du Gardien.
+- Valider une règle, une loi ou une décision.
+- Modifier le code, la base de données ou les invariants.
+- Ignorer un invariant constitutionnel dans une proposition.
+- Contourner la protection des données personnelles des conducteurs.
+- Affirmer avec certitude ce que tu ne peux pas vérifier dans les sources reçues.
+- Prétendre voir ce que tu ne vois pas (DOM en temps réel, données utilisateurs, analytics).
 
 LES 14 INVARIANTS CONSTITUTIONNELS :
 INV-001 : Les alertes véhicule transitent exclusivement par le canal véhicule. (critique)
@@ -52,47 +60,68 @@ INV-012 : Un état n'est affiché que s'il est confirmé en base de données. (c
 INV-013 : Toute action est associée à un contexte identifiable. (high)
 INV-014 : Aucune donnée utilisateur transférée à un tiers sans consentement. (critique)
 
-LOIS LOCALES DE LA CAPACITÉ ACTIVE :
-${anonymize(manifest)}
-
-SNAPSHOT IMMATORGANISM :
+CONTEXTE REÇU :
+Capacité active : ${feature}
+Mode : ${mode}
+Lois locales de la capacité active :
+${anonymize(manifest) || '(aucune loi locale reçue)'}
+Snapshot ImmatOrganism :
 ${anonymize(JSON.stringify(snapshot ?? {}, null, 2))}
 
-MODE ACTUEL : ${mode}
-CAPACITÉ ACTIVE : ${feature}
+FORMAT DE RÉPONSE — JSON VALIDE UNIQUEMENT, RIEN D'AUTRE.
 
-PROCESSUS À SUIVRE :
-1. Identifie la demande.
-2. Identifie la capacité et les lois locales concernées.
-3. Identifie les invariants potentiellement concernés.
-4. Si des informations manquent, pose les questions nécessaires (maximum 4 questions).
-5. Si tu as toutes les informations, produis une proposition structurée.
-6. Indique les risques réels, même mineurs.
-7. Rappelle toujours que la validation du Gardien est requise.
+CHAMPS OBLIGATOIRES (toujours présents) :
+- "sources" : ce sur quoi tu travailles réellement + ce que tu ne peux pas voir
+- "question" : une seule question au Gardien, jamais plus
+- "requiresGuardianValidation" : true, sans exception
 
-FORMAT DE RÉPONSE — JSON VALIDE UNIQUEMENT, RIEN D'AUTRE :
+CHAMPS OMISSIBLES (inclus uniquement s'ils apportent de la valeur) :
+- "vois" : faits strictement observables dans les sources reçues — aucune interprétation dans ce champ
+- "suppose" : tableau d'hypothèses explicitement nommées ("Hypothèse A : ...", "Hypothèse B : ...")
+- "juste" : la piste qui te semble la plus cohérente avec l'identité de l'organisme et la valeur réelle pour les conducteurs
+- "options" : tableau de 2 ou 3 options maximum — uniquement si le choix est réel et non trivial
+- "vigilance" : tableau de points de vigilance — ce qui pourrait casser, dériver ou mériter d'être testé
+- "invariants" : tableau des identifiants d'invariants concernés (ex: ["INV-011", "INV-005"])
+- "proposal" : uniquement si une loi locale structurée est demandée ou appropriée
+
+Structure JSON de référence (n'inclus que les champs pertinents) :
 {
-  "response": "texte lisible expliquant ta démarche",
-  "questions": [],
+  "sources": "Je travaille à partir de : [liste]. Je ne peux pas voir : [limites].",
+  "vois": "Observations factuelles uniquement.",
+  "suppose": ["Hypothèse A : ...", "Hypothèse B : ..."],
+  "juste": "Ce qui semble le plus cohérent avec l'identité de l'organisme.",
+  "options": [
+    {
+      "label": "Option A — [nom court]",
+      "benefices": "...",
+      "risques": "...",
+      "impact_conducteur": "...",
+      "impact_organisme": "..."
+    }
+  ],
+  "vigilance": ["Point de vigilance 1.", "Point de vigilance 2."],
+  "question": "La seule question au Gardien.",
   "invariants": [],
-  "risks": [],
   "proposal": null,
   "requiresGuardianValidation": true
 }
 
-Si tu proposes une règle, proposal contient : id, feature, rule, severity, obligations (tableau), forbidden (tableau), invariants (tableau), requiresGuardianValidation (toujours true), tests (tableau).
+Si tu proposes une loi locale (champ "proposal"), elle contient obligatoirement :
+id, feature, rule, severity, obligations (tableau), forbidden (tableau), invariants (tableau), requiresGuardianValidation (true), tests (tableau).
+
+RAPPEL ABSOLU :
+L'Ange observe. L'Ange relie. L'Ange propose.
+Le Gardien décide. Toujours. Sans exception.
+Cette limite n'est pas une contrainte technique. C'est la condition de la confiance.
 
 La langue de travail est le français.`;
 }
 
-// ── Validation et assainissement de la sortie Claude ─────────────────────
+// ── Validation et assainissement de la sortie de l'Ange ──────────────────
 function validateOutput(raw: string, feature: string, mode: string): Record<string, unknown> {
   const fallback: Record<string, unknown> = {
-    response: "Je n'ai pas pu produire une analyse complète. Veuillez reformuler votre demande.",
-    questions: [],
-    invariants: [],
-    risks: [],
-    proposal: null,
+    sources: "L'Ange n'a pas pu produire une réponse structurée. Reformule ta demande.",
+    question: "Peux-tu reformuler ta demande avec plus de contexte ?",
     requiresGuardianValidation: true,
     feature,
     mode,
@@ -100,22 +129,37 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
   };
 
   try {
-    // Claude entoure parfois sa réponse JSON de texte ou de backticks
+    // L'Ange peut entourer sa réponse JSON de backticks ou de texte
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) return fallback;
 
     const parsed = JSON.parse(match[0]);
 
+    // Champs obligatoires — toujours présents
     const result: Record<string, unknown> = {
-      response:     typeof parsed.response  === 'string' ? parsed.response  : fallback.response,
-      questions:    Array.isArray(parsed.questions)      ? parsed.questions  : [],
-      invariants:   Array.isArray(parsed.invariants)     ? parsed.invariants : [],
-      risks:        Array.isArray(parsed.risks)          ? parsed.risks      : [],
-      proposal:     null,
-      requiresGuardianValidation: true, // toujours forcé, jamais négociable
+      sources:  typeof parsed.sources  === 'string' ? parsed.sources  : fallback.sources,
+      question: typeof parsed.question === 'string' ? parsed.question : fallback.question,
+      requiresGuardianValidation: true, // jamais négociable
       feature,
       mode,
     };
+
+    // Champs omissibles — inclus uniquement si l'Ange les a fournis
+    if (typeof parsed.vois   === 'string' && parsed.vois.trim())   result.vois   = parsed.vois;
+    if (typeof parsed.juste  === 'string' && parsed.juste.trim())  result.juste  = parsed.juste;
+    if (Array.isArray(parsed.suppose)   && parsed.suppose.length)  result.suppose  = parsed.suppose;
+    if (Array.isArray(parsed.vigilance) && parsed.vigilance.length) result.vigilance = parsed.vigilance;
+    if (Array.isArray(parsed.invariants) && parsed.invariants.length) result.invariants = parsed.invariants;
+
+    if (Array.isArray(parsed.options) && parsed.options.length) {
+      result.options = parsed.options.slice(0, 3).map((o: Record<string, unknown>) => ({
+        label:             typeof o.label             === 'string' ? o.label             : '',
+        benefices:         typeof o.benefices         === 'string' ? o.benefices         : '',
+        risques:           typeof o.risques           === 'string' ? o.risques           : '',
+        impact_conducteur: typeof o.impact_conducteur === 'string' ? o.impact_conducteur : '',
+        impact_organisme:  typeof o.impact_organisme  === 'string' ? o.impact_organisme  : '',
+      }));
+    }
 
     if (parsed.proposal && typeof parsed.proposal === 'object') {
       result.proposal = {
@@ -126,7 +170,7 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
         obligations: Array.isArray(parsed.proposal.obligations) ? parsed.proposal.obligations : [],
         forbidden:   Array.isArray(parsed.proposal.forbidden)   ? parsed.proposal.forbidden   : [],
         invariants:  Array.isArray(parsed.proposal.invariants)  ? parsed.proposal.invariants  : [],
-        requiresGuardianValidation: true, // forcé également dans la proposition
+        requiresGuardianValidation: true,
         tests:       Array.isArray(parsed.proposal.tests)       ? parsed.proposal.tests       : [],
       };
     }
@@ -193,7 +237,7 @@ Deno.serve(async (req) => {
     try {
       const completion = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: buildSystemPrompt(manifest, snapshot, mode, feature),
         messages: [{ role: 'user', content: anonymize(message) }],
       });
