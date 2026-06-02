@@ -1840,7 +1840,10 @@ function showReputationToast(){
   <div id="angeResponse"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
-    <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000" style="flex:1"></textarea>
+      <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" style="background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#c4b5fd;padding:10px 12px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1">🎙️</button>
+    </div>
     <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
   </div>
 </div>
@@ -1850,6 +1853,12 @@ const AngeDialog={
   open(){
     $('angePanel').style.display='flex';
     $('angeOverlay').style.display='block';
+    const resp=$('angeResponse');
+    if(resp&&resp.style.display==='none'){
+      resp.style.display='block';
+      resp.dataset.welcome='1';
+      resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';
+    }
     setTimeout(()=>$('angeMsg')?.focus(),100);
   },
   close(){
@@ -1858,6 +1867,7 @@ const AngeDialog={
   },
   renderResponse(r){
     const el=$('angeResponse');
+    delete el.dataset.welcome;
     el.style.display='block';
     let html='';
     const main=r.juste||r.sources;
@@ -1881,6 +1891,20 @@ const AngeDialog={
     const qDiv=el.querySelector('.ange-question');
     if(qDiv)qDiv.addEventListener('click',()=>$('angeMsg').focus());
   },
+  startVoice(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){toast('Micro indisponible.','bad');$('angeMsg').focus();return;}
+    const btn=$('angeMic');
+    try{
+      const rec=new SR();
+      rec.lang='fr-FR';rec.interimResults=false;
+      if(btn){btn.style.color='#f0a500';btn.textContent='🎤';}
+      rec.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
+      rec.onerror=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');};
+      rec.onend=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
+      rec.start();
+    }catch(e){if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');}
+  },
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
@@ -1888,7 +1912,7 @@ const AngeDialog={
     btn.disabled=true;spin.style.display='block';resp.style.display='none';
     try{
       let snapshot={};
-      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL'};}catch(e){}
+      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed:S.lastSpeed||0,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,

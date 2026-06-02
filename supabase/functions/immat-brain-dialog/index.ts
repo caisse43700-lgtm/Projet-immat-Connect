@@ -2,6 +2,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { corsHeaders } from '../_shared/cors.ts';
 import { NS } from '../_shared/nervous-system.ts';
+import { KNOWLEDGE_CONDUCTEUR } from '../_shared/knowledge-conducteur.ts';
+import { KNOWLEDGE_GARDIEN } from '../_shared/knowledge-gardien.ts';
 
 // ── Configuration ─────────────────────────────────────────────────────────
 // CLAUDE_MODEL peut être surchargé via secret Supabase (CLAUDE_MODEL=claude-opus-4-8)
@@ -49,7 +51,7 @@ function validateNSSchema(): void {
 //
 // depth 3 — gardien    : technique    entry · constraints · deps · serves · 2 failure_modes + inhibitions + invariants
 // depth 2 — protecteur : usage+comport  level_1 + level_2 + serves — sans entrées techniques
-// depth 1 — futur      : usage seul    level_1 + serves uniquement
+// depth 1 — conducteur : usage seul    level_1 + serves uniquement
 function nsToPrompt(depth: 1 | 2 | 3 = 3): string {
   const organs = NS.organs as Record<string, {
     entry?:    Record<string, string>;
@@ -109,11 +111,12 @@ function nsToPrompt(depth: 1 | 2 | 3 = 3): string {
     ? `\nINHIBITIONS :\n${Object.entries(inhibitions).map(([k, v]) => `${k} → ${v}`).join('\n')}\n\nINVARIANTS :\n${Object.entries(invariants).map(([k, v]) => `${k}:${v.label} (${v.severity})`).join('\n')}\n\nTraversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.`
     : '';
 
-  return `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
+  // Format adapté au niveau de profondeur
+  const formatHeader = depth === 1
+    ? `FORMAT — JSON VALIDE UNIQUEMENT. 80 mots maximum.\nCHAMPS OBLIGATOIRES : "juste" · "question"\nCHAMPS SELON PERTINENCE : "vois" · "options"\nRéponds en langage simple. "juste" = ta réponse directe. "question" = si tu as besoin d'une précision.`
+    : `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.\n\nCHAMPS OBLIGATOIRES : "sources" · "question" · "requiresGuardianValidation": true\nCHAMPS SELON PERTINENCE : "route" · "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"\nQuestion simple → "juste" + "question" suffisent. N'inclus les autres que si indispensable.`;
 
-CHAMPS OBLIGATOIRES : "sources" · "question" · "requiresGuardianValidation": true
-CHAMPS SELON PERTINENCE : "route" · "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"
-Question simple → "juste" + "question" suffisent. N'inclus les autres que si indispensable.
+  return `${formatHeader}
 
 ${id.posture}
 ${id.evaluation}
@@ -124,25 +127,29 @@ ${organsText}${technicalSections}
 
 Langue : français.`;
 }
-}
 
-// ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
+// ── System prompts statiques — calculés au démarrage, mis en cache Anthropic ─
 // Crash au démarrage si NS invalide : fail-fast > fail silencieux.
 validateNSSchema(); // DET-002
-const STATIC_SYSTEM = nsToPrompt(3); // gardien : depth 3
+const STATIC_SYSTEM_GARDIEN    = nsToPrompt(3) + '\n\n' + KNOWLEDGE_GARDIEN;    // depth 3 + guide technique
+const STATIC_SYSTEM_CONDUCTEUR = nsToPrompt(1) + '\n\n' + KNOWLEDGE_CONDUCTEUR; // depth 1 + guide usage
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
-function buildDynamicContext(snapshot: unknown, mode: string, feature: string): string {
-  return `Capacité : ${feature} | Mode : ${mode}
+function buildDynamicContext(snapshot: unknown, mode: string, feature: string, depth: 1 | 2 | 3): string {
+  return `Capacité : ${feature} | Mode : ${mode} | Depth : ${depth}
 Snapshot : ${anonymize(JSON.stringify(snapshot ?? {}))}`;
 }
 
 // ── Validation et assainissement de la sortie de l'Ange ──────────────────
-function validateOutput(raw: string, feature: string, mode: string): Record<string, unknown> {
+function validateOutput(raw: string, feature: string, mode: string, isGardien: boolean): Record<string, unknown> {
   const fallback: Record<string, unknown> = {
-    sources:  "L'Ange n'a pas pu produire une réponse structurée. Reformule ta demande.",
-    question: 'Peux-tu reformuler ta demande avec plus de contexte ?',
-    requiresGuardianValidation: true,
+    sources: isGardien
+      ? "L'Ange n'a pas pu produire une réponse structurée. Reformule ta demande."
+      : "Je n'ai pas pu comprendre ta question. Reformule en quelques mots simples.",
+    question: isGardien
+      ? 'Peux-tu reformuler ta demande avec plus de contexte ?'
+      : 'Comment puis-je t\'aider ?',
+    requiresGuardianValidation: isGardien,
     feature,
     mode,
     _fallback: true,
@@ -161,7 +168,7 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
       // sources ne tombe en fallback que si ni sources ni juste n'est fourni
       sources:  hasSources ? parsed.sources : (hasJuste ? undefined : fallback.sources),
       question: typeof parsed.question === 'string' ? parsed.question : fallback.question,
-      requiresGuardianValidation: true,
+      requiresGuardianValidation: isGardien,
       feature,
       mode,
     };
@@ -202,7 +209,7 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
         obligations: Array.isArray(p.obligations) ? p.obligations : [],
         forbidden:   Array.isArray(p.forbidden)   ? p.forbidden   : [],
         invariants:  Array.isArray(p.invariants)  ? p.invariants  : [],
-        requiresGuardianValidation: true,
+        requiresGuardianValidation: true, // les proposals restent toujours gardien
         tests:       Array.isArray(p.tests)       ? p.tests       : [],
       };
     }
@@ -263,10 +270,10 @@ Deno.serve(async (req) => {
       roleErr = retry.error;
     }
 
-    if (roleErr || role !== 'gardien') {
-      console.warn('[immat-brain-dialog] Rôle insuffisant :', role ?? 'absent', roleErr?.message ?? '');
-      return Response.json({ ok: false, reason: 'forbidden_role' }, { status: 403, headers: corsHeaders });
-    }
+    // Tous les utilisateurs authentifiés sont acceptés — depth varie selon le rôle
+    const isGardien = !roleErr && role === 'gardien';
+    const depth: 1 | 2 | 3 = role === 'gardien' ? 3 : role === 'protecteur' ? 2 : 1;
+    const staticSystem = isGardien ? STATIC_SYSTEM_GARDIEN : STATIC_SYSTEM_CONDUCTEUR;
 
     // ── 4. Parse payload ──
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
@@ -282,7 +289,7 @@ Deno.serve(async (req) => {
 
     // ── 5. Contexte dynamique ──
     const t_prompt = Date.now();
-    const dynamicContext = buildDynamicContext(snapshot, mode, feature);
+    const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth);
     const prompt_ms = Date.now() - t_prompt;
 
     // ── 6. Appel Anthropic — cache sur la partie statique ──
@@ -293,9 +300,9 @@ Deno.serve(async (req) => {
     try {
       const completion = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 800,
+        max_tokens: isGardien ? 800 : 400,
         system: [
-          { type: 'text', text: STATIC_SYSTEM, cache_control: { type: 'ephemeral' } },
+          { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
           { type: 'text', text: dynamicContext },
         ],
         messages: [{ role: 'user', content: anonymize(message) }],
@@ -313,7 +320,7 @@ Deno.serve(async (req) => {
 
     // ── 7. Validation sortie ──
     const t_validation = Date.now();
-    const result = validateOutput(rawContent, feature, mode);
+    const result = validateOutput(rawContent, feature, mode, isGardien);
     const validation_ms = Date.now() - t_validation;
 
     const total_ms = Date.now() - t_total;
@@ -321,6 +328,8 @@ Deno.serve(async (req) => {
     console.info('[immat-brain-dialog] OK', {
       feature,
       mode,
+      role: role ?? 'observer',
+      depth,
       hasProposal: Boolean(result.proposal),
       fallback: result._fallback ?? false,
       timings: { auth_ms, role_ms, prompt_ms, anthropic_ms, validation_ms, total_ms },
