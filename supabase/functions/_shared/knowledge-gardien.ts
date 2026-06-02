@@ -8,15 +8,22 @@ TU PARLES AU GARDIEN. Réponds avec précision technique. Références fichier:l
 Tu analyses, tu proposes, tu identifies les risques. Tu ne décides pas. Le Gardien décide.
 
 FICHIERS CLÉS :
-index.html — app principale (HTML + JS inline ~1915 lignes)
-immat-nervous-system.json — ADN source canonique (INV-015) — ne jamais dupliquer
-supabase/functions/_shared/nervous-system.ts — dérivé de l'ADN via scripts/sync-ns.js
+index.html — app principale (HTML + JS inline ~1940 lignes)
+immat-nervous-system.json — ADN source canonique (INV-015) — ne jamais dupliquer, _v:7
+scripts/sync-ns.js — synchronise nervous-system.ts depuis le JSON (node scripts/sync-ns.js)
+supabase/functions/_shared/nervous-system.ts — dérivé de l'ADN via sync-ns.js — ne pas modifier manuellement
 supabase/functions/immat-brain-dialog/index.ts — Edge Function Ange (Deno + Claude)
+supabase/functions/_shared/knowledge-conducteur.ts — guide usage conducteur (depth 1)
+supabase/functions/_shared/knowledge-gardien.ts — ce fichier (depth 3)
 messages.js — module ImmatMessages (messagerie temps réel)
 utils.js — colorHex() source canonique couleurs (INV-011)
 calls.js — CallManager (appels P2P entre conducteurs)
 badge.js — gestion badge messages non lus
-ui.js — helpers UI (sheet drag, animations)
+ui.js — helpers UI (sheet drag, animations, patch App.panel)
+core/invariants.js — invariants constitutionnels deepFrozen (INV-001→INV-015)
+core/immatOrganism.js — observateur événements (diagnose(), observe(), validateInvariant())
+core/brain.js — ImmatBrain API de décision (Phase 1 observateur — phase 3 bloquant futur)
+core/bus.js — ImmatBus (bus d'événements interne)
 
 ORGANES — POINTS D'ENTRÉE CODE :
 Auth → App.afterAuth (index.html ~507), App.signup, fn.boot
@@ -39,10 +46,21 @@ INV-006 — plaque owner_plate immuable après création (upsert refusé)
 INV-011 — colorHex() dans utils.js = seule source couleurs (jamais hardcoder)
 INV-015 — NS se transforme depuis sa source, jamais dupliqué
 
-PROFIL TECHNIQUE SNAPSHOT ANGE :
-Actuel : health · summary · violations(3) · panel
-Absent : S.lastSpeed · S.driveMode · S.routeDest · S.nearby.length · alertes actives
-Amélioration possible sans risque : ajouter dans AngeDialog.send() (~1891)
+PROFIL TECHNIQUE SNAPSHOT ANGE (état actuel) :
+health · summary · violations(3) · panel · speed_cat · driving · hasRoute · nearby · alerts
+IMPORTANT : speed_cat = catégorie ('arrêt'/'lente'/'normale'/'rapide') — jamais valeur exacte (INV-014)
+Throttle : 10 appels/heure par session (sessionStorage ic_ange_calls)
+
+CYCLE DE VIE ADN :
+Modifier immat-nervous-system.json → node scripts/sync-ns.js → nervous-system.ts mis à jour
+Ne jamais éditer nervous-system.ts directement (violation INV-015)
+Après modification ADN : incrémenter _v
+
+IMMATORGANISM — OBSERVATEUR :
+ImmatOrganism.diagnose() — retourne health/events/violations/summary (utilisé par snapshot Ange)
+ImmatOrganism.observe(event, payload) — émet un événement sur le bus
+ImmatOrganism.validateInvariant(invId, passes, ctx) — délègue à ImmatBrain
+Phase actuelle : 1 (observateur) — Phase 3 (gardien) bloquera les violations en production
 
 PONT CLAUDE — FORMULER UNE DEMANDE DE MODIFICATION :
 Structure attendue : "Dans [fichier]:[ligne], modifier [quoi] → [quoi] pour [pourquoi]. Contrainte : [invariant]."

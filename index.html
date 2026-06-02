@@ -1864,6 +1864,9 @@ const AngeDialog={
   close(){
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
+    // Vider le panel : la réponse ne doit pas persister entre sessions d'ouverture
+    const resp=$('angeResponse');
+    if(resp){resp.style.display='none';resp.innerHTML='';delete resp.dataset.welcome;}
   },
   renderResponse(r){
     const el=$('angeResponse');
@@ -1875,6 +1878,7 @@ const AngeDialog={
     if(r.vigilance?.length){html+=`<div style="color:#f0a500;font-size:12px;margin-bottom:10px">${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div>`;}
     if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map((o,i)=>`<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
     if(r.question){html+=`<div class="ange-question" style="cursor:pointer" title="Cliquer pour répondre">${esc(r.question)}</div>`;}
+    if(r.proposal?.rule){html+=`<div style="margin-top:10px;padding:8px 10px;background:#1e1b4b;border-left:3px solid #f0a500;border-radius:0 6px 6px 0;font-size:12px"><div style="color:#f0a500;font-weight:700;margin-bottom:4px">📋 Proposition · ${esc(r.proposal.id||'')}</div><div style="color:#e2e8f0">${esc(r.proposal.rule)}</div>${r.proposal.obligations?.length?`<div style="color:#a5b4fc;margin-top:4px">✅ ${r.proposal.obligations.map(esc).join(' · ')}</div>`:''}</div>`;}
     el.innerHTML=html;
     // Options sélectionnables — clic = sélection visuelle + textarea prêt
     el.querySelectorAll('[data-opt]').forEach(div=>{
@@ -1908,11 +1912,21 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Throttle : 10 appels max par session (INV-014 — maîtrise des coûts et de l'usage)
+    const _aKey='ic_ange_calls';
+    const _aData=JSON.parse(sessionStorage.getItem(_aKey)||'{"n":0,"t":0}');
+    const _now=Date.now();
+    if(_now-_aData.t>3600000){_aData.n=0;} // reset après 1h
+    if(_aData.n>=10){toast('Limite Ange atteinte (10/heure). Réessaie dans quelques minutes.','bad');return;}
+    _aData.n++;_aData.t=_now;sessionStorage.setItem(_aKey,JSON.stringify(_aData));
     const btn=$('angeSubmit'),spin=$('angeSpin'),resp=$('angeResponse');
     btn.disabled=true;spin.style.display='block';resp.style.display='none';
     try{
       let snapshot={};
-      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed:S.lastSpeed||0,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
+      // Vitesse en catégorie (jamais valeur exacte — INV-014)
+      const _spd=S.lastSpeed||0;
+      const _spdCat=_spd>90?'rapide':_spd>30?'normale':_spd>0?'lente':'arrêt';
+      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed_cat:_spdCat,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,

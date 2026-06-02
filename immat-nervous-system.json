@@ -1,11 +1,11 @@
 {
-  "_v": 6,
+  "_v": 7,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
   "ange_identity": {
     "posture": "Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.",
     "evaluation": "Cette évolution nourrit-elle l'organisme ou l'alourdit-elle ? Cette proposition renforce-t-elle le jugement du Gardien ou le rend-elle dépendant ?",
     "limite": "Jamais de décision à la place du Gardien. Jamais de modification code, DB ou invariants. Jamais d'affirmation sur ce que tu ne vois pas.",
-    "format": "JSON valide uniquement. 150 mots maximum. requiresGuardianValidation toujours true."
+    "format": "JSON valide uniquement. 150 mots max (gardien) · 80 mots max (conducteur). requiresGuardianValidation conditionnel selon le rôle : true pour gardien, false pour conducteur."
   },
   "perception": {
     "desc": "Normalise tout signal entrant en texte avant routage. Le système nerveux ne voit jamais un son ni une image — il voit toujours un signal texte normalisé.",
@@ -348,12 +348,13 @@
       }
     },
     "Ange": {
-      "desc": "Interface Gardien — bouton ✦ (angeFab) + Edge Function Claude",
+      "desc": "Interface IA — bouton ✦ (angeFab) visible pour tous les conducteurs connectés. Profondeur de réponse adaptée au rôle (depth 1/2/3).",
       "entry": {
         "angeFab_css": "css.#angeFab",
-        "angeFab_afterAuth": "App.afterAuth > #angeFab",
-        "angeFab_openMap": "App.openMap > #angeFab",
-        "edge_function": "supabase/functions/immat-brain-dialog/index.ts"
+        "angeFab_openMap": "App.openMap > #angeFab (affiché pour tous)",
+        "edge_function": "supabase/functions/immat-brain-dialog/index.ts",
+        "knowledge_conducteur": "_shared/knowledge-conducteur.ts",
+        "knowledge_gardien": "_shared/knowledge-gardien.ts"
       },
       "constraints": [
         "INV-010",
@@ -365,9 +366,10 @@
       "data": [
         "S.isGardien",
         "user_metadata.role",
-        "get_my_role() RPC"
+        "get_my_role() RPC",
+        "snapshot anonymisé (health, violations, panel, speed_cat, driving, hasRoute, nearby, alerts)"
       ],
-      "note": "S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback dans openMap() si S.isGardien===undefined",
+      "note": "S.isGardien depuis get_my_role(), jamais du JWT seul. Vitesse transmise en catégorie (arrêt/lente/normale/rapide) — jamais en valeur exacte (INV-014).",
       "serves": [
         "FRI",
         "SEC"
@@ -380,29 +382,29 @@
       ],
       "level_1": {
         "what_user_sees": [
-          "Bouton ✦ en bas à droite — visible uniquement pour le Gardien",
+          "Bouton ✦ en bas à droite — visible pour tous les conducteurs connectés",
           "Panneau de dialogue pour poser une question à l'Ange",
-          "Réponse : analyse principale + alertes de vigilance + question au Gardien"
+          "Réponse adaptée au rôle : guidage usage (conducteur) ou analyse technique (gardien)"
         ],
         "common_questions": [
-          "Je ne vois pas le bouton ✦",
+          "Comment utiliser l'application ?",
           "L'Ange ne répond pas ou est très lent",
           "Comment poser une bonne question à l'Ange ?"
         ],
         "resolution": [
-          "Le bouton ✦ est réservé au rôle gardien — vérifier le rôle du compte connecté",
+          "Poser une question simple sur l'app, la navigation ou un problème rencontré",
           "L'Ange appelle un modèle IA externe — la réponse prend 5 à 20 secondes",
-          "Poser une question précise liée à un organe, un bug ou une évolution"
+          "Pour une analyse technique approfondie : avoir le rôle gardien"
         ]
       },
       "level_2": {
         "behaviors": [
-          "Vérifie le rôle gardien via get_my_role() avant d'afficher le bouton ✦",
-          "Envoie la question + snapshot de l'organisme à l'Edge Function immat-brain-dialog",
-          "Affiche la réponse structurée : juste (réponse) + vigilance (alertes) + question (au Gardien)"
+          "Affiche le bouton ✦ pour tous les utilisateurs authentifiés via openMap()",
+          "Envoie la question + snapshot anonymisé (INV-014) à l'Edge Function immat-brain-dialog",
+          "Adapte la profondeur : gardien=depth3+knowledge_gardien, conducteur=depth1+knowledge_conducteur"
         ],
         "failure_modes": [
-          "S.isGardien undefined au démarrage — bouton ✦ absent jusqu'au rechargement",
+          "S.isGardien undefined — bouton ✦ toujours affiché (fallback openMap catch)",
           "ANTHROPIC_API_KEY absente — Edge Function retourne server_misconfigured",
           "Cache Anthropic froid au premier appel — latence plus élevée (prompt non caché)"
         ]
