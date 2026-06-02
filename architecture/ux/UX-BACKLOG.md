@@ -38,7 +38,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 
 | ID | Item | Friction | Statut |
 |---|---|---|---|
-| P1-005 | reportPanel trop long — simplifier en 2 étapes | FRI-008 / DA-001 | 💬 décision Gardien requise |
+| P1-005 | reportPanel trop long — simplifier en 2 étapes | FRI-008 / DA-001 | ✅ fait (SESSION 19 — indicateur Étape 1/2 dans sigStep, DEC-001) |
 | P1-006 | reportPanel : pré-charger la plaque cible depuis le contexte | FRI-008 | ✅ fait (sigStepVehicle + sigVehiclePlate) |
 
 ### Navigation
@@ -83,8 +83,8 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | ID | Item | Statut |
 |---|---|---|
 | P2-011 | Clarifier message plaque immuable lors de l'inscription | ✅ fait (SESSION 19 — hint champ iPlate) |
-| P2-012 | Séparer onglets Activité : Conversations / Alertes | 💬 à décider |
-| P2-013 | Distinction visuelle messages vs alertes dans Activité Reçus | 🔧 à implémenter |
+| P2-012 | Séparer onglets Activité : Conversations / Alertes | ✅ fait (SESSION 19 — filtres type Tout/Messages/Alertes dans actCatPanel) |
+| P2-013 | Distinction visuelle messages vs alertes dans Activité Reçus | ✅ fait (SESSION 19 — filtres type DEC-003) |
 
 ---
 
@@ -108,7 +108,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 
 | ID | Item | Ref | Statut |
 |---|---|---|---|
-| P3-021 | INT-006 Remerciement formel — bouton "Je remercie" | BTN-MISS05 | 🔲 à concevoir |
+| P3-021 | INT-006 Remerciement formel — bouton "Je remercie" | BTN-MISS05 | ✅ fait (SESSION 19 — 🙏 Merci dédié, DEC-008) |
 | P3-022 | INT-010 Signalement abus — complet avec backend | BTN-MISS04 | 🔲 à concevoir |
 | P3-023 | SOS — canal prioritaire distinct (≠ assist panne) | INT-009 | 🔲 à concevoir |
 
@@ -146,7 +146,7 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 | DEC-003 | Activité : séparer onglets Conversations / Alertes ? | Clarté interface | DA-003 |
 | DEC-004 | Blocage : migrer vers DB ou garder localStorage ? | Vie privée vs persistance | DA-004 |
 | DEC-005 | Trust : unifier ic_trust + ReliabilityPro ou garder séparé ? | Cohérence données | FRI-005 |
-| DEC-006 | Doubles canaux alertes (panelAltet + alertsPanel) : intentionnel ? | Architecture interface | INVENTAIRE G-1 |
+| DEC-006 | ~~Doubles canaux alertes (panelAltet + alertsPanel) : intentionnel ?~~ | ✅ résolu (SESSION 19 — alertsPanel DOM mort supprimé) | INVENTAIRE G-1 |
 | DEC-007 | Status enum alertes : unifier seen/present/gone/resolved ? | Cohérence données | UX-INTERACTION-SKELETON §5 |
 | DEC-008 | INT-006 Remerciement : bouton dédié ou workaround "Bien reçu" suffit ? | UX sociale | INT-006 |
 
@@ -156,6 +156,10 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 
 | Item | Session |
 |---|---|
+| DEC-008 Bouton 🙏 Merci dédié (ic-quick + isOwn assist helper_coming) | SESSION 19 |
+| DEC-001 Indicateur progression sigStep (barres Étape 1/2 · 2/2) | SESSION 19 |
+| DEC-003 Filtres type Activité (Tout / Messages / Alertes) | SESSION 19 |
+| DEC-006 alertsPanel DOM mort supprimé (INV-015 restored) | SESSION 19 |
 | Appel audio WebRTC (ImmatCall) | SESSION 8 |
 | navPremium données temps réel (Vitesse / Autour / Alertes) | SESSION 8 |
 | Bouton × supprimer favori GPS | SESSION 8 |
