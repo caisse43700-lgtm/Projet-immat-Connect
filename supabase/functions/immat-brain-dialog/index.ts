@@ -212,19 +212,26 @@ Deno.serve(async (req) => {
 
     // ── 2+3. Auth + rôle en parallèle — évite JWT stale (INV-010) ──
     const t_auth = Date.now();
-    const [
-      { data: { user }, error: authErr },
-      { data: role, error: roleErr },
-    ] = await Promise.all([
+    const [authResult, roleResult] = await Promise.all([
       sb.auth.getUser(),
       sb.rpc('get_my_role'),
     ]);
+    const { data: { user }, error: authErr } = authResult;
+    let { data: role, error: roleErr } = roleResult;
     const auth_ms = Date.now() - t_auth;
     const role_ms = auth_ms; // mesurés ensemble
 
     if (authErr || !user) {
       console.warn('[immat-brain-dialog] Auth échouée.', authErr?.message ?? 'user null');
       return Response.json({ ok: false, reason: 'unauthenticated' }, { status: 401, headers: corsHeaders });
+    }
+
+    // Retry rôle une fois si erreur transitoire (cold start Supabase)
+    if (roleErr) {
+      await new Promise(r => setTimeout(r, 600));
+      const retry = await sb.rpc('get_my_role');
+      role = retry.data;
+      roleErr = retry.error;
     }
 
     if (roleErr || role !== 'gardien') {
