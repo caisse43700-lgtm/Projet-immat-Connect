@@ -60,13 +60,19 @@ function nsToPrompt(depth: 2 | 3 = 3): string {
     }
   }).join('\n\n');
 
-  const inhibitionsText = Object.entries(inhibitions)
-    .map(([k, v]) => `${k} → ${v}`)
-    .join('\n');
+  // depth 3 (gardien) : inhibitions + invariants inclus
+  // depth 2 (protecteur futur) : exclus — accès aux données techniques interdit
+  const inhibitionsText = depth === 3
+    ? Object.entries(inhibitions).map(([k, v]) => `${k} → ${v}`).join('\n')
+    : '';
 
-  const invariantsText = Object.entries(invariants)
-    .map(([k, v]) => `${k}:${v.label} (${v.severity})`)
-    .join('\n');
+  const invariantsText = depth === 3
+    ? Object.entries(invariants).map(([k, v]) => `${k}:${v.label} (${v.severity})`).join('\n')
+    : '';
+
+  const technicalSections = depth === 3
+    ? `\nINHIBITIONS :\n${inhibitionsText}\n\nINVARIANTS :\n${invariantsText}\n\nTraversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.`
+    : '';
 
   return `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
 
@@ -79,15 +85,7 @@ ${id.evaluation}
 ${id.limite}
 
 ORGANES :
-${organsText}
-
-INHIBITIONS :
-${inhibitionsText}
-
-INVARIANTS :
-${invariantsText}
-
-Traversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.
+${organsText}${technicalSections}
 
 Langue : français.`;
 }
