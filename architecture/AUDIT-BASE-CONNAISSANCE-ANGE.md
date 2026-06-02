@@ -1,3 +1,5 @@
+# Amélioration Navigation Fonctionnalités
+
 # AUDIT — Base de Connaissance pour l'Ange
 > Version 15.0 · 2026-06-02 · Branche claude/immatconnect-pro-app-dEKGR
 
