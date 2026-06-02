@@ -5,7 +5,7 @@
 
 export const NS = {
 
-  _v: 4,
+  _v: 5,
 
   ange_identity: {
     posture:    'Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.',
@@ -43,6 +43,7 @@ export const NS = {
       entry:       { afterAuth: 'index.html:507', signup: 'index.html:502', boot: 'index.html:1419' },
       constraints: ['INV-010', 'INV-014'],
       deps:        [] as string[],
+      data:        ['supabase.auth', 'user_metadata.role', 'get_my_role() RPC'],
       note:        'get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale',
       serves:      ['PRI', 'SEC'],
       known_costs: ['PERF', 'TEST'],
@@ -62,6 +63,7 @@ export const NS = {
       entry:       { saveProfile: 'index.html:549', upsert_profil: 'index.html:530' },
       constraints: ['INV-006', 'INV-007', 'INV-011'],
       deps:        ['Auth'],
+      data:        ['profiles.owner_plate', 'profiles.vehicle_color', 'profiles.pseudo', 'profiles.phone'],
       note:        'owner_plate immuable après création (INV-006). colorHex() utils.js = source canonique couleurs (INV-011)',
       serves:      ['PRI', 'LNK'],
       known_costs: ['MAINT', 'TEST'],
@@ -81,6 +83,7 @@ export const NS = {
       entry:       { icon: 'index.html:409', dot: 'index.html:408', initMap: 'index.html:551', locate: 'index.html:554', loadOthers: 'index.html:652' },
       constraints: ['INV-005', 'INV-011', 'INV-012'],
       deps:        ['Profil'],
+      data:        ['S.map', 'S.myMarker', 'S.otherMkrs', 'S.myLat', 'S.myLng', 'S.lastSpeed'],
       note:        'icon() consommé par locate():554 et loadOthers():652. colorHex() = source fill couleur',
       serves:      ['SEC', 'PRV', 'FRI'],
       known_costs: ['PERF', 'MAINT', 'TEST'],
@@ -100,6 +103,7 @@ export const NS = {
       entry:       { startMsgs: 'index.html:764', sendMsg: 'index.html:703', ImmatMessages: 'module externe' },
       constraints: ['INV-001', 'INV-004', 'INV-010'],
       deps:        ['Auth'],
+      data:        ['messages.sender_id', 'messages.receiver_id', 'messages.target_plate', 'S.chMsg'],
       note:        'Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide',
       serves:      ['LNK', 'ENT'],
       known_costs: ['PERF', 'ARCH', 'TEST'],
@@ -119,6 +123,7 @@ export const NS = {
       entry:       { roadReport: 'index.html:905', vehicleAlert: 'index.html:905', subscribeCommunityReports: 'index.html:896', addCommunityAlertMarker: 'index.html:813' },
       constraints: ['INV-001', 'INV-002', 'INV-003', 'INV-004'],
       deps:        ['Carte', 'Auth'],
+      data:        ['reports table', 'S.alerts', 'S.alertMarkersById', 'S.chCommunityReports'],
       note:        'Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser',
       serves:      ['SEC', 'ENT', 'PRV'],
       known_costs: ['PERF', 'ARCH', 'TEST'],
@@ -138,6 +143,7 @@ export const NS = {
       entry:       { angeFab_css: 'index.html:1907', angeFab_afterAuth: 'index.html:520', angeFab_openMap: 'index.html:550', edge_function: 'supabase/functions/immat-brain-dialog/index.ts' },
       constraints: ['INV-010', 'INV-014'],
       deps:        ['Auth'],
+      data:        ['S.isGardien', 'user_metadata.role', 'get_my_role() RPC'],
       note:        'S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback openMap() si undefined',
       serves:      ['FRI', 'SEC'],
       known_costs: ['PERF', 'ARCH', 'MAINT', 'TEST'],
@@ -152,6 +158,11 @@ export const NS = {
       },
     },
 
+  },
+
+  access_policy: {
+    guardian:  { max_depth: 3, levels: ['level_1', 'level_2', 'level_3'] as const, note: 'level_3 = entry · constraints · deps · data' },
+    protector: { max_depth: 2, levels: ['level_1', 'level_2']             as const, note: 'protector ne voit pas les entrées techniques'  },
   },
 
   inhibitions: {

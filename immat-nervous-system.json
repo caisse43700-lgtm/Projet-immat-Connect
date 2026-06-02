@@ -1,5 +1,5 @@
 {
-  "_v": 4,
+  "_v": 5,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
 
   "ange_identity": {
@@ -300,6 +300,11 @@
       }
     }
 
+  },
+
+  "access_policy": {
+    "guardian":  { "max_depth": 3, "levels": ["level_1", "level_2", "level_3"], "note": "level_3 = entry · constraints · deps · data" },
+    "protector": { "max_depth": 2, "levels": ["level_1", "level_2"],             "note": "protector ne voit pas les entrées techniques" }
   },
 
   "inhibitions": {
