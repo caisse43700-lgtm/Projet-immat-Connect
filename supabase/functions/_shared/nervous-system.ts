@@ -2,11 +2,11 @@
 // GÉNÉRÉ AUTOMATIQUEMENT — ne pas modifier manuellement.
 // Source canonique : immat-nervous-system.json (racine du projet) — INV-015
 // Pour modifier : éditer immat-nervous-system.json puis exécuter : node scripts/sync-ns.js
-// _v: 5
+// _v: 6
 
 // deno-lint-ignore-file
 export const NS = {
-  "_v": 5,
+  "_v": 6,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
   "ange_identity": {
     "posture": "Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.",
@@ -424,6 +424,8 @@ export const NS = {
         "level_2",
         "level_3"
       ],
+      "no_code": false,
+      "no_internal_invariants": false,
       "note": "level_3 = entry · constraints · deps · data"
     },
     "protector": {
@@ -432,7 +434,18 @@ export const NS = {
         "level_1",
         "level_2"
       ],
-      "note": "protector ne voit pas les entrées techniques"
+      "no_code": true,
+      "no_internal_invariants": true,
+      "note": "usage + comportement — jamais données techniques"
+    },
+    "observer": {
+      "max_depth": 1,
+      "levels": [
+        "level_1"
+      ],
+      "no_code": true,
+      "no_internal_invariants": true,
+      "note": "usage seulement — futur possible"
     }
   },
   "inhibitions": {

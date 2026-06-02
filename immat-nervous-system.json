@@ -1,5 +1,5 @@
 {
-  "_v": 5,
+  "_v": 6,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
 
   "ange_identity": {
@@ -303,8 +303,9 @@
   },
 
   "access_policy": {
-    "guardian":  { "max_depth": 3, "levels": ["level_1", "level_2", "level_3"], "note": "level_3 = entry · constraints · deps · data" },
-    "protector": { "max_depth": 2, "levels": ["level_1", "level_2"],             "note": "protector ne voit pas les entrées techniques" }
+    "guardian":  { "max_depth": 3, "levels": ["level_1", "level_2", "level_3"], "no_code": false, "no_internal_invariants": false, "note": "level_3 = entry · constraints · deps · data" },
+    "protector": { "max_depth": 2, "levels": ["level_1", "level_2"],             "no_code": true,  "no_internal_invariants": true,  "note": "usage + comportement — jamais données techniques" },
+    "observer":  { "max_depth": 1, "levels": ["level_1"],                        "no_code": true,  "no_internal_invariants": true,  "note": "usage seulement — futur possible" }
   },
 
   "inhibitions": {

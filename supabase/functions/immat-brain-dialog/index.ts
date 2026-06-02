@@ -19,15 +19,17 @@ function anonymize(text: string): string {
 // Source unique : _shared/nervous-system.ts (dérivé de immat-nervous-system.json)
 // Ne jamais écrire ce texte à la main — modifier la source, pas ce fichier.
 //
-// depth 3 — gardien   : entry · constraints · deps · serves · 2 failure_modes
-// depth 2 — protecteur: serves uniquement — pas d'entrées techniques ni de code
-function nsToPrompt(depth: 2 | 3 = 3): string {
+// depth 3 — gardien    : technique    entry · constraints · deps · serves · 2 failure_modes + inhibitions + invariants
+// depth 2 — protecteur : usage+comport  level_1 + level_2 + serves — sans entrées techniques
+// depth 1 — futur      : usage seul    level_1 + serves uniquement
+function nsToPrompt(depth: 1 | 2 | 3 = 3): string {
   const organs = NS.organs as Record<string, {
     entry?:    Record<string, string>;
     constraints?: string[];
     deps?:        string[];
     serves?:      string[];
-    level_2?:     { failure_modes?: string[] };
+    level_1?:     { what_user_sees?: string[]; common_questions?: string[]; resolution?: string[] };
+    level_2?:     { behaviors?: string[]; failure_modes?: string[] };
   }>;
   const routing     = NS.routing     as Record<string, string>;
   const inhibitions = NS.inhibitions as Record<string, string>;
@@ -54,24 +56,29 @@ function nsToPrompt(depth: 2 | 3 = 3): string {
       const failures    = (o.level_2?.failure_modes ?? []).slice(0, 2).join(' / ');
       const line1       = [entries, constraints, deps, serves].filter(Boolean).join(' · ');
       return `${name} [${keywords}]\n  ${line1}${failures ? `\n  ⚠ ${failures}` : ''}`;
+
+    } else if (depth === 2) {
+      const serves      = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const sees        = (o.level_1?.what_user_sees ?? []).join(' | ');
+      const behaviors   = (o.level_2?.behaviors ?? []).slice(0, 2).join(' | ');
+      const failures    = (o.level_2?.failure_modes ?? []).slice(0, 2).join(' / ');
+      return [
+        `${name} [${keywords}] ${serves}`,
+        sees        ? `  voit : ${sees}` : '',
+        behaviors   ? `  fait : ${behaviors}` : '',
+        failures    ? `  ⚠ ${failures}` : '',
+      ].filter(Boolean).join('\n');
+
     } else {
-      const serves = (o.serves ?? []).join(',');
-      return `${name} [${keywords}] serves:[${serves}]`;
+      const serves = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const sees   = (o.level_1?.what_user_sees ?? []).join(' | ');
+      return `${name} [${keywords}] ${serves}\n  voit : ${sees}`;
     }
   }).join('\n\n');
 
-  // depth 3 (gardien) : inhibitions + invariants inclus
-  // depth 2 (protecteur futur) : exclus — accès aux données techniques interdit
-  const inhibitionsText = depth === 3
-    ? Object.entries(inhibitions).map(([k, v]) => `${k} → ${v}`).join('\n')
-    : '';
-
-  const invariantsText = depth === 3
-    ? Object.entries(invariants).map(([k, v]) => `${k}:${v.label} (${v.severity})`).join('\n')
-    : '';
-
+  // inhibitions + invariants : gardien seulement (données techniques)
   const technicalSections = depth === 3
-    ? `\nINHIBITIONS :\n${inhibitionsText}\n\nINVARIANTS :\n${invariantsText}\n\nTraversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.`
+    ? `\nINHIBITIONS :\n${Object.entries(inhibitions).map(([k, v]) => `${k} → ${v}`).join('\n')}\n\nINVARIANTS :\n${Object.entries(invariants).map(([k, v]) => `${k}:${v.label} (${v.severity})`).join('\n')}\n\nTraversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.`
     : '';
 
   return `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
@@ -88,6 +95,7 @@ ORGANES :
 ${organsText}${technicalSections}
 
 Langue : français.`;
+}
 }
 
 // ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
