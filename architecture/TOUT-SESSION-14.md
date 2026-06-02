@@ -1,60 +1,128 @@
 # TOUT CE QUI A ÉTÉ FAIT — SESSION 14
+
 > Date : 2026-06-02
 > Branche : claude/immatconnect-pro-app-dEKGR
 
 ---
 
-## ══════════════════════════════════════════
-## CONTEXTE SESSION 14
-## ══════════════════════════════════════════
+# CONTEXTE SESSION 14
 
-Session de consolidation — pas de nouvelle architecture.
+SESSION 14 est une session de consolidation.
 
-Deux tâches en attente depuis la fin de SESSION 13 :
-1. Commiter `UX-NOTIFICATION-MATRIX.json` (créé mais non poussé)
-2. Implémenter la séparation des badges (décision Gardien SESSION 13)
+Aucune nouvelle architecture n'a été créée.
+
+Deux objectifs uniquement :
+
+1. Commiter le fichier UX-NOTIFICATION-MATRIX créé en SESSION 13 mais non poussé.
+2. Appliquer la décision Gardien de séparation stricte entre alertes et conversations.
+
+Principe désormais officiel :
+
+> Activité = événements
+> Messages = conversations
+> Une alerte peut ouvrir une conversation.
+> Une conversation ne crée jamais d'alerte.
 
 ---
 
-## ══════════════════════════════════════════
-## FICHIER : architecture/ux/UX-NOTIFICATION-MATRIX.json
-## ══════════════════════════════════════════
+# FICHIER : architecture/ux/UX-NOTIFICATION-MATRIX.json
 
-### Commit
+## Commit
 
 ```
 2dc81c3 docs: grammaire canonique des flux de notification — UX-NOTIFICATION-MATRIX.json
 ```
 
-Fichier créé en SESSION 13, non commité. Commité et poussé en SESSION 14.
-
-Contenu :
-- Principe : alerte vs message (séparation dure)
-- `badge_rules` : actBadge = événements / topMsgBadge = conversations
-- `intensity_rules` : distance → critique / urgent / important / info
-- 8 flows (FLOW-001 à FLOW-008) avec les 7 questions par flux
-- `a_implementer` : tâches restantes identifiées
+Le fichier avait été produit en SESSION 13 mais n'avait jamais été commité.
+SESSION 14 l'intègre officiellement au dépôt.
 
 ---
 
-## ══════════════════════════════════════════
-## FICHIER : index.html
-## ══════════════════════════════════════════
+## Contenu principal
 
-### Séparation badges — chercher : `updateActBadge`
+### Principe
 
-**Commit** : `918b762 fix: séparation badges actBadge (alertes) / topMsgBadge (messages)`
+> Alerte ≠ Message
 
-**3 corrections appliquées :**
+### Séparation des badges
+
+**actBadge = événements uniquement**
+
+Contient :
+- catBadgeRoute
+- catBadgeVehicle
+- catBadgeAide
+
+Ne contient jamais : Messages directs
 
 ---
 
-#### ① renderActivityMain — catBadgeVehicle — chercher : `const bVehicle=`
+**topMsgBadge = conversations uniquement**
+
+Contient :
+- Messages directs
+- Réponses aux alertes
+- Réponses aux demandes d'aide
+
+Ne contient jamais : Alertes
+
+---
+
+### Intensité des notifications
+
+Distance ↓ → Critique / Urgent / Important / Info
+
+avec comportement :
+- FloatingCard
+- Toast
+- Badge
+- Marqueur seul
+
+selon gravité et distance.
+
+---
+
+### Flows documentés
+
+```
+FLOW-001  Demande aide
+FLOW-002  Helper arrive
+FLOW-003  Helper indisponible
+FLOW-004  Aide résolue
+FLOW-005  Alerte véhicule
+FLOW-006  Message direct
+FLOW-007  Signalement route
+FLOW-008  Confirmation route
+```
+
+Chaque flow répond aux 7 questions officielles :
+1. Où A déclenche
+2. Où A confirme
+3. Où A suit
+4. Où B reçoit
+5. Où B agit
+6. Où A voit le retour
+7. Comment le cycle se clôture
+
+---
+
+# FICHIER : index.html
+
+## Commit
+
+```
+918b762 fix: séparation badges actBadge (alertes) / topMsgBadge (messages)
+```
+
+---
+
+## Correction ① — renderActivityMain
+
+### Chercher : `const bVehicle=`
 
 AVANT :
 ```javascript
-const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length
-  +msgs.filter(m=>m._received&&!m.read_at).length;
+const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length+msgs.filter(m=>m._received&&!m.read_at).length;
 ```
 
 APRÈS :
@@ -62,16 +130,18 @@ APRÈS :
 const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length;
 ```
 
-**Raison** : `catBadgeVehicle` ne doit contenir que des alertes véhicule — pas des messages. Les messages appartiennent à `topMsgBadge`.
+**Pourquoi :** `catBadgeVehicle` doit représenter uniquement des alertes véhicule. Les messages n'ont pas leur place dans ce badge.
 
 ---
 
-#### ② updateActBadge — actBadge / topMsgBadge — chercher : `App.updateActBadge=function`
+## Correction ② — updateActBadge()
+
+### Chercher : `const total=unreadMsgs+unreadAlerts`
 
 AVANT :
 ```javascript
 const total=unreadMsgs+unreadAlerts;
-try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{total,...})}catch(e){}
+try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{total,msgs:unreadMsgs,alerts:unreadAlerts,_src:'ImmatConnect/updateActBadge'})}catch(e){}
 const badge=$('actBadge');
 if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
 const legacy=$('topMsgBadge');
@@ -80,18 +150,29 @@ if(legacy){legacy.textContent=badgeFmt(total);legacy.style.display=total>0?'flex
 
 APRÈS :
 ```javascript
-try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,...})}catch(e){}
+try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
 const badge=$('actBadge');
 if(badge){badge.textContent=unreadAlerts>99?'99+':String(unreadAlerts);badge.style.display=unreadAlerts>0?'flex':'none';}
 const legacy=$('topMsgBadge');
 if(legacy){legacy.textContent=badgeFmt(unreadMsgs);legacy.style.display=unreadMsgs>0?'flex':'none';}
 ```
 
-**Raison** : décision Gardien SESSION 13 — `actBadge = événements / topMsgBadge = conversations`. Ne pas les fusionner.
+**Pourquoi :** Les deux badges montraient exactement la même valeur (msgs + alertes). Désormais :
+- `actBadge` = alertes non traitées
+- `topMsgBadge` = messages non lus
+
+Exemple — 3 alertes + 5 messages :
+
+| | Avant | Après |
+|---|---|---|
+| actBadge | 8 | 3 |
+| topMsgBadge | 8 | 5 |
 
 ---
 
-#### ③ updateCommunityStatus — topMsgBadge — chercher : `const mail=`
+## Correction ③ — updateCommunityStatus()
+
+### Chercher : `const mail=`
 
 AVANT :
 ```javascript
@@ -103,43 +184,25 @@ APRÈS :
 const mail=Number(S.unreadMsgCount)||0;
 ```
 
-**Raison** : `pendingSignalCount()` compte des alertes véhicule non vues — ce sont des événements, pas des messages. Les retirer du calcul `topMsgBadge`.
+**Pourquoi :** `pendingSignalCount()` compte les alertes véhicule non vues. Ces alertes restent dans `actBadge` et ne doivent pas polluer `topMsgBadge`.
 
 ---
 
-## ══════════════════════════════════════════
-## RÉSUMÉ DES MODIFICATIONS SESSION 14
-## ══════════════════════════════════════════
+# RÉSUMÉ DES MODIFICATIONS SESSION 14
 
-| Élément modifié | Type | Raison |
+| Élément | Type | Résultat |
 |---|---|---|
-| UX-NOTIFICATION-MATRIX.json | docs | Commit du fichier non poussé SESSION 13 |
-| catBadgeVehicle — bVehicle | JS | Retrait messages du catBadge véhicule |
-| actBadge dans updateActBadge | JS | Alertes uniquement (était msgs + alertes) |
-| topMsgBadge dans updateActBadge | JS | Messages uniquement (était msgs + alertes) |
-| topMsgBadge dans updateCommunityStatus | JS | Retrait pendingSignalCount() |
+| UX-NOTIFICATION-MATRIX.json | Documentation | Commit officiel |
+| catBadgeVehicle | JS | Messages retirés |
+| actBadge | JS | Alertes uniquement |
+| topMsgBadge | JS | Messages uniquement |
+| updateCommunityStatus | JS | Retrait des alertes du compteur messages |
 
-**Bilan** : +2 lignes, -7 lignes. Cohérence totale avec UX-NOTIFICATION-MATRIX.json.
-
----
-
-## ══════════════════════════════════════════
-## ÉTAT DU DÉPÔT APRÈS SESSION 14
-## ══════════════════════════════════════════
-
-Branche : `claude/immatconnect-pro-app-dEKGR`
-
-Commits SESSION 14 (du plus récent au plus ancien) :
-```
-918b762 fix: séparation badges actBadge (alertes) / topMsgBadge (messages)
-2dc81c3 docs: grammaire canonique des flux de notification — UX-NOTIFICATION-MATRIX.json
-```
+**Bilan** : 2 commits, -7 lignes, 0 nouvelle architecture.
 
 ---
 
-## ══════════════════════════════════════════
-## ÉTAT GLOBAL APRÈS SESSION 14
-## ══════════════════════════════════════════
+# ÉTAT GLOBAL APRÈS SESSION 14
 
 | Dimension | Statut |
 |---|---|
@@ -148,45 +211,41 @@ Commits SESSION 14 (du plus récent au plus ancien) :
 | Système nerveux | TERMINÉ ✅ |
 | Pipeline Ange Gardien | TERMINÉ ✅ |
 | Classification UX | TERMINÉE ✅ |
-| Grammaire flux notifications | TERMINÉE ✅ (SESSION 14) |
-| Séparation badges actBadge/topMsgBadge | CORRIGÉE ✅ (SESSION 14) |
-| Boucle aide | 90% ✅ (SESSION 13) |
-| FloatingCard contextuelle | CORRIGÉE ✅ (SESSION 13) |
-| Voir sur carte (MORT-002) | CORRIGÉ ✅ (SESSION 13) |
-| navPremium labels | CORRIGÉS ✅ (SESSION 13) |
+| UX-NOTIFICATION-MATRIX | TERMINÉ ✅ |
+| Séparation badges | TERMINÉE ✅ |
+| Boucle aide | 90% ✅ |
+| FloatingCard contextuelle | CORRIGÉE ✅ |
+| Voir sur carte (MORT-002) | CORRIGÉ ✅ |
+| navPremium labels | CORRIGÉS ✅ |
 | Validation terrain | EN COURS 🚀 |
 | Ange Conducteur | À COMMENCER |
 
 ---
 
-## ══════════════════════════════════════════
-## CE QUI RESTE À FAIRE
-## ══════════════════════════════════════════
+# CE QUI RESTE À FAIRE
 
-### Dettes techniques ouvertes
+## Dettes encore ouvertes
 
 | Ref | Description | Statut |
 |---|---|---|
-| IC-002 | Retour "Vu par le conducteur" dans card Activité Envoyés | Reporté terrain |
-| FLOW-002 | Statut "Helper en route" dans card aide côté A | Reporté terrain |
+| IC-002 | "Vu par le conducteur" dans Activité → Envoyés | Reporté terrain |
+| FLOW-002 | "Helper en route" dans card aide côté A | Reporté terrain |
 | FLOW-007 | Intensité notification selon distance | Reporté terrain |
-| DA-001 | reportPanel overlay 2 étapes | Validé non implémenté |
-| DA-004 | Blocage localStorage vs DB | Décision non prise |
+| DA-001 | reportPanel en 2 étapes | Validé non implémenté |
+| DA-004 | Blocage : localStorage ou DB | Décision non prise |
 
-### Ange Conducteur — 6 questions non tranchées
+## Ange Conducteur — 6 décisions non tranchées
 
-1. `brain-dialog` (avec verrou rôle) ou nouvel endpoint `brain-driver` ?
-2. Bouton ✦ dédié conducteur ou bouton partagé selon rôle ?
-3. Contexte injecté exact (vitesse GPS, proches, alertes actives) ?
-4. `requiresGuardianValidation` : `true` (contrainte permanente) ou `false` (informationnel) ?
-5. Profondeur NS : depth 1 (usage seul) ou depth 2 (usage + comportements) ?
-6. Niveau d'autonomie : réponse directe ou toujours passer par une confirmation ?
+1. `brain-dialog` ou endpoint dédié `brain-driver` ?
+2. Bouton ✦ dédié conducteur ou partagé selon rôle ?
+3. Contexte injecté exact ?
+4. `requiresGuardianValidation` : `true` ou `false` ?
+5. NS depth 1 ou depth 2 ?
+6. Niveau d'autonomie : réponse directe ou confirmation ?
 
 ---
 
-## ══════════════════════════════════════════
-## DIRECTIVE GARDIEN SESSION 14
-## ══════════════════════════════════════════
+# DIRECTIVE GARDIEN
 
 > Phase Architecture : TERMINÉE
 > Phase Validation Terrain : EN COURS
@@ -197,3 +256,5 @@ Commits SESSION 14 (du plus récent au plus ancien) :
 > - les frictions réelles
 >
 > et non sur une nouvelle couche d'architecture.
+
+**Filtre actif : TRF-006 — Quel coût réel cette modification réduit-elle ?**
