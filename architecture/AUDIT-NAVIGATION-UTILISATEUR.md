@@ -1,7 +1,7 @@
 # Amélioration Navigation Fonctionnalités
 
 > Audit complet navigation utilisateur · ImmatConnect
-> Version 15.0 · 2026-06-02
+> Version 16.0 · 2026-06-02
 
 ---
 
@@ -21,10 +21,10 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 | Profil Setup | `sp` | Compléter le profil avant carte | ⚠️ Plaque immuable mal annoncée | P2 |
 | Réinit. MDP | `sr` | Nouveau mot de passe | ✅ OK | — |
 | **Carte** | `sm` | Vue principale — radar conducteurs + alertes | ✅ Fonctionnel | P1 améliorations |
-| **GPS** | `drive` | Navigation — itinéraire, voix, POI | 🔴 Données simulées | P1 |
-| **Signaler** | `altet` (overlay) | Créer alerte route / véhicule / aide | ⚠️ 3 blocs trop longs | P1 |
-| **Activité** | `activite` | Historique des interactions | ⚠️ Onglet "Nouveau" confus | P1 |
-| **Messages** | `messages` | Messagerie directe conducteur à conducteur | ✅ Fonctionnel | P2 améliorations |
+| **GPS** | `drive` | Navigation — itinéraire, voix, POI | ✅ FRI-002 résolu SESSION 16 | P2 améliorations |
+| **Signaler** | `altet` (overlay) | Créer alerte route / véhicule / aide | ⚠️ 3 blocs trop longs | P1 SESSION 17 |
+| **Activité** | `activite` | Historique des interactions | ✅ FRI-003/FLOW-005 résolus SESSION 16 | P2 améliorations |
+| **Messages** | `messages` | Messagerie directe conducteur à conducteur | ✅ FRI-001 résolu SESSION 16 | P2 améliorations |
 | Conducteurs proches | `nearby` (overlay) | Liste + contacter | ✅ OK | P2 |
 | Alertes actives | `alerts` (overlay) | Voir toutes les alertes | ✅ OK | — |
 | Contact | `contact` | LEGACY — OBSOLÈTE | 🔴 À supprimer | P1 |
@@ -37,27 +37,21 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 
 ### 🔴 P1 — À corriger en priorité
 
-#### FRI-001 · `panelContact` legacy dans le DOM
-- **Problème :** Le panel `contact` est obsolète mais toujours dans le DOM. `ui.js` redirige déjà vers `panelMessages`.
-- **Impact :** Code dupliqué, risque de régression, poids inutile pour l'utilisateur.
-- **Amélioration :** Supprimer le panel `contact` du HTML et de toute référence dans le code.
-- **Effort :** Faible — 1 bloc HTML + vérifier les appels `App.panel('contact')`.
+#### ~~FRI-001~~ · ✅ RÉSOLU SESSION 16 · `vehicleAlert()` → panel `contact` inexistant
+- **Était :** `vehicleAlert()` appelait `this.panel('contact')` — panel non reconnu, flux bloqué silencieusement.
+- **Fix SESSION 16 :** Redirige vers `this.panel('messages')` + `ImmatMessages.setMode('compose')` + préremplissage plaque + message via `setTimeout 80ms`.
 
 ---
 
-#### FRI-002 · Données simulées dans GPS (`navPremium`)
-- **Problème :** Le panneau GPS affiche : trafic en temps réel, limite de vitesse, nombre de voies — toutes ces données sont **simulées / statiques**.
-- **Impact :** L'utilisateur croit ces données réelles. Risque de désinformation et de perte de confiance.
-- **Amélioration :** Supprimer les champs simulés OU les marquer clairement `(Bientôt disponible)`.
-- **Effort :** Faible — masquer les éléments HTML ou ajouter un badge.
+#### ~~FRI-002~~ · ✅ RÉSOLU SESSION 16 · Données simulées dans GPS (`navPremium`)
+- **Était :** Cellule `limitVal` affichait la vitesse GPS actuelle avec label "km/h" → confusion avec limite légale. `trafficBar` toujours à 0%.
+- **Fix SESSION 16 :** Label "km/h" → "Vitesse". Suppression du bloc `<div class="traffic-bar">`.
 
 ---
 
-#### FRI-003 · Onglet "Nouveau" dans Activité → ouvre Signaler
-- **Problème :** Dans le panel Activité, l'onglet "Nouveau" redirige vers `navSignaler` (créer une alerte) au lieu d'un nouveau message.
-- **Impact :** Friction cognitive — l'utilisateur cherche "Nouveau message", il arrive sur "Signaler un incident".
-- **Amélioration :** Renommer l'onglet "Signaler +" ou le supprimer. Accès au signalement doit rester via la carte.
-- **Effort :** Faible — modifier le libellé et l'action du bouton.
+#### ~~FRI-003~~ · ✅ RÉSOLU SESSION 16 · Onglet "Nouveau" dans Messages
+- **Était :** Libellé "Nouveau" ambigu avec le badge "Nouveaux" dans Activité.
+- **Fix SESSION 16 :** Renommé "Composer ✏️".
 
 ---
 
@@ -77,11 +71,9 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 
 ---
 
-#### Labels FLOW-005 inadaptés pour alerte véhicule
-- **Problème :** Les boutons d'action dans l'activité pour une alerte véhicule reçue sont "Toujours là" et "Résolu" — ces labels sont conçus pour les alertes route, pas pour un signalement véhicule.
-- **Impact :** L'utilisateur B ne comprend pas ce que signifie "Toujours là" quand il a reçu "Votre feu est cassé".
-- **Amélioration :** Remplacer par "J'ai vérifié" et "C'est bon" pour le groupe `vehicle`.
-- **Effort :** Faible — conditionnel sur `a.group` dans `_actModCard`.
+#### ~~FLOW-005~~ · ✅ RÉSOLU SESSION 16 · Labels inadaptés pour alerte véhicule
+- **Était :** Boutons "Toujours là" / "Résolu" pour alerte `type === 'vehicle'` non-propriétaire — labels conçus pour la route.
+- **Fix SESSION 16 :** "Toujours là" → "J'ai vérifié" · "Résolu" → "C'est bon" dans `_actAlertCard` branche `vehicle`.
 
 ---
 
@@ -166,9 +158,8 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 | Démarrer navigation | `App.startNav()` | ✅ | — |
 | Stop GPS | `App.stopGps()` | ✅ | — |
 | POI (6 types) | `App.poi(type)` | ✅ | — |
-| navPremium — trafic | (affiché) | 🔴 SIMULÉ | FRI-002 |
-| navPremium — limite vitesse | (affiché) | 🔴 SIMULÉ | FRI-002 |
-| navPremium — voies | (affiché) | 🔴 SIMULÉ | FRI-002 |
+| navPremium — vitesse actuelle | label "Vitesse" ✅ | ✅ SESSION 16 | FRI-002 résolu |
+| navPremium — barre trafic | supprimée ✅ | ✅ SESSION 16 | FRI-002 résolu |
 
 ### Panel Signaler (`reportPanel`)
 | Bouton | Action | État | Problème |
@@ -182,11 +173,11 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 | Bouton | Action | État | Problème |
 |---|---|---|---|
 | Onglet Reçus | affiche feed | ✅ | — |
-| Onglet Nouveau | `App.navSignaler()` | ⚠️ | FRI-003 — libellé trompeur |
+| Onglet Nouveau | `App.navSignaler()` | ✅ SESSION 16 | FRI-003 résolu — "Composer ✏️" |
 | Card Aide — "✋ J'arrive" | `App.actQuickReply()` | ✅ SESSION 15 | — |
 | Card Aide — "Passer" | dismiss | ✅ | — |
-| Card Véhicule — "Toujours là" | status update | ⚠️ | FLOW-005 labels inadaptés |
-| Card Véhicule — "Résolu" | résoudre | ⚠️ | FLOW-005 labels inadaptés |
+| Card Véhicule — "J'ai vérifié" | status update | ✅ SESSION 16 | FLOW-005 résolu |
+| Card Véhicule — "C'est bon" | résoudre | ✅ SESSION 16 | FLOW-005 résolu |
 | Badge "✋ En route · [plaque]" | affiché si `helper_coming` | ✅ SESSION 15 | — |
 | Badge "Vu par le conducteur" | affiché si `seen_by_driver` | ✅ SESSION 15 | — |
 
@@ -220,16 +211,16 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 
 ## PARTIE 5 — PLAN D'AMÉLIORATION PRIORISÉ
 
-### SESSION 16 — P1 (à implémenter)
+### SESSION 16 — P1 (✅ FAIT)
 
-| Réf | Action | Panel concerné | Effort |
+| Réf | Action | Panel concerné | Résultat |
 |---|---|---|---|
-| FRI-001 | Supprimer `panelContact` legacy | contact | Faible |
-| FRI-002 | Masquer ou étiqueter navPremium simulé | drive | Faible |
-| FRI-003 | Renommer onglet "Nouveau" dans Activité | activite | Faible |
-| FRI-008 | reportPanel en 2 étapes | altet (overlay) | Moyen |
-| FRI-010 | SOS — appui long + confirmation | settings · altet | Moyen |
-| FLOW-005 | Labels "J'ai vérifié" / "C'est bon" pour véhicule | activite | Faible |
+| FRI-001 | `vehicleAlert()` → `panel('messages')` + préremplissage | messages | ✅ Flux complet débloqué |
+| FRI-002 | Label "km/h" → "Vitesse" + supprimer trafficBar | drive | ✅ Donnée non simulée |
+| FRI-003 | Renommer onglet "Nouveau" → "Composer ✏️" | messages | ✅ Libellé clair |
+| FLOW-005 | Labels "J'ai vérifié" / "C'est bon" pour véhicule | activite | ✅ Labels adaptés au contexte |
+| FRI-010 | SOS — déjà protégé (`startSosHold` 3s + double confirm) | — | ✅ Déjà implémenté — rien à faire |
+| FRI-008 | reportPanel en 2 étapes | altet (overlay) | 🔄 Reporté SESSION 17 |
 
 ### SESSION 17+ — P2 (amélioration progressive)
 
@@ -258,6 +249,11 @@ Elle sera mise à jour à chaque session qui modifie une fonctionnalité.
 | ARCH | Architecture fonctionnelle complète | ARCHITECTURE-FONCTIONNELLE-COMPLETE.md | 965cf96 |
 | MATRICE | Toutes les interactions A↔B | MATRICE-INTERACTIONS-COMPLETE.md | c01d8e8 |
 | AUDIT NS | Audit base connaissance Ange | AUDIT-BASE-CONNAISSANCE-ANGE.md | 9263f7e |
+| MEGA | Méga structure croisée architecture + audit | MEGA-STRUCTURE-NAVIGATION.md | 2696e70 |
+| FRI-001 | vehicleAlert → panel messages + préremplissage | index.html | SESSION 16 |
+| FRI-002 | navPremium label "Vitesse" + suppr trafficBar | index.html | SESSION 16 |
+| FRI-003 | Onglet "Composer ✏️" (ex "Nouveau") | index.html | SESSION 16 |
+| FLOW-005 | Labels "J'ai vérifié" / "C'est bon" alerte véhicule | index.html | SESSION 16 |
 
 ---
 
