@@ -155,18 +155,4 @@ const ImmatBrain = (function () {
   };
 })();
 
-  return {
-    setPhase,
-    getPhase,
-    canDisplayVehicleOnMap,
-    canAddVehicleToAlerts,
-    canRequestCall,
-    canShowPersistentCallBanner,
-    computeBadge,
-    validateInvariant,
-    classifyEntity,
-    audit,
-  };
-})();
-
 if (typeof module !== 'undefined') module.exports = { ImmatBrain };
