@@ -1,5 +1,5 @@
 {
-  "_v": 2,
+  "_v": 3,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
 
   "ange_identity": {
@@ -31,7 +31,9 @@
       "constraints": ["INV-010", "INV-014"],
       "deps":        [],
       "data":        ["supabase.auth", "user_metadata.role", "get_my_role() RPC"],
-      "note":        "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale"
+      "note":        "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale",
+      "serves":      ["PRI", "SEC"],
+      "known_costs": ["PERF", "TEST"]
     },
 
     "Profil": {
@@ -43,7 +45,9 @@
       "constraints": ["INV-006", "INV-007", "INV-011"],
       "deps":        ["Auth"],
       "data":        ["profiles.owner_plate", "profiles.vehicle_color", "profiles.pseudo", "profiles.phone"],
-      "note":        "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)"
+      "note":        "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)",
+      "serves":      ["PRI", "LNK"],
+      "known_costs": ["MAINT", "TEST"]
     },
 
     "Carte": {
@@ -58,7 +62,9 @@
       "constraints": ["INV-005", "INV-011", "INV-012"],
       "deps":        ["Profil"],
       "data":        ["S.map", "S.myMarker", "S.otherMkrs", "S.myLat", "S.myLng", "S.lastSpeed"],
-      "note":        "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur"
+      "note":        "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur",
+      "serves":      ["SEC", "PRV", "FRI"],
+      "known_costs": ["PERF", "MAINT", "TEST"]
     },
 
     "Messages": {
@@ -71,7 +77,9 @@
       "constraints": ["INV-001", "INV-004", "INV-010"],
       "deps":        ["Auth"],
       "data":        ["messages.sender_id", "messages.receiver_id", "messages.target_plate", "S.chMsg"],
-      "note":        "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide"
+      "note":        "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide",
+      "serves":      ["LNK", "ENT"],
+      "known_costs": ["PERF", "ARCH", "TEST"]
     },
 
     "Signalements": {
@@ -85,7 +93,9 @@
       "constraints": ["INV-001", "INV-002", "INV-003", "INV-004"],
       "deps":        ["Carte", "Auth"],
       "data":        ["reports table", "S.alerts", "S.alertMarkersById", "S.chCommunityReports"],
-      "note":        "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003)"
+      "note":        "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003)",
+      "serves":      ["SEC", "ENT", "PRV"],
+      "known_costs": ["PERF", "ARCH", "TEST"]
     },
 
     "Ange": {
@@ -99,7 +109,9 @@
       "constraints": ["INV-010", "INV-014"],
       "deps":        ["Auth"],
       "data":        ["S.isGardien", "user_metadata.role", "get_my_role() RPC"],
-      "note":        "S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback dans openMap() si S.isGardien===undefined"
+      "note":        "S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback dans openMap() si S.isGardien===undefined",
+      "serves":      ["FRI", "SEC"],
+      "known_costs": ["PERF", "ARCH", "MAINT", "TEST"]
     }
 
   },

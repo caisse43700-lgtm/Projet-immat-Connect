@@ -1,5 +1,5 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_doc": "Constitution des Transformations d'ImmatConnect — couche de gouvernance des évolutions. Toute modification de l'organisme doit traverser cette couche avant d'entrer dans le code.",
 
   "_purpose": "Ce qui détruit les projets n'est pas l'absence de documentation. C'est : bonne idée → autre bonne idée → contradictions invisibles → dette structurelle → refonte. Cette constitution existe pour empêcher cela.",
@@ -116,17 +116,49 @@
       "label":      "Justification obligatoire",
       "principle":  "Toute évolution doit répondre à la question : quel coût réel cette évolution réduit-elle ?",
       "obligations": [
-        "Nommer le coût réel réduit : latence, friction utilisateur, risque, complexité, maintenance",
-        "Évaluer si le coût de l'évolution est inférieur au coût réduit",
-        "Accepter qu'une évolution élégante sans coût réduit réel soit refusée"
+        "Nommer le coût réel réduit en référençant au moins une finalité (voir finalites)",
+        "Évaluer si le coût de l'évolution est inférieur au coût réduit (voir couts)",
+        "Déclarer la confidence de l'évaluation : low | medium | high",
+        "Accepter qu'une évolution élégante sans finalité servie soit refusée"
       ],
       "forbidden": [
         "Créer une structure parce qu'elle est élégante",
         "Créer une structure parce qu'elle sera utile 'plus tard'",
-        "Créer une abstraction pour un usage hypothétique"
+        "Créer une abstraction pour un usage hypothétique",
+        "Déclarer serves:[] — toute évolution doit servir au moins une finalité"
       ],
       "severity":  "high",
-      "test":      "Si cette structure n'existait pas, quel problème concret subsisterait pour l'utilisateur ou le Gardien ?"
+      "test":      "Si cette structure n'existait pas, quel problème concret subsisterait pour l'utilisateur ou le Gardien ?",
+
+      "finalites": {
+        "SEC":  "sécurité conducteur",
+        "ENT":  "entraide entre conducteurs",
+        "PRV":  "prévention des dangers",
+        "FRI":  "réduction de la friction",
+        "PRI":  "protection de la vie privée",
+        "LNK":  "qualité du lien conducteur ↔ conducteur"
+      },
+
+      "couts": {
+        "COG":   "charge cognitive utilisateur",
+        "UI":    "surface d'interface à maintenir",
+        "PERF":  "latence ou ressources consommées",
+        "MAINT": "complexité code ajoutée",
+        "PRIV":  "exposition vie privée accrue",
+        "ARCH":  "couplage architectural introduit",
+        "TEST":  "charge de test supplémentaire"
+      },
+
+      "arbitrage": {
+        "regle":      "Acceptable si serves non vide, chaque cost justifié par serves, confidence >= medium pour critique",
+        "non_calcul": "Les finalités et coûts sont un vocabulaire commun — pas une formule. Le Gardien décide toujours.",
+        "exemple": {
+          "feature":    "conducteurs_proches",
+          "serves":     ["SEC", "LNK"],
+          "costs":      ["PERF", "TEST"],
+          "confidence": "high"
+        }
+      }
     },
 
     "TRF-007": {
@@ -150,15 +182,15 @@
 
   "process": {
     "steps": [
-      { "step": 1, "name": "Nommer l'idée",           "question": "Quelle est la modification proposée ?" },
-      { "step": 2, "name": "Rattachement (TRF-001)",   "question": "À quel organe, interaction, parcours ou invariant est-elle reliée ?" },
-      { "step": 3, "name": "Impact (TRF-002)",          "question": "Qu'est-ce que cette modification touche exactement ?" },
-      { "step": 4, "name": "Conflits (TRF-004)",        "question": "Entre-t-elle en tension avec un invariant ou une décision antérieure ?" },
-      { "step": 5, "name": "Justification (TRF-006)",   "question": "Quel coût réel réduit-elle ?" },
+      { "step": 1, "name": "Nommer l'idée",               "question": "Quelle est la modification proposée ?" },
+      { "step": 2, "name": "Rattachement (TRF-001)",       "question": "À quel organe, interaction, parcours ou invariant est-elle reliée ?" },
+      { "step": 3, "name": "Impact (TRF-002)",              "question": "Qu'est-ce que cette modification touche exactement ?" },
+      { "step": 4, "name": "Conflits (TRF-004)",            "question": "Entre-t-elle en tension avec un invariant ou une décision antérieure ?" },
+      { "step": 5, "name": "Justification (TRF-006)",       "question": "Quelles finalités sert-elle (serves) ? Quels coûts introduit-elle (costs) ? Confidence ?" },
       { "step": 6, "name": "Test de suppression (TRF-007)", "question": "Si elle n'existait pas, qui souffrirait et comment ?" },
-      { "step": 7, "name": "Duplication (TRF-005)",     "question": "Réutilise-t-elle les sources canoniques existantes ?" },
-      { "step": 8, "name": "Décision",                  "question": "Appliquer ou refuser ?" },
-      { "step": 9, "name": "Commit simultané (TRF-003)","question": "La documentation architecturale est-elle mise à jour dans ce même commit ?" }
+      { "step": 7, "name": "Duplication (TRF-005)",         "question": "Réutilise-t-elle les sources canoniques existantes ?" },
+      { "step": 8, "name": "Décision",                      "question": "Appliquer ou refuser ?" },
+      { "step": 9, "name": "Commit simultané (TRF-003)",    "question": "La documentation architecturale est-elle mise à jour dans ce même commit ?" }
     ]
   },
 
@@ -166,7 +198,7 @@
     "status":    "active",
     "confidence": "high",
     "validated": "2026-06",
-    "why":       "Créé pour prévenir la dette structurelle silencieuse. Toute évolution doit traverser cette couche avant d'entrer dans le code."
+    "why":       "Créé pour prévenir la dette structurelle silencieuse. TRF-006 enrichi avec taxonomie finalités+coûts pour rendre l'arbitrage comparable (pas calculable)."
   }
 
 }
