@@ -120,26 +120,7 @@
       <button class="alert-card medium" onclick="App.vehicleAlertQuick('Objet traînant sous le véhicule')"><span class="icon">⛓️</span><span>Objet</span></button>
       <button class="alert-card info" onclick="App.vehicleAlertQuick('Autre problème visible')"><span class="icon">⚠️</span><span>Autre</span></button>
     </div>
-    <!-- Legacy elements required by existing JS -->
     <div id="myAlertsList" class="altet-list" style="margin-top:8px"><div class="my-alert-empty">Aucune alerte active.</div></div>
-    <div id="signalRecapCard" class="signal-recap-card" style="display:none">
-      <div class="signal-recap-head"><span>✉️ Dernier signalement reçu</span><span class="chev">⌃</span></div>
-      <div class="signal-recap-body">
-        <div class="signal-recap-top">
-          <div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div>
-          <div id="recapStatus" class="signal-state">En attente</div>
-        </div>
-        <div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div>
-        <div id="recapTime" class="signal-time">◷ Aucun message.</div>
-        <div class="signal-actions">
-          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button>
-          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button>
-          <button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button>
-          <button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button>
-          <button type="button" class="seen" onclick="App.callSignalPlate()">📞 Appeler</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Étape 2 : sous-types Aide -->
@@ -694,68 +675,7 @@ clusterCloseVehicles(){
 },addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;if($('iTarget'))$('iTarget').value=S.selPlate;if($('icComposePlate'))$('icComposePlate').value=fPlate(p);S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.updateReportTarget?.();this.hideVehicleContextMenu?.();this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText'))$('icComposeText').focus()}catch(e){}},120)},
 showVehicleContextMenu(vehicle){try{S.map?.closePopup?.()}catch(e){}const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate;if($('vehicleContextPlate'))$('vehicleContextPlate').textContent='🚗 '+S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;if($('icComposePlate'))$('icComposePlate').value=fPlate(plate);this.updateReportTarget?.()}this.hideVehicleContextMenu?.();if(action==='contact'){this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText'))$('icComposeText').focus()}catch(e){}},120)}else if(action==='signal'){// Pré-remplir la plaque dans le panneau signalement véhicule
 if(plate&&$('sigVehiclePlate'))$('sigVehiclePlate').value=fPlate(plate);this.openVehicleReport()}else if(action==='assist'){this.openAssist()}else if(action==='block'){this.blockPlate(plate)}},
-selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target)return toast('Choisis un autre véhicule.','bad');if($('icComposePlate'))$('icComposePlate').value=fPlate(target);this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText')){$('icComposeText').value=t;$('icComposeText').focus()}}catch(e){}},120)},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
-async sendMsg(){
-  // Lock button pour éviter le double-clic
-  const sendBtn=document.querySelector('.msg-send-btn');
-  if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Envoi…';}
-  const unlock=()=>{if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer';}};
-  try{
-  // Règle stricte : l'expéditeur est toujours le compte connecté,
-  // la plaque sélectionnée est uniquement le destinataire.
-  const myPlate=this.ownPlate();
-  const plate=this.selectedTargetPlate();
-  const msg=$('iMsg').value.trim();
-  if(!myPlate){unlock();return toast('Profil conducteur introuvable.','bad');}
-  if(!plate){unlock();return hint('hTarget','error','Sélectionne le véhicule destinataire.');}
-  if(!vPlate(plate)){unlock();return hint('hTarget','error','Plaque destinataire invalide.');}
-  if(plate===myPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-  if(!msg){unlock();return hint('hMsg','error','Ajoute un message.');}
-
-  const now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);
-  if(S.msgClicks.length>=CFG.maxMsgPerMinute){unlock();return toast('Trop de messages.','bad');}
-  S.msgClicks.push(now);
-
-  const {data:ud}=await sb.auth.getUser(),u=ud?.user;
-  if(!u){unlock();return toast('Reconnecte-toi.','bad');}
-
-  const {data:meProfile}=await sb.from('profiles').select('id,owner_plate').eq('id',u.id).maybeSingle();
-  const senderPlate=fPlate(meProfile?.owner_plate||myPlate);
-  if(!senderPlate){unlock();return toast('Profil conducteur incomplet.','bad');}
-  if(plate===senderPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  // Cherche la plaque avec tirets ET sans tirets pour compatibilité
-  let {data:target,error:te}=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plate).maybeSingle();
-  if(!target?.id){
-    const plateCompact=nPlate(plate);
-    const r2=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plateCompact).maybeSingle();
-    if(r2.data?.id){target=r2.data;te=r2.error;}
-  }
-  if(te)console.warn(te);
-  if(!target?.id){unlock();return toast('Aucun utilisateur avec cette plaque.','bad');}
-  if(target.id===u.id){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  const receiverPlate=fPlate(target.owner_plate||plate);
-  if(receiverPlate===senderPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  const {data:a}=await sb.from('messages').select('status').or('and(sender_id.eq.'+u.id+',receiver_id.eq.'+target.id+'),and(sender_id.eq.'+target.id+',receiver_id.eq.'+u.id+')');
-  const rows=a||[],acc=rows.some(x=>x.status==='accepted');
-  // Plus de blocage pending — on autorise toujours l'envoi
-
-  // On tente d'abord avec les plaques explicites. Si ta table n'a pas encore
-  // sender_plate/receiver_plate, fallback automatique sans casser l'envoi.
-  const basePayload={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:msg,status:'accepted'};
-  const richPayload={...basePayload,sender_plate:senderPlate,receiver_plate:receiverPlate};
-  let {error}=await sb.from('messages').insert(richPayload);
-  if(error&&/sender_plate|receiver_plate|column|schema cache/i.test(String(error.message||''))){
-    ({error}=await sb.from('messages').insert(basePayload));
-  }
-  if(error){console.error(error);unlock();return toast('Erreur envoi.','bad');}
-
-  $('iMsg').value='';S.conv=receiverPlate;S.selPlate=receiverPlate;if($('iTarget'))$('iTarget').value=receiverPlate;
-  toast('✅ Message envoyé à '+receiverPlate+'.','ok');
-  this.loadMsgs();
-  }catch(e){console.error(e);toast('Erreur message.','bad');}finally{unlock();}},
+selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target)return toast('Choisis un autre véhicule.','bad');if($('icComposePlate'))$('icComposePlate').value=fPlate(target);this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText')){$('icComposeText').value=t;$('icComposeText').focus()}}catch(e){}},120)},
 async startMsgs(){await this.loadMsgs();await this.subMsgs()},
 async loadMsgs(){
   try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')await p}catch(e){}
@@ -842,25 +762,6 @@ renderMyAlertsBlock(){
   }else{
     list.innerHTML='<div class="my-alert-empty">Aucune alerte active.</div>';
   }
-  this.renderSignalRecap();
-},
-renderSignalRecap(){
-  const rows=(S.alerts||[]).filter(a=>isNearby(a)&&(a.group==='vehicle'||a.type==='vehicule')).sort((a,b)=>(b.at||0)-(a.at||0));
-  const a=rows[0]||null;
-  if(!$('signalRecapCard'))return;
-  const plate=a?nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''):'--';
-  const status=a&&a.status==='seen'?'Vu':'En attente';
-  const reason=a?(a.reason||'Signalement reçu'):'Aucun signalement reçu';
-  const ago=a?this.relativeTime(a.at||Date.now()):'Aucun message.';
-  if($('recapPlate'))$('recapPlate').textContent=plate||'--';
-  if($('recapSub'))$('recapSub').textContent='Immatriculation : '+(plate||'--');
-  if($('recapStatus')){
-    $('recapStatus').textContent=status;
-    $('recapStatus').style.borderColor=status==='Vu'?'#00d491':'#ffb020';
-    $('recapStatus').style.color=status==='Vu'?'#00d491':'#ffb020';
-  }
-  if($('recapReason'))$('recapReason').textContent=reason;
-  if($('recapTime'))$('recapTime').textContent=a?'◷ Reçu '+ago:'◷ Aucun message.';
 },
 relativeTime(ts){
   const d=Math.max(0,Date.now()-Number(ts||Date.now())),m=Math.floor(d/60000);

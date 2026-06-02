@@ -13,7 +13,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | P0-001 | Cycle aide sans confirmation helper | FRI-009 | 💬 à concevoir |
 | P0-002 | Retour émetteur quand alerte véhicule vue | JRN-005 | 💬 à concevoir |
 | P0-003 | Pas de confirmation lecture message | FRI-006 | 💬 à concevoir (P2) |
-| P0-004 | `App.callSignalPlate()` inexistante — ReferenceError si appelée | MORT-001 | 🔧 supprimer le bouton |
+| P0-004 | `App.callSignalPlate()` inexistante — ReferenceError si appelée | MORT-001 | ✅ fait (SESSION 12) |
 
 ---
 
@@ -26,7 +26,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | P1-001 | Supprimer `panelContact` du DOM + fonctions legacy (clearMsg, sendMsg, voicePlate dans panelContact) | D-001 | ✅ fait (SESSION 11) |
 | P1-002 | Supprimer ou masquer données simulées navPremium (Limite, Trafic, Voie, Recalcul) | DA-002 | 💬 décision Gardien requise |
 | P1-003 | Supprimer onglet "Nouveau" dans panelActivite → navSignaler | D-008 | ✅ fait (SESSION 8) |
-| P1-009 | Supprimer `signalRecapCard` (div caché, boutons morts, jamais affichée) | MORT-003 | 🔧 à supprimer |
+| P1-009 | Supprimer `signalRecapCard` (div caché, boutons morts, jamais affichée) | MORT-003 | ✅ fait (SESSION 12) |
 
 ### Sécurité UX
 
@@ -82,6 +82,14 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 |---|---|---|
 | P2-018 | quickMsg() / quickReply() ciblaient iMsg/iTarget (champs morts panelContact) | ✅ corrigé |
 | P2-019 | brain-dialog : retry RPC rôle si cold start Supabase | ✅ corrigé |
+
+### Nettoyage code mort (SESSION 12)
+
+| ID | Item | Statut |
+|---|---|---|
+| P0-004 | Bouton `📞 Appeler` → `callSignalPlate()` inexistante — supprimé avec signalRecapCard | ✅ fait |
+| P1-009 | `signalRecapCard` div (display:none, jamais affichée) + `renderSignalRecap()` supprimés | ✅ fait |
+| MORT-004 | `clearMsg()` + `sendMsg()` — code mort post-suppression panelContact, écriture `$('iMsg')` non gardée | ✅ fait |
 
 ### Clarté UI
 
