@@ -1,7 +1,8 @@
-# SESSION 14 — APPLIQUER LES CORRECTIONS BADGES
+# SESSION 14 — CORRECTION DES BADGES
 
 > Fichier cible : index.html
-> Objectif : appliquer la séparation officielle :
+>
+> Objectif :
 >
 > actBadge     = alertes
 > topMsgBadge  = messages
@@ -25,21 +26,21 @@ const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').
 const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length;
 ```
 
-## Raison
+## Effet
 
-Avant :
+### Avant
 
 ```
 catBadgeVehicle = alertes véhicule + messages non lus
 ```
 
-Après :
+### Après
 
 ```
 catBadgeVehicle = alertes véhicule uniquement
 ```
 
-Les messages appartiennent à `topMsgBadge`.
+Les messages sont désormais comptabilisés uniquement dans `topMsgBadge`.
 
 ---
 
@@ -66,16 +67,16 @@ const legacy=$('topMsgBadge');
 if(legacy){legacy.textContent=badgeFmt(unreadMsgs);legacy.style.display=unreadMsgs>0?'flex':'none';}
 ```
 
-## Raison
+## Effet
 
-Avant :
+### Avant
 
 ```
 actBadge    = messages + alertes
 topMsgBadge = messages + alertes
 ```
 
-Après :
+### Après
 
 ```
 actBadge    = alertes uniquement
@@ -98,15 +99,15 @@ const mail=(Number(S.unreadMsgCount)||0)+pendingSignalCount();
 const mail=Number(S.unreadMsgCount)||0;
 ```
 
-## Raison
+## Effet
 
-Avant :
+### Avant
 
 ```
 topMsgBadge = messages + alertes véhicule non vues
 ```
 
-Après :
+### Après
 
 ```
 topMsgBadge = messages uniquement
@@ -118,19 +119,29 @@ Les alertes restent dans `actBadge`.
 
 # RÉSULTAT FINAL
 
+## Badge Activité
+
 ```
 actBadge = catBadgeRoute + catBadgeVehicle + catBadgeAide
 ```
 
-Alertes uniquement.
+Contient uniquement :
+- Alertes route
+- Alertes véhicule
+- Demandes d'aide
 
 ---
+
+## Badge Messages
 
 ```
 topMsgBadge = messages directs non lus
 ```
 
-Conversations uniquement.
+Contient uniquement :
+- Conversations
+- Réponses aux alertes
+- Réponses aux demandes d'aide
 
 ---
 
@@ -146,7 +157,31 @@ Une conversation ne crée jamais d'alerte.
 
 ---
 
-## Commit
+# IMPACT UX
+
+Avant — 3 alertes + 5 messages :
+
+```
+actBadge    = 8
+topMsgBadge = 8
+```
+
+Après — 3 alertes + 5 messages :
+
+```
+actBadge    = 3
+topMsgBadge = 5
+```
+
+Le conducteur comprend immédiatement :
+
+```
+Ce qui demande une action ≠ Ce qui relève d'une conversation
+```
+
+---
+
+# COMMIT DE RÉFÉRENCE
 
 ```
 918b762  fix: séparation badges actBadge (alertes) / topMsgBadge (messages)
