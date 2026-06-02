@@ -15,6 +15,34 @@ function anonymize(text: string): string {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uid]');
 }
 
+// ── Validation schéma NS (DET-002) ───────────────────────────────────────
+// Fail-fast au démarrage : toute erreur de schéma NS est détectée avant usage.
+function validateNSSchema(): void {
+  const ns = NS as Record<string, unknown>;
+  const required: Array<[string, string]> = [
+    ['organs',        'Record<organe, {...}>'],
+    ['routing',       'Record<signal, organe>'],
+    ['inhibitions',   'Record<flag, description>'],
+    ['invariants',    'Record<id, {label, severity}>'],
+    ['ange_identity', '{posture, evaluation, limite}'],
+  ];
+  for (const [field, shape] of required) {
+    if (!ns[field] || typeof ns[field] !== 'object') {
+      throw new Error(`[validateNSSchema] NS.${field} manquant ou invalide (attendu : ${shape})`);
+    }
+  }
+  const organs = ns.organs as Record<string, unknown>;
+  if (Object.keys(organs).length === 0) {
+    throw new Error('[validateNSSchema] NS.organs vide — aucun organe défini');
+  }
+  const id = ns.ange_identity as Record<string, unknown>;
+  for (const f of ['posture', 'evaluation', 'limite']) {
+    if (typeof id[f] !== 'string' || !(id[f] as string).trim()) {
+      throw new Error(`[validateNSSchema] NS.ange_identity.${f} manquant ou vide`);
+    }
+  }
+}
+
 // ── Transformation NS → prompt compact (INV-015) ─────────────────────────
 // Source unique : _shared/nervous-system.ts (dérivé de immat-nervous-system.json)
 // Ne jamais écrire ce texte à la main — modifier la source, pas ce fichier.
@@ -100,6 +128,7 @@ Langue : français.`;
 
 // ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
 // Crash au démarrage si NS invalide : fail-fast > fail silencieux.
+validateNSSchema(); // DET-002
 const STATIC_SYSTEM = nsToPrompt(3); // gardien : depth 3
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
