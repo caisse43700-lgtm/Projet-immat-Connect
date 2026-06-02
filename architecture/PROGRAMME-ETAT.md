@@ -1,32 +1,63 @@
 # IMMATCONNECT — ÉTAT DU PROGRAMME
-> Mis à jour : 2026-06-02 · Décision Gardien
+> Mise à jour : 2026-06-02
+> Statut officiel du programme
 
 ---
 
-## PHASE 1 — ARCHITECTURE
-**Statut : TERMINÉE ✅**
+# PHASE 1 — ARCHITECTURE
+
+## Statut : TERMINÉE ✅
+
+L'architecture du système est considérée comme stable.
+
+Tous les éléments fondateurs nécessaires au fonctionnement de l'organisme sont présents, cohérents et validés.
+
+### Livrables validés
 
 | Livrable | Statut |
 |---|---|
 | ADN produit | ✅ |
-| Constitution v6 + invariants INV-001 → INV-015 | ✅ |
+| Constitution v6 | ✅ |
+| Invariants INV-001 → INV-015 | ✅ |
 | Access Policy (Gardien / Protecteur / Observateur) | ✅ |
-| NS v6 canonique (immat-nervous-system.json) | ✅ |
-| sync-ns.js → nervous-system.ts | ✅ |
-| nsToPrompt(depth:1/2/3) | ✅ |
-| validateNSSchema() fail-fast | ✅ |
-| validate-ns-refs.js CI | ✅ |
-| Architecture UX modulaire (11 fichiers) | ✅ |
-| UX-BACKLOG consolidé — source unique | ✅ |
+| NS v6 canonique | ✅ |
+| sync-ns.js | ✅ |
+| nervous-system.ts généré | ✅ |
+| nsToPrompt(depth) | ✅ |
+| validateNSSchema() | ✅ |
+| validate-ns-refs.js | ✅ |
+| Architecture UX modulaire | ✅ |
+| UX-BACKLOG consolidé | ✅ |
+
+### Résultat
+
+L'organisme possède désormais :
+
+- une identité,
+- une constitution,
+- des invariants,
+- des organes,
+- des règles de transformation,
+- un système nerveux,
+- un pipeline Ange contrôlé,
+- une documentation cohérente.
+
+Aucune dette structurelle bloquante n'est identifiée.
 
 ---
 
-## PHASE 2 — VALIDATION TERRAIN
-**Statut : À COMMENCER**
+# PHASE 2 — VALIDATION TERRAIN
 
-**Objectif** : vérifier que le système produit de la valeur réelle en situation réelle.
+## Statut : EN COURS DE DÉMARRAGE 🚀
 
-**Flux testé :**
+L'objectif n'est plus de construire.
+
+L'objectif est désormais de vérifier que ce qui a été construit produit réellement de la valeur.
+
+---
+
+## Flux à observer
+
 ```
 Question réelle
 ↓ Routage
@@ -34,32 +65,86 @@ Question réelle
 ↓ nsToPrompt()
 ↓ Ange
 ↓ Réponse
-↓ Décision Gardien
+↓ Décision du Gardien
 ```
 
-**Questions à valider :**
+---
+
+## Questions de validation
+
+### Utilité
 
 1. Les réponses de l'Ange sont-elles utiles ?
-2. Le routage choisit-il le bon organe ?
-3. Les sources citées sont-elles pertinentes ?
-4. Les vigilances détectent-elles les vrais risques ?
-5. Le Gardien gagne-t-il réellement du temps ?
-6. Les réponses améliorent-elles les décisions ?
+2. Les réponses sont-elles actionnables ?
+3. Le Gardien gagne-t-il du temps ?
+
+### Pertinence
+
+4. Le routage choisit-il le bon organe ?
+5. Les sources citées sont-elles pertinentes ?
+6. Les vigilances détectent-elles les vrais risques ?
+
+### Qualité
+
 7. Quels faux positifs subsistent ?
 8. Quels faux négatifs subsistent ?
+9. Quels cas réels échappent encore au système ?
+
+### Valeur
+
+10. Les réponses améliorent-elles les décisions ?
+11. Les réponses réduisent-elles l'incertitude ?
+12. Les réponses renforcent-elles le jugement du Gardien sans créer de dépendance ?
 
 ---
 
-## RÈGLE ACTIVE
+# RÈGLE ACTIVE
 
-> **TRF-006** — *Quel coût réel cette modification réduit-elle ?*
->
-> Toute évolution future doit répondre à cette question avant d'être acceptée.
+## TRF-006
+
+> Quel coût réel cette modification réduit-elle ?
+
+Toute évolution future doit répondre explicitement à cette question avant d'être acceptée.
+
+Une amélioration qui ne réduit aucun coût réel n'est pas prioritaire.
 
 ---
 
-## DÉCISION GARDIEN
+# ORIENTATION DU PROGRAMME
 
-> On arrête de construire. On commence à utiliser.
+Le risque principal n'est plus :
+
+- l'absence de structure,
+- l'absence de documentation,
+- l'absence de classification.
+
+Le risque principal devient :
+
+- la sur-architecture,
+- la complexité inutile,
+- les améliorations sans impact réel.
+
+---
+
+# DÉCISION GARDIEN
+
+> On arrête de construire.
 >
-> Le prochain audit doit porter sur le comportement réel du système, pas sur sa structure.
+> On commence à utiliser.
+>
+> Le prochain audit devra mesurer le comportement réel de l'organisme.
+>
+> Les futures décisions seront guidées par l'usage observé et non par la recherche d'une architecture plus complexe.
+
+---
+
+# ÉTAT OFFICIEL
+
+| Dimension | Statut |
+|---|---|
+| Architecture | TERMINÉE ✅ |
+| Documentation | TERMINÉE ✅ |
+| Système nerveux | TERMINÉE ✅ |
+| Pipeline Ange | TERMINÉE ✅ |
+| Classification UX | TERMINÉE ✅ |
+| Validation terrain | EN COURS DE DÉMARRAGE 🚀 |
