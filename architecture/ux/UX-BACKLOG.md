@@ -23,7 +23,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 
 | ID | Item | Décision | Statut |
 |---|---|---|---|
-| P1-001 | Supprimer `panelContact` du DOM + fonctions legacy (clearMsg, sendMsg, voicePlate dans panelContact) | D-001 | 🔧 condition presque remplie — vérifier call sites restants |
+| P1-001 | Supprimer `panelContact` du DOM + fonctions legacy (clearMsg, sendMsg, voicePlate dans panelContact) | D-001 | ✅ fait (SESSION 11) |
 | P1-002 | Supprimer ou masquer données simulées navPremium (Limite, Trafic, Voie, Recalcul) | DA-002 | 💬 décision Gardien requise |
 | P1-003 | Supprimer onglet "Nouveau" dans panelActivite → navSignaler | D-008 | ✅ fait (SESSION 8) |
 | P1-009 | Supprimer `signalRecapCard` (div caché, boutons morts, jamais affichée) | MORT-003 | 🔧 à supprimer |
@@ -181,19 +181,9 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 | UX-INTERACTION-SKELETON.md — squelette A→B complet | SESSION 10 |
 | Boutons morts catalogués (MORT-001 à MORT-007) | SESSION 10 |
 | Boutons manquants étendus (MISS-003 à MISS-006) | SESSION 10 |
-
-
----
-
-## P0 — Bloquants utilisateur
-
-Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
-
-| ID | Item | Friction | Statut |
-|---|---|---|---|
-| P0-001 | Cycle aide sans confirmation helper | FRI-009 | 💬 à concevoir |
-| P0-002 | Retour émetteur quand alerte véhicule vue | JRN-005 | 💬 à concevoir |
-| P0-003 | Pas de confirmation lecture message | FRI-006 | 💬 à concevoir (P2) |
+| panelContact supprimé — D-001 remplie (voicePlate/voiceMsg/fallbacks migrés) | SESSION 11 |
+| validateNSSchema() dans brain-dialog — DET-002 (fail-fast schéma NS) | SESSION 11 |
+| AUDIT-2026-06.md mis à jour — INC-001 et DET-002 fermés | SESSION 11 |
 
 ---
 
