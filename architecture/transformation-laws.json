@@ -1,0 +1,172 @@
+{
+  "_v": 1,
+  "_doc": "Constitution des Transformations d'ImmatConnect — couche de gouvernance des évolutions. Toute modification de l'organisme doit traverser cette couche avant d'entrer dans le code.",
+
+  "_purpose": "Ce qui détruit les projets n'est pas l'absence de documentation. C'est : bonne idée → autre bonne idée → contradictions invisibles → dette structurelle → refonte. Cette constitution existe pour empêcher cela.",
+
+  "_principle": "Une structure n'existe pas parce qu'elle est élégante. Une structure existe uniquement parce qu'elle réduit un coût réel. Si elle ne réduit aucun coût, elle ne doit pas exister.",
+
+  "_position": {
+    "above":  ["ADN", "Invariants", "Organes", "Métabolisme", "UX"],
+    "role":   "Gouvernance — filtre toute évolution avant qu'elle n'entre dans l'organisme",
+    "below":  ["Décision", "Déploiement"],
+    "note":   "La Constitution des Transformations n'est pas une couche de plus. C'est le passage obligatoire entre l'idée et le code."
+  },
+
+  "_chain": {
+    "before": "Idée → Patch",
+    "after":  "Idée → Analyse d'impact → Organes touchés → Invariants touchés → Interactions touchées → Parcours touchés → Métabolisme touché → Décision → Patch",
+    "rule":   "Aucune modification ne devrait entrer directement dans l'organisme. Toute modification devrait traverser cette couche."
+  },
+
+  "_sources": {
+    "nervous_system": "immat-nervous-system.json",
+    "metabolism":     "immat-metabolism.json",
+    "invariants":     "immat-nervous-system.json#invariants"
+  },
+
+  "laws": {
+
+    "TRF-001": {
+      "label":      "Aucune modification sans rattachement",
+      "principle":  "Toute modification doit être reliée à au moins un élément de l'organisme.",
+      "obligations": [
+        "Identifier au moins un des éléments suivants avant tout patch : organe, interaction, parcours, invariant",
+        "Nommer explicitement cet élément dans le commit ou la décision"
+      ],
+      "forbidden": [
+        "Modification orpheline — sans rattachement à l'organisme",
+        "Patch 'quick fix' non relié à une structure existante"
+      ],
+      "severity":  "critique",
+      "test":      "Peut-on tracer cette modification jusqu'à au moins un organe, une interaction, un parcours ou un invariant ?"
+    },
+
+    "TRF-002": {
+      "label":      "Analyse d'impact obligatoire",
+      "principle":  "Avant toute évolution, identifier ce qui sera touché.",
+      "obligations": [
+        "Identifier les organes impactés (référence : immat-nervous-system.json#organs)",
+        "Identifier les interactions impactées",
+        "Identifier les parcours impactés",
+        "Identifier les écrans et boutons impactés",
+        "Identifier les invariants mis sous tension"
+      ],
+      "forbidden": [
+        "Déployer sans avoir listé au moins un élément impacté",
+        "Considérer qu'une modification 'ne touche à rien d'autre'"
+      ],
+      "severity":  "high",
+      "test":      "Si cette modification casse quelque chose, où exactement ? La réponse doit exister avant le déploiement."
+    },
+
+    "TRF-003": {
+      "label":      "Mise à jour simultanée",
+      "principle":  "Si une structure change, sa représentation architecturale change dans le même commit.",
+      "obligations": [
+        "Tout changement de code qui modifie un organe met à jour immat-nervous-system.json dans le même commit",
+        "Tout changement qui modifie le statut d'une connaissance met à jour immat-metabolism.json",
+        "Tout changement qui introduit une nouvelle règle met à jour ce fichier"
+      ],
+      "forbidden": [
+        "Code mis à jour + documentation oubliée",
+        "Numéros de ligne obsolètes dans le système nerveux",
+        "_shared/nervous-system.ts en avance sur immat-nervous-system.json (violation INV-015)"
+      ],
+      "severity":  "critique",
+      "test":      "Si quelqu'un lit uniquement les fichiers architecture/ et immat-nervous-system.json demain, aura-t-il une image exacte du code actuel ?"
+    },
+
+    "TRF-004": {
+      "label":      "Conflit explicite",
+      "principle":  "Un conflit détecté doit être nommé avant toute recommandation.",
+      "obligations": [
+        "Nommer explicitement l'invariant, la décision antérieure, ou l'organe en conflit",
+        "Proposer une résolution avant de continuer",
+        "Ne jamais passer sous silence un conflit pour avancer plus vite"
+      ],
+      "forbidden": [
+        "Contourner silencieusement un invariant",
+        "Ignorer une décision antérieure sans la citer",
+        "Recommander une évolution qui entre en conflit avec l'ADN sans le signaler"
+      ],
+      "severity":  "critique",
+      "test":      "Cette proposition entre-t-elle en tension avec un invariant, une décision antérieure, ou l'identité de l'organisme ?"
+    },
+
+    "TRF-005": {
+      "label":      "Aucune duplication",
+      "principle":  "Toute nouvelle structure doit réutiliser la source canonique existante. Transformer : oui. Dupliquer : non.",
+      "obligations": [
+        "Identifier la source canonique avant de créer une nouvelle représentation",
+        "Créer une transformation depuis la source, jamais une copie",
+        "Documenter explicitement quelle source est transformée et comment"
+      ],
+      "forbidden": [
+        "Copier un objet de immat-nervous-system.json dans un autre fichier sans transformation",
+        "Réécrire à la main une information qui existe déjà dans une source canonique",
+        "Créer deux fichiers contenant la même vérité sous deux formes non liées"
+      ],
+      "severity":  "critique",
+      "invariants": ["INV-011", "INV-015"],
+      "test":      "Cette information existe-t-elle déjà quelque part ? Si oui, transformons-nous depuis cette source ou dupliquons-nous ?"
+    },
+
+    "TRF-006": {
+      "label":      "Justification obligatoire",
+      "principle":  "Toute évolution doit répondre à la question : quel coût réel cette évolution réduit-elle ?",
+      "obligations": [
+        "Nommer le coût réel réduit : latence, friction utilisateur, risque, complexité, maintenance",
+        "Évaluer si le coût de l'évolution est inférieur au coût réduit",
+        "Accepter qu'une évolution élégante sans coût réduit réel soit refusée"
+      ],
+      "forbidden": [
+        "Créer une structure parce qu'elle est élégante",
+        "Créer une structure parce qu'elle sera utile 'plus tard'",
+        "Créer une abstraction pour un usage hypothétique"
+      ],
+      "severity":  "high",
+      "test":      "Si cette structure n'existait pas, quel problème concret subsisterait pour l'utilisateur ou le Gardien ?"
+    },
+
+    "TRF-007": {
+      "label":      "Test de suppression",
+      "principle":  "Pour chaque élément : si nous le supprimons, l'utilisateur souffre-t-il réellement ?",
+      "obligations": [
+        "Appliquer ce test avant de conserver un élément dont l'utilité est incertaine",
+        "Supprimer sans hésitation ce qui échoue le test",
+        "Documenter pourquoi un élément a été conservé malgré une utilité non évidente"
+      ],
+      "forbidden": [
+        "Conserver un élément 'au cas où'",
+        "Conserver un élément par peur de casser quelque chose de non documenté",
+        "Conserver un élément parce qu'il a coûté du temps"
+      ],
+      "severity":  "medium",
+      "test":      "Si nous supprimons cet élément maintenant, quel conducteur ou Gardien en souffrirait, et comment ?"
+    }
+
+  },
+
+  "process": {
+    "steps": [
+      { "step": 1, "name": "Nommer l'idée",           "question": "Quelle est la modification proposée ?" },
+      { "step": 2, "name": "Rattachement (TRF-001)",   "question": "À quel organe, interaction, parcours ou invariant est-elle reliée ?" },
+      { "step": 3, "name": "Impact (TRF-002)",          "question": "Qu'est-ce que cette modification touche exactement ?" },
+      { "step": 4, "name": "Conflits (TRF-004)",        "question": "Entre-t-elle en tension avec un invariant ou une décision antérieure ?" },
+      { "step": 5, "name": "Justification (TRF-006)",   "question": "Quel coût réel réduit-elle ?" },
+      { "step": 6, "name": "Test de suppression (TRF-007)", "question": "Si elle n'existait pas, qui souffrirait et comment ?" },
+      { "step": 7, "name": "Duplication (TRF-005)",     "question": "Réutilise-t-elle les sources canoniques existantes ?" },
+      { "step": 8, "name": "Décision",                  "question": "Appliquer ou refuser ?" },
+      { "step": 9, "name": "Commit simultané (TRF-003)","question": "La documentation architecturale est-elle mise à jour dans ce même commit ?" }
+    ]
+  },
+
+  "_metabolism": {
+    "status":    "active",
+    "confidence": "high",
+    "validated": "2026-06",
+    "why":       "Créé pour prévenir la dette structurelle silencieuse. Toute évolution doit traverser cette couche avant d'entrer dans le code."
+  }
+
+}
