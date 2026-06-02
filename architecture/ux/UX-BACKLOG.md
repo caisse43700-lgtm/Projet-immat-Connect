@@ -11,7 +11,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | ID | Item | Friction | Statut |
 |---|---|---|---|
 | P0-001 | Cycle aide sans confirmation helper | FRI-009 | 💬 à concevoir |
-| P0-002 | Retour émetteur quand alerte véhicule vue | JRN-005 | 💬 à concevoir |
+| P0-002 | Retour émetteur quand alerte véhicule vue | JRN-005 | ✅ fait (SESSION 19 — broadcast vehicle_seen) |
 | P0-003 | Pas de confirmation lecture message | FRI-006 | 💬 à concevoir (P2) |
 | P0-004 | `App.callSignalPlate()` inexistante — ReferenceError si appelée | MORT-001 | ✅ fait (SESSION 12) |
 
@@ -56,7 +56,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 
 | ID | Item | Ref | Statut |
 |---|---|---|---|
-| P2-001 | Bouton "Modifier profil" dans le drawer | BTN-MISS01 | 🔧 à implémenter |
+| P2-001 | Bouton "Modifier profil" dans le drawer | BTN-MISS01 | ✅ fait (SESSION 19 — ✏️ Mon profil dans Réglages) |
 | P2-002 | FAB "Signaler ici" contextuel avec coordonnées du tap | BTN-MISS02 | 🔧 à implémenter |
 | P2-003 | Score fiabilité visible dans profil/drawer | PROP-09 | 🔲 futur |
 | P2-004 | Marqueur "lu" côté émetteur (confirmation lecture message) | FRI-006 | 💬 à concevoir |
@@ -82,7 +82,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 
 | ID | Item | Statut |
 |---|---|---|
-| P2-011 | Clarifier message plaque immuable lors de l'inscription | 🔧 à implémenter |
+| P2-011 | Clarifier message plaque immuable lors de l'inscription | ✅ fait (SESSION 19 — hint champ iPlate) |
 | P2-012 | Séparer onglets Activité : Conversations / Alertes | 💬 à décider |
 | P2-013 | Distinction visuelle messages vs alertes dans Activité Reçus | 🔧 à implémenter |
 
