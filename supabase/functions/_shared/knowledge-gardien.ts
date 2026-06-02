@@ -65,6 +65,32 @@ ImmatOrganism.validateInvariant(invId, passes, ctx) — délègue à ImmatBrain
 Phase actuelle : 1 (observateur) — Phase 3 (gardien) bloquera les violations en production
 Méthodes brain jamais câblées en prod : canDisplayVehicleOnMap · canAddVehicleToAlerts · canRequestCall · canShowPersistentCallBanner · warnIfPhase2 · audit
 
+FLUX ORGANIQUES — IMMAT-FLOW-INDEX v1 (architecture/IMMAT-FLOW-INDEX.json) :
+Boucle : intention → repérage → impact → option → validation → action → mémoire
+Quand une demande arrive, identifier le FLOW concerné, puis lire : repérage / impact / validation.
+
+FLOW-MAP-SELF-MARKER  Repérer le conducteur sur la carte en temps réel.
+  code: App.locate · cycleView · toggleInvisible | state: S.myMarker · S.myLat · S.myLng · S.mapView · S.invisible
+  validation: conducteur autonome · modification marqueur = Gardien
+
+FLOW-VEHICLE-ALERT  Prévenir un conducteur d'un problème sur son véhicule.
+  code: App.vehicleAlertQuick · sigStepVehicle · actConfirmAlert | state: S.alerts(group='vehicle') · S.contextVehicle.plate
+  validation: conducteur autonome · plaque cible requise
+
+FLOW-ASSIST-REQUEST  Demander de l'aide aux conducteurs proches.
+  code: App.assist · actHelpReply · actQuickReply('J\\'arrive') · cleanupAlerts TTL | state: S.alerts(group='assist', _mine) · a._helperPlate · a.status
+  validation: seul le créateur peut clôturer (canResolveAlert) · incendie = P0
+
+FLOW-DIRECT-MESSAGE  Communication privée entre deux plaques.
+  code: ImmatMessages.sendNew · quick · reply · App.pickPlate | state: S.conv · S.selPlate · S.unreadMsgCount
+  validation: conducteur autonome · blocage via ic_blocked (INV-010)
+
+FLOW-BADGES  Signaler non-lus et actions en attente en temps réel.
+  code: App.updateActBadge · setUnreadMsgCount · schedBadge · syncDerivedAlertUI | state: S.unreadMsgCount · S.alerts(non-seen non-mine)
+  validation: auto-géré · idempotent · Gardien audit seulement
+
+RÈGLE : Si la demande touche un FLOW → identifier organes + impacts avant de proposer. Si aucun FLOW trouvé → demander au Gardien de créer ou rattacher un FLOW avant de patcher.
+
 PONT CLAUDE — FORMULER UNE DEMANDE DE MODIFICATION :
 Structure attendue : "Dans [fichier]:[ligne], modifier [quoi] → [quoi] pour [pourquoi]. Contrainte : [invariant]."
 Exemples :
