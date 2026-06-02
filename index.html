@@ -190,7 +190,7 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
 <div id="panelActivite" class="panel">
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
@@ -525,6 +525,64 @@ async afterAuth(){
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
 openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o)_o.style.display='flex';}},1400)},
 dismissOnboarding(){set('ic_onboarded','1');const _o=$('onboardingOverlay');if(_o)_o.style.display='none';},
+openGardienDashboard(){
+  const el=$('gardienDashboard'),body=$('gardienDashboardBody');
+  if(!el||!body)return;
+  el.style.display='block';
+  try{
+    const d=window.ImmatOrganism?.diagnose?.()||{health:'inconnu',summary:'ImmatOrganism non initialisé.',violations:[],events:[]};
+    const phase=window.ImmatBrain?.getPhase?.()??1;
+    const hCol=d.health==='ok'?'#4caf50':d.health==='violated'?'#e53935':'#f0a500';
+    const hLbl=d.health==='ok'?'Sain ✅':d.health==='violated'?'Violation critique ⛔':'Dégradé ⚠️';
+    const now=Date.now();
+    const vHtml=(d.violations||[]).slice(-5).reverse().map(v=>`<div style="padding:6px 8px;background:#1a0a0a;border-left:3px solid #e53935;border-radius:0 4px 4px 0;margin-bottom:4px"><span style="color:#e57373">${esc(v.invariant)}</span> · <span style="color:#aaa">${esc(v.label||'')}</span><span style="color:#555;float:right">${Math.round((now-v.at)/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucune violation récente.</div>';
+    const eHtml=(d.events||[]).slice(-5).reverse().map(e=>`<div style="padding:4px 0;border-bottom:1px solid #1a1a2e;color:#888"><span style="color:#a5b4fc">${esc(e.event)}</span><span style="float:right;color:#555">${Math.round(e.ago/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucun événement.</div>';
+    const trust=Object.entries(S.trust||{}).map(([p,s])=>`<span style="color:${Number(s)>=75?'#4caf50':Number(s)>=35?'#f0a500':'#e57373'}">${esc(p)} ${s}%</span>`).join(' · ')||'<span style="color:#555">Aucune donnée</span>';
+    const callsData=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0}');
+    const fbData=JSON.parse(sessionStorage.getItem('ic_ange_feedback')||'[]');
+    const fbPos=fbData.filter(f=>f.v===1).length,fbNeg=fbData.filter(f=>f.v===0).length;
+    body.innerHTML=`
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b style="color:#c4b5fd">État du système</b>
+          <span style="color:${hCol};font-weight:700">${hLbl}</span>
+        </div>
+        <div style="color:#888">${esc(d.summary||'')}</div>
+        <div style="margin-top:8px;display:flex;gap:16px;font-size:12px">
+          <span>Phase : <b style="color:#c4b5fd">${phase}</b></span>
+          <span>Événements : <b>${(d.events||[]).length}</b></span>
+          <span>Violations : <b style="color:${(d.violations||[]).length?'#e57373':'#4caf50'}">${(d.violations||[]).length}</b></span>
+          <span>Alertes actives : <b>${(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length}</b></span>
+        </div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Violations récentes (5 dernières)</b>
+        <div style="margin-top:8px">${vHtml}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Événements bus (5 derniers)</b>
+        <div style="margin-top:8px">${eHtml}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Ange — session</b>
+        <div style="margin-top:6px;color:#888">Appels : <b>${callsData.n||0}/10</b> · Feedback 👍 <b>${fbPos}</b> · 👎 <b>${fbNeg}</b></div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Scores fiabilité conducteurs</b>
+        <div style="margin-top:6px;font-size:12px;line-height:1.8">${trust}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px">
+        <b style="color:#c4b5fd">Actions gardien</b>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+          <button onclick="App.restoreMessages();toast('Messages restaurés','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">📨 Restaurer msgs</button>
+          <button onclick="App.forceSyncAlerts();toast('Sync lancée','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Sync alertes</button>
+          <button onclick="App.clearOfflineCache()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🧹 Vider cache</button>
+          <button onclick="App.openGardienDashboard()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
+        </div>
+      </div>`;
+  }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
+},
+closeGardienDashboard(){const el=$('gardienDashboard');if(el)el.style.display='none';},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleVoiceGender(){const g=get('ic_voice_gender','female')==='female'?'male':'female';set('ic_voice_gender',g);const btn=$('voiceGenderBtn');if(btn)btn.textContent=g==='male'?'Homme ♂':'Femme ♀';speak(g==='male'?'Voix masculine activée.':'Voix féminine activée.',true);},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
@@ -1825,6 +1883,16 @@ function showReputationToast(){
   </div>
 </div>
 <!-- ── /Onboarding ───────────────────────────────────────────────────── -->
+
+<!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
+<div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto">
+  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0">
+    <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
+    <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer">✕</button>
+  </div>
+  <div id="gardienDashboardBody" style="padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0;line-height:1.6"></div>
+</div>
+<!-- ── /Dashboard Gardien ────────────────────────────────────────────── -->
 
 <!-- ── Ange du Gardien ────────────────────────────────────────────────── -->
 <style>
