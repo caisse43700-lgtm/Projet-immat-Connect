@@ -1916,7 +1916,9 @@ function showReputationToast(){
 #angeMsg:focus{border-color:#7c6af7}
 #angeSubmit{background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
 #angeSubmit:disabled{opacity:.5;cursor:default}
-#angeSpin{text-align:center;color:#7c6af7;font-size:13px;display:none}
+@keyframes ange-rotate{to{transform:rotate(360deg)}}
+#angeSpin{text-align:center;color:#7c6af7;font-size:13px;display:none;padding:14px 0}
+#angeSpin .ange-ring{width:28px;height:28px;border:3px solid #2d2b55;border-top-color:#7c6af7;border-radius:50%;animation:ange-rotate .75s linear infinite;margin:0 auto 8px}
 </style>
 
 <button id="angeFab" onclick="AngeDialog.open()" title="L'Ange">✦</button>
@@ -1927,7 +1929,7 @@ function showReputationToast(){
     <button onclick="AngeDialog.close()">✕</button>
   </div>
   <div id="angeResponse"></div>
-  <div id="angeSpin">L'Ange observe…</div>
+  <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
     <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
     <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
