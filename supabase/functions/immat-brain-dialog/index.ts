@@ -15,16 +15,26 @@ function anonymize(text: string): string {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uid]');
 }
 
-// ── Transformation NS → prompt lisible (INV-015) ──────────────────────────
+// ── Transformation NS → prompt compact (INV-015) ─────────────────────────
 // Source unique : _shared/nervous-system.ts (dérivé de immat-nervous-system.json)
 // Ne jamais écrire ce texte à la main — modifier la source, pas ce fichier.
-function nsToPrompt(): string {
-  // Guards : crash au démarrage plutôt qu'en production
-  const organs     = NS.organs     as Record<string, { entry?: Record<string, string>; constraints?: string[]; deps?: string[] }>;
-  const routing    = NS.routing    as Record<string, string>;
+//
+// depth 3 — gardien    : technique    entry · constraints · deps · serves · 2 failure_modes + inhibitions + invariants
+// depth 2 — protecteur : usage+comport  level_1 + level_2 + serves — sans entrées techniques
+// depth 1 — futur      : usage seul    level_1 + serves uniquement
+function nsToPrompt(depth: 1 | 2 | 3 = 3): string {
+  const organs = NS.organs as Record<string, {
+    entry?:    Record<string, string>;
+    constraints?: string[];
+    deps?:        string[];
+    serves?:      string[];
+    level_1?:     { what_user_sees?: string[]; common_questions?: string[]; resolution?: string[] };
+    level_2?:     { behaviors?: string[]; failure_modes?: string[] };
+  }>;
+  const routing     = NS.routing     as Record<string, string>;
   const inhibitions = NS.inhibitions as Record<string, string>;
-  const invariants = NS.invariants  as Record<string, { label: string; severity: string }>;
-  const id         = NS.ange_identity;
+  const invariants  = NS.invariants  as Record<string, { label: string; severity: string }>;
+  const id          = NS.ange_identity;
 
   if (!organs || !routing || !inhibitions || !invariants || !id) {
     throw new Error('[nsToPrompt] NS schema invalide — vérifier _shared/nervous-system.ts');
@@ -35,49 +45,62 @@ function nsToPrompt(): string {
       .filter(([, v]) => v === name)
       .map(([k]) => k)
       .join('|');
-    const entry = o.entry ?? {};
-    const entries = Object.entries(entry)
-      .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
-      .join(' · ');
-    const constraints = (o.constraints ?? []).join('·');
-    const deps = (o.deps ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]` : 'deps:[]';
-    return `${name} [${keywords}]\n  ${entries} · ${constraints} · ${deps}`;
+
+    if (depth === 3) {
+      const entries     = Object.entries(o.entry ?? {})
+        .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
+        .join(' · ');
+      const constraints = (o.constraints ?? []).join('·');
+      const deps        = (o.deps   ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]`    : '';
+      const serves      = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const failures    = (o.level_2?.failure_modes ?? []).slice(0, 2).join(' / ');
+      const line1       = [entries, constraints, deps, serves].filter(Boolean).join(' · ');
+      return `${name} [${keywords}]\n  ${line1}${failures ? `\n  ⚠ ${failures}` : ''}`;
+
+    } else if (depth === 2) {
+      const serves      = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const sees        = (o.level_1?.what_user_sees ?? []).join(' | ');
+      const behaviors   = (o.level_2?.behaviors ?? []).slice(0, 2).join(' | ');
+      const failures    = (o.level_2?.failure_modes ?? []).slice(0, 2).join(' / ');
+      return [
+        `${name} [${keywords}] ${serves}`,
+        sees        ? `  voit : ${sees}` : '',
+        behaviors   ? `  fait : ${behaviors}` : '',
+        failures    ? `  ⚠ ${failures}` : '',
+      ].filter(Boolean).join('\n');
+
+    } else {
+      const serves = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const sees   = (o.level_1?.what_user_sees ?? []).join(' | ');
+      return `${name} [${keywords}] ${serves}\n  voit : ${sees}`;
+    }
   }).join('\n\n');
 
-  const inhibitionsText = Object.entries(inhibitions)
-    .map(([k, v]) => `${k} → ${v}`)
-    .join('\n');
-
-  const invariantsText = Object.entries(invariants)
-    .map(([k, v]) => `${k}:${v.label} (${v.severity})`)
-    .join('\n');
+  // inhibitions + invariants : gardien seulement (données techniques)
+  const technicalSections = depth === 3
+    ? `\nINHIBITIONS :\n${Object.entries(inhibitions).map(([k, v]) => `${k} → ${v}`).join('\n')}\n\nINVARIANTS :\n${Object.entries(invariants).map(([k, v]) => `${k}:${v.label} (${v.severity})`).join('\n')}\n\nTraversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.`
+    : '';
 
   return `FORMAT — JSON VALIDE UNIQUEMENT. 150 mots maximum.
 
 CHAMPS OBLIGATOIRES : "sources" · "question" · "requiresGuardianValidation": true
 CHAMPS SELON PERTINENCE : "route" · "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"
+Question simple → "juste" + "question" suffisent. N'inclus les autres que si indispensable.
 
 ${id.posture}
 ${id.evaluation}
 ${id.limite}
 
 ORGANES :
-${organsText}
-
-INHIBITIONS :
-${inhibitionsText}
-
-INVARIANTS :
-${invariantsText}
-
-Traversée obligatoire pour technique : Signal→routing→organe→deps→entry→constraints.
+${organsText}${technicalSections}
 
 Langue : français.`;
+}
 }
 
 // ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
 // Crash au démarrage si NS invalide : fail-fast > fail silencieux.
-const STATIC_SYSTEM = nsToPrompt();
+const STATIC_SYSTEM = nsToPrompt(3); // gardien : depth 3
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
 function buildDynamicContext(snapshot: unknown, mode: string, feature: string): string {
@@ -102,8 +125,12 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
 
     const parsed = JSON.parse(match[0]) as Record<string, unknown>;
 
+    const hasJuste   = typeof parsed.juste   === 'string' && parsed.juste.trim().length   > 0;
+    const hasSources = typeof parsed.sources === 'string' && parsed.sources.trim().length > 0;
+
     const result: Record<string, unknown> = {
-      sources:  typeof parsed.sources  === 'string' ? parsed.sources  : fallback.sources,
+      // sources ne tombe en fallback que si ni sources ni juste n'est fourni
+      sources:  hasSources ? parsed.sources : (hasJuste ? undefined : fallback.sources),
       question: typeof parsed.question === 'string' ? parsed.question : fallback.question,
       requiresGuardianValidation: true,
       feature,
@@ -111,7 +138,7 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
     };
 
     if (typeof parsed.vois   === 'string' && parsed.vois.trim())    result.vois      = parsed.vois;
-    if (typeof parsed.juste  === 'string' && parsed.juste.trim())   result.juste     = parsed.juste;
+    if (hasJuste)                                                     result.juste     = parsed.juste;
     if (Array.isArray(parsed.suppose)    && parsed.suppose.length)  result.suppose   = parsed.suppose;
     if (Array.isArray(parsed.vigilance)  && parsed.vigilance.length) result.vigilance = parsed.vigilance;
     if (Array.isArray(parsed.invariants) && parsed.invariants.length) result.invariants = parsed.invariants;
@@ -183,19 +210,22 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
     );
 
+    // ── 2+3. Auth + rôle en parallèle — évite JWT stale (INV-010) ──
     const t_auth = Date.now();
-    const { data: { user }, error: authErr } = await sb.auth.getUser();
+    const [
+      { data: { user }, error: authErr },
+      { data: role, error: roleErr },
+    ] = await Promise.all([
+      sb.auth.getUser(),
+      sb.rpc('get_my_role'),
+    ]);
     const auth_ms = Date.now() - t_auth;
+    const role_ms = auth_ms; // mesurés ensemble
 
     if (authErr || !user) {
       console.warn('[immat-brain-dialog] Auth échouée.', authErr?.message ?? 'user null');
       return Response.json({ ok: false, reason: 'unauthenticated' }, { status: 401, headers: corsHeaders });
     }
-
-    // ── 3. Contrôle rôle via RPC — évite le JWT stale (INV-010) ──
-    const t_role = Date.now();
-    const { data: role, error: roleErr } = await sb.rpc('get_my_role');
-    const role_ms = Date.now() - t_role;
 
     if (roleErr || role !== 'gardien') {
       console.warn('[immat-brain-dialog] Rôle insuffisant :', role ?? 'absent', roleErr?.message ?? '');

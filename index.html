@@ -1951,14 +1951,26 @@ const AngeDialog={
     const el=$('angeResponse');
     el.style.display='block';
     let html='';
-    if(r.sources){html+=`<div class="ange-section"><div class="ange-label">Sources</div><div>${esc(r.sources)}</div></div>`;}
-    if(r.vois){html+=`<div class="ange-section"><div class="ange-label">Ce que je vois</div><div>${esc(r.vois)}</div></div>`;}
-    if(r.suppose?.length){html+=`<div class="ange-section"><div class="ange-label">Hypothèses</div><div>${r.suppose.map(s=>`• ${esc(s)}`).join('<br>')}</div></div>`;}
-    if(r.juste){html+=`<div class="ange-section"><div class="ange-label">Le juste</div><div>${esc(r.juste)}</div></div>`;}
-    if(r.options?.length){html+=`<div class="ange-section"><div class="ange-label">Options</div>${r.options.map(o=>`<div style="margin-bottom:8px;padding:8px;background:#0f0f1a;border-radius:8px"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
-    if(r.vigilance?.length){html+=`<div class="ange-section"><div class="ange-label">Vigilance</div><div>${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div></div>`;}
-    if(r.question){html+=`<div class="ange-section"><div class="ange-label">Question au Gardien</div><div class="ange-question">${esc(r.question)}</div></div>`;}
+    const main=r.juste||r.sources;
+    if(main){html+=`<div style="line-height:1.65;margin-bottom:10px">${esc(main)}</div>`;}
+    if(r.vigilance?.length){html+=`<div style="color:#f0a500;font-size:12px;margin-bottom:10px">${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div>`;}
+    if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map((o,i)=>`<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
+    if(r.question){html+=`<div class="ange-question" style="cursor:pointer" title="Cliquer pour répondre">${esc(r.question)}</div>`;}
     el.innerHTML=html;
+    // Options sélectionnables — clic = sélection visuelle + textarea prêt
+    el.querySelectorAll('[data-opt]').forEach(div=>{
+      const lbl=(r.options?.[+div.dataset.opt]?.label||'').trim();
+      div.addEventListener('mouseenter',()=>{if(!div.dataset.sel)div.style.background='#16162a';});
+      div.addEventListener('mouseleave',()=>{if(!div.dataset.sel)div.style.background='#0f0f1a';});
+      div.addEventListener('click',()=>{
+        el.querySelectorAll('[data-opt]').forEach(d=>{delete d.dataset.sel;d.style.background='#0f0f1a';});
+        div.dataset.sel='1';div.style.background='#2d2b4e';
+        const ta=$('angeMsg');ta.value=lbl;ta.focus();
+      });
+    });
+    // Question — clic = focus textarea (invitation à répondre)
+    const qDiv=el.querySelector('.ange-question');
+    if(qDiv)qDiv.addEventListener('click',()=>$('angeMsg').focus());
   },
   async send(){
     const msg=$('angeMsg').value.trim();
