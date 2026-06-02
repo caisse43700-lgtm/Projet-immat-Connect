@@ -1,0 +1,273 @@
+{
+  "_v": 1,
+  "_doc": "Grammaire canonique des flux de notification ImmatConnect",
+  "_rule": "Toute interaction répond aux 7 questions : où A déclenche, où A confirme, où A suit, où B reçoit, où B agit, où A voit le retour, comment le cycle se clôture.",
+  "_source": "Décision Gardien SESSION 13 — revue flux et notifications",
+
+  "principe": {
+    "alerte": "Information contextuelle liée à la route, au véhicule ou à l'aide. Vit dans Activité.",
+    "message": "Conversation entre deux conducteurs. Vit dans Messages.",
+    "règle": "Une alerte peut ouvrir un message. Un message ne crée pas d'alerte."
+  },
+
+  "badge_rules": {
+    "actBadge": {
+      "signification": "Événements non traités (alertes)",
+      "contient": ["catBadgeRoute", "catBadgeVehicle", "catBadgeAide"],
+      "formule": "actBadge = catBadgeRoute + catBadgeVehicle + catBadgeAide",
+      "ne_contient_pas": "messages directs personnels"
+    },
+    "topMsgBadge": {
+      "signification": "Conversations non lues (messages)",
+      "contient": ["messages directs", "réponses à une alerte", "réponses après demande d'aide"],
+      "ne_contient_pas": "alertes route, alertes véhicule, demandes aide"
+    },
+    "séparation": "actBadge = événements / topMsgBadge = conversations"
+  },
+
+  "intensity_rules": {
+    "distance_thresholds": {
+      "critique": "< 200m",
+      "urgent": "< 1km",
+      "important": "< 3km",
+      "info": "< rayon configuré"
+    },
+    "niveaux": {
+      "critique": {
+        "exemples": ["accident grave", "SOS", "incendie proche"],
+        "floatingCard": true,
+        "son": "si activé dans settings",
+        "toast": false,
+        "badge": "actBadge + catBadge concerné"
+      },
+      "urgent": {
+        "exemples": ["obstacle sur la route", "panne signalée", "alerte véhicule directe"],
+        "floatingCard": true,
+        "son": false,
+        "toast": false,
+        "badge": "actBadge + catBadge concerné"
+      },
+      "important": {
+        "exemples": ["bouchon à moins d'1km", "demande aide proche"],
+        "floatingCard": false,
+        "toast": true,
+        "badge": "actBadge + catBadge concerné"
+      },
+      "info": {
+        "exemples": ["bouchon lointain", "travaux", "contrôle"],
+        "floatingCard": false,
+        "toast": false,
+        "marqueur_carte": true,
+        "badge": "actBadge + catBadge concerné"
+      }
+    },
+    "mode_conduite": "En mode conduite actif (GPS lancé), FloatingCard compacte et non bloquante uniquement pour critique ou alerte véhicule directe.",
+    "messages_multiples": "Si 3 messages arrivent simultanément : 1 seul toast résumé '3 nouveaux messages', pas 3 toasts empilés."
+  },
+
+  "flows": [
+
+    {
+      "id": "FLOW-001",
+      "event": "assist.request.created",
+      "label": "A crée une demande d'aide",
+      "nature": "alerte",
+      "actor_A": {
+        "declencheur": "reportPanel → Aide → type",
+        "confirmation": "Toast '🆘 Demande d'aide envoyée'",
+        "suivi": "Activité → onglet Envoyés → Aide → card 'Demande active'",
+        "badge": null,
+        "actions_disponibles": ["✓ Résolu", "Retirer"]
+      },
+      "actor_B_all": {
+        "reception": "Carte (marqueur aide) + Activité → onglet Reçus → Aide",
+        "floatingCard": false,
+        "toast": true,
+        "toast_niveau": "important si < 1km, info si > 1km",
+        "badge": "actBadge++ / catBadgeAide++",
+        "actions_disponibles": ["✋ J'arrive", "Je ne peux pas", "💬 Contacter", "📍 Voir"]
+      },
+      "message_bridge": true,
+      "cloture": "A appuie sur '✓ Résolu' ou TTL expiré (45min)",
+      "retour_sur_cloture": "Marqueur carte retiré pour tous les B"
+    },
+
+    {
+      "id": "FLOW-002",
+      "event": "assist.helper.arrives",
+      "label": "B dit 'J'arrive'",
+      "nature": "message",
+      "actor_B": {
+        "declencheur": "Activité → card aide → '✋ J'arrive'",
+        "action": "actQuickReply envoie message structuré automatiquement"
+      },
+      "actor_A": {
+        "reception": "FloatingCard '✋ Un conducteur arrive pour vous aider — [plaque B]'",
+        "badge": "topMsgBadge++",
+        "suivi": "Messages → conversation avec B",
+        "statut_card_activite": "Card aide Activité mise à jour : 'Helper en route'"
+      },
+      "message_bridge": true,
+      "cloture": "A résout sa demande (FLOW-001 closure)"
+    },
+
+    {
+      "id": "FLOW-003",
+      "event": "assist.helper.cannot",
+      "label": "B dit 'Je ne peux pas'",
+      "nature": "message",
+      "actor_B": {
+        "declencheur": "Activité → card aide → 'Je ne peux pas'",
+        "action": "actQuickReply envoie message structuré — card aide reste active pour autres B"
+      },
+      "actor_A": {
+        "reception": "Toast discret 'Un conducteur ne peut pas venir'",
+        "badge": null,
+        "note": "Pas de badge — pas une urgence, juste une info"
+      },
+      "message_bridge": false,
+      "cloture": "Non applicable — l'alerte reste active pour les autres B"
+    },
+
+    {
+      "id": "FLOW-004",
+      "event": "assist.resolved",
+      "label": "A clôture sa demande d'aide",
+      "nature": "alerte",
+      "actor_A": {
+        "declencheur": "Activité → card aide (isOwn) → '✓ Résolu' OU marqueur carte → Résolu",
+        "confirmation": "Toast '✓ Demande d'aide clôturée'",
+        "effet": "Marqueur retiré de la carte"
+      },
+      "actor_B_all": {
+        "reception": "Marqueur carte retiré",
+        "toast": false,
+        "note": "Pas de notification intrusive — la disparition du marqueur suffit"
+      },
+      "message_bridge": false,
+      "cloture": "Immédiate"
+    },
+
+    {
+      "id": "FLOW-005",
+      "event": "vehicle.alert.sent",
+      "label": "A signale un problème sur le véhicule de B",
+      "nature": "alerte",
+      "actor_A": {
+        "declencheur": "Carte → marqueur B → Signaler OU reportPanel → Véhicule → type",
+        "confirmation": "Toast 'Signalement envoyé à [plaque B]'",
+        "suivi": "Activité → onglet Envoyés → Véhicule → card avec statut",
+        "badge": null,
+        "statuts_visibles": ["En attente", "Vu par le conducteur", "Info utile", "Déjà réglé", "Faux signalement"]
+      },
+      "actor_B": {
+        "reception": "FloatingCard '⚠️ Alerte sur votre véhicule — [type] — Signalé par [plaque A]'",
+        "floatingCard": true,
+        "floatingCard_niveau": "urgent",
+        "badge": "actBadge++ / catBadgeVehicle++",
+        "suivi": "Activité → onglet Reçus → Véhicule",
+        "actions_disponibles": ["Vu", "💬 Répondre", "Info utile", "Déjà réglé", "Faux signalement"]
+      },
+      "retour_vers_A": {
+        "declencheur": "B clique 'Vu' ou répond",
+        "reception_A": "Card Activité (Envoyés/Véhicule) mise à jour : statut 'Vu par le conducteur'",
+        "badge_A": null,
+        "note": "Pas de FloatingCard chez A — un statut discret dans la card suffit"
+      },
+      "message_bridge": true,
+      "cloture": "B marque 'Vu' OU répond OU TTL expiré"
+    },
+
+    {
+      "id": "FLOW-006",
+      "event": "message.direct",
+      "label": "A envoie un message direct à B",
+      "nature": "message",
+      "actor_A": {
+        "declencheur": "Messages → Compose OU carte → marqueur → Message OU nearbyPanel → Contacter",
+        "confirmation": "Toast 'Message envoyé'",
+        "suivi": "Messages → onglet Envoyés → conversation",
+        "badge": null
+      },
+      "actor_B": {
+        "reception": "Toast léger '[plaque A] : aperçu message'",
+        "floatingCard": false,
+        "badge": "topMsgBadge++",
+        "suivi": "Messages → onglet Reçus → conversation"
+      },
+      "retour_vers_A": {
+        "reception_A": "Non — pas de confirmation lecture (P2 futur)",
+        "note": "read receipt est P2 — ne pas implémenter maintenant"
+      },
+      "message_bridge": false,
+      "cloture": "Message lu (topMsgBadge décrémenter)"
+    },
+
+    {
+      "id": "FLOW-007",
+      "event": "road.signal.created",
+      "label": "A crée un signalement route (broadcast tous les B proches)",
+      "nature": "alerte",
+      "actor_A": {
+        "declencheur": "reportPanel → Route → type",
+        "confirmation": "Toast '✅ Signalement envoyé aux conducteurs proches'",
+        "suivi": "Activité → onglet Envoyés → Route → card avec TTL",
+        "badge": null,
+        "actions_disponibles": ["Retirer mon signalement"]
+      },
+      "actor_B_all": {
+        "reception_intensite": {
+          "< 200m ou critique": "FloatingCard + actBadge",
+          "< 1km ou urgent": "Toast fort + actBadge",
+          "> 1km ou info": "Marqueur carte + actBadge discret"
+        },
+        "badge": "actBadge++ / catBadgeRoute++",
+        "suivi": "Activité → onglet Reçus → Route",
+        "actions_disponibles": ["Toujours là", "Disparu", "📍 Voir"]
+      },
+      "message_bridge": false,
+      "cloture": "A retire OU votes 'Disparu' suffisants OU TTL expiré"
+    },
+
+    {
+      "id": "FLOW-008",
+      "event": "road.signal.confirmed",
+      "label": "B confirme qu'une alerte route est toujours présente",
+      "nature": "alerte",
+      "actor_B": {
+        "declencheur": "Activité → card route → 'Toujours là'"
+      },
+      "actor_A": {
+        "reception": "Aucune notification — TTL prolongé silencieusement",
+        "note": "La confirmation TTL est silencieuse côté A — pas de notification"
+      },
+      "message_bridge": false,
+      "cloture": "Non applicable"
+    }
+
+  ],
+
+  "ponts_activite_messages": {
+    "règle": "Quand B répond à une alerte via quick reply ou message, la card Activité côté A affiche un statut pont.",
+    "statuts_pont": {
+      "vehicle.alert.sent": "Vu par le conducteur",
+      "assist.request.created": "Helper en route",
+      "assist.helper.arrives": "Un conducteur arrive"
+    },
+    "formule": "Activité suit les événements. Messages contient les conversations. Le pont = un statut dans la card Activité."
+  },
+
+  "decisions_implementees": {
+    "FLOW-001_actions": "✓ Résolu + Retirer sur alertes _mine assist — SESSION 13",
+    "FLOW-002_boutons": "✋ J'arrive + Je ne peux pas dans cards aide — SESSION 13",
+    "FLOW-005_floatingCard": "FloatingCard btn2 contextuel ('✋ J'aide' / '🗺 Voir') — SESSION 13",
+    "MORT-002": "📍 Voir sur carte ajouté dans cards alerte — SESSION 13"
+  },
+
+  "a_implementer": {
+    "badge_separation": "actBadge = alertes seulement / topMsgBadge = messages seulement — updateActBadge à modifier",
+    "retour_vers_A_vehicle": "Statut 'Vu par le conducteur' dans card Activité Envoyés côté A — IC-002",
+    "intensite_distance": "Distance + gravité → intensité notification (FloatingCard / toast / marqueur seul)",
+    "helper_en_route_statut": "Statut 'Helper en route' dans card aide côté A quand B dit J'arrive"
+  }
+}
