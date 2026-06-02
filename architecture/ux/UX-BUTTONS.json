@@ -840,6 +840,86 @@
       "statut": "manquant",
       "ref": "INVENTAIRE B2-3",
       "priorite": "P2"
+    },
+    {
+      "id": "BTN-MISS03",
+      "label": "Je viens aider (helper → demandeur)",
+      "panel": "nearbyPanel / FloatingCard aide",
+      "organe": "AIDE",
+      "action": "Réponse structurée à demande d'aide — notifie le demandeur",
+      "type": "btn-action",
+      "statut": "manquant",
+      "ref": "FRI-009",
+      "priorite": "P2"
+    },
+    {
+      "id": "BTN-MISS04",
+      "label": "Signaler abus sur message",
+      "panel": "panelMessages / thread",
+      "organe": "CONTACT",
+      "action": "INT-010 — INSERT abuse_reports + blocage suggéré",
+      "type": "btn-action",
+      "statut": "manquant",
+      "ref": "INT-010",
+      "priorite": "P2"
+    },
+    {
+      "id": "BTN-MISS05",
+      "label": "Je remercie (remerciement formel)",
+      "panel": "FloatingCard / panelMessages",
+      "organe": "CONTACT",
+      "action": "INT-006 — message de remerciement avec icône dédiée",
+      "type": "btn-action",
+      "statut": "manquant",
+      "ref": "INT-006",
+      "priorite": "P3"
+    },
+    {
+      "id": "BTN-MISS06",
+      "label": "Fiche flottante au tap sur marqueur alerte",
+      "panel": "panelAltet (carte)",
+      "organe": "SIGNAL",
+      "action": "Tap marqueur alerte → mini-fiche (type, raison, âge, Résoudre)",
+      "type": "map-tap-action",
+      "statut": "manquant",
+      "ref": "UX-MAP.md Étape 1",
+      "priorite": "P3"
+    }
+
+  ],
+
+  "morts": [
+
+    {
+      "id": "BTN-MORT01",
+      "label": "Signaler (dans signalRecapCard)",
+      "element": "callSignalPlate onClick",
+      "panel": "signalRecapCard (display:none)",
+      "organe": "SIGNAL",
+      "action": "App.callSignalPlate() — FONCTION INEXISTANTE",
+      "statut": "mort",
+      "probleme": "ReferenceError si appelé — signalRecapCard n'est jamais affiché",
+      "recommandation": "Supprimer bouton + signalRecapCard entière"
+    },
+    {
+      "id": "BTN-MORT02",
+      "label": "Voir sur carte (alerte)",
+      "panel": "aucun — code orphelin",
+      "organe": "SIGNAL",
+      "action": "App.actViewOnMap(alertId) — fonction implémentée ligne ~1209",
+      "statut": "mort",
+      "probleme": "Fonction implémentée mais aucun bouton ne l'appelle",
+      "recommandation": "Ajouter bouton 'Voir sur carte' dans card d'alerte activité, ou supprimer la fonction"
+    },
+    {
+      "id": "BTN-MORT03",
+      "label": "Vider message / Envoyer / 🎙 Plaque / 🎙 Message",
+      "panel": "panelContact (display:none, jamais montré)",
+      "organe": "CONTACT",
+      "action": "App.clearMsg(), App.sendMsg(), App.voicePlate(), App.voiceMsg()",
+      "statut": "mort",
+      "probleme": "panelContact jamais affiché (redirect contact→messages). Boutons inaccessibles.",
+      "recommandation": "Supprimer panelContact + nettoyer fonctions legacy après migration complète"
     }
 
   ]
