@@ -159,14 +159,24 @@ Une conversation ne crée jamais d'alerte.
 
 # IMPACT UX
 
-Avant — 3 alertes + 5 messages :
+### Avant
+
+3 alertes + 5 messages :
 
 ```
 actBadge    = 8
 topMsgBadge = 8
 ```
 
-Après — 3 alertes + 5 messages :
+L'utilisateur ne distingue pas ce qui relève :
+- d'une action à traiter
+- d'une conversation à lire
+
+---
+
+### Après
+
+3 alertes + 5 messages :
 
 ```
 actBadge    = 3
@@ -181,8 +191,31 @@ Ce qui demande une action ≠ Ce qui relève d'une conversation
 
 ---
 
+# ARCHITECTURE VALIDÉE
+
+```
+actBadge    = catBadgeRoute + catBadgeVehicle + catBadgeAide
+topMsgBadge = messages directs non lus
+Activité    = événements
+Messages    = conversations
+```
+
+---
+
 # COMMIT DE RÉFÉRENCE
 
 ```
 918b762  fix: séparation badges actBadge (alertes) / topMsgBadge (messages)
 ```
+
+---
+
+# STATUT
+
+✅ SESSION 14 APPLIQUÉE
+
+✅ Cohérent avec UX-NOTIFICATION-MATRIX.json
+
+✅ Cohérent avec FLOW-001 → FLOW-008
+
+✅ Cohérent avec la règle : Alerte ≠ Message
