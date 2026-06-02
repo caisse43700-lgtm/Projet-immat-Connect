@@ -5,13 +5,25 @@
 
 export const NS = {
 
-  _v: 2,
+  _v: 4,
 
   ange_identity: {
     posture:    'Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.',
     evaluation: 'Cette évolution nourrit-elle l\'organisme ou l\'alourdit-elle ? Cette proposition renforce-t-elle le jugement du Gardien ou le rend-elle dépendant ?',
     limite:     'Jamais de décision à la place du Gardien. Jamais de modification code, DB ou invariants. Jamais d\'affirmation sur ce que tu ne vois pas.',
     format:     'JSON valide uniquement. 150 mots maximum. requiresGuardianValidation toujours true.',
+  },
+
+  perception: {
+    desc: 'Normalise tout signal entrant en texte avant routage. Le système nerveux ne voit jamais un son ni une image — il voit toujours un signal texte normalisé.',
+    sources: {
+      texte:  { transform: 'direct → signal',                            status: 'actif'  },
+      voix:   { transform: 'SpeechRecognition → transcription → signal', status: 'futur'  },
+      image:  { transform: 'analyse visuelle → description → signal',    status: 'futur'  },
+      camera: { transform: 'lecture plaque → action disponible → signal',status: 'futur'  },
+    },
+    rule:    'Tout signal entre dans PERCEPTION. Un signal normalisé (texte) sort vers le routage.',
+    privacy: 'La caméra ne révèle jamais une identité réelle. Elle permet uniquement une action conforme à l\'ADN.',
   },
 
   routing: {
@@ -25,48 +37,121 @@ export const NS = {
   },
 
   organs: {
+
     Auth: {
       desc:        'Authentification et session Supabase',
       entry:       { afterAuth: 'index.html:507', signup: 'index.html:502', boot: 'index.html:1419' },
       constraints: ['INV-010', 'INV-014'],
       deps:        [] as string[],
       note:        'get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale',
+      serves:      ['PRI', 'SEC'],
+      known_costs: ['PERF', 'TEST'],
+      level_1: {
+        what_user_sees:    ['Écran de connexion email / mot de passe', 'Formulaire d\'inscription', 'Chargement après connexion'],
+        common_questions:  ['Je n\'arrive pas à me connecter', 'L\'application reste bloquée au chargement', 'Je ne reçois pas l\'email de confirmation'],
+        resolution:        ['Vérifier email et mot de passe', 'Rafraîchir la page et réessayer', 'Vérifier les spams pour l\'email de confirmation'],
+      },
+      level_2: {
+        behaviors:     ['Vérifie les identifiants via Supabase Auth', 'Crée une session JWT après connexion réussie', 'Récupère le rôle via RPC get_my_role() pour éviter le JWT stale'],
+        failure_modes: ['JWT expiré — session invalide silencieusement', 'S._authRunning bloqué — afterAuth() ne se relance pas', 'get_my_role() échoue — rôle gardien non détecté'],
+      },
     },
+
     Profil: {
       desc:        'Données conducteur — plaque, pseudo, couleur, téléphone',
       entry:       { saveProfile: 'index.html:549', upsert_profil: 'index.html:530' },
       constraints: ['INV-006', 'INV-007', 'INV-011'],
       deps:        ['Auth'],
       note:        'owner_plate immuable après création (INV-006). colorHex() utils.js = source canonique couleurs (INV-011)',
+      serves:      ['PRI', 'LNK'],
+      known_costs: ['MAINT', 'TEST'],
+      level_1: {
+        what_user_sees:   ['Formulaire : plaque, pseudo, couleur véhicule', 'Mon marqueur coloré sur la carte', 'Numéro de téléphone (optionnel)'],
+        common_questions: ['Je veux changer ma plaque', 'Mon pseudo ne s\'affiche pas', 'Ma couleur de véhicule est incorrecte'],
+        resolution:       ['La plaque est définitive après création — impossible à modifier', 'Sauvegarder le profil après chaque modification', 'Choisir la couleur dans le sélecteur et sauvegarder'],
+      },
+      level_2: {
+        behaviors:     ['Upsert le profil via la table profiles en DB', 'La plaque owner_plate est verrouillée à la création (INV-006)', 'La couleur est normalisée via colorHex() dans utils.js (INV-011)'],
+        failure_modes: ['Profil non sauvegardé — marqueur carte sans couleur ni pseudo', 'Tentative de modification plaque — rejetée par INV-006', 'colorHex() absent — couleur par défaut appliquée silencieusement'],
+      },
     },
+
     Carte: {
       desc:        'Carte Leaflet — marqueurs véhicule, GPS, icônes colorées',
       entry:       { icon: 'index.html:409', dot: 'index.html:408', initMap: 'index.html:551', locate: 'index.html:554', loadOthers: 'index.html:652' },
       constraints: ['INV-005', 'INV-011', 'INV-012'],
       deps:        ['Profil'],
       note:        'icon() consommé par locate():554 et loadOthers():652. colorHex() = source fill couleur',
+      serves:      ['SEC', 'PRV', 'FRI'],
+      known_costs: ['PERF', 'MAINT', 'TEST'],
+      level_1: {
+        what_user_sees:   ['Ma position — marqueur coloré à mon emplacement', 'Les conducteurs proches — marqueurs autour de moi', 'Les alertes route et aide — marqueurs sur la carte'],
+        common_questions: ['Je ne vois plus les conducteurs autour de moi', 'Ma position est fausse ou ne bouge pas', 'La carte ne charge pas'],
+        resolution:       ['Vérifier que le GPS est activé dans les réglages', 'Vérifier les autorisations de localisation pour le navigateur', 'Rafraîchir la page si la carte reste bloquée'],
+      },
+      level_2: {
+        behaviors:     ['Affiche les marqueurs conducteurs depuis la DB via loadOthers()', 'Met à jour la position en temps réel via watchPosition()', 'Utilise le canal realtime Supabase pour les mises à jour'],
+        failure_modes: ['GPS refusé — S.myLat reste null, marqueur self absent', 'Canal realtime déconnecté — marqueurs figés, plus de mise à jour', 'INV-005 violé — marqueur affiché avant confirmation DB'],
+      },
     },
+
     Messages: {
       desc:        'Messagerie temps réel conducteur à conducteur via Supabase',
       entry:       { startMsgs: 'index.html:764', sendMsg: 'index.html:703', ImmatMessages: 'module externe' },
       constraints: ['INV-001', 'INV-004', 'INV-010'],
       deps:        ['Auth'],
       note:        'Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide',
+      serves:      ['LNK', 'ENT'],
+      known_costs: ['PERF', 'ARCH', 'TEST'],
+      level_1: {
+        what_user_sees:   ['Conversations avec d\'autres conducteurs', 'Messages reçus dans Activité > Reçus', 'Messages envoyés dans Activité > Envoyés'],
+        common_questions: ['Je ne vois pas mes messages', 'Mon message n\'est pas parti', 'Les boutons Je m\'arrête / Je vérifie n\'apparaissent pas'],
+        resolution:       ['Ouvrir Activité et attendre le chargement complet', 'Vérifier la connexion internet', 'Les boutons rapides apparaissent uniquement sur les messages reçus'],
+      },
+      level_2: {
+        behaviors:     ['Envoi via ImmatMessages.sendToPlate() → table messages en DB', 'Abonnement temps réel sur le canal Supabase pour les nouveaux messages', 'Normalisation des messages via normalizeRows()'],
+        failure_modes: ['S._actMessages vide — race condition entre refresh() et renderCategoryFeed()', 'Canal Supabase déconnecté — nouveaux messages non reçus', 'myPlate() absent au refresh — _sent mal calculé'],
+      },
     },
+
     Signalements: {
       desc:        'Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés',
       entry:       { roadReport: 'index.html:905', vehicleAlert: 'index.html:905', subscribeCommunityReports: 'index.html:896', addCommunityAlertMarker: 'index.html:813' },
       constraints: ['INV-001', 'INV-002', 'INV-003', 'INV-004'],
       deps:        ['Carte', 'Auth'],
       note:        'Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser',
+      serves:      ['SEC', 'ENT', 'PRV'],
+      known_costs: ['PERF', 'ARCH', 'TEST'],
+      level_1: {
+        what_user_sees:   ['Bouton Signaler pour créer une alerte', 'Marqueurs d\'alertes sur la carte (bouchon, accident, travaux, danger, aide)', 'Mes alertes dans Activité > Envoyés'],
+        common_questions: ['Comment signaler un danger sur la route ?', 'Mon signalement n\'apparaît pas sur la carte', 'Comment annuler ma demande d\'aide ?'],
+        resolution:       ['Appuyer sur Signaler puis choisir le type d\'alerte', 'Vérifier la connexion internet', 'Seul le créateur peut résoudre sa demande d\'aide'],
+      },
+      level_2: {
+        behaviors:     ['Crée un enregistrement dans la table reports en DB', 'Broadcast temps réel aux conducteurs proches via canal Supabase', 'TTL automatique : 30min bouchon · 2h travaux · 45min aide'],
+        failure_modes: ['Canal route déconnecté — alertes non reçues par les conducteurs proches', 'S._reporting bloqué — double signalement empêché', 'INV-002 violé si alerte route envoyée via canal véhicule'],
+      },
     },
+
     Ange: {
       desc:        'Interface Gardien — bouton ✦ (angeFab) + Edge Function Claude',
       entry:       { angeFab_css: 'index.html:1907', angeFab_afterAuth: 'index.html:520', angeFab_openMap: 'index.html:550', edge_function: 'supabase/functions/immat-brain-dialog/index.ts' },
       constraints: ['INV-010', 'INV-014'],
       deps:        ['Auth'],
       note:        'S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback openMap() si undefined',
+      serves:      ['FRI', 'SEC'],
+      known_costs: ['PERF', 'ARCH', 'MAINT', 'TEST'],
+      level_1: {
+        what_user_sees:   ['Bouton ✦ en bas à droite — visible uniquement pour le Gardien', 'Panneau de dialogue pour poser une question à l\'Ange', 'Réponse : analyse + vigilance + question au Gardien'],
+        common_questions: ['Je ne vois pas le bouton ✦', 'L\'Ange ne répond pas ou est très lent', 'Comment poser une bonne question à l\'Ange ?'],
+        resolution:       ['Le bouton ✦ est réservé au rôle gardien — vérifier le rôle du compte', 'L\'Ange appelle un modèle IA externe — réponse en 5 à 20 secondes', 'Poser une question précise liée à un organe, un bug ou une évolution'],
+      },
+      level_2: {
+        behaviors:     ['Vérifie le rôle gardien via get_my_role() avant d\'afficher le bouton ✦', 'Envoie la question + snapshot de l\'organisme à l\'Edge Function immat-brain-dialog', 'Affiche juste (réponse) + vigilance (alertes) + question (au Gardien)'],
+        failure_modes: ['S.isGardien undefined au démarrage — bouton ✦ absent jusqu\'au rechargement', 'ANTHROPIC_API_KEY absente — Edge Function retourne server_misconfigured', 'Cache Anthropic froid au premier appel — latence plus élevée'],
+      },
     },
+
   },
 
   inhibitions: {
