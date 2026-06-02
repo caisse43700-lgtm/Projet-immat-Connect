@@ -56,6 +56,7 @@ function nsToPrompt(): string {
 
 CHAMPS OBLIGATOIRES : "sources" · "question" · "requiresGuardianValidation": true
 CHAMPS SELON PERTINENCE : "route" · "vois" · "suppose" · "juste" · "options" · "vigilance" · "invariants" · "proposal"
+Question simple → "juste" + "question" suffisent. N'inclus les autres que si indispensable.
 
 ${id.posture}
 ${id.evaluation}
@@ -183,19 +184,22 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
     );
 
+    // ── 2+3. Auth + rôle en parallèle — évite JWT stale (INV-010) ──
     const t_auth = Date.now();
-    const { data: { user }, error: authErr } = await sb.auth.getUser();
+    const [
+      { data: { user }, error: authErr },
+      { data: role, error: roleErr },
+    ] = await Promise.all([
+      sb.auth.getUser(),
+      sb.rpc('get_my_role'),
+    ]);
     const auth_ms = Date.now() - t_auth;
+    const role_ms = auth_ms; // mesurés ensemble
 
     if (authErr || !user) {
       console.warn('[immat-brain-dialog] Auth échouée.', authErr?.message ?? 'user null');
       return Response.json({ ok: false, reason: 'unauthenticated' }, { status: 401, headers: corsHeaders });
     }
-
-    // ── 3. Contrôle rôle via RPC — évite le JWT stale (INV-010) ──
-    const t_role = Date.now();
-    const { data: role, error: roleErr } = await sb.rpc('get_my_role');
-    const role_ms = Date.now() - t_role;
 
     if (roleErr || role !== 'gardien') {
       console.warn('[immat-brain-dialog] Rôle insuffisant :', role ?? 'absent', roleErr?.message ?? '');

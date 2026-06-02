@@ -1951,13 +1951,15 @@ const AngeDialog={
     const el=$('angeResponse');
     el.style.display='block';
     let html='';
-    if(r.sources){html+=`<div class="ange-section"><div class="ange-label">Sources</div><div>${esc(r.sources)}</div></div>`;}
-    if(r.vois){html+=`<div class="ange-section"><div class="ange-label">Ce que je vois</div><div>${esc(r.vois)}</div></div>`;}
-    if(r.suppose?.length){html+=`<div class="ange-section"><div class="ange-label">Hypothèses</div><div>${r.suppose.map(s=>`• ${esc(s)}`).join('<br>')}</div></div>`;}
-    if(r.juste){html+=`<div class="ange-section"><div class="ange-label">Le juste</div><div>${esc(r.juste)}</div></div>`;}
-    if(r.options?.length){html+=`<div class="ange-section"><div class="ange-label">Options</div>${r.options.map(o=>`<div style="margin-bottom:8px;padding:8px;background:#0f0f1a;border-radius:8px"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
-    if(r.vigilance?.length){html+=`<div class="ange-section"><div class="ange-label">Vigilance</div><div>${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div></div>`;}
-    if(r.question){html+=`<div class="ange-section"><div class="ange-label">Question au Gardien</div><div class="ange-question">${esc(r.question)}</div></div>`;}
+    // Réponse principale — juste ou sources en fallback
+    const main=r.juste||r.sources;
+    if(main){html+=`<div style="line-height:1.65;margin-bottom:10px">${esc(main)}</div>`;}
+    // Vigilance — compact, en ligne
+    if(r.vigilance?.length){html+=`<div style="color:#f0a500;font-size:12px;margin-bottom:10px">${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div>`;}
+    // Options si présentes
+    if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map(o=>`<div style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
+    // Question — toujours en bas, style distinctif
+    if(r.question){html+=`<div class="ange-question">${esc(r.question)}</div>`;}
     el.innerHTML=html;
   },
   async send(){
