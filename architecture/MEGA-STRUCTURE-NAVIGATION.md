@@ -2,7 +2,7 @@
 
 > ImmatConnect Pro — Document unique de référence  
 > Architecture · Audit · État · Plan  
-> Version 16.0 · 2026-06-02  
+> Version 16.1 · 2026-06-02 — Audit code réel  
 > *(fusion de MEGA-STRUCTURE-NAVIGATION + AUDIT-NAVIGATION-UTILISATEUR — sans doublon)*
 
 ---
@@ -22,7 +22,7 @@
 | **Messages** | `messages` | Messagerie directe | ✅ FRI-001/003 résolus SESSION 16 | Confirmation lecture FRI-006 | P2 |
 | Conducteurs proches | `nearby` | Liste + contacter | ✅ OK | — | P2 |
 | Alertes actives | `alerts` | Voir toutes les alertes | ✅ OK | — | — |
-| Paramètres | `settings` | Config conducteur | ⚠️ Debug tools intrus | FRI-004 | P2 |
+| Paramètres | `settings` | Config conducteur | ✅ Debug tools masqués Gardien | — | — |
 | Appel | `callOverlay` | WebRTC en cours | ✅ OK | — | — |
 | SOS | FAB 3s | Urgence | ✅ Protégé (appui long + double confirm) | — | — |
 
@@ -37,7 +37,7 @@
 | INT-003 | Signalement route | ✅ | marqueur carte | marqueur + badge | — |
 | INT-004 | Demande d'aide | ✅ | marqueur · "Helper en route" | FloatingCard + Activité | Cycle helper carte P2 |
 | INT-005 | Appel WebRTC | ✅ | callOverlay | modal accepter | — |
-| INT-006 | Remerciement | ❌ ABSENT | — | — | À concevoir P2 |
+| INT-006 | Remerciement | ⚠️ PARTIEL | "Merci." quick reply dans cards | toast confiance | Bouton dédié social P2 |
 | INT-007 | Résoudre alerte | ✅ | suppression marqueur | marqueur disparu | — |
 | INT-008 | Blocage plaque | ⚠️ LOCAL | liste bloqués | (invisible) | Migrer DB P2 FRI-007 |
 | INT-009 | SOS | ✅ | marqueur urgence + 112 | notification | — |
@@ -137,10 +137,10 @@ Clic marqueur → showVehicleContextMenu()
 | 👥 Conducteurs | `openNearby()` | ✅ |
 | 🗺 Vue | `cycleView()` | ✅ |
 | SOS (3s maintenu) | `startSosHold()` → `sos()` | ✅ Protégé |
-| ✦ Ange | `AngeDialog.open()` | ✅ SESSION 15 |
+| ✦ Ange | `AngeDialog.open()` | ✅ SESSION 15 — visible tous conducteurs |
 | Contacter (bannière devant) | `contactFrontVehicle()` | ✅ |
 
-**Friction P2 — FRI-011 :** Marqueurs non orientés → heading + couleur selon état SESSION 17+
+**Friction P2 — FRI-011 :** ⚠️ Partiel — `icon()` supporte le heading et l'utilise pour le marqueur utilisateur (GPS `coords.heading`), mais `loadOthers()` ne passe pas de heading aux autres véhicules (non stocké dans `user_locations`). Compléter : stocker heading en DB + l'afficher SESSION 17+
 
 ---
 
@@ -335,18 +335,30 @@ catBadgeAide    = S.alerts.filter(group='assist').length
 [Contacter]   → CallManager.openContactOptions(plate)
 ```
 
-### Cards — Alerte véhicule reçue · ✅ FLOW-005 SESSION 16
+### Cards — Alerte véhicule reçue · deux rendus selon l'origine
 
+**`_actModCard` (messages reçus depuis vehicleAlertQuick / alerte ciblée)**
+```
+┌─────────────────────────────────────────┐
+│ 🚘 [plaque_A]                 [heure]  │
+│    [raison / extrait]                   │
+├─────────────────────────────────────────┤
+│ [Je m'arrête] [Je vérifie] [Merci]     │  ← réponse rapide au message
+│ [Contacter]                             │
+└─────────────────────────────────────────┘
+```
+
+**`_actAlertCard` (alerte communauté group='vehicle') · ✅ FLOW-005 SESSION 16**
 ```
 ┌─────────────────────────────────────────┐
 │ 🚘 [plaque_A]                 [heure]  │
 │    [raison / label]                     │
 │    📍 Position (si lat) · TTL bar       │
 ├─────────────────────────────────────────┤
-│ [✓ J'ai vérifié]  [✓ C'est bon]        │
+│ [✓ J'ai vérifié]  [✓ C'est bon]        │  ← FLOW-005 SESSION 16
 │ [📍 Voir]                               │
 └─────────────────────────────────────────┘
-SESSION 16 : "Toujours là"/"Résolu" → "J'ai vérifié"/"C'est bon"
+AVANT SESSION 16 : [✓ Toujours là] [✓ Résolu]  ← labels conçus pour la route
 ```
 
 ### Cards — Alerte route reçue
@@ -538,8 +550,8 @@ Chip profil (top-bar) → openDrawer()
 | 🔊 Voix GPS | `toggleVoice()` | ✅ |
 | Genre voix | `toggleVoiceGender()` | ✅ |
 | Toggle Autoriser contacts | `CallManager.setCallPreferences(bool)` | ✅ |
-| 📨 Restaurer msgs | `restoreMessages()` | ⚠️ Debug → Gardien FRI-004 P2 |
-| 🔄 Sync alertes | `forceSyncAlerts()` | ⚠️ Debug → Gardien FRI-004 P2 |
+| 📨 Restaurer msgs | `restoreMessages()` | ✅ Masqué non-gardien (class `gardien-debug-tool`) |
+| 🔄 Sync alertes | `forceSyncAlerts()` | ✅ Masqué non-gardien (class `gardien-debug-tool`) |
 | ⏻ Déconnexion | `logout()` | ✅ |
 
 ---
@@ -632,10 +644,15 @@ Niveaux :
 ### Conditions d'affichage · ✅ SESSION 15
 
 ```
-openMap() → resolve rôle
-  ├── rôle = 'gardien' → is-gardien CSS + angeFab visible
-  ├── rôle ≠ 'gardien' → angeFab visible (conducteur normal)
-  └── erreur réseau    → angeFab visible (fail-open)
+openMap() → resolve rôle via get_my_role()
+  ├── rôle = 'gardien' → body.is-gardien + angeFab.display='flex'
+  ├── rôle ≠ 'gardien' → angeFab.display='flex'  ← visible pour tous
+  └── erreur réseau    → angeFab.display='flex'  ← fail-open
+
+CSS : .gardien-debug-tool{display:none}
+      body.is-gardien .gardien-debug-tool{display:inline-flex}
+→ angeFab n'est PAS un gardien-debug-tool — il est affiché pour tous
+→ Les outils debug (Restaurer msgs, Sync alertes) sont masqués aux conducteurs normaux ✅
 ```
 
 ### Dialogue IA
@@ -652,7 +669,7 @@ openMap() → resolve rôle
   │           └── r.question          → invitation répondre
   └── [✕] → AngeDialog.close()
 
-NOTE P2 : Edge Function réservée Gardien → étendre aux conducteurs normaux (depth=2) SESSION 17
+NOTE P2 : Bouton visible tous conducteurs ✅ — Edge Function réservée Gardien (role check côté serveur → 403 pour non-gardiens) → étendre aux conducteurs normaux (depth=2) SESSION 17
 ```
 
 ---
@@ -672,18 +689,17 @@ NOTE P2 : Edge Function réservée Gardien → étendre aux conducteurs normaux 
 
 ### SESSION 17+ — P2
 
-| Réf | Action | Effort |
-|---|---|---|
-| FRI-008 | Supprimer reportPanel overlay legacy | Moyen |
-| FRI-004 | Debug tools → réserver au Gardien | Faible |
-| FRI-006 | Indicateur "Lu" côté émetteur + `read_at` DB | Moyen |
-| FRI-007 | Blocage plaque → champ JSON profiles DB | Moyen |
-| FRI-009 | Cycle aide complet (helper confirmé sur carte) | Moyen |
-| FRI-011 | Marqueurs orientés (heading) + couleur selon état | Élevé |
-| INT-006 | Bouton Remerciement social | Moyen |
-| INT-010 | Signalement abus modération | Moyen |
-| SA | Inscription en 2 étapes | Moyen |
-| ANGE | Edge Function conducteurs normaux (depth=2) | Moyen |
+| Réf | Action | Effort | Note état |
+|---|---|---|---|
+| FRI-008 | Supprimer reportPanel overlay legacy 3 blocs | Moyen | panelAltet 2 étapes existe déjà |
+| FRI-006 | Indicateur "Lu" côté émetteur + `read_at` DB | Moyen | absent |
+| FRI-007 | Blocage plaque → champ JSON profiles DB | Moyen | localStorage only |
+| FRI-009 | Cycle aide complet (helper confirmé sur carte Leaflet) | Moyen | messages OK, carte non |
+| FRI-011 | Stocker heading dans user_locations + afficher sur autres marqueurs | Moyen | icon() prêt, DB manque heading |
+| INT-006 | Bouton Remerciement social dédié (au-delà de "Merci." quick reply) | Moyen | "Merci." quick reply existe déjà |
+| INT-010 | Signalement abus modération (messages + profils) | Moyen | absent |
+| SA | Inscription en 2 étapes | Moyen | formulaire dense |
+| ANGE | Edge Function conducteurs normaux (depth=2) | Moyen | 403 pour non-gardiens |
 
 ---
 
@@ -694,7 +710,8 @@ NOTE P2 : Edge Function réservée Gardien → étendre aux conducteurs normaux 
 | 15 | IC-003 | FloatingCard "✋ Helper en route" | index.html | SESSION 15 |
 | 15 | IC-002 | Toast + badge "Vu par le conducteur" | index.html | SESSION 15 |
 | 15 | IC-003 | Badge `helper_coming` + plaque | index.html | SESSION 15 |
-| 15 | Ange | Bouton ✦ visible tous conducteurs | index.html | SESSION 15 |
+| 15 | Ange | Bouton ✦ visible tous conducteurs (non-gardien → angeFab affiché aussi) | index.html | SESSION 15 |
+| ≤15 | FRI-004 | Debug tools masqués conducteurs normaux (class gardien-debug-tool + CSS) | index.html | antérieur SESSION 15 |
 | 15 | ARCH | Architecture fonctionnelle complète | ARCHITECTURE-FONCTIONNELLE-COMPLETE.md | 965cf96 |
 | 15 | MATRICE | Interactions A↔B | MATRICE-INTERACTIONS-COMPLETE.md | c01d8e8 |
 | 15 | NS | Audit base connaissance Ange | AUDIT-BASE-CONNAISSANCE-ANGE.md | 9263f7e |
