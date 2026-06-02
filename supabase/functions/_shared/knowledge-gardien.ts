@@ -22,7 +22,9 @@ badge.js — gestion badge messages non lus
 ui.js — helpers UI (sheet drag, animations, patch App.panel)
 core/invariants.js — invariants constitutionnels deepFrozen (INV-001→INV-015)
 core/immatOrganism.js — observateur événements (diagnose(), observe(), validateInvariant())
-core/brain.js — ImmatBrain API de décision (Phase 1 observateur — phase 3 bloquant futur)
+core/brain.js — ImmatBrain API de décision (Phase 1 observateur — phase 3 bloquant futur) — 159 lignes
+  warnIfPhase2(invId, ctx) — Phase 2 : émet INVARIANT_WARNING sur le bus sans bloquer (définie, non câblée en prod)
+  audit() — snapshot phase+invariants (définie, non câblée en prod)
 core/bus.js — ImmatBus (bus d'événements interne)
 
 ORGANES — POINTS D'ENTRÉE CODE :
@@ -61,6 +63,7 @@ ImmatOrganism.diagnose() — retourne health/events/violations/summary (utilisé
 ImmatOrganism.observe(event, payload) — émet un événement sur le bus
 ImmatOrganism.validateInvariant(invId, passes, ctx) — délègue à ImmatBrain
 Phase actuelle : 1 (observateur) — Phase 3 (gardien) bloquera les violations en production
+Méthodes brain jamais câblées en prod : canDisplayVehicleOnMap · canAddVehicleToAlerts · canRequestCall · canShowPersistentCallBanner · warnIfPhase2 · audit
 
 PONT CLAUDE — FORMULER UNE DEMANDE DE MODIFICATION :
 Structure attendue : "Dans [fichier]:[ligne], modifier [quoi] → [quoi] pour [pourquoi]. Contrainte : [invariant]."
