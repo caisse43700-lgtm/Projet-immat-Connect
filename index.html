@@ -1879,6 +1879,8 @@ const AngeDialog={
     if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map((o,i)=>`<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
     if(r.question){html+=`<div class="ange-question" style="cursor:pointer" title="Cliquer pour répondre">${esc(r.question)}</div>`;}
     if(r.proposal?.rule){html+=`<div style="margin-top:10px;padding:8px 10px;background:#1e1b4b;border-left:3px solid #f0a500;border-radius:0 6px 6px 0;font-size:12px"><div style="color:#f0a500;font-weight:700;margin-bottom:4px">📋 Proposition · ${esc(r.proposal.id||'')}</div><div style="color:#e2e8f0">${esc(r.proposal.rule)}</div>${r.proposal.obligations?.length?`<div style="color:#a5b4fc;margin-top:4px">✅ ${r.proposal.obligations.map(esc).join(' · ')}</div>`:''}</div>`;}
+    // Feedback qualité
+    html+=`<div id="angeFeedback" style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end"><span style="color:#555;font-size:11px;align-self:center">Utile ?</span><button data-fb="1" onclick="AngeDialog.feedback(1,this)" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:.5;padding:2px 4px">👍</button><button data-fb="0" onclick="AngeDialog.feedback(0,this)" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:.5;padding:2px 4px">👎</button></div>`;
     el.innerHTML=html;
     // Options sélectionnables — clic = sélection visuelle + textarea prêt
     el.querySelectorAll('[data-opt]').forEach(div=>{
@@ -1894,6 +1896,16 @@ const AngeDialog={
     // Question — clic = focus textarea (invitation à répondre)
     const qDiv=el.querySelector('.ange-question');
     if(qDiv)qDiv.addEventListener('click',()=>$('angeMsg').focus());
+    // TTS — lire la réponse si la voix est activée (gated par S.voice)
+    const _tts=(r.juste||r.sources||'').replace(/<[^>]*>/g,'').slice(0,200);
+    if(_tts&&typeof speak==='function'&&S.voice)setTimeout(()=>speak(_tts,false),200);
+  },
+  feedback(v,btn){
+    // Remplace les boutons par un remerciement
+    const fb=$('angeFeedback');
+    if(fb)fb.innerHTML=`<span style="color:#555;font-size:11px">${v?'👍 Merci !':'👎 Noté — essaie de reformuler.'}</span>`;
+    // Sauvegarde en sessionStorage pour analyse future
+    try{const k='ic_ange_feedback';const arr=JSON.parse(sessionStorage.getItem(k)||'[]');arr.push({v,t:Date.now()});sessionStorage.setItem(k,JSON.stringify(arr.slice(-20)));}catch(e){}
   },
   startVoice(){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1919,6 +1931,9 @@ const AngeDialog={
     if(_now-_aData.t>3600000){_aData.n=0;} // reset après 1h
     if(_aData.n>=10){toast('Limite Ange atteinte (10/heure). Réessaie dans quelques minutes.','bad');return;}
     _aData.n++;_aData.t=_now;sessionStorage.setItem(_aKey,JSON.stringify(_aData));
+    // Historique de la session (3 derniers échanges = 6 messages)
+    const _hKey='ic_ange_history';
+    const _history=JSON.parse(sessionStorage.getItem(_hKey)||'[]');
     const btn=$('angeSubmit'),spin=$('angeSpin'),resp=$('angeResponse');
     btn.disabled=true;spin.style.display='block';resp.style.display='none';
     try{
@@ -1932,11 +1947,22 @@ const AngeDialog={
           message:msg,
           feature:S.panel||'GENERAL',
           mode:'consultation',
-          snapshot
+          snapshot,
+          history:_history.slice(-6)
         }
       });
       if(error)throw error;
       this.renderResponse(data);
+      // Sauvegarder l'échange dans l'historique de session
+      try{
+        const _respTxt=(data.juste||data.sources||'').slice(0,400);
+        if(_respTxt){
+          _history.push({role:'user',content:msg.slice(0,300)});
+          _history.push({role:'assistant',content:_respTxt});
+          while(_history.length>6)_history.shift();
+          sessionStorage.setItem(_hKey,JSON.stringify(_history));
+        }
+      }catch(e){}
       $('angeMsg').value='';
     }catch(e){
       $('angeResponse').style.display='block';

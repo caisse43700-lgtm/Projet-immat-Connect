@@ -287,6 +287,19 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, reason: 'message_required' }, { status: 400, headers: corsHeaders });
     }
 
+    // ── 4b. Historique — max 6 messages (3 échanges) ──
+    type HistMsg = { role: 'user' | 'assistant'; content: string };
+    const rawHistory = Array.isArray(body.history) ? body.history : [];
+    const history: HistMsg[] = rawHistory
+      .slice(-6)
+      .map((h: unknown) => {
+        const m = h as Record<string, unknown>;
+        const r = m.role === 'assistant' ? 'assistant' : 'user';
+        const c = typeof m.content === 'string' ? anonymize(m.content.slice(0, 400)) : '';
+        return c ? { role: r as 'user' | 'assistant', content: c } : null;
+      })
+      .filter((m): m is HistMsg => m !== null);
+
     // ── 5. Contexte dynamique ──
     const t_prompt = Date.now();
     const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth);
@@ -305,7 +318,10 @@ Deno.serve(async (req) => {
           { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
           { type: 'text', text: dynamicContext },
         ],
-        messages: [{ role: 'user', content: anonymize(message) }],
+        messages: [
+          ...history,
+          { role: 'user', content: anonymize(message) },
+        ],
       });
       rawContent = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
     } catch (apiErr: unknown) {
@@ -330,6 +346,7 @@ Deno.serve(async (req) => {
       mode,
       role: role ?? 'observer',
       depth,
+      historyLen: history.length,
       hasProposal: Boolean(result.proposal),
       fallback: result._fallback ?? false,
       timings: { auth_ms, role_ms, prompt_ms, anthropic_ms, validation_ms, total_ms },
