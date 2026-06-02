@@ -76,7 +76,7 @@ function nsToPrompt(depth: 1 | 2 | 3 = 3): string {
 
     if (depth === 3) {
       const entries     = Object.entries(o.entry ?? {})
-        .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
+        .map(([k, v]) => `${k}@${String(v)}`)
         .join(' · ');
       const constraints = (o.constraints ?? []).join('·');
       const deps        = (o.deps   ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]`    : '';

@@ -50,9 +50,9 @@ export const NS = {
     "Auth": {
       "desc": "Authentification et session Supabase",
       "entry": {
-        "afterAuth": "index.html:507",
-        "signup": "index.html:502",
-        "boot": "index.html:1419"
+        "afterAuth": "App.afterAuth",
+        "signup": "App.signup",
+        "boot": "fn.boot"
       },
       "constraints": [
         "INV-010",
@@ -106,8 +106,8 @@ export const NS = {
     "Profil": {
       "desc": "Données conducteur — plaque, pseudo, couleur, téléphone",
       "entry": {
-        "saveProfile": "index.html:549",
-        "upsert_profil": "index.html:530"
+        "saveProfile": "App.saveProfile",
+        "upsert_profil": "db.profiles.upsert"
       },
       "constraints": [
         "INV-006",
@@ -165,11 +165,11 @@ export const NS = {
     "Carte": {
       "desc": "Carte Leaflet — marqueurs véhicule, GPS, icônes colorées",
       "entry": {
-        "icon": "index.html:409",
-        "dot": "index.html:408",
-        "initMap": "index.html:551",
-        "locate": "index.html:554",
-        "loadOthers": "index.html:652"
+        "icon": "fn.icon",
+        "dot": "fn.dot",
+        "initMap": "App.initMap",
+        "locate": "App.locate",
+        "loadOthers": "App.loadOthers"
       },
       "constraints": [
         "INV-005",
@@ -231,8 +231,8 @@ export const NS = {
     "Messages": {
       "desc": "Messagerie temps réel conducteur à conducteur via Supabase",
       "entry": {
-        "startMsgs": "index.html:764",
-        "sendMsg": "index.html:703",
+        "startMsgs": "App.startMsgs",
+        "sendMsg": "App.sendMsg (legacy)",
         "ImmatMessages": "module externe"
       },
       "constraints": [
@@ -292,10 +292,10 @@ export const NS = {
     "Signalements": {
       "desc": "Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés",
       "entry": {
-        "roadReport": "index.html:905",
-        "vehicleAlert": "index.html:905",
-        "subscribeCommunityReports": "index.html:896",
-        "addCommunityAlertMarker": "index.html:813"
+        "roadReport": "App.roadReport",
+        "vehicleAlert": "App.vehicleAlert",
+        "subscribeCommunityReports": "App.subscribeCommunityReports",
+        "addCommunityAlertMarker": "App.addCommunityAlertMarker"
       },
       "constraints": [
         "INV-001",
@@ -357,9 +357,9 @@ export const NS = {
     "Ange": {
       "desc": "Interface Gardien — bouton ✦ (angeFab) + Edge Function Claude",
       "entry": {
-        "angeFab_css": "index.html:1907",
-        "angeFab_afterAuth": "index.html:520",
-        "angeFab_openMap": "index.html:550",
+        "angeFab_css": "css.#angeFab",
+        "angeFab_afterAuth": "App.afterAuth > #angeFab",
+        "angeFab_openMap": "App.openMap > #angeFab",
         "edge_function": "supabase/functions/immat-brain-dialog/index.ts"
       },
       "constraints": [
