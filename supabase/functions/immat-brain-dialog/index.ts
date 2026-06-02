@@ -125,8 +125,12 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
 
     const parsed = JSON.parse(match[0]) as Record<string, unknown>;
 
+    const hasJuste   = typeof parsed.juste   === 'string' && parsed.juste.trim().length   > 0;
+    const hasSources = typeof parsed.sources === 'string' && parsed.sources.trim().length > 0;
+
     const result: Record<string, unknown> = {
-      sources:  typeof parsed.sources  === 'string' ? parsed.sources  : fallback.sources,
+      // sources ne tombe en fallback que si ni sources ni juste n'est fourni
+      sources:  hasSources ? parsed.sources : (hasJuste ? undefined : fallback.sources),
       question: typeof parsed.question === 'string' ? parsed.question : fallback.question,
       requiresGuardianValidation: true,
       feature,
@@ -134,7 +138,7 @@ function validateOutput(raw: string, feature: string, mode: string): Record<stri
     };
 
     if (typeof parsed.vois   === 'string' && parsed.vois.trim())    result.vois      = parsed.vois;
-    if (typeof parsed.juste  === 'string' && parsed.juste.trim())   result.juste     = parsed.juste;
+    if (hasJuste)                                                     result.juste     = parsed.juste;
     if (Array.isArray(parsed.suppose)    && parsed.suppose.length)  result.suppose   = parsed.suppose;
     if (Array.isArray(parsed.vigilance)  && parsed.vigilance.length) result.vigilance = parsed.vigilance;
     if (Array.isArray(parsed.invariants) && parsed.invariants.length) result.invariants = parsed.invariants;
