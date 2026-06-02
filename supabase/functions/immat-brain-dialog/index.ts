@@ -15,16 +15,24 @@ function anonymize(text: string): string {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uid]');
 }
 
-// ── Transformation NS → prompt lisible (INV-015) ──────────────────────────
+// ── Transformation NS → prompt compact (INV-015) ─────────────────────────
 // Source unique : _shared/nervous-system.ts (dérivé de immat-nervous-system.json)
 // Ne jamais écrire ce texte à la main — modifier la source, pas ce fichier.
-function nsToPrompt(): string {
-  // Guards : crash au démarrage plutôt qu'en production
-  const organs     = NS.organs     as Record<string, { entry?: Record<string, string>; constraints?: string[]; deps?: string[] }>;
-  const routing    = NS.routing    as Record<string, string>;
+//
+// depth 3 — gardien   : entry · constraints · deps · serves · 2 failure_modes
+// depth 2 — protecteur: serves uniquement — pas d'entrées techniques ni de code
+function nsToPrompt(depth: 2 | 3 = 3): string {
+  const organs = NS.organs as Record<string, {
+    entry?:    Record<string, string>;
+    constraints?: string[];
+    deps?:        string[];
+    serves?:      string[];
+    level_2?:     { failure_modes?: string[] };
+  }>;
+  const routing     = NS.routing     as Record<string, string>;
   const inhibitions = NS.inhibitions as Record<string, string>;
-  const invariants = NS.invariants  as Record<string, { label: string; severity: string }>;
-  const id         = NS.ange_identity;
+  const invariants  = NS.invariants  as Record<string, { label: string; severity: string }>;
+  const id          = NS.ange_identity;
 
   if (!organs || !routing || !inhibitions || !invariants || !id) {
     throw new Error('[nsToPrompt] NS schema invalide — vérifier _shared/nervous-system.ts');
@@ -35,13 +43,21 @@ function nsToPrompt(): string {
       .filter(([, v]) => v === name)
       .map(([k]) => k)
       .join('|');
-    const entry = o.entry ?? {};
-    const entries = Object.entries(entry)
-      .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
-      .join(' · ');
-    const constraints = (o.constraints ?? []).join('·');
-    const deps = (o.deps ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]` : 'deps:[]';
-    return `${name} [${keywords}]\n  ${entries} · ${constraints} · ${deps}`;
+
+    if (depth === 3) {
+      const entries     = Object.entries(o.entry ?? {})
+        .map(([k, v]) => `${k}@${String(v).replace('index.html:', '')}`)
+        .join(' · ');
+      const constraints = (o.constraints ?? []).join('·');
+      const deps        = (o.deps   ?? []).length ? `deps:[${(o.deps ?? []).join(',')}]`    : '';
+      const serves      = (o.serves ?? []).length ? `serves:[${(o.serves ?? []).join(',')}]` : '';
+      const failures    = (o.level_2?.failure_modes ?? []).slice(0, 2).join(' / ');
+      const line1       = [entries, constraints, deps, serves].filter(Boolean).join(' · ');
+      return `${name} [${keywords}]\n  ${line1}${failures ? `\n  ⚠ ${failures}` : ''}`;
+    } else {
+      const serves = (o.serves ?? []).join(',');
+      return `${name} [${keywords}] serves:[${serves}]`;
+    }
   }).join('\n\n');
 
   const inhibitionsText = Object.entries(inhibitions)
@@ -78,7 +94,7 @@ Langue : français.`;
 
 // ── System prompt statique — calculé au démarrage, mis en cache Anthropic ─
 // Crash au démarrage si NS invalide : fail-fast > fail silencieux.
-const STATIC_SYSTEM = nsToPrompt();
+const STATIC_SYSTEM = nsToPrompt(3); // gardien : depth 3
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
 function buildDynamicContext(snapshot: unknown, mode: string, feature: string): string {
