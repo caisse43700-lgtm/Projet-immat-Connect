@@ -1,0 +1,846 @@
+{
+  "_v": 1,
+  "_doc": "Inventaire de tous les boutons, FABs et actions déclenchables — depuis index.html + INVENTAIRE-PRODUIT.md",
+
+  "auth_flow": [
+
+    {
+      "id": "BTN-A01",
+      "label": "Se connecter",
+      "element": "welcomeLoginBtn",
+      "panel": "sw",
+      "organe": null,
+      "action": "App.goAuth('login')",
+      "type": "btn-primary",
+      "position": "welcome screen",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A02",
+      "label": "Créer un compte gratuit",
+      "element": "welcomeSignupBtn",
+      "panel": "sw",
+      "organe": null,
+      "action": "App.goAuth('signup')",
+      "type": "btn-secondary",
+      "position": "welcome screen",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A03",
+      "label": "Connexion",
+      "element": "tabLogin",
+      "panel": "sa",
+      "organe": null,
+      "action": "App.setMode('login')",
+      "type": "tab",
+      "position": "auth tabs",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A04",
+      "label": "Inscription",
+      "element": "tabSignup",
+      "panel": "sa",
+      "organe": null,
+      "action": "App.setMode('signup')",
+      "type": "tab",
+      "position": "auth tabs",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A05",
+      "label": "Se connecter / Créer un compte",
+      "element": "authBtn",
+      "panel": "sa",
+      "organe": null,
+      "action": "App.login() ou App.signup()",
+      "type": "btn-primary",
+      "position": "auth form",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A06",
+      "label": "Mot de passe oublié",
+      "element": "forgotPwdBtn",
+      "panel": "sa",
+      "organe": null,
+      "action": "App.forgotPwd()",
+      "type": "btn-link",
+      "position": "auth form",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A07",
+      "label": "Renvoyer email",
+      "element": "resendBtn",
+      "panel": "sa",
+      "organe": null,
+      "action": "App.resendConfirm()",
+      "type": "btn-link",
+      "position": "auth form",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A08",
+      "label": "Enregistrer profil",
+      "element": null,
+      "panel": "sp",
+      "organe": null,
+      "action": "App.saveProfile()",
+      "type": "btn-primary",
+      "position": "profil setup",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-A09",
+      "label": "Mettre à jour mot de passe",
+      "element": null,
+      "panel": "sr",
+      "organe": null,
+      "action": "App.updatePwd()",
+      "type": "btn-primary",
+      "position": "reset password",
+      "statut": "actif"
+    }
+
+  ],
+
+  "carte_fabs": [
+
+    {
+      "id": "BTN-C01",
+      "label": "Signaler",
+      "element": "signalBtn",
+      "panel": "panelAltet",
+      "organe": "SIGNAL",
+      "action": "App.openReport() ou openOverlay('reportPanel')",
+      "type": "fab-primary",
+      "position": "bas-droite carte",
+      "statut": "actif",
+      "note": "FAB principal — accessible d'une main"
+    },
+    {
+      "id": "BTN-C02",
+      "label": "Recentrer",
+      "element": null,
+      "panel": "panelAltet",
+      "organe": "ROUTE",
+      "action": "App.recenter()",
+      "type": "fab",
+      "position": "fab-stack carte",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-C03",
+      "label": "Conducteurs proches",
+      "element": null,
+      "panel": "panelAltet",
+      "organe": "RADAR",
+      "action": "App.openNearby()",
+      "type": "fab",
+      "position": "fab-stack carte",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-C04",
+      "label": "Vue",
+      "element": "viewBtn",
+      "panel": "panelAltet",
+      "organe": "ROUTE",
+      "action": "App.cycleView()",
+      "type": "fab",
+      "position": "fab-stack carte",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-C05",
+      "label": "SOS",
+      "element": "longSos",
+      "panel": "panelAltet",
+      "organe": "SIGNAL",
+      "action": "App.startSosHold() + App.cancelSosHold()",
+      "type": "fab-sos long-press",
+      "position": "fab-stack carte",
+      "statut": "actif",
+      "note": "Appui long requis (D-005) — pas de tap simple"
+    },
+    {
+      "id": "BTN-C06",
+      "label": "L'Ange (Gardien)",
+      "element": "angeFab",
+      "panel": "panelAltet",
+      "organe": "GARDIEN",
+      "action": "AngeDialog.open()",
+      "type": "fab-gardien",
+      "position": "bas-gauche carte",
+      "statut": "actif",
+      "acces": "Gardien uniquement (isGardien === true)"
+    },
+    {
+      "id": "BTN-C07",
+      "label": "Invisible",
+      "element": "invisBtn",
+      "panel": "panelAltet",
+      "organe": "MOI",
+      "action": "App.toggleInvisible()",
+      "type": "fab",
+      "position": "fab-stack ou drawer",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-C08",
+      "label": "Localiser",
+      "element": null,
+      "panel": "panelAltet",
+      "organe": "ROUTE",
+      "action": "App.locate()",
+      "type": "fab",
+      "position": "carte",
+      "statut": "actif"
+    }
+
+  ],
+
+  "report_panel": [
+
+    {
+      "id": "BTN-R01",
+      "label": "Signaler ce véhicule (types)",
+      "panel": "reportPanel",
+      "organe": "SIGNAL",
+      "actions": [
+        "App.vehicleAlertQuick('Pneu crevé ou à plat')",
+        "App.vehicleAlertQuick('Portière ou coffre mal fermé')",
+        "App.vehicleAlertQuick('Feu arrière ou avant défaillant')",
+        "App.vehicleAlertQuick('Fumée ou odeur de brûlé')",
+        "App.vehicleAlertQuick('Objet traînant sous le véhicule')",
+        "App.vehicleAlertQuick('Autre problème visible')"
+      ],
+      "type": "signal-type-btn",
+      "statut": "actif",
+      "bloc": "véhicule"
+    },
+    {
+      "id": "BTN-R02",
+      "label": "Signaler route (types)",
+      "panel": "reportPanel",
+      "organe": "SIGNAL",
+      "actions": [
+        "App.roadReport('accident')",
+        "App.roadReport('bouchon')",
+        "App.roadReport('obstacle')",
+        "App.roadReport('travaux')",
+        "App.roadReport('controle')",
+        "App.roadReport('danger')"
+      ],
+      "type": "signal-type-btn",
+      "statut": "actif",
+      "bloc": "route"
+    },
+    {
+      "id": "BTN-R03",
+      "label": "Demander aide (types)",
+      "panel": "reportPanel",
+      "organe": "AIDE",
+      "actions": [
+        "App.assist('panne')",
+        "App.assist('carburant')",
+        "App.assist('batterie')",
+        "App.assist('moteur')",
+        "App.assist('incendie')",
+        "App.assist('perdu')"
+      ],
+      "type": "signal-type-btn",
+      "statut": "actif",
+      "bloc": "aide"
+    },
+    {
+      "id": "BTN-R04",
+      "label": "Fermer signalement",
+      "panel": "reportPanel",
+      "organe": "SIGNAL",
+      "action": "App.closeOverlay('reportPanel')",
+      "type": "btn-close",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-R05",
+      "label": "Retour",
+      "panel": "reportPanel",
+      "organe": "SIGNAL",
+      "action": "App.sigBack()",
+      "type": "btn-back",
+      "statut": "actif"
+    }
+
+  ],
+
+  "nearby_panel": [
+
+    {
+      "id": "BTN-N01",
+      "label": "Fermer",
+      "panel": "nearbyPanel",
+      "organe": "RADAR",
+      "action": "App.closeOverlay('nearbyPanel')",
+      "type": "btn-close",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-N02",
+      "label": "Contacter (par conducteur)",
+      "panel": "nearbyPanel",
+      "organe": "CONTACT",
+      "action": "CallManager.openContactOptions(plate)",
+      "type": "btn-action",
+      "statut": "actif",
+      "note": "Disponible pour chaque conducteur dans la liste"
+    }
+
+  ],
+
+  "panel_messages": [
+
+    {
+      "id": "BTN-M01",
+      "label": "Reçus",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.setMode('inbox')",
+      "type": "tab",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M02",
+      "label": "Envoyés",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.setMode('sent')",
+      "type": "tab",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M03",
+      "label": "Nouveau message",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.setMode('compose')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M04",
+      "label": "Envoyer",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.sendNew()",
+      "type": "btn-primary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M05",
+      "label": "Répondre",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.reply()",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M06",
+      "label": "Réponses rapides (Je m'arrête / Je vérifie / Bien reçu)",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "actions": [
+        "ImmatMessages.quick('Je m\\'arrête, merci.')",
+        "ImmatMessages.quick('Je vérifie, merci.')",
+        "ImmatMessages.quick('Bien reçu, merci.')"
+      ],
+      "type": "btn-quick",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M07",
+      "label": "Supprimer conversation",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.deleteThread()",
+      "type": "btn-danger",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M08",
+      "label": "Fermer thread",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "ImmatMessages.closeThread()",
+      "type": "btn-close",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M09",
+      "label": "Appeler",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "CallManager.openContactOptions(plate)",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-M10",
+      "label": "Voix (dicter message)",
+      "panel": "panelMessages",
+      "organe": "CONTACT",
+      "action": "App.voiceMsg()",
+      "type": "btn-voice",
+      "statut": "actif"
+    }
+
+  ],
+
+  "panel_activite": [
+
+    {
+      "id": "BTN-ACT01",
+      "label": "Reçus",
+      "panel": "panelActivite",
+      "organe": "SIGNAL",
+      "action": "App.actCatTab('recus')",
+      "type": "tab",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-ACT02",
+      "label": "Envoyés",
+      "panel": "panelActivite",
+      "organe": "SIGNAL",
+      "action": "App.actCatTab('envoyes')",
+      "type": "tab",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-ACT03",
+      "label": "Marquer tout lu",
+      "panel": "panelActivite",
+      "organe": "SIGNAL",
+      "action": "App.markAllCatRead()",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-ACT04",
+      "label": "Vu (dismiss alerte)",
+      "panel": "panelActivite / FloatingCard",
+      "organe": "SIGNAL",
+      "action": "App.actConfirmAlert(id, 'seen')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-ACT05",
+      "label": "Résolu (résoudre demande aide)",
+      "panel": "panelActivite / marqueur carte",
+      "organe": "AIDE",
+      "action": "App.actConfirmAlert(id, 'resolved')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-ACT06",
+      "label": "Répondre à l'aide",
+      "panel": "panelActivite",
+      "organe": "AIDE",
+      "action": "App.actHelpReply(plate)",
+      "type": "btn-action",
+      "statut": "actif"
+    }
+
+  ],
+
+  "panel_drive": [
+
+    {
+      "id": "BTN-D01",
+      "label": "Rechercher",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.searchGps()",
+      "type": "btn-primary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D02",
+      "label": "Voix GPS",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.voiceGps()",
+      "type": "btn-voice",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D03",
+      "label": "Naviguer",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.startNav()",
+      "type": "btn-primary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D04",
+      "label": "Stop GPS",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.stopGps()",
+      "type": "btn-danger",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D05",
+      "label": "Localiser",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.locate()",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D06",
+      "label": "Sauvegarder destination",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.saveCurrentDestination()",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D07",
+      "label": "Supprimer favori",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.deleteFav(i)",
+      "type": "btn-icon",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D08",
+      "label": "Supprimer historique",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.deleteHistEntry(i)",
+      "type": "btn-icon",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-D09",
+      "label": "POI (carburant / resto / parking / garage / recharge / santé)",
+      "panel": "panelDrive",
+      "organe": "ROUTE",
+      "action": "App.poi(type)",
+      "type": "btn-grid-poi",
+      "statut": "actif"
+    }
+
+  ],
+
+  "panel_settings": [
+
+    {
+      "id": "BTN-S01",
+      "label": "Activer / Désactiver sons",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.toggleSounds()",
+      "type": "toggle",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S02",
+      "label": "Voix GPS",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.toggleVoice()",
+      "type": "toggle",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S03",
+      "label": "Genre voix GPS",
+      "element": "voiceGenderBtn",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.toggleVoiceGender()",
+      "type": "btn-toggle",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S04",
+      "label": "Effets réduits",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.toggleReduceEffects()",
+      "type": "toggle",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S05",
+      "label": "Vider le cache",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.clearOfflineCache()",
+      "type": "btn-danger",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S06",
+      "label": "Restaurer messages",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.restoreMessages()",
+      "type": "btn-debug",
+      "statut": "actif",
+      "probleme": "FRI-004 — Outil debug dans paramètres utilisateur",
+      "decision": "D-007 — À déplacer vers outils Gardien"
+    },
+    {
+      "id": "BTN-S07",
+      "label": "Sync alertes",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.forceSyncAlerts()",
+      "type": "btn-debug",
+      "statut": "actif",
+      "probleme": "FRI-004 — Outil debug dans paramètres utilisateur",
+      "decision": "D-007 — À déplacer vers outils Gardien"
+    },
+    {
+      "id": "BTN-S08",
+      "label": "Déconnecter",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.logout()",
+      "type": "btn-danger",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S09",
+      "label": "Bloquer une plaque",
+      "panel": "panelSettings / message",
+      "organe": "MOI",
+      "action": "App.blockPlate(plate)",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S10",
+      "label": "Débloquer une plaque",
+      "panel": "panelSettings",
+      "organe": "MOI",
+      "action": "App.unblockPlate(plate)",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-S11",
+      "label": "Autoriser les appels",
+      "panel": "panelSettings",
+      "organe": "CONTACT",
+      "action": "toggle preference appels",
+      "type": "toggle",
+      "statut": "actif"
+    }
+
+  ],
+
+  "call_modals": [
+
+    {
+      "id": "BTN-K01",
+      "label": "Appeler par appel",
+      "panel": "callContactModal",
+      "organe": "CONTACT",
+      "action": "CallManager.contactByCall(plate, uid)",
+      "type": "btn-primary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K02",
+      "label": "Contacter par message",
+      "panel": "callContactModal",
+      "organe": "CONTACT",
+      "action": "CallManager.contactByMessage(plate)",
+      "type": "btn-secondary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K03",
+      "label": "Fermer",
+      "panel": "callContactModal",
+      "organe": "CONTACT",
+      "action": "CallManager.closeContactModal()",
+      "type": "btn-close",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K04",
+      "label": "Accepter appel",
+      "panel": "callIncomingPopup",
+      "organe": "CONTACT",
+      "action": "CallManager.acceptCall(requestId)",
+      "type": "btn-primary",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K05",
+      "label": "Refuser appel",
+      "panel": "callIncomingPopup",
+      "organe": "CONTACT",
+      "action": "CallManager.refuseCall(requestId)",
+      "type": "btn-danger",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K06",
+      "label": "Annuler demande d'appel",
+      "panel": "callSentBanner",
+      "organe": "CONTACT",
+      "action": "CallManager.cancelCallRequest(requestId)",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-K07",
+      "label": "Fermer (appels non autorisés)",
+      "panel": "callNotAllowedModal",
+      "organe": "CONTACT",
+      "action": "modal.classList.remove('show')",
+      "type": "btn-close",
+      "statut": "actif"
+    }
+
+  ],
+
+  "vehicle_context_menu": [
+
+    {
+      "id": "BTN-V01",
+      "label": "Contacter",
+      "panel": "vehicleContextMenu",
+      "organe": "CONTACT",
+      "action": "App.vehicleContextAction('contact')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-V02",
+      "label": "Signaler ce véhicule",
+      "panel": "vehicleContextMenu",
+      "organe": "SIGNAL",
+      "action": "App.vehicleContextAction('signal')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-V03",
+      "label": "Bloquer",
+      "panel": "vehicleContextMenu",
+      "organe": "MOI",
+      "action": "App.vehicleContextAction('block')",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-V04",
+      "label": "Contacter le véhicule devant",
+      "panel": "FloatingCard / carte",
+      "organe": "CONTACT",
+      "action": "App.contactFrontVehicle()",
+      "type": "btn-action",
+      "statut": "actif"
+    },
+    {
+      "id": "BTN-V05",
+      "label": "Signaler numéro de plaque (voix)",
+      "panel": "contextuel",
+      "organe": "SIGNAL",
+      "action": "App.voicePlate()",
+      "type": "btn-voice",
+      "statut": "actif"
+    }
+
+  ],
+
+  "ange_dialog": [
+
+    {
+      "id": "BTN-G01",
+      "label": "Ouvrir l'Ange",
+      "element": "angeFab",
+      "panel": "panelAltet",
+      "organe": "GARDIEN",
+      "action": "AngeDialog.open()",
+      "type": "fab-gardien",
+      "statut": "actif",
+      "acces": "Gardien uniquement"
+    },
+    {
+      "id": "BTN-G02",
+      "label": "Fermer l'Ange",
+      "panel": "angePanel",
+      "organe": "GARDIEN",
+      "action": "AngeDialog.close()",
+      "type": "btn-close",
+      "statut": "actif",
+      "acces": "Gardien uniquement"
+    },
+    {
+      "id": "BTN-G03",
+      "label": "Envoyer question",
+      "panel": "angePanel",
+      "organe": "GARDIEN",
+      "action": "AngeDialog.send()",
+      "type": "btn-primary",
+      "statut": "actif",
+      "acces": "Gardien uniquement"
+    },
+    {
+      "id": "BTN-G04",
+      "label": "Options de réponse (sélectionnables)",
+      "panel": "angePanel",
+      "organe": "GARDIEN",
+      "action": "clic → remplissage textarea avec label option",
+      "type": "btn-option-selectable",
+      "statut": "actif",
+      "note": "data-opt + click listener — sélection visuellement mise en évidence"
+    }
+
+  ],
+
+  "manquants": [
+
+    {
+      "id": "BTN-MISS01",
+      "label": "Modifier profil",
+      "panel": "drawer",
+      "organe": "MOI",
+      "action": "ouvre sp avec données pré-remplies",
+      "type": "btn-action",
+      "statut": "manquant",
+      "ref": "INVENTAIRE B2-2",
+      "priorite": "P2"
+    },
+    {
+      "id": "BTN-MISS02",
+      "label": "FAB Signaler ici (contextuel sur la carte)",
+      "panel": "panelAltet",
+      "organe": "SIGNAL",
+      "action": "App.openReport() avec coordonnées de tap",
+      "type": "fab",
+      "statut": "manquant",
+      "ref": "INVENTAIRE B2-3",
+      "priorite": "P2"
+    }
+
+  ]
+}

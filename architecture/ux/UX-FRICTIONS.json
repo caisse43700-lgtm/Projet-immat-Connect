@@ -1,0 +1,129 @@
+{
+  "_v": 1,
+  "_doc": "Frictions, incohérences, doublons identifiés — depuis INVENTAIRE-PRODUIT.md phase 7 + SPEC.md warnings",
+
+  "frictions": [
+
+    {
+      "id": "FRI-001",
+      "titre": "panelContact legacy dans le DOM",
+      "categorie": "doublon",
+      "gravite": "haute",
+      "desc": "panelContact est obsolète mais toujours présent dans le DOM. ui.js redirige déjà vers panelMessages.",
+      "impact": "Confusion code, risque de régression, poids inutile",
+      "decision": "D-001 — Supprimer",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "FRI-002",
+      "titre": "navPremium avec données simulées",
+      "categorie": "trompeuse",
+      "gravite": "haute",
+      "desc": "Les champs trafic, limite de vitesse, voies dans panelDrive affichent des données simulées/statiques.",
+      "impact": "L'utilisateur peut croire ces données réelles — risque de désinformation",
+      "decision": "DA-002 — Supprimer ou marquer Futur clairement",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "FRI-003",
+      "titre": "Onglet Nouveau → navSignaler (confusion)",
+      "categorie": "navigation_mort",
+      "gravite": "moyenne",
+      "desc": "Dans panelActivite, l'onglet 'Nouveau' redirige vers la fonctionnalité de signalement au lieu d'un nouveau message.",
+      "impact": "Friction cognitive — l'utilisateur cherche 'Nouveau message', trouve 'Signaler'",
+      "decision": "D-008 — Supprimer ou renommer l'onglet",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "FRI-004",
+      "titre": "Debug tools dans paramètres utilisateur",
+      "categorie": "mauvais_contexte",
+      "gravite": "moyenne",
+      "desc": "Restaurer msgs et Sync alertes sont des outils de debug dans le panel paramètres conducteur.",
+      "impact": "Confusion utilisateur, sentiment d'interface cassée",
+      "decision": "D-007 — Déplacer vers outils Gardien",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "FRI-005",
+      "titre": "Deux systèmes de confiance (local vs DB)",
+      "categorie": "doublon",
+      "gravite": "moyenne",
+      "desc": "Un système de score local (ic_trust) et un système DB (ReliabilityPro) coexistent.",
+      "impact": "Incohérence de données, maintenance complexe",
+      "decision": "Unifier — la confiance est locale, contextuelle, jamais publique (D-004)",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "FRI-006",
+      "titre": "Pas de confirmation lecture message",
+      "categorie": "retour_absent",
+      "gravite": "basse",
+      "desc": "L'émetteur ne sait jamais si son message a été lu.",
+      "impact": "Frustration émetteur, incertitude sur la réception",
+      "decision": "À concevoir — marqueur lu (P2)",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "FRI-007",
+      "titre": "Blocage local uniquement",
+      "categorie": "donnée_volatile",
+      "gravite": "basse",
+      "desc": "Les plaques bloquées sont stockées en localStorage (ic_blocked). Perdues si cache effacé.",
+      "impact": "Perte de protection si cache effacé ou changement de navigateur",
+      "decision": "DA-004 — Migrer vers DB (P2)",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "FRI-008",
+      "titre": "reportPanel trop long (3 blocs visibles)",
+      "categorie": "friction_ux",
+      "gravite": "moyenne",
+      "desc": "Le reportPanel affiche toujours les 3 blocs (véhicule + route + aide) même si le contexte est connu.",
+      "impact": "Scroll inutile, choix difficile si contexte non préchargé",
+      "decision": "DA-001 — Simplifier en 2 étapes",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "FRI-009",
+      "titre": "Pas de cycle complet pour Aide (pas de confirmation helper)",
+      "categorie": "cycle_incomplet",
+      "gravite": "moyenne",
+      "desc": "Quand un conducteur demande de l'aide, aucun conducteur helper ne peut confirmer 'je viens'. Il n'y a pas de fil de réponse.",
+      "impact": "Le demandeur ne sait pas si quelqu'un vient",
+      "decision": "À concevoir — réponse structurée à une demande d'aide (P2)",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "FRI-010",
+      "titre": "SOS non protégé (risque fausse alerte)",
+      "categorie": "securite_ux",
+      "gravite": "haute",
+      "desc": "L'alerte 'incendie' dans reportPanel est un simple tap. Pas de confirmation supplémentaire.",
+      "impact": "Risque de fausses alertes SOS — crédibilité du réseau",
+      "decision": "D-005 — Appui long ou confirmation double",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "FRI-011",
+      "titre": "Carte comme fond, pas comme interface vivante",
+      "categorie": "ux_stratégique",
+      "gravite": "haute",
+      "desc": "La carte Leaflet est actuellement un fond avec des marqueurs. Les véhicules ne sont pas des entités visuelles (pas de direction, pas d'état, silhouette basique).",
+      "impact": "Expérience sous-optimale — pas immersive, pas inspirante",
+      "decision": "Voir UX-MAP.md — évolution vers carte immersive (P2)",
+      "priorite": "P2"
+    }
+
+  ]
+}

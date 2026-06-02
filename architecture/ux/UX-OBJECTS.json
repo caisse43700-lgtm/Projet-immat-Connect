@@ -1,0 +1,91 @@
+{
+  "_v": 1,
+  "_doc": "Objets métier réels d'ImmatConnect — dérivés de SPEC.md section 1. Source canonique : SPEC.md#domaine.",
+  "_derived_from": "SPEC.md section 1.1–1.10",
+
+  "objects": {
+
+    "Conducteur": {
+      "desc": "Utilisateur authentifié avec un véhicule enregistré",
+      "fields": ["id (UUID)", "email", "pseudo", "owner_plate", "vehicle_color", "phone (optionnel)"],
+      "invariants": ["owner_plate immuable après création (INV-006)", "email unique (Supabase Auth)"],
+      "note": "L'identité est le véhicule, pas la personne. pseudo = surnom public."
+    },
+
+    "Véhicule": {
+      "desc": "Entité représentée par une plaque d'immatriculation",
+      "fields": ["owner_plate (canonical)", "vehicle_color", "pseudo du propriétaire"],
+      "invariants": ["1 conducteur = 1 plaque (INV-006)"],
+      "note": "Le véhicule est l'unité d'interaction (P-002). La carte affiche des véhicules, pas des personnes."
+    },
+
+    "Message": {
+      "desc": "Communication directe entre deux conducteurs identifiés",
+      "fields": ["id", "sender_id", "receiver_id", "target_plate", "body", "created_at", "read_at", "deleted_at"],
+      "states": ["envoyé", "reçu", "lu", "supprimé_soft"],
+      "canal": "INV-001 — canal véhicule exclusivement",
+      "note": "Jamais mélangé avec alertes route ou aide. Séparation stricte."
+    },
+
+    "Conversation": {
+      "desc": "Fil de messages entre deux plaques",
+      "fields": ["plaque_a", "plaque_b", "messages[]", "last_message_at"],
+      "note": "Identifiée par les deux plaques (canoniques). Pas par les IDs utilisateurs."
+    },
+
+    "SignalementRoute": {
+      "desc": "Alerte sur une condition de route — visible par tous les conducteurs proches",
+      "fields": ["id", "type", "reason", "latitude", "longitude", "reporter_id", "created_at", "status", "ttl"],
+      "types": ["accident", "bouchon", "obstacle", "travaux", "controle", "danger"],
+      "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
+      "canal": "INV-002 — canal route exclusivement",
+      "states": ["actif", "résolu", "expiré"],
+      "note": "Broadcast temps réel. Résoluble uniquement par le créateur."
+    },
+
+    "AlerteVehicule": {
+      "desc": "Notification ciblée sur le véhicule d'un conducteur spécifique",
+      "fields": ["sender_plate", "target_plate", "label", "urgent", "created_at"],
+      "types": ["feux_allumés", "porte_coffre", "eclairage", "element_detache", "pneu_roue", "fumee_feu"],
+      "canal": "INV-001 — canal véhicule exclusivement",
+      "note": "Ciblé (1 véhicule). Distinct du signalement route (tous les proches)."
+    },
+
+    "DemandeAide": {
+      "desc": "Demande d'assistance au réseau de conducteurs proches",
+      "fields": ["id", "type", "reporter_id", "latitude", "longitude", "created_at", "status"],
+      "types": ["panne", "carburant", "batterie", "moteur", "incendie", "perdu"],
+      "canal": "INV-003 — canal aide exclusivement",
+      "states": ["active", "résolue", "expirée"],
+      "ttl": "45min",
+      "note": "Seul le créateur peut la résoudre. Visible par les conducteurs proches."
+    },
+
+    "DemandeAppel": {
+      "desc": "Demande de contact téléphonique WebRTC entre deux conducteurs",
+      "fields": ["id", "caller_plate", "callee_plate", "status", "created_at", "answered_at", "ended_at"],
+      "states": ["en_attente", "accepté", "refusé", "en_cours", "terminé", "expiré"],
+      "note": "Jamais de numéro partagé sans consentement (INV-010). CallManager gère tout."
+    },
+
+    "PreferenceAppel": {
+      "desc": "Configuration du conducteur pour les demandes de contact",
+      "fields": ["allow_calls (boolean)"],
+      "note": "Stockée localement et en DB. Respectée avant toute demande d'appel."
+    },
+
+    "Localisation": {
+      "desc": "Position GPS temps réel d'un conducteur",
+      "fields": ["owner_plate", "latitude", "longitude", "heading", "speed", "updated_at"],
+      "note": "Mise à jour via watchPosition(). Visible sur la carte par les conducteurs proches. Jamais partagée sans consentement (INV-010)."
+    },
+
+    "Interaction": {
+      "desc": "Objet central d'ImmatConnect — unification conceptuelle de toutes les communications",
+      "note": "Un message est une interaction. Un signalement est une interaction. Un appel est une interaction. L'objet Interaction relie : émetteur · système · récepteur · résolution.",
+      "types": ["message", "alerte_vehicule", "alerte_route", "demande_aide", "appel", "remerciement", "confirmation", "blocage", "sos"],
+      "invariants": ["Toute interaction a un contexte réel (P-001)", "Toute interaction a une nature principale (distinction critique)"]
+    }
+
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "_v": 1,
+  "_doc": "Parcours réels conducteur — depuis SPEC.md section 5 + INVENTAIRE-PRODUIT.md phase 6",
+
+  "journeys": [
+
+    {
+      "id": "JRN-001",
+      "titre": "Je vois un problème sur le véhicule d'un conducteur devant moi",
+      "situation": "Conduite — véhicule devant avec feux allumés, porte ouverte, pneu à plat",
+      "etapes": [
+        "Voir le marqueur du véhicule sur la carte",
+        "Cliquer le marqueur → menu contextuel → Signaler ce véhicule",
+        "Choisir le type d'alerte (ou passer par reportPanel → Informer conducteurs)",
+        "Envoyer"
+      ],
+      "boutons": ["marqueur → menu contextuel", "reportPanel → bloc véhicule → type"],
+      "retour": "Toast envoyé · FloatingCard côté récepteur",
+      "interaction": "INT-002",
+      "problemes": ["Menu contextuel pas toujours intuitif", "Le conducteur ciblé reçoit sans contexte visuel fort"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-002",
+      "titre": "Je vois un danger sur la route (accident, bouchon)",
+      "situation": "Conduite — accident devant, bouchon, obstacle sur la route",
+      "etapes": [
+        "Appuyer sur FAB Signaler",
+        "reportPanel → Informer la route",
+        "Choisir le type (accident, bouchon, obstacle…)",
+        "Envoyer"
+      ],
+      "boutons": ["FAB Signaler → reportPanel → type route"],
+      "retour": "Marqueur ajouté sur la carte · tous les conducteurs proches notifiés",
+      "interaction": "INT-003",
+      "problemes": [],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-003",
+      "titre": "Je suis en panne et j'ai besoin d'aide",
+      "situation": "Conducteur immobilisé — panne, carburant vide, batterie, moteur",
+      "etapes": [
+        "Appuyer sur FAB Signaler",
+        "reportPanel → Demander de l'aide",
+        "Choisir le type (panne, carburant, batterie…)",
+        "Envoyer — marqueur aide visible sur la carte"
+      ],
+      "boutons": ["FAB Signaler → reportPanel → bloc aide → type"],
+      "retour": "Marqueur aide sur ma carte · conducteurs proches notifiés",
+      "actions_apres": ["Attendre qu'un conducteur me contacte", "Résoudre quand l'aide est arrivée"],
+      "interaction": "INT-004",
+      "problemes": ["Pas de confirmation qu'un helper vient", "Pas de fil de réponse aide → demandeur"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-004",
+      "titre": "Je veux envoyer un message à un conducteur proche",
+      "situation": "Je veux communiquer avec un conducteur que je vois sur la carte",
+      "etapes": [
+        "Option A : Cliquer le marqueur → menu contextuel → Envoyer message",
+        "Option B : FAB 👥 → nearbyPanel → Contacter",
+        "panelMessages → compose → saisir le message → Envoyer"
+      ],
+      "boutons": ["marqueur → Envoyer message", "nearbyPanel → Contacter", "compose → Envoyer"],
+      "retour": "Message dans onglet Envoyés · récepteur notifié",
+      "interaction": "INT-001",
+      "problemes": ["2 chemins pour le même résultat — pas de friction mais redondance"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-005",
+      "titre": "Je reçois une alerte véhicule sur mon propre véhicule",
+      "situation": "Un conducteur m'alerte d'un problème sur mon véhicule",
+      "etapes": [
+        "FloatingCard apparaît avec l'alerte",
+        "Lire le type de problème signalé",
+        "Choisir : Vu (dismiss) ou Répondre (ouvre message vers l'émetteur)"
+      ],
+      "boutons": ["FloatingCard → Vu", "FloatingCard → Répondre"],
+      "retour": "FloatingCard disparaît · badge activité mis à jour",
+      "interaction": "INT-002",
+      "problemes": ["Pas de retour à l'émetteur que j'ai vu son alerte"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-006",
+      "titre": "Je reçois un message d'un autre conducteur",
+      "situation": "Notification de message entrant",
+      "etapes": [
+        "Badge messages augmente · notification toast",
+        "Ouvrir panelMessages → onglet Reçus",
+        "Lire le message",
+        "Répondre via compose"
+      ],
+      "boutons": ["badge → panelMessages → Reçus → Répondre"],
+      "retour": "Message envoyé · onglet Envoyés mis à jour",
+      "interaction": "INT-001",
+      "problemes": ["Pas de confirmation de lecture côté émetteur"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-007",
+      "titre": "Je demande un contact téléphonique",
+      "situation": "Après échange de messages, je veux parler vocalement",
+      "etapes": [
+        "panelMessages → bouton Appeler",
+        "callContactModal → envoi demande",
+        "Attendre acceptation",
+        "Appel WebRTC en cours (callOverlay)"
+      ],
+      "prerequis": ["L'autre conducteur a activé les appels entrants"],
+      "boutons": ["Appeler → callContactModal → Envoyer demande"],
+      "retour": "callOverlay avec statut",
+      "interaction": "INT-005",
+      "problemes": ["callNotAllowedModal si préférence désactivée — message d'erreur à améliorer"],
+      "priorite": "P1"
+    },
+
+    {
+      "id": "JRN-008",
+      "titre": "Je résous ma demande d'aide",
+      "situation": "L'aide est arrivée, je veux clore ma demande",
+      "etapes": [
+        "Ouvrir panelActivite ou marqueur aide sur carte",
+        "Appuyer sur Résoudre",
+        "Confirmer"
+      ],
+      "boutons": ["marqueur aide → Résoudre", "activité → Résoudre"],
+      "retour": "Marqueur supprimé · conducteurs helpers notifiés",
+      "interaction": "INT-007",
+      "problemes": ["Bouton Résoudre pas toujours visible facilement"],
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-009",
+      "titre": "Je navigue vers une destination",
+      "situation": "Je veux me rendre quelque part et utiliser la navigation GPS",
+      "etapes": [
+        "Ouvrir panelDrive (menu → Navigation GPS)",
+        "Saisir destination dans la barre de recherche",
+        "Sélectionner résultat",
+        "Naviguer"
+      ],
+      "boutons": ["menu → Navigation GPS → recherche → sélection résultat"],
+      "retour": "Route tracée sur la carte · instructions vocales",
+      "problemes": ["navPremium affiche données simulées — trompeuses"],
+      "priorite": "P1"
+    },
+
+    {
+      "id": "JRN-010",
+      "titre": "Je bloque un conducteur qui m'a harcelé",
+      "situation": "Je reçois des messages indésirables d'une plaque",
+      "etapes": [
+        "Message → menu → Bloquer",
+        "Confirmation → bloqué localement"
+      ],
+      "boutons": ["message → Bloquer"],
+      "retour": "Plaque disparaît des listes · messages filtrés",
+      "interaction": "INT-008",
+      "problemes": ["Blocage local uniquement — perdu si cache effacé"],
+      "priorite": "P1"
+    },
+
+    {
+      "id": "JRN-011",
+      "titre": "Je cherche un conducteur proche pour l'avertir",
+      "situation": "Je veux voir qui est connecté autour de moi",
+      "etapes": [
+        "FAB 👥 → nearbyPanel",
+        "Voir la liste des conducteurs (plaque, pseudo, distance)",
+        "Cliquer Contacter → panelMessages → compose"
+      ],
+      "boutons": ["FAB 👥 → nearbyPanel → Contacter"],
+      "retour": "panelMessages en mode compose avec la plaque préremplie",
+      "priorite": "P0"
+    },
+
+    {
+      "id": "JRN-012",
+      "titre": "Je consulte les alertes actives dans ma zone",
+      "situation": "Je veux savoir quelles alertes sont actives près de moi",
+      "etapes": [
+        "Option A : Cliquer marqueur alerte sur la carte",
+        "Option B : Icône alertes (panelAltet) → alertsPanel",
+        "Filtrer par type",
+        "Voir détails"
+      ],
+      "boutons": ["marqueur alerte", "icône alertes → alertsPanel"],
+      "retour": "Liste filtrée avec historique",
+      "priorite": "P0"
+    }
+
+  ]
+}
