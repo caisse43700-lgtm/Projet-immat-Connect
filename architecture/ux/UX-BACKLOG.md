@@ -184,6 +184,9 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 | panelContact supprimé — D-001 remplie (voicePlate/voiceMsg/fallbacks migrés) | SESSION 11 |
 | validateNSSchema() dans brain-dialog — DET-002 (fail-fast schéma NS) | SESSION 11 |
 | AUDIT-2026-06.md mis à jour — INC-001 et DET-002 fermés | SESSION 11 |
+| DET-001 anchors symboliques NS (19 références lignes remplacées) | SESSION 11 |
+| scripts/test-brain-routing.js — validation comportementale pipeline 100% | SESSION 11 |
+| scripts/validate-ns-refs.js — vérification CI anchors symboliques | SESSION 11 |
 
 ---
 
