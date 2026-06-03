@@ -169,7 +169,10 @@ function normalizeRows(rows, profs){
       // NE PAS tomber sur rp si reçu et sp vide (sinon _otherPlate = MA plaque)
       _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
-  }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)));
+  }).filter(m => {
+    const blocked = window.S?.blocked || [];
+    return m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)) && !blocked.includes(nPlate(m._otherPlate));
+  });
 }
 
 async function refresh(){
