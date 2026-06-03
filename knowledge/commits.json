@@ -4,6 +4,16 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 33,
+      "titre": "CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet",
+      "changes": [
+        "index.html — alertHistoryBox retiré de sigStep2Route, placé avant gpsErrorMsg (toujours visible)",
+        "index.html — renderAlerts() : display toggle histBox basé sur S.alertHistory.length",
+        "knowledge/decisions.json — SESSION-33 ajouté en implementees"
+      ],
+      "fichiers_touches": ["index.html", "knowledge/"]
+    },
+    {
       "session": 32,
       "titre": "Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)",
       "changes": [

@@ -183,6 +183,7 @@ SESSION-26 (S26) — Audit général : BUG-001 badge.js (setUnreadMsgCount écra
 SESSION-27 (S27) — INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.
 DA-004-CLOS (S28) — ic_blocked : Option C retenue — filtre messages dans normalizeRows() messages.js. Zéro migration DB.
 DEC-007-NA (S29) — Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.
+SESSION-33 (S33) — CORRECTION-1 (SESSION-31) : alertHistoryBox sorti de sigStep2Route → section permanente dans panelAltet. Visible dès le premier signalement (display toggle). Boucle CONFIANCE renforcée.
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
 
@@ -226,6 +227,7 @@ INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
 INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
+Session 33 — CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet
 Session 32 — Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)
 Session 31 — Audit des 7 boucles vitales — score moyen 2.6/5 · CONTRIBUTION/CONFIANCE/RÉTENTION partielles
 Session 30 — Consolidation SESSION 30 — 5 intentions ajoutées, règles organiques + boucles vitales formalisées, architecture/organism/ créé

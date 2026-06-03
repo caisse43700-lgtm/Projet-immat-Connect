@@ -25,7 +25,8 @@
     { "id": "SESSION-26", "quoi": "Audit général : BUG-001 badge.js (setUnreadMsgCount écrasé), BUG-002 timer FAB (tapLat persistant), BUG-003 distance haversine, MORT-001 alertsPanel mort, BUG-004 openReport sans _sigReset.", "session": 26, "statut": "fait" },
     { "id": "SESSION-27", "quoi": "INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.", "session": 27, "statut": "fait" },
     { "id": "DA-004-CLOS", "quoi": "ic_blocked : Option C retenue — filtre messages dans normalizeRows() messages.js. Zéro migration DB.", "session": 28, "statut": "fait" },
-    { "id": "DEC-007-NA", "quoi": "Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.", "session": 29, "statut": "non_applicable" }
+    { "id": "DEC-007-NA", "quoi": "Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.", "session": 29, "statut": "non_applicable" },
+    { "id": "SESSION-33", "quoi": "CORRECTION-1 (SESSION-31) : alertHistoryBox sorti de sigStep2Route → section permanente dans panelAltet. Visible dès le premier signalement (display toggle). Boucle CONFIANCE renforcée.", "session": 33, "statut": "fait" }
   ],
   "decisions_en_attente": [],
   "regles_organiques": [
