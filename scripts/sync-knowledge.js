@@ -361,6 +361,19 @@ if (check) {
     console.error('[sync-knowledge] ✗ knowledge-gardien.ts désynchronisé');
     ok = false;
   }
+  // R-04 : vérification croisée decisions.json ↔ ORGANISM-RULES.json (SESSION 36)
+  const orgRulesPath = path.join(ROOT, 'architecture', 'organism', 'ORGANISM-RULES.json');
+  if (fs.existsSync(orgRulesPath)) {
+    const orgRules = JSON.parse(fs.readFileSync(orgRulesPath, 'utf8'));
+    const orgIds = (orgRules.organic_rules || []).map(r => r.id).sort().join(',');
+    const decIds = (d.decisions.regles_organiques || []).map(r => r.id).sort().join(',');
+    if (orgIds !== decIds) {
+      console.error('[sync-knowledge] ✗ Désynchronisation règles : ORGANISM-RULES.json (' + (orgRules.organic_rules||[]).length + ') ≠ decisions.json (' + (d.decisions.regles_organiques||[]).length + ')');
+      const missing = (orgRules.organic_rules||[]).map(r=>r.id).filter(id=>!(d.decisions.regles_organiques||[]).find(r=>r.id===id));
+      if (missing.length) console.error('  Manquantes dans decisions.json :', missing.join(', '));
+      ok = false;
+    }
+  }
   if (ok) {
     console.log('[sync-knowledge] ✓ Les deux TS sont à jour');
     process.exit(0);

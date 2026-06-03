@@ -380,6 +380,7 @@ function trustDelta(plate,delta){
   const next=Math.max(0,Math.min(100,cur+(Number(delta)||0)));
   S.trust=S.trust||{};
   S.trust[plate]=next;
+  const _tk=Object.keys(S.trust);if(_tk.length>300){const _drop=_tk.slice(0,_tk.length-300);_drop.forEach(k=>delete S.trust[k]);}
   safeSet('ic_trust_scores',S.trust);
   return next;
 }

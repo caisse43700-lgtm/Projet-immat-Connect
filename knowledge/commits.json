@@ -4,6 +4,17 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 36,
+      "titre": "Audit risques systémiques — 3 corrections R-02/R-03/R-04 implémentées",
+      "changes": [
+        "index.html — R-02 : ic_trust_scores limité à 300 entrées dans trustDelta()",
+        "scripts/sync-ns.js — R-03 : try/catch avec message d'erreur clair",
+        "scripts/sync-knowledge.js — R-04 : vérification croisée decisions.json ↔ ORGANISM-RULES.json en --check",
+        "architecture/SESSION-36-AUDIT-RISQUES-SYSTEMIQUES.md créé — 10 axes, 10 risques classifiés"
+      ],
+      "fichiers_touches": ["index.html", "scripts/", "architecture/"]
+    },
+    {
       "session": 35,
       "titre": "Audit cohérence interne — gap sync corrigé (3 règles manquantes decisions.json)",
       "changes": [

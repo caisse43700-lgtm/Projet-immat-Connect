@@ -31,7 +31,11 @@ function generate() {
 }
 
 const check = process.argv.includes('--check');
-const generated = generate();
+let generated;
+try { generated = generate(); } catch(e) {
+  console.error('[sync-ns] ✗ Erreur lecture source :', e.message);
+  process.exit(1);
+}
 
 if (check) {
   const current = fs.existsSync(DST) ? fs.readFileSync(DST, 'utf8') : '';

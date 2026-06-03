@@ -231,6 +231,7 @@ INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
 INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
+Session 35 — Audit cohérence interne — gap sync corrigé (3 règles manquantes decisions.json)
 Session 34 — REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée
 Session 33 — CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet
 Session 32 — Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)
