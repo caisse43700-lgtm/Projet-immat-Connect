@@ -26,7 +26,7 @@ Messages  = CE QUE LES AUTRES M'ONT DIT — conversations directes conducteur à
 F-CARTE — Carte temps réel : Voir sa position et les véhicules proches sur une carte interactive
 F-GPS — Navigation GPS : Rechercher une destination et suivre un itinéraire en temps réel [⚠️ navPremium (trafic, limite vitesse, voies) = données SIMULÉES — P1-002 en attente]
 F-SIGNAL-VEHICULE — Alerte véhicule : Prévenir un conducteur d'un problème sur son véhicule (feux, pneu, porte...)
-F-SIGNAL-ROUTE — Signalement route : Informer les conducteurs proches d'un danger sur la route
+F-SIGNAL-ROUTE — Signalement route : Informer les conducteurs proches d'un danger sur la route [⚠️ Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)]
 F-ASSIST — Demande d'aide : Demander de l'aide aux conducteurs proches (panne, carburant, batterie...)
 F-MESSAGES — Messages directs : Envoyer et recevoir des messages privés entre deux conducteurs par plaque
 F-ACTIVITE — Activité (notifications) : Consulter les messages reçus et alertes avec filtres Tout/Messages/Alertes
@@ -78,6 +78,8 @@ INT-006 — Remerciement (communication_sociale) : bouton 🙏 Merci → message
   → DEC-008 — bouton dédié séparé de Bien reçu
 INT-007 — Blocage conducteur (sécurité) : contextMenu → Bloquer → ic_blocked local → plus de messages/alertes de B
   → Local uniquement — DA-004 migration DB en attente
+INT-008 — Signalement carte contextuel (alerte_route) : clic droit / long press carte → FAB 📍 5s → reportPanel → type Route → roadReport(S.tapLat,S.tapLng)
+  → P2-002 — désactivé si panelDrive actif (DA-FAB-007). assist() ne consomme jamais tapLat.
 
 ## INTENTIONS RECONNUES
 INT-SIGNAL-VEHICLE — Je veux prévenir un conducteur d'un problème sur son véhicule

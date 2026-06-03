@@ -38,9 +38,11 @@
       "organe": "Signalements",
       "description": "Informer les conducteurs proches d'un danger sur la route",
       "actions": ["Accident", "Bouchon", "Obstacle", "Verglas", "Contrôle police"],
+      "entry_points": ["FAB Signaler (onglet Altet)", "Clic droit carte → 📍 Signaler ici (P2-002)"],
       "statut": "actif",
       "flows": [],
-      "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" }
+      "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
+      "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
     },
     {
       "id": "F-ASSIST",

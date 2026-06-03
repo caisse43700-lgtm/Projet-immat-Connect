@@ -20,14 +20,14 @@
     { "id": "SESSION-22", "quoi": "CSS mort supprimé (act-card, act-filter, act-card-actions). JS mort topMsgBadge nettoyé dans badge.js, messages.js, ui.js", "session": 22, "statut": "fait" },
     { "id": "P2-002", "quoi": "FAB '📍 Signaler ici' — clic droit carte → coordonnées tap → roadReport(). S.tapLat/tapLng transmis aux signalements route.", "session": 23, "statut": "fait" },
     { "id": "DA-002-CLOS", "quoi": "DA-002 clos : navPremium utilise données réelles (S.lastSpeed, S.nearby.length, alertes actives). Aucune simulation.", "session": 23, "statut": "fait" },
-    { "id": "SESSION-23b", "quoi": "Audit robustesse FAB : clearSignalHereContext() centralise le nettoyage. _sigReset() extrait pour réinitialisation UI pure. openSignalHere() préserve tapLat. signalHereIndicator affiché.", "session": "23b", "statut": "fait" }
+    { "id": "SESSION-23b", "quoi": "Audit robustesse FAB : clearSignalHereContext() centralise le nettoyage. _sigReset() extrait pour réinitialisation UI pure. openSignalHere() préserve tapLat. signalHereIndicator affiché.", "session": "23b", "statut": "fait" },
+    { "id": "SESSION-25", "quoi": "Liens opérationnels intentions.json (champ liens → tutorial/interaction/flow). DA-FAB-004 : avertissement toast >10km via km() haversine. DA-FAB-007 : FAB désactivé si panelDrive actif.", "session": 25, "statut": "fait" },
+    { "id": "SESSION-26", "quoi": "Audit général : BUG-001 badge.js (setUnreadMsgCount écrasé), BUG-002 timer FAB (tapLat persistant), BUG-003 distance haversine, MORT-001 alertsPanel mort, BUG-004 openReport sans _sigReset.", "session": 26, "statut": "fait" },
+    { "id": "SESSION-27", "quoi": "INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.", "session": 27, "statut": "fait" }
   ],
   "decisions_en_attente": [
     { "id": "DA-004", "question": "Blocage ic_blocked : migrer vers DB ou garder localStorage ?", "impact": "persistance blocage cross-device", "bloque": "P2-009" },
-    { "id": "DA-004", "question": "Blocage ic_blocked : migrer vers DB ou garder localStorage ?", "impact": "persistance blocage cross-device", "bloque": "P2-009" },
-    { "id": "DEC-007", "question": "Status alertes : unifier seen/present/gone/resolved → 3 statuts ?", "impact": "cohérence données", "bloque": "P2-016" },
-    { "id": "DA-FAB-004", "question": "Signalement tap très éloigné du GPS (ex: Paris → clic Marseille) : libre ou limiter à Xkm ?", "impact": "signalements fantômes sur la carte", "bloque": null },
-    { "id": "DA-FAB-007", "question": "FAB 'Signaler ici' en mode conduite active (panelDrive) : désactiver ou réduire ? ", "impact": "distraction conducteur", "bloque": null }
+    { "id": "DEC-007", "question": "Status alertes : unifier seen/present/gone/resolved → 3 statuts ?", "impact": "cohérence données", "bloque": "P2-016" }
   ],
   "invariants_critiques": [
     { "id": "INV-001", "règle": "Canal véhicule séparé canal route — jamais croiser" },

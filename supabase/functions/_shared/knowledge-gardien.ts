@@ -178,13 +178,13 @@ SESSION-22 (S22) — CSS mort supprimé (act-card, act-filter, act-card-actions)
 P2-002 (S23) — FAB '📍 Signaler ici' — clic droit carte → coordonnées tap → roadReport(). S.tapLat/tapLng transmis aux signalements route.
 DA-002-CLOS (S23) — DA-002 clos : navPremium utilise données réelles (S.lastSpeed, S.nearby.length, alertes actives). Aucune simulation.
 SESSION-23b (S23b) — Audit robustesse FAB : clearSignalHereContext() centralise le nettoyage. _sigReset() extrait pour réinitialisation UI pure. openSignalHere() préserve tapLat. signalHereIndicator affiché.
+SESSION-25 (S25) — Liens opérationnels intentions.json (champ liens → tutorial/interaction/flow). DA-FAB-004 : avertissement toast >10km via km() haversine. DA-FAB-007 : FAB désactivé si panelDrive actif.
+SESSION-26 (S26) — Audit général : BUG-001 badge.js (setUnreadMsgCount écrasé), BUG-002 timer FAB (tapLat persistant), BUG-003 distance haversine, MORT-001 alertsPanel mort, BUG-004 openReport sans _sigReset.
+SESSION-27 (S27) — INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
 DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
-DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
 DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? → bloque P2-016
-DA-FAB-004 — Signalement tap très éloigné du GPS (ex: Paris → clic Marseille) : libre ou limiter à Xkm ?
-DA-FAB-007 — FAB 'Signaler ici' en mode conduite active (panelDrive) : désactiver ou réduire ? 
 
 INTENTION → FLOW + TUTORIAL (diagnostic rapide) :
 Intention               Flow                    Tutorial
@@ -200,6 +200,9 @@ INT-ASK-ANGE            —                       —
 INT-MANAGE-PROFILE      —                       TUT-009
 
 HISTORIQUE SESSIONS :
+Session 27 — Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel
+Session 26 — Audit général · 5 bugs corrigés (BUG-001 badge, BUG-002 FAB timer, BUG-003 haversine, MORT-001 alertsPanel, BUG-004 openReport)
+Session 25 — Liens opérationnels intentions.json · DA-FAB-004 (toast >10km) · DA-FAB-007 (FAB désactivé en conduite)
 Session 19 — ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2
 Session 18 — ANGE audit complet — flux organiques concept + boucle intention→mémoire
 Session 12 — Corrections P0/P1 — callSignalPlate + signalRecapCard mort

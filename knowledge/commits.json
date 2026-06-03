@@ -4,6 +4,43 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 27,
+      "titre": "Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel",
+      "changes": [
+        "knowledge/interactions.json — INT-008 Signalement carte contextuel ajouté",
+        "knowledge/features.json — F-SIGNAL-ROUTE entry_points + note ajoutés",
+        "knowledge/decisions.json — DA-FAB-004/007 déplacés en implementees, DA-004 dédoublé",
+        "supabase/functions/_shared/knowledge-conducteur.ts regénéré",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré",
+        "architecture/SESSION-27-VERIFICATION-P2-002.md créé"
+      ],
+      "fichiers_touches": ["knowledge/", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
+      "session": 26,
+      "titre": "Audit général · 5 bugs corrigés (BUG-001 badge, BUG-002 FAB timer, BUG-003 haversine, MORT-001 alertsPanel, BUG-004 openReport)",
+      "changes": [
+        "badge.js — BUG-001 : window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge",
+        "index.html — BUG-002 : timer FAB → clearSignalHereContext (tapLat nettoyé)",
+        "index.html — BUG-003 : km() haversine au lieu de Math.hypot*111",
+        "ui.js — MORT-001 : alertsPanel supprimé du tableau floating",
+        "ui.js — BUG-004 : openReport appelle _sigReset"
+      ],
+      "fichiers_touches": ["badge.js", "index.html", "ui.js"]
+    },
+    {
+      "session": 25,
+      "titre": "Liens opérationnels intentions.json · DA-FAB-004 (toast >10km) · DA-FAB-007 (FAB désactivé en conduite)",
+      "changes": [
+        "knowledge/intentions.json _v:3 — champ liens ajouté sur 10 intentions",
+        "index.html — DA-FAB-004 : avertissement toast si signalement >10km GPS",
+        "index.html — DA-FAB-007 : guard panelDrive dans showSignalHere()",
+        "supabase/functions/_shared/knowledge-conducteur.ts — section RESSOURCES PAR INTENTION",
+        "supabase/functions/_shared/knowledge-gardien.ts — tableau INTENTION → FLOW + TUTORIAL"
+      ],
+      "fichiers_touches": ["knowledge/intentions.json", "index.html", "supabase/functions/_shared/"]
+    },
+    {
       "session": 19,
       "titre": "ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2",
       "changes": [

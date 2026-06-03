@@ -73,6 +73,18 @@
       "qui": "A bloque B",
       "chemin_court": "contextMenu → Bloquer → ic_blocked local → plus de messages/alertes de B",
       "note": "Local uniquement — DA-004 migration DB en attente"
+    },
+    {
+      "id": "INT-008",
+      "nom": "Signalement carte contextuel",
+      "nature": "alerte_route",
+      "canal": "INV-002",
+      "qui": "A → tous les proches (coordonnées choisies sur carte)",
+      "chemin_court": "clic droit / long press carte → FAB 📍 5s → reportPanel → type Route → roadReport(S.tapLat,S.tapLng)",
+      "retour_emetteur": "indicator position choisie · toast envoyé · avertissement si >10km GPS",
+      "retour_recepteur": "marqueur carte · badge alertes",
+      "fin": "tapLat/tapLng nettoyés après envoi ou abandon",
+      "note": "P2-002 — désactivé si panelDrive actif (DA-FAB-007). assist() ne consomme jamais tapLat."
     }
   ]
 }
