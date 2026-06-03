@@ -1,0 +1,109 @@
+{
+  "_v": 1,
+  "_role": "Inventaire des fonctionnalités — relie usage → organe → flux",
+  "_rule": "Chaque feature = ce que le conducteur peut faire, pas comment le code fonctionne. Ref FLOW-INDEX pour les flux critiques.",
+  "_ref": "architecture/IMMAT-FLOW-INDEX.json",
+  "features": [
+    {
+      "id": "F-CARTE",
+      "nom": "Carte temps réel",
+      "organe": "Carte",
+      "description": "Voir sa position et les véhicules proches sur une carte interactive",
+      "actions": ["Se localiser", "Voir les conducteurs proches", "Naviguer vers un marqueur", "Mode invisible"],
+      "statut": "actif",
+      "flows": ["FLOW-MAP-SELF-MARKER"]
+    },
+    {
+      "id": "F-GPS",
+      "nom": "Navigation GPS",
+      "organe": "Carte",
+      "description": "Rechercher une destination et suivre un itinéraire en temps réel",
+      "actions": ["Rechercher adresse", "Lancer GPS", "Arrêter GPS", "Favoris GPS", "Historique GPS"],
+      "statut": "actif",
+      "flows": [],
+      "note": "navPremium (trafic, limite vitesse, voies) = données SIMULÉES — P1-002 en attente"
+    },
+    {
+      "id": "F-SIGNAL-VEHICULE",
+      "nom": "Alerte véhicule",
+      "organe": "Signalements",
+      "description": "Prévenir un conducteur d'un problème sur son véhicule (feux, pneu, porte...)",
+      "actions": ["Choisir type alerte", "Cibler une plaque", "Envoyer alerte"],
+      "statut": "actif",
+      "flows": ["FLOW-VEHICLE-ALERT"]
+    },
+    {
+      "id": "F-SIGNAL-ROUTE",
+      "nom": "Signalement route",
+      "organe": "Signalements",
+      "description": "Informer les conducteurs proches d'un danger sur la route",
+      "actions": ["Accident", "Bouchon", "Obstacle", "Verglas", "Contrôle police"],
+      "statut": "actif",
+      "flows": [],
+      "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" }
+    },
+    {
+      "id": "F-ASSIST",
+      "nom": "Demande d'aide",
+      "organe": "Signalements",
+      "description": "Demander de l'aide aux conducteurs proches (panne, carburant, batterie...)",
+      "actions": ["Choisir type aide", "Envoyer demande", "Marquer résolu"],
+      "statut": "actif",
+      "flows": ["FLOW-ASSIST-REQUEST"]
+    },
+    {
+      "id": "F-MESSAGES",
+      "nom": "Messages directs",
+      "organe": "Messages",
+      "description": "Envoyer et recevoir des messages privés entre deux conducteurs par plaque",
+      "actions": ["Composer message", "Répondre", "Réponses rapides", "Bloquer"],
+      "statut": "actif",
+      "flows": ["FLOW-DIRECT-MESSAGE"]
+    },
+    {
+      "id": "F-ACTIVITE",
+      "nom": "Activité (notifications)",
+      "organe": "Messages",
+      "description": "Consulter les messages reçus et alertes avec filtres Tout/Messages/Alertes",
+      "actions": ["Filtrer par type", "Voir détail", "Marquer vu", "Répondre"],
+      "statut": "actif",
+      "flows": ["FLOW-BADGES"]
+    },
+    {
+      "id": "F-APPEL",
+      "nom": "Appels audio",
+      "organe": "Messages",
+      "description": "Appeler un conducteur en audio P2P via WebRTC",
+      "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser"],
+      "statut": "actif",
+      "note": "Consentement explicite requis — D-002"
+    },
+    {
+      "id": "F-SOS",
+      "nom": "SOS urgence",
+      "organe": "Signalements",
+      "description": "Déclencher une alerte d'urgence protégée par appui long",
+      "actions": ["Appui long 3s → confirmation → envoi"],
+      "statut": "actif",
+      "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
+    },
+    {
+      "id": "F-ANGE",
+      "nom": "Ange IA",
+      "organe": "Ange",
+      "description": "Assistant contextuel intelligent — répond selon rôle conducteur/gardien",
+      "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
+      "statut": "actif",
+      "throttle": "10 appels/heure par session"
+    },
+    {
+      "id": "F-PROFIL",
+      "nom": "Profil conducteur",
+      "organe": "Profil",
+      "description": "Gérer son pseudo, téléphone, couleur véhicule. La plaque est immuable.",
+      "actions": ["Modifier pseudo", "Modifier téléphone", "Modifier couleur"],
+      "statut": "actif",
+      "note": "Plaque immuable après création — INV-006"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "_v": 1,
+  "_role": "Cartographie des écrans — panelId, composants, actions disponibles",
+  "_rule": "Condensé depuis UX-SCREENS.json. Chaque entrée = un point d'entrée réel dans index.html.",
+  "_ref": "architecture/ux/UX-SCREENS.json",
+  "auth_flow": [
+    { "id": "sw", "nom": "Welcome", "actions": ["goAuth('login')", "goAuth('signup')"] },
+    { "id": "sa", "nom": "Auth (Connexion / Inscription)", "actions": ["login()", "signup()", "forgotPwd()"] },
+    { "id": "sp", "nom": "Profil Setup", "actions": ["saveProfile()"], "note": "Plaque immuable — INV-006" },
+    { "id": "sr", "nom": "Réinitialisation mot de passe", "actions": ["updatePwd()"] }
+  ],
+  "panels": [
+    {
+      "id": "panelAltet",
+      "nom": "Carte",
+      "organe": "Carte",
+      "default": true,
+      "composants": ["Leaflet", "Marqueurs véhicules", "Marqueurs alertes", "FAB Signaler", "angeFab"],
+      "actions": ["locate()", "loadOthers()", "openAlerts()", "reportPanel"]
+    },
+    {
+      "id": "panelDrive",
+      "nom": "Navigation GPS",
+      "organe": "Carte",
+      "composants": ["Barre recherche", "Grille POI", "navPremium ⚠️ simulé", "Favoris", "Historique"],
+      "actions": ["searchGps()", "voiceGps()", "poi()", "locate()", "stopGps()", "cycleView()", "toggleInvisible()"]
+    },
+    {
+      "id": "panelMessages",
+      "nom": "Messages",
+      "organe": "Messages",
+      "composants": ["Onglets Reçus/Envoyés/Composer", "Liste conversations", "Compose (plaque + texte)"],
+      "actions": ["ImmatMessages.setMode()", "sendNew()", "reply()", "quick()"]
+    },
+    {
+      "id": "panelActivite",
+      "nom": "Activité",
+      "organe": "Messages",
+      "composants": ["actCatPanel (onglets Reçus/Envoyés)", "actTypeFilterBar (Tout/Messages/Alertes)", "cards alertes/messages"],
+      "actions": ["actTypeFilter()", "actConfirmAlert()", "actQuickReply()", "actViewOnMap()"]
+    },
+    {
+      "id": "panelSettings",
+      "nom": "Réglages",
+      "organe": "Profil",
+      "composants": ["✏️ Mon profil", "Debug tools (gardien)", "Déconnexion"],
+      "actions": ["saveProfile()", "logout()", "restoreMsgs() (gardien)", "syncAlerts() (gardien)"]
+    }
+  ],
+  "overlays": [
+    {
+      "id": "reportPanel",
+      "nom": "Signaler",
+      "organe": "Signalements",
+      "composants": ["sigStep1 (nature: véhicule/route/aide)", "sigStep2 (type selon nature)"],
+      "actions": ["sigStepVehicle()", "sigStepRoute()", "sigStepAide()", "actConfirmAlert()"],
+      "note": "2 étapes avec indicateur Étape 1/2 — DEC-001"
+    },
+    {
+      "id": "nearbyPanel",
+      "nom": "Conducteurs proches",
+      "organe": "Carte",
+      "composants": ["Liste conducteurs", "Boutons Contacter · Appeler · Bloquer"],
+      "actions": ["pickPlate()", "callSignalPlate()", "blockPlate()"]
+    }
+  ]
+}

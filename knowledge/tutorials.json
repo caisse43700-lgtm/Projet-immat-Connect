@@ -1,0 +1,67 @@
+{
+  "_v": 1,
+  "_role": "Base pédagogique conducteur — comment faire chaque action",
+  "_rule": "Tutoriels = actions concrètes. Pas de jargon technique. Jamais de références fichier/code.",
+  "tutorials": [
+    {
+      "id": "TUT-001",
+      "action": "Localiser ma voiture sur la carte",
+      "etapes": ["Ouvre la carte", "Appuie sur le bouton 📍 en bas à droite", "Ta position apparaît sur la carte"],
+      "conseil": "Si la carte ne se centre pas, réappuie sur 📍"
+    },
+    {
+      "id": "TUT-002",
+      "action": "Signaler un danger sur la route",
+      "etapes": ["Appuie sur le bouton ⚠️ (FAB rouge)", "Choisis 'Informer la route'", "Sélectionne le type de danger (accident, bouchon...)", "Appuie sur Envoyer"],
+      "conseil": "Tous les conducteurs proches seront informés immédiatement"
+    },
+    {
+      "id": "TUT-003",
+      "action": "Prévenir un conducteur d'un problème sur son véhicule",
+      "etapes": ["Appuie sur le marqueur du conducteur sur la carte", "Choisis 'Signaler ce véhicule'", "Sélectionne le problème (pneu, feux, porte...)", "Envoie"],
+      "conseil": "Le conducteur recevra une alerte directement"
+    },
+    {
+      "id": "TUT-004",
+      "action": "Demander de l'aide",
+      "etapes": ["Appuie sur ⚠️", "Choisis 'Demander de l'aide'", "Sélectionne le type (panne, carburant, batterie...)", "Envoie"],
+      "conseil": "Un marqueur d'aide apparaît sur la carte. Les conducteurs proches peuvent répondre."
+    },
+    {
+      "id": "TUT-005",
+      "action": "Envoyer un message à un conducteur",
+      "etapes": ["Appuie sur un marqueur sur la carte", "Choisis 'Envoyer message'", "Tape ton message", "Envoie"],
+      "conseil": "Tu peux aussi composer depuis Messages → Composer et entrer la plaque manuellement"
+    },
+    {
+      "id": "TUT-006",
+      "action": "Chercher un itinéraire",
+      "etapes": ["Appuie sur l'onglet Navigation (🗺)", "Tape ta destination dans la barre de recherche", "Choisis dans la liste", "Le GPS démarre"],
+      "conseil": "Tu peux sauvegarder des favoris pour les destinations fréquentes"
+    },
+    {
+      "id": "TUT-007",
+      "action": "Déclencher le SOS",
+      "etapes": ["Dans l'onglet Navigation, appuie longuement sur le bouton SOS pendant 3 secondes", "Confirme quand demandé"],
+      "conseil": "L'appui doit durer 3 secondes pour éviter les déclenchements accidentels"
+    },
+    {
+      "id": "TUT-008",
+      "action": "Voir mon activité et mes messages",
+      "etapes": ["Appuie sur l'onglet Activité (🔔)", "Filtre par type : Tout / Messages / Alertes", "Appuie sur une carte pour voir les détails"],
+      "conseil": "Le badge rouge indique le nombre de notifications non lues"
+    },
+    {
+      "id": "TUT-009",
+      "action": "Passer en mode invisible",
+      "etapes": ["Dans l'onglet Navigation, appuie sur 👁", "Ton marqueur disparaît de la carte des autres"],
+      "conseil": "Tu restes connecté mais les autres conducteurs ne te voient plus"
+    },
+    {
+      "id": "TUT-010",
+      "action": "Remercier un conducteur qui m'a aidé",
+      "etapes": ["Dans Activité, trouve la card de l'aide reçue", "Appuie sur '🙏 Merci'"],
+      "conseil": "Un message de remerciement sera envoyé automatiquement au conducteur"
+    }
+  ]
+}

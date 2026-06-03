@@ -1,0 +1,99 @@
+{
+  "_v": 1,
+  "_role": "Mapper un besoin utilisateur vers une intention organique",
+  "_rule": "Une intention = un verbe d'action + un sujet + un contexte. Jamais de doublons avec interactions.json.",
+  "intentions": [
+    {
+      "id": "INT-SIGNAL-VEHICLE",
+      "besoin": "Je veux prévenir un conducteur d'un problème sur son véhicule",
+      "intention": "signaler un danger véhicule à un conducteur précis",
+      "organe": "Signalements",
+      "flow": "FLOW-VEHICLE-ALERT",
+      "acces": "conducteur",
+      "chemin": "carte → marqueur → menu → Signaler ce véhicule OU FAB → reportPanel → bloc véhicule"
+    },
+    {
+      "id": "INT-SIGNAL-ROAD",
+      "besoin": "Je veux informer les conducteurs proches d'un danger sur la route",
+      "intention": "signaler un danger route à la communauté",
+      "organe": "Signalements",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "FAB Signaler → reportPanel → Informer la route → type → envoi"
+    },
+    {
+      "id": "INT-REQUEST-HELP",
+      "besoin": "Je suis en panne et j'ai besoin d'aide",
+      "intention": "demander de l'aide aux conducteurs proches",
+      "organe": "Signalements",
+      "flow": "FLOW-ASSIST-REQUEST",
+      "acces": "conducteur",
+      "chemin": "FAB Signaler → reportPanel → Demander de l'aide → type → envoi"
+    },
+    {
+      "id": "INT-CONTACT-DRIVER",
+      "besoin": "Je veux envoyer un message à un conducteur précis",
+      "intention": "communiquer en privé avec un conducteur par plaque",
+      "organe": "Messages",
+      "flow": "FLOW-DIRECT-MESSAGE",
+      "acces": "conducteur",
+      "chemin": "carte → marqueur → Envoyer message OU panelMessages → Composer → plaque"
+    },
+    {
+      "id": "INT-LOCATE-SELF",
+      "besoin": "Je veux voir ma position sur la carte",
+      "intention": "se repérer sur la carte en temps réel",
+      "organe": "Carte",
+      "flow": "FLOW-MAP-SELF-MARKER",
+      "acces": "conducteur",
+      "chemin": "carte → bouton Localiser OU démarrage automatique"
+    },
+    {
+      "id": "INT-NAVIGATE",
+      "besoin": "Je veux aller quelque part en voiture",
+      "intention": "rechercher et suivre un itinéraire GPS",
+      "organe": "Carte",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "panelDrive → barre recherche → Nominatim → lancer GPS"
+    },
+    {
+      "id": "INT-SOS",
+      "besoin": "Je suis en danger — j'ai besoin d'une aide urgente",
+      "intention": "déclencher une alerte SOS prioritaire",
+      "organe": "Signalements",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "panelDrive → SOS appui long 3s → confirmation → envoi",
+      "note": "Protégé appui long D-005 — canal distinct futur P3-023"
+    },
+    {
+      "id": "INT-CHECK-ACTIVITY",
+      "besoin": "Je veux voir ce qui s'est passé (messages reçus, alertes)",
+      "intention": "consulter l'activité récente — messages + alertes",
+      "organe": "Messages",
+      "flow": "FLOW-BADGES",
+      "acces": "conducteur",
+      "chemin": "badge actBadge → panelActivite → filtres Tout/Messages/Alertes"
+    },
+    {
+      "id": "INT-ASK-ANGE",
+      "besoin": "Je veux de l'aide ou une explication sur l'application",
+      "intention": "consulter l'Ange pour une aide contextuelle",
+      "organe": "Ange",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "angeFab → dialogue → question → réponse 80 mots max"
+    },
+    {
+      "id": "INT-MANAGE-PROFILE",
+      "besoin": "Je veux modifier mon pseudo ou mes informations",
+      "intention": "mettre à jour son profil conducteur",
+      "organe": "Profil",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "panelSettings → ✏️ Mon profil → modifier → sauvegarder",
+      "note": "La plaque est immuable après création — INV-006"
+    }
+  ]
+}

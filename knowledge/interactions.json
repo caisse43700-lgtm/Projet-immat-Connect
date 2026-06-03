@@ -1,0 +1,78 @@
+{
+  "_v": 1,
+  "_role": "Scénarios A→B condensés — comment les conducteurs interagissent entre eux",
+  "_rule": "Condensé depuis UX-INTERACTIONS.json. Ne pas dupliquer le fichier source.",
+  "_ref": "architecture/ux/UX-INTERACTIONS.json",
+  "interactions": [
+    {
+      "id": "INT-001",
+      "nom": "Message direct",
+      "nature": "communication_personnelle",
+      "canal": "INV-001",
+      "qui": "A → B (ciblé par plaque)",
+      "chemin_court": "compose → envoi → badge B → lecture → réponse optionnelle",
+      "retour_emetteur": "toast envoi · message dans Envoyés",
+      "retour_recepteur": "badge +1 · message dans Reçus",
+      "fin": "lu · répondu · ignoré"
+    },
+    {
+      "id": "INT-002",
+      "nom": "Alerte véhicule",
+      "nature": "alerte_vehicule",
+      "canal": "INV-001",
+      "qui": "A → B (ciblé par plaque)",
+      "chemin_court": "type alerte → envoi → FloatingCard B → vu/réponse",
+      "retour_emetteur": "toast envoyé",
+      "retour_recepteur": "FloatingCard urgente · badge activité",
+      "fin": "vu · ignoré · répondu"
+    },
+    {
+      "id": "INT-003",
+      "nom": "Signalement route",
+      "nature": "alerte_route",
+      "canal": "INV-002",
+      "qui": "A → tous les proches",
+      "chemin_court": "type danger → envoi → marqueur carte → badge alertes proches",
+      "ttl": "30min à 2h selon type",
+      "fin": "expiré · résolu par créateur"
+    },
+    {
+      "id": "INT-004",
+      "nom": "Demande d'aide",
+      "nature": "demande_aide",
+      "canal": "INV-003",
+      "qui": "A → proches (broadcast) → helper volontaire",
+      "chemin_court": "type aide → marqueur aide → helper répond → statut helper_coming → résolution",
+      "retour_emetteur": "marqueur aide visible",
+      "retour_recepteur": "notification · bouton J'arrive",
+      "fin": "résolu par créateur · TTL expiré"
+    },
+    {
+      "id": "INT-005",
+      "nom": "Appel audio",
+      "nature": "communication_vocale",
+      "canal": "WebRTC P2P",
+      "qui": "A → B (consentement requis)",
+      "chemin_court": "bouton Appeler → sonnerie B → accepte/refuse → session audio → raccroche",
+      "note": "INV-010 — consentement explicite requis"
+    },
+    {
+      "id": "INT-006",
+      "nom": "Remerciement",
+      "nature": "communication_sociale",
+      "canal": "INV-001",
+      "qui": "A → helper B",
+      "chemin_court": "bouton 🙏 Merci → message automatique vers helper_plate",
+      "note": "DEC-008 — bouton dédié séparé de Bien reçu"
+    },
+    {
+      "id": "INT-007",
+      "nom": "Blocage conducteur",
+      "nature": "sécurité",
+      "canal": "localStorage ic_blocked",
+      "qui": "A bloque B",
+      "chemin_court": "contextMenu → Bloquer → ic_blocked local → plus de messages/alertes de B",
+      "note": "Local uniquement — DA-004 migration DB en attente"
+    }
+  ]
+}
