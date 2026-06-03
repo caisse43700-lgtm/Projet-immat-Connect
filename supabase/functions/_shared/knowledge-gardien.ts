@@ -175,11 +175,16 @@ P2-015 (S21) — actViewOnMap() confirmé présent — bouton '📍 Voir' dans _
 P2-017 (S21) — topMsgBadge supprimé (off-screen depuis la création). actBadge = badge unique nav (onglet Activité)
 P2-017b (S21b) — actBadge étendu : unreadAlerts + S.unreadMsgCount. setUnreadMsgCount() déclenche updateActBadge()
 SESSION-22 (S22) — CSS mort supprimé (act-card, act-filter, act-card-actions). JS mort topMsgBadge nettoyé dans badge.js, messages.js, ui.js
+P2-002 (S23) — FAB '📍 Signaler ici' — clic droit carte → coordonnées tap → roadReport(). S.tapLat/tapLng transmis aux signalements route.
+DA-002-CLOS (S23) — DA-002 clos : navPremium utilise données réelles (S.lastSpeed, S.nearby.length, alertes actives). Aucune simulation.
+SESSION-23b (S23b) — Audit robustesse FAB : clearSignalHereContext() centralise le nettoyage. _sigReset() extrait pour réinitialisation UI pure. openSignalHere() préserve tapLat. signalHereIndicator affiché.
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
-DA-002 — navPremium simulé : supprimer ou marquer Futur ? → bloque P1-002
+DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
 DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
 DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? → bloque P2-016
+DA-FAB-004 — Signalement tap très éloigné du GPS (ex: Paris → clic Marseille) : libre ou limiter à Xkm ?
+DA-FAB-007 — FAB 'Signaler ici' en mode conduite active (panelDrive) : désactiver ou réduire ? 
 
 HISTORIQUE SESSIONS :
 Session 19 — ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2
