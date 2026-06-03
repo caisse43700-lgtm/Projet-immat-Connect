@@ -57,6 +57,11 @@
       "path": "knowledge/commits.json",
       "role": "Mémoire technique par session",
       "accessible": ["gardien"]
+    },
+    "meta": {
+      "path": "knowledge/meta.json",
+      "role": "Contexte technique statique — fichiers clés, inhibitions, protocole modification",
+      "accessible": ["gardien"]
     }
   },
   "projections": {
@@ -67,8 +72,8 @@
       "ts_output": "supabase/functions/_shared/knowledge-conducteur.ts"
     },
     "gardien": {
-      "files": ["intentions", "features", "interactions", "screens", "organs", "decisions", "commits"],
-      "sees": "tout — fonctionnalités · interactions · organes · écrans · historique · décisions · impacts · commits",
+      "files": ["intentions", "features", "interactions", "screens", "organs", "decisions", "commits", "meta"],
+      "sees": "tout — fonctionnalités · interactions · organes · écrans · historique · décisions · impacts · commits · contexte technique",
       "ts_output": "supabase/functions/_shared/knowledge-gardien.ts"
     }
   },

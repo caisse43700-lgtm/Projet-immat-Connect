@@ -1,51 +1,52 @@
 // _shared/knowledge-gardien.ts
-// Guide technique Gardien pour l'Ange — architecture, code, invariants, modifications.
-// Dérivé de MEGA-STRUCTURE-NAVIGATION.md (v16.1) + ADN — INV-015
-// Ne pas dupliquer : référencer ce fichier depuis immat-brain-dialog/index.ts uniquement.
+// GÉNÉRÉ AUTOMATIQUEMENT — node scripts/sync-knowledge.js
+// Ne pas modifier manuellement. Modifier knowledge/*.json puis relancer le script.
+// INV-015 — la vérité vit dans les JSON source
 
+// deno-lint-ignore-file
 export const KNOWLEDGE_GARDIEN = `
 TU PARLES AU GARDIEN. Réponds avec précision technique. Références fichier:ligne bienvenues.
 Tu analyses, tu proposes, tu identifies les risques. Tu ne décides pas. Le Gardien décide.
 
 FICHIERS CLÉS :
-index.html — app principale (HTML + JS inline ~1940 lignes)
-immat-nervous-system.json — ADN source canonique (INV-015) — ne jamais dupliquer, _v:7
-scripts/sync-ns.js — synchronise nervous-system.ts depuis le JSON (node scripts/sync-ns.js)
-supabase/functions/_shared/nervous-system.ts — dérivé de l'ADN via sync-ns.js — ne pas modifier manuellement
+index.html — Application principale (HTML + JS inline ~1940 lignes)
+immat-nervous-system.json — ADN source canonique (INV-015) — ne jamais dupliquer, _v:8
+scripts/sync-ns.js — Synchronise nervous-system.ts depuis le JSON
+scripts/sync-knowledge.js — Génère knowledge-conducteur.ts et knowledge-gardien.ts depuis knowledge/*.json
+supabase/functions/_shared/nervous-system.ts — Dérivé de l'ADN via sync-ns.js — ne pas modifier manuellement
 supabase/functions/immat-brain-dialog/index.ts — Edge Function Ange (Deno + Claude)
-supabase/functions/_shared/knowledge-conducteur.ts — guide usage conducteur (depth 1)
-supabase/functions/_shared/knowledge-gardien.ts — ce fichier (depth 3)
-messages.js — module ImmatMessages (messagerie temps réel)
+supabase/functions/_shared/knowledge-conducteur.ts — Guide usage conducteur (depth 1) — généré par sync-knowledge.js
+supabase/functions/_shared/knowledge-gardien.ts — Ce fichier en production (depth 3) — généré par sync-knowledge.js
+messages.js — Module ImmatMessages (messagerie temps réel)
 utils.js — colorHex() source canonique couleurs (INV-011)
 calls.js — CallManager (appels P2P entre conducteurs)
-badge.js — gestion badge messages non lus
-ui.js — helpers UI (sheet drag, animations, patch App.panel)
-core/invariants.js — invariants constitutionnels deepFrozen (INV-001→INV-015)
-core/immatOrganism.js — observateur événements (diagnose(), observe(), validateInvariant())
-core/brain.js — ImmatBrain API de décision (Phase 1 observateur — phase 3 bloquant futur) — 159 lignes
-  warnIfPhase2(invId, ctx) — Phase 2 : émet INVARIANT_WARNING sur le bus sans bloquer (définie, non câblée en prod)
-  audit() — snapshot phase+invariants (définie, non câblée en prod)
+badge.js — Gestion badge messages non lus
+ui.js — Helpers UI (sheet drag, animations, patch App.panel)
+core/invariants.js — Invariants constitutionnels deepFrozen (INV-001→INV-015)
+core/immatOrganism.js — Observateur événements (diagnose(), observe(), validateInvariant())
+core/brain.js — ImmatBrain API de décision Phase 1 — 159 lignes. warnIfPhase2() et audit() définis, non câblés prod.
 core/bus.js — ImmatBus (bus d'événements interne)
 
 ORGANES — POINTS D'ENTRÉE CODE :
-Auth → App.afterAuth (index.html ~507), App.signup, fn.boot
-Profil → App.saveProfile (~525), sb.from('profiles').upsert
-Carte → App.initMap (~527), App.locate (~530), App.loadOthers (~557)
-Messages → ImmatMessages (messages.js), App.startMsgs
-Signalements → App.roadReport, App.vehicleAlert (~804), App.subscribeCommunityReports
-Ange → AngeDialog (~1849), supabase/functions/immat-brain-dialog/index.ts
+Auth → App.afterAuth (~507)
+Profil → App.saveProfile / db.profiles.upsert
+Carte → App.initMap / App.locate / App.loadOthers
+Messages → App.startMsgs / ImmatMessages (module externe)
+Signalements → App.roadReport / App.vehicleAlert / App.subscribeCommunityReports
+Ange → css.#angeFab / supabase/functions/immat-brain-dialog/index.ts
 
 INHIBITIONS (verrous en mémoire) :
-S._authRunning — bloque ré-entrée afterAuth(). Libéré par finally{} (~507)
-S._reporting — bloque double signalement pendant envoi en cours
-S._recalcLock — bloque recalcul itinéraire pendant 12s après recalcul auto
+S._authRunning — Bloque ré-entrée afterAuth(). Libéré par finally{} (~507)
+S._reporting — Bloque double signalement pendant envoi en cours
+S._recalcLock — Bloque recalcul itinéraire pendant 12s après recalcul auto
 
 INVARIANTS CRITIQUES (ne jamais violer) :
-INV-001/002/003 — canaux séparés véhicule/route/aide — croiser = corruption données
-INV-004 — atomicité : tout ou rien (upsert + realtime ensemble)
-INV-005/008/012 — toujours passer par DB avant affichage
-INV-006 — plaque owner_plate immuable après création (upsert refusé)
-INV-011 — colorHex() dans utils.js = seule source couleurs (jamais hardcoder)
+INV-001 — Canal véhicule séparé canal route — jamais croiser
+INV-002 — Canal route séparé — broadcast à tous les proches
+INV-003 — Canal aide séparé — demande + réponse + TTL
+INV-006 — owner_plate immuable après création
+INV-010 — Consentement explicite requis pour appels et partage numéro
+INV-014 — speed_cat = catégorie, jamais valeur exacte GPS
 INV-015 — NS se transforme depuis sa source, jamais dupliqué
 
 PROFIL TECHNIQUE SNAPSHOT ANGE (état actuel) :
@@ -56,36 +57,44 @@ Throttle : 10 appels/heure par session (sessionStorage ic_ange_calls)
 CINQ SENS ORGANIQUES — ADN _v:8 (section "senses") :
 Vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l'organisme.
 
-  voir     (Phase 1) — lire l'état sans l'altérer     → diagnose() · snapshot Ange
-  entendre (Phase 1) — recevoir des événements        → ImmatBus.on('*') · realtime Supabase
-  gouter   (Phase 2) — valider, tester conformité     → validateInvariant() · warnIfPhase2() [non câblé prod]
-  toucher  (Phase 3) — agir, effet mesurable          → can*() [non câblés prod] · réponse Ange
-  sentir   (Phase 4) — comprendre le contexte         → nsToPrompt · knowledge files · FLOW-INDEX [Ange seulement]
+  voir      (Phase 1) — Lire l'état — observer ce qui est sans l'altérer.
+  entendre  (Phase 1) — Recevoir des événements — écouter sans bloquer le flux.
+  gouter    (Phase 2) — Valider, tester — vérifier la conformité aux invariants. [warnIfPhase2 définie dans brain.js — non câblée en prod (Phase 2 non activée)]
+  toucher   (Phase 3) — Agir — produire un effet mesurable dans l'organisme. [Actif en surface seulement (réponse Ange). can*() jamais câblés en prod.]
+  sentir    (Phase 4) — Comprendre le contexte — lire l'intention derrière le signal. [Actif uniquement dans Ange. ImmatOrganism n'a pas encore de sentir().]
+
+Lien avec la boucle organique :
+entendre  → identifier l'intention
+voir      → repérer les composants concernés
+sentir    → comprendre le contexte et l'environnement
+toucher   → mesurer l'impact et agir
+gouter    → tester et vérifier la conformité aux invariants
 
 GRILLE SENSORIELLE PAR ORGANE :
-  Auth         : entendre · gouter · toucher
-  Profil       : voir · entendre · gouter · toucher
-  Carte        : voir · entendre · sentir · toucher
-  Messages     : voir · entendre · toucher
-  Signalements : voir · entendre · sentir · gouter · toucher
-  Ange         : voir · entendre · sentir · gouter · toucher  ← seul organe à cinq sens complets
+  Auth          : entendre · gouter · toucher
+  Profil        : voir · entendre · gouter · toucher
+  Carte         : voir · entendre · sentir · toucher
+  Messages      : voir · entendre · toucher
+  Signalements  : voir · entendre · sentir · gouter · toucher
+  Ange          : voir · entendre · sentir · gouter · toucher  ← seul organe à cinq sens complets
 
 PHASES (core/governance.js) :
-  Phase 1 Observateur  : voir + entendre                           (ACTIF — phase courante)
-  Phase 2 Conseiller   : + gouter                                  (warnIfPhase2 prête, non câblée)
-  Phase 3 Gardien      : + toucher    [tests_green requis]         (can*() prêts, non câblés)
-  Phase 4 Coordinateur : + sentir     [organs_wired requis]        (sentir() à créer dans ImmatOrganism)
-  Phase 5 Intelligence : conscience   [human_approval du Gardien]  (décision humaine requise)
+  Phase 1 Observateur      : voir + entendre
+  Phase 2 Conseiller       : voir + entendre + gouter  [journal_ok, no_regressions requis]  (warnIfPhase2() prête dans brain.js — non câblée en prod)
+  Phase 3 Gardien          : voir + entendre + gouter + toucher  [journal_ok, no_regressions, tests_green, invariants_stable requis]  (can*() définis dans brain.js — non câblés en prod)
+  Phase 4 Coordinateur     : voir + entendre + gouter + toucher + sentir  [journal_ok, no_regressions, tests_green, invariants_stable, organs_wired requis]  (sentir() à créer dans ImmatOrganism — lit snapshot + ADN)
+  Phase 5 Intelligence     : voir + entendre + gouter + toucher + sentir  [journal_ok, no_regressions, tests_green, invariants_stable, organs_wired, human_approval requis]  (Nécessite approbation explicite du Gardien — décision humaine requise)
 
 CYCLE DE VIE ADN :
 Modifier immat-nervous-system.json → node scripts/sync-ns.js → nervous-system.ts mis à jour
-Ne jamais éditer nervous-system.ts directement (violation INV-015)
+Modifier knowledge/*.json → node scripts/sync-knowledge.js → knowledge-conducteur.ts + knowledge-gardien.ts
+Ne jamais éditer les TS directement (violation INV-015)
 Après modification ADN : incrémenter _v
 
 IMMATORGANISM — OBSERVATEUR :
-ImmatOrganism.diagnose() — retourne health/events/violations/summary (utilisé par snapshot Ange)
-ImmatOrganism.observe(event, payload) — émet un événement sur le bus
-ImmatOrganism.validateInvariant(invId, passes, ctx) — délègue à ImmatBrain
+ImmatOrganism.diagnose() — Retourne health/events/violations/summary — utilisé par snapshot Ange
+ImmatOrganism.observe(event, payload) — Émet un événement sur le bus (event, payload)
+ImmatOrganism.validateInvariant(invId, passes, ctx) — Délègue à ImmatBrain
 Phase actuelle : 1 (observateur) — Phase 3 (gardien) bloquera les violations en production
 Méthodes brain jamais câblées en prod : canDisplayVehicleOnMap · canAddVehicleToAlerts · canRequestCall · canShowPersistentCallBanner · warnIfPhase2 · audit
 
@@ -93,25 +102,21 @@ FLUX ORGANIQUES — IMMAT-FLOW-INDEX v1 (architecture/IMMAT-FLOW-INDEX.json) :
 Boucle : intention → repérage → impact → option → validation → action → mémoire
 Quand une demande arrive, identifier le FLOW concerné, puis lire : repérage / impact / validation.
 
-FLOW-MAP-SELF-MARKER  Repérer le conducteur sur la carte en temps réel.
-  code: App.locate · cycleView · toggleInvisible | state: S.myMarker · S.myLat · S.myLng · S.mapView · S.invisible
-  validation: conducteur autonome · modification marqueur = Gardien
-
-FLOW-VEHICLE-ALERT  Prévenir un conducteur d'un problème sur son véhicule.
-  code: App.vehicleAlertQuick · sigStepVehicle · actConfirmAlert | state: S.alerts(group='vehicle') · S.contextVehicle.plate
-  validation: conducteur autonome · plaque cible requise
-
-FLOW-ASSIST-REQUEST  Demander de l'aide aux conducteurs proches.
-  code: App.assist · actHelpReply · actQuickReply('J\\'arrive') · cleanupAlerts TTL | state: S.alerts(group='assist', _mine) · a._helperPlate · a.status
-  validation: seul le créateur peut clôturer (canResolveAlert) · incendie = P0
-
-FLOW-DIRECT-MESSAGE  Communication privée entre deux plaques.
-  code: ImmatMessages.sendNew · quick · reply · App.pickPlate | state: S.conv · S.selPlate · S.unreadMsgCount
-  validation: conducteur autonome · blocage via ic_blocked (INV-010)
-
-FLOW-BADGES  Signaler non-lus et actions en attente en temps réel.
-  code: App.updateActBadge · setUnreadMsgCount · schedBadge · syncDerivedAlertUI | state: S.unreadMsgCount · S.alerts(non-seen non-mine)
-  validation: auto-géré · idempotent · Gardien audit seulement
+FLOW-MAP-SELF-MARKER  Permettre au conducteur de se repérer immédiatement sur la carte en temps réel.
+  code: App.locate() · App.loadOthers() · App.cycleView() · App.toggleInvisible() · App.recenter() | state: S.myMarker · S.myLat · S.myLng · S.driveMode · S.mapView ('drive'|'2d') · S.invisible
+  validation: Conducteur autonome pour usage. Gardien requis pour modification du marqueur ou de la logique de localisation.
+FLOW-VEHICLE-ALERT  Prévenir un conducteur identifié d'un problème visible sur son véhicule, et lui permettre de confirmer.
+  code: App.vehicleAlertQuick(label) · App.sigStepVehicle() · App.actConfirmAlert(id,'seen') · broadcast 'vehicle_seen' → notifyAlert · App.vehicleAlert(label) (overlay legacy) | state: S.alerts (group='vehicle') · S.contextVehicle.plate · S.selPlate · a.status ('pending'|'seen'|'resolved')
+  validation: Conducteur autonome. Plaque cible requise (sigVehiclePlate). Pas de validation Gardien.
+FLOW-ASSIST-REQUEST  Demander de l'aide aux conducteurs proches et coordonner la réponse (helper + demandeur).
+  code: App.assist(type) · App.actHelpReply(plate) · App.actQuickReply(plate,'J\'arrive...') · App.cleanupAlerts() TTL · canResolveAlert(a) — seul le créateur peut clôturer | state: S.alerts (group='assist', _mine=true) · a.status ('pending'|'helper_coming') · a._helperPlate · a._own
+  validation: Seul le créateur peut clôturer (canResolveAlert). Incendie = P0 = urgent = Gardien informé si besoin.
+FLOW-DIRECT-MESSAGE  Communication directe et privée entre deux conducteurs identifiés par leur plaque.
+  code: ImmatMessages.sendNew() · ImmatMessages.quick(txt) · ImmatMessages.reply() · App.actQuickReply(plate,msg) · App.pickPlate(plate) · App.actOpenConv(plate) | state: S.conv (plaque active ou 'all') · S.selPlate · S.unreadMsgCount · S._actMessages
+  validation: Conducteur autonome. Blocage via ic_blocked sans validation Gardien (INV-010).
+FLOW-BADGES  Signaler en temps réel au conducteur les items non lus et actions en attente, sans surcharger l'attention.
+  code: App.updateActBadge() · App.renderActivityMain() · setUnreadMsgCount(n) · schedBadge() (rAF) · syncDerivedAlertUI() | state: S.unreadMsgCount · S.alerts (non-seen, non-mine, non-expired) · S._actMessages (unread)
+  validation: Aucune validation requise. Auto-synchronisé par rAF (schedBadge). Idempotent.
 
 RÈGLE : Si la demande touche un FLOW → identifier organes + impacts avant de proposer. Si aucun FLOW trouvé → demander au Gardien de créer ou rattacher un FLOW avant de patcher.
 
@@ -135,4 +140,31 @@ PROTOCOLE MODIFICATION SÛRE (5 règles) :
 3. Proposer d'abord, attendre validation, appliquer ensuite
 4. Une modification = un commit atomique
 5. Après modification : vérifier les inhibitions toujours actives
+
+DÉCISIONS IMPLÉMENTÉES (sessions récentes) :
+DEC-001 (S19) — reportPanel 2 étapes avec indicateur Étape 1/2
+DEC-003 (S19) — Filtres type Activité Tout/Messages/Alertes via S._actTypeFilter
+DEC-006 (S19) — alertsPanel DOM mort supprimé — INV-015 restored
+DEC-008 (S19) — Bouton 🙏 Merci dédié — ic-quick + cards aide helper_coming
+D-001 (S11) — panelContact supprimé — remplacé par panelMessages
+D-002 (S8) — CallManager = seul gestionnaire appels — INV-010
+D-005 (S8) — SOS appui long 3s — protection fausse alerte
+D-007 (S10) — Debug tools gardien seulement (CSS gardien-debug-tool)
+D-008 (S8) — Onglet Nouveau → navSignaler supprimé
+
+DÉCISIONS EN ATTENTE (Gardien requis) :
+DA-001 — reportPanel 2 étapes OK ou garder accordéon ?
+DA-002 — navPremium simulé : supprimer ou marquer Futur ? → bloque P1-002
+DA-003 — panelActivite : séparer Messages/Alertes en onglets séparés ?
+DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
+DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? → bloque P2-016
+
+HISTORIQUE SESSIONS :
+Session 19 — ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2
+Session 18 — ANGE audit complet — flux organiques concept + boucle intention→mémoire
+Session 12 — Corrections P0/P1 — callSignalPlate + signalRecapCard mort
+Session 11 — panelContact supprimé — D-001
+Session 10 — quickMsg/quickReply fix + debug tools gardien + brain-dialog retry
+Session 9 — NS v6 + nsToPrompt + sync-ns.js + architecture UX modulaire
+Session 8 — Appels WebRTC + navPremium temps réel + corrections P1
 `.trim();
