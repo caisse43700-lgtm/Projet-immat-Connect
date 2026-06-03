@@ -4,6 +4,24 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 29,
+      "titre": "DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes",
+      "changes": [
+        "knowledge/decisions.json — DEC-007-NA ajouté en implementees, decisions_en_attente vidé",
+        "architecture/SESSION-29-DEC-007-STATUTS-ALERTES.md créé"
+      ],
+      "fichiers_touches": ["knowledge/", "architecture/"]
+    },
+    {
+      "session": 28,
+      "titre": "DA-004 clôturé Option C · messages.js filtre les messages des plaques bloquées",
+      "changes": [
+        "messages.js — normalizeRows() filtre !blocked.includes(nPlate(m._otherPlate))",
+        "architecture/SESSION-28-DA-004-BLOCAGE.md créé"
+      ],
+      "fichiers_touches": ["messages.js", "architecture/"]
+    },
+    {
       "session": 27,
       "titre": "Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel",
       "changes": [

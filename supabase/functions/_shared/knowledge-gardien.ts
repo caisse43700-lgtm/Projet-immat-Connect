@@ -181,10 +181,10 @@ SESSION-23b (S23b) — Audit robustesse FAB : clearSignalHereContext() centralis
 SESSION-25 (S25) — Liens opérationnels intentions.json (champ liens → tutorial/interaction/flow). DA-FAB-004 : avertissement toast >10km via km() haversine. DA-FAB-007 : FAB désactivé si panelDrive actif.
 SESSION-26 (S26) — Audit général : BUG-001 badge.js (setUnreadMsgCount écrasé), BUG-002 timer FAB (tapLat persistant), BUG-003 distance haversine, MORT-001 alertsPanel mort, BUG-004 openReport sans _sigReset.
 SESSION-27 (S27) — INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.
+DA-004-CLOS (S28) — ic_blocked : Option C retenue — filtre messages dans normalizeRows() messages.js. Zéro migration DB.
+DEC-007-NA (S29) — Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
-DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
-DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? → bloque P2-016
 
 INTENTION → FLOW + TUTORIAL (diagnostic rapide) :
 Intention               Flow                    Tutorial
@@ -200,6 +200,8 @@ INT-ASK-ANGE            —                       —
 INT-MANAGE-PROFILE      —                       TUT-009
 
 HISTORIQUE SESSIONS :
+Session 29 — DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes
+Session 28 — DA-004 clôturé Option C · messages.js filtre les messages des plaques bloquées
 Session 27 — Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel
 Session 26 — Audit général · 5 bugs corrigés (BUG-001 badge, BUG-002 FAB timer, BUG-003 haversine, MORT-001 alertsPanel, BUG-004 openReport)
 Session 25 — Liens opérationnels intentions.json · DA-FAB-004 (toast >10km) · DA-FAB-007 (FAB désactivé en conduite)

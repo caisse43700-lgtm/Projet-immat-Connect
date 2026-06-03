@@ -23,12 +23,11 @@
     { "id": "SESSION-23b", "quoi": "Audit robustesse FAB : clearSignalHereContext() centralise le nettoyage. _sigReset() extrait pour réinitialisation UI pure. openSignalHere() préserve tapLat. signalHereIndicator affiché.", "session": "23b", "statut": "fait" },
     { "id": "SESSION-25", "quoi": "Liens opérationnels intentions.json (champ liens → tutorial/interaction/flow). DA-FAB-004 : avertissement toast >10km via km() haversine. DA-FAB-007 : FAB désactivé si panelDrive actif.", "session": 25, "statut": "fait" },
     { "id": "SESSION-26", "quoi": "Audit général : BUG-001 badge.js (setUnreadMsgCount écrasé), BUG-002 timer FAB (tapLat persistant), BUG-003 distance haversine, MORT-001 alertsPanel mort, BUG-004 openReport sans _sigReset.", "session": 26, "statut": "fait" },
-    { "id": "SESSION-27", "quoi": "INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.", "session": 27, "statut": "fait" }
+    { "id": "SESSION-27", "quoi": "INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enrichis. P2-002 clôturé. DA-FAB-004 et DA-FAB-007 vérifiés implémentés.", "session": 27, "statut": "fait" },
+    { "id": "DA-004-CLOS", "quoi": "ic_blocked : Option C retenue — filtre messages dans normalizeRows() messages.js. Zéro migration DB.", "session": 28, "statut": "fait" },
+    { "id": "DEC-007-NA", "quoi": "Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.", "session": 29, "statut": "non_applicable" }
   ],
-  "decisions_en_attente": [
-    { "id": "DA-004", "question": "Blocage ic_blocked : migrer vers DB ou garder localStorage ?", "impact": "persistance blocage cross-device", "bloque": "P2-009" },
-    { "id": "DEC-007", "question": "Status alertes : unifier seen/present/gone/resolved → 3 statuts ?", "impact": "cohérence données", "bloque": "P2-016" }
-  ],
+  "decisions_en_attente": [],
   "invariants_critiques": [
     { "id": "INV-001", "règle": "Canal véhicule séparé canal route — jamais croiser" },
     { "id": "INV-002", "règle": "Canal route séparé — broadcast à tous les proches" },
