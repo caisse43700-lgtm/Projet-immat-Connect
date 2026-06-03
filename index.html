@@ -263,8 +263,6 @@
     <span id="actBadge" class="nav-badge" style="display:none">0</span>
   </button>
 </nav>
-<!-- Legacy badge element for compatibility -->
-<span id="topMsgBadge" class="nav-badge" style="display:none;position:fixed;top:-9999px">0</span>
 <div id="reportPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Informe les conducteurs proches, la route ou demande de l'aide.</p><div id="reportTargetLine" class="report-target-line">Information générale envoyée aux véhicules proches.</div><div id="reportVehicleBlock" class="report-block"><h3 id="reportVehicleTitle">🚗 Informer les conducteurs</h3><div class="report-grid"><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Feux restés allumés')">💡 Feux allumés</button><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Problème d\'éclairage')">💡 Éclairage</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Élément semble se détacher')">🔧 Élément détaché</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div><div id="reportRouteBlock" class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button type="button" class="report-route" onclick="App.roadReport('accident')">🚗 Accident</button><button type="button" class="report-route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button type="button" class="report-route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button type="button" class="report-route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button type="button" class="report-route" onclick="App.roadReport('controle')">👮 Contrôle</button><button type="button" class="report-route" onclick="App.roadReport('danger')">❗ Danger</button></div></div><div id="reportAssistBlock" class="report-block"><h3>🆘 Demander de l'aide</h3><div class="report-grid"><button type="button" class="report-help" onclick="App.assist('panne')">🚗 Panne</button><button type="button" class="report-help" onclick="App.assist('carburant')">⛽ Carburant</button><button type="button" class="report-help" onclick="App.assist('batterie')">🔋 Batterie</button><button type="button" class="report-help" onclick="App.assist('moteur')">⚙️ Moteur</button><button type="button" class="report-urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button type="button" class="report-help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div></div>
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div>
 <div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
@@ -858,7 +856,7 @@ markAlertPending(id){
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id,opts={}){const rid=String(id||'').trim();if(!rid)return;const removed=[];S.alerts=(S.alerts||[]).filter(a=>{const keys=[a.key,a.id,a.remoteId,a.rid].filter(Boolean).map(String);const match=keys.includes(rid);if(match)removed.push(a);return!match;});removed.forEach(a=>{if(a.remoteId&&!opts?.silent&&(a._mine||isRouteAlert(a)))try{S.chCommunityReports?.send({type:'broadcast',event:'resolve_report',payload:{remoteId:a.remoteId}})}catch(e){};if(a.remoteId&&(a._mine||isRouteAlert(a)))try{sb?.from('reports').update({status:'resolved',resolved_at:new Date().toISOString()}).eq('id',a.remoteId).then(({error})=>{if(error)console.warn('dismissAlert UPDATE DB',error);})}catch(e){};if(a.remoteId)S.resolvedRemoteIds=[...(S.resolvedRemoteIds||[]).filter(x=>x!==a.remoteId),a.remoteId].slice(0,200);[a.key,a.id,a.remoteId,a.rid].filter(Boolean).forEach(k=>{const m=S.alertMarkersById?.[k];if(m){try{S.map?.removeLayer(m)}catch(e){}delete S.alertMarkersById[k];}});});syncDerivedAlertUI();if(!opts?.silent)toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('*').gte('created_at',since).or('status.eq.active,status.is.null').order('created_at',{ascending:false}).limit(150);if(error)throw error;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));const myUid=ud?.user?.id;(data||[]).forEach(r=>{if(myUid&&r.reporter_id&&r.reporter_id===myUid)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:false})});this.syncAlertMarkers?.()}catch(e){console.warn('sync alerts',e)}},
 subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id){if(r.id){const mine=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(r.plate||'')&&Date.now()-(a.at||0)<60000);if(mine){mine.remoteId=String(r.id);saveAlerts();console.info('remoteId assigné via postgres_changes:',mine.remoteId);}}return;}const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});schedFeed();schedBadge();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('postgres_changes',{event:'UPDATE',schema:'public',table:'reports'},p=>{const r=p.new||{};if(r.status!=='resolved')return;const rid=String(r.id||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';this.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:d.label||'Problème signalé',plate:d.sender_plate||'',lat:null,lng:null,level:d.urgent?'urgent':'important',group:'vehicle'},{notify:false});notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+'\nSignalé par : '+(d.sender_plate||'Conducteur proche'),'Vu','Répondre',()=>{this.updateActBadge?.()},()=>{S.selPlate=nPlate(d.sender_plate||'');S.conv=S.selPlate;this.panel('messages');try{ImmatMessages?.setMode?.('inbox');ImmatMessages?.refresh?.();}catch(e){}},'urgent');}catch(e){}schedFeed();schedBadge();try{window.ImmatMessages?.refresh?.();}catch(e){}}).on('broadcast',{event:'vehicle_seen'},p=>{const d=p.payload||{};const myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPl||nPlate(d.target_plate||'')!==myPl)return;notifyAlert('✓ Signalement vérifié',(nPlate(d.sender_plate)||'Un conducteur')+' a vérifié votre signalement.','ok');}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
-updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=Number(S.unreadMsgCount)||0;el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
+updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>'},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;const _bcast=p=>{try{if(S.chCommunityReports){const bp={id:String(p.id||Date.now()),type:p.type||inferType((p.reason||'')+' '+(p.plate||'')),plate:p.plate||null,reason:p.reason||null,latitude:p.latitude??p.lat??null,longitude:p.longitude??p.lng??null,lat:p.lat??p.latitude??null,lng:p.lng??p.longitude??null,created_at:p.created_at||new Date().toISOString(),reporter_id:p.reporter_id||null};S.chCommunityReports.send({type:'broadcast',event:'new_report',payload:bp})}}catch(e){console.warn('bcast',e)}};try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;
 let r=await sb.from('reports').insert(payload).select('id');if(!r.error){console.info('saveReportRemote ✅ T1');_bcast({...payload,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
@@ -1207,71 +1205,6 @@ App.markAllCatRead=function(){
   this.renderCategoryFeed(S._actCat||'all',S._actCatTab||'recus');
   this.updateActBadge?.();toast('Tout marqué comme lu.','ok');
 };
-App._actMsgCard=function(item){
-  const time=item.at?new Date(item.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-  const lastMsg=item.msgs?item.msgs[item.msgs.length-1]:null;
-  const lastSent=lastMsg?._sent===true;
-  const unreadDot=item.unread?'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-left:6px"></span>':'';
-  const dirLabel=lastSent?'<span style="font-size:10px;color:#888;margin-left:4px">Envoyé</span>':'<span style="font-size:10px;color:var(--green);margin-left:4px">Reçu</span>';
-  return `<div class="act-card${item.unread?' unread':''}">
-    <div class="act-card-head">
-      <div class="act-card-icon act-icon-msg">💬</div>
-      <div><div class="act-card-title">${esc(item.plate)}${unreadDot}</div><div class="act-card-plate">Conversation${dirLabel}</div></div>
-      <div class="act-card-time">${esc(time)}</div>
-    </div>
-    <div class="act-card-body">${lastSent?'→ ':''} ${esc(item.body)}</div>
-    <div class="act-card-actions">
-      <button class="act-btn-reply" onclick="App.actOpenConv('${esc(item.plate)}')">${lastSent?'Voir →':'Répondre →'}</button>
-      <button class="act-btn-danger" onclick="App.actDeleteConv('${esc(item.plate)}')">Supprimer</button>
-    </div>
-  </div>`;
-};
-App._actAlertCard=function(item){
-  const a=item.alert;
-  const meta=typeof cat==='function'?cat(a.type):{icon:'⚠️',label:a.type||'Alerte'};
-  const now=Date.now();
-  const ttl=typeof ttlFor==='function'?ttlFor(a.type):60*60*1000;
-  const age=now-(Number(a.at)||now);
-  const pct=Math.max(0,Math.min(100,100-(age/ttl*100)));
-  const time=a.at?new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-  const dist=(typeof distanceOf==='function')?distanceOf(a):null;
-  const distStr=dist==null?'':(dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km');
-
-  const iconBg=item.type==='vehicle'?'act-icon-vehicle':item.type==='aide'?'act-icon-aide':'act-icon-route';
-  const plate=a.from_plate||a.sender_plate||a.plate||'';
-  const isOwn=a._own===true||a._mine===true;
-
-  let actions='';
-  if(isOwn&&item.type==='aide'){
-    const _hp=a.status==='helper_coming'&&a._helperPlate?`<button class="act-btn-ok" onclick="App.actQuickReply('${esc(a._helperPlate||'')}','🙏 Merci pour votre aide !')">🙏 Merci</button>`:'';
-    actions=`${_hp}<button class="act-btn-ok" onclick="App.actConfirmAlert('${esc(a.id)}','resolved')">✓ Résolu</button><button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','gone')">Retirer</button>`;
-  } else if(isOwn){
-    actions=`<button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','gone')">Retirer mon signalement</button>`;
-  } else if(item.type==='vehicle'){
-    actions=`<button class="act-btn-ok" onclick="App.actConfirmAlert('${esc(a.id)}','seen')">✓ J'ai vérifié</button>
-             <button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','resolved')">✓ C'est bon</button>`;
-  } else if(item.type==='route'){
-    actions=`<button class="act-btn-ok" onclick="App.actConfirmAlert('${esc(a.id)}','present')">Toujours là</button>
-             <button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','gone')">Disparu</button>`;
-  } else if(item.type==='aide'){
-    actions=`<button class="act-btn-ok" onclick="App.actQuickReply('${esc(plate)}','J\\'arrive, je viens vous aider.')">✋ J'arrive</button><button class="act-btn-done" onclick="App.actQuickReply('${esc(plate)}','Je ne peux pas aider cette fois.')">Je ne peux pas</button><button class="act-btn-reply" onclick="App.actHelpReply('${esc(plate)}')">💬 Contacter</button>`;
-  }
-  if(a.lat!=null)actions+=`<button class="act-btn-map" onclick="App.actViewOnMap('${esc(a.id)}')">📍 Voir</button>`;
-
-  return `<div class="act-card${a.status!=='seen'?' unread':''}">
-    <div class="act-card-head">
-      <div class="act-card-icon ${iconBg}">${meta.icon}</div>
-      <div>
-        <div class="act-card-title">${esc(meta.label)}${distStr?' · '+distStr:''}${isOwn?' <span style="font-size:10px;background:#2979ff22;color:#2979ff;border-radius:4px;padding:1px 5px">Mon signalement</span>':''}</div>
-        <div class="act-card-plate">${isOwn?'Toi':''}${!isOwn&&plate?esc(plate):''}${!isOwn&&!plate?'Conducteur proche':''}${(()=>{if(isOwn||!plate)return'';const sc=Number((S.trust||{})[nPlate(plate)]??70);const col=sc>=75?'#4caf50':sc>=35?'#f0a500':'#666';const lbl=sc>=75?'Fiable':sc>=35?'Confirmé':'Inconnu';return` <span style="color:${col};font-size:9px" title="Fiabilité : ${lbl} (${sc}%)">●</span>`;})()}</div>
-      </div>
-      <div class="act-card-time">${esc(time)}</div>
-    </div>
-    <div class="act-ttl-bar"><div class="act-ttl-fill" style="width:${pct}%"></div></div>
-    <div class="act-card-body">${esc(a.reason||meta.label)}</div>
-    <div class="act-card-actions">${actions}</div>
-  </div>`;
-};
 App.openEditProfile=function(){
   const p=S.profile||{};
   if($('iPseudo'))$('iPseudo').value=p.pseudo||'';
@@ -1383,8 +1316,6 @@ App.updateActBadge=function(){
     try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
     if(badge){badge.textContent=unreadAlerts>99?'99+':String(unreadAlerts);badge.style.display=unreadAlerts>0?'flex':'none';}
-    const legacy=$('topMsgBadge');
-    if(legacy){legacy.textContent=badgeFmt(unreadMsgs);legacy.style.display=unreadMsgs>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
 };

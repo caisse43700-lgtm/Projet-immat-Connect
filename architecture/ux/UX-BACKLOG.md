@@ -63,7 +63,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | P2-005 | Bouton "Je viens aider" — réponse structurée aide | BTN-MISS03 / FRI-009 | 💬 à concevoir |
 | P2-006 | Fil de réponse helper → demandeur d'aide | FRI-009 | 💬 à concevoir |
 | P2-014 | Bouton "Signaler abus" sur message reçu | BTN-MISS04 / INT-010 | 💬 à concevoir |
-| P2-015 | Exposer `App.actViewOnMap()` avec un bouton dans la card alerte | MORT-002 | 🔧 ajouter bouton "Voir sur carte" |
+| P2-015 | Exposer `App.actViewOnMap()` avec un bouton dans la card alerte | MORT-002 | ✅ fait (déjà implémenté — `_actModCard` ligne ~1178) |
 | P2-016 | Unifier status enum alertes (seen / present / gone / resolved) | UX-INTERACTION-SKELETON §5 | 💬 à décider |
 
 ### Nettoyage technique
@@ -73,8 +73,8 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | P2-007 | Debug tools ("Restaurer msgs" + "Sync alertes") → Gardien seulement | D-007 / FRI-004 | ✅ fait (SESSION 10 — gardien-debug-tool CSS) |
 | P2-008 | Unifier trust local (ic_trust) et ReliabilityPro DB | FRI-005 | 💬 à décider |
 | P2-009 | Migrer blocage (ic_blocked) de localStorage vers DB | DA-004 / FRI-007 | 💬 à décider |
-| P2-010 | Supprimer code mort `_actMsgCard` + `_actAlertCard` | INVENTAIRE | 🔧 à implémenter |
-| P2-017 | Supprimer badge `topMsgBadge` — remplacer par `actBadge` partout | AUDIT-2026 | 🔧 à implémenter |
+| P2-010 | Supprimer code mort `_actMsgCard` + `_actAlertCard` | INVENTAIRE | ✅ fait (SESSION 21) |
+| P2-017 | Supprimer badge `topMsgBadge` — remplacer par `actBadge` partout | AUDIT-2026 | ✅ fait (SESSION 21) |
 | P2-018 | quickMsg() / quickReply() ciblaient iMsg/iTarget (champs morts panelContact) | — | ✅ corrigé (SESSION 10) |
 | P2-019 | brain-dialog : retry RPC rôle si cold start Supabase | — | ✅ corrigé (SESSION 10) |
 
@@ -156,6 +156,9 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 
 | Item | Session |
 |---|---|
+| P2-010 `_actMsgCard` + `_actAlertCard` code mort supprimé | SESSION 21 |
+| P2-017 `topMsgBadge` supprimé — `actBadge` seul badge actif | SESSION 21 |
+| P2-015 `App.actViewOnMap()` — déjà implémenté dans `_actModCard` | SESSION 21 |
 | DEC-008 Bouton 🙏 Merci dédié (ic-quick + isOwn assist helper_coming) | SESSION 19 |
 | DEC-001 Indicateur progression sigStep (barres Étape 1/2 · 2/2) | SESSION 19 |
 | DEC-003 Filtres type Activité (Tout / Messages / Alertes) | SESSION 19 |
