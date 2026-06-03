@@ -1,23 +1,26 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_role": "Mémoire des décisions architecturales et UX",
   "_rule": "Source canonique : UX-BACKLOG.md + UX-DECISIONS.md. Ne pas dupliquer — résumer seulement.",
   "_ref": "architecture/ux/UX-BACKLOG.md · architecture/ux/UX-DECISIONS.md",
   "decisions_implementees": [
-    { "id": "DEC-001", "quoi": "reportPanel 2 étapes avec indicateur Étape 1/2", "session": 19, "statut": "fait" },
-    { "id": "DEC-003", "quoi": "Filtres type Activité Tout/Messages/Alertes via S._actTypeFilter", "session": 19, "statut": "fait" },
-    { "id": "DEC-006", "quoi": "alertsPanel DOM mort supprimé — INV-015 restored", "session": 19, "statut": "fait" },
-    { "id": "DEC-008", "quoi": "Bouton 🙏 Merci dédié — ic-quick + cards aide helper_coming", "session": 19, "statut": "fait" },
     { "id": "D-001", "quoi": "panelContact supprimé — remplacé par panelMessages", "session": 11, "statut": "fait" },
     { "id": "D-002", "quoi": "CallManager = seul gestionnaire appels — INV-010", "session": 8, "statut": "fait" },
     { "id": "D-005", "quoi": "SOS appui long 3s — protection fausse alerte", "session": 8, "statut": "fait" },
     { "id": "D-007", "quoi": "Debug tools gardien seulement (CSS gardien-debug-tool)", "session": 10, "statut": "fait" },
-    { "id": "D-008", "quoi": "Onglet Nouveau → navSignaler supprimé", "session": 8, "statut": "fait" }
+    { "id": "D-008", "quoi": "Onglet Nouveau → navSignaler supprimé", "session": 8, "statut": "fait" },
+    { "id": "DEC-001", "quoi": "reportPanel 2 étapes avec indicateur Étape 1/2 — DA-001 résolu", "session": 19, "statut": "fait" },
+    { "id": "DEC-003", "quoi": "Filtres Activité Tout/Messages/Alertes via S._actTypeFilter — DA-003 résolu", "session": 19, "statut": "fait" },
+    { "id": "DEC-006", "quoi": "alertsPanel DOM mort supprimé — INV-015 restored", "session": 19, "statut": "fait" },
+    { "id": "DEC-008", "quoi": "Bouton 🙏 Merci dédié — ic-quick + cards aide helper_coming", "session": 19, "statut": "fait" },
+    { "id": "P2-010", "quoi": "_actMsgCard + _actAlertCard supprimées (code mort 70 lignes). renderCategoryFeed utilise uniquement _actModCard", "session": 21, "statut": "fait" },
+    { "id": "P2-015", "quoi": "actViewOnMap() confirmé présent — bouton '📍 Voir' dans _actModCard depuis SESSION 19. MORT-002 résolu", "session": 21, "statut": "fait" },
+    { "id": "P2-017", "quoi": "topMsgBadge supprimé (off-screen depuis la création). actBadge = badge unique nav (onglet Activité)", "session": 21, "statut": "fait" },
+    { "id": "P2-017b", "quoi": "actBadge étendu : unreadAlerts + S.unreadMsgCount. setUnreadMsgCount() déclenche updateActBadge()", "session": "21b", "statut": "fait" },
+    { "id": "SESSION-22", "quoi": "CSS mort supprimé (act-card, act-filter, act-card-actions). JS mort topMsgBadge nettoyé dans badge.js, messages.js, ui.js", "session": 22, "statut": "fait" }
   ],
   "decisions_en_attente": [
-    { "id": "DA-001", "question": "reportPanel 2 étapes OK ou garder accordéon ?", "impact": "ergonomie signalement", "bloque": null },
     { "id": "DA-002", "question": "navPremium simulé : supprimer ou marquer Futur ?", "impact": "désinformation vitesse/trafic/voies", "bloque": "P1-002" },
-    { "id": "DA-003", "question": "panelActivite : séparer Messages/Alertes en onglets séparés ?", "impact": "clarté interface", "bloque": null },
     { "id": "DA-004", "question": "Blocage ic_blocked : migrer vers DB ou garder localStorage ?", "impact": "persistance blocage cross-device", "bloque": "P2-009" },
     { "id": "DEC-007", "question": "Status alertes : unifier seen/present/gone/resolved → 3 statuts ?", "impact": "cohérence données", "bloque": "P2-016" }
   ],

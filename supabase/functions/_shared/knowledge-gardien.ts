@@ -142,20 +142,23 @@ PROTOCOLE MODIFICATION SÛRE (5 règles) :
 5. Après modification : vérifier les inhibitions toujours actives
 
 DÉCISIONS IMPLÉMENTÉES (sessions récentes) :
-DEC-001 (S19) — reportPanel 2 étapes avec indicateur Étape 1/2
-DEC-003 (S19) — Filtres type Activité Tout/Messages/Alertes via S._actTypeFilter
-DEC-006 (S19) — alertsPanel DOM mort supprimé — INV-015 restored
-DEC-008 (S19) — Bouton 🙏 Merci dédié — ic-quick + cards aide helper_coming
 D-001 (S11) — panelContact supprimé — remplacé par panelMessages
 D-002 (S8) — CallManager = seul gestionnaire appels — INV-010
 D-005 (S8) — SOS appui long 3s — protection fausse alerte
 D-007 (S10) — Debug tools gardien seulement (CSS gardien-debug-tool)
 D-008 (S8) — Onglet Nouveau → navSignaler supprimé
+DEC-001 (S19) — reportPanel 2 étapes avec indicateur Étape 1/2 — DA-001 résolu
+DEC-003 (S19) — Filtres Activité Tout/Messages/Alertes via S._actTypeFilter — DA-003 résolu
+DEC-006 (S19) — alertsPanel DOM mort supprimé — INV-015 restored
+DEC-008 (S19) — Bouton 🙏 Merci dédié — ic-quick + cards aide helper_coming
+P2-010 (S21) — _actMsgCard + _actAlertCard supprimées (code mort 70 lignes). renderCategoryFeed utilise uniquement _actModCard
+P2-015 (S21) — actViewOnMap() confirmé présent — bouton '📍 Voir' dans _actModCard depuis SESSION 19. MORT-002 résolu
+P2-017 (S21) — topMsgBadge supprimé (off-screen depuis la création). actBadge = badge unique nav (onglet Activité)
+P2-017b (S21b) — actBadge étendu : unreadAlerts + S.unreadMsgCount. setUnreadMsgCount() déclenche updateActBadge()
+SESSION-22 (S22) — CSS mort supprimé (act-card, act-filter, act-card-actions). JS mort topMsgBadge nettoyé dans badge.js, messages.js, ui.js
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
-DA-001 — reportPanel 2 étapes OK ou garder accordéon ?
 DA-002 — navPremium simulé : supprimer ou marquer Futur ? → bloque P1-002
-DA-003 — panelActivite : séparer Messages/Alertes en onglets séparés ?
 DA-004 — Blocage ic_blocked : migrer vers DB ou garder localStorage ? → bloque P2-009
 DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? → bloque P2-016
 
