@@ -184,6 +184,7 @@ SESSION-27 (S27) — INT-008 interactions.json + F-SIGNAL-ROUTE entry_points enr
 DA-004-CLOS (S28) — ic_blocked : Option C retenue — filtre messages dans normalizeRows() messages.js. Zéro migration DB.
 DEC-007-NA (S29) — Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.
 SESSION-33 (S33) — CORRECTION-1 (SESSION-31) : alertHistoryBox sorti de sigStep2Route → section permanente dans panelAltet. Visible dès le premier signalement (display toggle). Boucle CONFIANCE renforcée.
+SESSION-36A-R07 (S36) — R-07 : updateCommunityStatus() — garde !S.networkOnline → textContent 'Hors ligne · GPS actif · alertes en cache'. Boucle ORIENTATION renforcée. INT-FEEL-SAFE. Zéro nouvelle dette.
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
 
@@ -231,6 +232,7 @@ INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
 INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
+Session 36 — Audit risques systémiques — 3 corrections R-02/R-03/R-04 implémentées
 Session 35 — Audit cohérence interne — gap sync corrigé (3 règles manquantes decisions.json)
 Session 34 — REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée
 Session 33 — CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet
