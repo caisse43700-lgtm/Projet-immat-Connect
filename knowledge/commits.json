@@ -4,6 +4,39 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 32,
+      "titre": "Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)",
+      "changes": [
+        "knowledge/organs.json _v:3 — intentions/features/boucles_vitales ajoutés sur 6 organes",
+        "architecture/organism/ORGANISM-RULES.json _v:2 — 3 nouvelles règles (DISCOVERABILITY_TEST, ANGE_SURVIVAL_TEST, ATTENTION_IS_SCARCE)",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré",
+        "architecture/SESSION-32-CONSOLIDATION-FINALE.md créé"
+      ],
+      "fichiers_touches": ["knowledge/organs.json", "architecture/organism/ORGANISM-RULES.json", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
+      "session": 31,
+      "titre": "Audit des 7 boucles vitales — score moyen 2.6/5 · CONTRIBUTION/CONFIANCE/RÉTENTION partielles",
+      "changes": [
+        "architecture/SESSION-31-AUDIT-BOUCLES-VITALES.md créé — scores et corrections identifiées"
+      ],
+      "fichiers_touches": ["architecture/"]
+    },
+    {
+      "session": 30,
+      "titre": "Consolidation SESSION 30 — 5 intentions ajoutées, règles organiques + boucles vitales formalisées, architecture/organism/ créé",
+      "changes": [
+        "knowledge/intentions.json _v:4 — INT-CONFIRM-DANGER, INT-RESOLVE-ALERT, INT-HELP-DRIVER, INT-UNDERSTAND-ENV, INT-FEEL-SAFE + PRIM-007",
+        "knowledge/decisions.json _v:4 — regles_organiques + boucles_vitales ajoutées",
+        "architecture/organism/ORGANISM-RULES.json créé",
+        "architecture/organism/IMMATCONNECT-MASTER-AUDIT.md créé",
+        "architecture/organism/IMMATCONNECT-REASONING.md créé",
+        "supabase/functions/_shared/knowledge-conducteur.ts regénéré (134 lignes)",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (242 lignes)"
+      ],
+      "fichiers_touches": ["knowledge/", "architecture/organism/", "supabase/functions/_shared/"]
+    },
+    {
       "session": 29,
       "titre": "DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes",
       "changes": [

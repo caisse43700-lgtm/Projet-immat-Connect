@@ -226,6 +226,9 @@ INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
 INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
+Session 32 — Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)
+Session 31 — Audit des 7 boucles vitales — score moyen 2.6/5 · CONTRIBUTION/CONFIANCE/RÉTENTION partielles
+Session 30 — Consolidation SESSION 30 — 5 intentions ajoutées, règles organiques + boucles vitales formalisées, architecture/organism/ créé
 Session 29 — DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes
 Session 28 — DA-004 clôturé Option C · messages.js filtre les messages des plaques bloquées
 Session 27 — Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel

@@ -1,9 +1,9 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_role": "Règles organiques et boucles vitales — formalisation des décisions architecturales validées",
-  "_source": "architecture/DECISIONS-FINALES-CONSOLIDEES.md",
+  "_source": "architecture/DECISIONS-FINALES-CONSOLIDEES.md + SESSION-32-CONSOLIDATION-FINALE.md",
   "_rule": "Ces règles gouvernent l'évolution du produit. Elles ne remplacent pas les INV-XXX (Constitution). Elles s'appliquent au-dessus.",
-  "_note": "Toute évolution doit renforcer au moins une boucle vitale et respecter les 10 règles.",
+  "_note": "Toute évolution doit renforcer au moins une boucle vitale et respecter les 13 règles.",
 
   "organic_rules": [
     {
@@ -55,6 +55,27 @@
       "id": "SOCIAL_VISIBILITY",
       "principe": "Ce qui est visible aux autres doit être explicitement consenti par le conducteur",
       "contre_exemple": "Partager la position sans que le conducteur l'ait autorisé"
+    },
+    {
+      "id": "DISCOVERABILITY_TEST",
+      "principe": "Toute nouvelle fonctionnalité doit être trouvable en moins de 30 secondes par un nouveau conducteur",
+      "contre_exemple": "Une fonctionnalité accessible uniquement via Ange ou un tutoriel",
+      "test": "Un conducteur découvrant l'app peut-il trouver cette fonctionnalité en 30s ? Si NON : exposer, guider, simplifier — ou supprimer.",
+      "indicateur": "Fonctionnalité découverte naturellement > Fonctionnalité expliquée par tutoriel"
+    },
+    {
+      "id": "ANGE_SURVIVAL_TEST",
+      "principe": "Ange peut disparaître — l'organisme doit fonctionner sans lui",
+      "contre_exemple": "Une fonctionnalité ne s'ouvre que via Ange, ou une donnée critique n'est accessible que par Ange",
+      "test": "Si Ange disparaît : signalements, messages, appels, GPS, aide et alertes fonctionnent-ils encore ? Si un NON → Ange est devenu une dépendance critique. Interdit.",
+      "interdit": "Ange ne peut pas être un organe vital ni une dépendance fonctionnelle"
+    },
+    {
+      "id": "ATTENTION_IS_SCARCE",
+      "principe": "L'attention du conducteur est la ressource rare — valeur perçue > attention consommée",
+      "contre_exemple": "Badge inutile, alerte inutile, popup inutile, bouton inutile",
+      "test": "Cette évolution justifie-t-elle le coût d'attention qu'elle consomme ? Sinon : refuser.",
+      "indicateur": "Valeur perçue > Attention consommée"
     }
   ],
 
@@ -92,7 +113,7 @@
       "role": "Les échanges passés construisent la confiance entre conducteurs",
       "organe": "Messages",
       "features": ["F-ACTIVITE"],
-      "intentions": ["INT-CHECK-ACTIVITY", "INT-FIND-INFO"]
+      "intentions": ["INT-CHECK-ACTIVITY"]
     },
     {
       "id": "APPRENTISSAGE",
