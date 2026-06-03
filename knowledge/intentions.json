@@ -1,5 +1,5 @@
 {
-  "_v": 2,
+  "_v": 3,
   "_role": "Racine de l'organisme — mapper une intention humaine vers les organes et fonctionnalités",
   "_rule": "La vraie racine n'est pas features.json. C'est ici que commence la compréhension de l'organisme.",
   "_ref": "Audit Stratégique Final SESSION 24 — Théorie du Tout stabilisée",
@@ -85,7 +85,8 @@
       "organe": "Signalements",
       "flow": "FLOW-VEHICLE-ALERT",
       "acces": "conducteur",
-      "chemin": "carte → marqueur → menu → Signaler ce véhicule OU clic droit carte → 📍 Signaler ici → bloc véhicule"
+      "chemin": "carte → marqueur → menu → Signaler ce véhicule OU clic droit carte → 📍 Signaler ici → bloc véhicule",
+      "liens": { "tutorial": "TUT-003", "interaction": "INT-002" }
     },
     {
       "id": "INT-SIGNAL-ROAD",
@@ -94,7 +95,8 @@
       "organe": "Signalements",
       "flow": null,
       "acces": "conducteur",
-      "chemin": "FAB Signaler OU clic droit carte → 📍 Signaler ici → Informer la route → type → envoi"
+      "chemin": "FAB Signaler OU clic droit carte → 📍 Signaler ici → Informer la route → type → envoi",
+      "liens": { "tutorial": "TUT-002", "interaction": "INT-003" }
     },
     {
       "id": "INT-REQUEST-HELP",
@@ -103,7 +105,8 @@
       "organe": "Signalements",
       "flow": "FLOW-ASSIST-REQUEST",
       "acces": "conducteur",
-      "chemin": "FAB Signaler → reportPanel → Demander de l'aide → type → envoi"
+      "chemin": "FAB Signaler → reportPanel → Demander de l'aide → type → envoi",
+      "liens": { "tutorial": "TUT-004", "interaction": "INT-004" }
     },
     {
       "id": "INT-CONTACT-DRIVER",
@@ -112,7 +115,8 @@
       "organe": "Messages",
       "flow": "FLOW-DIRECT-MESSAGE",
       "acces": "conducteur",
-      "chemin": "carte → marqueur → Envoyer message OU panelMessages → Composer → plaque"
+      "chemin": "carte → marqueur → Envoyer message OU panelMessages → Composer → plaque",
+      "liens": { "tutorial": "TUT-005", "interaction": "INT-001" }
     },
     {
       "id": "INT-LOCATE-SELF",
@@ -121,7 +125,8 @@
       "organe": "Carte",
       "flow": "FLOW-MAP-SELF-MARKER",
       "acces": "conducteur",
-      "chemin": "carte → bouton Localiser OU démarrage automatique"
+      "chemin": "carte → bouton Localiser OU démarrage automatique",
+      "liens": { "tutorial": "TUT-001", "interaction": null }
     },
     {
       "id": "INT-NAVIGATE",
@@ -130,7 +135,8 @@
       "organe": "Carte",
       "flow": null,
       "acces": "conducteur",
-      "chemin": "panelDrive → barre recherche → Nominatim → lancer GPS"
+      "chemin": "panelDrive → barre recherche → Nominatim → lancer GPS",
+      "liens": { "tutorial": "TUT-006", "interaction": null }
     },
     {
       "id": "INT-SOS",
@@ -140,7 +146,8 @@
       "flow": null,
       "acces": "conducteur",
       "chemin": "panelDrive → SOS appui long 3s → confirmation → envoi",
-      "note": "Protégé appui long D-005 — canal distinct futur P3-023"
+      "note": "Protégé appui long D-005 — canal distinct futur P3-023",
+      "liens": { "tutorial": "TUT-007", "interaction": null }
     },
     {
       "id": "INT-CHECK-ACTIVITY",
@@ -149,7 +156,8 @@
       "organe": "Messages",
       "flow": "FLOW-BADGES",
       "acces": "conducteur",
-      "chemin": "badge actBadge → panelActivite → filtres Tout/Messages/Alertes"
+      "chemin": "badge actBadge → panelActivite → filtres Tout/Messages/Alertes",
+      "liens": { "tutorial": "TUT-008", "interaction": null }
     },
     {
       "id": "INT-ASK-ANGE",
@@ -158,7 +166,8 @@
       "organe": "Ange",
       "flow": null,
       "acces": "conducteur",
-      "chemin": "angeFab → dialogue → question → réponse 80 mots max"
+      "chemin": "angeFab → dialogue → question → réponse 80 mots max",
+      "liens": { "tutorial": null, "interaction": null }
     },
     {
       "id": "INT-MANAGE-PROFILE",
@@ -168,7 +177,8 @@
       "flow": null,
       "acces": "conducteur",
       "chemin": "panelSettings → ✏️ Mon profil → modifier → sauvegarder",
-      "note": "La plaque est immuable après création — INV-006"
+      "note": "La plaque est immuable après création — INV-006",
+      "liens": { "tutorial": "TUT-009", "interaction": null }
     }
   ]
 }

@@ -100,4 +100,16 @@ INT-ASK-ANGE — Je veux de l'aide ou une explication sur l'application
   → angeFab → dialogue → question → réponse 80 mots max
 INT-MANAGE-PROFILE — Je veux modifier mon pseudo ou mes informations
   → panelSettings → ✏️ Mon profil → modifier → sauvegarder
+
+## RESSOURCES PAR INTENTION
+Quand tu identifies une intention, cite la ressource correspondante :
+INT-SIGNAL-VEHICLE : 📚 TUT-003 (Prévenir un conducteur d'un problème sur son véhicule) | ↔️ INT-002 (Alerte véhicule) | ⚙️ FLOW-VEHICLE-ALERT
+INT-SIGNAL-ROAD : 📚 TUT-002 (Signaler un danger sur la route) | ↔️ INT-003 (Signalement route)
+INT-REQUEST-HELP : 📚 TUT-004 (Demander de l'aide) | ↔️ INT-004 (Demande d'aide) | ⚙️ FLOW-ASSIST-REQUEST
+INT-CONTACT-DRIVER : 📚 TUT-005 (Envoyer un message à un conducteur) | ↔️ INT-001 (Message direct) | ⚙️ FLOW-DIRECT-MESSAGE
+INT-LOCATE-SELF : 📚 TUT-001 (Localiser ma voiture sur la carte) | ⚙️ FLOW-MAP-SELF-MARKER
+INT-NAVIGATE : 📚 TUT-006 (Chercher un itinéraire)
+INT-SOS : 📚 TUT-007 (Déclencher le SOS)
+INT-CHECK-ACTIVITY : 📚 TUT-008 (Voir mon activité et mes messages) | ⚙️ FLOW-BADGES
+INT-MANAGE-PROFILE : 📚 TUT-009 (Passer en mode invisible)
 `.trim();

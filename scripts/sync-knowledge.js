@@ -91,6 +91,25 @@ function generateConducteur(d) {
     lines.push(`  → ${i.chemin}`);
   }
 
+  // RESSOURCES PAR INTENTION — ponts vers tutorials + interactions + flows
+  lines.push('', '## RESSOURCES PAR INTENTION');
+  lines.push('Quand tu identifies une intention, cite la ressource correspondante :');
+  for (const intent of d.intentions.intentions) {
+    const li = intent.liens;
+    if (!li) continue;
+    const parts = [];
+    if (li.tutorial) {
+      const t = d.tutorials.tutorials.find(x => x.id === li.tutorial);
+      if (t) parts.push(`📚 ${li.tutorial} (${t.action})`);
+    }
+    if (li.interaction) {
+      const ix = d.interactions.interactions.find(x => x.id === li.interaction);
+      if (ix) parts.push(`↔️ ${li.interaction} (${ix.nom})`);
+    }
+    if (intent.flow) parts.push(`⚙️ ${intent.flow}`);
+    if (parts.length) lines.push(`${intent.id} : ${parts.join(' | ')}`);
+  }
+
   lines.push("\`.trim();", '');
   return lines.join('\n');
 }
@@ -263,6 +282,15 @@ function generateGardien(d) {
   for (const dec of d.decisions.decisions_en_attente) {
     const bloque = dec.bloque ? ` → bloque ${dec.bloque}` : '';
     lines.push(`${dec.id} — ${dec.question}${bloque}`);
+  }
+
+  // INTENTION → FLOW + TUTORIAL — raccourci diagnostic Gardien
+  lines.push('', 'INTENTION → FLOW + TUTORIAL (diagnostic rapide) :');
+  lines.push('Intention'.padEnd(24) + 'Flow'.padEnd(24) + 'Tutorial');
+  for (const intent of d.intentions.intentions) {
+    const flowStr = intent.flow || '—';
+    const tutStr  = intent.liens?.tutorial || '—';
+    lines.push(intent.id.padEnd(24) + flowStr.padEnd(24) + tutStr);
   }
 
   // HISTORIQUE SESSIONS

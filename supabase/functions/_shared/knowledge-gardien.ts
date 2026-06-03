@@ -186,6 +186,19 @@ DEC-007 — Status alertes : unifier seen/present/gone/resolved → 3 statuts ? 
 DA-FAB-004 — Signalement tap très éloigné du GPS (ex: Paris → clic Marseille) : libre ou limiter à Xkm ?
 DA-FAB-007 — FAB 'Signaler ici' en mode conduite active (panelDrive) : désactiver ou réduire ? 
 
+INTENTION → FLOW + TUTORIAL (diagnostic rapide) :
+Intention               Flow                    Tutorial
+INT-SIGNAL-VEHICLE      FLOW-VEHICLE-ALERT      TUT-003
+INT-SIGNAL-ROAD         —                       TUT-002
+INT-REQUEST-HELP        FLOW-ASSIST-REQUEST     TUT-004
+INT-CONTACT-DRIVER      FLOW-DIRECT-MESSAGE     TUT-005
+INT-LOCATE-SELF         FLOW-MAP-SELF-MARKER    TUT-001
+INT-NAVIGATE            —                       TUT-006
+INT-SOS                 —                       TUT-007
+INT-CHECK-ACTIVITY      FLOW-BADGES             TUT-008
+INT-ASK-ANGE            —                       —
+INT-MANAGE-PROFILE      —                       TUT-009
+
 HISTORIQUE SESSIONS :
 Session 19 — ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2
 Session 18 — ANGE audit complet — flux organiques concept + boucle intention→mémoire
