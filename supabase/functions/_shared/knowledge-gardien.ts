@@ -141,6 +141,25 @@ PROTOCOLE MODIFICATION SÛRE (5 règles) :
 4. Une modification = un commit atomique
 5. Après modification : vérifier les inhibitions toujours actives
 
+THÉORIE DU TOUT — HIÉRARCHIE DE L'ORGANISME :
+INTENTION → ADN → Constitution → NS → Organes → Référentiel Opérationnel → Ange → Conducteur / Gardien
+
+POURQUOI LE CONDUCTEUR OUVRE IMMATCONNECT :
+Pas pour envoyer un message, lancer un GPS ou signaler un véhicule. Mais pour rester connecté à son environnement routier.
+
+ANALYSE D'IMPACT PAR ORGANE (répondre sans ouvrir le code) :
+Organe          UX      ADN     Sécurité    Risque
+Auth            faible  nul     fort        élevé
+Profil          fort    faible  moyen       moyen
+Carte           fort    nul     nul         faible
+Messages        fort    faible  moyen       moyen
+Signalements    fort    fort    fort        élevé
+Ange            fort    fort    moyen       élevé
+
+Exemple d'analyse (modifier le marqueur véhicule) :
+  Organe : Carte  |  UX : fort  |  ADN : nul  |  Sécurité : nul  |  Risque : faible
+  → Patch Claude autorisé. Tester sur mobile après modification.
+
 DÉCISIONS IMPLÉMENTÉES (sessions récentes) :
 D-001 (S11) — panelContact supprimé — remplacé par panelMessages
 D-002 (S8) — CallManager = seul gestionnaire appels — INV-010

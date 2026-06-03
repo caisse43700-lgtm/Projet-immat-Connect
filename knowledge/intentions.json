@@ -1,7 +1,82 @@
 {
-  "_v": 1,
-  "_role": "Mapper un besoin utilisateur vers une intention organique",
-  "_rule": "Une intention = un verbe d'action + un sujet + un contexte. Jamais de doublons avec interactions.json.",
+  "_v": 2,
+  "_role": "Racine de l'organisme — mapper une intention humaine vers les organes et fonctionnalités",
+  "_rule": "La vraie racine n'est pas features.json. C'est ici que commence la compréhension de l'organisme.",
+  "_ref": "Audit Stratégique Final SESSION 24 — Théorie du Tout stabilisée",
+
+  "theorie_du_tout": [
+    "INTENTION",
+    "ADN",
+    "Constitution",
+    "NS",
+    "Organes",
+    "Référentiel Opérationnel",
+    "Ange",
+    "Conducteur / Gardien"
+  ],
+
+  "pourquoi_le_conducteur_ouvre_immatconnect": "Pas pour envoyer un message, lancer un GPS ou signaler un véhicule. Mais pour rester connecté à son environnement routier.",
+
+  "orientation_mentale": {
+    "carte":    "Ce qui se passe AUTOUR DE MOI en ce moment — véhicules proches, alertes actives, ma position.",
+    "activite": "Ce qui S'EST PASSÉ — alertes reçues, messages non lus, historique d'interactions.",
+    "messages": "CE QUE LES AUTRES M'ONT DIT — conversations directes conducteur à conducteur par plaque."
+  },
+
+  "intentions_primaires": [
+    {
+      "id": "PRIM-001",
+      "icone": "🚗",
+      "label": "Prévenir un conducteur",
+      "description": "Signaler un problème sur le véhicule d'un autre conducteur ou lui envoyer un message direct.",
+      "intentions": ["INT-SIGNAL-VEHICLE", "INT-CONTACT-DRIVER"]
+    },
+    {
+      "id": "PRIM-002",
+      "icone": "🛣",
+      "label": "Signaler un danger",
+      "description": "Avertir tous les conducteurs proches d'un danger sur la route — accident, bouchon, obstacle.",
+      "intentions": ["INT-SIGNAL-ROAD"]
+    },
+    {
+      "id": "PRIM-003",
+      "icone": "🆘",
+      "label": "Demander de l'aide",
+      "description": "Alerter les conducteurs proches d'une situation d'urgence — panne, incendie, SOS.",
+      "intentions": ["INT-REQUEST-HELP", "INT-SOS"]
+    },
+    {
+      "id": "PRIM-004",
+      "icone": "📍",
+      "label": "Me guider",
+      "description": "Trouver sa position sur la carte ou rechercher un itinéraire GPS vers une destination.",
+      "intentions": ["INT-NAVIGATE", "INT-LOCATE-SELF"]
+    },
+    {
+      "id": "PRIM-005",
+      "icone": "📨",
+      "label": "Voir mes conversations",
+      "description": "Consulter les messages reçus, les alertes passées et l'activité récente.",
+      "intentions": ["INT-CHECK-ACTIVITY"]
+    },
+    {
+      "id": "PRIM-006",
+      "icone": "⚙️",
+      "label": "Paramètres",
+      "description": "Modifier son profil, ses préférences ou accéder à l'aide contextuelle.",
+      "intentions": ["INT-MANAGE-PROFILE", "INT-ASK-ANGE"]
+    }
+  ],
+
+  "etats_conducteur": [
+    { "etat": "Je suis perdu", "intentions": ["INT-NAVIGATE", "INT-LOCATE-SELF"] },
+    { "etat": "Je veux prévenir quelqu'un", "intentions": ["INT-SIGNAL-VEHICLE", "INT-CONTACT-DRIVER"] },
+    { "etat": "J'ai besoin d'aide", "intentions": ["INT-REQUEST-HELP", "INT-SOS"] },
+    { "etat": "Je veux savoir ce qui se passe autour de moi", "intentions": ["INT-LOCATE-SELF", "INT-CHECK-ACTIVITY"] },
+    { "etat": "J'ai vu quelque chose de dangereux", "intentions": ["INT-SIGNAL-ROAD"] },
+    { "etat": "Je veux contacter un conducteur", "intentions": ["INT-CONTACT-DRIVER"] }
+  ],
+
   "intentions": [
     {
       "id": "INT-SIGNAL-VEHICLE",
@@ -10,7 +85,7 @@
       "organe": "Signalements",
       "flow": "FLOW-VEHICLE-ALERT",
       "acces": "conducteur",
-      "chemin": "carte → marqueur → menu → Signaler ce véhicule OU FAB → reportPanel → bloc véhicule"
+      "chemin": "carte → marqueur → menu → Signaler ce véhicule OU clic droit carte → 📍 Signaler ici → bloc véhicule"
     },
     {
       "id": "INT-SIGNAL-ROAD",
@@ -19,7 +94,7 @@
       "organe": "Signalements",
       "flow": null,
       "acces": "conducteur",
-      "chemin": "FAB Signaler → reportPanel → Informer la route → type → envoi"
+      "chemin": "FAB Signaler OU clic droit carte → 📍 Signaler ici → Informer la route → type → envoi"
     },
     {
       "id": "INT-REQUEST-HELP",

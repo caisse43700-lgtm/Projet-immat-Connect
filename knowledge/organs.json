@@ -1,5 +1,5 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_role": "Profil organique synthétique — dérivé NS, ne pas modifier directement",
   "_rule": "Dérivé de immat-nervous-system.json organs + senses. Modifier l'ADN, pas ce fichier.",
   "_ref": "immat-nervous-system.json _v:8",
@@ -13,7 +13,14 @@
       "deps": [],
       "data": ["supabase.auth", "user_metadata.role", "get_my_role() RPC"],
       "phase": 1,
-      "note": "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale"
+      "note": "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale",
+      "impact_analyse": {
+        "ux": "faible",
+        "adn": "nul",
+        "securite": "fort",
+        "risque_modification": "élevé",
+        "note": "Toute modification Auth touche la session, les rôles et l'accès Gardien. Tester exhaustivement."
+      }
     },
     {
       "id": "Profil",
@@ -24,7 +31,14 @@
       "deps": ["Auth"],
       "data": ["profiles.owner_plate", "profiles.vehicle_color", "profiles.pseudo", "profiles.phone"],
       "phase": 1,
-      "note": "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)"
+      "note": "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)",
+      "impact_analyse": {
+        "ux": "fort",
+        "adn": "faible",
+        "securite": "moyen",
+        "risque_modification": "moyen",
+        "note": "Impact UX fort (marqueur visible par tous). La plaque ne peut jamais être modifiée (INV-006)."
+      }
     },
     {
       "id": "Carte",
@@ -35,7 +49,14 @@
       "deps": ["Profil"],
       "data": ["S.map", "S.myMarker", "S.otherMkrs", "S.myLat", "S.myLng", "S.lastSpeed"],
       "phase": 1,
-      "note": "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). sentir = position → contexte vitesse/rayon."
+      "note": "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). sentir = position → contexte vitesse/rayon.",
+      "impact_analyse": {
+        "ux": "fort",
+        "adn": "nul",
+        "securite": "nul",
+        "risque_modification": "faible",
+        "note": "Modifications visuelles (marqueurs, couleurs) = impact UX fort mais risque sécurité nul. Tester sur mobile."
+      }
     },
     {
       "id": "Messages",
@@ -46,7 +67,14 @@
       "deps": ["Auth"],
       "data": ["messages.sender_id", "messages.receiver_id", "messages.target_plate", "S.chMsg"],
       "phase": 1,
-      "note": "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide"
+      "note": "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide",
+      "impact_analyse": {
+        "ux": "fort",
+        "adn": "faible",
+        "securite": "moyen",
+        "risque_modification": "moyen",
+        "note": "Canal realtime Supabase actif. Toute modification du schéma messages = coordination DB requise."
+      }
     },
     {
       "id": "Signalements",
@@ -57,7 +85,14 @@
       "deps": ["Carte", "Auth"],
       "data": ["reports table", "S.alerts", "S.alertMarkersById", "S.chCommunityReports"],
       "phase": 1,
-      "note": "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003). sentir = type → intention. gouter = TTL validation."
+      "note": "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003). sentir = type → intention. gouter = TTL validation.",
+      "impact_analyse": {
+        "ux": "fort",
+        "adn": "fort",
+        "securite": "fort",
+        "risque_modification": "élevé",
+        "note": "Organe central de sécurité. Toute modification touche les invariants INV-001/002/003. Valider tous les canaux après changement."
+      }
     },
     {
       "id": "Ange",
@@ -68,7 +103,14 @@
       "deps": ["Auth"],
       "data": ["S.isGardien", "user_metadata.role", "get_my_role() RPC", "snapshot anonymisé (health, violations, panel, speed_cat, driving, hasRoute, nearby, alerts)"],
       "phase": 1,
-      "note": "Seul organe à cinq sens complets. S.isGardien depuis get_my_role(), jamais du JWT seul. Vitesse transmise en catégorie — jamais valeur exacte (INV-014)."
+      "note": "Seul organe à cinq sens complets. S.isGardien depuis get_my_role(), jamais du JWT seul. Vitesse transmise en catégorie — jamais valeur exacte (INV-014).",
+      "impact_analyse": {
+        "ux": "fort",
+        "adn": "fort",
+        "securite": "moyen",
+        "risque_modification": "élevé",
+        "note": "Ange est l'interface de compréhension. Modifier le prompt ou le knowledge = modifier la perception de tout l'organisme. Tester les deux projections (conducteur + gardien)."
+      }
     }
   ]
 }

@@ -42,8 +42,29 @@ function generateConducteur(d) {
     'TU PARLES AU CONDUCTEUR. Réponds simplement, sans jargon technique. 80 mots max.',
     "Tu guides. Tu rassures. Tu proposes. Tu ne décides jamais.",
     '',
-    '## CE QUE TU PEUX FAIRE',
   ];
+
+  // COMMENT PUIS-JE VOUS AIDER ? (intentions primaires)
+  lines.push('## COMMENT PUIS-JE VOUS AIDER ?');
+  lines.push('Commence toujours par identifier l\'intention du conducteur :');
+  if (d.intentions.intentions_primaires) {
+    for (const p of d.intentions.intentions_primaires) {
+      lines.push(`${p.icone} ${p.label} — ${p.description}`);
+    }
+  }
+  lines.push('');
+
+  // ORIENTATION MENTALE
+  if (d.intentions.orientation_mentale) {
+    lines.push('## ORIENTATION MENTALE');
+    const om = d.intentions.orientation_mentale;
+    lines.push(`Carte     = ${om.carte}`);
+    lines.push(`Activité  = ${om.activite}`);
+    lines.push(`Messages  = ${om.messages}`);
+    lines.push('');
+  }
+
+  lines.push('## CE QUE TU PEUX FAIRE');
 
   for (const f of d.features.features) {
     let line = `${f.id} — ${f.nom} : ${f.description}`;
@@ -202,6 +223,36 @@ function generateGardien(d) {
   // PROTOCOLE MODIFICATION
   lines.push('', 'PROTOCOLE MODIFICATION SÛRE (5 règles) :');
   for (const r of d.meta.protocole_modification) lines.push(r);
+
+  // THÉORIE DU TOUT
+  if (d.intentions.theorie_du_tout) {
+    lines.push('', 'THÉORIE DU TOUT — HIÉRARCHIE DE L\'ORGANISME :');
+    lines.push(d.intentions.theorie_du_tout.join(' → '));
+    if (d.intentions.pourquoi_le_conducteur_ouvre_immatconnect) {
+      lines.push('');
+      lines.push('POURQUOI LE CONDUCTEUR OUVRE IMMATCONNECT :');
+      lines.push(d.intentions.pourquoi_le_conducteur_ouvre_immatconnect);
+    }
+  }
+
+  // ANALYSE D'IMPACT PAR ORGANE (pour Gardien — dette #6)
+  lines.push('', 'ANALYSE D\'IMPACT PAR ORGANE (répondre sans ouvrir le code) :');
+  lines.push('Organe'.padEnd(16) + 'UX'.padEnd(8) + 'ADN'.padEnd(8) + 'Sécurité'.padEnd(12) + 'Risque');
+  for (const o of d.organs.organs) {
+    if (!o.impact_analyse) continue;
+    const ia = o.impact_analyse;
+    lines.push(
+      o.id.padEnd(16) +
+      ia.ux.padEnd(8) +
+      ia.adn.padEnd(8) +
+      ia.securite.padEnd(12) +
+      ia.risque_modification
+    );
+  }
+  lines.push('');
+  lines.push('Exemple d\'analyse (modifier le marqueur véhicule) :');
+  lines.push('  Organe : Carte  |  UX : fort  |  ADN : nul  |  Sécurité : nul  |  Risque : faible');
+  lines.push('  → Patch Claude autorisé. Tester sur mobile après modification.');
 
   // DÉCISIONS
   lines.push('', 'DÉCISIONS IMPLÉMENTÉES (sessions récentes) :');
