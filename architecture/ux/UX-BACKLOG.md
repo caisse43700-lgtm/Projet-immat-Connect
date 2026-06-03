@@ -24,7 +24,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | ID | Item | Décision | Statut |
 |---|---|---|---|
 | P1-001 | Supprimer `panelContact` du DOM + fonctions legacy (clearMsg, sendMsg, voicePlate dans panelContact) | D-001 | ✅ fait (SESSION 11) |
-| P1-002 | Supprimer ou masquer données simulées navPremium (Limite, Trafic, Voie, Recalcul) | DA-002 | 💬 décision Gardien requise |
+| P1-002 | Supprimer ou masquer données simulées navPremium (Limite, Trafic, Voie, Recalcul) | DA-002 | ✅ fait (SESSION 8+) — navPremium affiche données réelles : Vitesse GPS, conducteurs Proches, Alertes actives |
 | P1-003 | Supprimer onglet "Nouveau" dans panelActivite → navSignaler | D-008 | ✅ fait (SESSION 8) |
 | P1-009 | Supprimer `signalRecapCard` (div caché, boutons morts, jamais affichée) | MORT-003 | ✅ fait (SESSION 12) |
 
@@ -57,7 +57,7 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | ID | Item | Ref | Statut |
 |---|---|---|---|
 | P2-001 | Bouton "Modifier profil" dans le drawer | BTN-MISS01 | ✅ fait (SESSION 19 — ✏️ Mon profil dans Réglages) |
-| P2-002 | FAB "Signaler ici" contextuel avec coordonnées du tap | BTN-MISS02 | 🔧 à implémenter |
+| P2-002 | FAB "Signaler ici" contextuel avec coordonnées du tap | BTN-MISS02 | ✅ fait (SESSION 23) — clic droit / long press carte → FAB positionné → roadReport utilise S.tapLat/S.tapLng |
 | P2-003 | Score fiabilité visible dans profil/drawer | PROP-09 | 🔲 futur |
 | P2-004 | Marqueur "lu" côté émetteur (confirmation lecture message) | FRI-006 | 💬 à concevoir |
 | P2-005 | Bouton "Je viens aider" — réponse structurée aide | BTN-MISS03 / FRI-009 | 💬 à concevoir |
@@ -156,6 +156,8 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 
 | Item | Session |
 |---|---|
+| P2-002 FAB "📍 Signaler ici" — clic droit carte → reportPanel avec coordonnées tap | SESSION 23 |
+| P1-002 / DA-002 navPremium données réelles confirmées (Vitesse GPS · Proches · Alertes) | SESSION 23 |
 | P2-010 `_actMsgCard` + `_actAlertCard` code mort supprimé | SESSION 21 |
 | P2-017 `topMsgBadge` supprimé — `actBadge` seul badge actif | SESSION 21 |
 | P2-015 `App.actViewOnMap()` — déjà implémenté dans `_actModCard` | SESSION 21 |
