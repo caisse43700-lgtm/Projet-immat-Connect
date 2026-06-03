@@ -4,6 +4,16 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 35,
+      "titre": "Audit cohérence interne — gap sync corrigé (3 règles manquantes decisions.json)",
+      "changes": [
+        "knowledge/decisions.json — DISCOVERABILITY_TEST, ANGE_SURVIVAL_TEST, ATTENTION_IS_SCARCE ajoutés en regles_organiques",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (252 lignes) — 14 règles complètes",
+        "architecture/SESSION-35-AUDIT-COHERENCE.md créé"
+      ],
+      "fichiers_touches": ["knowledge/decisions.json", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
       "session": 34,
       "titre": "REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée",
       "changes": [

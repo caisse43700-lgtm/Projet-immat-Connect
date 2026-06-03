@@ -198,6 +198,9 @@ ANGE_ASSISTS           — Ange assiste, il ne décide pas — jamais source de 
 NO_ORPHAN_FEATURE      — Pas de feature sans intention conducteur rattachée
 NO_ORPHAN_INTENTION    — Pas d'intention sans chemin navigable dans l'app
 SOCIAL_VISIBILITY      — Ce qui est visible aux autres doit être explicitement consenti
+DISCOVERABILITY_TEST   — Toute fonctionnalité doit être trouvable en 30s — sinon exposer, guider, simplifier ou supprimer
+ANGE_SURVIVAL_TEST     — L'organisme doit fonctionner sans Ange — il ne peut jamais devenir une dépendance critique
+ATTENTION_IS_SCARCE    — Valeur perçue > Attention consommée — sinon refuser l'évolution
 REALITY_OVER_DOCUMENTATION — Le comportement perçu par le conducteur prime sur le comportement théorique — une boucle documentée mais invisible n'existe pas
 
 BOUCLES VITALES (toute évolution doit renforcer au moins une boucle) :
