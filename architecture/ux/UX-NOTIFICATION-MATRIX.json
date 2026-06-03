@@ -12,17 +12,12 @@
 
   "badge_rules": {
     "actBadge": {
-      "signification": "Événements non traités (alertes)",
-      "contient": ["catBadgeRoute", "catBadgeVehicle", "catBadgeAide"],
-      "formule": "actBadge = catBadgeRoute + catBadgeVehicle + catBadgeAide",
-      "ne_contient_pas": "messages directs personnels"
+      "signification": "Toute activité non lue — alertes + messages",
+      "contient": ["catBadgeRoute", "catBadgeVehicle", "catBadgeAide", "messages directs non lus"],
+      "formule": "actBadge = unreadAlerts + S.unreadMsgCount",
+      "note": "topMsgBadge supprimé (SESSION 21 P2-017 — était off-screen). actBadge = badge unique sur l'onglet Activité."
     },
-    "topMsgBadge": {
-      "signification": "Conversations non lues (messages)",
-      "contient": ["messages directs", "réponses à une alerte", "réponses après demande d'aide"],
-      "ne_contient_pas": "alertes route, alertes véhicule, demandes aide"
-    },
-    "séparation": "actBadge = événements / topMsgBadge = conversations"
+    "règle": "Un seul badge nav (actBadge sur Activité) couvre tout. La séparation visuelle alertes/messages est dans le panel Activité via les filtres DEC-003."
   },
 
   "intensity_rules": {
@@ -265,7 +260,7 @@
   },
 
   "a_implementer": {
-    "badge_separation": "actBadge = alertes seulement / topMsgBadge = messages seulement — updateActBadge à modifier",
+    "badge_separation": "✅ fait (SESSION 21) — actBadge = alertes + messages. topMsgBadge supprimé.",
     "retour_vers_A_vehicle": "Statut 'Vu par le conducteur' dans card Activité Envoyés côté A — IC-002",
     "intensite_distance": "Distance + gravité → intensité notification (FloatingCard / toast / marqueur seul)",
     "helper_en_route_statut": "Statut 'Helper en route' dans card aide côté A quand B dit J'arrive"

@@ -48,7 +48,7 @@
       "intention": "Prévenir un conducteur identifié d'un problème visible sur son véhicule, et lui permettre de confirmer.",
       "organes": ["Signalements", "Messages", "Carte"],
       "repérage": {
-        "ui":    ["panelAltet sigStep2Vehicle", "#sigVehiclePlate", ".alert-grid (vehicule)", "_actAlertCard (type='vehicle')", "showFloatingCard (alerte reçue)"],
+        "ui":    ["panelAltet sigStep2Vehicle", "#sigVehiclePlate", ".alert-grid (vehicule)", "_actModCard (group='vehicle')", "showFloatingCard (alerte reçue)"],
         "code":  ["App.vehicleAlertQuick(label)", "App.sigStepVehicle()", "App.actConfirmAlert(id,'seen')", "broadcast 'vehicle_seen' → notifyAlert", "App.vehicleAlert(label) (overlay legacy)"],
         "state": ["S.alerts (group='vehicle')", "S.contextVehicle.plate", "S.selPlate", "a.status ('pending'|'seen'|'resolved')"],
         "data":  ["reports (plate, reason, lat, lng, category='vehicle')", "messages (receiver_id = a.sender_id, message=label)"]
@@ -154,7 +154,7 @@
         "attention conducteur dirigée vers l'onglet Activité",
         "résumé rapide actMain mis à jour (Nouveaux / En cours / Traités)",
         "catégories colorées selon présence/urgence",
-        "signal topMsgBadge caché hors écran (legacy — P2-017 futur)"
+        "actBadge nav = alertes + messages (total activité non lue — SESSION 21)"
       ],
       "options": [
         "badge chiffre brut (≤ 99)",

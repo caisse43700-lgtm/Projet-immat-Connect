@@ -368,7 +368,7 @@ const S={uid:null,mode:'login',map:null,myMarker:null,otherMkrs:[],roadMkrs:[],r
 let lastNotif='',lastSpoken='',toastTimer=null,gpsTimer=null;
 function badgeFmt(n){n=Number(n)||0;return n>99?'99+':String(n)}
 function pendingSignalCount(){try{return (S.alerts||[]).filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen').length}catch(e){return 0}}
-function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};try{App.updateCommunityStatus()}catch(e){}}
+function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};try{App.updateCommunityStatus()}catch(e){};try{App.updateActBadge?.()}catch(e){}}
 function trustDelta(plate,delta){
   plate=nPlate(plate);
   if(!plate)return 50;
@@ -1315,7 +1315,8 @@ App.updateActBadge=function(){
     }).length;
     try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
-    if(badge){badge.textContent=unreadAlerts>99?'99+':String(unreadAlerts);badge.style.display=unreadAlerts>0?'flex':'none';}
+    const total=unreadAlerts+(Number(S.unreadMsgCount)||0);
+    if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
 };
