@@ -1,5 +1,5 @@
 {
-  "_v": 2,
+  "_v": 3,
   "_role": "Règles organiques et boucles vitales — formalisation des décisions architecturales validées",
   "_source": "architecture/DECISIONS-FINALES-CONSOLIDEES.md + SESSION-32-CONSOLIDATION-FINALE.md",
   "_rule": "Ces règles gouvernent l'évolution du produit. Elles ne remplacent pas les INV-XXX (Constitution). Elles s'appliquent au-dessus.",
@@ -76,6 +76,13 @@
       "contre_exemple": "Badge inutile, alerte inutile, popup inutile, bouton inutile",
       "test": "Cette évolution justifie-t-elle le coût d'attention qu'elle consomme ? Sinon : refuser.",
       "indicateur": "Valeur perçue > Attention consommée"
+    },
+    {
+      "id": "REALITY_OVER_DOCUMENTATION",
+      "principe": "Le comportement perçu par le conducteur prime sur le comportement théorique",
+      "contre_exemple": "Une boucle parfaitement documentée mais invisible pour l'utilisateur",
+      "test": "Le conducteur perçoit-il l'effet de cette fonctionnalité sans lire la documentation ? Si NON → la fonctionnalité n'existe pas encore.",
+      "corollaire": "Un bug non perçu n'est pas une priorité. Une valeur non perçue n'est pas une valeur."
     }
   ],
 

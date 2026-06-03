@@ -39,7 +39,8 @@
     { "id": "ANGE_ASSISTS",        "principe": "Ange assiste, il ne décide pas — jamais source de vérité" },
     { "id": "NO_ORPHAN_FEATURE",   "principe": "Pas de feature sans intention conducteur rattachée" },
     { "id": "NO_ORPHAN_INTENTION", "principe": "Pas d'intention sans chemin navigable dans l'app" },
-    { "id": "SOCIAL_VISIBILITY",   "principe": "Ce qui est visible aux autres doit être explicitement consenti" }
+    { "id": "SOCIAL_VISIBILITY",   "principe": "Ce qui est visible aux autres doit être explicitement consenti" },
+    { "id": "REALITY_OVER_DOCUMENTATION", "principe": "Le comportement perçu par le conducteur prime sur le comportement théorique — une boucle documentée mais invisible n'existe pas" }
   ],
   "boucles_vitales": [
     { "id": "ORIENTATION",  "role": "Le conducteur sait où il est et ce qui l'entoure", "features": ["F-CARTE", "F-GPS"] },

@@ -4,6 +4,16 @@
   "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
   "sessions": [
     {
+      "session": 34,
+      "titre": "REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée",
+      "changes": [
+        "knowledge/decisions.json — REALITY_OVER_DOCUMENTATION ajouté en regles_organiques",
+        "architecture/organism/ORGANISM-RULES.json _v:3 — règle 14 avec test et corollaire",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (249 lignes)"
+      ],
+      "fichiers_touches": ["knowledge/decisions.json", "architecture/organism/ORGANISM-RULES.json", "supabase/functions/_shared/"]
+    },
+    {
       "session": 33,
       "titre": "CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet",
       "changes": [

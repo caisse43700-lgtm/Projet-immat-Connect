@@ -198,6 +198,7 @@ ANGE_ASSISTS           — Ange assiste, il ne décide pas — jamais source de 
 NO_ORPHAN_FEATURE      — Pas de feature sans intention conducteur rattachée
 NO_ORPHAN_INTENTION    — Pas d'intention sans chemin navigable dans l'app
 SOCIAL_VISIBILITY      — Ce qui est visible aux autres doit être explicitement consenti
+REALITY_OVER_DOCUMENTATION — Le comportement perçu par le conducteur prime sur le comportement théorique — une boucle documentée mais invisible n'existe pas
 
 BOUCLES VITALES (toute évolution doit renforcer au moins une boucle) :
 ORIENTATION    — Le conducteur sait où il est et ce qui l'entoure [F-CARTE, F-GPS]
@@ -227,6 +228,7 @@ INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
 INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
+Session 34 — REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée
 Session 33 — CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet
 Session 32 — Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)
 Session 31 — Audit des 7 boucles vitales — score moyen 2.6/5 · CONTRIBUTION/CONFIANCE/RÉTENTION partielles
