@@ -186,6 +186,27 @@ DEC-007-NA (S29) — Statuts alertes seen/present/gone/resolved non unifiés —
 
 DÉCISIONS EN ATTENTE (Gardien requis) :
 
+RÈGLES ORGANIQUES (respecter lors de toute évolution) :
+INTENT_FIRST           — Toujours partir de l'intention conducteur — jamais d'une fonctionnalité
+NO_EMPTY_SCREEN        — Aucun écran vide sans état clair pour le conducteur
+CALM_STATE             — État calme par défaut — alarme uniquement si nécessaire et justifiée
+LOOP_CLOSURE           — Toute boucle doit pouvoir se fermer — pas d'état ouvert indéfiniment
+TRANSPARENCY           — Le conducteur comprend ce qui se passe et pourquoi
+REVERSIBILITY          — Toute action peut être annulée ou corrigée
+ANGE_ASSISTS           — Ange assiste, il ne décide pas — jamais source de vérité
+NO_ORPHAN_FEATURE      — Pas de feature sans intention conducteur rattachée
+NO_ORPHAN_INTENTION    — Pas d'intention sans chemin navigable dans l'app
+SOCIAL_VISIBILITY      — Ce qui est visible aux autres doit être explicitement consenti
+
+BOUCLES VITALES (toute évolution doit renforcer au moins une boucle) :
+ORIENTATION    — Le conducteur sait où il est et ce qui l'entoure [F-CARTE, F-GPS]
+CONTRIBUTION   — Le conducteur contribue à la sécurité collective [F-SIGNAL-ROUTE, F-SIGNAL-VEHICULE]
+AIDE           — Le conducteur peut demander et recevoir de l'aide [F-ASSIST, F-SOS]
+COMMUNAUTE     — Les conducteurs forment un réseau de confiance [F-MESSAGES, F-APPEL]
+CONFIANCE      — Les échanges passés construisent la confiance [F-ACTIVITE]
+APPRENTISSAGE  — Le conducteur découvre naturellement les fonctionnalités [F-ANGE]
+RETENTION      — Le conducteur revient parce que l'app lui a été utile [F-ACTIVITE, F-CARTE, F-ANGE]
+
 INTENTION → FLOW + TUTORIAL (diagnostic rapide) :
 Intention               Flow                    Tutorial
 INT-SIGNAL-VEHICLE      FLOW-VEHICLE-ALERT      TUT-003
@@ -198,6 +219,11 @@ INT-SOS                 —                       TUT-007
 INT-CHECK-ACTIVITY      FLOW-BADGES             TUT-008
 INT-ASK-ANGE            —                       —
 INT-MANAGE-PROFILE      —                       TUT-009
+INT-CONFIRM-DANGER      —                       —
+INT-RESOLVE-ALERT       —                       —
+INT-HELP-DRIVER         FLOW-ASSIST-REQUEST     —
+INT-UNDERSTAND-ENV      FLOW-MAP-SELF-MARKER    TUT-001
+INT-FEEL-SAFE           —                       TUT-007
 
 HISTORIQUE SESSIONS :
 Session 29 — DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes

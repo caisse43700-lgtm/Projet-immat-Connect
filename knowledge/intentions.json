@@ -1,5 +1,5 @@
 {
-  "_v": 3,
+  "_v": 4,
   "_role": "Racine de l'organisme — mapper une intention humaine vers les organes et fonctionnalités",
   "_rule": "La vraie racine n'est pas features.json. C'est ici que commence la compréhension de l'organisme.",
   "_ref": "Audit Stratégique Final SESSION 24 — Théorie du Tout stabilisée",
@@ -65,6 +65,13 @@
       "label": "Paramètres",
       "description": "Modifier son profil, ses préférences ou accéder à l'aide contextuelle.",
       "intentions": ["INT-MANAGE-PROFILE", "INT-ASK-ANGE"]
+    },
+    {
+      "id": "PRIM-007",
+      "icone": "🤝",
+      "label": "Proposer mon aide",
+      "description": "Répondre à la demande d'aide d'un conducteur en difficulté.",
+      "intentions": ["INT-HELP-DRIVER"]
     }
   ],
 
@@ -74,7 +81,10 @@
     { "etat": "J'ai besoin d'aide", "intentions": ["INT-REQUEST-HELP", "INT-SOS"] },
     { "etat": "Je veux savoir ce qui se passe autour de moi", "intentions": ["INT-LOCATE-SELF", "INT-CHECK-ACTIVITY"] },
     { "etat": "J'ai vu quelque chose de dangereux", "intentions": ["INT-SIGNAL-ROAD"] },
-    { "etat": "Je veux contacter un conducteur", "intentions": ["INT-CONTACT-DRIVER"] }
+    { "etat": "Je veux contacter un conducteur", "intentions": ["INT-CONTACT-DRIVER"] },
+    { "etat": "Je vois une alerte active — je veux confirmer ou clore", "intentions": ["INT-CONFIRM-DANGER", "INT-RESOLVE-ALERT"] },
+    { "etat": "Un conducteur a besoin d'aide — je veux intervenir", "intentions": ["INT-HELP-DRIVER"] },
+    { "etat": "Je veux comprendre ce qui m'entoure", "intentions": ["INT-UNDERSTAND-ENV", "INT-LOCATE-SELF"] }
   ],
 
   "intentions": [
@@ -179,6 +189,59 @@
       "chemin": "panelSettings → ✏️ Mon profil → modifier → sauvegarder",
       "note": "La plaque est immuable après création — INV-006",
       "liens": { "tutorial": "TUT-009", "interaction": null }
+    },
+    {
+      "id": "INT-CONFIRM-DANGER",
+      "besoin": "Je veux confirmer qu'un danger est toujours présent",
+      "intention": "valider la présence d'un signalement route actif",
+      "organe": "Signalements",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "Activité → card alerte route → Toujours là (actConfirmAlert 'present')",
+      "liens": { "tutorial": null, "interaction": "INT-003" }
+    },
+    {
+      "id": "INT-RESOLVE-ALERT",
+      "besoin": "Je veux dire qu'un danger ou une situation est terminée",
+      "intention": "clore un signalement actif (disparu ou résolu)",
+      "organe": "Signalements",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "Activité → card alerte → Disparu (actConfirmAlert 'gone') OU Résolu (actConfirmAlert 'resolved' — créateur uniquement)",
+      "note": "Résolu réservé au créateur via canResolveAlert() — DEC-007",
+      "liens": { "tutorial": null, "interaction": "INT-003" }
+    },
+    {
+      "id": "INT-HELP-DRIVER",
+      "besoin": "Je veux aider un conducteur en difficulté",
+      "intention": "répondre à une demande d'aide en se proposant comme helper",
+      "organe": "Signalements",
+      "flow": "FLOW-ASSIST-REQUEST",
+      "acces": "conducteur",
+      "chemin": "FloatingCard aide → J'arrive OU Activité → card aide → J'arrive (actHelpReply())",
+      "liens": { "tutorial": null, "interaction": "INT-004" }
+    },
+    {
+      "id": "INT-UNDERSTAND-ENV",
+      "besoin": "Je veux comprendre mon environnement routier immédiat",
+      "intention": "lire la situation autour de soi — véhicules, alertes, distance",
+      "organe": "Carte",
+      "flow": "FLOW-MAP-SELF-MARKER",
+      "acces": "conducteur",
+      "chemin": "Carte → marqueurs proches + alertes actives visibles + onglet Activité",
+      "note": "Intention composite — couverte par F-CARTE + F-ACTIVITE. Pas de CTA unique.",
+      "liens": { "tutorial": "TUT-001", "interaction": null }
+    },
+    {
+      "id": "INT-FEEL-SAFE",
+      "besoin": "Je veux me sentir en sécurité sur la route",
+      "intention": "activer la discrétion ou l'urgence selon la situation",
+      "organe": "Carte",
+      "flow": null,
+      "acces": "conducteur",
+      "chemin": "Mode invisible (panelDrive → 👁) OU SOS (panelDrive → appui long 3s)",
+      "note": "Intention composite — couverte par F-SOS + mode invisible.",
+      "liens": { "tutorial": "TUT-007", "interaction": null }
     }
   ]
 }

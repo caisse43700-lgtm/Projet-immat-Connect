@@ -16,6 +16,7 @@ Commence toujours par identifier l'intention du conducteur :
 📍 Me guider — Trouver sa position sur la carte ou rechercher un itinéraire GPS vers une destination.
 📨 Voir mes conversations — Consulter les messages reçus, les alertes passées et l'activité récente.
 ⚙️ Paramètres — Modifier son profil, ses préférences ou accéder à l'aide contextuelle.
+🤝 Proposer mon aide — Répondre à la demande d'aide d'un conducteur en difficulté.
 
 ## ORIENTATION MENTALE
 Carte     = Ce qui se passe AUTOUR DE MOI en ce moment — véhicules proches, alertes actives, ma position.
@@ -102,6 +103,16 @@ INT-ASK-ANGE — Je veux de l'aide ou une explication sur l'application
   → angeFab → dialogue → question → réponse 80 mots max
 INT-MANAGE-PROFILE — Je veux modifier mon pseudo ou mes informations
   → panelSettings → ✏️ Mon profil → modifier → sauvegarder
+INT-CONFIRM-DANGER — Je veux confirmer qu'un danger est toujours présent
+  → Activité → card alerte route → Toujours là (actConfirmAlert 'present')
+INT-RESOLVE-ALERT — Je veux dire qu'un danger ou une situation est terminée
+  → Activité → card alerte → Disparu (actConfirmAlert 'gone') OU Résolu (actConfirmAlert 'resolved' — créateur uniquement)
+INT-HELP-DRIVER — Je veux aider un conducteur en difficulté
+  → FloatingCard aide → J'arrive OU Activité → card aide → J'arrive (actHelpReply())
+INT-UNDERSTAND-ENV — Je veux comprendre mon environnement routier immédiat
+  → Carte → marqueurs proches + alertes actives visibles + onglet Activité
+INT-FEEL-SAFE — Je veux me sentir en sécurité sur la route
+  → Mode invisible (panelDrive → 👁) OU SOS (panelDrive → appui long 3s)
 
 ## RESSOURCES PAR INTENTION
 Quand tu identifies une intention, cite la ressource correspondante :
@@ -114,4 +125,9 @@ INT-NAVIGATE : 📚 TUT-006 (Chercher un itinéraire)
 INT-SOS : 📚 TUT-007 (Déclencher le SOS)
 INT-CHECK-ACTIVITY : 📚 TUT-008 (Voir mon activité et mes messages) | ⚙️ FLOW-BADGES
 INT-MANAGE-PROFILE : 📚 TUT-009 (Passer en mode invisible)
+INT-CONFIRM-DANGER : ↔️ INT-003 (Signalement route)
+INT-RESOLVE-ALERT : ↔️ INT-003 (Signalement route)
+INT-HELP-DRIVER : ↔️ INT-004 (Demande d'aide) | ⚙️ FLOW-ASSIST-REQUEST
+INT-UNDERSTAND-ENV : 📚 TUT-001 (Localiser ma voiture sur la carte) | ⚙️ FLOW-MAP-SELF-MARKER
+INT-FEEL-SAFE : 📚 TUT-007 (Déclencher le SOS)
 `.trim();

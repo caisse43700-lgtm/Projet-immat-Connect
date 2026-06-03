@@ -284,6 +284,22 @@ function generateGardien(d) {
     lines.push(`${dec.id} — ${dec.question}${bloque}`);
   }
 
+  // RÈGLES ORGANIQUES
+  if (d.decisions.regles_organiques && d.decisions.regles_organiques.length) {
+    lines.push('', 'RÈGLES ORGANIQUES (respecter lors de toute évolution) :');
+    for (const r of d.decisions.regles_organiques) {
+      lines.push(`${r.id.padEnd(22)} — ${r.principe}`);
+    }
+  }
+
+  // BOUCLES VITALES
+  if (d.decisions.boucles_vitales && d.decisions.boucles_vitales.length) {
+    lines.push('', 'BOUCLES VITALES (toute évolution doit renforcer au moins une boucle) :');
+    for (const b of d.decisions.boucles_vitales) {
+      lines.push(`${b.id.padEnd(14)} — ${b.role} [${b.features.join(', ')}]`);
+    }
+  }
+
   // INTENTION → FLOW + TUTORIAL — raccourci diagnostic Gardien
   lines.push('', 'INTENTION → FLOW + TUTORIAL (diagnostic rapide) :');
   lines.push('Intention'.padEnd(24) + 'Flow'.padEnd(24) + 'Tutorial');

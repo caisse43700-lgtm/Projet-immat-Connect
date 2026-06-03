@@ -1,5 +1,5 @@
 {
-  "_v": 3,
+  "_v": 4,
   "_role": "Mémoire des décisions architecturales et UX",
   "_rule": "Source canonique : UX-BACKLOG.md + UX-DECISIONS.md. Ne pas dupliquer — résumer seulement.",
   "_ref": "architecture/ux/UX-BACKLOG.md · architecture/ux/UX-DECISIONS.md",
@@ -28,6 +28,27 @@
     { "id": "DEC-007-NA", "quoi": "Statuts alertes seen/present/gone/resolved non unifiés — sémantiques distinctes, canResolveAlert() protège le créateur. Refactoring bénéfice nul / risque élevé.", "session": 29, "statut": "non_applicable" }
   ],
   "decisions_en_attente": [],
+  "regles_organiques": [
+    { "id": "INTENT_FIRST",        "principe": "Toujours partir de l'intention conducteur — jamais d'une fonctionnalité" },
+    { "id": "NO_EMPTY_SCREEN",     "principe": "Aucun écran vide sans état clair pour le conducteur" },
+    { "id": "CALM_STATE",          "principe": "État calme par défaut — alarme uniquement si nécessaire et justifiée" },
+    { "id": "LOOP_CLOSURE",        "principe": "Toute boucle doit pouvoir se fermer — pas d'état ouvert indéfiniment" },
+    { "id": "TRANSPARENCY",        "principe": "Le conducteur comprend ce qui se passe et pourquoi" },
+    { "id": "REVERSIBILITY",       "principe": "Toute action peut être annulée ou corrigée" },
+    { "id": "ANGE_ASSISTS",        "principe": "Ange assiste, il ne décide pas — jamais source de vérité" },
+    { "id": "NO_ORPHAN_FEATURE",   "principe": "Pas de feature sans intention conducteur rattachée" },
+    { "id": "NO_ORPHAN_INTENTION", "principe": "Pas d'intention sans chemin navigable dans l'app" },
+    { "id": "SOCIAL_VISIBILITY",   "principe": "Ce qui est visible aux autres doit être explicitement consenti" }
+  ],
+  "boucles_vitales": [
+    { "id": "ORIENTATION",  "role": "Le conducteur sait où il est et ce qui l'entoure", "features": ["F-CARTE", "F-GPS"] },
+    { "id": "CONTRIBUTION", "role": "Le conducteur contribue à la sécurité collective", "features": ["F-SIGNAL-ROUTE", "F-SIGNAL-VEHICULE"] },
+    { "id": "AIDE",         "role": "Le conducteur peut demander et recevoir de l'aide", "features": ["F-ASSIST", "F-SOS"] },
+    { "id": "COMMUNAUTE",   "role": "Les conducteurs forment un réseau de confiance", "features": ["F-MESSAGES", "F-APPEL"] },
+    { "id": "CONFIANCE",    "role": "Les échanges passés construisent la confiance", "features": ["F-ACTIVITE"] },
+    { "id": "APPRENTISSAGE","role": "Le conducteur découvre naturellement les fonctionnalités", "features": ["F-ANGE"] },
+    { "id": "RETENTION",    "role": "Le conducteur revient parce que l'app lui a été utile", "features": ["F-ACTIVITE", "F-CARTE", "F-ANGE"] }
+  ],
   "invariants_critiques": [
     { "id": "INV-001", "règle": "Canal véhicule séparé canal route — jamais croiser" },
     { "id": "INV-002", "règle": "Canal route séparé — broadcast à tous les proches" },

@@ -58,6 +58,12 @@
       "role": "Mémoire technique par session",
       "accessible": ["gardien"]
     },
+    "organism_rules": {
+      "path": "architecture/organism/ORGANISM-RULES.json",
+      "role": "Règles organiques + boucles vitales — principes d'évolution du produit",
+      "accessible": ["gardien"],
+      "note": "Source canonique des 10 règles + 7 boucles. Intégré dans decisions.json pour le sync."
+    },
     "meta": {
       "path": "knowledge/meta.json",
       "role": "Contexte technique statique — fichiers clés, inhibitions, protocole modification",
