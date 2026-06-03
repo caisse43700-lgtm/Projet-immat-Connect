@@ -852,8 +852,6 @@ body.night .act-mod-card { background: rgba(255,255,255,.07); }
 #gpsErrorMsg.show { display: block; }
 
 /* ── NIGHT MODE additions ── */
-body.night .act-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
-body.night .act-filter { background: rgba(255,255,255,.09); }
 body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
 
 /* ── FINITIONS UX V2 ── */
@@ -869,8 +867,6 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
   color: #fff;
 }
 
-/* Act-card : pointer sur les actions */
-.act-card-actions button { cursor: pointer; }
 
 /* Scrollbar discrète sur les panels */
 .panel::-webkit-scrollbar { width: 3px; }

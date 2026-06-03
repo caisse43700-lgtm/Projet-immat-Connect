@@ -71,14 +71,14 @@ La classification UX est **structurellement solide** : 120 items catalogués, ID
 | ID | Bouton | Problème | Statut |
 |---|---|---|---|
 | MORT-001 | `App.callSignalPlate()` — 📞 Appeler | Fonction inexistante (ReferenceError) | ✅ Supprimé SESSION 12 |
-| MORT-002 | `App.actViewOnMap(alertId)` | Fonction implémentée mais aucun bouton n'y accède | 🔧 Orphelin actif |
+| MORT-002 | `App.actViewOnMap(alertId)` | Bouton "📍 Voir" présent dans `_actModCard` depuis SESSION 19 | ✅ Résolu P2-015 SESSION 21 |
 | MORT-003 | Boutons `signalRecapCard` (div cachée) | Div display:none, jamais affichée | ✅ Supprimé SESSION 12 |
 | MORT-004 | Bouton Envoyer / panelContact | Panel supprimé → bouton disparu | ✅ Supprimé SESSION 11 |
 | MORT-005 | voicePlate / panelContact | Panel supprimé | ✅ Supprimé SESSION 11 |
 | MORT-006 | voiceMsg / panelContact | Panel supprimé | ✅ Supprimé SESSION 11 |
 | MORT-007 | sendMsg() / clearMsg() | Écriture directe dans champs inexistants | ✅ Supprimé SESSION 12 |
 
-**Bilan MORT** : 7 catalogués · 6 supprimés · **1 restant (MORT-002 orphelin)**
+**Bilan MORT** : 7 catalogués · 7 supprimés · **0 restant** ✅
 
 **Boutons manquants (MISS) :**
 
@@ -270,8 +270,8 @@ La classification UX est **structurellement solide** : 120 items catalogués, ID
 | P1-002 | navPremium : supprimer ou "Bientôt" | DA-002 décision Gardien |
 | P1-005 | reportPanel 2 étapes | DA-001 décision Gardien |
 
-### MORT-002 restant (seul bouton mort non supprimé)
-- `App.actViewOnMap(alertId)` — fonction implémentée, aucun bouton ne l'appelle. Options : ajouter un bouton "Voir sur carte" dans la card alerte (P2-015), ou supprimer la fonction.
+### MORT-002 — résolu (SESSION 21)
+- `App.actViewOnMap(alertId)` — ✅ Le bouton "📍 Voir" est présent dans `_actModCard` depuis SESSION 19. Résolu P2-015.
 
 ### À mettre à jour dans les fichiers existants
 - **UX-SCREENS.json** : `panelContact` toujours marqué OBSOLÈTE — à changer en SUPPRIMÉ avec la date SESSION 11.
@@ -310,3 +310,16 @@ Les 3 points d'attention qui subsistent :
 | DET-003 cross-références partielles | Navigation docs difficile | Faible urgence, travail futur |
 
 Aucune contradiction documentaire détectée dans l'état actuel.
+
+---
+
+## 7. MISES À JOUR SESSION 21
+
+| Item | Nature | Résultat |
+|---|---|---|
+| P2-010 | `_actMsgCard` + `_actAlertCard` supprimées (code mort — 70 lignes) | ✅ fait |
+| P2-015 / MORT-002 | `actViewOnMap()` — bouton "📍 Voir" dans `_actModCard` confirmé présent | ✅ fait |
+| P2-017 | `topMsgBadge` supprimé (était off-screen depuis l'origine) | ✅ fait |
+| SESSION 21b | `actBadge` étendu : `unreadAlerts + S.unreadMsgCount` | ✅ fait |
+| CSS mort | `body.night .act-card`, `body.night .act-filter`, `.act-card-actions button` supprimés | ✅ fait |
+| JS mort | Blocs `topMsgBadge` nettoyés dans `badge.js`, `messages.js`, `ui.js` | ✅ fait |

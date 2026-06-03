@@ -44,11 +44,6 @@ function setBadge(n){
     localStorage.setItem('ic_unread_msg_count', String(n));
     if(window.S) window.S.unreadMsgCount = n;
   }catch(e){}
-  const b = $('topMsgBadge');
-  if(b){
-    b.textContent = n > 99 ? '99+' : String(n);
-    b.style.display = n > 0 ? 'flex' : 'none';
-  }
 }
 
 function timeFR(d){
