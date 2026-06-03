@@ -53,6 +53,30 @@ health · summary · violations(3) · panel · speed_cat · driving · hasRoute 
 IMPORTANT : speed_cat = catégorie ('arrêt'/'lente'/'normale'/'rapide') — jamais valeur exacte (INV-014)
 Throttle : 10 appels/heure par session (sessionStorage ic_ange_calls)
 
+CINQ SENS ORGANIQUES — ADN _v:8 (section "senses") :
+Vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l'organisme.
+
+  voir     (Phase 1) — lire l'état sans l'altérer     → diagnose() · snapshot Ange
+  entendre (Phase 1) — recevoir des événements        → ImmatBus.on('*') · realtime Supabase
+  gouter   (Phase 2) — valider, tester conformité     → validateInvariant() · warnIfPhase2() [non câblé prod]
+  toucher  (Phase 3) — agir, effet mesurable          → can*() [non câblés prod] · réponse Ange
+  sentir   (Phase 4) — comprendre le contexte         → nsToPrompt · knowledge files · FLOW-INDEX [Ange seulement]
+
+GRILLE SENSORIELLE PAR ORGANE :
+  Auth         : entendre · gouter · toucher
+  Profil       : voir · entendre · gouter · toucher
+  Carte        : voir · entendre · sentir · toucher
+  Messages     : voir · entendre · toucher
+  Signalements : voir · entendre · sentir · gouter · toucher
+  Ange         : voir · entendre · sentir · gouter · toucher  ← seul organe à cinq sens complets
+
+PHASES (core/governance.js) :
+  Phase 1 Observateur  : voir + entendre                           (ACTIF — phase courante)
+  Phase 2 Conseiller   : + gouter                                  (warnIfPhase2 prête, non câblée)
+  Phase 3 Gardien      : + toucher    [tests_green requis]         (can*() prêts, non câblés)
+  Phase 4 Coordinateur : + sentir     [organs_wired requis]        (sentir() à créer dans ImmatOrganism)
+  Phase 5 Intelligence : conscience   [human_approval du Gardien]  (décision humaine requise)
+
 CYCLE DE VIE ADN :
 Modifier immat-nervous-system.json → node scripts/sync-ns.js → nervous-system.ts mis à jour
 Ne jamais éditer nervous-system.ts directement (violation INV-015)
