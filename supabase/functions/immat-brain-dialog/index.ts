@@ -214,6 +214,13 @@ function validateOutput(raw: string, feature: string, mode: string, isGardien: b
       };
     }
 
+    if (!isGardien) {
+      delete result.route;
+      delete result.proposal;
+      delete result.invariants;
+      delete result.vigilance;
+    }
+
     return result;
   } catch {
     return fallback;
