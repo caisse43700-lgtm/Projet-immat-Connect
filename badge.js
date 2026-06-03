@@ -55,7 +55,7 @@
     } catch (e) {}
   }
 
-  window.setUnreadMsgCount = setBadge;
+  window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
 
   window.ImmatBadge = {
     set: setBadge,

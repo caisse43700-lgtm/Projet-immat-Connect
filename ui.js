@@ -43,7 +43,6 @@
   const floating = [
     'reportPanel',
     'nearbyPanel',
-    'alertsPanel',
     'drawer',
     'legal',
     'blocked',
@@ -276,10 +275,8 @@
         : null;
 
     App.openReport = function () {
-      // Route to altet panel instead of old reportPanel overlay
-      try {
-        App.panel('altet');
-      } catch(e) {}
+      try { App.panel('altet'); } catch(e) {}
+      try { App._sigReset?.(); } catch(e) {}
     };
 
     const oldOpenNearby =
