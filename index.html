@@ -159,6 +159,7 @@
       <button type="button" data-mode="inbox" class="on" onclick="ImmatMessages.setMode('inbox')">Reçus</button>
       <button type="button" data-mode="sent" onclick="ImmatMessages.setMode('sent')">Envoyés</button>
       <button type="button" data-mode="compose" onclick="ImmatMessages.setMode('compose')">Composer ✏️</button>
+      <button type="button" data-mode="calls" onclick="ImmatMessages.setMode('calls')">📞 Appels</button>
       <button type="button" onclick="ImmatMessages.deleteAllMessages()" style="margin-left:auto;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">🗑 Tout</button>
     </div>
 
@@ -173,6 +174,8 @@
     <div id="icMsgList" class="ic-mail-list">
       <div class="ic-empty ic-empty-help">💬 Aucun message pour l'instant.<br><small>Clique sur un véhicule sur la carte pour démarrer une conversation.</small></div>
     </div>
+
+    <div id="icCallLog" style="display:none;overflow-y:auto;flex:1"></div>
 
     <div id="icThread" class="ic-thread">
       <div class="ic-thread-head">
@@ -550,6 +553,7 @@ openGardienDashboard(){
     const vHtml=(d.violations||[]).slice(-5).reverse().map(v=>`<div style="padding:6px 8px;background:#1a0a0a;border-left:3px solid #e53935;border-radius:0 4px 4px 0;margin-bottom:4px"><span style="color:#e57373">${esc(v.invariant)}</span> · <span style="color:#aaa">${esc(v.label||'')}</span><span style="color:#555;float:right">${Math.round((now-v.at)/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucune violation récente.</div>';
     const eHtml=(d.events||[]).slice(-5).reverse().map(e=>`<div style="padding:4px 0;border-bottom:1px solid #1a1a2e;color:#888"><span style="color:#a5b4fc">${esc(e.event)}</span><span style="float:right;color:#555">${Math.round(e.ago/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucun événement.</div>';
     const trust=Object.entries(S.trust||{}).map(([p,s])=>`<span style="color:${Number(s)>=75?'#4caf50':Number(s)>=35?'#f0a500':'#e57373'}">${esc(p)} ${s}%</span>`).join(' · ')||'<span style="color:#555">Aucune donnée</span>';
+    const allowCalls=$('allowCallsToggle')?.checked||false;
     const callsData=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0}');
     const fbData=JSON.parse(localStorage.getItem('ic_ange_feedback')||'[]');
     const fbPos=fbData.filter(f=>f.v===1).length,fbNeg=fbData.filter(f=>f.v===0).length;
@@ -582,6 +586,12 @@ openGardienDashboard(){
       <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
         <b style="color:#c4b5fd">Scores fiabilité conducteurs</b>
         <div style="margin-top:6px;font-size:12px;line-height:1.8">${trust}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Appels internes</b>
+        <div style="margin-top:6px;color:#888">Recevoir des appels : <b style="color:${allowCalls?'#4caf50':'#e57373'}">${allowCalls?'Autorisé ✅':'Désactivé 🔕'}</b></div>
+        <div style="margin-top:4px;font-size:12px;color:#555">Réseau pair-à-pair entre conducteurs connectés (WiFi / Bluetooth)</div>
+        <div style="margin-top:8px"><button onclick="App.panel('settings');App.closeGardienDashboard()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">⚙️ Modifier dans Paramètres</button></div>
       </div>
       <div style="background:#0f0f1a;border-radius:10px;padding:12px">
         <b style="color:#c4b5fd">Actions gardien</b>
@@ -1159,7 +1169,7 @@ App._actModCard=function(item,cat){
         </div>
       </div>
       <div class="act-mod-actions">
-        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${e(item.plate)}')">Contacter</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
+        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(item.plate)}','')">📞 Appel</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
       </div>
     </div>`;
   }
@@ -1181,9 +1191,9 @@ App._actModCard=function(item,cat){
   let actions='';
   if(isOwn&&a.group==='assist')actions=`${a.status==='helper_coming'&&a._helperPlate?`<button class="act-mod-btn-ok" onclick="App.actQuickReply('${e(a._helperPlate||'')}','🙏 Merci pour votre aide !')">🙏 Merci</button>`:''}<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','resolved')">✓ Résolu</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
   else if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button>${_vp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_vp}')">Contacter</button>`:''}`; }
-  else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_rp}')">Contacter</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
-  else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Contacter</button>`;
+  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button>${_vp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_vp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_vp}','')">📞 Appel</button>`:''}`; }
+  else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_rp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_rp}','')">📞 Appel</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
+  else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(plate)}','')">📞 Appel</button>`;
   if(a.lat!=null)actions+=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir</button>`;
   const isSelAlert=S.selPlate&&nPlate(a.plate||a.sender_plate||a.from_plate||'')===S.selPlate;
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSelAlert?' act-mod-selected':''}">
@@ -1843,9 +1853,9 @@ function showReputationToast(){
 </script>
 
 
-<script src="calls.js"></script>
+<script src="calls.js?v=2"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=14"></script>
+<script src="messages.js?v=15"></script>
 <script src="ui.js?v=6"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->

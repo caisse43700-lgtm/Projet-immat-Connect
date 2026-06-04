@@ -263,7 +263,38 @@ function setMode(mode){
   const compose = $('icComposePanel');
   if(compose) compose.classList.toggle('show', State.mode === 'compose');
 
+  const callLog = $('icCallLog');
+  if(callLog) callLog.style.display = State.mode === 'calls' ? '' : 'none';
+
+  if(State.mode === 'calls'){ renderCallLog(); return; }
   render();
+}
+
+async function renderCallLog(){
+  const list = $('icCallLog');
+  if(!list) return;
+  list.innerHTML = '<div class="ic-empty">Chargement…</div>';
+  let calls = [];
+  try{ calls = await (window.CallManager?.loadCallLog?.() || Promise.resolve([])); }catch(e){}
+  if(!calls.length){
+    list.innerHTML = '<div class="ic-empty ic-empty-help">📞 Aucun appel pour l\'instant.</div>';
+    return;
+  }
+  const statusLabel = {pending:'En attente',accepted:'Accepté ✅',refused:'Refusé',cancelled:'Annulé'};
+  list.innerHTML = calls.map(c=>{
+    const dir = c.outgoing ? '📤 Émis' : '📥 Reçu';
+    const sl = statusLabel[c.status] || c.status;
+    const time = c.at ? new Date(c.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:18px">${c.outgoing?'📤':'📥'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">${esc(c.plate)}</div>
+        <div style="font-size:11px;color:#888">${dir} · ${sl}</div>
+      </div>
+      <div style="font-size:11px;color:#555;flex-shrink:0">${time}</div>
+      <button type="button" onclick="CallManager.openContactOptions('${esc(c.plate)}')" style="background:rgba(41,121,255,.15);color:#2979ff;border:1px solid rgba(41,121,255,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">📞 Rappeler</button>
+    </div>`;
+  }).join('');
 }
 
 function renderEmpty(text){
@@ -687,6 +718,7 @@ window.ImmatMessages = {
   deleteThread,
   deleteMessage,
   deleteAllMessages,
+  renderCallLog,
   sendToPlate,
   unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
 };
