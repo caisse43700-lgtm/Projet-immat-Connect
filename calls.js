@@ -390,5 +390,6 @@ const CallManager = (function () {
     loadCallPreferences,
     setCallPreferences,
     loadCallLog,
+    isCallBlocked: _isCallBlocked,
   };
 })();

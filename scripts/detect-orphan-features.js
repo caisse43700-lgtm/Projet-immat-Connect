@@ -90,7 +90,7 @@ function loadKnowledge() {
     // Carte / GPS
     'MAP_SELF_LOCATED', 'MAP_LOCATED', 'GPS_STARTED',
     // Ange
-    'ANGE_QUERIED',
+    'ANGE_QUERIED', 'ANGE_ACTION_PREPARED', 'ANGE_ACTION_EXECUTED',
     // Badges
     'BADGE_RECOMPUTED',
     // Système immunitaire (OBD-002b)

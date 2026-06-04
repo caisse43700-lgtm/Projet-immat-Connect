@@ -160,6 +160,7 @@ function setContextTrust(plate, source, reason, ttlMs){
   try{ ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}'); }catch(e){}
   ctx[p] = { expiration: Date.now() + (ttlMs || 3600000), context_source: source || 'unknown', trust_reason: reason || '' };
   try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('TRUST_CONTEXTUAL_SET',{plate:p,source:source||'unknown',reason:reason||'',ttlMs:ttlMs||3600000,_src:'ImmatConnect/messages/setContextTrust'}); }catch(e){}
 }
 
 function getContextTrust(plate){

@@ -166,6 +166,22 @@
       "obd_events": ["ANGE_QUERIED"],
       "invariants": ["INV-COM-015"],
       "patterns": ["aide-moi", "comment", "que faire", "ange"]
+    },
+    {
+      "id": "INT-ANGE-ACTION",
+      "label": "Ange propose une action conducteur",
+      "organe": "MOI",
+      "interaction": "INT-011",
+      "journey": "JRN-010",
+      "flow": "FLOW-ANGE-ACTION",
+      "screens": ["angePanel", "angePreview"],
+      "buttons": ["AngeAction._confirmInteraction", "AngeAction._hidePreview"],
+      "functions": ["AngeAction.checkPermissions", "AngeAction.prepareInteraction", "AngeAction.execute"],
+      "files": ["index.html"],
+      "supabase": [],
+      "obd_events": ["ANGE_ACTION_PREPARED", "ANGE_ACTION_EXECUTED"],
+      "invariants": ["INV-ANGE-003", "INV-ANGE-004", "INV-COM-027", "INV-COM-028"],
+      "patterns": ["envoie", "appelle", "signale", "bloque", "fais confiance", "propose", "ange"]
     }
   ],
 
@@ -218,7 +234,9 @@
     { "event": "PROFILE_SAVED", "emitted_by": "index.html/saveProfile", "invariant": null },
     { "event": "BADGE_RECOMPUTED", "emitted_by": "badge.js", "invariant": null },
     { "event": "ANGE_QUERIED", "emitted_by": "index.html/AngeDialog", "invariant": "INV-COM-015" },
-    { "event": "TRUST_CONTEXTUAL_SET", "emitted_by": "messages.js/setContextTrust", "invariant": "INV-COM-022", "status": "PENDING — OBD à ajouter SESSION 26" },
+    { "event": "TRUST_CONTEXTUAL_SET", "emitted_by": "messages.js/setContextTrust", "invariant": "INV-COM-022" },
+    { "event": "ANGE_ACTION_PREPARED", "emitted_by": "index.html/AngeAction.prepareInteraction", "invariant": "INV-ANGE-004" },
+    { "event": "ANGE_ACTION_EXECUTED", "emitted_by": "index.html/AngeAction.execute", "invariant": "INV-ANGE-003" },
     { "event": "ABUSE_REVIEWED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
     { "event": "ABUSE_DISMISSED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
     { "event": "ABUSE_CONFIRMED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
@@ -271,7 +289,7 @@
     { "id": "GAP-006", "description": "WebRTC voix Phase B", "interaction": "INT-005", "priority": "P3", "planned": "SESSION-30" },
     { "id": "GAP-007", "description": "Recherche dans les messages", "interaction": "INT-001", "priority": "P3" },
     { "id": "GAP-008", "description": "Fiches flottantes légères au tap alerte", "interaction": "INT-002/003", "priority": "P3" },
-    { "id": "GAP-009", "description": "AngeAction API — prepareInteraction()", "interaction": "INT-010", "priority": "P2", "planned": "SESSION-26" },
+    { "id": "GAP-009", "description": "AngeAction API — prepareInteraction()", "interaction": "INT-011", "priority": "P2", "planned": "SESSION-26", "status": "RÉSOLU SESSION-26" },
     { "id": "GAP-010", "description": "Interaction Engine objet central", "interaction": "ALL", "priority": "P2", "planned": "SESSION-27" },
     { "id": "GAP-011", "description": "Guardian Intelligence Loop", "interaction": "ALL", "priority": "P2", "planned": "SESSION-28" },
     { "id": "GAP-012", "description": "Knowledge Graph V2 — 100% 0 nœud isolé", "interaction": "ALL", "priority": "P1", "planned": "SESSION-29" }

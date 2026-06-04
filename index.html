@@ -2033,6 +2033,7 @@ function showReputationToast(){
     <button onclick="AngeDialog.close()">✕</button>
   </div>
   <div id="angeResponse"></div>
+  <div id="angePreview" style="display:none"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
     <div style="display:flex;gap:8px;align-items:flex-end">
@@ -2168,6 +2169,120 @@ const AngeDialog={
     }
   }
 };
+
+// ── AngeAction — SESSION 26 (INV-ANGE-004) ──────────────────────────────────
+const AngeAction = {
+
+  // INV-ANGE-004 : checkPermissions() OBLIGATOIRE avant toute action
+  checkPermissions(plate) {
+    const p = plate ? String(plate).replace(/[\s-]/g,'').toUpperCase() : null;
+    const blockLevel  = p ? (window.ImmatMessages?.getBlockLevel?.(p) || 'BLOCK_NONE') : 'BLOCK_NONE';
+    const trustLevel  = p ? (window.ImmatMessages?.getTrustLevel?.(p) || 'TRUST_NONE') : 'TRUST_NONE';
+    const callBlocked = p ? (window.CallManager?.isCallBlocked?.(p) || false) : false;
+    return {
+      canMessage: blockLevel !== 'BLOCK_MESSAGES' && blockLevel !== 'BLOCK_ALL',
+      canCall:    !callBlocked && blockLevel !== 'BLOCK_ALL',
+      canSee:     blockLevel !== 'BLOCK_ALL',
+      blockLevel,
+      trustLevel
+    };
+  },
+
+  getContext() {
+    return {
+      frontVehicle: window.S?.frontVehicle || null,
+      selPlate:     window.S?.selPlate     || null,
+      activePlate:  window.State?.activePlate || null,
+      // myLat/myLng JAMAIS transmis — INV-COM-015 + INV-COM-010
+      activeAlerts: (window.S?.alerts||[]).filter(a=>a._mine).map(a=>({id:a.id,type:a.type,group:a.group}))
+    };
+  },
+
+  prepareInteraction({type, target, context, payload}) {
+    // INV-ANGE-004 : checkPermissions TOUJOURS en premier
+    const perms = this.checkPermissions(target);
+
+    const needsMsg  = ['MESSAGE','THANKS','VEHICLE_ALERT'].includes(type);
+    const needsCall = type === 'CALL';
+
+    if(needsMsg && !perms.canMessage) { this._showBlocked(target, perms.blockLevel); return false; }
+    if(needsCall && !perms.canCall)   { this._showBlocked(target, perms.blockLevel); return false; }
+
+    const interaction = { type, target: target || null, context: context || this.getContext(), payload: payload || {}, perms };
+
+    try{ window.ImmatOrganism?.observe?.('ANGE_ACTION_PREPARED',{type, hasTarget:!!target, _src:'ImmatConnect/ange/AngeAction'}); }catch(e){}
+
+    this._showPreview(interaction);
+    return true;
+  },
+
+  _showBlocked(plate, blockLevel) {
+    const el = $('angeResponse');
+    if(el){
+      el.style.display = 'block';
+      el.innerHTML = `<div style="color:#f0a500;font-size:13px;padding:6px 0">⚠️ Ce conducteur ne peut pas être contacté (${esc(blockLevel||'blocage actif')}).</div>`;
+    }
+    this._hidePreview();
+  },
+
+  _showPreview(interaction) {
+    const el = $('angePreview');
+    if(!el) return;
+    const LABELS = {MESSAGE:'Envoyer un message',CALL:'Appeler',VEHICLE_ALERT:'Signaler problème véhicule',ROAD_ALERT:'Signaler incident route',HELP:'Demander de l\'aide',SOS:'SOS',THANKS:'Envoyer un remerciement',TRUST:'Faire confiance',BLOCK:'Bloquer'};
+    const ICONS  = {MESSAGE:'💬',CALL:'📞',VEHICLE_ALERT:'🚗',ROAD_ALERT:'⚠️',HELP:'🆘',SOS:'🆘',THANKS:'🙏',TRUST:'🤝',BLOCK:'🚫'};
+    let detail = '';
+    if(interaction.target) detail += `<div style="color:#888;font-size:12px;margin-top:2px">→ ${esc(interaction.target)}</div>`;
+    if(interaction.payload?.text) detail += `<div style="color:#c4b5fd;font-size:12px;margin-top:4px;font-style:italic">"${esc(interaction.payload.text)}"</div>`;
+    if(interaction.type==='SOS') detail += `<div style="color:#f87171;font-size:12px;margin-top:4px;font-weight:700">⚠️ Double confirmation obligatoire</div>`;
+    el.innerHTML = `<div style="background:#1e1b4b;border:1px solid #7c6af7;border-radius:10px;padding:12px;margin-bottom:10px"><div style="color:#a5b4fc;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Proposition Ange</div><div style="color:#e2e8f0;font-size:14px;font-weight:600">${ICONS[interaction.type]||'▶️'} ${esc(LABELS[interaction.type]||interaction.type)}</div>${detail}<div style="display:flex;gap:8px;margin-top:10px"><button onclick="AngeAction._confirmInteraction()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:8px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer">✅ Confirmer</button><button onclick="AngeAction._hidePreview()" style="background:#1a1a2e;color:#888;border:1px solid #333;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer">✗</button></div></div>`;
+    el.style.display = 'block';
+    el._pendingInteraction = interaction;
+  },
+
+  _hidePreview() {
+    const el = $('angePreview');
+    if(el){ el.style.display='none'; el.innerHTML=''; delete el._pendingInteraction; }
+  },
+
+  _confirmInteraction() {
+    const el = $('angePreview');
+    if(!el) return;
+    const interaction = el._pendingInteraction;
+    if(!interaction) return;
+    this._hidePreview();
+    this.execute(interaction);
+  },
+
+  execute(interaction) {
+    const {type, target, payload} = interaction;
+    // Re-vérification — INV-ANGE-004 : permissions vérifiées à chaque exécution
+    const perms = this.checkPermissions(target);
+    try{
+      if(type==='MESSAGE'||type==='THANKS'){
+        if(!perms.canMessage){toast('Ce conducteur a bloqué les communications.','bad');return;}
+        window.ImmatMessages?.sendToPlate?.(target, type==='THANKS'?'🙏 Merci':(payload?.text||''));
+      } else if(type==='CALL'){
+        if(!perms.canCall){toast('Cet appel n\'est pas autorisé.','bad');return;}
+        window.CallManager?.contactByCall?.(target);
+      } else if(type==='VEHICLE_ALERT'){
+        if(!perms.canMessage){toast('Ce conducteur a bloqué les communications.','bad');return;}
+        window.App?.vehicleAlertQuick?.(payload?.label||'');
+      } else if(type==='ROAD_ALERT'){
+        window.App?.roadReport?.(payload?.type||'');
+      } else if(type==='HELP'){
+        window.App?.assist?.(payload?.type||'');
+      } else if(type==='SOS'){
+        window.App?.sos?.();
+      } else if(type==='TRUST'){
+        window.ImmatMessages?.setTrust?.(target,'TRUSTED');
+      } else if(type==='BLOCK'){
+        window.App?.blockPlate?.(target);
+      }
+      try{ window.ImmatOrganism?.observe?.('ANGE_ACTION_EXECUTED',{type,hasTarget:!!target,_src:'ImmatConnect/ange/AngeAction'}); }catch(e){}
+    }catch(e){ toast('Erreur lors de l\'action Ange.','bad'); }
+  }
+};
+window.AngeAction = AngeAction;
 </script>
 <!-- ── /Ange du Gardien ─────────────────────────────────────────────── -->
 </body>
