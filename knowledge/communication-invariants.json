@@ -93,6 +93,18 @@
       "name": "L'Ange n'accède jamais au contenu des messages",
       "rule": "Le snapshot transmis à immat-brain-dialog ne contient jamais de texte de message, de plaque de correspondant ni d'historique de conversation. Seules des métriques agrégées et anonymisées sont transmises.",
       "check": "FLOW-ANGE-ASSISTANT — snapshot : health, panel, speed_cat, driving, hasRoute, nearby, alerts (sans plaque ni contenu)"
+    },
+    {
+      "id": "INV-COM-016",
+      "name": "Aucune interaction orpheline",
+      "rule": "Tout bouton onclick doit appartenir à un INT-xxx documenté dans UX-INTERACTIONS.md. Toute interaction sans documentation de flux est invalide.",
+      "check": "detect-orphan-features.js — knownPanels + knownObserveEvents exhaustifs"
+    },
+    {
+      "id": "INV-COM-017",
+      "name": "Tout flux A↔B émet au moins un OBD event",
+      "rule": "Un flux sans observation OBD est invisible pour l'Ange et le Gardien. Chaque JRN-xxx doit avoir au moins un event ImmatOrganism.observe() émis par l'initiateur.",
+      "check": "UX-JOURNEYS.md — colonne OBD manquants vide pour tous les JRN"
     }
   ]
 }
