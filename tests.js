@@ -1476,8 +1476,8 @@ const { ImmatGovernance }   = require('./core/governance');
 
 suite('20. ImmatOrganism V1 — invariants.js');
 
-test('IO-01 — 14 invariants déclarés', () => {
-  eq(Object.keys(INVARIANTS).length, 14);
+test('IO-01 — 15 invariants déclarés', () => {
+  eq(Object.keys(INVARIANTS).length, 15);
 });
 
 test('IO-02 — INV-001 présent et critique', () => {

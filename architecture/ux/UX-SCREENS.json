@@ -1,0 +1,203 @@
+{
+  "_v": 1,
+  "_doc": "Tous les écrans, panels, overlays d'ImmatConnect — depuis index.html + INVENTAIRE-PRODUIT.md",
+
+  "auth_flow": [
+
+    {
+      "id": "sw",
+      "nom": "Welcome / Landing",
+      "type": "screen",
+      "objectif": "Première impression — connexion ou inscription",
+      "contenu": ["Logo ImmatConnect", "Description courte", "Bouton Se connecter", "Bouton Créer un compte"],
+      "actions": ["goAuth('login')", "goAuth('signup')"],
+      "problemes": [],
+      "decision": "garder"
+    },
+
+    {
+      "id": "sa",
+      "nom": "Auth (Connexion / Inscription)",
+      "type": "screen",
+      "objectif": "Authentifier le conducteur",
+      "contenu": ["Tabs Login / Signup", "Email + mot de passe", "Extras inscription (téléphone, plaque, couleur)", "Confirmation mot de passe"],
+      "actions": ["login()", "signup()", "forgotPwd()", "resendConfirm()"],
+      "problemes": ["Formulaire dense en mode inscription"],
+      "decision": "garder — éventuellement simplifier inscription en 2 étapes"
+    },
+
+    {
+      "id": "sp",
+      "nom": "Profil Setup",
+      "type": "screen",
+      "objectif": "Compléter le profil conducteur avant d'accéder à la carte",
+      "contenu": ["Pseudo", "Plaque (immuable après création)", "Téléphone", "Couleur véhicule"],
+      "actions": ["saveProfile()", "logout()"],
+      "problemes": ["La plaque est immuable mais l'utilisateur n'est pas toujours bien prévenu"],
+      "decision": "garder — clarifier message plaque immuable (INV-006)"
+    },
+
+    {
+      "id": "sr",
+      "nom": "Réinitialisation mot de passe",
+      "type": "screen",
+      "objectif": "Saisir un nouveau mot de passe après lien email",
+      "contenu": ["Nouveau mot de passe", "Confirmation"],
+      "actions": ["updatePwd()"],
+      "problemes": [],
+      "decision": "garder"
+    }
+
+  ],
+
+  "app_panels": [
+
+    {
+      "id": "panelAltet",
+      "nom": "Carte (Radar + Signal)",
+      "type": "panel",
+      "organe": "RADAR",
+      "statut": "panel par défaut — on",
+      "objectif": "Vue principale — carte avec conducteurs, alertes, position",
+      "contenu": ["Carte Leaflet", "Marqueurs véhicules", "Marqueurs alertes", "Badge conducteurs proches", "Badge alertes actives", "FAB Signaler", "angeFab (Gardien seulement)"],
+      "actions": ["locate()", "loadOthers()", "openAlerts()", "reportPanel (signaler)"],
+      "problemes": ["Carte non immersive — fond seulement", "Pas de vue conduite dédiée"],
+      "decision": "garder — améliorer vers carte immersive (UX-MAP.md)"
+    },
+
+    {
+      "id": "panelDrive",
+      "nom": "Navigation GPS",
+      "type": "panel",
+      "organe": "ROUTE",
+      "objectif": "Rechercher un itinéraire, naviguer, voir POI",
+      "contenu": ["Barre de recherche + voix", "Grille POI (carburant, resto, parking, garage, recharge, santé)", "Résultats Nominatim", "navPremium (ETA, restant, vitesse, alertes, voies ⚠️ SIMULÉ)", "Boutons actions (localiser, stop GPS, alertes, recentrer, vue, invisible, voix)", "Favoris GPS", "Historique GPS"],
+      "actions": ["searchGps()", "voiceGps()", "poi()", "locate()", "stopGps()", "cycleView()", "toggleInvisible()", "saveCurrentDestination()"],
+      "problemes": ["navPremium affiche données SIMULÉES (trafic, limite vitesse, voies) — trompeur"],
+      "decision": "garder GPS réel — SUPPRIMER ou MARQUER FUTUR navPremium simulé"
+    },
+
+    {
+      "id": "panelMessages",
+      "nom": "Messages",
+      "type": "panel",
+      "organe": "CONTACT",
+      "objectif": "Messagerie directe conducteur à conducteur",
+      "contenu": ["Onglets Reçus / Envoyés", "Compose (plaque + message)", "Liste conversations", "Boutons rapides (Je m'arrête, Je vérifie)"],
+      "actions": ["sendMsg()", "setMode('inbox'/'compose')", "ImmatMessages.refresh()"],
+      "problemes": ["Race condition refresh() / renderCategoryFeed()", "S._actMessages vide possible"],
+      "decision": "garder — panel principal pour toute communication directe"
+    },
+
+    {
+      "id": "panelContact",
+      "nom": "Contact (legacy)",
+      "type": "panel",
+      "organe": "CONTACT",
+      "statut": "OBSOLÈTE — redirigé par ui.js vers panelMessages",
+      "objectif": "Ancien formulaire de message — remplacé par panelMessages",
+      "problemes": ["Doublon de panelMessages", "Toujours dans le DOM"],
+      "decision": "SUPPRIMER — après validation que tous les accès passent par panelMessages"
+    },
+
+    {
+      "id": "panelActivite",
+      "nom": "Activité",
+      "type": "panel",
+      "organe": "SIGNAL + CONTACT",
+      "objectif": "Historique des interactions reçues et envoyées",
+      "contenu": ["Onglets Reçus / Envoyés", "Feed des interactions", "Badge non-lus"],
+      "problemes": ["Onglet 'Reçus' mélange messages, alertes, aide — confusion possible", "Onglet 'Nouveau' redirige inutilement vers navSignaler"],
+      "decision": "garder — clarifier séparation messages vs alertes dans les onglets"
+    },
+
+    {
+      "id": "panelSettings",
+      "nom": "Paramètres",
+      "type": "panel",
+      "organe": "MOI",
+      "objectif": "Configuration personnelle du conducteur",
+      "contenu": ["Bloqués", "Récents", "Confidentialité", "Sons", "Performance", "Cache", "Voix GPS", "Restaurer msgs", "Sync alertes", "Déconnexion", "Communication (autoriser appels)", "Genre voix GPS"],
+      "problemes": ["Restaurer msgs et Sync alertes sont des outils debug — pas à leur place ici", "Debug tools polluent les paramètres utilisateur (P-011)"],
+      "decision": "garder — déplacer Restaurer msgs + Sync alertes vers outils Gardien"
+    }
+
+  ],
+
+  "overlays": [
+
+    {
+      "id": "reportPanel",
+      "nom": "Signaler",
+      "type": "overlay",
+      "organe": "SIGNAL",
+      "objectif": "Créer une alerte (véhicule, route, aide)",
+      "contenu": ["Bloc véhicule (6 types)", "Bloc route (6 types)", "Bloc aide (6 types)"],
+      "problemes": ["3 blocs distincts — long à parcourir", "Context plaque pas toujours visible"],
+      "decision": "garder — simplifier UX (étape 1 : choisir nature, étape 2 : type)"
+    },
+
+    {
+      "id": "nearbyPanel",
+      "nom": "Conducteurs proches",
+      "type": "overlay",
+      "organe": "RADAR",
+      "objectif": "Voir et contacter les conducteurs dans le rayon",
+      "contenu": ["Liste avec plaque + pseudo + distance", "Bouton Contacter"],
+      "problemes": [],
+      "decision": "garder"
+    },
+
+    {
+      "id": "alertsPanel",
+      "nom": "Alertes actives",
+      "type": "overlay",
+      "organe": "SIGNAL",
+      "objectif": "Voir toutes les alertes actives avec filtre et historique",
+      "contenu": ["Toolbar filtre", "Liste alertes actives", "Historique (details/summary)"],
+      "problemes": [],
+      "decision": "garder — accessible depuis panelAltet et panelDrive"
+    },
+
+    {
+      "id": "callOverlay",
+      "nom": "Appel en cours",
+      "type": "overlay_modal",
+      "organe": "CONTACT",
+      "objectif": "Interface appel WebRTC (en cours / raccrochage)",
+      "contenu": ["Plaque appelé", "Statut (Appel… / En cours)", "Boutons actions (Raccrocher, Muet…)"],
+      "decision": "garder"
+    },
+
+    {
+      "id": "callContactModal",
+      "nom": "Demande de contact",
+      "type": "modal",
+      "organe": "CONTACT",
+      "objectif": "Demander ou recevoir une demande d'appel",
+      "contenu": ["Plaque appelant", "Bouton Accepter", "Bouton Refuser"],
+      "decision": "garder"
+    },
+
+    {
+      "id": "callNotAllowedModal",
+      "nom": "Appels désactivés",
+      "type": "modal",
+      "organe": "CONTACT",
+      "objectif": "Informer que le conducteur n'accepte pas les appels",
+      "decision": "garder — améliorer message d'explication"
+    },
+
+    {
+      "id": "angePanel",
+      "nom": "L'Ange Gardien",
+      "type": "overlay",
+      "organe": "GARDIEN",
+      "objectif": "Interface de dialogue entre le Gardien et l'Ange",
+      "contenu": ["Zone réponse structurée (juste, vigilance, options, question)", "Textarea question", "Bouton Envoyer"],
+      "acces": "Gardien seulement (isGardien === true via get_my_role())",
+      "decision": "garder — options sélectionnables ✅ implémenté"
+    }
+
+  ]
+}

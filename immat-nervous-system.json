@@ -1,51 +1,115 @@
 {
-  "_v": 6,
+  "_v": 8,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
-
   "ange_identity": {
-    "posture":    "Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.",
+    "posture": "Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.",
     "evaluation": "Cette évolution nourrit-elle l'organisme ou l'alourdit-elle ? Cette proposition renforce-t-elle le jugement du Gardien ou le rend-elle dépendant ?",
-    "limite":     "Jamais de décision à la place du Gardien. Jamais de modification code, DB ou invariants. Jamais d'affirmation sur ce que tu ne vois pas.",
-    "format":     "JSON valide uniquement. 150 mots maximum. requiresGuardianValidation toujours true."
+    "limite": "Jamais de décision à la place du Gardien. Jamais de modification code, DB ou invariants. Jamais d'affirmation sur ce que tu ne vois pas.",
+    "format": "JSON valide uniquement. 150 mots max (gardien) · 80 mots max (conducteur). requiresGuardianValidation conditionnel selon le rôle : true pour gardien, false pour conducteur."
   },
-
+  "senses": {
+    "_desc": "Les cinq sens organiques — vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l'organisme. Source : SESSION-18-CINQ-SENS.md + IMMAT-FLOW-INDEX v1.",
+    "_boucle_mapping": {
+      "entendre": "identifier l'intention",
+      "voir":     "repérer les composants concernés",
+      "sentir":   "comprendre le contexte et l'environnement",
+      "toucher":  "mesurer l'impact et agir",
+      "gouter":   "tester et vérifier la conformité aux invariants"
+    },
+    "voir": {
+      "desc": "Lire l'état — observer ce qui est sans l'altérer.",
+      "impl": "ImmatOrganism.diagnose() · ImmatOrganism.getJournal()",
+      "ange": "Snapshot anonymisé (health, violations, panel, speed_cat, nearby, alerts)",
+      "phase_activation": 1
+    },
+    "entendre": {
+      "desc": "Recevoir des événements — écouter sans bloquer le flux.",
+      "impl": "ImmatBus.on('*') · realtime Supabase · perception.sources",
+      "ange": "Question conducteur reçue (texte ou voix transcrite)",
+      "phase_activation": 1
+    },
+    "gouter": {
+      "desc": "Valider, tester — vérifier la conformité aux invariants.",
+      "impl": "validateInvariant() · warnIfPhase2() · validateOutput()",
+      "ange": "validateOutput() · requiresGuardianValidation",
+      "phase_activation": 2,
+      "note": "warnIfPhase2 définie dans brain.js — non câblée en prod (Phase 2 non activée)"
+    },
+    "toucher": {
+      "desc": "Agir — produire un effet mesurable dans l'organisme.",
+      "impl": "Phase 3+ — ImmatBrain can*() bloquants · réponse Ange transmise",
+      "ange": "Réponse transmise au conducteur : propositions, guidage, alertes",
+      "phase_activation": 3,
+      "note": "Actif en surface seulement (réponse Ange). can*() jamais câblés en prod."
+    },
+    "sentir": {
+      "desc": "Comprendre le contexte — lire l'intention derrière le signal.",
+      "impl": "nsToPrompt(depth) · knowledge_conducteur · knowledge_gardien · IMMAT-FLOW-INDEX",
+      "ange": "Rôle + depth + environnement + ADN + flux organiques = compréhension de l'intention",
+      "phase_activation": 4,
+      "note": "Actif uniquement dans Ange. ImmatOrganism n'a pas encore de sentir()."
+    }
+  },
   "perception": {
     "desc": "Normalise tout signal entrant en texte avant routage. Le système nerveux ne voit jamais un son ni une image — il voit toujours un signal texte normalisé.",
     "sources": {
-      "texte":  { "transform": "direct → signal",                              "status": "actif"  },
-      "voix":   { "transform": "SpeechRecognition → transcription → signal",   "status": "futur"  },
-      "image":  { "transform": "analyse visuelle → description → signal",       "status": "futur"  },
-      "camera": { "transform": "lecture plaque → action disponible → signal",   "status": "futur"  }
+      "texte": {
+        "transform": "direct → signal",
+        "status": "actif"
+      },
+      "voix": {
+        "transform": "SpeechRecognition → transcription → signal",
+        "status": "futur"
+      },
+      "image": {
+        "transform": "analyse visuelle → description → signal",
+        "status": "futur"
+      },
+      "camera": {
+        "transform": "lecture plaque → action disponible → signal",
+        "status": "futur"
+      }
     },
-    "rule":    "Tout signal entre dans PERCEPTION. Un signal normalisé (texte) sort vers le routage. Ce découplage permet d'ajouter voix/image/caméra sans modifier le système nerveux.",
+    "rule": "Tout signal entre dans PERCEPTION. Un signal normalisé (texte) sort vers le routage. Ce découplage permet d'ajouter voix/image/caméra sans modifier le système nerveux.",
     "privacy": "La caméra ne révèle jamais une identité réelle. Elle permet uniquement une action conforme à l'ADN : 'Plaque reconnue. Tu peux contacter ce conducteur via ImmatConnect.'"
   },
-
   "routing": {
-    "marqueur|rond|icône|car-pin|voiture|icon|SVG":          "Carte",
+    "marqueur|rond|icône|car-pin|voiture|icon|SVG": "Carte",
     "position|GPS|localisation|locate|watchPosition|heading": "Carte",
-    "bouton|✦|angeFab|ange|gardien|fab":                     "Ange",
-    "message|conversation|ImmatMessages|chMsg|envoi":         "Messages",
-    "alerte|signalement|route|report|SOS|urgence":            "Signalements",
-    "profil|pseudo|plaque|couleur|vehicle_color|phone":       "Profil",
-    "login|signup|auth|connexion|session|afterAuth":          "Auth"
+    "bouton|✦|angeFab|ange|gardien|fab": "Ange",
+    "message|conversation|ImmatMessages|chMsg|envoi": "Messages",
+    "alerte|signalement|route|report|SOS|urgence": "Signalements",
+    "profil|pseudo|plaque|couleur|vehicle_color|phone": "Profil",
+    "login|signup|auth|connexion|session|afterAuth": "Auth"
   },
-
   "organs": {
-
     "Auth": {
-      "desc":        "Authentification et session Supabase",
+      "desc": "Authentification et session Supabase",
       "entry": {
-        "afterAuth": "index.html:507",
-        "signup":    "index.html:502",
-        "boot":      "index.html:1419"
+        "afterAuth": "App.afterAuth",
+        "signup": "App.signup",
+        "boot": "fn.boot"
       },
-      "constraints": ["INV-010", "INV-014"],
-      "deps":        [],
-      "data":        ["supabase.auth", "user_metadata.role", "get_my_role() RPC"],
-      "note":        "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale",
-      "serves":      ["PRI", "SEC"],
-      "known_costs": ["PERF", "TEST"],
+      "constraints": [
+        "INV-010",
+        "INV-014"
+      ],
+      "deps": [],
+      "data": [
+        "supabase.auth",
+        "user_metadata.role",
+        "get_my_role() RPC"
+      ],
+      "senses": ["entendre", "gouter", "toucher"],
+      "note": "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale",
+      "serves": [
+        "PRI",
+        "SEC"
+      ],
+      "known_costs": [
+        "PERF",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
           "Écran de connexion email / mot de passe",
@@ -76,19 +140,36 @@
         ]
       }
     },
-
     "Profil": {
-      "desc":        "Données conducteur — plaque, pseudo, couleur, téléphone",
+      "desc": "Données conducteur — plaque, pseudo, couleur, téléphone",
       "entry": {
-        "saveProfile":   "index.html:549",
-        "upsert_profil": "index.html:530"
+        "saveProfile": "App.saveProfile",
+        "upsert_profil": "db.profiles.upsert"
       },
-      "constraints": ["INV-006", "INV-007", "INV-011"],
-      "deps":        ["Auth"],
-      "data":        ["profiles.owner_plate", "profiles.vehicle_color", "profiles.pseudo", "profiles.phone"],
-      "note":        "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)",
-      "serves":      ["PRI", "LNK"],
-      "known_costs": ["MAINT", "TEST"],
+      "constraints": [
+        "INV-006",
+        "INV-007",
+        "INV-011"
+      ],
+      "deps": [
+        "Auth"
+      ],
+      "data": [
+        "profiles.owner_plate",
+        "profiles.vehicle_color",
+        "profiles.pseudo",
+        "profiles.phone"
+      ],
+      "senses": ["voir", "entendre", "gouter", "toucher"],
+      "note": "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)",
+      "serves": [
+        "PRI",
+        "LNK"
+      ],
+      "known_costs": [
+        "MAINT",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
           "Formulaire : plaque d'immatriculation, pseudo, couleur véhicule",
@@ -119,22 +200,43 @@
         ]
       }
     },
-
     "Carte": {
-      "desc":        "Carte Leaflet — marqueurs véhicule, GPS, icônes colorées",
+      "desc": "Carte Leaflet — marqueurs véhicule, GPS, icônes colorées",
       "entry": {
-        "icon":       "index.html:409",
-        "dot":        "index.html:408",
-        "initMap":    "index.html:551",
-        "locate":     "index.html:554",
-        "loadOthers": "index.html:652"
+        "icon": "fn.icon",
+        "dot": "fn.dot",
+        "initMap": "App.initMap",
+        "locate": "App.locate",
+        "loadOthers": "App.loadOthers"
       },
-      "constraints": ["INV-005", "INV-011", "INV-012"],
-      "deps":        ["Profil"],
-      "data":        ["S.map", "S.myMarker", "S.otherMkrs", "S.myLat", "S.myLng", "S.lastSpeed"],
-      "note":        "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur",
-      "serves":      ["SEC", "PRV", "FRI"],
-      "known_costs": ["PERF", "MAINT", "TEST"],
+      "constraints": [
+        "INV-005",
+        "INV-011",
+        "INV-012"
+      ],
+      "deps": [
+        "Profil"
+      ],
+      "data": [
+        "S.map",
+        "S.myMarker",
+        "S.otherMkrs",
+        "S.myLat",
+        "S.myLng",
+        "S.lastSpeed"
+      ],
+      "senses": ["voir", "entendre", "sentir", "toucher"],
+      "note": "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur. sentir = position → contexte vitesse/rayon.",
+      "serves": [
+        "SEC",
+        "PRV",
+        "FRI"
+      ],
+      "known_costs": [
+        "PERF",
+        "MAINT",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
           "Ma position — marqueur coloré à mon emplacement",
@@ -165,20 +267,38 @@
         ]
       }
     },
-
     "Messages": {
-      "desc":        "Messagerie temps réel conducteur à conducteur via Supabase",
+      "desc": "Messagerie temps réel conducteur à conducteur via Supabase",
       "entry": {
-        "startMsgs":     "index.html:764",
-        "sendMsg":       "index.html:703",
+        "startMsgs": "App.startMsgs",
+        "sendMsg": "App.sendMsg (legacy)",
         "ImmatMessages": "module externe"
       },
-      "constraints": ["INV-001", "INV-004", "INV-010"],
-      "deps":        ["Auth"],
-      "data":        ["messages.sender_id", "messages.receiver_id", "messages.target_plate", "S.chMsg"],
-      "note":        "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide",
-      "serves":      ["LNK", "ENT"],
-      "known_costs": ["PERF", "ARCH", "TEST"],
+      "constraints": [
+        "INV-001",
+        "INV-004",
+        "INV-010"
+      ],
+      "deps": [
+        "Auth"
+      ],
+      "data": [
+        "messages.sender_id",
+        "messages.receiver_id",
+        "messages.target_plate",
+        "S.chMsg"
+      ],
+      "senses": ["voir", "entendre", "toucher"],
+      "note": "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide",
+      "serves": [
+        "LNK",
+        "ENT"
+      ],
+      "known_costs": [
+        "PERF",
+        "ARCH",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
           "Conversations avec d'autres conducteurs",
@@ -209,21 +329,42 @@
         ]
       }
     },
-
     "Signalements": {
-      "desc":        "Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés",
+      "desc": "Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés",
       "entry": {
-        "roadReport":                "index.html:905",
-        "vehicleAlert":              "index.html:905",
-        "subscribeCommunityReports": "index.html:896",
-        "addCommunityAlertMarker":   "index.html:813"
+        "roadReport": "App.roadReport",
+        "vehicleAlert": "App.vehicleAlert",
+        "subscribeCommunityReports": "App.subscribeCommunityReports",
+        "addCommunityAlertMarker": "App.addCommunityAlertMarker"
       },
-      "constraints": ["INV-001", "INV-002", "INV-003", "INV-004"],
-      "deps":        ["Carte", "Auth"],
-      "data":        ["reports table", "S.alerts", "S.alertMarkersById", "S.chCommunityReports"],
-      "note":        "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003)",
-      "serves":      ["SEC", "ENT", "PRV"],
-      "known_costs": ["PERF", "ARCH", "TEST"],
+      "constraints": [
+        "INV-001",
+        "INV-002",
+        "INV-003",
+        "INV-004"
+      ],
+      "deps": [
+        "Carte",
+        "Auth"
+      ],
+      "data": [
+        "reports table",
+        "S.alerts",
+        "S.alertMarkersById",
+        "S.chCommunityReports"
+      ],
+      "senses": ["voir", "entendre", "sentir", "gouter", "toucher"],
+      "note": "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003). sentir = type → intention (panne/incendie/bouchon). gouter = TTL validation.",
+      "serves": [
+        "SEC",
+        "ENT",
+        "PRV"
+      ],
+      "known_costs": [
+        "PERF",
+        "ARCH",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
           "Bouton Signaler pour créer une alerte",
@@ -254,81 +395,204 @@
         ]
       }
     },
-
     "Ange": {
-      "desc":        "Interface Gardien — bouton ✦ (angeFab) + Edge Function Claude",
+      "desc": "Interface IA — bouton ✦ (angeFab) visible pour tous les conducteurs connectés. Profondeur de réponse adaptée au rôle (depth 1/2/3).",
       "entry": {
-        "angeFab_css":       "index.html:1907",
-        "angeFab_afterAuth": "index.html:520",
-        "angeFab_openMap":   "index.html:550",
-        "edge_function":     "supabase/functions/immat-brain-dialog/index.ts"
+        "angeFab_css": "css.#angeFab",
+        "angeFab_openMap": "App.openMap > #angeFab (affiché pour tous)",
+        "edge_function": "supabase/functions/immat-brain-dialog/index.ts",
+        "knowledge_conducteur": "_shared/knowledge-conducteur.ts",
+        "knowledge_gardien": "_shared/knowledge-gardien.ts"
       },
-      "constraints": ["INV-010", "INV-014"],
-      "deps":        ["Auth"],
-      "data":        ["S.isGardien", "user_metadata.role", "get_my_role() RPC"],
-      "note":        "S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback dans openMap() si S.isGardien===undefined",
-      "serves":      ["FRI", "SEC"],
-      "known_costs": ["PERF", "ARCH", "MAINT", "TEST"],
+      "constraints": [
+        "INV-010",
+        "INV-014"
+      ],
+      "deps": [
+        "Auth"
+      ],
+      "data": [
+        "S.isGardien",
+        "user_metadata.role",
+        "get_my_role() RPC",
+        "snapshot anonymisé (health, violations, panel, speed_cat, driving, hasRoute, nearby, alerts)"
+      ],
+      "senses": ["voir", "entendre", "sentir", "gouter", "toucher"],
+      "note": "S.isGardien depuis get_my_role(), jamais du JWT seul. Vitesse transmise en catégorie (arrêt/lente/normale/rapide) — jamais en valeur exacte (INV-014). Seul organe à cinq sens complets.",
+      "serves": [
+        "FRI",
+        "SEC"
+      ],
+      "known_costs": [
+        "PERF",
+        "ARCH",
+        "MAINT",
+        "TEST"
+      ],
       "level_1": {
         "what_user_sees": [
-          "Bouton ✦ en bas à droite — visible uniquement pour le Gardien",
+          "Bouton ✦ en bas à droite — visible pour tous les conducteurs connectés",
           "Panneau de dialogue pour poser une question à l'Ange",
-          "Réponse : analyse principale + alertes de vigilance + question au Gardien"
+          "Réponse adaptée au rôle : guidage usage (conducteur) ou analyse technique (gardien)"
         ],
         "common_questions": [
-          "Je ne vois pas le bouton ✦",
+          "Comment utiliser l'application ?",
           "L'Ange ne répond pas ou est très lent",
           "Comment poser une bonne question à l'Ange ?"
         ],
         "resolution": [
-          "Le bouton ✦ est réservé au rôle gardien — vérifier le rôle du compte connecté",
+          "Poser une question simple sur l'app, la navigation ou un problème rencontré",
           "L'Ange appelle un modèle IA externe — la réponse prend 5 à 20 secondes",
-          "Poser une question précise liée à un organe, un bug ou une évolution"
+          "Pour une analyse technique approfondie : avoir le rôle gardien"
         ]
       },
       "level_2": {
         "behaviors": [
-          "Vérifie le rôle gardien via get_my_role() avant d'afficher le bouton ✦",
-          "Envoie la question + snapshot de l'organisme à l'Edge Function immat-brain-dialog",
-          "Affiche la réponse structurée : juste (réponse) + vigilance (alertes) + question (au Gardien)"
+          "Affiche le bouton ✦ pour tous les utilisateurs authentifiés via openMap()",
+          "Envoie la question + snapshot anonymisé (INV-014) à l'Edge Function immat-brain-dialog",
+          "Adapte la profondeur : gardien=depth3+knowledge_gardien, conducteur=depth1+knowledge_conducteur"
         ],
         "failure_modes": [
-          "S.isGardien undefined au démarrage — bouton ✦ absent jusqu'au rechargement",
+          "S.isGardien undefined — bouton ✦ toujours affiché (fallback openMap catch)",
           "ANTHROPIC_API_KEY absente — Edge Function retourne server_misconfigured",
           "Cache Anthropic froid au premier appel — latence plus élevée (prompt non caché)"
         ]
       }
     }
-
   },
-
   "access_policy": {
-    "guardian":  { "max_depth": 3, "levels": ["level_1", "level_2", "level_3"], "no_code": false, "no_internal_invariants": false, "note": "level_3 = entry · constraints · deps · data" },
-    "protector": { "max_depth": 2, "levels": ["level_1", "level_2"],             "no_code": true,  "no_internal_invariants": true,  "note": "usage + comportement — jamais données techniques" },
-    "observer":  { "max_depth": 1, "levels": ["level_1"],                        "no_code": true,  "no_internal_invariants": true,  "note": "usage seulement — futur possible" }
+    "guardian": {
+      "max_depth": 3,
+      "levels": [
+        "level_1",
+        "level_2",
+        "level_3"
+      ],
+      "no_code": false,
+      "no_internal_invariants": false,
+      "note": "level_3 = entry · constraints · deps · data"
+    },
+    "protector": {
+      "max_depth": 2,
+      "levels": [
+        "level_1",
+        "level_2"
+      ],
+      "no_code": true,
+      "no_internal_invariants": true,
+      "note": "usage + comportement — jamais données techniques"
+    },
+    "observer": {
+      "max_depth": 1,
+      "levels": [
+        "level_1"
+      ],
+      "no_code": true,
+      "no_internal_invariants": true,
+      "note": "usage seulement — futur possible"
+    }
   },
-
+  "governance": {
+    "_desc": "Les cinq phases de gouvernance — les sens s'activent progressivement avec les phases. Source : core/governance.js PHASE_REQUIREMENTS.",
+    "_source": "core/governance.js",
+    "current_phase": 1,
+    "phases": {
+      "1": {
+        "label": "Observateur",
+        "senses_actifs": ["voir", "entendre"],
+        "requires": []
+      },
+      "2": {
+        "label": "Conseiller",
+        "senses_actifs": ["voir", "entendre", "gouter"],
+        "requires": ["journal_ok", "no_regressions"],
+        "note": "warnIfPhase2() prête dans brain.js — non câblée en prod"
+      },
+      "3": {
+        "label": "Gardien",
+        "senses_actifs": ["voir", "entendre", "gouter", "toucher"],
+        "requires": ["journal_ok", "no_regressions", "tests_green", "invariants_stable"],
+        "note": "can*() définis dans brain.js — non câblés en prod"
+      },
+      "4": {
+        "label": "Coordinateur",
+        "senses_actifs": ["voir", "entendre", "gouter", "toucher", "sentir"],
+        "requires": ["journal_ok", "no_regressions", "tests_green", "invariants_stable", "organs_wired"],
+        "note": "sentir() à créer dans ImmatOrganism — lit snapshot + ADN"
+      },
+      "5": {
+        "label": "Intelligence",
+        "senses_actifs": ["voir", "entendre", "gouter", "toucher", "sentir"],
+        "conscience": true,
+        "requires": ["journal_ok", "no_regressions", "tests_green", "invariants_stable", "organs_wired", "human_approval"],
+        "note": "Nécessite approbation explicite du Gardien — décision humaine requise"
+      }
+    }
+  },
   "inhibitions": {
     "S._authRunning": "Bloque ré-entrée dans afterAuth(). Libéré par finally{}. index.html:507",
-    "S._reporting":   "Bloque nouveau signalement pendant envoi en cours. index.html:roadReport/vehicleAlert"
+    "S._reporting": "Bloque nouveau signalement pendant envoi en cours. index.html:roadReport/vehicleAlert"
   },
-
   "invariants": {
-    "INV-001": { "label": "Les alertes véhicule transitent exclusivement par le canal véhicule.",           "severity": "critique" },
-    "INV-002": { "label": "Les alertes route transitent exclusivement par le canal route.",                  "severity": "critique" },
-    "INV-003": { "label": "Les demandes d'aide transitent exclusivement par le canal aide.",                 "severity": "critique" },
-    "INV-004": { "label": "Toute transaction est atomique — réussit entièrement ou échoue entièrement.",     "severity": "critique" },
-    "INV-005": { "label": "L'interface affiche uniquement ce qui est persisté en base.",                     "severity": "critique" },
-    "INV-006": { "label": "Un identifiant de véhicule ne peut pas être modifié après création.",             "severity": "critique" },
-    "INV-007": { "label": "Aucune action engageante sans confirmation explicite de l'utilisateur.",          "severity": "high"     },
-    "INV-008": { "label": "L'interface ne modifie pas l'état du système sans passer par la persistance.",    "severity": "critique" },
-    "INV-009": { "label": "Toute action irréversible requiert une confirmation supplémentaire.",             "severity": "high"     },
-    "INV-010": { "label": "Les données personnelles ne circulent jamais sans consentement explicite.",       "severity": "critique" },
-    "INV-011": { "label": "Chaque donnée a exactement une source canonique.",                               "severity": "critique" },
-    "INV-012": { "label": "Un état n'est affiché que s'il est confirmé en base de données.",                "severity": "critique" },
-    "INV-013": { "label": "Toute action est associée à un contexte identifiable.",                          "severity": "high"     },
-    "INV-014": { "label": "Aucune donnée utilisateur transférée à un tiers sans consentement.",             "severity": "critique" },
-    "INV-015": { "label": "Le système nerveux se transforme depuis sa source. Il ne se duplique jamais.",   "severity": "critique" }
+    "INV-001": {
+      "label": "Les alertes véhicule transitent exclusivement par le canal véhicule.",
+      "severity": "critique"
+    },
+    "INV-002": {
+      "label": "Les alertes route transitent exclusivement par le canal route.",
+      "severity": "critique"
+    },
+    "INV-003": {
+      "label": "Les demandes d'aide transitent exclusivement par le canal aide.",
+      "severity": "critique"
+    },
+    "INV-004": {
+      "label": "Toute transaction est atomique — réussit entièrement ou échoue entièrement.",
+      "severity": "critique"
+    },
+    "INV-005": {
+      "label": "L'interface affiche uniquement ce qui est persisté en base.",
+      "severity": "critique"
+    },
+    "INV-006": {
+      "label": "Un identifiant de véhicule ne peut pas être modifié après création.",
+      "severity": "critique"
+    },
+    "INV-007": {
+      "label": "Aucune action engageante sans confirmation explicite de l'utilisateur.",
+      "severity": "high"
+    },
+    "INV-008": {
+      "label": "L'interface ne modifie pas l'état du système sans passer par la persistance.",
+      "severity": "critique"
+    },
+    "INV-009": {
+      "label": "Toute action irréversible requiert une confirmation supplémentaire.",
+      "severity": "high"
+    },
+    "INV-010": {
+      "label": "Les données personnelles ne circulent jamais sans consentement explicite.",
+      "severity": "critique"
+    },
+    "INV-011": {
+      "label": "Chaque donnée a exactement une source canonique.",
+      "severity": "critique"
+    },
+    "INV-012": {
+      "label": "Un état n'est affiché que s'il est confirmé en base de données.",
+      "severity": "critique"
+    },
+    "INV-013": {
+      "label": "Toute action est associée à un contexte identifiable.",
+      "severity": "high"
+    },
+    "INV-014": {
+      "label": "Aucune donnée utilisateur transférée à un tiers sans consentement.",
+      "severity": "critique"
+    },
+    "INV-015": {
+      "label": "Le système nerveux se transforme depuis sa source. Il ne se duplique jamais.",
+      "severity": "critique"
+    }
   }
-
 }

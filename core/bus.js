@@ -21,6 +21,7 @@ const EVENTS = Object.freeze({
   SETTINGS_UPDATED:        'SETTINGS_UPDATED',
   BADGE_RECOMPUTED:        'BADGE_RECOMPUTED',
   INVARIANT_VIOLATED:      'INVARIANT_VIOLATED',
+  INVARIANT_WARNING:       'INVARIANT_WARNING',
 });
 
 const ImmatBus = (function () {

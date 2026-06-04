@@ -29,6 +29,7 @@
 <section id="sr" class="auth-screen"><div class="app-card"><h1 class="title">Nouveau mot de passe</h1><div class="field"><label class="label" for="iNewPwd">Nouveau mot de passe</label><div class="pw-wrap"><input id="iNewPwd" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" aria-label="Afficher le mot de passe" onclick="App.eye('iNewPwd',this)">Voir</button></div></div><div class="field"><label class="label" for="iNewCfm">Confirmer le mot de passe</label><div class="pw-wrap"><input id="iNewCfm" class="input" type="password" placeholder="••••••••" autocomplete="new-password"><button type="button" class="show-pw" aria-label="Afficher la confirmation" onclick="App.eye('iNewCfm',this)">Voir</button></div></div><button type="button" class="btn primary" onclick="App.updatePwd()">Mettre à jour</button><button type="button" class="btn secondary" onclick="App.show('sw')">← Retour</button><div id="resetSt" class="status-msg" aria-live="polite" role="status"></div></div></section>
 <section id="appScreen">
 <div id="map"></div>
+<div id="fabSignalHere" style="display:none;position:fixed;z-index:800;background:rgba(255,59,92,.95);color:#fff;border-radius:24px;padding:9px 16px;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap;pointer-events:all" onclick="App.openSignalHere()">📍 Signaler ici</div>
 <div class="map-shade"></div>
 
 <div class="top-bar">
@@ -69,6 +70,7 @@
 <div id="panelAltet" class="panel on">
   <!-- Étape 1 : choix catégorie -->
   <div id="sigStep1" class="sig-step active">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span>Étape 1 / 2</span></div>
     <div class="sig-step-title">Que voulez-vous signaler ?</div>
     <div class="sig-cat-grid">
       <button class="sig-cat-btn cat-route" onclick="App.sigStepRoute()">
@@ -89,6 +91,7 @@
   <!-- Étape 2 : sous-types Route -->
   <div id="sigStep2Route" class="sig-step">
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Type d'incident route</div>
     <div class="alert-grid">
       <button class="alert-card urgent" onclick="App.roadReport('accident');App.sigDone()"><span class="icon">💥</span><span>Accident</span></button>
@@ -102,12 +105,12 @@
     <div class="sig-section-hd" style="margin-top:8px">Alertes actives</div>
     <div id="alertsToolbar" class="alert-filter-pills"></div>
     <div id="alertsList" class="altet-list"><div class="empty-msg">Aucune alerte dans ton rayon.<br><small style="color:var(--muted);font-size:11px">Les incidents signalés par les conducteurs proches apparaîtront ici.</small></div></div>
-    <details id="alertHistoryBox" class="altet-history" style="margin-top:12px"><summary>Historique des signalements</summary><div id="alertHistoryList" class="altet-list"></div></details>
   </div>
 
   <!-- Étape 2 : sous-types Véhicule -->
   <div id="sigStep2Vehicle" class="sig-step">
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Quel problème sur le véhicule ?</div>
     <div class="sig-vehicle-input">
       <input id="sigVehiclePlate" class="plate-input" placeholder="Plaque : AB-123-CD" maxlength="9">
@@ -120,31 +123,13 @@
       <button class="alert-card medium" onclick="App.vehicleAlertQuick('Objet traînant sous le véhicule')"><span class="icon">⛓️</span><span>Objet</span></button>
       <button class="alert-card info" onclick="App.vehicleAlertQuick('Autre problème visible')"><span class="icon">⚠️</span><span>Autre</span></button>
     </div>
-    <!-- Legacy elements required by existing JS -->
     <div id="myAlertsList" class="altet-list" style="margin-top:8px"><div class="my-alert-empty">Aucune alerte active.</div></div>
-    <div id="signalRecapCard" class="signal-recap-card" style="display:none">
-      <div class="signal-recap-head"><span>✉️ Dernier signalement reçu</span><span class="chev">⌃</span></div>
-      <div class="signal-recap-body">
-        <div class="signal-recap-top">
-          <div class="signal-vehicle"><div class="signal-avatar">🚘</div><div><div class="signal-title">Le véhicule vous a contacté</div><div id="recapPlate" class="signal-plate">--</div><div id="recapSub" class="signal-sub">Immatriculation : --</div></div></div>
-          <div id="recapStatus" class="signal-state">En attente</div>
-        </div>
-        <div class="signal-info"><small>Information signalée :</small><b id="recapReason">Aucun signalement reçu</b></div>
-        <div id="recapTime" class="signal-time">◷ Aucun message.</div>
-        <div class="signal-actions">
-          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('utile')">👍 Info utile</button>
-          <button type="button" class="seen" onclick="App.respondLastVehicleAlert('recu')">✓ Reçu</button>
-          <button type="button" class="seen" onclick="App.markLastVehicleAlertSeen()">👁️ Vu</button>
-          <button type="button" class="pending" onclick="App.markLastVehicleAlertPending()">◷ En attente</button>
-          <button type="button" class="seen" onclick="App.callSignalPlate()">📞 Appeler</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Étape 2 : sous-types Aide -->
   <div id="sigStep2Aide" class="sig-step">
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">De quoi avez-vous besoin ?</div>
     <div class="alert-grid">
       <button class="alert-card urgent" onclick="App.assist('panne');App.sigDone()"><span class="icon">🚗</span><span>Panne</span></button>
@@ -159,18 +144,20 @@
       <div id="aideCallList" class="altet-list"></div>
     </div>
   </div>
+  <div id="alertHistoryBox" class="altet-history" style="display:none;margin-top:4px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px">
+    <div class="sig-section-hd" style="margin-bottom:6px">Mes signalements</div>
+    <div id="alertHistoryList" class="altet-list"></div>
+  </div>
   <!-- GPS Error helper -->
   <div id="gpsErrorMsg"></div>
 </div>
-<div id="panelDrive" class="panel"><div class="panel-inner-hd"><span>Navigation GPS</span></div><div class="section-lbl">Recherche</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Vitesse</div><div class="nav-card"><b id="trafficVal">--</b>Autour</div><div class="nav-card"><b id="laneVal">--</b>Alertes</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div><div class="traffic-bar"><span id="trafficBar"></span></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
-<div id="panelContact" class="panel">
-<div class="section-lbl">Envoyer un message</div><div class="msg-input-row"><input id="iTarget" class="plate-input inp-light" placeholder="AB-123-CD" maxlength="9"><button type="button" class="msg-send-btn" onclick="App.sendMsg()">Envoyer</button></div><div id="hTarget" class="hint"></div><textarea id="iMsg" class="msg-textarea" placeholder="Message court et utile…"></textarea><div id="hMsg" class="hint"></div><div class="contact-only-note">Ici, tu peux uniquement envoyer un message au véhicule sélectionné. Les signalements se font depuis le bouton Signaler.</div><div class="voice-row"><button type="button" onclick="App.voicePlate()">🎙 Plaque</button><button type="button" onclick="App.voiceMsg()">🎙 Message</button></div><button type="button" class="clear-btn" onclick="App.clearMsg()">Vider message</button></div>
+<div id="panelDrive" class="panel"><div class="panel-inner-hd"><span>Navigation GPS</span></div><div class="section-lbl">Recherche</div><div class="gps-card"><div class="gps-row"><input id="gpsSearch" placeholder="Rue, lieu, POI…"><button type="button" onclick="App.searchGps()">🔍</button><button type="button" onclick="App.voiceGps()">🎙️</button></div><div class="poi-grid"><button type="button" onclick="App.poi('station essence')">⛽ Carburant</button><button type="button" onclick="App.poi('restaurant')">🍽️ Resto</button><button type="button" onclick="App.poi('parking')">🅿️ Parking</button><button type="button" onclick="App.poi('garage automobile')">🔧 Garage</button><button type="button" onclick="App.poi('borne recharge')">🔌 Recharge</button><button type="button" onclick="App.poi('hôpital')">🏥 Santé</button></div><div id="gpsResults" class="gps-results"></div><div id="routeMini" class="route-mini"></div><div id="navPremium" class="nav-premium"><div class="nav-card"><b id="etaVal">--</b>ETA</div><div class="nav-card"><b id="remainVal">--</b>Restant</div><div class="nav-card"><b id="limitVal">--</b>Vitesse</div><div class="nav-card"><b id="trafficVal">--</b>Proches</div><div class="nav-card"><b id="laneVal">--</b>Alertes</div><div class="nav-card"><b id="recalcVal">OK</b>Recalcul</div></div></div><div class="section-lbl">Navigation</div><div class="act-grid"><button type="button" class="act-btn primary" onclick="App.locate()">📍 Me localiser</button><button type="button" class="act-btn" onclick="App.stopGps()">⏹ Stop GPS</button><button type="button" class="act-btn" onclick="App.openAlerts()">✅ Alertes</button><button type="button" class="act-btn" onclick="App.recenter()">🎯 Recentrer</button><button type="button" id="viewBtn" class="act-btn" onclick="App.cycleView()">🗺 Vue</button><button type="button" id="invisBtn" class="act-btn" onclick="App.toggleInvisible()">👻 Invisible</button><button type="button" class="act-btn" onclick="App.toggleVoice()">🔊 Voix</button></div><div class="fav-card"><h4>⭐ Favoris GPS</h4><div id="favMiniList" class="mini-list"><div class="empty-msg">Aucun favori.</div></div><button type="button" class="act-btn primary" style="margin-top:8px;width:100%" onclick="App.saveCurrentDestination()">⭐ Ajouter destination</button></div><div class="history-card"><h4>🕘 Historique GPS</h4><div id="historyMiniList" class="mini-list"><div class="empty-msg">Aucun historique.</div></div></div></div>
 <div id="panelMessages" class="panel">
   <div id="icMessagesPro" class="ic-msg-shell">
     <div class="ic-msg-tabs">
       <button type="button" data-mode="inbox" class="on" onclick="ImmatMessages.setMode('inbox')">Reçus</button>
       <button type="button" data-mode="sent" onclick="ImmatMessages.setMode('sent')">Envoyés</button>
-      <button type="button" data-mode="compose" onclick="ImmatMessages.setMode('compose')">Nouveau</button>
+      <button type="button" data-mode="compose" onclick="ImmatMessages.setMode('compose')">Composer ✏️</button>
     </div>
 
     <div id="icComposePanel" class="ic-compose-panel">
@@ -203,6 +190,7 @@
         <button type="button" onclick="ImmatMessages.quick('Je m\'arrête, merci.')">Je m'arrête</button>
         <button type="button" onclick="ImmatMessages.quick('Je vérifie, merci.')">Je vérifie</button>
         <button type="button" onclick="ImmatMessages.quick('Bien reçu, merci.')">Bien reçu</button>
+        <button type="button" onclick="ImmatMessages.quick('🙏 Merci !')">🙏 Merci</button>
       </div>
 
       <div class="ic-thread-composer">
@@ -211,7 +199,7 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
 <div id="panelActivite" class="panel">
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
@@ -257,6 +245,7 @@
       <button type="button" class="act-cat-tab on" data-tab="recus" onclick="App.actCatTab('recus')">Reçus <span class="act-tab-badge" id="actTabBadge" style="display:none">0</span></button>
       <button type="button" class="act-cat-tab" data-tab="envoyes" onclick="App.actCatTab('envoyes')">Envoyés</button>
     </div>
+    <div id="actTypeFilterBar" style="display:none;gap:6px;overflow:auto;padding:6px 0 2px;margin-bottom:4px"></div>
     <div id="actCatFeed" class="act-cat-feed"></div>
     <div class="act-status-bar" id="actStatusBar" style="display:none"><span id="actStatusText"></span><button type="button" onclick="App.markAllCatRead()">Tout marquer lu</button></div>
   </div>
@@ -278,10 +267,8 @@
     <span id="actBadge" class="nav-badge" style="display:none">0</span>
   </button>
 </nav>
-<!-- Legacy badge element for compatibility -->
-<span id="topMsgBadge" class="nav-badge" style="display:none;position:fixed;top:-9999px">0</span>
-<div id="reportPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Informe les conducteurs proches, la route ou demande de l'aide.</p><div id="reportTargetLine" class="report-target-line">Information générale envoyée aux véhicules proches.</div><div id="reportVehicleBlock" class="report-block"><h3 id="reportVehicleTitle">🚗 Informer les conducteurs</h3><div class="report-grid"><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Feux restés allumés')">💡 Feux allumés</button><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Problème d\'éclairage')">💡 Éclairage</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Élément semble se détacher')">🔧 Élément détaché</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div><div id="reportRouteBlock" class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button type="button" class="report-route" onclick="App.roadReport('accident')">🚗 Accident</button><button type="button" class="report-route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button type="button" class="report-route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button type="button" class="report-route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button type="button" class="report-route" onclick="App.roadReport('controle')">👮 Contrôle</button><button type="button" class="report-route" onclick="App.roadReport('danger')">❗ Danger</button></div></div><div id="reportAssistBlock" class="report-block"><h3>🆘 Demander de l'aide</h3><div class="report-grid"><button type="button" class="report-help" onclick="App.assist('panne')">🚗 Panne</button><button type="button" class="report-help" onclick="App.assist('carburant')">⛽ Carburant</button><button type="button" class="report-help" onclick="App.assist('batterie')">🔋 Batterie</button><button type="button" class="report-help" onclick="App.assist('moteur')">⚙️ Moteur</button><button type="button" class="report-urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button type="button" class="report-help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div></div>
-<div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div><div id="alertsPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('alertsPanel')">×</button><h2>Alertes actives</h2><div id="alertsToolbarOverlay" style="display:flex;gap:6px;overflow:auto;margin:10px 0;padding-bottom:4px"></div><div id="alertsListOverlay" class="list"><div class="empty-msg">Aucune alerte.</div></div><details id="alertHistoryBoxOverlay" style="margin-top:12px"><summary style="font-weight:900;cursor:pointer">Historique des signalements</summary><div id="alertHistoryListOverlay" class="list"></div></details></div>
+<div id="reportPanel" class="overlay"><button type="button" class="close-x" onclick="App.sigBack?.();App.closeOverlay('reportPanel')">×</button><h2>Signaler</h2><p>Informe les conducteurs proches, la route ou demande de l'aide.</p><div id="signalHereIndicator" style="display:none;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.25);border-radius:10px;padding:7px 12px;font-size:12px;color:#ff3b5c;margin-bottom:6px">📍 Signalement à la position choisie sur la carte</div><div id="reportTargetLine" class="report-target-line">Information générale envoyée aux véhicules proches.</div><div id="reportVehicleBlock" class="report-block"><h3 id="reportVehicleTitle">🚗 Informer les conducteurs</h3><div class="report-grid"><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Feux restés allumés')">💡 Feux allumés</button><button type="button" class="report-info" onclick="App.reportVehicleOrDrivers('Porte ou coffre mal fermé')">🚪 Porte/coffre</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Problème d\'éclairage')">💡 Éclairage</button><button type="button" class="report-important" onclick="App.reportVehicleOrDrivers('Élément semble se détacher')">🔧 Élément détaché</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Pneu ou roue dangereux')">🛞 Pneu/roue</button><button type="button" class="report-urgent" onclick="App.reportVehicleOrDrivers('Fumée ou risque incendie')">🚨 Fumée/feu</button></div></div><div id="reportRouteBlock" class="report-block"><h3>⚠️ Informer la route</h3><div class="report-grid"><button type="button" class="report-route" onclick="App.roadReport('accident')">🚗 Accident</button><button type="button" class="report-route" onclick="App.roadReport('bouchon')">🚦 Bouchon</button><button type="button" class="report-route" onclick="App.roadReport('obstacle')">⚠️ Obstacle</button><button type="button" class="report-route" onclick="App.roadReport('travaux')">🚧 Travaux</button><button type="button" class="report-route" onclick="App.roadReport('controle')">👮 Contrôle</button><button type="button" class="report-route" onclick="App.roadReport('danger')">❗ Danger</button></div></div><div id="reportAssistBlock" class="report-block"><h3>🆘 Demander de l'aide</h3><div class="report-grid"><button type="button" class="report-help" onclick="App.assist('panne')">🚗 Panne</button><button type="button" class="report-help" onclick="App.assist('carburant')">⛽ Carburant</button><button type="button" class="report-help" onclick="App.assist('batterie')">🔋 Batterie</button><button type="button" class="report-help" onclick="App.assist('moteur')">⚙️ Moteur</button><button type="button" class="report-urgent" onclick="App.assist('incendie')">🔥 Incendie</button><button type="button" class="report-help" onclick="App.assist('perdu')">🧭 Perdu</button></div></div></div>
+<div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div>
 <div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
 <div id="floatingCard" class="floating-card" style="display:none">
   <div class="fc-icon" id="fcIcon">🚘</div>
@@ -385,7 +372,7 @@ const S={uid:null,mode:'login',map:null,myMarker:null,otherMkrs:[],roadMkrs:[],r
 let lastNotif='',lastSpoken='',toastTimer=null,gpsTimer=null;
 function badgeFmt(n){n=Number(n)||0;return n>99?'99+':String(n)}
 function pendingSignalCount(){try{return (S.alerts||[]).filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen').length}catch(e){return 0}}
-function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};try{App.updateCommunityStatus()}catch(e){}}
+function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};try{App.updateCommunityStatus()}catch(e){};try{App.updateActBadge?.()}catch(e){}}
 function trustDelta(plate,delta){
   plate=nPlate(plate);
   if(!plate)return 50;
@@ -393,6 +380,7 @@ function trustDelta(plate,delta){
   const next=Math.max(0,Math.min(100,cur+(Number(delta)||0)));
   S.trust=S.trust||{};
   S.trust[plate]=next;
+  const _tk=Object.keys(S.trust);if(_tk.length>300){const _drop=_tk.slice(0,_tk.length-300);_drop.forEach(k=>delete S.trust[k]);}
   safeSet('ic_trust_scores',S.trust);
   return next;
 }
@@ -422,7 +410,7 @@ let _schedFeedId=null,_schedBadgeId=null;
 function schedFeed(){cancelAnimationFrame(_schedFeedId);_schedFeedId=requestAnimationFrame(()=>App.renderActivityFeed?.())}
 function schedBadge(){cancelAnimationFrame(_schedBadgeId);_schedBadgeId=requestAnimationFrame(()=>App.updateActBadge?.())}
 function normalizeAlert(raw){if(!raw)return null;const remoteId=String(raw.remoteId||raw.rid||raw.id||'').trim();const type=raw.type||inferType((raw.reason||'')+(raw.label||'')+(raw.plate||''));const meta=cat(type);const at=raw.at?Number(raw.at):raw.created_at?new Date(raw.created_at).getTime():Date.now();const key=remoteId||String(raw.id||['local',type,raw.lat??raw.latitude,raw.lng??raw.longitude,at].join('|'));return{key,id:String(raw.id||remoteId||key),remoteId:remoteId||null,type,label:raw.label||meta.label,reason:(raw.reason||raw.label||meta.label||'').replace(/^\[[^\]]+\]\s*/,'').trim(),level:raw.level||meta.level,group:raw.group||meta.group,plate:nPlate(raw.plate||''),lat:raw.lat!=null?Number(raw.lat):raw.latitude!=null?Number(raw.latitude):null,lng:raw.lng!=null?Number(raw.lng):raw.longitude!=null?Number(raw.longitude):null,at,status:String(raw.status||'active').toLowerCase(),updatedAt:raw.updated_at?new Date(raw.updated_at).getTime():at,updated_at:raw.updated_at||raw.created_at||new Date(at).toISOString(),_mine:raw._mine===true};}
-function upsertAlert(alert){if(!alert||!alert.key)return null;if(alert.group==='vehicle')return null;if(['resolved','gone','expired','deleted'].includes(String(alert.status||'')))return null;if((S.resolvedRemoteIds||[]).some(r=>r&&(String(r)===String(alert.key)||String(r)===String(alert.remoteId||''))))return null;if(Date.now()-alert.at>ttlFor(alert.type))return null;const idx=(S.alerts||[]).findIndex(a=>String(a.key||a.remoteId||a.id||'')===String(alert.key));if(idx>=0){const ex=S.alerts[idx];if(ex.updatedAt&&alert.updatedAt&&ex.updatedAt>alert.updatedAt)return ex;S.alerts[idx]={...ex,...alert};return S.alerts[idx];}S.alerts.unshift(alert);S.alerts=S.alerts.slice(0,80);S.alertHistory.unshift({...alert,seenAt:Date.now()});S.alertHistory=S.alertHistory.slice(0,150);return alert;}
+function upsertAlert(alert){if(!alert||!alert.key)return null;if(['resolved','gone','expired','deleted'].includes(String(alert.status||'')))return null;if((S.resolvedRemoteIds||[]).some(r=>r&&(String(r)===String(alert.key)||String(r)===String(alert.remoteId||''))))return null;if(Date.now()-alert.at>ttlFor(alert.type))return null;const idx=(S.alerts||[]).findIndex(a=>String(a.key||a.remoteId||a.id||'')===String(alert.key));if(idx>=0){const ex=S.alerts[idx];if(ex.updatedAt&&alert.updatedAt&&ex.updatedAt>alert.updatedAt)return ex;S.alerts[idx]={...ex,...alert};return S.alerts[idx];}S.alerts.unshift(alert);S.alerts=S.alerts.slice(0,80);S.alertHistory.unshift({...alert,seenAt:Date.now()});S.alertHistory=S.alertHistory.slice(0,150);return alert;}
 function syncDerivedAlertUI(){saveAlerts();try{App.syncAlertMarkers?.()}catch(e){}try{App.renderAlerts?.()}catch(e){}try{App.renderMyAlertsBlock?.()}catch(e){}schedFeed();schedBadge();try{App.updateCommunityStatus?.()}catch(e){}}
 function saveAlerts(){safeSet('ic_alerts',S.alerts.slice(0,80));safeSet('ic_alert_history',S.alertHistory.slice(0,150));safeSet('ic_offline_reports',S.offlineReports.slice(0,50));safeSet('ic_resolved_remote_ids',(S.resolvedRemoteIds||[]).slice(0,200))}
 function distanceOf(a){if(S.myLat==null||S.myLng==null||a.lat==null||a.lng==null)return null;try{return km(S.myLat,S.myLng,Number(a.lat),Number(a.lng))}catch(e){return null}}
@@ -441,7 +429,7 @@ const App={
 show(id){['sw','sa','sp','sr'].forEach(x=>$(x)?.classList.remove('active'));$('appScreen')?.classList.remove('active');if(id==='sm'||id==='appScreen')$('appScreen')?.classList.add('active');else $(id)?.classList.add('active')},
 eye(id,b){let e=$(id),v=e.type==='password';e.type=v?'text':'password';b.textContent=v?'Masquer':'Voir'},
 goAuth(m){this.setMode(m);this.show('sa');setTimeout(()=>$('iEmail')?.focus(),60)},
-setMode(m){S.mode=m==='signup'?'signup':'login';let su=S.mode==='signup';$('authTitle').textContent=su?'Créer un compte':'Connexion';$('authSubtitle').textContent=su?'Renseigne tes informations conducteur.':'Entre ton email et ton mot de passe.';$('authBtn').textContent=su?'Créer mon compte':'Se connecter';$('authBtn').disabled=false;$('tabSignup').classList.toggle('active',su);$('tabLogin').classList.toggle('active',!su);$('suExtras').classList.toggle('hidden',!su);$('confirmWrap').classList.toggle('hidden',!su);$('resendBtn').classList.add('hidden');$('forgotPwdBtn')?.classList.toggle('hidden',su);st('authSt','','');['hEmail','hPwd','hPhone','hPlate','hColor','hConfirm'].forEach(id=>hint(id,'',''));if($('iPwd'))$('iPwd').autocomplete=su?'new-password':'current-password';if(su)hint('hPwd','','Min. 8 car., 1 majuscule, 1 spécial.');},
+setMode(m){S.mode=m==='signup'?'signup':'login';let su=S.mode==='signup';$('authTitle').textContent=su?'Créer un compte':'Connexion';$('authSubtitle').textContent=su?'Renseigne tes informations conducteur.':'Entre ton email et ton mot de passe.';$('authBtn').textContent=su?'Créer mon compte':'Se connecter';$('authBtn').disabled=false;$('tabSignup').classList.toggle('active',su);$('tabLogin').classList.toggle('active',!su);$('suExtras').classList.toggle('hidden',!su);$('confirmWrap').classList.toggle('hidden',!su);$('resendBtn').classList.add('hidden');$('forgotPwdBtn')?.classList.toggle('hidden',su);st('authSt','','');['hEmail','hPwd','hPhone','hPlate','hColor','hConfirm'].forEach(id=>hint(id,'',''));if($('iPwd'))$('iPwd').autocomplete=su?'new-password':'current-password';if(su)hint('hPwd','','Min. 8 car., 1 majuscule, 1 spécial.');if(su)hint('hPlate','','Définitive après inscription — impossible à modifier.');},
 pending(email,p,ph,c){set('ic_pending_profile',JSON.stringify({email,pseudo:email.split('@')[0],owner_plate:p,phone:ph,vehicle_color:c}))},
 pendingGet(email){try{let p=JSON.parse(get('ic_pending_profile','null'));return p?.email===email?p:null}catch(e){return null}},
 async plateAvailable(p,self){if(!sb)return true;try{let{data,error}=await sb.from('profiles').select('id').eq('owner_plate',p).maybeSingle();return error||!data?.id||data.id===self}catch(e){return true}},
@@ -509,8 +497,8 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
-    try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');}catch(e){S.isGardien=false;}
-    if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
+    try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');if(S.isGardien)document.body.classList.add('is-gardien');}catch(e){S.isGardien=false;}
+    if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
 
     let p=null;
     try{
@@ -544,8 +532,67 @@ async afterAuth(){
   }finally{S._authRunning=false;}
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;if($('angeFab'))$('angeFab').style.display='flex';}else S.isGardien=false;}).catch(()=>{S.isGardien=false;});}toast('Connecté à ImmatConnect.','ok')},
-initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',()=>this.hideVehicleContextMenu());this.initSheetDrag()},
+openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o)_o.style.display='flex';}},1400)},
+dismissOnboarding(){set('ic_onboarded','1');const _o=$('onboardingOverlay');if(_o)_o.style.display='none';},
+openGardienDashboard(){
+  const el=$('gardienDashboard'),body=$('gardienDashboardBody');
+  if(!el||!body)return;
+  el.style.display='block';
+  try{
+    const d=window.ImmatOrganism?.diagnose?.()||{health:'inconnu',summary:'ImmatOrganism non initialisé.',violations:[],events:[]};
+    const phase=window.ImmatBrain?.getPhase?.()??1;
+    const hCol=d.health==='ok'?'#4caf50':d.health==='violated'?'#e53935':'#f0a500';
+    const hLbl=d.health==='ok'?'Sain ✅':d.health==='violated'?'Violation critique ⛔':'Dégradé ⚠️';
+    const now=Date.now();
+    const vHtml=(d.violations||[]).slice(-5).reverse().map(v=>`<div style="padding:6px 8px;background:#1a0a0a;border-left:3px solid #e53935;border-radius:0 4px 4px 0;margin-bottom:4px"><span style="color:#e57373">${esc(v.invariant)}</span> · <span style="color:#aaa">${esc(v.label||'')}</span><span style="color:#555;float:right">${Math.round((now-v.at)/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucune violation récente.</div>';
+    const eHtml=(d.events||[]).slice(-5).reverse().map(e=>`<div style="padding:4px 0;border-bottom:1px solid #1a1a2e;color:#888"><span style="color:#a5b4fc">${esc(e.event)}</span><span style="float:right;color:#555">${Math.round(e.ago/1000)}s</span></div>`).join('')||'<div style="color:#555">Aucun événement.</div>';
+    const trust=Object.entries(S.trust||{}).map(([p,s])=>`<span style="color:${Number(s)>=75?'#4caf50':Number(s)>=35?'#f0a500':'#e57373'}">${esc(p)} ${s}%</span>`).join(' · ')||'<span style="color:#555">Aucune donnée</span>';
+    const callsData=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0}');
+    const fbData=JSON.parse(localStorage.getItem('ic_ange_feedback')||'[]');
+    const fbPos=fbData.filter(f=>f.v===1).length,fbNeg=fbData.filter(f=>f.v===0).length;
+    body.innerHTML=`
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b style="color:#c4b5fd">État du système</b>
+          <span style="color:${hCol};font-weight:700">${hLbl}</span>
+        </div>
+        <div style="color:#888">${esc(d.summary||'')}</div>
+        <div style="margin-top:8px;display:flex;gap:16px;font-size:12px">
+          <span>Phase : <b style="color:#c4b5fd">${phase}</b></span>
+          <span>Événements : <b>${(d.events||[]).length}</b></span>
+          <span>Violations : <b style="color:${(d.violations||[]).length?'#e57373':'#4caf50'}">${(d.violations||[]).length}</b></span>
+          <span>Alertes actives : <b>${(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length}</b></span>
+        </div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Violations récentes (5 dernières)</b>
+        <div style="margin-top:8px">${vHtml}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Événements bus (5 derniers)</b>
+        <div style="margin-top:8px">${eHtml}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Ange — session</b>
+        <div style="margin-top:6px;color:#888">Appels : <b>${callsData.n||0}/10</b> · Feedback 👍 <b>${fbPos}</b> · 👎 <b>${fbNeg}</b></div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
+        <b style="color:#c4b5fd">Scores fiabilité conducteurs</b>
+        <div style="margin-top:6px;font-size:12px;line-height:1.8">${trust}</div>
+      </div>
+      <div style="background:#0f0f1a;border-radius:10px;padding:12px">
+        <b style="color:#c4b5fd">Actions gardien</b>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+          <button onclick="App.restoreMessages();toast('Messages restaurés','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">📨 Restaurer msgs</button>
+          <button onclick="App.forceSyncAlerts();toast('Sync lancée','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Sync alertes</button>
+          <button onclick="App.clearOfflineCache()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🧹 Vider cache</button>
+          <button onclick="App.openGardienDashboard()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
+        </div>
+      </div>`;
+  }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
+},
+closeGardienDashboard(){const el=$('gardienDashboard');if(el)el.style.display='none';},
+initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',e=>{this.hideVehicleContextMenu();if($('fabSignalHere'))$('fabSignalHere').style.display='none';});S.map.on('contextmenu',e=>{e.originalEvent?.preventDefault?.();this.showSignalHere(e);});this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleVoiceGender(){const g=get('ic_voice_gender','female')==='female'?'male':'female';set('ic_voice_gender',g);const btn=$('voiceGenderBtn');if(btn)btn.textContent=g==='male'?'Homme ♂':'Femme ♀';speak(g==='male'?'Voix masculine activée.':'Voix féminine activée.',true);},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
 locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed,heading}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true,heading!=null&&!isNaN(heading)?heading:null),zIndexOffset:-100,riseOnHover:false}).addTo(S.map);this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
@@ -694,70 +741,9 @@ clusterCloseVehicles(){
     }
   });
 },addRecent(p,c,d){S.recent=S.recent.filter(x=>x.plate!==p);S.recent.unshift({plate:p,color:c,dist:d,at:Date.now()});S.recent=S.recent.slice(0,20);safeSet('ic_recent_vehicles',S.recent)},openNearby(){this.closeAllOverlays();$('nearbyPanel').classList.add('show');$('nearbyList').innerHTML='<div class="empty-msg">Recherche…</div>';this.loadOthers()},renderNearby(){let list=$('nearbyList');if(!list)return;let rows=S.nearby||[];list.innerHTML=rows.length?rows.map(d=>{let dist=d.dist!=null?(d.dist<1?Math.round(d.dist*1000)+' m':d.dist.toFixed(1)+' km'):'distance inconnue';return'<div class="list-item"><span>'+dot(d.color)+' <b>'+esc(d.plate)+'</b><br><small>'+esc(d.pseudo)+' · '+esc(dist)+'</small></span><button type="button" onclick="App.pickPlate(\''+js(d.plate)+'\')">Contacter</button></div>'}).join(''):'<div class="empty-msg">Aucun conducteur connecté.</div>'},updateFrontVehicle(){const box=$('frontCarBanner'),txt=$('frontCarText');if(!box||!txt)return;if(S.frontVehicle&&S.driveMode){const d=S.frontVehicle.dist?Math.round(S.frontVehicle.dist*1000)+' m':'proche';txt.innerHTML='<b>Véhicule devant</b> · '+esc(S.frontVehicle.plate)+' · '+esc(d);box.classList.add('show')}else box.classList.remove('show')},contactFrontVehicle(){if(!S.frontVehicle)return toast('Aucun véhicule devant.','bad');this.pickPlate(S.frontVehicle.plate)},pickPlate(p){S.selPlate=nPlate(p);S.conv=S.selPlate;if($('iTarget'))$('iTarget').value=S.selPlate;if($('icComposePlate'))$('icComposePlate').value=fPlate(p);S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:S.selPlate});this.updateReportTarget?.();this.hideVehicleContextMenu?.();this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText'))$('icComposeText').focus()}catch(e){}},120)},
-showVehicleContextMenu(vehicle){try{S.map?.closePopup?.()}catch(e){}const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate;if($('vehicleContextPlate'))$('vehicleContextPlate').textContent='🚗 '+S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;if($('icComposePlate'))$('icComposePlate').value=fPlate(plate);this.updateReportTarget?.()}this.hideVehicleContextMenu?.();if(action==='contact'){this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText'))$('icComposeText').focus()}catch(e){}},120)}else if(action==='signal'){// Pré-remplir la plaque dans le panneau signalement véhicule
+showVehicleContextMenu(vehicle){try{S.map?.closePopup?.()}catch(e){}const menu=$('vehicleContextMenu');if(!menu)return;S.contextVehicle=vehicle||{};if(vehicle?.plate){S.selPlate=nPlate(vehicle.plate);if($('iTarget'))$('iTarget').value=S.selPlate;if($('vehicleContextPlate'))$('vehicleContextPlate').textContent='🚗 '+S.selPlate}this.updateReportTarget?.();let latlng=null;if(vehicle?.lat!=null&&vehicle?.lng!=null)latlng={lat:vehicle.lat,lng:vehicle.lng};else if(vehicle?.marker?.getLatLng)latlng=vehicle.marker.getLatLng();if(!latlng||!S.map)return;try{const p=S.map.latLngToContainerPoint([latlng.lat,latlng.lng]);menu.style.left=p.x+'px';menu.style.top=p.y+'px';menu.classList.add('show')}catch(e){}},hideVehicleContextMenu(){$('vehicleContextMenu')?.classList.remove('show')},clearSignalHereContext(){S.tapLat=null;S.tapLng=null;clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';if($('signalHereIndicator'))$('signalHereIndicator').style.display='none';},showSignalHere(e){if($('panelDrive')?.classList.contains('on'))return;S.tapLat=e.latlng.lat;S.tapLng=e.latlng.lng;const fab=$('fabSignalHere');if(!fab||!$('map'))return;const rect=$('map').getBoundingClientRect();fab.style.left=(rect.left+e.containerPoint.x)+'px';fab.style.top=(rect.top+e.containerPoint.y)+'px';fab.style.display='block';clearTimeout(S._tapFabTimer);S._tapFabTimer=setTimeout(()=>{this.clearSignalHereContext?.()},5000);},openSignalHere(){clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';if($('signalHereIndicator'))$('signalHereIndicator').style.display='block';this.panel('altet');App._sigReset?.();},vehicleContextAction(action){const plate=nPlate((S.contextVehicle?.plate||S.selPlate||''));if(plate){S.selPlate=plate;if($('iTarget'))$('iTarget').value=plate;if($('icComposePlate'))$('icComposePlate').value=fPlate(plate);this.updateReportTarget?.()}this.hideVehicleContextMenu?.();if(action==='contact'){this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText'))$('icComposeText').focus()}catch(e){}},120)}else if(action==='signal'){// Pré-remplir la plaque dans le panneau signalement véhicule
 if(plate&&$('sigVehiclePlate'))$('sigVehiclePlate').value=fPlate(plate);this.openVehicleReport()}else if(action==='assist'){this.openAssist()}else if(action==='block'){this.blockPlate(plate)}},
-selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target){if(S.selPlate&&S.selPlate!==this.ownPlate())$('iTarget').value=S.selPlate;else return toast('Choisis un autre véhicule.','bad')}$('iMsg').value=t;this.panel('contact')},clearMsg(){$('iMsg').value='';$('iTarget').value='';hint('hTarget','','');hint('hMsg','','')},
-async sendMsg(){
-  // Lock button pour éviter le double-clic
-  const sendBtn=document.querySelector('.msg-send-btn');
-  if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Envoi…';}
-  const unlock=()=>{if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer';}};
-  try{
-  // Règle stricte : l'expéditeur est toujours le compte connecté,
-  // la plaque sélectionnée est uniquement le destinataire.
-  const myPlate=this.ownPlate();
-  const plate=this.selectedTargetPlate();
-  const msg=$('iMsg').value.trim();
-  if(!myPlate){unlock();return toast('Profil conducteur introuvable.','bad');}
-  if(!plate){unlock();return hint('hTarget','error','Sélectionne le véhicule destinataire.');}
-  if(!vPlate(plate)){unlock();return hint('hTarget','error','Plaque destinataire invalide.');}
-  if(plate===myPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-  if(!msg){unlock();return hint('hMsg','error','Ajoute un message.');}
-
-  const now=Date.now();S.msgClicks=S.msgClicks.filter(t=>now-t<60000);
-  if(S.msgClicks.length>=CFG.maxMsgPerMinute){unlock();return toast('Trop de messages.','bad');}
-  S.msgClicks.push(now);
-
-  const {data:ud}=await sb.auth.getUser(),u=ud?.user;
-  if(!u){unlock();return toast('Reconnecte-toi.','bad');}
-
-  const {data:meProfile}=await sb.from('profiles').select('id,owner_plate').eq('id',u.id).maybeSingle();
-  const senderPlate=fPlate(meProfile?.owner_plate||myPlate);
-  if(!senderPlate){unlock();return toast('Profil conducteur incomplet.','bad');}
-  if(plate===senderPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  // Cherche la plaque avec tirets ET sans tirets pour compatibilité
-  let {data:target,error:te}=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plate).maybeSingle();
-  if(!target?.id){
-    const plateCompact=nPlate(plate);
-    const r2=await sb.from('profiles').select('id,owner_plate').eq('owner_plate',plateCompact).maybeSingle();
-    if(r2.data?.id){target=r2.data;te=r2.error;}
-  }
-  if(te)console.warn(te);
-  if(!target?.id){unlock();return toast('Aucun utilisateur avec cette plaque.','bad');}
-  if(target.id===u.id){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  const receiverPlate=fPlate(target.owner_plate||plate);
-  if(receiverPlate===senderPlate){unlock();return hint('hTarget','error',"Impossible de t'envoyer un message à toi-même.");}
-
-  const {data:a}=await sb.from('messages').select('status').or('and(sender_id.eq.'+u.id+',receiver_id.eq.'+target.id+'),and(sender_id.eq.'+target.id+',receiver_id.eq.'+u.id+')');
-  const rows=a||[],acc=rows.some(x=>x.status==='accepted');
-  // Plus de blocage pending — on autorise toujours l'envoi
-
-  // On tente d'abord avec les plaques explicites. Si ta table n'a pas encore
-  // sender_plate/receiver_plate, fallback automatique sans casser l'envoi.
-  const basePayload={sender_id:u.id,receiver_id:target.id,target_plate:receiverPlate,message:msg,status:'accepted'};
-  const richPayload={...basePayload,sender_plate:senderPlate,receiver_plate:receiverPlate};
-  let {error}=await sb.from('messages').insert(richPayload);
-  if(error&&/sender_plate|receiver_plate|column|schema cache/i.test(String(error.message||''))){
-    ({error}=await sb.from('messages').insert(basePayload));
-  }
-  if(error){console.error(error);unlock();return toast('Erreur envoi.','bad');}
-
-  $('iMsg').value='';S.conv=receiverPlate;S.selPlate=receiverPlate;if($('iTarget'))$('iTarget').value=receiverPlate;
-  toast('✅ Message envoyé à '+receiverPlate+'.','ok');
-  this.loadMsgs();
-  }catch(e){console.error(e);toast('Erreur message.','bad');}finally{unlock();}},
+selectedTargetPlate(){const v=nPlate($('iTarget')?.value||S.selPlate||S.contextVehicle?.plate||'');const me=this.ownPlate();return v&&v!==me?v:''},quickMsg(t){const target=this.selectedTargetPlate();if(!target)return toast('Choisis un autre véhicule.','bad');if($('icComposePlate'))$('icComposePlate').value=fPlate(target);this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText')){$('icComposeText').value=t;$('icComposeText').focus()}}catch(e){}},120)},
 async startMsgs(){await this.loadMsgs();await this.subMsgs()},
 async loadMsgs(){
   try{const p=window.ImmatMessages?.refresh?.();if(p&&typeof p.then==='function')await p}catch(e){}
@@ -787,7 +773,7 @@ msgHtml(m,my){
 },
 signalFeedback:async function(id,sender,plate,kind){let delta=0,label='Merci';if(kind==='utile'){delta=8;label='✅ Info utile'}else if(kind==='regle'){delta=3;label='👌 Déjà réglé'}else if(kind==='faux'){delta=-12;label='❌ Faux signalement'}const score=trustDelta(plate,delta);try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&sender)await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:sender,target_plate:plate,message:label+' — note confiance actuelle : '+score+'%',status:'accepted'})}catch(e){}toast(label+' · confiance '+score+'%','ok');this.loadMsgs()},
 async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact a été acceptée.',status:'accepted'});this.loadMsgs()},async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;if(window.ImmatMessages?.deleteMessage){await ImmatMessages.deleteMessage(id);}else{let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}if(!d.includes(String(id)))d.push(String(id));try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}toast('Message supprimé.','ok');this.loadMsgs();}},
-async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;if(window.ImmatMessages?.deleteThread){await ImmatMessages.deleteThread(S.conv)}else{const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===S.conv||m._displayPlate===S.conv||m._convPlate===S.conv);let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}msgs.forEach(m=>{if(!d.includes(String(m.id)))d.push(String(m.id))});try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}}S.conv='all';toast('Conversation supprimée.','ok');this.renderActivityFeed?.();this.updateActBadge?.();},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');$('iTarget').value=S.conv;$('iMsg').value=t;this.panel('contact')},
+async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;if(window.ImmatMessages?.deleteThread){await ImmatMessages.deleteThread(S.conv)}else{const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===S.conv||m._displayPlate===S.conv||m._convPlate===S.conv);let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}msgs.forEach(m=>{if(!d.includes(String(m.id)))d.push(String(m.id))});try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}}S.conv='all';toast('Conversation supprimée.','ok');this.renderActivityFeed?.();this.updateActBadge?.();},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if($('icComposePlate'))$('icComposePlate').value=fPlate(S.conv);this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText')){$('icComposeText').value=t;$('icComposeText').focus()}}catch(e){}},120)},
 async subMsgs(){
   const {data:ud}=await sb.auth.getUser(),u=ud?.user;
   if(!u)return;
@@ -801,15 +787,18 @@ async subMsgs(){
       const profs=await profilesByIds([m.sender_id]);
       const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
       this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl||null);
-      try{this.showFloatingCard('💬','Message de '+(pl||'inconnu'),''+((m.message||'').slice(0,40)),'Vu','Répondre →',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}
+      const _txt=String(m.message||'');let _ic003=false;
+      if(_txt.startsWith("J’arrive")||_txt.startsWith("J’arrive")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Helper en route',pl+' vient vous aider','OK','💬 Messages',()=>{},()=>{S.conv=pl;this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.openThread?.(pl)}catch(e2){}},'urgent')}catch(e){}}}
+      if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(pl||'Le conducteur')+' a vu votre signalement','ok');}
+      if(!_ic003&&!_txt.includes('note confiance actuelle')){try{this.showFloatingCard('💬','Message de '+(pl||'inconnu'),''+(_txt.slice(0,40)),'Vu','Répondre →',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}}
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
 },notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
 async subLocs(){if(!sb)return;if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if($('appScreen').classList.contains('active'))this.loadOthers()}).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime locs KO',err);setTimeout(()=>{S.chLoc=null;this.subLocs?.()},5000)}})},async subReports(){let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let{data:p}=await sb.from('profiles').select('owner_plate').eq('id',u.id).maybeSingle(),my=nPlate(p?.owner_plate);if(!my)return;if(S.chReports)await sb.removeChannel(S.chReports);S.chReports=sb.channel('ic_reports_'+u.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},x=>{}).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime reports KO',err);setTimeout(()=>{S.chReports=null;this.subReports?.()},5000)}})},
-addCommunityAlert(raw,opts={}){const alert=normalizeAlert(raw);const saved=upsertAlert(alert);if(!saved)return null;syncDerivedAlertUI();if(opts.notify&&isNearby(saved)){const meta=cat(saved.type);notifyAlert(meta.icon+' '+meta.label,saved.reason,saved.level);try{this.showFloatingCard(meta.icon,'Incident '+meta.label,(nPlate(saved.plate)||'Conducteur proche')+(saved.reason?' · '+saved.reason:''),'Vu','→',()=>this.actConfirmAlert(saved.id,'seen'),()=>{this.navActivite?.();},saved.level)}catch(e){}}return saved},
+addCommunityAlert(raw,opts={}){const alert=normalizeAlert(raw);const saved=upsertAlert(alert);if(!saved)return null;syncDerivedAlertUI();if(opts.notify&&isNearby(saved)){const meta=cat(saved.type);notifyAlert(meta.icon+' '+meta.label,saved.reason,saved.level);try{this.showFloatingCard(meta.icon,'Incident '+meta.label,(nPlate(saved.plate)||'Conducteur proche')+(saved.reason?' · '+saved.reason:''),'Vu',saved.group==='assist'?'✋ J\'aide':'🗺 Voir',()=>this.actConfirmAlert(saved.id,'seen'),saved.group==='assist'?()=>{this.actHelpReply?.(nPlate(saved.plate||''));}:()=>{App.actViewOnMap?.(saved.id);},saved.level)}catch(e){}}return saved},
 addCommunityAlertMarker(a){if(!S.map||a.lat==null||a.lng==null)return;const mkey=a.key||a.id;if(S.alertMarkersById[mkey])return;const meta=cat(a.type),color=a.level==='urgent'?'#ff2d55':a.level==='important'?'#ff9500':'#10161d';const marker=L.marker([a.lat,a.lng],{icon:L.divIcon({html:'<div class="road-pin" style="background:'+color+';padding:6px;border-radius:12px">'+meta.icon+'</div>',iconSize:[38,38],iconAnchor:[19,19],className:''})}).addTo(S.map);marker.bindPopup('<b>'+esc(meta.icon+' '+(a.label||meta.label))+'</b><br><small>'+esc(a.reason||'Signalement')+'</small><br><button type="button" onclick="App.dismissAlert(\''+js(a.key||a.id)+'\')">Retirer</button>');S.alertMarkersById[mkey]=marker},
-cleanupAlerts(){const before=S.alerts.length;S.alerts=S.alerts.filter(a=>Date.now()-(Number(a.at)||Date.now())<ttlFor(a.type));Object.keys(S.alertMarkersById).forEach(id=>{if(!S.alerts.some(a=>a.id===id||a.key===id)){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}});if(before!==S.alerts.length){saveAlerts();this.renderAlerts()}this.updateCommunityStatus()},syncAlertMarkers(){if(!S.map)return;(S.alerts||[]).forEach(a=>{if(a.lat!=null&&a.lng!=null&&!S.alertMarkersById[a.key||a.id])this.addCommunityAlertMarker(a);});},setAlertFilter(f){S.alertFilter=f||'all';set('ic_alert_filter',S.alertFilter);this.renderAlerts()},openAlerts(){this.panel('altet');this.syncCommunityAlerts();this.renderAlerts()},
-renderAlerts(){const list=$('alertsList');if(!list)return;const f=S.alertFilter||'all',toolbar=$('alertsToolbar');if(toolbar)toolbar.innerHTML=['all','route','assist','vehicle','urgent'].map(fi=>'<button type="button" onclick="App.setAlertFilter(\''+fi+'\')" style="border-radius:999px;padding:8px 10px;font-weight:900;background:'+(fi===f?'#10161d':'#eef2f6')+';color:'+(fi===f?'#fff':'#10161d')+'">'+(fi==='all'?'Toutes':fi==='route'?'Route':fi==='assist'?'Aide':fi==='vehicle'?'Véhicule':'Urgent')+'</button>').join('');let rows=S.alerts.filter(a=>isNearby(a));if(f==='urgent')rows=rows.filter(a=>a.level==='urgent');else if(f!=='all')rows=rows.filter(a=>a.group===f||a.type===f);rows.sort((a,b)=>(b.level==='urgent')-(a.level==='urgent')||(b.at||0)-(a.at||0));list.innerHTML=rows.length?rows.map(a=>{const m=cat(a.type),d=distanceOf(a),ds=d==null?'':(d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km'),when=new Date(a.at||Date.now()).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),status=a.status==='seen'?'Vu':'En attente',isVeh=a.group==='vehicle'||a.type==='vehicule',sender=nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||'');const title=isVeh?'🚗 Le véhicule vous a contacté':m.icon+' '+(a.label||m.label);const details=isVeh?('Immat : '+(sender||'non renseignée')+' · Info signalée : '+(a.reason||'Signalement')+(ds?' · '+ds:'')+' · '+when):((a.reason||'Signalement')+(ds?' · '+ds:'')+' · '+when);return'<div class="list-item"><span><b>'+esc(title)+'</b><br><small>'+esc(details)+'</small><br><small>Statut : '+esc(status)+'</small></span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button type="button" style="min-height:44px" onclick="App.markAlertSeen(\''+js(a.id)+'\')">Vu</button><button type="button" style="min-height:44px" onclick="App.markAlertPending(\''+js(a.id)+'\')">En attente</button></span></div>'}).join(''):'<div class="empty-msg">Aucune alerte dans ton rayon.<br><small style="color:var(--muted);font-size:11px">Signale un incident via "Signaler" pour en créer une.</small></div>';const h=$('alertHistoryList');if(h)h.innerHTML=S.alertHistory.slice(0,30).map(a=>'<div class="list-item"><span><b>'+esc((a.group==='vehicle'||a.type==='vehicule')?'🚗 Le véhicule vous a contacté':cat(a.type).icon+' '+(a.label||cat(a.type).label))+'</b><br><small>'+esc((a.reason||'Signalement')+' · '+new Date(a.at||Date.now()).toLocaleString('fr-FR'))+'</small></span></div>').join('')||'<div class="empty-msg">Aucun historique.</div>';this.updateCommunityStatus()},
+cleanupAlerts(){const before=S.alerts.length;(S.alerts||[]).filter(a=>a.group==='assist'&&(a._mine||a._own)&&a.status!=='helper_coming'&&Date.now()-(Number(a.at)||Date.now())>=ttlFor(a.type)).forEach(a=>{notifyAlert('Aide non répondue','Votre demande de '+a.label+' a expiré sans répondant.','urgent')});S.alerts=S.alerts.filter(a=>Date.now()-(Number(a.at)||Date.now())<ttlFor(a.type));Object.keys(S.alertMarkersById).forEach(id=>{if(!S.alerts.some(a=>a.id===id||a.key===id)){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}});if(before!==S.alerts.length){saveAlerts();this.renderAlerts()}this.updateCommunityStatus()},syncAlertMarkers(){if(!S.map)return;(S.alerts||[]).forEach(a=>{if(a.lat!=null&&a.lng!=null&&!S.alertMarkersById[a.key||a.id])this.addCommunityAlertMarker(a);});},setAlertFilter(f){S.alertFilter=f||'all';set('ic_alert_filter',S.alertFilter);this.renderAlerts()},openAlerts(){this.panel('altet');this.syncCommunityAlerts();this.renderAlerts()},
+renderAlerts(){const list=$('alertsList');if(!list)return;const f=S.alertFilter||'all',toolbar=$('alertsToolbar');if(toolbar)toolbar.innerHTML=['all','route','assist','vehicle','urgent'].map(fi=>'<button type="button" onclick="App.setAlertFilter(\''+fi+'\')" style="border-radius:999px;padding:8px 10px;font-weight:900;background:'+(fi===f?'#10161d':'#eef2f6')+';color:'+(fi===f?'#fff':'#10161d')+'">'+(fi==='all'?'Toutes':fi==='route'?'Route':fi==='assist'?'Aide':fi==='vehicle'?'Véhicule':'Urgent')+'</button>').join('');let rows=S.alerts.filter(a=>isNearby(a));if(f==='urgent')rows=rows.filter(a=>a.level==='urgent');else if(f!=='all')rows=rows.filter(a=>a.group===f||a.type===f);rows.sort((a,b)=>(b.level==='urgent')-(a.level==='urgent')||(b.at||0)-(a.at||0));list.innerHTML=rows.length?rows.map(a=>{const m=cat(a.type),d=distanceOf(a),ds=d==null?'':(d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km'),when=new Date(a.at||Date.now()).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),status=a.status==='seen'?'Vu':'En attente',isVeh=a.group==='vehicle'||a.type==='vehicule',sender=nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||'');const title=isVeh?'🚗 Le véhicule vous a contacté':m.icon+' '+(a.label||m.label);const details=isVeh?('Immat : '+(sender||'non renseignée')+' · Info signalée : '+(a.reason||'Signalement')+(ds?' · '+ds:'')+' · '+when):((a.reason||'Signalement')+(ds?' · '+ds:'')+' · '+when);return'<div class="list-item"><span><b>'+esc(title)+'</b><br><small>'+esc(details)+'</small><br><small>Statut : '+esc(status)+'</small></span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button type="button" style="min-height:44px" onclick="App.markAlertSeen(\''+js(a.id)+'\')">Vu</button><button type="button" style="min-height:44px" onclick="App.markAlertPending(\''+js(a.id)+'\')">En attente</button></span></div>'}).join(''):'<div class="empty-msg">Aucune alerte dans ton rayon.<br><small style="color:var(--muted);font-size:11px">Signale un incident via "Signaler" pour en créer une.</small></div>';const h=$('alertHistoryList');if(h)h.innerHTML=S.alertHistory.slice(0,30).map(a=>'<div class="list-item"><span><b>'+esc((a.group==='vehicle'||a.type==='vehicule')?'🚗 Le véhicule vous a contacté':cat(a.type).icon+' '+(a.label||cat(a.type).label))+'</b><br><small>'+esc((a.reason||'Signalement')+' · '+new Date(a.at||Date.now()).toLocaleString('fr-FR'))+'</small></span></div>').join('')||'<div class="empty-msg">Aucun historique.</div>';const histBox=$('alertHistoryBox');if(histBox)histBox.style.display=S.alertHistory.length?'':'none';this.updateCommunityStatus()},
 
 syncVehicleAlertsFromMessages(rows){},
 alertFeedbackLabel(kind){if(kind==='utile')return{label:'✅ Info utile',delta:8,status:'seen'};if(kind==='merci')return{label:'🙏 Merci',delta:5,status:'seen'};if(kind==='recu')return{label:'✅ Reçu',delta:3,status:'seen'};if(kind==='regle')return{label:'👌 Déjà réglé',delta:2,status:'seen'};if(kind==='faux')return{label:'❌ Faux signalement',delta:-12,status:'seen'};return{label:'👁️ Vu',delta:1,status:'seen'}},
@@ -844,25 +833,6 @@ renderMyAlertsBlock(){
   }else{
     list.innerHTML='<div class="my-alert-empty">Aucune alerte active.</div>';
   }
-  this.renderSignalRecap();
-},
-renderSignalRecap(){
-  const rows=(S.alerts||[]).filter(a=>isNearby(a)&&(a.group==='vehicle'||a.type==='vehicule')).sort((a,b)=>(b.at||0)-(a.at||0));
-  const a=rows[0]||null;
-  if(!$('signalRecapCard'))return;
-  const plate=a?nPlate(a.from_plate||a.sender_plate||a.reporter_plate||a.plate||''):'--';
-  const status=a&&a.status==='seen'?'Vu':'En attente';
-  const reason=a?(a.reason||'Signalement reçu'):'Aucun signalement reçu';
-  const ago=a?this.relativeTime(a.at||Date.now()):'Aucun message.';
-  if($('recapPlate'))$('recapPlate').textContent=plate||'--';
-  if($('recapSub'))$('recapSub').textContent='Immatriculation : '+(plate||'--');
-  if($('recapStatus')){
-    $('recapStatus').textContent=status;
-    $('recapStatus').style.borderColor=status==='Vu'?'#00d491':'#ffb020';
-    $('recapStatus').style.color=status==='Vu'?'#00d491':'#ffb020';
-  }
-  if($('recapReason'))$('recapReason').textContent=reason;
-  if($('recapTime'))$('recapTime').textContent=a?'◷ Reçu '+ago:'◷ Aucun message.';
 },
 relativeTime(ts){
   const d=Math.max(0,Date.now()-Number(ts||Date.now())),m=Math.floor(d/60000);
@@ -890,8 +860,8 @@ markAlertPending(id){
 },
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id,opts={}){const rid=String(id||'').trim();if(!rid)return;const removed=[];S.alerts=(S.alerts||[]).filter(a=>{const keys=[a.key,a.id,a.remoteId,a.rid].filter(Boolean).map(String);const match=keys.includes(rid);if(match)removed.push(a);return!match;});removed.forEach(a=>{if(a.remoteId&&!opts?.silent&&(a._mine||isRouteAlert(a)))try{S.chCommunityReports?.send({type:'broadcast',event:'resolve_report',payload:{remoteId:a.remoteId}})}catch(e){};if(a.remoteId&&(a._mine||isRouteAlert(a)))try{sb?.from('reports').update({status:'resolved',resolved_at:new Date().toISOString()}).eq('id',a.remoteId).then(({error})=>{if(error)console.warn('dismissAlert UPDATE DB',error);})}catch(e){};if(a.remoteId)S.resolvedRemoteIds=[...(S.resolvedRemoteIds||[]).filter(x=>x!==a.remoteId),a.remoteId].slice(0,200);[a.key,a.id,a.remoteId,a.rid].filter(Boolean).forEach(k=>{const m=S.alertMarkersById?.[k];if(m){try{S.map?.removeLayer(m)}catch(e){}delete S.alertMarkersById[k];}});});syncDerivedAlertUI();if(!opts?.silent)toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('*').gte('created_at',since).or('status.eq.active,status.is.null').order('created_at',{ascending:false}).limit(150);if(error)throw error;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));const myUid=ud?.user?.id;(data||[]).forEach(r=>{if(myUid&&r.reporter_id&&r.reporter_id===myUid)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:false})});this.syncAlertMarkers?.()}catch(e){console.warn('sync alerts',e)}},
-subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id){if(r.id){const mine=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(r.plate||'')&&Date.now()-(a.at||0)<60000);if(mine){mine.remoteId=String(r.id);saveAlerts();console.info('remoteId assigné via postgres_changes:',mine.remoteId);}}return;}const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});schedFeed();schedBadge();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('postgres_changes',{event:'UPDATE',schema:'public',table:'reports'},p=>{const r=p.new||{};if(r.status!=='resolved')return;const rid=String(r.id||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';this.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:d.label||'Problème signalé',plate:d.sender_plate||'',lat:null,lng:null,level:d.urgent?'urgent':'important',group:'vehicle'},{notify:false});notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+'\nSignalé par : '+(d.sender_plate||'Conducteur proche'),'Vu','Répondre',()=>{this.updateActBadge?.()},()=>{S.selPlate=nPlate(d.sender_plate||'');S.conv=S.selPlate;this.panel('messages');try{ImmatMessages?.setMode?.('inbox');ImmatMessages?.refresh?.();}catch(e){}},'urgent');}catch(e){}schedFeed();schedBadge();try{window.ImmatMessages?.refresh?.();}catch(e){}}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
-updateCommunityStatus(){let el=$('communityStatus');if(!el)return;const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;const mail=(Number(S.unreadMsgCount)||0)+pendingSignalCount();el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>';const badge=$('topMsgBadge');if(badge){badge.textContent=badgeFmt(mail);badge.style.display=mail>0?'flex':'none'}},
+subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id){if(r.id){const mine=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(r.plate||'')&&Date.now()-(a.at||0)<60000);if(mine){mine.remoteId=String(r.id);saveAlerts();console.info('remoteId assigné via postgres_changes:',mine.remoteId);}}return;}const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});schedFeed();schedBadge();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('postgres_changes',{event:'UPDATE',schema:'public',table:'reports'},p=>{const r=p.new||{};if(r.status!=='resolved')return;const rid=String(r.id||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';this.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:d.label||'Problème signalé',plate:d.sender_plate||'',lat:null,lng:null,level:d.urgent?'urgent':'important',group:'vehicle'},{notify:false});notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+'\nSignalé par : '+(d.sender_plate||'Conducteur proche'),'Vu','Répondre',()=>{this.updateActBadge?.()},()=>{S.selPlate=nPlate(d.sender_plate||'');S.conv=S.selPlate;this.panel('messages');try{ImmatMessages?.setMode?.('inbox');ImmatMessages?.refresh?.();}catch(e){}},'urgent');}catch(e){}schedFeed();schedBadge();try{window.ImmatMessages?.refresh?.();}catch(e){}}).on('broadcast',{event:'vehicle_seen'},p=>{const d=p.payload||{};const myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPl||nPlate(d.target_plate||'')!==myPl)return;notifyAlert('✓ Signalement vérifié',(nPlate(d.sender_plate)||'Un conducteur')+' a vérifié votre signalement.','ok');}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
+updateCommunityStatus(){let el=$('communityStatus');if(!el)return;if(!S.networkOnline){el.textContent='Hors ligne · GPS actif · alertes en cache';return;}const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>'},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;const _bcast=p=>{try{if(S.chCommunityReports){const bp={id:String(p.id||Date.now()),type:p.type||inferType((p.reason||'')+' '+(p.plate||'')),plate:p.plate||null,reason:p.reason||null,latitude:p.latitude??p.lat??null,longitude:p.longitude??p.lng??null,lat:p.lat??p.latitude??null,lng:p.lng??p.longitude??null,created_at:p.created_at||new Date().toISOString(),reporter_id:p.reporter_id||null};S.chCommunityReports.send({type:'broadcast',event:'new_report',payload:bp})}}catch(e){console.warn('bcast',e)}};try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;
 let r=await sb.from('reports').insert(payload).select('id');if(!r.error){console.info('saveReportRemote ✅ T1');_bcast({...payload,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
@@ -899,10 +869,10 @@ const{reporter_id:_r,...p2}=payload;r=await sb.from('reports').insert(p2).select
 const{latitude,longitude,...p3base}=p2;r=await sb.from('reports').insert({...p3base,lat:latitude,lng:longitude}).select('id');if(!r.error){console.info('saveReportRemote ✅ T3');_bcast({...p3base,lat:latitude,lng:longitude,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
 const{lat:__,lng:___,...minimal}=payload;r=await sb.from('reports').insert({plate:minimal.plate,reason:minimal.reason,created_at:minimal.created_at||new Date().toISOString()}).select('id');if(!r.error){console.info('saveReportRemote ✅ T4 minimal');_bcast({...payload,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
 throw r.error}catch(e){console.error('saveReportRemote ❌',e);_bcast(payload);S.offlineReports.unshift(payload);S.offlineReports=S.offlineReports.slice(0,50);saveAlerts();toast('Signalement hors ligne (réessai auto).','bad')}},async syncOfflineReports(){if(!S.networkOnline||!S.offlineReports?.length)return;const queue=[...S.offlineReports];S.offlineReports=[];for(const p of queue){const dbId=await this.saveReportRemote(p);if(dbId){const match=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(p.plate||''));if(match)match.remoteId=String(dbId);}}saveAlerts()},
-ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedVehiclePlate(){const own=this.ownPlate();const candidates=[S.contextVehicle?.plate,S.selPlate,$('iTarget')?.value,S.conv].map(nPlate).filter(Boolean).filter(p=>p!=='ALL'&&p!==own);return candidates[0]||''},updateReportTarget(){const p=this.selectedVehiclePlate();const panel=$('reportPanel'),line=$('reportTargetLine'),title=$('reportVehicleTitle'),ctx=$('vehicleContextPlate');const vehicleMode=panel?.classList.contains('vehicle-only');if(ctx)ctx.textContent=p?'Véhicule '+p:'Véhicule';if(title)title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'🚗 Informer les conducteurs';if(line){line.classList.toggle('warn',vehicleMode&&!p);line.innerHTML=vehicleMode?(p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.'):'Information générale envoyée aux véhicules proches.'}},setReportMode(mode){const p=$('reportPanel');if(!p)return;p.classList.toggle('vehicle-only',mode==='vehicle');p.classList.toggle('full-report',mode!=='vehicle');const title=p.querySelector('h2');const desc=p.querySelector('p');if(title)title.textContent=mode==='vehicle'?'Alerter le véhicule':'Signaler';if(desc)desc.textContent=mode==='vehicle'?'Choisis uniquement une information concernant le véhicule sélectionné.':"Informe les conducteurs proches, la route ou demande de l'aide.";this.updateReportTarget?.()},openReport(){this.panel('altet');App.sigBack?.()},openVehicleReport(){this.panel('altet');App.sigStepVehicle?.()},reportVehicleOrDrivers(label){const panel=$('reportPanel');if(panel?.classList.contains('vehicle-only'))return this.vehicleAlert(label);return this.driverInfo(label)},async driverInfo(label){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Localise-toi avant.','bad');}const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);const reason='[CONDUCTEURS] '+label;const _al=this.addCommunityAlert({type:'vehicule',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'vehicle',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});S._reporting=false;try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/driverInfo'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('driverInfo: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');notifyAlert('🚗 Information envoyée',label,urgent?'urgent':'important')},vehicleAlert(label){let p=this.selectedVehiclePlate();const own=this.ownPlate();if(!p)return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');if(p===own)return toast("Impossible de te signaler toi-même.",'bad');if($('iTarget'))$('iTarget').value=p;const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';if($('iMsg'))$('iMsg').value=msg;S.selPlate=p;S.conv=p;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});this.updateReportTarget?.();this.closeOverlay('reportPanel');this.panel('contact');toast('Signalement préparé pour '+p+'. Appuie sur Envoyer pour le transmettre.','ok')},async roadReport(type){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Active le GPS pour signaler ta position.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'route',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'route'});S._reporting=false;try{window.ImmatOrganism?.observe?.('ROAD_CREATED',{type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/roadReport'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('roadReport: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('✅ Signalement envoyé aux conducteurs proches.','ok');notifyAlert(meta.icon+' Signalement',meta.label,meta.level)},async assist(type){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Active le GPS pour signaler ta position.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'help'});S._reporting=false;try{window.ImmatOrganism?.observe?.('HELP_CREATED',{type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/assist'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('assist: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('🆘 Demande d\'aide envoyée aux conducteurs proches.','ok');notifyAlert(meta.icon+' Aide demandée',meta.label,meta.level)},openAssist(){this.openReport()},
-openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini','full');S.sheetSnap='mid';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){['altet','drive','contact','messages','settings','activite'].forEach(x=>{$('panel'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p);$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock()} },
-openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><button type="button" onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty-msg">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!S.blocked.includes(p))S.blocked.push(p);safeSet('ic_blocked',S.blocked);this.loadMsgs();this.loadOthers()},unblockPlate(p){S.blocked=S.blocked.filter(x=>x!==p);safeSet('ic_blocked',S.blocked);this.openBlocked()},openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="list-item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b><br><small>'+(r.dist?Math.round(r.dist*1000)+' m':'dist. inconnue')+'</small></span><button type="button" onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()">Contacter</button></div>').join(''):'<div class="empty-msg">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},clearRecent(){if(!S.recent.length)return toast('Aucun véhicule récent.','bad');S.recent=[];safeSet('ic_recent_vehicles',S.recent);this.openRecent();},openLegal(){$('legal').classList.add('show')},closeLegal(){$('legal').classList.remove('show')},openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},closeOverlay(id){$(id)?.classList.remove('show')},closeAllOverlays(){['reportPanel','nearbyPanel','alertsPanel'].forEach(id=>this.closeOverlay(id))},
-voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible.','bad');$(target)?.focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast(mode==='plate'?'Dicte la plaque…':'Dicte ton message…','ok');rec.onresult=e=>{let txt=e.results?.[0]?.[0]?.transcript||'';$(target).value=mode==='plate'?this.normalizeSpokenPlate(txt):txt};rec.onerror=()=>toast('Vocal indisponible.','bad');rec.start()}catch(e){toast('Vocal indisponible.','bad')}},normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},voicePlate(){this.voiceInput('iTarget','plate')},voiceMsg(){this.voiceInput('iMsg','message')},
+ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedVehiclePlate(){const own=this.ownPlate();const candidates=[S.contextVehicle?.plate,S.selPlate,$('iTarget')?.value,S.conv].map(nPlate).filter(Boolean).filter(p=>p!=='ALL'&&p!==own);return candidates[0]||''},updateReportTarget(){const p=this.selectedVehiclePlate();const panel=$('reportPanel'),line=$('reportTargetLine'),title=$('reportVehicleTitle'),ctx=$('vehicleContextPlate');const vehicleMode=panel?.classList.contains('vehicle-only');if(ctx)ctx.textContent=p?'Véhicule '+p:'Véhicule';if(title)title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'🚗 Informer les conducteurs';if(line){line.classList.toggle('warn',vehicleMode&&!p);line.innerHTML=vehicleMode?(p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.'):'Information générale envoyée aux véhicules proches.'}},setReportMode(mode){const p=$('reportPanel');if(!p)return;p.classList.toggle('vehicle-only',mode==='vehicle');p.classList.toggle('full-report',mode!=='vehicle');const title=p.querySelector('h2');const desc=p.querySelector('p');if(title)title.textContent=mode==='vehicle'?'Alerter le véhicule':'Signaler';if(desc)desc.textContent=mode==='vehicle'?'Choisis uniquement une information concernant le véhicule sélectionné.':"Informe les conducteurs proches, la route ou demande de l'aide.";this.updateReportTarget?.()},openReport(){this.panel('altet');App.sigBack?.()},openVehicleReport(){this.panel('altet');App.sigStepVehicle?.()},reportVehicleOrDrivers(label){const panel=$('reportPanel');if(panel?.classList.contains('vehicle-only'))return this.vehicleAlert(label);return this.driverInfo(label)},async driverInfo(label){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Localise-toi avant.','bad');}const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);const reason='[CONDUCTEURS] '+label;const _al=this.addCommunityAlert({type:'vehicule',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'vehicle',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString()});S._reporting=false;try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/driverInfo'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('driverInfo: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');notifyAlert('🚗 Information envoyée',label,urgent?'urgent':'important')},vehicleAlert(label){let p=this.selectedVehiclePlate();const own=this.ownPlate();if(!p)return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');if(p===own)return toast("Impossible de te signaler toi-même.",'bad');if($('iTarget'))$('iTarget').value=p;const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';if($('iMsg'))$('iMsg').value=msg;S.selPlate=p;S.conv=p;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});this.updateReportTarget?.();this.closeOverlay('reportPanel');this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposePlate'))$('icComposePlate').value=p;if($('icComposeText'))$('icComposeText').value=msg;}catch(e){}},80);toast('Signalement préparé pour '+p+'. Appuie sur Envoyer pour le transmettre.','ok')},async roadReport(type){if(S._reporting)return;S._reporting=true;const rLat=S.tapLat??S.myLat,rLng=S.tapLng??S.myLng;S.tapLat=null;S.tapLng=null;if(rLat!==null&&S.myLat!==null){const _dKm=km(rLat,rLng,S.myLat,S.myLng);if(_dKm>10)toast('📍 Signalement à '+Math.round(_dKm)+' km de votre position.','warn');}if(rLat===null){S._reporting=false;return toast('Active le GPS ou choisis un point sur la carte.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:rLat,lng:rLng,level:meta.level,group:'route',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:rLat,longitude:rLng,created_at:new Date().toISOString(),category:'route'});S._reporting=false;try{window.ImmatOrganism?.observe?.('ROAD_CREATED',{type,lat:rLat,lng:rLng,_src:'ImmatConnect/roadReport'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('roadReport: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('✅ Signalement envoyé aux conducteurs proches.','ok');notifyAlert(meta.icon+' Signalement',meta.label,meta.level)},async assist(type){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Active le GPS pour signaler ta position.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'help'});S._reporting=false;try{window.ImmatOrganism?.observe?.('HELP_CREATED',{type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/assist'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('assist: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('🆘 Demande d\'aide envoyée aux conducteurs proches.','ok');notifyAlert(meta.icon+' Aide demandée',meta.label,meta.level)},openAssist(){this.openReport()},
+openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini','full');S.sheetSnap='mid';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';['altet','drive','messages','settings','activite'].forEach(x=>{$('panel'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p);$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock()} },
+openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><button type="button" onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty-msg">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!S.blocked.includes(p))S.blocked.push(p);safeSet('ic_blocked',S.blocked);this.loadMsgs();this.loadOthers()},unblockPlate(p){S.blocked=S.blocked.filter(x=>x!==p);safeSet('ic_blocked',S.blocked);this.openBlocked()},openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="list-item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b><br><small>'+(r.dist?Math.round(r.dist*1000)+' m':'dist. inconnue')+'</small></span><button type="button" onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()">Contacter</button></div>').join(''):'<div class="empty-msg">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},clearRecent(){if(!S.recent.length)return toast('Aucun véhicule récent.','bad');S.recent=[];safeSet('ic_recent_vehicles',S.recent);this.openRecent();},openLegal(){$('legal').classList.add('show')},closeLegal(){$('legal').classList.remove('show')},openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},closeOverlay(id){$(id)?.classList.remove('show');if(id==='reportPanel')this.clearSignalHereContext?.();},closeAllOverlays(){['reportPanel','nearbyPanel'].forEach(id=>this.closeOverlay(id))},
+voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible.','bad');$(target)?.focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast(mode==='plate'?'Dicte la plaque…':'Dicte ton message…','ok');rec.onresult=e=>{let txt=e.results?.[0]?.[0]?.transcript||'';$(target).value=mode==='plate'?this.normalizeSpokenPlate(txt):txt};rec.onerror=()=>toast('Vocal indisponible.','bad');rec.start()}catch(e){toast('Vocal indisponible.','bad')}},normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},voicePlate(){this.voiceInput('icComposePlate','plate')},voiceMsg(){this.voiceInput('icComposeText','message')},
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
 restoreMessages(){try{localStorage.removeItem('ic_deleted_msgs')}catch(e){}this.loadMsgs();this.renderActivityFeed?.();this.updateActBadge?.();toast('Messages restaurés ✓','ok')},forceSyncAlerts(){this.syncCommunityAlerts?.().then?.(()=>{toast('Alertes synchronisées ✓','ok')}).catch?.(()=>toast('Sync échouée','bad'));this.subscribeCommunityReports?.()},toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];S.resolvedRemoteIds=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}['ic_deleted_msgs','ic_alerts','ic_alert_history','ic_offline_reports','ic_unread_msg_count','ic_trust_scores','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{window.ImmatMessages?.unsubscribe?.()}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
@@ -961,9 +931,13 @@ App.sigStepAide=function(){
   $('sigStep2Aide')?.classList.add('active');
   App.renderAideCallSection?.();
 };
-App.sigBack=function(){
+App._sigReset=function(){
   ['sigStep2Route','sigStep2Vehicle','sigStep2Aide'].forEach(id=>$(id)?.classList.remove('active'));
   $('sigStep1')?.classList.add('active');
+};
+App.sigBack=function(){
+  App.clearSignalHereContext?.();
+  App._sigReset();
 };
 App.resetSignalPanel=App.sigBack;
 App.sigDone=function(){
@@ -985,9 +959,10 @@ App.vehicleAlertQuick=async function(label){
       if(ok===false){return;}// sendToPlate a déjà affiché l'erreur
       sent=true;
     } else {
-      if($('iTarget'))$('iTarget').value=plate;
-      if($('iMsg'))$('iMsg').value=msg;
-      await this.sendMsg?.();
+      if($('icComposePlate'))$('icComposePlate').value=plate;
+      if($('icComposeText'))$('icComposeText').value=msg;
+      this.panel('messages');
+      setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose')}catch(e){}},120);
       sent=true;
     }
     // Broadcast temps réel pour notification immédiate chez le destinataire
@@ -1037,7 +1012,7 @@ App.renderActivityMain=function(){
   });
   const msgs=(S._actMessages||[]).filter(m=>!deleted.includes(String(m.id)));
   const bRoute=activeAlerts.filter(a=>a.group==='route').length;
-  const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length+msgs.filter(m=>m._received&&!m.read_at).length;
+  const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
@@ -1051,7 +1026,8 @@ App.renderActivityMain=function(){
   if(encBadgeEl){encBadgeEl.textContent=enCours>99?'99+':String(enCours);encBadgeEl.style.display=enCours>0?'flex':'none';}
 };
 App.openActivityCat=function(cat){
-  S._actCat=cat;S._actCatTab='recus';
+  S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';
+  this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
   if(main)main.style.display='none';if(panel)panel.style.display='flex';
   const meta={route:{icon:'🚦',title:'Route',sub:'Incidents de circulation'},vehicle:{icon:'🚘',title:'Véhicule',sub:'Prévenir un conducteur'},aide:{icon:'🆘',title:'Aide',sub:'Demandes d\'assistance'},all:{icon:'🔔',title:'Tout',sub:'Toutes les alertes et messages'}};
@@ -1081,8 +1057,24 @@ App.closeActivityCat=function(){
 };
 App.actCatTab=function(tab){
   S._actCatTab=tab;
+  S._actTypeFilter='all';
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  this._renderTypeFilterBar(S._actCat||'all');
   this.renderCategoryFeed(S._actCat||'all',tab);
+};
+App.actTypeFilter=function(type){
+  S._actTypeFilter=type||'all';
+  const bar=document.getElementById('actTypeFilterBar');
+  if(bar)bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.type===type));
+  this.renderCategoryFeed(S._actCat||'all',S._actCatTab||'recus');
+};
+App._renderTypeFilterBar=function(cat){
+  const bar=document.getElementById('actTypeFilterBar');if(!bar)return;
+  if(cat==='all'||(cat==='vehicle'||cat==='all')){
+    bar.style.display='flex';
+    const cur=S._actTypeFilter||'all';
+    bar.innerHTML=['all','msg','alert'].map(t=>`<button type="button" data-type="${t}" onclick="App.actTypeFilter('${t}')" style="border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap;background:${t===cur?'#2979ff':'rgba(255,255,255,.08)'};color:${t===cur?'#fff':'#ccc'};border:none;cursor:pointer">${t==='all'?'Tout':t==='msg'?'💬 Messages':'⚠️ Alertes'}</button>`).join('');
+  }else{bar.style.display='none';}
 };
 App.renderCategoryFeed=function(cat,tab){
   const feed=document.getElementById('actCatFeed');if(!feed)return;
@@ -1126,6 +1118,9 @@ App.renderCategoryFeed=function(cat,tab){
     }
   }
   items.sort((a,b)=>b.at-a.at);
+  const tf=S._actTypeFilter||'all';
+  if(tf==='msg')items=items.filter(i=>i.kind==='msg');
+  else if(tf==='alert')items=items.filter(i=>i.kind==='alert');
   const unread=items.filter(i=>i.unread>0||(i.kind==='alert'&&i.alert?.status!=='seen'&&i.alert?.status!=='present'&&!i.alert?._own)).length;
   const tabBadge=document.getElementById('actTabBadge');
   if(tabBadge){tabBadge.textContent=unread>99?'99+':String(unread);tabBadge.style.display=isRecus&&unread>0?'flex':'none';}
@@ -1162,7 +1157,7 @@ App._actModCard=function(item,cat){
         </div>
       </div>
       <div class="act-mod-actions">
-        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Merci.')">Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${e(item.plate)}')">Contacter</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
+        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${e(item.plate)}')">Contacter</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
       </div>
     </div>`;
   }
@@ -1179,13 +1174,15 @@ App._actModCard=function(item,cat){
   const ttl=typeof ttlFor==='function'?ttlFor(a.type):3600000;
   const age=now-Number(a.at!=null?a.at:now);
   const pct=Math.max(0,Math.min(100,100-(age/ttl*100)));
-  let statusBadge=isOwn?'<span class="act-mod-status-lbl mine">Mon signalement</span>':(a.status==='seen'||a.status==='present')?'<span class="act-mod-status-lbl vu">Vu</span>':'';
+  let statusBadge=isOwn?(a.status==='helper_coming'?`<span class="act-mod-status-lbl vu">✋ En route${a._helperPlate?' · '+e(a._helperPlate):''}</span>`:'<span class="act-mod-status-lbl mine">Mon signalement</span>'):(a.status==='seen'||a.status==='present')?'<span class="act-mod-status-lbl vu">Vu</span>':(a.status==='seen_by_driver'?'<span class="act-mod-status-lbl vu">Vu par le conducteur</span>':'');
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
-  if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
+  if(isOwn&&a.group==='assist')actions=`${a.status==='helper_coming'&&a._helperPlate?`<button class="act-mod-btn-ok" onclick="App.actQuickReply('${e(a._helperPlate||'')}','🙏 Merci pour votre aide !')">🙏 Merci</button>`:''}<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','resolved')">✓ Résolu</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
+  else if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
   else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button>${_vp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_vp}')">Contacter</button>`:''}`; }
   else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-contact" onclick="CallManager.openContactOptions('${_rp}')">Contacter</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
-  else if(a.group==='assist')actions=`<button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Je peux aider</button>`;
+  else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Contacter</button>`;
+  if(a.lat!=null)actions+=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir</button>`;
   const isSelAlert=S.selPlate&&nPlate(a.plate||a.sender_plate||a.from_plate||'')===S.selPlate;
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSelAlert?' act-mod-selected':''}">
     ${isNew?'<div class="act-mod-badge-row"><span class="act-mod-new-badge">NOUVEAU</span></div>':''}
@@ -1217,66 +1214,14 @@ App.markAllCatRead=function(){
   this.renderCategoryFeed(S._actCat||'all',S._actCatTab||'recus');
   this.updateActBadge?.();toast('Tout marqué comme lu.','ok');
 };
-App._actMsgCard=function(item){
-  const time=item.at?new Date(item.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-  const lastMsg=item.msgs?item.msgs[item.msgs.length-1]:null;
-  const lastSent=lastMsg?._sent===true;
-  const unreadDot=item.unread?'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-left:6px"></span>':'';
-  const dirLabel=lastSent?'<span style="font-size:10px;color:#888;margin-left:4px">Envoyé</span>':'<span style="font-size:10px;color:var(--green);margin-left:4px">Reçu</span>';
-  return `<div class="act-card${item.unread?' unread':''}">
-    <div class="act-card-head">
-      <div class="act-card-icon act-icon-msg">💬</div>
-      <div><div class="act-card-title">${esc(item.plate)}${unreadDot}</div><div class="act-card-plate">Conversation${dirLabel}</div></div>
-      <div class="act-card-time">${esc(time)}</div>
-    </div>
-    <div class="act-card-body">${lastSent?'→ ':''} ${esc(item.body)}</div>
-    <div class="act-card-actions">
-      <button class="act-btn-reply" onclick="App.actOpenConv('${esc(item.plate)}')">${lastSent?'Voir →':'Répondre →'}</button>
-      <button class="act-btn-danger" onclick="App.actDeleteConv('${esc(item.plate)}')">Supprimer</button>
-    </div>
-  </div>`;
-};
-App._actAlertCard=function(item){
-  const a=item.alert;
-  const meta=typeof cat==='function'?cat(a.type):{icon:'⚠️',label:a.type||'Alerte'};
-  const now=Date.now();
-  const ttl=typeof ttlFor==='function'?ttlFor(a.type):60*60*1000;
-  const age=now-(Number(a.at)||now);
-  const pct=Math.max(0,Math.min(100,100-(age/ttl*100)));
-  const time=a.at?new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-  const dist=(typeof distanceOf==='function')?distanceOf(a):null;
-  const distStr=dist==null?'':(dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km');
-
-  const iconBg=item.type==='vehicle'?'act-icon-vehicle':item.type==='aide'?'act-icon-aide':'act-icon-route';
-  const plate=a.from_plate||a.sender_plate||a.plate||'';
-  const isOwn=a._own===true||a._mine===true;
-
-  let actions='';
-  if(isOwn){
-    actions=`<button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','gone')">Retirer mon signalement</button>`;
-  } else if(item.type==='vehicle'){
-    actions=`<button class="act-btn-ok" onclick="App.actConfirmAlert('${esc(a.id)}','seen')">✓ Toujours là</button>
-             <button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','resolved')">✓ Résolu</button>`;
-  } else if(item.type==='route'){
-    actions=`<button class="act-btn-ok" onclick="App.actConfirmAlert('${esc(a.id)}','present')">Toujours là</button>
-             <button class="act-btn-done" onclick="App.actConfirmAlert('${esc(a.id)}','gone')">Disparu</button>`;
-  } else if(item.type==='aide'){
-    actions=`<button class="act-btn-reply" onclick="App.actHelpReply('${esc(plate)}')">Je peux aider →</button>`;
-  }
-
-  return `<div class="act-card${a.status!=='seen'?' unread':''}">
-    <div class="act-card-head">
-      <div class="act-card-icon ${iconBg}">${meta.icon}</div>
-      <div>
-        <div class="act-card-title">${esc(meta.label)}${distStr?' · '+distStr:''}${isOwn?' <span style="font-size:10px;background:#2979ff22;color:#2979ff;border-radius:4px;padding:1px 5px">Mon signalement</span>':''}</div>
-        <div class="act-card-plate">${isOwn?'Toi':''}${!isOwn&&plate?esc(plate):''}${!isOwn&&!plate?'Conducteur proche':''}</div>
-      </div>
-      <div class="act-card-time">${esc(time)}</div>
-    </div>
-    <div class="act-ttl-bar"><div class="act-ttl-fill" style="width:${pct}%"></div></div>
-    <div class="act-card-body">${esc(a.reason||meta.label)}</div>
-    <div class="act-card-actions">${actions}</div>
-  </div>`;
+App.openEditProfile=function(){
+  const p=S.profile||{};
+  if($('iPseudo'))$('iPseudo').value=p.pseudo||'';
+  if($('iProPlate')){$('iProPlate').value=fPlate(p.owner_plate||'');$('iProPlate').disabled=true;}
+  if($('iProPhone'))$('iProPhone').value=p.phone||'';
+  if($('iProColor'))$('iProColor').value=p.vehicle_color||'';
+  hint('hProPlate','','Immatriculation définitive — non modifiable (INV-006).');
+  this.show('sp');
 };
 App.actConfirmAlert=function(id,status){
   const a=S.alerts.find(x=>x.id===id);
@@ -1288,6 +1233,7 @@ App.actConfirmAlert=function(id,status){
       return;
     }
     a.status=status;
+    if(status==='seen'&&(a.group==='vehicle'||a.type==='vehicule')&&a.plate){const _myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');try{if(S.chCommunityReports)S.chCommunityReports.send({type:'broadcast',event:'vehicle_seen',payload:{target_plate:nPlate(a.plate),sender_plate:_myPl}});}catch(e){}}
     if(status==='gone'||status==='resolved'){
       if(a.remoteId){
         // UPDATE DB — source de vérité (fire-and-forget)
@@ -1343,9 +1289,10 @@ App.actQuickReply=async function(plate,msg){
       await ImmatMessages.sendToPlate(plate,msg);
       toast('Message envoyé à '+plate+'.','ok');
     }else{
-      if($('iTarget'))$('iTarget').value=plate;
-      if($('iMsg'))$('iMsg').value=msg;
-      this.panel('contact');
+      if($('icComposePlate'))$('icComposePlate').value=plate;
+      if($('icComposeText'))$('icComposeText').value=msg;
+      this.panel('messages');
+      setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose')}catch(e){}},120);
     }
   }catch(e){toast('Erreur lors de l\'envoi.','bad');}
 };
@@ -1354,10 +1301,11 @@ App.actHelpReply=function(plate){
   this.panel('messages');
   try{
     if(window.ImmatMessages){
-      window.ImmatMessages.sendToPlate?.(plate,'Je peux vous aider, où êtes-vous ?');
+      ImmatMessages.setMode?.('compose');
+      if($('icComposePlate'))$('icComposePlate').value=plate;
+      setTimeout(()=>{try{$('icComposeText')?.focus()}catch(e){}},120);
     }
   }catch(e){}
-  toast('Message d\'aide envoyé à '+plate,'ok');
 };
 App.updateActBadge=function(){
   try{
@@ -1374,12 +1322,10 @@ App.updateActBadge=function(){
       const ttl=typeof ttlFor==='function'?ttlFor(a.type):3600000;
       return age<ttl&&isNearby(a);
     }).length;
-    const total=unreadMsgs+unreadAlerts;
-    try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{total,msgs:unreadMsgs,alerts:unreadAlerts,_src:'ImmatConnect/updateActBadge'})}catch(e){}
+    try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
+    const total=unreadAlerts+(Number(S.unreadMsgCount)||0);
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
-    const legacy=$('topMsgBadge');
-    if(legacy){legacy.textContent=badgeFmt(total);legacy.style.display=total>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
 };
@@ -1421,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!mapEl) return;
   mapEl.addEventListener('click', function(e) {
     if (e.target.closest('.leaflet-interactive,.leaflet-popup-content-wrapper,.leaflet-control,.vehicle-context-menu')) return;
-    ['reportPanel','nearbyPanel','alertsPanel'].forEach(function(id) {
+    ['reportPanel','nearbyPanel'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.classList.remove('show');
     });
@@ -1900,9 +1846,35 @@ function showReputationToast(){
 <script src="messages.js?v=13"></script>
 <script src="ui.js?v=6"></script>
 
+<!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
+<div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center">
+  <div style="background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:24px 20px 32px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto">
+    <div style="text-align:center;margin-bottom:20px"><div style="font-size:26px;color:#c4b5fd;font-weight:700;margin-bottom:4px">✦ ImmatConnect</div><div style="color:#666;font-size:13px">La communauté des conducteurs</div></div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:20px;flex-shrink:0">📍</span><div><b style="color:#e2e8f0;font-size:14px">Carte en direct</b><div style="color:#888;font-size:12px;margin-top:2px">Vois les conducteurs proches en temps réel. Ton marqueur coloré = ta position.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:20px;flex-shrink:0">⚠️</span><div><b style="color:#e2e8f0;font-size:14px">Signalements communauté</b><div style="color:#888;font-size:12px;margin-top:2px">Signale bouchons, accidents, dangers. Reçois les alertes des conducteurs autour de toi.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:20px;flex-shrink:0">💬</span><div><b style="color:#e2e8f0;font-size:14px">Messages conducteurs</b><div style="color:#888;font-size:12px;margin-top:2px">Contacte un conducteur par sa plaque. Réponds aux alertes en un bouton.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:20px;flex-shrink:0">🧭</span><div><b style="color:#e2e8f0;font-size:14px">GPS intégré</b><div style="color:#888;font-size:12px;margin-top:2px">Cherche une destination, démarre la navigation avec instructions vocales.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:20px;flex-shrink:0">✦</span><div><b style="color:#e2e8f0;font-size:14px">L'Ange — ton assistant</b><div style="color:#888;font-size:12px;margin-top:2px">Appuie sur ✦ pour poser une question sur l'app ou la navigation.</div></div></div>
+    </div>
+    <button onclick="App.dismissOnboarding()" style="width:100%;background:#7c6af7;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer">C'est parti ! 🚗</button>
+  </div>
+</div>
+<!-- ── /Onboarding ───────────────────────────────────────────────────── -->
+
+<!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
+<div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto">
+  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0">
+    <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
+    <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer">✕</button>
+  </div>
+  <div id="gardienDashboardBody" style="padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0;line-height:1.6"></div>
+</div>
+<!-- ── /Dashboard Gardien ────────────────────────────────────────────── -->
+
 <!-- ── Ange du Gardien ────────────────────────────────────────────────── -->
 <style>
-#angeFab{display:none;position:fixed;bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);left:calc(50% - 26px);z-index:3000;width:52px;height:52px;border-radius:50%;background:#1a1a2e;border:2px solid #7c6af7;color:#c4b5fd;font-size:22px;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(124,106,247,.4)}
+.gardien-debug-tool{display:none}body.is-gardien .gardien-debug-tool{display:inline-flex}#angeFab{display:none;position:fixed;bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);left:calc(50% - 26px);z-index:3000;width:52px;height:52px;border-radius:50%;background:#1a1a2e;border:2px solid #7c6af7;color:#c4b5fd;font-size:22px;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(124,106,247,.4)}
 #angeOverlay{display:none;position:fixed;inset:0;z-index:3001;background:rgba(0,0,0,.55)}
 #angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;max-height:80vh;overflow-y:auto;flex-direction:column;gap:12px}
 #angeHeader{display:flex;justify-content:space-between;align-items:center;color:#c4b5fd;font-weight:700;font-size:15px}
@@ -1931,7 +1903,10 @@ function showReputationToast(){
   <div id="angeResponse"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
-    <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000" style="flex:1"></textarea>
+      <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" style="background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#c4b5fd;padding:10px 12px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1">🎙️</button>
+    </div>
     <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
   </div>
 </div>
@@ -1941,14 +1916,24 @@ const AngeDialog={
   open(){
     $('angePanel').style.display='flex';
     $('angeOverlay').style.display='block';
+    const resp=$('angeResponse');
+    if(resp&&resp.style.display==='none'){
+      resp.style.display='block';
+      resp.dataset.welcome='1';
+      resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';
+    }
     setTimeout(()=>$('angeMsg')?.focus(),100);
   },
   close(){
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
+    // Vider le panel : la réponse ne doit pas persister entre sessions d'ouverture
+    const resp=$('angeResponse');
+    if(resp){resp.style.display='none';resp.innerHTML='';delete resp.dataset.welcome;}
   },
   renderResponse(r){
     const el=$('angeResponse');
+    delete el.dataset.welcome;
     el.style.display='block';
     let html='';
     const main=r.juste||r.sources;
@@ -1956,6 +1941,9 @@ const AngeDialog={
     if(r.vigilance?.length){html+=`<div style="color:#f0a500;font-size:12px;margin-bottom:10px">${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div>`;}
     if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map((o,i)=>`<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
     if(r.question){html+=`<div class="ange-question" style="cursor:pointer" title="Cliquer pour répondre">${esc(r.question)}</div>`;}
+    if(r.proposal?.rule){html+=`<div style="margin-top:10px;padding:8px 10px;background:#1e1b4b;border-left:3px solid #f0a500;border-radius:0 6px 6px 0;font-size:12px"><div style="color:#f0a500;font-weight:700;margin-bottom:4px">📋 Proposition · ${esc(r.proposal.id||'')}</div><div style="color:#e2e8f0">${esc(r.proposal.rule)}</div>${r.proposal.obligations?.length?`<div style="color:#a5b4fc;margin-top:4px">✅ ${r.proposal.obligations.map(esc).join(' · ')}</div>`:''}</div>`;}
+    // Feedback qualité
+    html+=`<div id="angeFeedback" style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end"><span style="color:#555;font-size:11px;align-self:center">Utile ?</span><button data-fb="1" onclick="AngeDialog.feedback(1,this)" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:.5;padding:2px 4px">👍</button><button data-fb="0" onclick="AngeDialog.feedback(0,this)" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:.5;padding:2px 4px">👎</button></div>`;
     el.innerHTML=html;
     // Options sélectionnables — clic = sélection visuelle + textarea prêt
     el.querySelectorAll('[data-opt]').forEach(div=>{
@@ -1971,25 +1959,73 @@ const AngeDialog={
     // Question — clic = focus textarea (invitation à répondre)
     const qDiv=el.querySelector('.ange-question');
     if(qDiv)qDiv.addEventListener('click',()=>$('angeMsg').focus());
+    // TTS — lire la réponse si la voix est activée (gated par S.voice)
+    const _tts=(r.juste||r.sources||'').replace(/<[^>]*>/g,'').slice(0,200);
+    if(_tts&&typeof speak==='function'&&S.voice)setTimeout(()=>speak(_tts,false),200);
+  },
+  feedback(v,btn){
+    // Remplace les boutons par un remerciement
+    const fb=$('angeFeedback');
+    if(fb)fb.innerHTML=`<span style="color:#555;font-size:11px">${v?'👍 Merci !':'👎 Noté — essaie de reformuler.'}</span>`;
+    // Sauvegarde en localStorage pour survie inter-sessions
+    try{const k='ic_ange_feedback';const arr=JSON.parse(localStorage.getItem(k)||'[]');arr.push({v,t:Date.now()});localStorage.setItem(k,JSON.stringify(arr.slice(-20)));}catch(e){}
+  },
+  startVoice(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){toast('Micro indisponible.','bad');$('angeMsg').focus();return;}
+    const btn=$('angeMic');
+    try{
+      const rec=new SR();
+      rec.lang='fr-FR';rec.interimResults=false;
+      if(btn){btn.style.color='#f0a500';btn.textContent='🎤';}
+      rec.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
+      rec.onerror=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');};
+      rec.onend=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
+      rec.start();
+    }catch(e){if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');}
   },
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Throttle : 10 appels max par session (INV-014 — maîtrise des coûts et de l'usage)
+    const _aKey='ic_ange_calls';
+    const _aData=JSON.parse(sessionStorage.getItem(_aKey)||'{"n":0,"t":0}');
+    const _now=Date.now();
+    if(_now-_aData.t>3600000){_aData.n=0;} // reset après 1h
+    if(_aData.n>=10){toast('Limite Ange atteinte (10/heure). Réessaie dans quelques minutes.','bad');return;}
+    _aData.n++;_aData.t=_now;sessionStorage.setItem(_aKey,JSON.stringify(_aData));
+    // Historique de la session (3 derniers échanges = 6 messages)
+    const _hKey='ic_ange_history';
+    const _history=JSON.parse(sessionStorage.getItem(_hKey)||'[]');
     const btn=$('angeSubmit'),spin=$('angeSpin'),resp=$('angeResponse');
     btn.disabled=true;spin.style.display='block';resp.style.display='none';
     try{
       let snapshot={};
-      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL'};}catch(e){}
+      // Vitesse en catégorie (jamais valeur exacte — INV-014)
+      const _spd=S.lastSpeed||0;
+      const _spdCat=_spd>90?'rapide':_spd>30?'normale':_spd>0?'lente':'arrêt';
+      try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed_cat:_spdCat,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
           feature:S.panel||'GENERAL',
           mode:'consultation',
-          snapshot
+          snapshot,
+          history:_history.slice(-6)
         }
       });
       if(error)throw error;
       this.renderResponse(data);
+      // Sauvegarder l'échange dans l'historique de session
+      try{
+        const _respTxt=(data.juste||data.sources||'').slice(0,400);
+        if(_respTxt){
+          _history.push({role:'user',content:msg.slice(0,300)});
+          _history.push({role:'assistant',content:_respTxt});
+          while(_history.length>6)_history.shift();
+          sessionStorage.setItem(_hKey,JSON.stringify(_history));
+        }
+      }catch(e){}
       $('angeMsg').value='';
     }catch(e){
       $('angeResponse').style.display='block';

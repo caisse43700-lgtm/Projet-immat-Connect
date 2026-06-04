@@ -2,17 +2,60 @@
 // GÉNÉRÉ AUTOMATIQUEMENT — ne pas modifier manuellement.
 // Source canonique : immat-nervous-system.json (racine du projet) — INV-015
 // Pour modifier : éditer immat-nervous-system.json puis exécuter : node scripts/sync-ns.js
-// _v: 6
+// _v: 8
 
 // deno-lint-ignore-file
 export const NS = {
-  "_v": 6,
+  "_v": 8,
   "_doc": "Système nerveux d'ImmatConnect — source canonique unique (INV-015). Toute transformation (prompt Ange, documentation, tests) doit être dérivée de ce fichier. Ne pas dupliquer : transformer uniquement.",
   "ange_identity": {
     "posture": "Tu observes. Tu relies. Tu proposes. Tu ne décides jamais. Le Gardien décide. Toujours.",
     "evaluation": "Cette évolution nourrit-elle l'organisme ou l'alourdit-elle ? Cette proposition renforce-t-elle le jugement du Gardien ou le rend-elle dépendant ?",
     "limite": "Jamais de décision à la place du Gardien. Jamais de modification code, DB ou invariants. Jamais d'affirmation sur ce que tu ne vois pas.",
-    "format": "JSON valide uniquement. 150 mots maximum. requiresGuardianValidation toujours true."
+    "format": "JSON valide uniquement. 150 mots max (gardien) · 80 mots max (conducteur). requiresGuardianValidation conditionnel selon le rôle : true pour gardien, false pour conducteur."
+  },
+  "senses": {
+    "_desc": "Les cinq sens organiques — vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l'organisme. Source : SESSION-18-CINQ-SENS.md + IMMAT-FLOW-INDEX v1.",
+    "_boucle_mapping": {
+      "entendre": "identifier l'intention",
+      "voir": "repérer les composants concernés",
+      "sentir": "comprendre le contexte et l'environnement",
+      "toucher": "mesurer l'impact et agir",
+      "gouter": "tester et vérifier la conformité aux invariants"
+    },
+    "voir": {
+      "desc": "Lire l'état — observer ce qui est sans l'altérer.",
+      "impl": "ImmatOrganism.diagnose() · ImmatOrganism.getJournal()",
+      "ange": "Snapshot anonymisé (health, violations, panel, speed_cat, nearby, alerts)",
+      "phase_activation": 1
+    },
+    "entendre": {
+      "desc": "Recevoir des événements — écouter sans bloquer le flux.",
+      "impl": "ImmatBus.on('*') · realtime Supabase · perception.sources",
+      "ange": "Question conducteur reçue (texte ou voix transcrite)",
+      "phase_activation": 1
+    },
+    "gouter": {
+      "desc": "Valider, tester — vérifier la conformité aux invariants.",
+      "impl": "validateInvariant() · warnIfPhase2() · validateOutput()",
+      "ange": "validateOutput() · requiresGuardianValidation",
+      "phase_activation": 2,
+      "note": "warnIfPhase2 définie dans brain.js — non câblée en prod (Phase 2 non activée)"
+    },
+    "toucher": {
+      "desc": "Agir — produire un effet mesurable dans l'organisme.",
+      "impl": "Phase 3+ — ImmatBrain can*() bloquants · réponse Ange transmise",
+      "ange": "Réponse transmise au conducteur : propositions, guidage, alertes",
+      "phase_activation": 3,
+      "note": "Actif en surface seulement (réponse Ange). can*() jamais câblés en prod."
+    },
+    "sentir": {
+      "desc": "Comprendre le contexte — lire l'intention derrière le signal.",
+      "impl": "nsToPrompt(depth) · knowledge_conducteur · knowledge_gardien · IMMAT-FLOW-INDEX",
+      "ange": "Rôle + depth + environnement + ADN + flux organiques = compréhension de l'intention",
+      "phase_activation": 4,
+      "note": "Actif uniquement dans Ange. ImmatOrganism n'a pas encore de sentir()."
+    }
   },
   "perception": {
     "desc": "Normalise tout signal entrant en texte avant routage. Le système nerveux ne voit jamais un son ni une image — il voit toujours un signal texte normalisé.",
@@ -50,9 +93,9 @@ export const NS = {
     "Auth": {
       "desc": "Authentification et session Supabase",
       "entry": {
-        "afterAuth": "index.html:507",
-        "signup": "index.html:502",
-        "boot": "index.html:1419"
+        "afterAuth": "App.afterAuth",
+        "signup": "App.signup",
+        "boot": "fn.boot"
       },
       "constraints": [
         "INV-010",
@@ -63,6 +106,11 @@ export const NS = {
         "supabase.auth",
         "user_metadata.role",
         "get_my_role() RPC"
+      ],
+      "senses": [
+        "entendre",
+        "gouter",
+        "toucher"
       ],
       "note": "get_my_role() lit raw_user_meta_data directement en DB, bypass JWT stale",
       "serves": [
@@ -106,8 +154,8 @@ export const NS = {
     "Profil": {
       "desc": "Données conducteur — plaque, pseudo, couleur, téléphone",
       "entry": {
-        "saveProfile": "index.html:549",
-        "upsert_profil": "index.html:530"
+        "saveProfile": "App.saveProfile",
+        "upsert_profil": "db.profiles.upsert"
       },
       "constraints": [
         "INV-006",
@@ -122,6 +170,12 @@ export const NS = {
         "profiles.vehicle_color",
         "profiles.pseudo",
         "profiles.phone"
+      ],
+      "senses": [
+        "voir",
+        "entendre",
+        "gouter",
+        "toucher"
       ],
       "note": "owner_plate immuable après création (INV-006). colorHex() dans utils.js = source canonique des couleurs (INV-011)",
       "serves": [
@@ -165,11 +219,11 @@ export const NS = {
     "Carte": {
       "desc": "Carte Leaflet — marqueurs véhicule, GPS, icônes colorées",
       "entry": {
-        "icon": "index.html:409",
-        "dot": "index.html:408",
-        "initMap": "index.html:551",
-        "locate": "index.html:554",
-        "loadOthers": "index.html:652"
+        "icon": "fn.icon",
+        "dot": "fn.dot",
+        "initMap": "App.initMap",
+        "locate": "App.locate",
+        "loadOthers": "App.loadOthers"
       },
       "constraints": [
         "INV-005",
@@ -187,7 +241,13 @@ export const NS = {
         "S.myLng",
         "S.lastSpeed"
       ],
-      "note": "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur",
+      "senses": [
+        "voir",
+        "entendre",
+        "sentir",
+        "toucher"
+      ],
+      "note": "icon() consommé par locate():554 (marqueur self) et loadOthers():652 (autres). colorHex() utils.js = source fill couleur. sentir = position → contexte vitesse/rayon.",
       "serves": [
         "SEC",
         "PRV",
@@ -231,8 +291,8 @@ export const NS = {
     "Messages": {
       "desc": "Messagerie temps réel conducteur à conducteur via Supabase",
       "entry": {
-        "startMsgs": "index.html:764",
-        "sendMsg": "index.html:703",
+        "startMsgs": "App.startMsgs",
+        "sendMsg": "App.sendMsg (legacy)",
         "ImmatMessages": "module externe"
       },
       "constraints": [
@@ -248,6 +308,11 @@ export const NS = {
         "messages.receiver_id",
         "messages.target_plate",
         "S.chMsg"
+      ],
+      "senses": [
+        "voir",
+        "entendre",
+        "toucher"
       ],
       "note": "Canal INV-001 = véhicule uniquement. Ne pas mixer avec canaux route ou aide",
       "serves": [
@@ -292,10 +357,10 @@ export const NS = {
     "Signalements": {
       "desc": "Alertes route (INV-002), véhicule (INV-001), aide (INV-003) — canaux strictement séparés",
       "entry": {
-        "roadReport": "index.html:905",
-        "vehicleAlert": "index.html:905",
-        "subscribeCommunityReports": "index.html:896",
-        "addCommunityAlertMarker": "index.html:813"
+        "roadReport": "App.roadReport",
+        "vehicleAlert": "App.vehicleAlert",
+        "subscribeCommunityReports": "App.subscribeCommunityReports",
+        "addCommunityAlertMarker": "App.addCommunityAlertMarker"
       },
       "constraints": [
         "INV-001",
@@ -313,7 +378,14 @@ export const NS = {
         "S.alertMarkersById",
         "S.chCommunityReports"
       ],
-      "note": "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003)",
+      "senses": [
+        "voir",
+        "entendre",
+        "sentir",
+        "gouter",
+        "toucher"
+      ],
+      "note": "Canal véhicule ≠ canal route ≠ canal aide — ne jamais croiser (INV-001/002/003). sentir = type → intention (panne/incendie/bouchon). gouter = TTL validation.",
       "serves": [
         "SEC",
         "ENT",
@@ -355,12 +427,13 @@ export const NS = {
       }
     },
     "Ange": {
-      "desc": "Interface Gardien — bouton ✦ (angeFab) + Edge Function Claude",
+      "desc": "Interface IA — bouton ✦ (angeFab) visible pour tous les conducteurs connectés. Profondeur de réponse adaptée au rôle (depth 1/2/3).",
       "entry": {
-        "angeFab_css": "index.html:1907",
-        "angeFab_afterAuth": "index.html:520",
-        "angeFab_openMap": "index.html:550",
-        "edge_function": "supabase/functions/immat-brain-dialog/index.ts"
+        "angeFab_css": "css.#angeFab",
+        "angeFab_openMap": "App.openMap > #angeFab (affiché pour tous)",
+        "edge_function": "supabase/functions/immat-brain-dialog/index.ts",
+        "knowledge_conducteur": "_shared/knowledge-conducteur.ts",
+        "knowledge_gardien": "_shared/knowledge-gardien.ts"
       },
       "constraints": [
         "INV-010",
@@ -372,9 +445,17 @@ export const NS = {
       "data": [
         "S.isGardien",
         "user_metadata.role",
-        "get_my_role() RPC"
+        "get_my_role() RPC",
+        "snapshot anonymisé (health, violations, panel, speed_cat, driving, hasRoute, nearby, alerts)"
       ],
-      "note": "S.isGardien depuis get_my_role(), jamais du JWT seul. Fallback dans openMap() si S.isGardien===undefined",
+      "senses": [
+        "voir",
+        "entendre",
+        "sentir",
+        "gouter",
+        "toucher"
+      ],
+      "note": "S.isGardien depuis get_my_role(), jamais du JWT seul. Vitesse transmise en catégorie (arrêt/lente/normale/rapide) — jamais en valeur exacte (INV-014). Seul organe à cinq sens complets.",
       "serves": [
         "FRI",
         "SEC"
@@ -387,29 +468,29 @@ export const NS = {
       ],
       "level_1": {
         "what_user_sees": [
-          "Bouton ✦ en bas à droite — visible uniquement pour le Gardien",
+          "Bouton ✦ en bas à droite — visible pour tous les conducteurs connectés",
           "Panneau de dialogue pour poser une question à l'Ange",
-          "Réponse : analyse principale + alertes de vigilance + question au Gardien"
+          "Réponse adaptée au rôle : guidage usage (conducteur) ou analyse technique (gardien)"
         ],
         "common_questions": [
-          "Je ne vois pas le bouton ✦",
+          "Comment utiliser l'application ?",
           "L'Ange ne répond pas ou est très lent",
           "Comment poser une bonne question à l'Ange ?"
         ],
         "resolution": [
-          "Le bouton ✦ est réservé au rôle gardien — vérifier le rôle du compte connecté",
+          "Poser une question simple sur l'app, la navigation ou un problème rencontré",
           "L'Ange appelle un modèle IA externe — la réponse prend 5 à 20 secondes",
-          "Poser une question précise liée à un organe, un bug ou une évolution"
+          "Pour une analyse technique approfondie : avoir le rôle gardien"
         ]
       },
       "level_2": {
         "behaviors": [
-          "Vérifie le rôle gardien via get_my_role() avant d'afficher le bouton ✦",
-          "Envoie la question + snapshot de l'organisme à l'Edge Function immat-brain-dialog",
-          "Affiche la réponse structurée : juste (réponse) + vigilance (alertes) + question (au Gardien)"
+          "Affiche le bouton ✦ pour tous les utilisateurs authentifiés via openMap()",
+          "Envoie la question + snapshot anonymisé (INV-014) à l'Edge Function immat-brain-dialog",
+          "Adapte la profondeur : gardien=depth3+knowledge_gardien, conducteur=depth1+knowledge_conducteur"
         ],
         "failure_modes": [
-          "S.isGardien undefined au démarrage — bouton ✦ absent jusqu'au rechargement",
+          "S.isGardien undefined — bouton ✦ toujours affiché (fallback openMap catch)",
           "ANTHROPIC_API_KEY absente — Edge Function retourne server_misconfigured",
           "Cache Anthropic froid au premier appel — latence plus élevée (prompt non caché)"
         ]
@@ -446,6 +527,88 @@ export const NS = {
       "no_code": true,
       "no_internal_invariants": true,
       "note": "usage seulement — futur possible"
+    }
+  },
+  "governance": {
+    "_desc": "Les cinq phases de gouvernance — les sens s'activent progressivement avec les phases. Source : core/governance.js PHASE_REQUIREMENTS.",
+    "_source": "core/governance.js",
+    "current_phase": 1,
+    "phases": {
+      "1": {
+        "label": "Observateur",
+        "senses_actifs": [
+          "voir",
+          "entendre"
+        ],
+        "requires": []
+      },
+      "2": {
+        "label": "Conseiller",
+        "senses_actifs": [
+          "voir",
+          "entendre",
+          "gouter"
+        ],
+        "requires": [
+          "journal_ok",
+          "no_regressions"
+        ],
+        "note": "warnIfPhase2() prête dans brain.js — non câblée en prod"
+      },
+      "3": {
+        "label": "Gardien",
+        "senses_actifs": [
+          "voir",
+          "entendre",
+          "gouter",
+          "toucher"
+        ],
+        "requires": [
+          "journal_ok",
+          "no_regressions",
+          "tests_green",
+          "invariants_stable"
+        ],
+        "note": "can*() définis dans brain.js — non câblés en prod"
+      },
+      "4": {
+        "label": "Coordinateur",
+        "senses_actifs": [
+          "voir",
+          "entendre",
+          "gouter",
+          "toucher",
+          "sentir"
+        ],
+        "requires": [
+          "journal_ok",
+          "no_regressions",
+          "tests_green",
+          "invariants_stable",
+          "organs_wired"
+        ],
+        "note": "sentir() à créer dans ImmatOrganism — lit snapshot + ADN"
+      },
+      "5": {
+        "label": "Intelligence",
+        "senses_actifs": [
+          "voir",
+          "entendre",
+          "gouter",
+          "toucher",
+          "sentir"
+        ],
+        "conscience": true,
+        "requires": [
+          "journal_ok",
+          "no_regressions",
+          "tests_green",
+          "invariants_stable",
+          "organs_wired",
+          "human_approval"
+        ],
+        "note": "Nécessite approbation explicite du Gardien — décision humaine requise"
+      }
     }
   },
   "inhibitions": {

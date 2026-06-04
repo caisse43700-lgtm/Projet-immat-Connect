@@ -1,0 +1,207 @@
+{
+  "_v": 1,
+  "_doc": "Toutes les interactions ImmatConnect — émetteur → système → récepteur → résolution. Source : SPEC.md · INVENTAIRE-PRODUIT.md",
+  "_rule": "Chaque interaction a une nature principale. Ne jamais mélanger message personnel / alerte route / demande aide / appel.",
+
+  "interactions": [
+
+    {
+      "id": "INT-001",
+      "nom": "Message conducteur",
+      "nature": "communication_personnelle",
+      "organe": "CONTACT",
+      "situation_reelle": "Un conducteur remarque quelque chose ou veut établir un contact avec un autre conducteur précis.",
+      "emetteur": "Conducteur A",
+      "recepteur": "Conducteur B (par plaque)",
+      "declencheur": "bouton Contacter (nearbyPanel) · clic marqueur → Envoyer message · compose dans panelMessages",
+      "chemin_emetteur": "carte → marqueur → menu contextuel → Envoyer message → compose → envoi",
+      "chemin_systeme": "ImmatMessages.sendToPlate() → table messages → realtime canal véhicule (INV-001)",
+      "chemin_recepteur": "badge messages → panelMessages → onglet Reçus → lecture",
+      "retour_emetteur": "toast envoi · message dans onglet Envoyés",
+      "retour_recepteur": "badge +1 · notification · message dans onglet Reçus",
+      "actions_recepteur": ["Lire", "Répondre", "Ignorer", "Bloquer l'émetteur"],
+      "fin_cycle": "lu · répondu · ignoré · archivé",
+      "problemes": ["Pas de confirmation de lecture", "Pas d'état 'vu' côté émetteur"],
+      "decision": "garder",
+      "priorite": "P0",
+      "canal": "INV-001"
+    },
+
+    {
+      "id": "INT-002",
+      "nom": "Alerte véhicule",
+      "nature": "alerte_vehicule",
+      "organe": "SIGNAL",
+      "situation_reelle": "Un conducteur remarque un problème sur le véhicule d'un autre conducteur (feux, porte, pneu, fumée…).",
+      "emetteur": "Conducteur A",
+      "recepteur": "Conducteur B (ciblé par plaque)",
+      "declencheur": "bouton Signaler → Informer les conducteurs → type d'alerte",
+      "chemin_emetteur": "carte → marqueur → Signaler ce véhicule OU reportPanel → Informer conducteurs → type → envoi",
+      "chemin_systeme": "App.reportVehicleOrDrivers() → broadcast canal véhicule (INV-001)",
+      "chemin_recepteur": "showFloatingCard() → toast urgent/important → badge activité",
+      "retour_emetteur": "toast envoyé",
+      "retour_recepteur": "FloatingCard avec option Vu / Répondre · badge activité",
+      "actions_recepteur": ["Vu (dismiss)", "Répondre (ouvre message vers l'émetteur)"],
+      "fin_cycle": "vu · ignoré · répondu",
+      "problemes": ["Pas de confirmation côté émetteur que la cible a vu l'alerte"],
+      "decision": "garder — fusionner déclenchement avec menu contextuel carte",
+      "priorite": "P0",
+      "canal": "INV-001"
+    },
+
+    {
+      "id": "INT-003",
+      "nom": "Signalement route",
+      "nature": "alerte_route",
+      "organe": "SIGNAL",
+      "situation_reelle": "Un conducteur constate un danger, un bouchon, un accident, des travaux sur la route.",
+      "emetteur": "Conducteur A",
+      "recepteur": "Tous les conducteurs proches",
+      "declencheur": "reportPanel → Informer la route → type",
+      "chemin_emetteur": "carte → FAB signaler → reportPanel → Informer route → type → envoi",
+      "chemin_systeme": "App.roadReport() → table reports → broadcast canal route (INV-002) → markers carte",
+      "chemin_recepteur": "marqueur sur carte · badge alertes · notification toast",
+      "retour_emetteur": "marqueur ajouté à sa propre carte · badge alertes mis à jour",
+      "retour_recepteur": "marqueur visible · notification · alerte dans panelAltet",
+      "actions_recepteur": ["Voir sur carte", "Filtrer par type", "Marquer résolu (créateur seulement)"],
+      "fin_cycle": "expiré (TTL) · résolu par créateur",
+      "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
+      "problemes": [],
+      "decision": "garder",
+      "priorite": "P0",
+      "canal": "INV-002"
+    },
+
+    {
+      "id": "INT-004",
+      "nom": "Demande d'aide",
+      "nature": "demande_aide",
+      "organe": "AIDE",
+      "situation_reelle": "Un conducteur est en panne, à court de carburant, perdu, ou en danger.",
+      "emetteur": "Conducteur A (demandeur)",
+      "recepteur": "Conducteurs proches (helpers)",
+      "declencheur": "reportPanel → Demander de l'aide → type",
+      "chemin_emetteur": "carte → FAB signaler → reportPanel → Demander aide → type → envoi",
+      "chemin_systeme": "App.assist() → table reports (type aide) → broadcast canal aide (INV-003)",
+      "chemin_recepteur": "marqueur aide sur carte · notification · badge activité",
+      "retour_emetteur": "marqueur aide visible · alerte dans son activité · bouton Résoudre",
+      "retour_recepteur": "marqueur aide sur carte · peut répondre via message",
+      "actions_emetteur": ["Résoudre ma demande (bouton dédié)"],
+      "actions_recepteur": ["Voir sur carte", "Contacter le demandeur (message)"],
+      "fin_cycle": "résolu par émetteur · expiré (45min)",
+      "problemes": ["Pas de confirmation que quelqu'un vient aider", "Pas de fil de réponse structuré"],
+      "decision": "garder — améliorer retour réception côté helper",
+      "priorite": "P0",
+      "canal": "INV-003"
+    },
+
+    {
+      "id": "INT-005",
+      "nom": "Appel WebRTC",
+      "nature": "communication_voix",
+      "organe": "CONTACT",
+      "situation_reelle": "Deux conducteurs veulent se parler vocalement après échange de messages.",
+      "emetteur": "Conducteur A (appelant)",
+      "recepteur": "Conducteur B (appelé)",
+      "declencheur": "panelMessages → bouton Appeler · callContactModal",
+      "chemin_emetteur": "message → Appeler → callContactModal → envoi demande",
+      "chemin_systeme": "CallManager.requestCall() → table call_requests → realtime → WebRTC WebSocket",
+      "chemin_recepteur": "callContactModal popup → Accepter / Refuser",
+      "retour_emetteur": "callOverlay avec statut (Appel… / En cours / Raccroché)",
+      "retour_recepteur": "modal popup · son · vibration",
+      "prerequis": ["allow_calls activé chez le récepteur", "Consentement explicite requis (INV-010)"],
+      "actions_recepteur": ["Accepter", "Refuser"],
+      "fin_cycle": "raccroché · refusé · expiré",
+      "problemes": ["callNotAllowedModal si préférence désactivée — feedback à améliorer"],
+      "decision": "garder — message toujours prioritaire (P-003), appel secondaire",
+      "priorite": "P1",
+      "canal": "INV-001"
+    },
+
+    {
+      "id": "INT-006",
+      "nom": "Remerciement",
+      "nature": "retour_interaction",
+      "organe": "CONTACT",
+      "situation_reelle": "Un conducteur veut exprimer sa gratitude après avoir reçu une alerte ou de l'aide.",
+      "emetteur": "Conducteur B (bénéficiaire)",
+      "recepteur": "Conducteur A (aidant)",
+      "declencheur": "bouton Je remercie · message rapide",
+      "statut_actuel": "absent — non implémenté",
+      "decision": "à concevoir — P2",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "INT-007",
+      "nom": "Confirmation / Résolu",
+      "nature": "fin_cycle",
+      "organe": "SIGNAL",
+      "situation_reelle": "Le conducteur confirme qu'une alerte ou demande d'aide est résolue.",
+      "emetteur": "Créateur de l'alerte / demande",
+      "recepteur": "Système + conducteurs ayant reçu l'alerte",
+      "declencheur": "bouton Résoudre (dans activité ou alerte) · auto-TTL expiration",
+      "chemin_systeme": "App.dismissAlert() → update table reports status=resolved → broadcast resolve_report",
+      "retour": "marqueur supprimé de la carte · alerte archivée dans historique",
+      "decision": "garder — améliorer visibilité du bouton Résoudre",
+      "priorite": "P0"
+    },
+
+    {
+      "id": "INT-008",
+      "nom": "Blocage conducteur",
+      "nature": "moderation_locale",
+      "organe": "MOI",
+      "situation_reelle": "Un conducteur veut ignorer les messages et alertes d'une plaque spécifique.",
+      "emetteur": "Conducteur A",
+      "recepteur": "Plaque bloquée (côté local uniquement)",
+      "declencheur": "panelSettings → Bloqués · message → menu → Bloquer",
+      "stockage": "local (ic_blocked) — pas en DB",
+      "retour": "plaque disparaît des listes et marqueurs",
+      "problemes": ["Stockage local seulement — perdu si cache effacé", "Pas de blocage réel côté serveur"],
+      "decision": "garder temporairement — à migrer vers DB (soft-delete M-02)",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "INT-009",
+      "nom": "SOS",
+      "nature": "urgence",
+      "organe": "AIDE",
+      "situation_reelle": "Conducteur en danger immédiat — besoin d'aide urgente.",
+      "emetteur": "Conducteur A",
+      "recepteur": "Conducteurs proches + système",
+      "declencheur": "bouton SOS (protégé par appui long ou confirmation)",
+      "statut_actuel": "partiellement implémenté via assist('incendie')",
+      "decision": "à séparer — SOS dédié, appui long, canal prioritaire",
+      "priorite": "P1"
+    },
+
+    {
+      "id": "INT-010",
+      "nom": "Signalement abus",
+      "nature": "moderation",
+      "organe": "MOI",
+      "situation_reelle": "Un conducteur reçoit un message inapproprié ou une fausse alerte.",
+      "emetteur": "Conducteur B (victime)",
+      "recepteur": "Système (Gardien)",
+      "declencheur": "message → menu → Signaler abus",
+      "statut_actuel": "absent — non implémenté",
+      "decision": "à concevoir — P2",
+      "priorite": "P2"
+    },
+
+    {
+      "id": "INT-011",
+      "nom": "Notification système",
+      "nature": "information_passive",
+      "organe": "RADAR",
+      "situation_reelle": "Le système informe le conducteur d'un événement sans action requise de sa part.",
+      "examples": ["Conducteur proche vient d'apparaître", "Alerte route dans ton secteur", "Ton aide a été résolue"],
+      "retour": "toast · badge · son (si activé)",
+      "decision": "garder — améliorer hiérarchie visuelle (urgent > important > info)",
+      "priorite": "P0"
+    }
+
+  ]
+}

@@ -43,7 +43,6 @@
   const floating = [
     'reportPanel',
     'nearbyPanel',
-    'alertsPanel',
     'drawer',
     'legal',
     'blocked',
@@ -141,16 +140,6 @@
 
       if (typeof window.setUnreadMsgCount === 'function') {
         window.setUnreadMsgCount(count);
-      } else {
-        const badge = $('topMsgBadge');
-
-        if (badge) {
-          badge.textContent =
-            count > 99 ? '99+' : String(count);
-
-          badge.style.display =
-            count > 0 ? 'flex' : 'none';
-        }
       }
 
       document
@@ -286,10 +275,8 @@
         : null;
 
     App.openReport = function () {
-      // Route to altet panel instead of old reportPanel overlay
-      try {
-        App.panel('altet');
-      } catch(e) {}
+      try { App.panel('altet'); } catch(e) {}
+      try { App._sigReset?.(); } catch(e) {}
     };
 
     const oldOpenNearby =

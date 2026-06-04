@@ -151,6 +151,16 @@ const invariants = Object.freeze({
     severity: 'critical',
   }),
 
+  // INV-015 — Transformation depuis la source
+  // Dérivé de : F-02, ADN-1
+  'INV-015': Object.freeze({
+    id: 'INV-015',
+    name: 'Transformation depuis la source',
+    rule: 'Le système nerveux se transforme depuis sa source canonique (immat-nervous-system.json). Il ne se duplique jamais. Toute transformation doit être dérivée, jamais recopiée.',
+    derivedFrom: ['F-02', 'ADN-1'],
+    severity: 'critical',
+  }),
+
 });
 
 if (typeof window !== 'undefined') window._INVARIANTS = invariants;

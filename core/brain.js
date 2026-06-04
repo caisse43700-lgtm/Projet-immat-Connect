@@ -122,9 +122,28 @@ const ImmatBrain = (function () {
     return { phase: _phase, invariants: Object.keys(INVARIANTS).length };
   }
 
+  // Phase 2 — Conseiller : avertit sans bloquer.
+  // Émet INVARIANT_WARNING sur le bus pour que l'UI puisse afficher un avertissement.
+  // N'altère PAS le flux de l'application (return values inchangés).
+  function warnIfPhase2(invId, context) {
+    if (_phase < 2) return;
+    const inv = INVARIANTS[invId];
+    if (!inv) return;
+    if (_ImmatBus) {
+      _ImmatBus.emit('INVARIANT_WARNING', {
+        invariant: invId,
+        label: inv.name,
+        severity: inv.severity,
+        context,
+        phase: _phase,
+      });
+    }
+  }
+
   return {
     setPhase,
     getPhase,
+    warnIfPhase2,
     canDisplayVehicleOnMap,
     canAddVehicleToAlerts,
     canRequestCall,

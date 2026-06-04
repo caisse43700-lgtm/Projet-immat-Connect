@@ -1,0 +1,87 @@
+{
+  "_v": 1,
+  "_role": "Référentiel Opérationnel d'ImmatConnect — index maître",
+  "_rule": "Ne jamais dupliquer les sources. Le référentiel référence. La vérité vit dans ADN → Constitution → NS → Historique.",
+  "_sources": {
+    "adn": "immat-nervous-system.json _v:8",
+    "constitution": "core/invariants.js (INV-001→INV-015)",
+    "ns": "supabase/functions/_shared/nervous-system.ts (dérivé ADN)",
+    "flow_index": "architecture/IMMAT-FLOW-INDEX.json _v:1",
+    "ux_interactions": "architecture/ux/UX-INTERACTIONS.json",
+    "ux_screens": "architecture/ux/UX-SCREENS.json",
+    "ux_backlog": "architecture/ux/UX-BACKLOG.md",
+    "ux_journeys": "architecture/ux/UX-JOURNEYS.json"
+  },
+  "files": {
+    "intentions": {
+      "path": "knowledge/intentions.json",
+      "role": "Mapper un besoin utilisateur vers une intention organique",
+      "accessible": ["conducteur", "gardien"]
+    },
+    "features": {
+      "path": "knowledge/features.json",
+      "role": "Inventaire des fonctionnalités — relie usage → organe → flux",
+      "accessible": ["conducteur", "gardien"],
+      "ref": "architecture/IMMAT-FLOW-INDEX.json"
+    },
+    "interactions": {
+      "path": "knowledge/interactions.json",
+      "role": "Scénarios A→B condensés — comment les conducteurs interagissent",
+      "accessible": ["conducteur", "gardien"],
+      "ref": "architecture/ux/UX-INTERACTIONS.json"
+    },
+    "screens": {
+      "path": "knowledge/screens.json",
+      "role": "Cartographie des écrans — panelId, composants, actions disponibles",
+      "accessible": ["conducteur", "gardien"],
+      "ref": "architecture/ux/UX-SCREENS.json"
+    },
+    "organs": {
+      "path": "knowledge/organs.json",
+      "role": "Profil organique synthétique — dérivé NS, ne pas modifier directement",
+      "accessible": ["gardien"],
+      "ref": "immat-nervous-system.json organs + senses"
+    },
+    "tutorials": {
+      "path": "knowledge/tutorials.json",
+      "role": "Base pédagogique conducteur — comment faire chaque action",
+      "accessible": ["conducteur"]
+    },
+    "decisions": {
+      "path": "knowledge/decisions.json",
+      "role": "Mémoire des décisions architecturales et UX",
+      "accessible": ["gardien"],
+      "ref": "architecture/ux/UX-BACKLOG.md section DEC + architecture/ux/UX-DECISIONS.md"
+    },
+    "commits": {
+      "path": "knowledge/commits.json",
+      "role": "Mémoire technique par session",
+      "accessible": ["gardien"]
+    },
+    "organism_rules": {
+      "path": "architecture/organism/ORGANISM-RULES.json",
+      "role": "Règles organiques + boucles vitales — principes d'évolution du produit",
+      "accessible": ["gardien"],
+      "note": "Source canonique des 10 règles + 7 boucles. Intégré dans decisions.json pour le sync."
+    },
+    "meta": {
+      "path": "knowledge/meta.json",
+      "role": "Contexte technique statique — fichiers clés, inhibitions, protocole modification",
+      "accessible": ["gardien"]
+    }
+  },
+  "projections": {
+    "conducteur": {
+      "files": ["intentions", "features", "interactions", "screens", "tutorials"],
+      "sees": "fonctionnalités · tutoriels · interactions · état application · aides contextuelles",
+      "never_sees": "code · architecture · gouvernance · décisions · commits · dette technique",
+      "ts_output": "supabase/functions/_shared/knowledge-conducteur.ts"
+    },
+    "gardien": {
+      "files": ["intentions", "features", "interactions", "screens", "organs", "decisions", "commits", "meta"],
+      "sees": "tout — fonctionnalités · interactions · organes · écrans · historique · décisions · impacts · commits · contexte technique",
+      "ts_output": "supabase/functions/_shared/knowledge-gardien.ts"
+    }
+  },
+  "sync_script": "node scripts/sync-knowledge.js"
+}

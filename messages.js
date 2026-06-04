@@ -44,11 +44,6 @@ function setBadge(n){
     localStorage.setItem('ic_unread_msg_count', String(n));
     if(window.S) window.S.unreadMsgCount = n;
   }catch(e){}
-  const b = $('topMsgBadge');
-  if(b){
-    b.textContent = n > 99 ? '99+' : String(n);
-    b.style.display = n > 0 ? 'flex' : 'none';
-  }
 }
 
 function timeFR(d){
@@ -174,7 +169,10 @@ function normalizeRows(rows, profs){
       // NE PAS tomber sur rp si reçu et sp vide (sinon _otherPlate = MA plaque)
       _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
-  }).filter(m => m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)));
+  }).filter(m => {
+    const blocked = window.S?.blocked || [];
+    return m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)) && !blocked.includes(nPlate(m._otherPlate));
+  });
 }
 
 async function refresh(){

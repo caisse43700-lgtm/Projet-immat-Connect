@@ -1,0 +1,71 @@
+{
+  "_v": 1,
+  "_role": "Contexte technique statique pour le Gardien — fichiers clés, inhibitions, protocole",
+  "_rule": "Contenu stable. Modifier quand le code change de structure. Gardien uniquement.",
+  "_accessible": ["gardien"],
+
+  "fichiers_cles": [
+    { "path": "index.html", "role": "Application principale (HTML + JS inline ~1940 lignes)" },
+    { "path": "immat-nervous-system.json", "role": "ADN source canonique (INV-015) — ne jamais dupliquer, _v:8" },
+    { "path": "scripts/sync-ns.js", "role": "Synchronise nervous-system.ts depuis le JSON" },
+    { "path": "scripts/sync-knowledge.js", "role": "Génère knowledge-conducteur.ts et knowledge-gardien.ts depuis knowledge/*.json" },
+    { "path": "supabase/functions/_shared/nervous-system.ts", "role": "Dérivé de l'ADN via sync-ns.js — ne pas modifier manuellement" },
+    { "path": "supabase/functions/immat-brain-dialog/index.ts", "role": "Edge Function Ange (Deno + Claude)" },
+    { "path": "supabase/functions/_shared/knowledge-conducteur.ts", "role": "Guide usage conducteur (depth 1) — généré par sync-knowledge.js" },
+    { "path": "supabase/functions/_shared/knowledge-gardien.ts", "role": "Ce fichier en production (depth 3) — généré par sync-knowledge.js" },
+    { "path": "messages.js", "role": "Module ImmatMessages (messagerie temps réel)" },
+    { "path": "utils.js", "role": "colorHex() source canonique couleurs (INV-011)" },
+    { "path": "calls.js", "role": "CallManager (appels P2P entre conducteurs)" },
+    { "path": "badge.js", "role": "Gestion badge messages non lus" },
+    { "path": "ui.js", "role": "Helpers UI (sheet drag, animations, patch App.panel)" },
+    { "path": "core/invariants.js", "role": "Invariants constitutionnels deepFrozen (INV-001→INV-015)" },
+    { "path": "core/immatOrganism.js", "role": "Observateur événements (diagnose(), observe(), validateInvariant())" },
+    { "path": "core/brain.js", "role": "ImmatBrain API de décision Phase 1 — 159 lignes. warnIfPhase2() et audit() définis, non câblés prod." },
+    { "path": "core/bus.js", "role": "ImmatBus (bus d'événements interne)" }
+  ],
+
+  "inhibitions": [
+    { "id": "S._authRunning", "desc": "Bloque ré-entrée afterAuth(). Libéré par finally{} (~507)" },
+    { "id": "S._reporting", "desc": "Bloque double signalement pendant envoi en cours" },
+    { "id": "S._recalcLock", "desc": "Bloque recalcul itinéraire pendant 12s après recalcul auto" }
+  ],
+
+  "snapshot_ange": {
+    "champs": ["health", "summary", "violations(3)", "panel", "speed_cat", "driving", "hasRoute", "nearby", "alerts"],
+    "note": "speed_cat = catégorie ('arrêt'/'lente'/'normale'/'rapide') — jamais valeur exacte (INV-014)",
+    "throttle": "10 appels/heure par session (sessionStorage ic_ange_calls)"
+  },
+
+  "immatorganism": {
+    "diagnose": "Retourne health/events/violations/summary — utilisé par snapshot Ange",
+    "observe": "Émet un événement sur le bus (event, payload)",
+    "validateInvariant": "Délègue à ImmatBrain",
+    "phase_courante": 1,
+    "methodes_non_cablees": ["canDisplayVehicleOnMap", "canAddVehicleToAlerts", "canRequestCall", "canShowPersistentCallBanner", "warnIfPhase2", "audit"]
+  },
+
+  "pont_claude": {
+    "structure": "Dans [fichier]:[ligne], modifier [quoi] → [quoi] pour [pourquoi]. Contrainte : [invariant].",
+    "exemples": [
+      "Dans index.html:804, vehicleAlert() appelle this.panel('contact') — panel inexistant. Modifier → this.panel('messages').",
+      "Dans immat-brain-dialog/index.ts:266, supprimer le filtre role!=='gardien' pour ouvrir aux conducteurs."
+    ],
+    "regles": ["modification ciblée", "atomique", "invariant identifié", "test décrit"]
+  },
+
+  "tensions": [
+    "Ange simple vs riche — snapshot trop lourd = coût tokens. Garder < 200 mots contexte.",
+    "requiresGuardianValidation — true pour gardien (décision humaine requise), false pour conducteur (réponse directe).",
+    "AngeFab — visible pour TOUS les rôles (code ~526). Ce n'est pas un bug — c'est la conception actuelle.",
+    "ADN vs MEGA doc — l'ADN dit ce qui est, le MEGA doc dit comment le naviguer.",
+    "Vocal Ange — infrastructure SpeechRecognition disponible (voiceGps ~552). Câblage manquant."
+  ],
+
+  "protocole_modification": [
+    "1. Lire le code avant de proposer — jamais de modification à l'aveugle",
+    "2. Identifier l'invariant concerné — s'il n'y en a pas, vérifier deux fois",
+    "3. Proposer d'abord, attendre validation, appliquer ensuite",
+    "4. Une modification = un commit atomique",
+    "5. Après modification : vérifier les inhibitions toujours actives"
+  ]
+}

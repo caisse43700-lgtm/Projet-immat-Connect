@@ -21,21 +21,6 @@
       );
     } catch (e) {}
 
-    const badge = $('topMsgBadge');
-
-    if (badge) {
-      badge.textContent =
-        n > 99 ? '99+' : String(n);
-
-      badge.style.display =
-        n > 0 ? 'flex' : 'none';
-
-      badge.setAttribute(
-        'aria-label',
-        `${n} unread messages`
-      );
-    }
-
     document
       .querySelectorAll('.status-mail-badge')
       .forEach(b => {
@@ -70,7 +55,7 @@
     } catch (e) {}
   }
 
-  window.setUnreadMsgCount = setBadge;
+  window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
 
   window.ImmatBadge = {
     set: setBadge,

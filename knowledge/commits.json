@@ -1,0 +1,188 @@
+{
+  "_v": 1,
+  "_role": "Mémoire technique par session — historique des changements majeurs",
+  "_rule": "Résumé structuré par session. Ne pas lister chaque commit. Pointer vers les fichiers touchés.",
+  "sessions": [
+    {
+      "session": 36,
+      "titre": "Audit risques systémiques — 3 corrections R-02/R-03/R-04 implémentées",
+      "changes": [
+        "index.html — R-02 : ic_trust_scores limité à 300 entrées dans trustDelta()",
+        "scripts/sync-ns.js — R-03 : try/catch avec message d'erreur clair",
+        "scripts/sync-knowledge.js — R-04 : vérification croisée decisions.json ↔ ORGANISM-RULES.json en --check",
+        "architecture/SESSION-36-AUDIT-RISQUES-SYSTEMIQUES.md créé — 10 axes, 10 risques classifiés"
+      ],
+      "fichiers_touches": ["index.html", "scripts/", "architecture/"]
+    },
+    {
+      "session": 35,
+      "titre": "Audit cohérence interne — gap sync corrigé (3 règles manquantes decisions.json)",
+      "changes": [
+        "knowledge/decisions.json — DISCOVERABILITY_TEST, ANGE_SURVIVAL_TEST, ATTENTION_IS_SCARCE ajoutés en regles_organiques",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (252 lignes) — 14 règles complètes",
+        "architecture/SESSION-35-AUDIT-COHERENCE.md créé"
+      ],
+      "fichiers_touches": ["knowledge/decisions.json", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
+      "session": 34,
+      "titre": "REALITY_OVER_DOCUMENTATION — règle 14/14 ajoutée",
+      "changes": [
+        "knowledge/decisions.json — REALITY_OVER_DOCUMENTATION ajouté en regles_organiques",
+        "architecture/organism/ORGANISM-RULES.json _v:3 — règle 14 avec test et corollaire",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (249 lignes)"
+      ],
+      "fichiers_touches": ["knowledge/decisions.json", "architecture/organism/ORGANISM-RULES.json", "supabase/functions/_shared/"]
+    },
+    {
+      "session": 33,
+      "titre": "CORRECTION-1 : alertHistoryBox sorti de sigStep2Route — visible dès l'onglet Altet",
+      "changes": [
+        "index.html — alertHistoryBox retiré de sigStep2Route, placé avant gpsErrorMsg (toujours visible)",
+        "index.html — renderAlerts() : display toggle histBox basé sur S.alertHistory.length",
+        "knowledge/decisions.json — SESSION-33 ajouté en implementees"
+      ],
+      "fichiers_touches": ["index.html", "knowledge/"]
+    },
+    {
+      "session": 32,
+      "titre": "Consolidation finale — responsabilité organes + 3 tests organiques (DISCOVERABILITY, ANGE_SURVIVAL, ATTENTION_IS_SCARCE)",
+      "changes": [
+        "knowledge/organs.json _v:3 — intentions/features/boucles_vitales ajoutés sur 6 organes",
+        "architecture/organism/ORGANISM-RULES.json _v:2 — 3 nouvelles règles (DISCOVERABILITY_TEST, ANGE_SURVIVAL_TEST, ATTENTION_IS_SCARCE)",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré",
+        "architecture/SESSION-32-CONSOLIDATION-FINALE.md créé"
+      ],
+      "fichiers_touches": ["knowledge/organs.json", "architecture/organism/ORGANISM-RULES.json", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
+      "session": 31,
+      "titre": "Audit des 7 boucles vitales — score moyen 2.6/5 · CONTRIBUTION/CONFIANCE/RÉTENTION partielles",
+      "changes": [
+        "architecture/SESSION-31-AUDIT-BOUCLES-VITALES.md créé — scores et corrections identifiées"
+      ],
+      "fichiers_touches": ["architecture/"]
+    },
+    {
+      "session": 30,
+      "titre": "Consolidation SESSION 30 — 5 intentions ajoutées, règles organiques + boucles vitales formalisées, architecture/organism/ créé",
+      "changes": [
+        "knowledge/intentions.json _v:4 — INT-CONFIRM-DANGER, INT-RESOLVE-ALERT, INT-HELP-DRIVER, INT-UNDERSTAND-ENV, INT-FEEL-SAFE + PRIM-007",
+        "knowledge/decisions.json _v:4 — regles_organiques + boucles_vitales ajoutées",
+        "architecture/organism/ORGANISM-RULES.json créé",
+        "architecture/organism/IMMATCONNECT-MASTER-AUDIT.md créé",
+        "architecture/organism/IMMATCONNECT-REASONING.md créé",
+        "supabase/functions/_shared/knowledge-conducteur.ts regénéré (134 lignes)",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré (242 lignes)"
+      ],
+      "fichiers_touches": ["knowledge/", "architecture/organism/", "supabase/functions/_shared/"]
+    },
+    {
+      "session": 29,
+      "titre": "DEC-007 clôturé non applicable · statuts alertes seen/present/gone/resolved conservés — sémantiques distinctes",
+      "changes": [
+        "knowledge/decisions.json — DEC-007-NA ajouté en implementees, decisions_en_attente vidé",
+        "architecture/SESSION-29-DEC-007-STATUTS-ALERTES.md créé"
+      ],
+      "fichiers_touches": ["knowledge/", "architecture/"]
+    },
+    {
+      "session": 28,
+      "titre": "DA-004 clôturé Option C · messages.js filtre les messages des plaques bloquées",
+      "changes": [
+        "messages.js — normalizeRows() filtre !blocked.includes(nPlate(m._otherPlate))",
+        "architecture/SESSION-28-DA-004-BLOCAGE.md créé"
+      ],
+      "fichiers_touches": ["messages.js", "architecture/"]
+    },
+    {
+      "session": 27,
+      "titre": "Vérification P2-002 (13 points) · INT-008 ajouté · F-SIGNAL-ROUTE enrichi · Ange connaît le FAB contextuel",
+      "changes": [
+        "knowledge/interactions.json — INT-008 Signalement carte contextuel ajouté",
+        "knowledge/features.json — F-SIGNAL-ROUTE entry_points + note ajoutés",
+        "knowledge/decisions.json — DA-FAB-004/007 déplacés en implementees, DA-004 dédoublé",
+        "supabase/functions/_shared/knowledge-conducteur.ts regénéré",
+        "supabase/functions/_shared/knowledge-gardien.ts regénéré",
+        "architecture/SESSION-27-VERIFICATION-P2-002.md créé"
+      ],
+      "fichiers_touches": ["knowledge/", "supabase/functions/_shared/", "architecture/"]
+    },
+    {
+      "session": 26,
+      "titre": "Audit général · 5 bugs corrigés (BUG-001 badge, BUG-002 FAB timer, BUG-003 haversine, MORT-001 alertsPanel, BUG-004 openReport)",
+      "changes": [
+        "badge.js — BUG-001 : window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge",
+        "index.html — BUG-002 : timer FAB → clearSignalHereContext (tapLat nettoyé)",
+        "index.html — BUG-003 : km() haversine au lieu de Math.hypot*111",
+        "ui.js — MORT-001 : alertsPanel supprimé du tableau floating",
+        "ui.js — BUG-004 : openReport appelle _sigReset"
+      ],
+      "fichiers_touches": ["badge.js", "index.html", "ui.js"]
+    },
+    {
+      "session": 25,
+      "titre": "Liens opérationnels intentions.json · DA-FAB-004 (toast >10km) · DA-FAB-007 (FAB désactivé en conduite)",
+      "changes": [
+        "knowledge/intentions.json _v:3 — champ liens ajouté sur 10 intentions",
+        "index.html — DA-FAB-004 : avertissement toast si signalement >10km GPS",
+        "index.html — DA-FAB-007 : guard panelDrive dans showSignalHere()",
+        "supabase/functions/_shared/knowledge-conducteur.ts — section RESSOURCES PAR INTENTION",
+        "supabase/functions/_shared/knowledge-gardien.ts — tableau INTENTION → FLOW + TUTORIAL"
+      ],
+      "fichiers_touches": ["knowledge/intentions.json", "index.html", "supabase/functions/_shared/"]
+    },
+    {
+      "session": 19,
+      "titre": "ADN _v:8 · Cinq sens · FLOW-INDEX · DEC-001/003/006/008 · ANGE V2",
+      "changes": [
+        "immat-nervous-system.json _v:7→8 — senses + governance + profil sensoriel organes",
+        "architecture/IMMAT-FLOW-INDEX.json créé — 5 flux organiques",
+        "knowledge/ créé — Référentiel Opérationnel ANGE V2",
+        "index.html — DEC-001 barres progression sigStep",
+        "index.html — DEC-003 filtres type Activité S._actTypeFilter",
+        "index.html — DEC-006 alertsPanel mort supprimé",
+        "index.html — DEC-008 bouton 🙏 Merci dédié",
+        "knowledge-gardien.ts — cinq sens + flux organiques",
+        "nervous-system.ts regénéré via sync-ns.js"
+      ],
+      "fichiers_touches": ["immat-nervous-system.json", "index.html", "architecture/IMMAT-FLOW-INDEX.json", "knowledge/", "supabase/functions/_shared/"]
+    },
+    {
+      "session": 18,
+      "titre": "ANGE audit complet — flux organiques concept + boucle intention→mémoire",
+      "changes": ["Audit organique transmis — concept IMMAT-FLOW-INDEX formalisé par Gardien"],
+      "fichiers_touches": []
+    },
+    {
+      "session": 12,
+      "titre": "Corrections P0/P1 — callSignalPlate + signalRecapCard mort",
+      "changes": ["P0-004 callSignalPlate ReferenceError fixé", "P1-009 signalRecapCard supprimé"],
+      "fichiers_touches": ["index.html"]
+    },
+    {
+      "session": 11,
+      "titre": "panelContact supprimé — D-001",
+      "changes": ["P1-001 panelContact DOM mort retiré — panelMessages remplace"],
+      "fichiers_touches": ["index.html"]
+    },
+    {
+      "session": 10,
+      "titre": "quickMsg/quickReply fix + debug tools gardien + brain-dialog retry",
+      "changes": ["BUG-001 P2-018 quickMsg → icComposePlate/icComposeText", "P2-007 debug tools gardien-debug-tool CSS", "P2-019 brain-dialog retry RPC cold start"],
+      "fichiers_touches": ["index.html", "supabase/functions/immat-brain-dialog/index.ts"]
+    },
+    {
+      "session": 9,
+      "titre": "NS v6 + nsToPrompt + sync-ns.js + architecture UX modulaire",
+      "changes": ["NS _v:6 access_policy 3 rôles", "nsToPrompt(depth:1/2/3)", "sync-ns.js génération mécanique", "11 fichiers architecture/ux/"],
+      "fichiers_touches": ["immat-nervous-system.json", "scripts/sync-ns.js", "architecture/ux/"]
+    },
+    {
+      "session": 8,
+      "titre": "Appels WebRTC + navPremium temps réel + corrections P1",
+      "changes": ["ImmatCall WebRTC P2P", "navPremium vitesse GPS réelle", "SOS appui long D-005", "Bouton Appeler nearbyPanel/contextMenu"],
+      "fichiers_touches": ["index.html", "calls.js"]
+    }
+  ]
+}
