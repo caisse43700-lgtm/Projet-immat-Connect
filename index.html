@@ -1973,6 +1973,7 @@ function showReputationToast(){
 </script>
 
 
+<script src="core/interaction-engine.js?v=1"></script>
 <script src="calls.js?v=2"></script>
 <script src="badge.js"></script>
 <script src="messages.js?v=15"></script>
@@ -2279,6 +2280,8 @@ const AngeAction = {
         window.App?.blockPlate?.(target);
       }
       try{ window.ImmatOrganism?.observe?.('ANGE_ACTION_EXECUTED',{type,hasTarget:!!target,_src:'ImmatConnect/ange/AngeAction'}); }catch(e){}
+      // Phase 1 : enregistrement dans l'Interaction Engine (INV-OBD-001)
+      try{ window.InteractionEngine?.create?.({type, initiator: window.S?.profile?.owner_plate || '', target: target || null, payload, status:'resolved'}); }catch(e){}
     }catch(e){ toast('Erreur lors de l\'action Ange.','bad'); }
   }
 };

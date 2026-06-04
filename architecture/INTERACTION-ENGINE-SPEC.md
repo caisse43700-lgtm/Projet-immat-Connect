@@ -100,11 +100,11 @@ InteractionEngine.observe(interaction)
 
 | Phase | Contenu | Session |
 |---|---|---|
-| Phase 1 | Objet Interaction + storage local `ic_interactions` | SESSION 27 |
-| Phase 2 | Historique unifié + Badge unifié | SESSION 27 |
-| Phase 3 | Ange → InteractionEngine (remplacement APIs multiples) | SESSION 28 |
-| Phase 4 | Guardian Loop → InteractionEngine | SESSION 28 |
-| Phase 5 | WebRTC → InteractionEngine (CALL Phase B) | SESSION 30 |
+| Phase 1 | Objet Interaction + storage local `ic_interactions` | SESSION 27 | ✅ IMPLÉMENTÉ |
+| Phase 2 | Historique unifié + Badge unifié | SESSION 27 | ✅ IMPLÉMENTÉ |
+| Phase 3 | Ange → InteractionEngine (remplacement APIs multiples) | SESSION 28 | ⏳ |
+| Phase 4 | Guardian Loop → InteractionEngine | SESSION 28 | ⏳ |
+| Phase 5 | WebRTC → InteractionEngine (CALL Phase B) | SESSION 30 | ⏳ |
 
 ---
 

@@ -290,7 +290,7 @@
     { "id": "GAP-007", "description": "Recherche dans les messages", "interaction": "INT-001", "priority": "P3" },
     { "id": "GAP-008", "description": "Fiches flottantes légères au tap alerte", "interaction": "INT-002/003", "priority": "P3" },
     { "id": "GAP-009", "description": "AngeAction API — prepareInteraction()", "interaction": "INT-011", "priority": "P2", "planned": "SESSION-26", "status": "RÉSOLU SESSION-26" },
-    { "id": "GAP-010", "description": "Interaction Engine objet central", "interaction": "ALL", "priority": "P2", "planned": "SESSION-27" },
+    { "id": "GAP-010", "description": "Interaction Engine objet central", "interaction": "ALL", "priority": "P2", "planned": "SESSION-27", "status": "RÉSOLU SESSION-27" },
     { "id": "GAP-011", "description": "Guardian Intelligence Loop", "interaction": "ALL", "priority": "P2", "planned": "SESSION-28" },
     { "id": "GAP-012", "description": "Knowledge Graph V2 — 100% 0 nœud isolé", "interaction": "ALL", "priority": "P1", "planned": "SESSION-29" }
   ]
