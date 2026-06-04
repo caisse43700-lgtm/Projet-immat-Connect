@@ -1,8 +1,11 @@
-/* interaction-engine.js — SESSION 27 (Phase 1→F)
+/* interaction-engine.js — SESSION 27 (Phase 1→F) + Audit A-001→A-005
  * Objet Interaction central : create / history / status / notify / search / analytics
  * Backward compatible : ne remplace pas messages.js / calls.js (SESSION 28)
  * INV-OBD-001 : chaque Interaction émet un OBD event avec flow_id + invariant
- * INV-INT-001 à INV-INT-008 : grammaire métier universelle
+ * INV-INT-001→008 : grammaire métier universelle
+ * INV-CALL-002 : modèle Interaction extensible WebRTC sans migration (RÉSERVÉ SESSION 30)
+ * INV-COM-029 : tout abus = Interaction · INV-COM-030 : tout contact = Interaction
+ * INV-GUARD-001 : toute Recommendation Guardian référence une Interaction
  */
 'use strict';
 if (window.__InteractionEngineV2) return;
@@ -44,17 +47,24 @@ const InteractionEngine = (function () {
     SOS:              { obd: 'SOS_TRIGGERED',          flow: 'FLOW-SOS', invariants: ['INV-COM-014'] },
     TRUST:            { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
     BLOCK:            { obd: 'BLOCK_APPLIED',          flow: 'FLOW-BLOCK', invariants: ['INV-COM-019'] },
-    ABUSE:            { obd: 'ABUSE_REPORTED',         flow: 'FLOW-ABUSE', invariants: ['INV-COM-026'] },
-    // Cycle contact
-    CONTACT_REQUEST:  { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
-    CONTACT_ACCEPTED: { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
-    CONTACT_REJECTED: { obd: 'CONTACT_REVOKED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
-    // Cycle appel granulaire
+    ABUSE:            { obd: 'ABUSE_REPORTED',         flow: 'FLOW-ABUSE', invariants: ['INV-COM-026', 'INV-COM-029'] },
+    // Cycle contact (INV-COM-030)
+    CONTACT_REQUEST:  { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018', 'INV-COM-030'] },
+    CONTACT_ACCEPTED: { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018', 'INV-COM-030'] },
+    CONTACT_REJECTED: { obd: 'CONTACT_REVOKED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018', 'INV-COM-030'] },
+    // Cycle appel granulaire Phase A
     CALL_REQUEST:     { obd: 'CALL_INITIATED',         flow: 'FLOW-008', invariants: ['INV-COM-003'] },
     CALL_ACCEPTED:    { obd: 'CALL_ACCEPTED',           flow: 'FLOW-008', invariants: ['INV-COM-003'] },
     CALL_REFUSED:     { obd: 'CALL_REFUSED',            flow: 'FLOW-008', invariants: ['INV-COM-003'] },
     CALL_MISSED:      { obd: 'CALL_MISSED',             flow: 'FLOW-008', invariants: ['INV-COM-003', 'INV-CALL-001'] },
     CALL_CANCELLED:   { obd: 'CALL_CANCELLED',          flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+    // ── A-002 WebRTC Phase B — RÉSERVÉ SESSION 30 (INV-CALL-002) ─────────────────
+    // Le modèle Interaction est déjà prêt : aucune migration de structure requise.
+    CALL_CONNECTED:    { obd: 'CALL_CONNECTED',    flow: 'FLOW-008-B', invariants: ['INV-COM-003', 'INV-CALL-002'], reserved: true },
+    CALL_ENDED:        { obd: 'CALL_ENDED',         flow: 'FLOW-008-B', invariants: ['INV-COM-003', 'INV-CALL-002'], reserved: true },
+    CALL_FAILED:       { obd: 'CALL_FAILED',        flow: 'FLOW-008-B', invariants: ['INV-COM-003', 'INV-CALL-002'], reserved: true },
+    CALL_NETWORK_LOST: { obd: 'CALL_NETWORK_LOST',  flow: 'FLOW-008-B', invariants: ['INV-COM-003', 'INV-CALL-002'], reserved: true },
+    CALL_RECONNECTED:  { obd: 'CALL_RECONNECTED',   flow: 'FLOW-008-B', invariants: ['INV-COM-003', 'INV-CALL-002'], reserved: true },
   };
 
   // ── Utilitaires ──────────────────────────────────────────────────────────────

@@ -243,6 +243,30 @@
       "name": "Toute Interaction est indexée dans le Knowledge Graph",
       "rule": "Chaque nouveau type d'Interaction doit être déclaré dans knowledge/immat-knowledge-graph.json avec son type, OBD event, flow_id et invariant. Un type sans entrée dans le Knowledge Graph est un nœud isolé.",
       "check": "knowledge/immat-knowledge-graph.json — TYPE_META de interaction-engine.js ↔ obd_events + intentions"
+    },
+    {
+      "id": "INV-CALL-002",
+      "name": "Le modèle Interaction est extensible WebRTC sans migration",
+      "rule": "Les types WebRTC Phase B (CALL_CONNECTED, CALL_ENDED, CALL_FAILED, CALL_NETWORK_LOST, CALL_RECONNECTED) doivent être réservés dans TYPE_META avec reserved:true dès SESSION 27. Aucune modification de la structure Interaction ne doit être nécessaire lors de l'activation en SESSION 30.",
+      "check": "core/interaction-engine.js — TYPE_META : CALL_CONNECTED→CALL_RECONNECTED reserved:true · FLOW-008-B"
+    },
+    {
+      "id": "INV-COM-029",
+      "name": "Tout signalement d'abus doit être représenté par une Interaction",
+      "rule": "Chaque appel à _reportAbuse() doit créer ou référencer une Interaction de type ABUSE. Un abus sans Interaction est invisible pour le Guardian et non traçable dans le Knowledge Graph.",
+      "check": "core/interaction-engine.js — TYPE_META.ABUSE · INV-COM-026 complémentaire"
+    },
+    {
+      "id": "INV-COM-030",
+      "name": "Toute relation de confiance débute par une Interaction observable",
+      "rule": "Chaque CONTACT_REQUEST, CONTACT_ACCEPTED ou CONTACT_REJECTED doit être représenté par une Interaction. Aucune modification de niveau de confiance ne peut être silencieuse pour le Guardian.",
+      "check": "core/interaction-engine.js — TYPE_META.CONTACT_REQUEST/ACCEPTED/REJECTED · INV-COM-018 complémentaire"
+    },
+    {
+      "id": "INV-GUARD-001",
+      "name": "Toute Recommendation Guardian référence au moins une Interaction",
+      "rule": "Chaque objet Recommendation émis par le Guardian Loop (SESSION 28) doit posséder un champ interaction_id ou evidence[] pointant vers au moins une Interaction existante dans ic_interactions. Une recommandation sans preuve d'Interaction est invalide.",
+      "check": "SESSION 28 — Recommendation.evidence[] → Interaction.id · core/interaction-engine.js getHistory()"
     }
   ]
 }

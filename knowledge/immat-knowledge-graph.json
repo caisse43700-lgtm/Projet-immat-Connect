@@ -278,7 +278,11 @@
     { "id": "INV-INT-005", "name": "Toute Interaction possède un Invariant", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-INT-006", "name": "Toute Interaction possède un test", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-INT-007", "name": "Toute Interaction observable remonte à l'OBD", "file": "knowledge/communication-invariants.json" },
-    { "id": "INV-INT-008", "name": "Toute Interaction est indexée dans le Knowledge Graph", "file": "knowledge/communication-invariants.json" }
+    { "id": "INV-INT-008", "name": "Toute Interaction est indexée dans le Knowledge Graph", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-CALL-002", "name": "Modèle Interaction extensible WebRTC sans migration", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-029", "name": "Tout abus = Interaction ABUSE observable", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-030", "name": "Toute relation de confiance = Interaction CONTACT observable", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-GUARD-001", "name": "Toute Recommendation Guardian référence une Interaction", "file": "knowledge/communication-invariants.json" }
   ],
 
   "features_trust_block": [
