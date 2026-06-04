@@ -495,7 +495,9 @@ function _renderArchivedSection(list){
   const archived = getArchived();
   if(!archived.length) return;
 
-  const archThreads = (State.threads || []).filter(t => archived.includes(nPlate(t.plate)));
+  const archThreads = (State.threads || [])
+    .filter(t => archived.includes(nPlate(t.plate)))
+    .sort((a,b) => new Date(b.last?.created_at||0) - new Date(a.last?.created_at||0));
   if(!archThreads.length) return;
 
   const toggle = document.createElement('button');
@@ -1003,13 +1005,48 @@ function openThreadMenu(){
 
   const backdrop = document.getElementById('icSheetBackdrop');
   const sheet    = document.getElementById('icBottomSheet');
+  _initSheetTouch();
   if(backdrop) backdrop.classList.add('show');
   if(sheet)    sheet.classList.add('show');
 }
 
 function closeSheet(){
-  document.getElementById('icSheetBackdrop')?.classList.remove('show');
-  document.getElementById('icBottomSheet')?.classList.remove('show');
+  const sheet    = document.getElementById('icBottomSheet');
+  const backdrop = document.getElementById('icSheetBackdrop');
+  if(sheet){
+    sheet.style.transform  = '';
+    sheet.style.transition = '';
+    sheet.classList.remove('show');
+  }
+  if(backdrop) backdrop.classList.remove('show');
+}
+
+let _sheetTouchInit = false;
+function _initSheetTouch(){
+  if(_sheetTouchInit) return;
+  const sheet = document.getElementById('icBottomSheet');
+  if(!sheet) return;
+  _sheetTouchInit = true;
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    startY   = e.touches[0].clientY;
+    dragging = true;
+    sheet.style.transition = 'none';
+  }, {passive:true});
+  sheet.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = Math.max(0, e.touches[0].clientY - startY);
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  sheet.addEventListener('touchend', () => {
+    if(!dragging) return;
+    dragging = false;
+    const m  = sheet.style.transform.match(/translateY\((\d+(?:\.\d+)?)px\)/);
+    const dy = m ? parseFloat(m[1]) : 0;
+    sheet.style.transition = '';
+    if(dy > 60){ closeSheet(); }
+    else        { sheet.style.transform = ''; }
+  });
 }
 
 function _sheetAction(action){
