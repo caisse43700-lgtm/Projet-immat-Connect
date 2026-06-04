@@ -16,11 +16,11 @@
   <link rel="stylesheet" href="messages.css?v=4">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
-  <script src="core/invariants.js"></script>
-  <script src="core/bus.js"></script>
-  <script src="core/brain.js"></script>
-  <script src="core/governance.js"></script>
-  <script src="core/immatOrganism.js"></script>
+  <script src="core/invariants.js?v=45"></script>
+  <script src="core/bus.js?v=45"></script>
+  <script src="core/brain.js?v=45"></script>
+  <script src="core/governance.js?v=45"></script>
+  <script src="core/immatOrganism.js?v=45"></script>
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Communique avec les conducteurs proches par immatriculation. Signale des incidents, envoie des messages et reste informé en temps réel.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte gratuit</button></div></section>
@@ -536,6 +536,7 @@ async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)re
 openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.startMsgs();this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();try{CallManager.init(sb,p.id,p.owner_plate||'')}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v;})}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o)_o.style.display='flex';}},1400)},
 dismissOnboarding(){set('ic_onboarded','1');const _o=$('onboardingOverlay');if(_o)_o.style.display='none';},
 openGardienDashboard(){
+  try{window.ImmatOrganism?.init?.()}catch(e){}
   const el=$('gardienDashboard'),body=$('gardienDashboardBody');
   if(!el||!body)return;
   el.style.display='block';
