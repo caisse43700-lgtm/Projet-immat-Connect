@@ -1,199 +1,88 @@
 {
-  "_generated_at": "2026-06-04T07:45:44.685Z",
+  "_generated_at": "2026-06-04T08:27:25.548Z",
   "_rule": "ORPHAN_CHAIN",
   "_session": "OBD-002b",
   "_version": 1,
   "features_checked": 11,
   "coherence_score": {
-    "score": 83,
-    "label": "ATTENTION",
+    "score": 100,
+    "label": "OPTIMAL",
     "max_points": 66,
-    "deducted": 11
+    "deducted": 0
   },
   "stats": {
     "high": 0,
     "medium": 0,
-    "low": 11,
-    "total": 11
+    "low": 0,
+    "total": 0
   },
   "per_feature": {
     "F-CARTE": {
       "nom": "Carte temps réel",
       "organe": "Carte",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-GPS": {
       "nom": "Navigation GPS",
       "organe": "Carte",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-SIGNAL-VEHICULE": {
       "nom": "Alerte véhicule",
       "organe": "Signalements",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-SIGNAL-ROUTE": {
       "nom": "Signalement route",
       "organe": "Signalements",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-ASSIST": {
       "nom": "Demande d'aide",
       "organe": "Signalements",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-MESSAGES": {
       "nom": "Messages directs",
       "organe": "Messages",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-ACTIVITE": {
       "nom": "Activité (notifications)",
       "organe": "Messages",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-APPEL": {
       "nom": "Demandes de contact / Appels",
       "organe": "Messages",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-SOS": {
       "nom": "SOS urgence",
       "organe": "Signalements",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-ANGE": {
       "nom": "Ange IA",
       "organe": "Ange",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     },
     "F-PROFIL": {
       "nom": "Profil conducteur",
       "organe": "Profil",
       "chain_complete": true,
-      "findings_count": 1
+      "findings_count": 0
     }
   },
-  "findings": [
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-CARTE",
-      "feature_nom": "Carte temps réel",
-      "reason": "F-CARTE : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-carte.test.js et y référencer 'F-CARTE'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-GPS",
-      "feature_nom": "Navigation GPS",
-      "reason": "F-GPS : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-gps.test.js et y référencer 'F-GPS'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-SIGNAL-VEHICULE",
-      "feature_nom": "Alerte véhicule",
-      "reason": "F-SIGNAL-VEHICULE : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-signal-vehicule.test.js et y référencer 'F-SIGNAL-VEHICULE'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-SIGNAL-ROUTE",
-      "feature_nom": "Signalement route",
-      "reason": "F-SIGNAL-ROUTE : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-signal-route.test.js et y référencer 'F-SIGNAL-ROUTE'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-ASSIST",
-      "feature_nom": "Demande d'aide",
-      "reason": "F-ASSIST : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-assist.test.js et y référencer 'F-ASSIST'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-MESSAGES",
-      "feature_nom": "Messages directs",
-      "reason": "F-MESSAGES : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-messages.test.js et y référencer 'F-MESSAGES'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-ACTIVITE",
-      "feature_nom": "Activité (notifications)",
-      "reason": "F-ACTIVITE : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-activite.test.js et y référencer 'F-ACTIVITE'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-APPEL",
-      "feature_nom": "Demandes de contact / Appels",
-      "reason": "F-APPEL : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-appel.test.js et y référencer 'F-APPEL'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-SOS",
-      "feature_nom": "SOS urgence",
-      "reason": "F-SOS : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-sos.test.js et y référencer 'F-SOS'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-ANGE",
-      "feature_nom": "Ange IA",
-      "reason": "F-ANGE : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-ange.test.js et y référencer 'F-ANGE'",
-      "rule_id": "NO_ORPHAN_TEST"
-    },
-    {
-      "type": "ORPHAN_CHAIN_DETECTED",
-      "rule": "NO_ORPHAN_TEST",
-      "severity": "low",
-      "feature_id": "F-PROFIL",
-      "feature_nom": "Profil conducteur",
-      "reason": "F-PROFIL : aucun test ne référence cet ID dans tests/",
-      "suggested_action": "Créer tests/organism/f-profil.test.js et y référencer 'F-PROFIL'",
-      "rule_id": "NO_ORPHAN_TEST"
-    }
-  ]
+  "findings": []
 }
