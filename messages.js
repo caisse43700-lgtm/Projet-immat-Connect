@@ -222,7 +222,7 @@ async function refresh(){
   buildThreads();
   render();
   refreshThread();
-  subscribe();
+  if(!State.channel) subscribe();
 }
 
 function buildThreads(){
@@ -836,11 +836,7 @@ async function subscribe(){
   const client = sb();
   const u = State.user || await getUser();
   if(!client || !u) return;
-
-  if(State.channel) {
-    try{ await client.removeChannel(State.channel); }catch(e){}
-    State.channel = null;
-  }
+  if(State.channel) return;
 
   const mp = nPlate(myPlate());
   const uid = State.user?.id;
