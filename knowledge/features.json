@@ -1,5 +1,5 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_role": "Inventaire des fonctionnalités — relie usage → organe → flux",
   "_rule": "Chaque feature = ce que le conducteur peut faire, pas comment le code fonctionne. Ref FLOW-INDEX pour les flux critiques.",
   "_ref": "architecture/IMMAT-FLOW-INDEX.json",
@@ -20,7 +20,7 @@
       "description": "Rechercher une destination et suivre un itinéraire en temps réel",
       "actions": ["Rechercher adresse", "Lancer GPS", "Arrêter GPS", "Favoris GPS", "Historique GPS"],
       "statut": "actif",
-      "flows": [],
+      "flows": ["FLOW-GPS-NAVIGATION"],
       "note": "navPremium (trafic, limite vitesse, voies) = données SIMULÉES — P1-002 en attente"
     },
     {
@@ -40,7 +40,7 @@
       "actions": ["Accident", "Bouchon", "Obstacle", "Verglas", "Contrôle police"],
       "entry_points": ["FAB Signaler (onglet Altet)", "Clic droit carte → 📍 Signaler ici (P2-002)"],
       "statut": "actif",
-      "flows": [],
+      "flows": ["FLOW-ROAD-REPORT"],
       "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
       "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
     },
@@ -78,6 +78,7 @@
       "description": "Appeler un conducteur en audio P2P via WebRTC",
       "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser"],
       "statut": "actif",
+      "flows": ["FLOW-AUDIO-CALL"],
       "note": "Consentement explicite requis — D-002"
     },
     {
@@ -87,6 +88,7 @@
       "description": "Déclencher une alerte d'urgence protégée par appui long",
       "actions": ["Appui long 3s → confirmation → envoi"],
       "statut": "actif",
+      "flows": ["FLOW-SOS"],
       "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
     },
     {
@@ -96,6 +98,7 @@
       "description": "Assistant contextuel intelligent — répond selon rôle conducteur/gardien",
       "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
       "statut": "actif",
+      "flows": ["FLOW-ANGE-DIALOG"],
       "throttle": "10 appels/heure par session"
     },
     {
@@ -105,6 +108,7 @@
       "description": "Gérer son pseudo, téléphone, couleur véhicule. La plaque est immuable.",
       "actions": ["Modifier pseudo", "Modifier téléphone", "Modifier couleur"],
       "statut": "actif",
+      "flows": ["FLOW-PROFILE-MANAGEMENT"],
       "note": "Plaque immuable après création — INV-006"
     }
   ]
