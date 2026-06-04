@@ -270,7 +270,15 @@
     { "id": "INV-COM-010", "name": "Présence ≠ Géolocalisation", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-011", "name": "Interaction observable", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-014", "name": "Priorités BLOCKED > TRUSTED", "file": "knowledge/communication-invariants.json" },
-    { "id": "INV-COM-015", "name": "Ange ≠ accès messages", "file": "knowledge/communication-invariants.json" }
+    { "id": "INV-COM-015", "name": "Ange ≠ accès messages", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-001", "name": "Toute action conducteur produit une Interaction", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-002", "name": "Toute notification référence une Interaction", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-003", "name": "Toute Interaction possède un statut normalisé", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-004", "name": "Toute Interaction possède un Flow", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-005", "name": "Toute Interaction possède un Invariant", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-006", "name": "Toute Interaction possède un test", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-007", "name": "Toute Interaction observable remonte à l'OBD", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-INT-008", "name": "Toute Interaction est indexée dans le Knowledge Graph", "file": "knowledge/communication-invariants.json" }
   ],
 
   "features_trust_block": [

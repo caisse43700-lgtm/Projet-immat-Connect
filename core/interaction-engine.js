@@ -1,29 +1,63 @@
-/* interaction-engine.js — SESSION 27 — Phase 1/2
- * Objet Interaction : stockage ic_interactions + historique unifié + badge unifié
+/* interaction-engine.js — SESSION 27 (Phase 1→F)
+ * Objet Interaction central : create / history / status / notify / search / analytics
  * Backward compatible : ne remplace pas messages.js / calls.js (SESSION 28)
  * INV-OBD-001 : chaque Interaction émet un OBD event avec flow_id + invariant
+ * INV-INT-001 à INV-INT-008 : grammaire métier universelle
  */
 'use strict';
-if (window.__InteractionEngineV1) return;
-window.__InteractionEngineV1 = true;
+if (window.__InteractionEngineV2) return;
+window.__InteractionEngineV2 = true;
 
 const InteractionEngine = (function () {
 
   const STORAGE_KEY     = 'ic_interactions';
+  const NOTIF_KEY       = 'ic_notifications';
   const MAX_INTERACTIONS = 200;
+  const MAX_NOTIFS       = 100;
 
-  // Type → OBD event + flow + invariant (INV-OBD-001)
-  const TYPE_META = {
-    MESSAGE:       { obd: 'MSG_SENT',             flow: 'FLOW-001', invariants: ['INV-COM-001'] },
-    THANKS:        { obd: 'MSG_SENT',             flow: 'FLOW-001', invariants: ['INV-COM-001'] },
-    CALL:          { obd: 'CALL_INITIATED',        flow: 'FLOW-008', invariants: ['INV-COM-003'] },
-    VEHICLE_ALERT: { obd: 'VEHICLE_MESSAGE_SENT', flow: 'FLOW-005', invariants: ['INV-COM-001'] },
-    ROAD_ALERT:    { obd: 'ROAD_CREATED',          flow: 'FLOW-007', invariants: ['INV-COM-011'] },
-    HELP:          { obd: 'HELP_CREATED',          flow: 'FLOW-003', invariants: ['INV-COM-005'] },
-    SOS:           { obd: 'SOS_TRIGGERED',         flow: 'FLOW-SOS', invariants: ['INV-COM-014'] },
-    TRUST:         { obd: 'CONTACT_TRUSTED',       flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
-    BLOCK:         { obd: 'BLOCK_APPLIED',         flow: 'FLOW-BLOCK', invariants: ['INV-COM-019'] },
+  // ── 27C — Statuts normalisés (INV-INT-003) ───────────────────────────────────
+  const STATUSES = {
+    PENDING:    'pending',
+    RECEIVED:   'received',
+    VIEWED:     'viewed',
+    RESPONDED:  'responded',
+    ACCEPTED:   'accepted',
+    REJECTED:   'rejected',
+    EXPIRED:    'expired',
+    RESOLVED:   'resolved',
+    ARCHIVED:   'archived',
+    CANCELLED:  'cancelled',
+    BLOCKED:    'blocked',
+    FAILED:     'failed',
   };
+  const VALID_STATUSES = new Set(Object.values(STATUSES));
+
+  // ── TYPE_META — OBD event + flow + invariant (INV-OBD-001) ──────────────────
+  const TYPE_META = {
+    // Actions conducteur de base
+    MESSAGE:          { obd: 'MSG_SENT',              flow: 'FLOW-001', invariants: ['INV-COM-001'] },
+    THANKS:           { obd: 'MSG_SENT',              flow: 'FLOW-001', invariants: ['INV-COM-001'] },
+    CALL:             { obd: 'CALL_INITIATED',         flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+    VEHICLE_ALERT:    { obd: 'VEHICLE_MESSAGE_SENT',  flow: 'FLOW-005', invariants: ['INV-COM-001'] },
+    ROAD_ALERT:       { obd: 'ROAD_CREATED',           flow: 'FLOW-007', invariants: ['INV-COM-011'] },
+    HELP:             { obd: 'HELP_CREATED',           flow: 'FLOW-003', invariants: ['INV-COM-005'] },
+    SOS:              { obd: 'SOS_TRIGGERED',          flow: 'FLOW-SOS', invariants: ['INV-COM-014'] },
+    TRUST:            { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
+    BLOCK:            { obd: 'BLOCK_APPLIED',          flow: 'FLOW-BLOCK', invariants: ['INV-COM-019'] },
+    ABUSE:            { obd: 'ABUSE_REPORTED',         flow: 'FLOW-ABUSE', invariants: ['INV-COM-026'] },
+    // Cycle contact
+    CONTACT_REQUEST:  { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
+    CONTACT_ACCEPTED: { obd: 'CONTACT_TRUSTED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
+    CONTACT_REJECTED: { obd: 'CONTACT_REVOKED',        flow: 'FLOW-TRUST', invariants: ['INV-COM-018'] },
+    // Cycle appel granulaire
+    CALL_REQUEST:     { obd: 'CALL_INITIATED',         flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+    CALL_ACCEPTED:    { obd: 'CALL_ACCEPTED',           flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+    CALL_REFUSED:     { obd: 'CALL_REFUSED',            flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+    CALL_MISSED:      { obd: 'CALL_MISSED',             flow: 'FLOW-008', invariants: ['INV-COM-003', 'INV-CALL-001'] },
+    CALL_CANCELLED:   { obd: 'CALL_CANCELLED',          flow: 'FLOW-008', invariants: ['INV-COM-003'] },
+  };
+
+  // ── Utilitaires ──────────────────────────────────────────────────────────────
 
   function _nPlate(p) {
     return String(p || '').replace(/[\s-]/g, '').toUpperCase();
@@ -61,10 +95,11 @@ const InteractionEngine = (function () {
     } catch(e) {}
   }
 
-  // ── Phase 1 : Création et stockage ─────────────────────────────────────────
+  // ── Phase 1 — Création ───────────────────────────────────────────────────────
 
   function create({ type, initiator, target, payload, status, journey_id, flow_id, invariants }) {
     const meta = TYPE_META[type] || {};
+    const st = VALID_STATUSES.has(status) ? status : STATUSES.PENDING;
     const interaction = {
       id:          _uuid(),
       type:        type || 'MESSAGE',
@@ -72,7 +107,7 @@ const InteractionEngine = (function () {
       target:      target ? _nPlate(target) : null,
       timestamp:   new Date().toISOString(),
       payload:     payload || {},
-      status:      status || 'pending',
+      status:      st,
       obd_events:  meta.obd ? [meta.obd] : [],
       journey_id:  journey_id || null,
       flow_id:     flow_id || meta.flow || null,
@@ -85,13 +120,21 @@ const InteractionEngine = (function () {
     return interaction;
   }
 
-  function resolve(id, newStatus) {
+  // ── 27C — Mise à jour de statut normalisé (INV-INT-003) ─────────────────────
+
+  function updateStatus(id, newStatus) {
+    if (!VALID_STATUSES.has(newStatus)) return false;
     const list = _load();
     const item = list.find(i => i.id === id);
-    if (item) { item.status = newStatus || 'resolved'; _save(list); }
+    if (item) { item.status = newStatus; _save(list); return true; }
+    return false;
   }
 
-  // ── Phase 2 : Historique unifié ─────────────────────────────────────────────
+  function resolve(id, newStatus) {
+    return updateStatus(id, newStatus || STATUSES.RESOLVED);
+  }
+
+  // ── Phase 2 — Historique filtré (INV-COM-025) ────────────────────────────────
 
   function getHistory(plate, opts) {
     const p = _nPlate(plate);
@@ -99,10 +142,7 @@ const InteractionEngine = (function () {
     const { limit = 50, types = null, status = null } = opts || {};
     let list = _load();
 
-    // Filtrer par plaque (initiateur ou cible)
     list = list.filter(i => _nPlate(i.initiator) === p || _nPlate(i.target || '') === p);
-
-    // Filtrer par Permissions Matrix (INV-COM-025 : block > trust)
     list = list.filter(i => {
       const other = _nPlate(i.initiator) === p ? i.target : i.initiator;
       if (!other) return true;
@@ -113,25 +153,144 @@ const InteractionEngine = (function () {
     if (types)  list = list.filter(i => types.includes(i.type));
     if (status) list = list.filter(i => i.status === status);
 
-    return list.slice(-limit).reverse(); // DESC
+    return list.slice(-limit).reverse();
   }
 
-  // ── Phase 2 : Badge unifié ──────────────────────────────────────────────────
+  // ── 27B — Historique unifié (INV-INT-001) ────────────────────────────────────
+
+  function getHistoryUnified(plate, opts) {
+    const interactions = getHistory(plate, { limit: 100, ...(opts || {}) });
+    const unreadCount  = interactions.filter(i =>
+      _nPlate(i.target || '') === _nPlate(plate) &&
+      (i.status === STATUSES.PENDING || i.status === STATUSES.RECEIVED)
+    ).length;
+    const lastActivity = interactions.length ? interactions[0].timestamp : null;
+    return { interactions, unreadCount, lastActivity };
+  }
+
+  // ── Phase 2 — Badge unifié ───────────────────────────────────────────────────
 
   function notifyPending(plate) {
     const p = _nPlate(plate);
     if (!p) return 0;
-    const list = _load();
-    return list.filter(i => _nPlate(i.target || '') === p && i.status === 'pending').length;
+    return _load().filter(i => _nPlate(i.target || '') === p && i.status === STATUSES.PENDING).length;
   }
 
-  // ── observe() : alias public pour ré-émettre un OBD depuis une interaction ──
+  // ── 27D — Notification Engine (INV-INT-002) ──────────────────────────────────
+
+  function _loadNotifs() {
+    try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function _saveNotifs(list) {
+    try { localStorage.setItem(NOTIF_KEY, JSON.stringify(list.slice(-MAX_NOTIFS))); } catch(e) {}
+  }
+
+  function createNotification({ interaction_id, type, plate, message }) {
+    const notif = {
+      id:             _uuid(),
+      interaction_id: interaction_id || null,
+      type:           type || 'INFO',
+      plate:          _nPlate(plate || ''),
+      message:        message || '',
+      created_at:     new Date().toISOString(),
+      viewed:         false,
+    };
+    const list = _loadNotifs();
+    list.push(notif);
+    _saveNotifs(list);
+    return notif;
+  }
+
+  function getNotifications({ viewed = null, limit = 50, plate = null } = {}) {
+    let list = _loadNotifs();
+    if (plate)          list = list.filter(n => _nPlate(n.plate) === _nPlate(plate));
+    if (viewed !== null) list = list.filter(n => n.viewed === viewed);
+    return list.slice(-limit).reverse();
+  }
+
+  function markNotificationViewed(id) {
+    const list = _loadNotifs();
+    const item = list.find(n => n.id === id);
+    if (item) { item.viewed = true; _saveNotifs(list); return true; }
+    return false;
+  }
+
+  function getPendingNotificationCount(plate) {
+    return _loadNotifs().filter(n =>
+      !n.viewed && (!plate || _nPlate(n.plate) === _nPlate(plate))
+    ).length;
+  }
+
+  // ── 27E — Moteur de recherche (INV-INT-001) ──────────────────────────────────
+
+  function search({ plate, type, types, dateFrom, dateTo, status, organ, limit = 100 } = {}) {
+    let list = _load();
+
+    if (plate) {
+      const p = _nPlate(plate);
+      list = list.filter(i => _nPlate(i.initiator) === p || _nPlate(i.target || '') === p);
+    }
+    if (type)     list = list.filter(i => i.type === type);
+    if (types)    list = list.filter(i => types.includes(i.type));
+    if (status)   list = list.filter(i => i.status === status);
+    if (organ)    list = list.filter(i => (TYPE_META[i.type]?.organ || '') === organ);
+    if (dateFrom) list = list.filter(i => new Date(i.timestamp) >= new Date(dateFrom));
+    if (dateTo)   list = list.filter(i => new Date(i.timestamp) <= new Date(dateTo));
+
+    return list.slice(-limit).reverse();
+  }
+
+  // ── 27F — Analytics Engine (INV-INT-007) ─────────────────────────────────────
+
+  function getAnalytics(plate) {
+    let list = _load();
+    if (plate) {
+      const p = _nPlate(plate);
+      list = list.filter(i => _nPlate(i.initiator) === p || _nPlate(i.target || '') === p);
+    }
+    const counts = {};
+    list.forEach(i => { counts[i.type] = (counts[i.type] || 0) + 1; });
+    return {
+      total:              list.length,
+      total_messages:     (counts.MESSAGE  || 0) + (counts.THANKS || 0),
+      total_calls:        (counts.CALL     || 0) + (counts.CALL_REQUEST || 0) +
+                          (counts.CALL_ACCEPTED || 0) + (counts.CALL_REFUSED || 0) +
+                          (counts.CALL_MISSED || 0) + (counts.CALL_CANCELLED || 0),
+      total_alerts:       (counts.VEHICLE_ALERT || 0) + (counts.ROAD_ALERT || 0),
+      total_help:          counts.HELP     || 0,
+      total_sos:           counts.SOS      || 0,
+      total_trust:        (counts.TRUST    || 0) + (counts.CONTACT_REQUEST || 0) +
+                          (counts.CONTACT_ACCEPTED || 0),
+      total_blocks:        counts.BLOCK    || 0,
+      total_abuse:         counts.ABUSE    || 0,
+      by_type:             counts,
+      by_status:           list.reduce((acc, i) => { acc[i.status] = (acc[i.status] || 0) + 1; return acc; }, {}),
+    };
+  }
+
+  // ── observe() — alias public ─────────────────────────────────────────────────
 
   function observe(interaction) {
     _emitObd(interaction);
   }
 
-  return { create, resolve, getHistory, notifyPending, observe, TYPE_META };
+  return {
+    // Phase 1
+    create, resolve, updateStatus, observe,
+    // Phase 2
+    getHistory, notifyPending,
+    // 27B
+    getHistoryUnified,
+    // 27D
+    createNotification, getNotifications, markNotificationViewed, getPendingNotificationCount,
+    // 27E
+    search,
+    // 27F
+    getAnalytics,
+    // Constantes
+    STATUSES, TYPE_META,
+  };
 
 })();
 

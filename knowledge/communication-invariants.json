@@ -195,6 +195,54 @@
       "name": "Tout événement OBD doit être relié à un Flow et à un Invariant",
       "rule": "Chaque événement ImmatOrganism.observe() doit référencer un flux métier (JRN-xxx ou FLOW-xxx) et un invariant (INV-xxx) dans knowledge/immat-knowledge-graph.json. Un événement sans flow ou sans invariant est un événement orphelin.",
       "check": "knowledge/immat-knowledge-graph.json — champ invariant non null pour chaque event · detect-orphan-chain.js NO_ORPHAN_FLOW"
+    },
+    {
+      "id": "INV-INT-001",
+      "name": "Toute action conducteur produit une Interaction",
+      "rule": "Chaque action significative d'un conducteur (message, appel, signalement, aide, SOS, confiance, blocage, abus) doit créer un objet Interaction dans ic_interactions via InteractionEngine.create(). Aucune action ne peut être silencieuse.",
+      "check": "core/interaction-engine.js — create() · AngeAction.execute() → InteractionEngine.create()"
+    },
+    {
+      "id": "INV-INT-002",
+      "name": "Toute notification référence une Interaction",
+      "rule": "Chaque notification créée via InteractionEngine.createNotification() doit posséder un interaction_id valide. Une notification sans interaction référencée est orpheline.",
+      "check": "core/interaction-engine.js — createNotification() champ interaction_id obligatoire"
+    },
+    {
+      "id": "INV-INT-003",
+      "name": "Toute Interaction possède un statut normalisé",
+      "rule": "Le statut d'une Interaction doit appartenir à la liste : pending, received, viewed, responded, accepted, rejected, expired, resolved, archived, cancelled, blocked, failed. Aucun statut libre n'est autorisé.",
+      "check": "core/interaction-engine.js — STATUSES + VALID_STATUSES Set · updateStatus() valide avant toute mise à jour"
+    },
+    {
+      "id": "INV-INT-004",
+      "name": "Toute Interaction possède un Flow",
+      "rule": "Chaque Interaction doit avoir un flow_id non nul. Le flow est résolu automatiquement depuis TYPE_META si non fourni explicitement.",
+      "check": "core/interaction-engine.js — create() : flow_id = flow_id || meta.flow || null"
+    },
+    {
+      "id": "INV-INT-005",
+      "name": "Toute Interaction possède un Invariant",
+      "rule": "Chaque Interaction doit référencer au moins un invariant dans son tableau invariants[]. Les invariants sont résolus automatiquement depuis TYPE_META si non fournis explicitement.",
+      "check": "core/interaction-engine.js — create() : invariants = invariants || meta.invariants || []"
+    },
+    {
+      "id": "INV-INT-006",
+      "name": "Toute Interaction possède un test",
+      "rule": "Chaque type d'Interaction déclaré dans TYPE_META doit être couvert par au moins un test dans tests/organism/. Tout type sans test est un GAP de traçabilité.",
+      "check": "tests/organism/interaction-engine.test.js · tests/organism/interaction-engine-extended.test.js"
+    },
+    {
+      "id": "INV-INT-007",
+      "name": "Toute Interaction observable remonte à l'OBD",
+      "rule": "Chaque InteractionEngine.create() déclenche automatiquement _emitObd() qui émet l'event OBD correspondant au type. Aucune Interaction n'est invisible pour le Guardian et l'Ange.",
+      "check": "core/interaction-engine.js — create() → _emitObd() · TYPE_META.obd non null pour chaque type"
+    },
+    {
+      "id": "INV-INT-008",
+      "name": "Toute Interaction est indexée dans le Knowledge Graph",
+      "rule": "Chaque nouveau type d'Interaction doit être déclaré dans knowledge/immat-knowledge-graph.json avec son type, OBD event, flow_id et invariant. Un type sans entrée dans le Knowledge Graph est un nœud isolé.",
+      "check": "knowledge/immat-knowledge-graph.json — TYPE_META de interaction-engine.js ↔ obd_events + intentions"
     }
   ]
 }

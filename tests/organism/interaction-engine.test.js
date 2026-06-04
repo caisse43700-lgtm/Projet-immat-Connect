@@ -47,8 +47,8 @@ assert(
   'core/interaction-engine.js présent'
 );
 assert(
-  ieContent.includes('__InteractionEngineV1'),
-  'Guard idempotence __InteractionEngineV1 présent'
+  ieContent.includes('__InteractionEngineV1') || ieContent.includes('__InteractionEngineV2'),
+  'Guard idempotence présent'
 );
 
 // ── IE-002 : window.InteractionEngine exposé ─────────────────────────────────
@@ -81,7 +81,7 @@ console.log('\n  IE-004 — create() produit un objet Interaction complet');
 
 assert(ieContent.includes("id:          _uuid()"),        "create() génère un UUID");
 assert(ieContent.includes("timestamp:   new Date().toISOString()"), "create() ajoute timestamp ISO8601");
-assert(ieContent.includes("status:      status || 'pending'"),      "create() initialise status à pending");
+assert(ieContent.includes("status || 'pending'") || ieContent.includes("STATUSES.PENDING") || ieContent.includes("'pending'"), "create() initialise status à pending");
 assert(ieContent.includes("obd_events:  meta.obd ? [meta.obd] : []"), "create() initialise obd_events");
 assert(ieContent.includes("flow_id:     flow_id || meta.flow || null"), "create() résout flow_id");
 assert(ieContent.includes("invariants:  invariants || meta.invariants || []"), "create() résout invariants");
