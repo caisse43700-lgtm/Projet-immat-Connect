@@ -309,6 +309,198 @@
       },
       "validation": "INV-006 : owner_plate immuable. INV-011 : colorHex() = source canonique.",
       "mémoire": ["profiles DB (persistant)", "S.myColor / S.myPseudo (runtime sync)"]
+    },
+
+    {
+      "id": "FLOW-CONVERSATION",
+      "intention": "Permettre au conducteur de voir d'un coup d'œil toutes ses relations actives et d'y accéder.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["#icMsgList (liste conversations)", "#icThread (thread actif)", ".ic-conv-header"],
+        "code":  ["ImmatMessages.refresh()", "ImmatMessages.buildThreads()", "ImmatMessages.render()"],
+        "state": ["State.threads", "State.activePlate", "State.searchQuery"],
+        "data":  ["messages DB", "ic_trust (localStorage)", "ic_favorites (localStorage)"]
+      },
+      "impact": ["vue unifiée une-relation-une-timeline", "badge non-lus", "tri favoris puis activité récente"],
+      "qui_peut_agir": { "conducteur": "ouvrir, archiver, favoriser, bloquer", "organisme": "tri + badge auto" },
+      "validation": "Conducteur autonome.",
+      "mémoire": ["State.threads runtime", "messages DB", "ic_trust / ic_favorites / ic_archived localStorage"]
+    },
+
+    {
+      "id": "FLOW-MESSAGE",
+      "intention": "Envoyer et recevoir des messages dans le cadre d'une conversation unifiée.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["#icThread .ic-bubble (sent/recv)", "#icReplyText", "#icComposePanel"],
+        "code":  ["ImmatMessages.sendToPlate()", "ImmatMessages.reply()", "ImmatMessages.quick()"],
+        "state": ["State.activePlate", "State.messages"],
+        "data":  ["messages DB (sender_id, receiver_id, message)"]
+      },
+      "impact": ["bulle gauche (reçu) / droite (envoyé)", "OBD MSG_SENT / MSG_RECEIVED", "badge mis à jour", "anti-spam _checkSpam"],
+      "qui_peut_agir": { "conducteur": "envoyer, répondre, réponses rapides" },
+      "validation": "Conducteur autonome. Blocage via ic_blocked. Anti-spam seuil 20/60s.",
+      "mémoire": ["messages DB", "ic_deleted_msgs localStorage", "ic_spam_log localStorage"]
+    },
+
+    {
+      "id": "FLOW-CALL",
+      "intention": "Gérer le cycle de vie complet d'une demande de contact audio entre deux conducteurs.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["#icCallBtn (thread header)", "#callIncomingPopup", "#callSentBanner", "#callLevelSelector"],
+        "code":  ["CallManager.contactByCall()", "CallManager.acceptCall()", "CallManager.refuseCall()", "ImmatMessages.setCallLevel()"],
+        "state": ["_pendingCallId", "call_requests.status", "ic_call_perm localStorage"],
+        "data":  ["call_requests DB", "call_preferences DB", "ic_call_perm localStorage (1-4)"]
+      },
+      "impact": ["événement appel dans timeline thread", "OBD CALL_REQUESTED / CALL_ACCEPTED / CALL_REFUSED / CALL_PREFERENCES_UPDATED", "DND respecté"],
+      "qui_peut_agir": { "conducteur_emetteur": "initier, annuler", "conducteur_recepteur": "accepter, refuser" },
+      "validation": "RPC can_receive_calls() + ic_call_perm + DND (ic_dnd).",
+      "mémoire": ["call_requests DB", "ic_call_perm / ic_dnd / ic_dnd_from / ic_dnd_to localStorage"]
+    },
+
+    {
+      "id": "FLOW-CALL-CONTEXT",
+      "intention": "Initier ou répondre à un appel dans le contexte d'un signalement actif.",
+      "organes": ["Messages", "Signalements"],
+      "repérage": {
+        "ui":    ["Activité card alerte → 📞 Appeler", "#icContextCard dans thread"],
+        "code":  ["App.actOpenConv(plate)", "ImmatMessages.openThread(plate)", "CallManager.contactByCall()"],
+        "state": ["S.alerts (actif)", "State.activePlate"],
+        "data":  ["reports DB", "messages DB", "call_requests DB"]
+      },
+      "impact": ["carte contexte alerte visible en haut du thread", "permission contextuelle auto si confiance CONTEXT", "OBD CONTEXT_GRANTED"],
+      "qui_peut_agir": { "conducteur": "initier appel depuis alerte active" },
+      "validation": "Alerte active requise. Permission contextuelle expire à résolution alerte (INV-COM-005).",
+      "mémoire": ["ic_trust localStorage (CONTEXT)", "reports DB (actif)"]
+    },
+
+    {
+      "id": "FLOW-TRUST",
+      "intention": "Gérer le niveau de confiance attribué à chaque conducteur connu.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["thread menu → Confiance", "badge niveau confiance dans liste conversations"],
+        "code":  ["ImmatMessages.setTrust(plate, level)", "ImmatMessages.getTrust(plate)"],
+        "state": ["ic_trust localStorage"],
+        "data":  ["ic_trust localStorage { 'PLATE': 'NONE|CONTEXT|TRUSTED|FAVORITE' }"]
+      },
+      "impact": ["niveau confiance affiché dans liste", "OBD CONTACT_TRUSTED / CONTACT_REVOKED", "autorisation appels basée sur confiance"],
+      "qui_peut_agir": { "conducteur": "attribuer, modifier, révoquer (manuel uniquement)" },
+      "validation": "Révocation manuelle uniquement — INV-COM-005.",
+      "mémoire": ["ic_trust localStorage (persistant session)"]
+    },
+
+    {
+      "id": "FLOW-BLOCK",
+      "intention": "Bloquer tout contact d'un conducteur (messages + appels + notifications).",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["thread menu → Bloquer", "panelSettings → Bloqués"],
+        "code":  ["App.blockPlate(plate)", "App.unblockPlate(plate)"],
+        "state": ["window.S.blocked", "ic_blocked localStorage"],
+        "data":  ["ic_blocked localStorage"]
+      },
+      "impact": ["INV-COM-004 : blocage bilatéral réception", "OBD BLOCK_CREATED / BLOCK_REMOVED", "historique conservé (INV-COM-009)"],
+      "qui_peut_agir": { "conducteur": "bloquer, débloquer" },
+      "validation": "Réversible. Historique messages non supprimé (INV-COM-009).",
+      "mémoire": ["ic_blocked localStorage", "ic_deleted_msgs localStorage (pour filtrage)"]
+    },
+
+    {
+      "id": "FLOW-SEARCH",
+      "intention": "Trouver rapidement une conversation par plaque ou contenu de message.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["#icSearchBar (bouton 🔍)", "#icSearchInput"],
+        "code":  ["ImmatMessages.toggleSearch()", "ImmatMessages.filterConv(query)"],
+        "state": ["State.searchQuery"],
+        "data":  ["State.threads (filtrage local)"]
+      },
+      "impact": ["filtre instantané sur icMsgList", "OBD CONV_SEARCHED", "pas de requête DB (filtrage local)"],
+      "qui_peut_agir": { "conducteur": "saisir plaque, effacer recherche" },
+      "validation": "Conducteur autonome. Filtrage local uniquement.",
+      "mémoire": ["State.searchQuery runtime uniquement"]
+    },
+
+    {
+      "id": "FLOW-ARCHIVE",
+      "intention": "Archiver une conversation terminée sans la supprimer.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["swipe gauche → Archiver (via menu)"],
+        "code":  ["ImmatMessages.archiveConv(plate)", "ImmatMessages.unarchiveConv(plate)"],
+        "state": ["ic_archived localStorage"],
+        "data":  ["ic_archived localStorage ['plate1', 'plate2']"]
+      },
+      "impact": ["conversation masquée de la liste principale", "OBD CONV_ARCHIVED", "INV-COM-009 : données non supprimées"],
+      "qui_peut_agir": { "conducteur": "archiver, désarchiver" },
+      "validation": "Local uniquement. INV-COM-009 : pas de suppression DB.",
+      "mémoire": ["ic_archived localStorage"]
+    },
+
+    {
+      "id": "FLOW-FAVORITE",
+      "intention": "Épingler une conversation en tête de liste pour un accès prioritaire.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["thread menu → ⭐ Épingler", "badge ⭐ dans liste conversations"],
+        "code":  ["ImmatMessages.favoriteConv(plate)", "ImmatMessages.unfavoriteConv(plate)"],
+        "state": ["ic_favorites localStorage"],
+        "data":  ["ic_favorites localStorage ['plate1', ...]"]
+      },
+      "impact": ["conversation remontée en tête de liste", "OBD CONV_FAVORITED", "niveau confiance FAVORITE accessible"],
+      "qui_peut_agir": { "conducteur": "épingler, désépingler" },
+      "validation": "Conducteur autonome.",
+      "mémoire": ["ic_favorites localStorage"]
+    },
+
+    {
+      "id": "FLOW-PRESENCE",
+      "intention": "Indiquer sa disponibilité sans révéler sa géolocalisation.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["panelSettings → Présence", "#presenceSelector"],
+        "code":  ["ImmatMessages.setPresence(status)"],
+        "state": ["ic_presence localStorage"],
+        "data":  ["ic_presence localStorage 'disponible|conduite|occupé|invisible|hors-ligne'"]
+      },
+      "impact": ["OBD PRESENCE_CHANGED", "aucune géolocalisation dans le statut (INV-COM-010)"],
+      "qui_peut_agir": { "conducteur": "changer statut manuellement" },
+      "validation": "Aucune géoloc — INV-COM-010.",
+      "mémoire": ["ic_presence localStorage"]
+    },
+
+    {
+      "id": "FLOW-SPAM-PROTECTION",
+      "intention": "Détecter automatiquement les comportements abusifs répétitifs et les neutraliser.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["toast 'Trop de messages envoyés rapidement' (cooldown)"],
+        "code":  ["ImmatMessages._checkSpam(plate)"],
+        "state": ["ic_spam_log localStorage"],
+        "data":  ["ic_spam_log localStorage { plate: {count, ts} }"]
+      },
+      "impact": ["blocage envoi si > 20 messages en 60s vers même plaque", "OBD SPAM_DETECTED"],
+      "qui_peut_agir": { "organisme": "détection automatique dans sendToPlate()" },
+      "validation": "Automatique. Seuil = 20 messages en 60s.",
+      "mémoire": ["ic_spam_log localStorage (TTL 60s)"]
+    },
+
+    {
+      "id": "FLOW-ANGE-CALL",
+      "intention": "Permettre à l'Ange d'accompagner le conducteur dans ses décisions de communication.",
+      "organes": ["Ange", "Messages"],
+      "repérage": {
+        "ui":    ["angeFab → question sur appel", "options rapides Ange sur communication"],
+        "code":  ["App.openAnge()", "supabase.functions.invoke('immat-brain-dialog')"],
+        "state": ["S.isGardien", "snapshot communication anonymisé"],
+        "data":  ["immat-brain-dialog — knowledge-conducteur.ts"]
+      },
+      "impact": ["conseils contextuels sur niveaux appel, confiance, spam", "OBD ANGE_QUERIED", "INV-COM-010 : aucune donnée privée"],
+      "qui_peut_agir": { "conducteur": "poser question sur communication" },
+      "validation": "INV-COM-010 : aucun contenu message transmis à l'Ange.",
+      "mémoire": ["session runtime uniquement"]
     }
 
   ]

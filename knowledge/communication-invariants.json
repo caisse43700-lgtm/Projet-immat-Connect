@@ -1,0 +1,68 @@
+{
+  "_v": 1,
+  "_role": "Invariants de l'organe Communication — DAM-COMMUNICATION Phase 1",
+  "_rule": "Ces invariants gouvernent toute communication entre conducteurs. Violation = risque utilisateur réel.",
+  "_ref": "architecture/DAM-COMMUNICATION-PHASE1.md",
+  "invariants": [
+    {
+      "id": "INV-COM-001",
+      "name": "Toute interaction appartient à une conversation",
+      "rule": "Tout message, appel ou événement de contexte est rattaché à une relation identifiée par deux plaques. Aucune communication ne flotte sans relation.",
+      "check": "messages.js — chaque item possède un _otherPlate non vide"
+    },
+    {
+      "id": "INV-COM-002",
+      "name": "Toute conversation possède au minimum deux participants",
+      "rule": "Une conversation ne peut exister avec un seul participant. La plaque émetteur ≠ plaque destinataire.",
+      "check": "sendToPlate() : plate === senderPlate → rejeté"
+    },
+    {
+      "id": "INV-COM-003",
+      "name": "Tout appel nécessite une permission valide",
+      "rule": "Avant tout appel, la RPC can_receive_calls() doit valider que le destinataire autorise les appels du niveau de confiance de l'émetteur.",
+      "check": "CallManager.requestCall() → can_receive_calls() RPC + ic_call_perm localStorage"
+    },
+    {
+      "id": "INV-COM-004",
+      "name": "Un blocage interdit toute communication",
+      "rule": "Si A bloque B, B ne peut ni envoyer de message ni initier d'appel vers A. Le blocage est bilatéral pour la réception.",
+      "check": "normalizeRows() : blocked filter · sendToPlate() : ic_blocked check"
+    },
+    {
+      "id": "INV-COM-005",
+      "name": "Une autorisation contextuelle expire automatiquement",
+      "rule": "Le niveau CONTEXT est lié à un signalement actif. Quand le signalement est résolu/expiré, le niveau repasse à NONE automatiquement.",
+      "check": "F-TRUST — expiration liée à l'état des alertes actives"
+    },
+    {
+      "id": "INV-COM-006",
+      "name": "Aucune fonctionnalité communication ne peut être orpheline",
+      "rule": "Toute feature de l'organe Communication doit être déclarée dans features.json et couverte par au moins un test structurel.",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_TEST"
+    },
+    {
+      "id": "INV-COM-007",
+      "name": "Toute observation communication remonte à l'OBD",
+      "rule": "Tout événement de communication significatif (envoi, appel, blocage) doit appeler ImmatOrganism.observe().",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_OBSERVATION"
+    },
+    {
+      "id": "INV-COM-008",
+      "name": "Toute feature communication possède au minimum un test",
+      "rule": "Chaque feature de l'organe Communication doit être référencée dans tests/organism/organism-features.test.js.",
+      "check": "organism-features.test.js — suite 2 couvre toutes les features"
+    },
+    {
+      "id": "INV-COM-009",
+      "name": "Aucune suppression physique d'historique utilisateur",
+      "rule": "La suppression d'une conversation n'efface pas les données de l'autre participant. Les messages sont marqués deleted côté local uniquement (ic_deleted_msgs).",
+      "check": "deleteThread() : localStorage ic_deleted_msgs — pas de DELETE DB sur messages reçus"
+    },
+    {
+      "id": "INV-COM-010",
+      "name": "Aucune donnée privée ne remonte au Dashboard Gardien",
+      "rule": "Le Dashboard Gardien ne voit que des métriques agrégées. Aucun contenu de message ni identité de correspondant n'est exposé.",
+      "check": "OBD.observe() — payload anonymisé uniquement"
+    }
+  ]
+}

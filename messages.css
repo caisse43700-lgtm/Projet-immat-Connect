@@ -274,10 +274,60 @@
   font-size:13px;
 }
 
+/* ---- iMessage-style conversation header ---- */
+.ic-conv-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 2px 10px;
+}
+
+.ic-conv-title {
+  font-size:17px;
+  font-weight:950;
+  color:#eef6ff;
+  letter-spacing:.3px;
+}
+
+.ic-conv-header-acts {
+  display:flex;
+  gap:6px;
+}
+
+.ic-icon-btn {
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  background:#19283a;
+  border:1px solid #2a3c56;
+  color:#eef6ff;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+}
+.ic-icon-btn:active { transform:scale(.92); }
+
+/* ---- Search bar ---- */
+.ic-search-bar { padding:0 0 8px; }
+.ic-search-bar input {
+  width:100%;
+  min-height:40px;
+  border:1px solid #26364d;
+  border-radius:14px;
+  background:#0b1420;
+  color:#eef6ff;
+  padding:0 12px;
+  outline:none;
+  font-size:13px;
+  box-sizing:border-box;
+}
+.ic-search-bar input:focus { border-color:#00ffb3; }
+
 /* ---- Thread ---- */
 .ic-thread {
   display:none;
-  margin-top:10px;
   border:1px solid #2a3c56;
   border-radius:20px;
   background:#0d1723;
@@ -285,7 +335,115 @@
 }
 
 .ic-thread.show {
-  display:block;
+  display:flex;
+  flex-direction:column;
+  min-height:380px;
+}
+
+/* ---- Back button ---- */
+.ic-back-btn {
+  width:34px;
+  height:34px;
+  min-width:34px;
+  border-radius:12px;
+  background:#19283a;
+  border:1px solid #2a3c56;
+  color:#00ffb3;
+  font-size:20px;
+  font-weight:950;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+  line-height:1;
+  padding:0;
+}
+.ic-back-btn:active { transform:scale(.92); }
+
+/* ---- Thread info ---- */
+.ic-thread-info {
+  flex:1;
+  min-width:0;
+  padding:0 6px;
+}
+
+/* ---- Call button ---- */
+.ic-call-btn {
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  background:rgba(0,200,100,.15);
+  border:1px solid rgba(0,200,100,.3);
+  color:#00e070;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+}
+.ic-call-btn:active { transform:scale(.92); }
+
+/* ---- Context card (alerte active) ---- */
+.ic-context-card {
+  margin:8px 12px 0;
+  padding:8px 12px;
+  border-radius:12px;
+  background:rgba(255,180,0,.1);
+  border:1px solid rgba(255,180,0,.28);
+  color:#ffd966;
+  font-size:12px;
+  line-height:1.4;
+}
+
+/* ---- Compose panel header ---- */
+.ic-compose-hd {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:10px;
+}
+.ic-compose-title {
+  font-size:14px;
+  font-weight:950;
+  color:#eef6ff;
+  flex:1;
+  text-align:center;
+}
+
+/* ---- Trust badges in conversation list ---- */
+.ic-trust-fav  { color:#f5c518; font-size:11px; margin-left:4px; }
+.ic-trust-ok   { color:#00ffb3; font-size:11px; margin-left:4px; }
+.ic-trust-ctx  { color:#7bb8ff; font-size:11px; margin-left:4px; }
+
+/* ---- Call event bubbles ---- */
+.ic-bubble.call-recv {
+  align-self:flex-start;
+  background:rgba(0,200,100,.1);
+  color:#00e070;
+  border:1px solid rgba(0,200,100,.22);
+  border-bottom-left-radius:6px;
+}
+.ic-bubble.call-sent {
+  align-self:flex-end;
+  background:rgba(0,200,100,.14);
+  color:#00c878;
+  border:1px solid rgba(0,200,100,.28);
+  border-bottom-right-radius:6px;
+}
+.ic-bubble.call-missed {
+  align-self:center;
+  background:rgba(255,60,60,.1);
+  color:#ff7070;
+  border:1px solid rgba(255,60,60,.22);
+  border-radius:999px;
+}
+.ic-bubble.call-refused {
+  align-self:center;
+  background:rgba(150,150,150,.07);
+  color:#9aacc2;
+  border:1px solid rgba(150,150,150,.18);
+  border-radius:999px;
 }
 
 /* ---- Thread header ---- */
@@ -293,7 +451,7 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap:8px;
   padding:10px 12px;
   background:#132033;
   border-bottom:1px solid #2a3c56;
@@ -345,7 +503,9 @@
   display:flex;
   flex-direction:column;
   gap:8px;
-  max-height:260px;
+  flex:1;
+  min-height:140px;
+  max-height:320px;
   overflow:auto;
   padding:12px;
   overscroll-behavior:contain;
@@ -526,3 +686,68 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* ---- Call level selector (Settings) ---- */
+.settings-call-levels {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  padding:6px 0 4px;
+}
+.call-level-btn {
+  min-height:40px;
+  border-radius:14px;
+  border:1px solid #2a3c56;
+  background:#19283a;
+  color:#9aacc2;
+  font-size:12px;
+  font-weight:700;
+  transition:.15s ease;
+}
+.call-level-btn.on {
+  background:rgba(0,255,179,.14);
+  border-color:#00ffb3;
+  color:#00ffb3;
+}
+.call-level-btn:active { transform:scale(.96); }
+
+/* ---- Presence selector (Settings) ---- */
+.settings-presence-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  padding:6px 0 4px;
+}
+.presence-btn {
+  min-height:40px;
+  border-radius:14px;
+  border:1px solid #2a3c56;
+  background:#19283a;
+  color:#9aacc2;
+  font-size:12px;
+  font-weight:700;
+  transition:.15s ease;
+}
+.presence-btn.on {
+  background:rgba(0,255,179,.14);
+  border-color:#00ffb3;
+  color:#00ffb3;
+}
+.presence-btn:active { transform:scale(.96); }
+
+/* ---- DND hours (Settings) ---- */
+.settings-dnd-hours {
+  padding:6px 0 2px;
+  border-top:1px solid #1a2d44;
+  margin-top:6px;
+}
+.settings-time-input {
+  background:#0b1420;
+  border:1px solid #2a3c56;
+  border-radius:10px;
+  color:#eef6ff;
+  padding:6px 10px;
+  font-size:13px;
+  outline:none;
+}
+.settings-time-input:focus { border-color:#00ffb3; }

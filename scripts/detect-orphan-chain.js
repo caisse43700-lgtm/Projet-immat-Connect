@@ -105,17 +105,26 @@ function loadTestCoverage() {
 
 // Correspondance feature → préfixes d'événements OBD attendus
 const FEATURE_OBD_HINTS = {
-  'F-CARTE':          ['MAP_', 'LOCATE'],
-  'F-GPS':            ['NAV_', 'GPS_', 'ROUTE'],
-  'F-SIGNAL-VEHICULE':['ALERT_', 'VEHICLE_', 'REPORT_'],
-  'F-SIGNAL-ROUTE':   ['ALERT_', 'REPORT_', 'ROAD_'],
-  'F-ASSIST':         ['ASSIST_', 'HELP_', 'ALERT_'],
-  'F-MESSAGES':       ['MSG_', 'MESSAGE_'],
-  'F-ACTIVITE':       ['BADGE_', 'MSG_', 'ALERT_'],
-  'F-APPEL':          ['CALL_'],
-  'F-SOS':            ['SOS_'],
-  'F-ANGE':           ['ANGE_', 'BRAIN_', 'DIALOG_'],
-  'F-PROFIL':         ['PROFILE_', 'PROFIL_'],
+  'F-CARTE':               ['MAP_', 'LOCATE'],
+  'F-GPS':                 ['NAV_', 'GPS_', 'ROUTE'],
+  'F-SIGNAL-VEHICULE':     ['ALERT_', 'VEHICLE_', 'REPORT_'],
+  'F-SIGNAL-ROUTE':        ['ALERT_', 'REPORT_', 'ROAD_'],
+  'F-ASSIST':              ['ASSIST_', 'HELP_', 'ALERT_'],
+  'F-MESSAGES':            ['MSG_', 'MESSAGE_'],
+  'F-ACTIVITE':            ['BADGE_', 'MSG_', 'ALERT_'],
+  'F-APPEL':               ['CALL_'],
+  'F-SOS':                 ['SOS_'],
+  'F-ANGE':                ['ANGE_', 'BRAIN_', 'DIALOG_'],
+  'F-PROFIL':              ['PROFILE_', 'PROFIL_'],
+  // DAM-COMMUNICATION Phase 1
+  'F-CONVERSATION-ENGINE': ['MSG_SENT', 'MSG_RECEIVED', 'CONV_'],
+  'F-TRUST':               ['CONTACT_TRUSTED', 'CONTACT_REVOKED', 'CONTEXT_'],
+  'F-CALL-PERMISSIONS':    ['CALL_PREFERENCES', 'CALL_'],
+  'F-PRESENCE':            ['PRESENCE_'],
+  'F-FAVORITES':           ['CONV_FAVORITED', 'CONV_FAVORITE'],
+  'F-ARCHIVE':             ['CONV_ARCHIVED', 'CONV_ARCHIVE'],
+  'F-SEARCH':              ['CONV_SEARCHED', 'CONV_SEARCH'],
+  'F-SPAM-PROTECTION':     ['SPAM_'],
 };
 
 // ── 5. Vérifier la chaîne pour chaque feature ────────────────────────────

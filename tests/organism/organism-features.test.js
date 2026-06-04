@@ -12,6 +12,8 @@
  * Features couvertes :
  *   F-CARTE, F-GPS, F-SIGNAL-VEHICULE, F-SIGNAL-ROUTE, F-ASSIST,
  *   F-MESSAGES, F-ACTIVITE, F-APPEL, F-SOS, F-ANGE, F-PROFIL
+ *   + DAM Phase 1 : F-CONVERSATION-ENGINE, F-TRUST, F-CALL-PERMISSIONS,
+ *     F-PRESENCE, F-FAVORITES, F-ARCHIVE, F-SEARCH, F-SPAM-PROTECTION
  *
  * Exécution : node tests/organism/organism-features.test.js
  */
@@ -65,14 +67,14 @@ const invOrgIds  = new Set((invData.invariants || []).map(i => i.id));
 console.log('\n[OBD-002c] Tests structurels des features d\'ImmatConnect\n');
 
 console.log('Suite 1 : Intégrité des référentiels knowledge');
-assert(features.length >= 11,
-  `Au moins 11 features déclarées (trouvé : ${features.length})`);
+assert(features.length >= 19,
+  `Au moins 19 features déclarées (trouvé : ${features.length})`);
 assert(organsData.organs.length >= 6,
   `Au moins 6 organes déclarés (trouvé : ${organsData.organs.length})`);
-assert((intentsData.intentions || []).length >= 10,
-  `Au moins 10 intentions déclarées (trouvé : ${(intentsData.intentions||[]).length})`);
-assert((flowData.flows || []).length >= 11,
-  `Au moins 11 flows déclarés (trouvé : ${(flowData.flows||[]).length})`);
+assert((intentsData.intentions || []).length >= 28,
+  `Au moins 28 intentions déclarées (trouvé : ${(intentsData.intentions||[]).length})`);
+assert((flowData.flows || []).length >= 23,
+  `Au moins 23 flows déclarés (trouvé : ${(flowData.flows||[]).length})`);
 assert(invOrgIds.size >= 8,
   `8 invariants INV-ORG-* déclarés (trouvé : ${invOrgIds.size})`);
 
@@ -82,6 +84,9 @@ const FEATURE_IDS = [
   'F-CARTE', 'F-GPS', 'F-SIGNAL-VEHICULE', 'F-SIGNAL-ROUTE',
   'F-ASSIST', 'F-MESSAGES', 'F-ACTIVITE', 'F-APPEL',
   'F-SOS', 'F-ANGE', 'F-PROFIL',
+  // DAM-COMMUNICATION Phase 1
+  'F-CONVERSATION-ENGINE', 'F-TRUST', 'F-CALL-PERMISSIONS',
+  'F-PRESENCE', 'F-FAVORITES', 'F-ARCHIVE', 'F-SEARCH', 'F-SPAM-PROTECTION',
 ];
 
 // Comportements attendus : Phase actuelle, dépréciation volontaire
@@ -98,6 +103,31 @@ const FEATURE_META = {
   },
   'F-SOS': {
     note: 'Canal SOS distinct = futur P3-023',
+  },
+  // DAM-COMMUNICATION Phase 1
+  'F-CONVERSATION-ENGINE': {
+    note: 'ONE_RELATION_ONE_TIMELINE — messages + appels dans un seul fil',
+  },
+  'F-TRUST': {
+    note: 'Niveaux NONE/CONTEXT/TRUSTED/FAVORITE — stockés localStorage ic_trust',
+  },
+  'F-CALL-PERMISSIONS': {
+    note: 'Niveaux 1-4 — persistés ic_call_perm, DND ic_dnd/ic_dnd_from/ic_dnd_to',
+  },
+  'F-PRESENCE': {
+    note: '5 statuts — persistés ic_presence',
+  },
+  'F-FAVORITES': {
+    note: 'Conversations épinglées — persistées ic_favorites',
+  },
+  'F-ARCHIVE': {
+    note: 'Archivage souple (pas de suppression physique INV-COM-009) — ic_archived',
+  },
+  'F-SEARCH': {
+    note: 'Recherche locale sur plaque/message — ic_search_query éphémère',
+  },
+  'F-SPAM-PROTECTION': {
+    note: 'Seuil anti-spam : 20 msg/60s — log ic_spam_log',
   },
 };
 
@@ -199,6 +229,43 @@ const missingIntents = referencedIntents.filter(i => !intentSet.has(i));
 assert(missingIntents.length === 0,
   `Toutes les intentions référencées existent dans intentions.json`,
   missingIntents.length > 0 ? `Intentions manquantes : ${missingIntents.join(', ')}` : '');
+
+// ── Suite 5 : Invariants communication INV-COM-001 à INV-COM-010 ──────────
+
+console.log('\nSuite 5 : Invariants INV-COM-001 à INV-COM-010 (DAM Phase 1)');
+
+let comInvData;
+try {
+  comInvData = load('knowledge/communication-invariants.json');
+} catch (e) {
+  comInvData = null;
+  failed++;
+  console.error(`    ${FAIL} knowledge/communication-invariants.json introuvable`);
+}
+
+if (comInvData) {
+  const comInvIds = new Set((comInvData.invariants || []).map(i => i.id));
+  assert(comInvIds.size >= 10,
+    `Au moins 10 invariants INV-COM-* déclarés (trouvé : ${comInvIds.size})`);
+  for (let n = 1; n <= 10; n++) {
+    const id = n < 10 ? `INV-COM-00${n}` : `INV-COM-0${n}`;
+    assert(comInvIds.has(id), `${id} déclaré dans knowledge/communication-invariants.json`);
+  }
+  // Vérifier les invariants critiques
+  const criticalInvs = {
+    'INV-COM-004': 'blocage interdit toute communication',
+    'INV-COM-009': 'pas de suppression physique',
+    'INV-COM-010': 'aucune donnée privée au Gardien',
+  };
+  for (const [id, desc] of Object.entries(criticalInvs)) {
+    const inv = (comInvData.invariants || []).find(i => i.id === id);
+    assert(!!inv, `${id} présent (${desc})`);
+    if (inv) {
+      assert(typeof inv.rule === 'string' && inv.rule.length > 0,
+        `${id} : champ 'rule' non vide`);
+    }
+  }
+}
 
 // ── Résumé ────────────────────────────────────────────────────────────────
 

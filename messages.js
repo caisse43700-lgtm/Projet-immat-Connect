@@ -1,4 +1,4 @@
-/* ===== IMMATCONNECT MESSAGES — V12 COMPLET SUPABASE ===== */
+/* ===== IMMATCONNECT MESSAGES — V13 DAM-COMMUNICATION PHASE 1 ===== */
 (function(){
 'use strict';
 
@@ -61,7 +61,9 @@ const State = {
   messages:[],
   threads:[],
   activePlate:null,
-  channel:null
+  channel:null,
+  searchQuery:'',
+  callEventsCache:{}
 };
 
 async function getUser(){
@@ -139,7 +141,6 @@ function normalizeRows(rows, profs){
   const mp = nPlate(myPlate());
   const uid = State.user?.id;
 
-  // Récupère les IDs supprimés localement
   let deletedIds = [];
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
@@ -147,7 +148,6 @@ function normalizeRows(rows, profs){
     const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
     const rp = fPlate(m.receiver_plate || m.to_plate || profs[m.receiver_id]?.owner_plate || m.target_plate || '');
 
-    // BUG 2 fix: si on est l'expéditeur, on ne peut pas être aussi récepteur (sauf conversation avec soi-même)
     const sent = (m.sender_id === uid) || (mp && nPlate(sp) === mp);
     const received = !sent && (
       m.receiver_id === uid ||
@@ -165,8 +165,6 @@ function normalizeRows(rows, profs){
       _received: received,
       _senderPlate: sp || 'INCONNU',
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
-      // sent → other = receiver (rp) ; received → other = sender (sp)
-      // NE PAS tomber sur rp si reçu et sp vide (sinon _otherPlate = MA plaque)
       _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
   }).filter(m => {
@@ -215,7 +213,6 @@ async function refresh(){
   const profs = await profilesByIds(raw.flatMap(m=>[m.sender_id,m.receiver_id]));
   State.messages = normalizeRows(raw, profs);
 
-  // Connexion messages → Activité
   try{ if(window.S) window.S._actMessages = State.messages; }catch(e){}
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
@@ -227,7 +224,6 @@ async function refresh(){
 }
 
 function buildThreads(){
-  // BUG 3: filtrer les messages supprimés localement
   let deletedIds = [];
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
@@ -254,19 +250,36 @@ function buildThreads(){
 }
 
 function setMode(mode){
+  const prev = State.mode;
   State.mode = mode || 'inbox';
 
+  // Tab buttons (backward compat)
   document.querySelectorAll('.ic-msg-tabs button').forEach(b=>{
     b.classList.toggle('on', b.dataset.mode === State.mode);
   });
 
   const compose = $('icComposePanel');
-  if(compose) compose.classList.toggle('show', State.mode === 'compose');
-
   const callLog = $('icCallLog');
-  if(callLog) callLog.style.display = State.mode === 'calls' ? '' : 'none';
+  const list    = $('icMsgList');
 
-  if(State.mode === 'calls'){ renderCallLog(); return; }
+  if(compose) compose.classList.remove('show');
+  if(callLog) callLog.style.display = 'none';
+
+  if(State.mode === 'compose'){
+    if(list) list.style.display = 'none';
+    if(compose) compose.classList.add('show');
+    return;
+  }
+
+  if(State.mode === 'calls'){
+    if(list) list.style.display = 'none';
+    if(callLog) callLog.style.display = '';
+    renderCallLog();
+    return;
+  }
+
+  // inbox / sent / default
+  if(list) list.style.display = '';
   render();
 }
 
@@ -387,21 +400,42 @@ function render(){
   if(State.mode === 'sent'){
     threads = threads.filter(t => t.list.some(m=>m._sent));
   }
-
   if(State.mode === 'inbox'){
     threads = threads.filter(t => t.list.some(m=>m._received));
   }
-
   if(State.mode === 'compose'){
     list.innerHTML = `<div class="ic-empty">Écris une plaque et un message puis appuie sur ➤.</div>`;
-    closeThread();
     return;
+  }
+
+  // Filtre recherche (F-SEARCH)
+  if(State.searchQuery){
+    const q = State.searchQuery;
+    threads = threads.filter(t =>
+      nPlate(t.plate).includes(q) ||
+      (t.last?.message || '').toUpperCase().includes(q)
+    );
+  }
+
+  // Filtre archives (F-ARCHIVE)
+  const archived = getArchived();
+  threads = threads.filter(t => !archived.includes(nPlate(t.plate)));
+
+  // Favoris en tête (F-FAVORITES)
+  const favs = getFavorites();
+  if(favs.length > 0){
+    threads = [
+      ...threads.filter(t => favs.includes(nPlate(t.plate))),
+      ...threads.filter(t => !favs.includes(nPlate(t.plate)))
+    ];
   }
 
   if(!threads.length){
     const helpText = State.mode === 'sent'
       ? 'Aucun message envoyé.'
-      : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
+      : State.searchQuery
+        ? `Aucune conversation pour "${State.searchQuery}".`
+        : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
     list.innerHTML = `<div class="ic-empty">${helpText}</div>`;
     closeThread();
     return;
@@ -410,6 +444,11 @@ function render(){
   list.innerHTML = threads.map(t=>{
     const last = t.last || {};
     const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const trust = getTrust(t.plate);
+    const isFav = favs.includes(nPlate(t.plate));
+    const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
+      trust === 'TRUSTED'  ? '<span class="ic-trust-ok">✓</span>' :
+      trust === 'CONTEXT'  ? '<span class="ic-trust-ctx">📍</span>' : '';
     return `
       <div class="ic-swipe-wrap">
         <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
@@ -417,7 +456,7 @@ function render(){
           <div class="ic-avatar">🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}</span>
+              <span class="ic-plate">${esc(t.plate)}${trustBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
@@ -459,6 +498,39 @@ async function markThreadRead(plate){
   try{window.App?.updateActBadge?.()}catch(e){}
 }
 
+// ── Timeline unifiée (messages + appels) ────────────────────────
+function _renderTimeline(body, messages, callEvents){
+  const allEvents = [
+    ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
+    ...(callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()}))
+  ].sort((a,b) => a._ts - b._ts);
+
+  body.innerHTML = allEvents.map(item => {
+    const timeStr = item._ts ? new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(item._type === 'call'){
+      const isOut = item.outgoing;
+      const statusLabel = {
+        pending:'En attente',accepted:'Accepté ✅',refused:'Refusé ❌',
+        cancelled:'Annulé',missed:'Manqué ☎️'
+      }[item.status] || item.status;
+      const cls = item.status==='missed' ? 'call-missed' :
+                  item.status==='refused' ? 'call-refused' :
+                  isOut ? 'call-sent' : 'call-recv';
+      return `<div class="ic-bubble ${cls}">
+        <div class="ic-bubble-text">📞 ${isOut ? 'Appel émis' : 'Appel reçu'} · ${statusLabel}</div>
+        <div class="ic-bubble-footer"><span class="ic-time">${esc(timeStr)}</span></div>
+      </div>`;
+    }
+    return `<div class="ic-bubble ${item._sent?'sent':'recv'}">
+      <div class="ic-bubble-text">${esc(item.message||'')}</div>
+      <div class="ic-bubble-footer">
+        <span class="ic-time">${esc(timeStr)}</span>
+        <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
@@ -470,23 +542,58 @@ async function openThread(plate){
   const box = $('icThread');
   const body = $('icThreadBody');
   const title = $('icThreadTitle');
+  const sub = $('icThreadSub');
 
   if(!box || !body || !t) return;
 
   if(title) title.textContent = localPlate;
 
-  body.innerHTML = t.list.map(m=>{
-    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `
-      <div class="ic-bubble ${m._sent?'sent':'recv'}">
-        <div class="ic-bubble-text">${esc(m.message || '')}</div>
-        <div class="ic-bubble-footer">
-          <span class="ic-time">${esc(timeStr)}</span>
-          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  // Sous-titre : niveau confiance (F-TRUST)
+  if(sub){
+    const trust = getTrust(localPlate);
+    const subLabels = {
+      NONE:     'Appuie sur 📞 pour demander un contact',
+      CONTEXT:  '📍 Contexte actif',
+      TRUSTED:  '✓ Conducteur de confiance',
+      FAVORITE: '⭐ Favori prioritaire'
+    };
+    sub.textContent = subLabels[trust] || subLabels.NONE;
+  }
+
+  // Carte contexte alerte active (F-CALL-CONTEXT)
+  const ctxCard = $('icContextCard');
+  if(ctxCard){
+    const alerts = (window.S?.alerts || []).filter(a =>
+      a.status !== 'resolved' &&
+      (nPlate(a.plate||a.target_plate||'') === nPlate(localPlate) ||
+       nPlate(a.sender_plate||'') === nPlate(localPlate))
+    );
+    if(alerts.length > 0){
+      const a = alerts[0];
+      ctxCard.style.display = '';
+      ctxCard.innerHTML = `⚠️ <strong>Alerte active</strong> : ${esc(a.reason || a.category || 'Signalement')}`;
+    } else {
+      ctxCard.style.display = 'none';
+    }
+  }
+
+  // Masquer la liste (thread prend la place)
+  const listEl = $('icMsgList');
+  const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
+  const sbar   = $('icSearchBar');
+  if(listEl) listEl.style.display = 'none';
+  if(hdr)    hdr.style.display    = 'none';
+  if(sbar)   sbar.style.display   = 'none';
+
+  // Chargement événements d'appel (F-CONVERSATION-ENGINE + F-APPEL)
+  let callEvents = [];
+  try{
+    const allCalls = await (window.CallManager?.loadCallLog?.() || Promise.resolve([]));
+    callEvents = (allCalls||[]).filter(c => nPlate(fPlate(c.plate)) === nPlate(localPlate));
+    State.callEventsCache[nPlate(localPlate)] = callEvents;
+  }catch(e){ callEvents = []; }
+
+  _renderTimeline(body, t.list, callEvents);
 
   box.classList.add('show');
   body.scrollTop = body.scrollHeight;
@@ -494,8 +601,14 @@ async function openThread(plate){
 }
 
 function closeThread(){
-  const box = $('icThread');
-  if(box) box.classList.remove('show');
+  const box    = $('icThread');
+  const listEl = $('icMsgList');
+  const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
+  const sbar   = $('icSearchBar');
+  if(box)    box.classList.remove('show');
+  if(listEl) listEl.style.display = '';
+  if(hdr)    hdr.style.display    = '';
+  if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
 }
 
@@ -507,21 +620,12 @@ function refreshThread(){
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
   if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
-  body.innerHTML = t.list.map(m=>{
-    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div class="ic-bubble ${m._sent?'sent':'recv'}">
-        <div class="ic-bubble-text">${esc(m.message || '')}</div>
-        <div class="ic-bubble-footer">
-          <span class="ic-time">${esc(timeStr)}</span>
-          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
-        </div>
-      </div>`;
-  }).join('');
+  const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
+  _renderTimeline(body, t.list, callEvents);
   body.scrollTop = body.scrollHeight;
 }
 
 async function sendNew(){
-  // Désactiver le bouton pendant l'envoi pour éviter les doubles clics
   const btn = document.querySelector('#icComposePanel .ic-send-btn');
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
@@ -537,7 +641,6 @@ async function sendNew(){
 async function reply(){
   if(!State.activePlate) return toast('Choisis une conversation.','bad');
   const text = ($('icReplyText')?.value || '').trim();
-  // Désactiver le bouton pendant l'envoi
   const btn = document.querySelector('#icThread .ic-send-btn');
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
@@ -566,6 +669,9 @@ async function sendToPlate(plate,text){
   if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
+
+  // Anti-spam (F-SPAM-PROTECTION)
+  if(_checkSpam(plate)){ toast('Trop de messages envoyés rapidement.','bad'); return false; }
 
   const target = await findProfileByPlate(plate);
   if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
@@ -676,7 +782,6 @@ async function subscribe(){
   const u = State.user || await getUser();
   if(!client || !u) return;
 
-  // Si un channel existe déjà et est actif, ne pas recréer
   if(State.channel) {
     try{ await client.removeChannel(State.channel); }catch(e){}
     State.channel = null;
@@ -685,6 +790,7 @@ async function subscribe(){
   State.channel = client
     .channel('immat_messages_v12_' + u.id)
     .on('postgres_changes',{event:'*',schema:'public',table:'messages'},async()=>{
+      try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
       await refresh();
     })
     .subscribe((status,err)=>{
@@ -706,6 +812,213 @@ function installInputs(){
   });
 }
 
+// ── F-TRUST : Gestion de confiance ──────────────────────────────
+function getTrustMap(){
+  try{ return JSON.parse(localStorage.getItem('ic_trust')||'{}'); }catch(e){ return {}; }
+}
+function getTrust(plate){
+  return getTrustMap()[nPlate(fPlate(plate))] || 'NONE';
+}
+function setTrust(plate,level){
+  plate = fPlate(plate);
+  if(!plate) return;
+  const map = getTrustMap();
+  map[nPlate(plate)] = level || 'NONE';
+  try{ localStorage.setItem('ic_trust',JSON.stringify(map)); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
+  toast('Confiance '+level+' attribuée à '+plate+'.','ok');
+  render();
+}
+
+// ── F-FAVORITES : Conversations favorites ───────────────────────
+function getFavorites(){
+  try{ return JSON.parse(localStorage.getItem('ic_favorites')||'[]'); }catch(e){ return []; }
+}
+function saveFavorites(arr){
+  try{ localStorage.setItem('ic_favorites',JSON.stringify(arr)); }catch(e){}
+}
+function favoriteConv(plate){
+  plate = nPlate(fPlate(plate));
+  const favs = getFavorites();
+  if(!favs.includes(plate)) saveFavorites([...favs,plate]);
+  try{ window.ImmatOrganism?.observe?.('CONV_FAVORITED',{plate,_src:'ImmatConnect/messages/favoriteConv'}); }catch(e){}
+  render();
+}
+function unfavoriteConv(plate){
+  plate = nPlate(fPlate(plate));
+  saveFavorites(getFavorites().filter(p=>p!==plate));
+  render();
+}
+
+// ── F-ARCHIVE : Archivage de conversations ──────────────────────
+function getArchived(){
+  try{ return JSON.parse(localStorage.getItem('ic_archived')||'[]'); }catch(e){ return []; }
+}
+function saveArchived(arr){
+  try{ localStorage.setItem('ic_archived',JSON.stringify(arr)); }catch(e){}
+}
+function archiveConv(plate){
+  plate = nPlate(fPlate(plate));
+  const arch = getArchived();
+  if(!arch.includes(plate)) saveArchived([...arch,plate]);
+  try{ window.ImmatOrganism?.observe?.('CONV_ARCHIVED',{plate,_src:'ImmatConnect/messages/archiveConv'}); }catch(e){}
+  render();
+}
+function unarchiveConv(plate){
+  plate = nPlate(fPlate(plate));
+  saveArchived(getArchived().filter(p=>p!==plate));
+  render();
+}
+
+// ── F-SEARCH : Recherche dans les conversations ─────────────────
+function toggleSearch(){
+  const bar = $('icSearchBar');
+  if(!bar) return;
+  const hidden = bar.style.display === 'none' || !bar.style.display;
+  bar.style.display = hidden ? '' : 'none';
+  try{ localStorage.setItem('_icSearchOpen', hidden ? '1' : '0'); }catch(e){}
+  if(hidden){
+    const inp = $('icSearchInput');
+    if(inp){ inp.value=''; inp.focus(); }
+  } else {
+    State.searchQuery = '';
+    render();
+  }
+}
+function filterConv(query){
+  State.searchQuery = (query||'').trim().toUpperCase();
+  try{ window.ImmatOrganism?.observe?.('CONV_SEARCHED',{_src:'ImmatConnect/messages/filterConv'}); }catch(e){}
+  render();
+}
+
+// ── Appel depuis thread (F-APPEL) ────────────────────────────────
+function callActive(){
+  if(!State.activePlate) return toast('Aucune conversation active.','bad');
+  try{
+    window.CallManager?.openContactOptions?.(State.activePlate) ||
+    window.CallManager?.contactByCall?.(State.activePlate);
+  }catch(e){}
+}
+
+// ── Fermer composition ───────────────────────────────────────────
+function closeCompose(){
+  const compose = $('icComposePanel');
+  const list    = $('icMsgList');
+  if(compose) compose.classList.remove('show');
+  if(list)    list.style.display = '';
+  State.mode = 'inbox';
+  render();
+}
+
+// ── Menu thread ──────────────────────────────────────────────────
+function openThreadMenu(){
+  if(!State.activePlate) return;
+  const plate = State.activePlate;
+  const trust = getTrust(plate);
+  const isFav = getFavorites().includes(nPlate(plate));
+  const isArch = getArchived().includes(nPlate(plate));
+  const opts = [
+    isFav ? '1. ⭐ Retirer des favoris' : '1. ⭐ Ajouter aux favoris',
+    isArch ? '2. 📂 Désarchiver' : '2. 📁 Archiver',
+    trust === 'TRUSTED' ? '3. ✓ Révoquer confiance' : '3. ✓ Marquer de confiance',
+    '4. ✕ Annuler'
+  ];
+  const choice = prompt(opts.join('\n'));
+  if(choice === '1' || choice?.startsWith('1')) { isFav ? unfavoriteConv(plate) : favoriteConv(plate); }
+  else if(choice === '2' || choice?.startsWith('2')) { isArch ? unarchiveConv(plate) : archiveConv(plate); }
+  else if(choice === '3' || choice?.startsWith('3')) { setTrust(plate, trust==='TRUSTED'?'NONE':'TRUSTED'); }
+}
+
+// ── F-PRESENCE : Statut de présence ─────────────────────────────
+function setPresence(status){
+  try{ localStorage.setItem('ic_presence',status); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('PRESENCE_CHANGED',{status,_src:'ImmatConnect/messages/setPresence'}); }catch(e){}
+  document.querySelectorAll('.presence-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.status === status);
+  });
+  const labels = {disponible:'🟢 Disponible',conduite:'🚗 Conduite',occupé:'🟡 Occupé',invisible:'⚫ Invisible','hors-ligne':'⭕ Hors ligne'};
+  toast('Statut : '+(labels[status]||status)+'.','ok');
+}
+
+// ── F-CALL-PERMISSIONS : Niveau d'accès appels ──────────────────
+function setCallLevel(level){
+  try{ localStorage.setItem('ic_call_perm',String(level)); }catch(e){}
+  document.querySelectorAll('.call-level-btn').forEach(b=>{
+    b.classList.toggle('on', String(b.dataset.level) === String(level));
+  });
+  saveCallSettings();
+  const labels = {1:'Personne ne peut vous appeler.',2:'Contacts de confiance uniquement.',3:'Confiance + contexte actif.',4:'Tout le monde peut vous appeler.'};
+  toast('Niveau '+level+' : '+(labels[level]||''),'ok');
+}
+
+function setDnd(enabled){
+  try{ localStorage.setItem('ic_dnd',enabled?'1':'0'); }catch(e){}
+  const hours = $('dndHours');
+  if(hours) hours.style.display = enabled ? '' : 'none';
+  const sub = $('dndSub');
+  if(sub) _updateDndSub();
+  saveCallSettings();
+}
+
+function saveDndHours(){
+  const from = $('dndFrom')?.value || '22:00';
+  const to   = $('dndTo')?.value   || '07:00';
+  try{ localStorage.setItem('ic_dnd_from',from); localStorage.setItem('ic_dnd_to',to); }catch(e){}
+  _updateDndSub();
+  saveCallSettings();
+}
+
+function _updateDndSub(){
+  const sub = $('dndSub');
+  if(!sub) return;
+  const dndOn = localStorage.getItem('ic_dnd') === '1';
+  const from  = localStorage.getItem('ic_dnd_from') || '22:00';
+  const to    = localStorage.getItem('ic_dnd_to')   || '07:00';
+  sub.textContent = dndOn ? 'Activé : '+from+' → '+to : 'Désactivé';
+}
+
+function saveCallSettings(){
+  try{ window.ImmatOrganism?.observe?.('CALL_PREFERENCES_UPDATED',{_src:'ImmatConnect/messages/saveCallSettings'}); }catch(e){}
+}
+
+// ── F-SPAM-PROTECTION : Anti-spam ───────────────────────────────
+function _checkSpam(plate){
+  plate = nPlate(fPlate(plate));
+  const now = Date.now();
+  let log = {};
+  try{ log = JSON.parse(localStorage.getItem('ic_spam_log')||'{}'); }catch(e){}
+  const entry = log[plate] || {count:0,ts:now};
+  if(now - entry.ts > 60000){ entry.count = 1; entry.ts = now; }
+  else { entry.count++; }
+  log[plate] = entry;
+  try{ localStorage.setItem('ic_spam_log',JSON.stringify(log)); }catch(e){}
+  if(entry.count > 20){
+    try{ window.ImmatOrganism?.observe?.('SPAM_DETECTED',{plate,count:entry.count,_src:'ImmatConnect/messages/sendToPlate'}); }catch(e){}
+    return true;
+  }
+  return false;
+}
+
+// ── Initialiser les paramètres UI ───────────────────────────────
+function initSettings(){
+  try{
+    const callPerm = localStorage.getItem('ic_call_perm');
+    if(callPerm) setCallLevel(parseInt(callPerm,10));
+    const presence = localStorage.getItem('ic_presence');
+    if(presence) document.querySelectorAll('.presence-btn').forEach(b=>b.classList.toggle('on',b.dataset.status===presence));
+    const dnd = localStorage.getItem('ic_dnd') === '1';
+    const dndToggle = $('dndToggle');
+    if(dndToggle) dndToggle.checked = dnd;
+    const hoursEl = $('dndHours');
+    if(hoursEl) hoursEl.style.display = dnd ? '' : 'none';
+    const from = localStorage.getItem('ic_dnd_from');
+    const to   = localStorage.getItem('ic_dnd_to');
+    if(from && $('dndFrom')) $('dndFrom').value = from;
+    if(to   && $('dndTo'))   $('dndTo').value   = to;
+    _updateDndSub();
+  }catch(e){}
+}
+
 window.ImmatMessages = {
   mode:State.mode,
   refresh,
@@ -721,13 +1034,31 @@ window.ImmatMessages = {
   deleteAllMessages,
   renderCallLog,
   sendToPlate,
-  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
+  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}},
+  // Phase 1 — DAM-COMMUNICATION
+  toggleSearch,
+  filterConv,
+  callActive,
+  closeCompose,
+  openThreadMenu,
+  setTrust,
+  getTrust,
+  favoriteConv,
+  unfavoriteConv,
+  archiveConv,
+  unarchiveConv,
+  setPresence,
+  setCallLevel,
+  setDnd,
+  saveDndHours,
+  saveCallSettings,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
 
 async function boot(){
   installInputs();
+  initSettings();
   const u = await getUser();
   if(u) await refresh();
 }

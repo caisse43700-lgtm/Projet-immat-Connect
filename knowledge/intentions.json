@@ -242,6 +242,168 @@
       "chemin": "Mode invisible (panelDrive → 👁) OU SOS (panelDrive → appui long 3s)",
       "note": "Intention composite — couverte par F-SOS + mode invisible.",
       "liens": { "tutorial": "TUT-007", "interaction": null }
+    },
+    {
+      "id": "INT-SEND-MESSAGE",
+      "besoin": "Je veux envoyer un message dans une conversation",
+      "intention": "envoyer un message texte à un conducteur connu",
+      "organe": "Messages",
+      "flow": "FLOW-MESSAGE",
+      "acces": "conducteur",
+      "chemin": "panelMessages → conversation → composer → envoyer"
+    },
+    {
+      "id": "INT-RECEIVE-MESSAGE",
+      "besoin": "Je veux voir les messages que j'ai reçus",
+      "intention": "consulter la liste des conversations avec messages non lus",
+      "organe": "Messages",
+      "flow": "FLOW-CONVERSATION",
+      "acces": "conducteur",
+      "chemin": "panelMessages → liste conversations → badge non lu"
+    },
+    {
+      "id": "INT-CALL-DRIVER",
+      "besoin": "Je veux appeler un conducteur via une demande de contact",
+      "intention": "initier une demande de contact audio vers un conducteur",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "panelMessages → thread → bouton 📞"
+    },
+    {
+      "id": "INT-ANSWER-CALL",
+      "besoin": "Je veux accepter une demande de contact entrant",
+      "intention": "accepter une demande d'appel d'un conducteur",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "popup appel entrant → Accepter"
+    },
+    {
+      "id": "INT-REFUSE-CALL",
+      "besoin": "Je veux refuser une demande de contact",
+      "intention": "refuser une demande d'appel d'un conducteur",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "popup appel entrant → Refuser"
+    },
+    {
+      "id": "INT-END-CALL",
+      "besoin": "Je veux mettre fin à un appel",
+      "intention": "terminer un appel en cours",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "interface appel actif → Raccrocher"
+    },
+    {
+      "id": "INT-MISS-CALL",
+      "besoin": "Je veux voir les appels manqués",
+      "intention": "consulter les appels manqués dans la timeline de conversation",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "panelMessages → thread → événement appel manqué (centré)"
+    },
+    {
+      "id": "INT-MANAGE-TRUST",
+      "besoin": "Je veux gérer le niveau de confiance d'un conducteur",
+      "intention": "attribuer ou modifier le niveau de confiance (NONE/CONTEXT/TRUSTED/FAVORITE)",
+      "organe": "Messages",
+      "flow": "FLOW-TRUST",
+      "acces": "conducteur",
+      "chemin": "panelMessages → thread → menu → Confiance"
+    },
+    {
+      "id": "INT-REVOKE-TRUST",
+      "besoin": "Je veux révoquer la confiance accordée à un conducteur",
+      "intention": "retirer le niveau de confiance d'un conducteur",
+      "organe": "Messages",
+      "flow": "FLOW-TRUST",
+      "acces": "conducteur",
+      "chemin": "panelMessages → thread → menu → Révoquer confiance"
+    },
+    {
+      "id": "INT-BLOCK-DRIVER",
+      "besoin": "Je veux bloquer un conducteur",
+      "intention": "empêcher tout contact d'un conducteur (messages + appels)",
+      "organe": "Messages",
+      "flow": "FLOW-BLOCK",
+      "acces": "conducteur",
+      "chemin": "panelMessages → thread → menu → Bloquer"
+    },
+    {
+      "id": "INT-UNBLOCK-DRIVER",
+      "besoin": "Je veux débloquer un conducteur",
+      "intention": "réactiver la communication avec un conducteur bloqué",
+      "organe": "Messages",
+      "flow": "FLOW-BLOCK",
+      "acces": "conducteur",
+      "chemin": "panelSettings → Bloqués → Débloquer"
+    },
+    {
+      "id": "INT-CONTACT-FROM-ALERT",
+      "besoin": "Je veux contacter le conducteur qui m'a signalé une alerte",
+      "intention": "ouvrir une conversation depuis une carte alerte véhicule",
+      "organe": "Messages",
+      "flow": "FLOW-CALL-CONTEXT",
+      "acces": "conducteur",
+      "chemin": "Activité → card alerte → Contacter → Messages"
+    },
+    {
+      "id": "INT-REPLY-TO-ALERT",
+      "besoin": "Je veux répondre à une alerte avec un message contextuel",
+      "intention": "envoyer une réponse rapide depuis une alerte active",
+      "organe": "Messages",
+      "flow": "FLOW-CALL-CONTEXT",
+      "acces": "conducteur",
+      "chemin": "Activité → card → Répondre rapide"
+    },
+    {
+      "id": "INT-FIND-CONVERSATION",
+      "besoin": "Je veux trouver une conversation avec une plaque spécifique",
+      "intention": "rechercher dans la liste des conversations par plaque ou message",
+      "organe": "Messages",
+      "flow": "FLOW-SEARCH",
+      "acces": "conducteur",
+      "chemin": "panelMessages → 🔍 → saisir plaque"
+    },
+    {
+      "id": "INT-ARCHIVE-CONVERSATION",
+      "besoin": "Je veux archiver une conversation sans la supprimer",
+      "intention": "archiver localement une conversation terminée",
+      "organe": "Messages",
+      "flow": "FLOW-ARCHIVE",
+      "acces": "conducteur",
+      "chemin": "panelMessages → swipe → Archiver"
+    },
+    {
+      "id": "INT-MANAGE-CALLS",
+      "besoin": "Je veux configurer qui peut m'appeler",
+      "intention": "modifier le niveau d'autorisation des appels entrants",
+      "organe": "Messages",
+      "flow": "FLOW-CALL",
+      "acces": "conducteur",
+      "chemin": "panelSettings → Paramètres appels → Niveau permission"
+    },
+    {
+      "id": "INT-MANAGE-PRESENCE",
+      "besoin": "Je veux indiquer ma disponibilité",
+      "intention": "changer son statut de présence visible par les autres conducteurs",
+      "organe": "Messages",
+      "flow": "FLOW-PRESENCE",
+      "acces": "conducteur",
+      "chemin": "panelSettings → Présence → Choisir statut"
+    },
+    {
+      "id": "INT-CONTEXTUAL-CALL",
+      "besoin": "Je veux appeler un conducteur dans le contexte d'une alerte active",
+      "intention": "initier un appel contextuel lié à un signalement actif",
+      "organe": "Messages",
+      "flow": "FLOW-CALL-CONTEXT",
+      "acces": "conducteur",
+      "chemin": "Activité → card alerte active → 📞 Appeler"
     }
   ]
 }

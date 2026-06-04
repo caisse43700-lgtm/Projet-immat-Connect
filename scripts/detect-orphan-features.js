@@ -65,6 +65,9 @@ function loadKnowledge() {
     'actCatPanel',
     // Bandeau véhicule devant
     'frontCarBanner',
+    // DAM-COMMUNICATION Phase 1
+    'icSearchBar', 'icContextCard', 'callLevelSelector', 'presenceSelector', 'dndHours',
+    'icThread', 'icCallLog',
   ]);
 
   // Événements OBD (ImmatOrganism.observe) connus
@@ -95,6 +98,20 @@ function loadKnowledge() {
     'ORPHAN_INVARIANT_DETECTED', 'ORPHAN_ORGAN_DETECTED',
     // Divers
     'REPORT_SENT', 'ASSIST_REQUESTED', 'ASSIST_RESOLVED',
+    // DAM-COMMUNICATION Phase 1 — F-CONVERSATION-ENGINE
+    'MSG_FAILED',
+    // DAM-COMMUNICATION Phase 1 — F-CALL-PERMISSIONS
+    'CALL_PREFERENCES_UPDATED', 'CALL_RINGING', 'CALL_ENDED',
+    'CALL_MISSED', 'CALL_UNREACHABLE',
+    // DAM-COMMUNICATION Phase 1 — F-TRUST
+    'CONTACT_TRUSTED', 'CONTACT_REVOKED',
+    'BLOCK_CREATED', 'BLOCK_REMOVED', 'CONTEXT_GRANTED', 'CONTEXT_EXPIRED',
+    // DAM-COMMUNICATION Phase 1 — F-SPAM-PROTECTION
+    'SPAM_DETECTED',
+    // DAM-COMMUNICATION Phase 1 — F-FAVORITES / F-ARCHIVE / F-SEARCH
+    'CONV_FAVORITED', 'CONV_ARCHIVED', 'CONV_SEARCHED',
+    // DAM-COMMUNICATION Phase 1 — F-PRESENCE
+    'PRESENCE_CHANGED',
   ]);
 
   // Edge Functions déclarées
@@ -110,6 +127,9 @@ function loadKnowledge() {
     'gps_favs', 'gps_hist', 'last_plate', 'last_role',
     'call_prefs', 'nearby_radius',
     'unread_msg_count', 'last_state',
+    // DAM-COMMUNICATION Phase 1
+    'trust', 'call_perm', 'dnd', 'dnd_from', 'dnd_to',
+    'archived', 'favorites', 'spam_log', 'presence',
   ]);
 
   return {

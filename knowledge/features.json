@@ -122,6 +122,87 @@
       "intentions": ["INT-MANAGE-PROFILE"],
       "flows": ["FLOW-PROFILE-EDIT"],
       "note": "Plaque immuable après création — INV-006"
+    },
+    {
+      "id": "F-CONVERSATION-ENGINE",
+      "nom": "Moteur de conversation unifié",
+      "organe": "Messages",
+      "description": "Regrouper en une timeline unique tous les échanges entre deux conducteurs : messages, appels, contexte",
+      "actions": ["Afficher liste conversations", "Ouvrir thread", "Vue timeline unifiée", "Fermer thread"],
+      "statut": "actif",
+      "intentions": ["INT-SEND-MESSAGE", "INT-RECEIVE-MESSAGE"],
+      "flows": ["FLOW-CONVERSATION", "FLOW-MESSAGE"]
+    },
+    {
+      "id": "F-TRUST",
+      "nom": "Gestion de confiance",
+      "organe": "Messages",
+      "description": "Gérer le niveau de confiance entre conducteurs (NONE, CONTEXT, TRUSTED, FAVORITE)",
+      "actions": ["Attribuer confiance", "Révoquer confiance", "Voir niveau confiance", "Épingler favori"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-TRUST", "INT-REVOKE-TRUST"],
+      "flows": ["FLOW-TRUST"]
+    },
+    {
+      "id": "F-CALL-PERMISSIONS",
+      "nom": "Paramètres d'appel",
+      "organe": "Messages",
+      "description": "Configurer les niveaux d'autorisation d'appel (1-4) et le mode Ne pas déranger",
+      "actions": ["Choisir niveau permission (1-4)", "Activer Ne pas déranger", "Configurer plage horaire", "Gérer exceptions"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-CALLS"],
+      "flows": ["FLOW-CALL"]
+    },
+    {
+      "id": "F-PRESENCE",
+      "nom": "Statut de présence",
+      "organe": "Messages",
+      "description": "Indiquer sa disponibilité aux autres conducteurs sans révéler sa géolocalisation",
+      "actions": ["Changer statut", "Voir statut d'un pair", "Mode Conduite automatique"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-PRESENCE"],
+      "flows": ["FLOW-PRESENCE"],
+      "note": "Aucune géolocalisation dans le statut — INV-COM-010"
+    },
+    {
+      "id": "F-FAVORITES",
+      "nom": "Conversations favorites",
+      "organe": "Messages",
+      "description": "Épingler des conversations pour y accéder prioritairement",
+      "actions": ["Épingler conversation", "Désépingler", "Accès prioritaire"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-TRUST"],
+      "flows": ["FLOW-FAVORITE"]
+    },
+    {
+      "id": "F-ARCHIVE",
+      "nom": "Archivage de conversations",
+      "organe": "Messages",
+      "description": "Archiver une conversation localement sans la supprimer",
+      "actions": ["Archiver", "Désarchiver", "Voir archives"],
+      "statut": "actif",
+      "intentions": ["INT-ARCHIVE-CONVERSATION"],
+      "flows": ["FLOW-ARCHIVE"]
+    },
+    {
+      "id": "F-SEARCH",
+      "nom": "Recherche dans les conversations",
+      "organe": "Messages",
+      "description": "Rechercher une conversation par plaque ou contenu de message",
+      "actions": ["Rechercher par plaque", "Rechercher dans les messages", "Effacer recherche"],
+      "statut": "actif",
+      "intentions": ["INT-FIND-CONVERSATION"],
+      "flows": ["FLOW-SEARCH"]
+    },
+    {
+      "id": "F-SPAM-PROTECTION",
+      "nom": "Protection anti-spam",
+      "organe": "Messages",
+      "description": "Détecter et bloquer automatiquement les comportements répétitifs abusifs",
+      "actions": ["Détecter spam", "Cooldown automatique", "Alerter OBD"],
+      "statut": "actif",
+      "intentions": ["INT-BLOCK-DRIVER"],
+      "flows": ["FLOW-SPAM-PROTECTION"]
     }
   ]
 }
