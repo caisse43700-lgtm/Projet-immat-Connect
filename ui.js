@@ -41,7 +41,7 @@
   }
 
   const floating = [
-    'reportPanel',
+
     'nearbyPanel',
     'drawer',
     'legal',

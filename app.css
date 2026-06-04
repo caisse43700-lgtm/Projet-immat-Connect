@@ -844,8 +844,6 @@ body.night .act-cat-card { filter: brightness(.92); }
 body.night .act-resume-item { background: rgba(255,255,255,.07); }
 body.night .act-mod-card { background: rgba(255,255,255,.07); }
 
-/* ── HIDE REPORT PANEL ── */
-#reportPanel { display: none !important; }
 
 /* ── GPS ERROR ── */
 #gpsErrorMsg { display: none; background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.3); border-radius: 14px; padding: 12px; margin-top: 8px; font-size: 12px; color: #ff3b5c; line-height: 1.5; }
