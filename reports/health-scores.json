@@ -1,5 +1,5 @@
 {
-  "_generated_at": "2026-06-04T13:23:21.811Z",
+  "_generated_at": "2026-06-04T13:38:40.665Z",
   "_session": "OBD-003d",
   "global_score": 96,
   "global_label": "OPTIMAL",
@@ -44,7 +44,7 @@
           "present": true
         },
         {
-          "file": "sw.js",
+          "file": "service-worker.js",
           "present": true
         },
         {

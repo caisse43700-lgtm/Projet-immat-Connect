@@ -168,8 +168,8 @@ function computeDatabaseCoverage() {
   const tables   = data.tables || [];
   const edgeFns  = data.edge_functions || [];
   const lsKeys   = data.localStorage_keys || [];
-  // Score basé sur les 5 tables attendues + 3 edge functions + 17 clés localStorage
-  const expectedTables = 5, expectedEF = 3, expectedLS = 17;
+  // Score basé sur les 5 tables attendues + 3 edge functions + 24 clés localStorage
+  const expectedTables = 5, expectedEF = 3, expectedLS = 24;
   const score = Math.round(
     (Math.min(tables.length, expectedTables) / expectedTables * 0.4 +
      Math.min(edgeFns.length, expectedEF)  / expectedEF  * 0.3 +
@@ -223,7 +223,7 @@ scores.MEMORY_HEALTH_SCORE = {
 function computePWAHealth() {
   const checks = [
     { file: 'manifest.json', weight: 0.35 },
-    { file: 'sw.js', weight: 0.35 },
+    { file: 'service-worker.js', weight: 0.35 },
     { file: 'offline.html', weight: 0.15 },
     { file: 'icons/icon-192.png', weight: 0.075 },
     { file: 'icons/icon-512.png', weight: 0.075 },

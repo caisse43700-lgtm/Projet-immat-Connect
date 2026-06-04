@@ -84,8 +84,13 @@ assert(messagesSrc.includes('removeChannel') || messagesSrc.includes('channel') 
 
 console.log('\nSuite 3 : afterAuth() — nettoyage état stale');
 
-const afterAuthMatch = indexSrc.match(/App\.afterAuth\s*=\s*async\s*function\s*\(\)\s*\{([\s\S]*?)(?=^\s{4}App\.|^\s{0,4}\/\*)/m);
-const afterAuthBody = afterAuthMatch ? afterAuthMatch[1] : indexSrc;
+// Extraction par position pour éviter le fallback dangereux (faux positifs si regex rate)
+const afterAuthIdx   = indexSrc.indexOf('App.afterAuth = async function(){');
+const afterAuthStart = afterAuthIdx >= 0 ? indexSrc.indexOf('{', afterAuthIdx) + 1 : -1;
+const afterAuthEnd   = afterAuthStart > 0 ? indexSrc.indexOf('\n    App.', afterAuthStart) : -1;
+const afterAuthBody  = (afterAuthStart > 0 && afterAuthEnd > 0)
+  ? indexSrc.substring(afterAuthStart, afterAuthEnd)
+  : '';
 
 assert(afterAuthBody.includes('ic_current_user_id') || afterAuthBody.includes('lastUid'),
   'afterAuth() : vérifie ic_current_user_id (détection changement de compte)');

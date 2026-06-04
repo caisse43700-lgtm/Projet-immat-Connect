@@ -79,8 +79,17 @@ const deadLocalStorage = lsKeys.filter(entry => {
 let whitelistedEvents = [];
 try {
   const dfSrc = readSrc('scripts/detect-orphan-features.js');
-  for (const m of dfSrc.matchAll(/'([A-Z][A-Z0-9_]+)'/g)) {
-    if (m[1].length > 4) whitelistedEvents.push(m[1]);
+  // Chercher d'abord un tableau JSON explicite knownObserveEvents = [...]
+  const arrMatch = dfSrc.match(/knownObserveEvents\s*=\s*\[([\s\S]*?)\]/);
+  if (arrMatch) {
+    for (const m of arrMatch[1].matchAll(/'([A-Z][A-Z0-9_]+)'/g)) {
+      if (m[1].length > 4) whitelistedEvents.push(m[1]);
+    }
+  } else {
+    // Fallback : scanner toutes les constantes uppercase entre guillemets simples
+    for (const m of dfSrc.matchAll(/'([A-Z][A-Z0-9_]+)'/g)) {
+      if (m[1].length > 4) whitelistedEvents.push(m[1]);
+    }
   }
 } catch(_) {}
 whitelistedEvents = [...new Set(whitelistedEvents)];
