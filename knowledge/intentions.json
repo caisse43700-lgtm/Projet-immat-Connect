@@ -404,6 +404,15 @@
       "flow": "FLOW-CALL-CONTEXT",
       "acces": "conducteur",
       "chemin": "Activité → card alerte active → 📞 Appeler"
+    },
+    {
+      "id": "INT-PROXIMITY-SIGNAL",
+      "besoin": "Je veux prévenir discrètement le véhicule devant moi d'un problème visible",
+      "intention": "envoyer un signal de proximité au véhicule de devant (pneu, coffre, feu…)",
+      "organe": "Signalements",
+      "flow": "FLOW-PROXIMITY-SIGNAL",
+      "acces": "conducteur",
+      "chemin": "Ange → 'le véhicule devant a…' OU frontCarBanner → menu → Signaler"
     }
   ]
 }

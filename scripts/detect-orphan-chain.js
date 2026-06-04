@@ -125,6 +125,8 @@ const FEATURE_OBD_HINTS = {
   'F-ARCHIVE':             ['CONV_ARCHIVED', 'CONV_ARCHIVE'],
   'F-SEARCH':              ['CONV_SEARCHED', 'CONV_SEARCH'],
   'F-SPAM-PROTECTION':     ['SPAM_'],
+  // F-PROXIMITY-SIGNAL — utilise vehicleAlertQuick() → mêmes events que F-SIGNAL-VEHICULE
+  'F-PROXIMITY-SIGNAL':    ['VEHICLE_MESSAGE_', 'ALERT_'],
 };
 
 // ── 5. Vérifier la chaîne pour chaque feature ────────────────────────────

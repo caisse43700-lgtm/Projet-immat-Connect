@@ -1,0 +1,149 @@
+{
+  "_v": 1,
+  "_role": "Registre des composants Phase B/C réservés — non actifs, non activables sans validation Gardien",
+  "_rule": "INV-COM-013 : aucun composant reservé ne peut être activé sans déploiement explicitement approuvé (status 'approved').",
+  "_ref": "SESSION OBD-003c — Audit ultime de cohérence",
+  "components": [
+    {
+      "id": "COMP-B-001",
+      "nom": "WebRTCTransport",
+      "phase": "B",
+      "description": "Transport audio P2P temps réel via WebRTC entre deux conducteurs. Remplacera le système call_requests Phase A.",
+      "status": "reserved",
+      "feature_id": "F-APPEL",
+      "invariant": "INV-COM-003",
+      "preconditions": [
+        "STUN/TURN servers déployés et configurés",
+        "Consentement explicite conducteur (micro) D-002",
+        "Validation Gardien + revue sécurité P2P",
+        "Tests charge 100+ connexions simultanées"
+      ],
+      "note": "Phase A actuelle = call_requests (notification + consentement). Phase B = appel audio réel."
+    },
+    {
+      "id": "COMP-B-002",
+      "nom": "ConversationEngineCloud",
+      "phase": "B",
+      "description": "Synchronisation cloud des conversations entre appareils multiples. Actuellement local-first (localStorage + DB messages).",
+      "status": "reserved",
+      "feature_id": "F-CONVERSATION-ENGINE",
+      "invariant": "INV-COM-009",
+      "preconditions": [
+        "Architecture multi-device définie",
+        "Chiffrement E2E validé (INV-COM-010)",
+        "Migration schéma DB validée Gardien",
+        "Consentement conducteur pour sync cloud"
+      ],
+      "note": "INV-COM-009 doit rester respecté même en mode cloud : soft-delete uniquement."
+    },
+    {
+      "id": "COMP-B-003",
+      "nom": "TrustManagerDB",
+      "phase": "B",
+      "description": "Persistance DB des niveaux de confiance (ic_trust). Actuellement localStorage uniquement.",
+      "status": "reserved",
+      "feature_id": "F-TRUST",
+      "invariant": "INV-COM-005",
+      "preconditions": [
+        "Schéma DB trust_levels validé Gardien",
+        "Migration localStorage → DB sans perte",
+        "Expiration CONTEXT automatique côté DB",
+        "Revue confidentialité (INV-COM-010)"
+      ],
+      "note": "INV-COM-005 : expiration CONTEXT doit être gérée par trigger DB ou cron."
+    },
+    {
+      "id": "COMP-B-004",
+      "nom": "PushNotificationsNative",
+      "phase": "B",
+      "description": "Notifications push natives (PWA Service Worker / FCM) pour alertes hors-session.",
+      "status": "reserved",
+      "feature_id": "F-ACTIVITE",
+      "invariant": "INV-COM-010",
+      "preconditions": [
+        "Service Worker déployé et testé",
+        "Consentement push conducteur",
+        "Payload push anonymisé (INV-COM-010 — pas de contenu message)",
+        "Gestion DND côté push (INV-COM-003)"
+      ],
+      "note": "Le payload push ne doit contenir que le type d'alerte, jamais le contenu."
+    },
+    {
+      "id": "COMP-C-001",
+      "nom": "SpeedLimitAPIReel",
+      "phase": "C",
+      "description": "Intégration API externe de limites de vitesse réelles pour navPremium. Actuellement données simulées (P1-002).",
+      "status": "reserved",
+      "feature_id": "F-GPS",
+      "invariant": null,
+      "preconditions": [
+        "API fournisseur validée (OpenStreetMap, HERE, TomTom)",
+        "Quota et facturation définis",
+        "Fallback si API indisponible",
+        "Validation donnée vitesse en catégorie pour Ange (INV-014)"
+      ],
+      "note": "navPremium affiche actuellement 'Vitesse' (GPS vitesse actuelle). limitVal est simulé."
+    },
+    {
+      "id": "COMP-C-002",
+      "nom": "OfflineFirstSync",
+      "phase": "C",
+      "description": "Mode hors-ligne complet : toutes les actions sont bufferedées et synchronisées à la reconnexion.",
+      "status": "reserved",
+      "feature_id": "F-SIGNAL-ROUTE",
+      "invariant": "INV-COM-009",
+      "preconditions": [
+        "Service Worker + IndexedDB définis",
+        "Résolution conflits de sync définie",
+        "Tests déconnexion/reconnexion sur mobile"
+      ],
+      "note": "ic_offline_reports existe déjà pour les alertes. Extension à messages et appels = Phase C."
+    },
+    {
+      "id": "COMP-C-003",
+      "nom": "GroupConversations",
+      "phase": "C",
+      "description": "Conversations multi-participants (ex: groupe conducteurs d'une zone).",
+      "status": "reserved",
+      "feature_id": "F-CONVERSATION-ENGINE",
+      "invariant": "INV-COM-002",
+      "preconditions": [
+        "INV-COM-002 : adapter '2 participants' → 'N participants'",
+        "Schéma DB group_messages validé Gardien",
+        "Modération groupe définie",
+        "Tests charge groupe > 50 membres"
+      ],
+      "note": "INV-COM-002 actuel : conducteur_A ≠ conducteur_B (binaire). Groupes = nouvelle règle."
+    },
+    {
+      "id": "COMP-C-004",
+      "nom": "SOSCanalDedié",
+      "phase": "C",
+      "description": "Canal Supabase dédié aux alertes SOS (séparé des reports communs). Priorité P0 garantie.",
+      "status": "reserved",
+      "feature_id": "F-SOS",
+      "invariant": "INV-COM-014",
+      "preconditions": [
+        "Channel realtime 'sos_alerts' créé",
+        "RLS Supabase pour canal SOS",
+        "Tests charge canal prioritaire"
+      ],
+      "note": "P3-023 : canal SOS distinct = priorité garantie même si canal reports saturé."
+    },
+    {
+      "id": "COMP-C-005",
+      "nom": "DrivingModeAutoDetect",
+      "phase": "C",
+      "description": "Détection automatique du mode conduite via l'accéléromètre et la vitesse GPS.",
+      "status": "reserved",
+      "feature_id": "F-CARTE",
+      "invariant": null,
+      "preconditions": [
+        "API DeviceMotion consentement conducteur",
+        "Seuils vitesse/accélération calibrés",
+        "Respect RGPD : données capteur non transmises au serveur"
+      ],
+      "note": "F-PRESENCE : 'Mode Conduite automatique' = actuellement manuel. Auto = Phase C."
+    }
+  ]
+}

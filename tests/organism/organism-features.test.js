@@ -67,14 +67,14 @@ const invOrgIds  = new Set((invData.invariants || []).map(i => i.id));
 console.log('\n[OBD-002c] Tests structurels des features d\'ImmatConnect\n');
 
 console.log('Suite 1 : Intégrité des référentiels knowledge');
-assert(features.length >= 19,
-  `Au moins 19 features déclarées (trouvé : ${features.length})`);
+assert(features.length >= 20,
+  `Au moins 20 features déclarées (trouvé : ${features.length})`);
 assert(organsData.organs.length >= 6,
   `Au moins 6 organes déclarés (trouvé : ${organsData.organs.length})`);
-assert((intentsData.intentions || []).length >= 28,
-  `Au moins 28 intentions déclarées (trouvé : ${(intentsData.intentions||[]).length})`);
-assert((flowData.flows || []).length >= 23,
-  `Au moins 23 flows déclarés (trouvé : ${(flowData.flows||[]).length})`);
+assert((intentsData.intentions || []).length >= 34,
+  `Au moins 34 intentions déclarées (trouvé : ${(intentsData.intentions||[]).length})`);
+assert((flowData.flows || []).length >= 28,
+  `Au moins 28 flows déclarés (trouvé : ${(flowData.flows||[]).length})`);
 assert(invOrgIds.size >= 8,
   `8 invariants INV-ORG-* déclarés (trouvé : ${invOrgIds.size})`);
 
@@ -87,6 +87,8 @@ const FEATURE_IDS = [
   // DAM-COMMUNICATION Phase 1
   'F-CONVERSATION-ENGINE', 'F-TRUST', 'F-CALL-PERMISSIONS',
   'F-PRESENCE', 'F-FAVORITES', 'F-ARCHIVE', 'F-SEARCH', 'F-SPAM-PROTECTION',
+  // OBD-003c
+  'F-PROXIMITY-SIGNAL',
 ];
 
 // Comportements attendus : Phase actuelle, dépréciation volontaire
@@ -128,6 +130,9 @@ const FEATURE_META = {
   },
   'F-SPAM-PROTECTION': {
     note: 'Seuil anti-spam : 20 msg/60s — log ic_spam_log',
+  },
+  'F-PROXIMITY-SIGNAL': {
+    note: 'Signal discret via Ange ou frontCarBanner — utilise vehicleAlertQuick() (FLOW-PROXIMITY-SIGNAL)',
   },
 };
 
@@ -264,6 +269,92 @@ if (comInvData) {
       assert(typeof inv.rule === 'string' && inv.rule.length > 0,
         `${id} : champ 'rule' non vide`);
     }
+  }
+}
+
+// ── Suite 6 : Invariants communication INV-COM-011 à INV-COM-015 ──────────
+
+console.log('\nSuite 6 : Invariants INV-COM-011 à INV-COM-015 (OBD-003c)');
+
+if (comInvData) {
+  const comInvIds = new Set((comInvData.invariants || []).map(i => i.id));
+  assert(comInvIds.size >= 15,
+    `Au moins 15 invariants INV-COM-* déclarés (trouvé : ${comInvIds.size})`);
+  for (let n = 11; n <= 15; n++) {
+    const id = `INV-COM-0${n}`;
+    assert(comInvIds.has(id), `${id} déclaré dans knowledge/communication-invariants.json`);
+  }
+  // Vérifier les nouveaux invariants critiques OBD-003c
+  const criticalInvsObd = {
+    'INV-COM-011': 'toute interaction observable par OBD',
+    'INV-COM-014': 'contradictions résolues en faveur de la sécurité',
+    'INV-COM-015': "l'Ange n'accède jamais au contenu des messages",
+  };
+  for (const [id, desc] of Object.entries(criticalInvsObd)) {
+    const inv = (comInvData.invariants || []).find(i => i.id === id);
+    assert(!!inv, `${id} présent (${desc})`);
+    if (inv) {
+      assert(typeof inv.rule === 'string' && inv.rule.length > 0,
+        `${id} : champ 'rule' non vide`);
+    }
+  }
+} else {
+  warn('Suite 6 ignorée — communication-invariants.json non chargé');
+}
+
+// ── Suite 7 : Fichiers knowledge OBD-003c ─────────────────────────────────
+
+console.log('\nSuite 7 : Fichiers knowledge OBD-003c');
+
+const newKnowledgeFiles = [
+  'knowledge/interactions.json',
+  'knowledge/ange-commands.json',
+  'knowledge/supabase-dependencies.json',
+  'knowledge/contradiction-rules.json',
+  'knowledge/future-components.json',
+];
+
+for (const kf of newKnowledgeFiles) {
+  let data;
+  try {
+    data = load(kf);
+    assert(!!data, `${kf} : fichier lisible et JSON valide`);
+  } catch (e) {
+    failed++;
+    console.error(`    ${FAIL} ${kf} : INTROUVABLE ou JSON invalide`);
+    continue;
+  }
+  // Vérifications spécifiques
+  if (kf === 'knowledge/interactions.json') {
+    const items = data.interactions || [];
+    assert(items.length >= 8, `interactions.json : au moins 8 interactions documentées (trouvé : ${items.length})`);
+    const requiredFields = ['id', 'titre', 'acteur', 'organe', 'flow_id', 'events_obd', 'invariants'];
+    const first = items[0];
+    if (first) {
+      for (const f of requiredFields) {
+        assert(first[f] !== undefined, `interactions.json[0] : champ '${f}' présent`);
+      }
+    }
+  }
+  if (kf === 'knowledge/ange-commands.json') {
+    const cmds = data.commands || [];
+    assert(cmds.length >= 12, `ange-commands.json : au moins 12 commandes Ange (trouvé : ${cmds.length})`);
+  }
+  if (kf === 'knowledge/contradiction-rules.json') {
+    const rules = data.rules || [];
+    assert(rules.length >= 5, `contradiction-rules.json : au moins 5 règles de conflit (trouvé : ${rules.length})`);
+    const first = rules[0];
+    if (first) {
+      assert(typeof first.resolution_winner === 'string', `contradiction-rules.json[0] : champ 'resolution_winner' présent`);
+    }
+  }
+  if (kf === 'knowledge/future-components.json') {
+    const comps = data.components || [];
+    assert(comps.length >= 5, `future-components.json : au moins 5 composants réservés (trouvé : ${comps.length})`);
+  }
+  if (kf === 'knowledge/supabase-dependencies.json') {
+    assert(Array.isArray(data.tables), `supabase-dependencies.json : champ 'tables' présent`);
+    assert(Array.isArray(data.edge_functions), `supabase-dependencies.json : champ 'edge_functions' présent`);
   }
 }
 

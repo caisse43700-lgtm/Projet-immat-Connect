@@ -203,6 +203,16 @@
       "statut": "actif",
       "intentions": ["INT-BLOCK-DRIVER"],
       "flows": ["FLOW-SPAM-PROTECTION"]
+    },
+    {
+      "id": "F-PROXIMITY-SIGNAL",
+      "nom": "Signal de proximité véhicule",
+      "organe": "Signalements",
+      "description": "Signaler discrètement au véhicule devant soi un problème visible (pneu, coffre ouvert, feu cassé…) via l'Ange ou le menu contextuel",
+      "actions": ["Signaler via Ange (voix)", "Signaler via menu véhicule devant", "Recevoir signal de proximité"],
+      "statut": "actif",
+      "intentions": ["INT-PROXIMITY-SIGNAL"],
+      "flows": ["FLOW-PROXIMITY-SIGNAL"]
     }
   ]
 }

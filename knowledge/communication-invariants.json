@@ -63,6 +63,36 @@
       "name": "Aucune donnée privée ne remonte au Dashboard Gardien",
       "rule": "Le Dashboard Gardien ne voit que des métriques agrégées. Aucun contenu de message ni identité de correspondant n'est exposé.",
       "check": "OBD.observe() — payload anonymisé uniquement"
+    },
+    {
+      "id": "INV-COM-011",
+      "name": "Toute interaction est observable par l'OBD",
+      "rule": "Chaque action significative de communication (envoi, appel, blocage, confiance, spam) doit émettre un événement ImmatOrganism.observe() avec payload anonymisé.",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_OBSERVATION — tous les préfixes FEATURE_OBD_HINTS trouvés dans le code"
+    },
+    {
+      "id": "INV-COM-012",
+      "name": "Toute interaction est référencée dans interactions.json",
+      "rule": "Chaque flux d'interaction conducteur→conducteur est documenté dans knowledge/interactions.json avec sa chaîne complète feature→organe→intention→flow→OBD→invariant→test.",
+      "check": "knowledge/interactions.json — champ obligatoire : id, titre, acteur, declencheur, organe, intention_id, flow_id, events_obd, invariants"
+    },
+    {
+      "id": "INV-COM-013",
+      "name": "Aucun composant Phase B/C ne peut être activé sans validation Gardien",
+      "rule": "Les composants réservés (WebRTC, ConversationEngine Cloud, TrustManager DB) ne peuvent pas être activés côté conducteur sans déploiement explicitement approuvé en knowledge/future-components.json.",
+      "check": "knowledge/future-components.json — champ status:'reserved' ou 'approved' selon état réel"
+    },
+    {
+      "id": "INV-COM-014",
+      "name": "Les contradictions de règles métier sont résolues en faveur de la sécurité",
+      "rule": "Quand deux règles s'affrontent (BLOCKED+TRUSTED, DND+URGENCY, INVISIBLE+SOS), la règle la plus restrictive ou protectrice s'applique. Priorité : BLOCKED > TRUSTED, URGENCY > DND, SOS > INVISIBLE.",
+      "check": "knowledge/contradiction-rules.json — champ resolution_winner documenté pour chaque conflit"
+    },
+    {
+      "id": "INV-COM-015",
+      "name": "L'Ange n'accède jamais au contenu des messages",
+      "rule": "Le snapshot transmis à immat-brain-dialog ne contient jamais de texte de message, de plaque de correspondant ni d'historique de conversation. Seules des métriques agrégées et anonymisées sont transmises.",
+      "check": "FLOW-ANGE-ASSISTANT — snapshot : health, panel, speed_cat, driving, hasRoute, nearby, alerts (sans plaque ni contenu)"
     }
   ]
 }

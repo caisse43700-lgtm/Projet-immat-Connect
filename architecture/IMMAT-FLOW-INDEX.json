@@ -501,6 +501,90 @@
       "qui_peut_agir": { "conducteur": "poser question sur communication" },
       "validation": "INV-COM-010 : aucun contenu message transmis à l'Ange.",
       "mémoire": ["session runtime uniquement"]
+    },
+
+    {
+      "id": "FLOW-PROXIMITY-SIGNAL",
+      "intention": "Signaler discrètement au conducteur immédiatement devant un problème visible sur son véhicule.",
+      "organes": ["Signalements", "Messages"],
+      "repérage": {
+        "ui":    ["frontCarBanner → Signaler", "Ange → 'le véhicule devant a…'", "#sigVehiclePlate pré-rempli"],
+        "code":  ["App.contactFrontVehicle()", "App.vehicleAlertQuick(label)", "window.ImmatMessages?.setMode?.('compose')"],
+        "state": ["S.contextVehicle.plate", "S.frontCarPlate"],
+        "data":  ["reports (category='vehicle', target=frontPlate)", "messages DB"]
+      },
+      "impact": ["message auto envoyé au conducteur devant (vehicleAlertQuick)", "alerte créée côté destinataire", "OBD VEHICLE_MESSAGE_SENT"],
+      "options": ["Via Ange voix → question → option rapide", "Via menu frontCarBanner → Signaler un problème"],
+      "qui_peut_agir": {
+        "conducteur_derriere": "signaler via Ange ou menu frontal",
+        "conducteur_devant": "confirmer (✓ J'ai vérifié) ou ignorer"
+      },
+      "validation": "Conducteur autonome. Plaque détectée via S.contextVehicle ou frontCarBanner.",
+      "mémoire": ["reports DB", "messages DB", "S.contextVehicle.plate (runtime session)"]
+    },
+
+    {
+      "id": "FLOW-ANGE-CONVERSATION",
+      "intention": "Permettre à l'Ange d'ouvrir ou retrouver une conversation par plaque à la voix.",
+      "organes": ["Ange", "Messages"],
+      "repérage": {
+        "ui":    ["angeFab → 'Ouvrir conversation avec AB-123-CD'", "options Ange → Conversations récentes"],
+        "code":  ["App.openAnge()", "ImmatMessages.openThread(plate)"],
+        "state": ["S.isGardien", "State.activePlate"],
+        "data":  ["immat-brain-dialog — commande ANGE_OPEN_CONVERSATION"]
+      },
+      "impact": ["navigation directe vers thread", "OBD ANGE_QUERIED", "INV-COM-010 respecté"],
+      "qui_peut_agir": { "conducteur": "demander à l'Ange d'ouvrir une conversation" },
+      "validation": "INV-COM-010 : aucune donnée privée transmise.",
+      "mémoire": ["session runtime uniquement"]
+    },
+
+    {
+      "id": "FLOW-ANGE-TRUST",
+      "intention": "Permettre à l'Ange d'expliquer les niveaux de confiance et d'orienter vers le réglage.",
+      "organes": ["Ange", "Messages"],
+      "repérage": {
+        "ui":    ["angeFab → 'Qu\\'est-ce que la confiance ?'", "options Ange → Niveaux confiance"],
+        "code":  ["App.openAnge()", "ImmatMessages.setTrust(plate, level)"],
+        "state": ["S.isGardien", "ic_trust localStorage"],
+        "data":  ["immat-brain-dialog — commande ANGE_EXPLAIN_TRUST"]
+      },
+      "impact": ["explication niveaux NONE/CONTEXT/TRUSTED/FAVORITE", "OBD ANGE_QUERIED", "INV-COM-010 respecté"],
+      "qui_peut_agir": { "conducteur": "demander à l'Ange d'expliquer la confiance" },
+      "validation": "INV-COM-010 : aucun contenu de message transmis.",
+      "mémoire": ["session runtime uniquement"]
+    },
+
+    {
+      "id": "FLOW-ANGE-SIGNAL",
+      "intention": "Permettre à l'Ange de déclencher ou orienter un signalement selon le contexte actuel.",
+      "organes": ["Ange", "Signalements"],
+      "repérage": {
+        "ui":    ["angeFab → 'Je veux signaler un danger'", "options rapides Ange → types signalement"],
+        "code":  ["App.openAnge()", "App.sigStepRoute()", "App.assist(type)"],
+        "state": ["S.isGardien", "S.tapLat", "S.tapLng"],
+        "data":  ["immat-brain-dialog — commande ANGE_REPORT_ROAD"]
+      },
+      "impact": ["orientation contextuelle vers bon type de signalement", "OBD ANGE_QUERIED", "INV-COM-010 respecté"],
+      "qui_peut_agir": { "conducteur": "demander à l'Ange de l'aider à signaler" },
+      "validation": "INV-COM-010 : aucune donnée privée. Vitesse = catégorie seulement.",
+      "mémoire": ["session runtime uniquement"]
+    },
+
+    {
+      "id": "FLOW-ANGE-NAVIGATE",
+      "intention": "Permettre à l'Ange d'orienter le conducteur dans la navigation GPS ou la carte.",
+      "organes": ["Ange", "Carte"],
+      "repérage": {
+        "ui":    ["angeFab → 'Comment lancer le GPS ?'", "options rapides Ange → Navigation"],
+        "code":  ["App.openAnge()", "App.startNav()", "App.searchGps()"],
+        "state": ["S.hasRoute", "S.myLat", "S.myLng"],
+        "data":  ["immat-brain-dialog — commande ANGE_START_NAVIGATION"]
+      },
+      "impact": ["guidance contextuelle vers lancement GPS ou itinéraire", "OBD ANGE_QUERIED"],
+      "qui_peut_agir": { "conducteur": "demander à l'Ange de l'aider à naviguer" },
+      "validation": "Conducteur autonome. INV-014 : vitesse catégorisée.",
+      "mémoire": ["session runtime uniquement"]
     }
 
   ]

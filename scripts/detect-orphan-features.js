@@ -112,6 +112,12 @@ function loadKnowledge() {
     'CONV_FAVORITED', 'CONV_ARCHIVED', 'CONV_SEARCHED',
     // DAM-COMMUNICATION Phase 1 — F-PRESENCE
     'PRESENCE_CHANGED',
+    // F-PROXIMITY-SIGNAL
+    'PROXIMITY_SIGNAL_SENT', 'PROXIMITY_SIGNAL_RECEIVED',
+    // Conversation lifecycle
+    'CONV_OPENED', 'CONV_CLOSED',
+    // CommunicationSelfTest
+    'COMMUNICATION_SELFTEST_PASS', 'COMMUNICATION_SELFTEST_FAIL',
   ]);
 
   // Edge Functions déclarées
