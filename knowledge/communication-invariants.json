@@ -105,6 +105,18 @@
       "name": "Tout flux A↔B émet au moins un OBD event",
       "rule": "Un flux sans observation OBD est invisible pour l'Ange et le Gardien. Chaque JRN-xxx doit avoir au moins un event ImmatOrganism.observe() émis par l'initiateur.",
       "check": "UX-JOURNEYS.md — colonne OBD manquants vide pour tous les JRN"
+    },
+    {
+      "id": "INV-COM-018",
+      "name": "La confiance est toujours un acte explicite conducteur",
+      "rule": "Le niveau de confiance (callLevel 1-4) ne peut être modifié qu'avec une action consciente de l'utilisateur via setCallLevel(). Aucune logique automatique ne peut élever le niveau sans confirmation.",
+      "check": "messages.js — setCallLevel() : toast + OBD TRUST_LEVEL_CHANGED — aucun appel automatique sans interaction utilisateur"
+    },
+    {
+      "id": "INV-COM-019",
+      "name": "Un blocage interdit toute communication y compris OBD",
+      "rule": "Quand blockPlate() est appelé, l'OBD BLOCK_APPLIED est émis immédiatement, puis loadMsgs() masque la conversation. Aucun message, appel ou alerte de la plaque bloquée ne peut parvenir à l'utilisateur.",
+      "check": "index.html — blockPlate() → BLOCK_APPLIED OBD → loadMsgs() normalizeRows() blocked filter"
     }
   ]
 }

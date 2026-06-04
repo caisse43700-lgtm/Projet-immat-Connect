@@ -69,7 +69,7 @@ function loadKnowledge() {
     'icSearchBar', 'icContextCard', 'callLevelSelector', 'presenceSelector', 'dndHours',
     'icThread', 'icCallLog',
     // SESSION 19 — Bottom sheet menu thread
-    'icSheetBackdrop', 'icBottomSheet', 'icSheetFav', 'icSheetArch', 'icSheetTrust', 'icSheetDel',
+    'icSheetBackdrop', 'icBottomSheet', 'icSheetFav', 'icSheetArch', 'icSheetTrust', 'icSheetAbuse', 'icSheetDel',
   ]);
 
   // Événements OBD (ImmatOrganism.observe) connus
@@ -107,7 +107,8 @@ function loadKnowledge() {
     'CALL_MISSED', 'CALL_UNREACHABLE',
     // DAM-COMMUNICATION Phase 1 — F-TRUST
     'CONTACT_TRUSTED', 'CONTACT_REVOKED',
-    'BLOCK_CREATED', 'BLOCK_REMOVED', 'CONTEXT_GRANTED', 'CONTEXT_EXPIRED',
+    'TRUST_LEVEL_CHANGED', 'ABUSE_REPORTED',
+    'BLOCK_APPLIED', 'BLOCK_CREATED', 'BLOCK_REMOVED', 'CONTEXT_GRANTED', 'CONTEXT_EXPIRED',
     // DAM-COMMUNICATION Phase 1 — F-SPAM-PROTECTION
     'SPAM_DETECTED',
     // DAM-COMMUNICATION Phase 1 — F-FAVORITES / F-ARCHIVE / F-SEARCH

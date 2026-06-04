@@ -1056,6 +1056,11 @@ function _sheetAction(action){
   else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
   else if(action === 'del')   { deleteThread(plate); }
+  else if(action === 'abuse') {
+    if(!confirm('Signaler un abus de '+plate+' ?')) return;
+    try{ window.ImmatOrganism?.observe?.('ABUSE_REPORTED',{plate,_src:'ImmatConnect/messages/_sheetAction/abuse'}); }catch(e){}
+    toast('Abus signalé. Merci pour votre vigilance.','ok');
+  }
 }
 
 // ── F-PRESENCE : Statut de présence ─────────────────────────────
@@ -1076,6 +1081,7 @@ function setCallLevel(level){
     b.classList.toggle('on', String(b.dataset.level) === String(level));
   });
   saveCallSettings();
+  try{ window.ImmatOrganism?.observe?.('TRUST_LEVEL_CHANGED',{level,_src:'ImmatConnect/messages/setCallLevel'}); }catch(e){}
   const labels = {1:'Personne ne peut vous appeler.',2:'Contacts de confiance uniquement.',3:'Confiance + contexte actif.',4:'Tout le monde peut vous appeler.'};
   toast('Niveau '+level+' : '+(labels[level]||''),'ok');
 }

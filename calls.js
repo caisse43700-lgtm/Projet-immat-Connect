@@ -263,7 +263,10 @@ const CallManager = (function () {
     popup.dataset.requestId = req.id;
     popup.classList.add('show');
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
-    if (ms > 0) setTimeout(() => popup.classList.remove('show'), ms);
+    if (ms > 0) setTimeout(() => {
+      popup.classList.remove('show');
+      try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+    }, ms);
     try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
   }
 

@@ -115,8 +115,8 @@
       "functions": ["ImmatMessages._sheetAction", "ImmatMessages.setTrust"],
       "files": ["messages.js"],
       "supabase": [],
-      "obd_events": ["CONTACT_TRUSTED", "CONTACT_REVOKED"],
-      "invariants": ["INV-COM-014"],
+      "obd_events": ["CONTACT_TRUSTED", "CONTACT_REVOKED", "TRUST_LEVEL_CHANGED"],
+      "invariants": ["INV-COM-014", "INV-COM-018"],
       "patterns": ["confiance", "marque", "révoque", "fais confiance"]
     },
     {
@@ -131,8 +131,8 @@
       "functions": ["App.blockPlate", "App.unblockPlate"],
       "files": ["index.html"],
       "supabase": [],
-      "obd_events": [],
-      "invariants": ["INV-COM-014"],
+      "obd_events": ["BLOCK_APPLIED"],
+      "invariants": ["INV-COM-004", "INV-COM-014", "INV-COM-019"],
       "patterns": ["bloque", "bloquer", "plus jamais"]
     },
     {
@@ -210,7 +210,11 @@
     { "event": "CALL_ACCEPTED", "emitted_by": "calls.js/acceptCall", "invariant": "INV-COM-003" },
     { "event": "CALL_REFUSED", "emitted_by": "calls.js/refuseCall", "invariant": "INV-COM-003" },
     { "event": "CALL_CANCELLED", "emitted_by": "calls.js/cancelCallRequest", "invariant": "INV-COM-003" },
-    { "event": "CALL_MISSED", "emitted_by": "MANQUANT", "invariant": "INV-C02" },
+    { "event": "CALL_MISSED", "emitted_by": "calls.js/_showIncomingPopup TTL timeout", "invariant": "INV-COM-003" },
+    { "event": "VEHICLE_MESSAGE_RECEIVED", "emitted_by": "index.html/subscribeCommunityReports/vehicle_alert", "invariant": "INV-COM-001" },
+    { "event": "BLOCK_APPLIED", "emitted_by": "index.html/blockPlate", "invariant": "INV-COM-004" },
+    { "event": "TRUST_LEVEL_CHANGED", "emitted_by": "messages.js/setCallLevel", "invariant": "INV-COM-018" },
+    { "event": "ABUSE_REPORTED", "emitted_by": "messages.js/_sheetAction/abuse", "invariant": "INV-COM-006" },
     { "event": "PROFILE_SAVED", "emitted_by": "index.html/saveProfile", "invariant": null },
     { "event": "BADGE_RECOMPUTED", "emitted_by": "badge.js", "invariant": null },
     { "event": "ANGE_QUERIED", "emitted_by": "index.html/AngeDialog", "invariant": "INV-COM-015" }
@@ -232,7 +236,7 @@
     { "id": "GAP-002", "description": "Marqueur lu ✓✓ côté émetteur", "interaction": "INT-001", "priority": "P2" },
     { "id": "GAP-003", "description": "Bouton Signaler abus sur message", "interaction": "INT-009", "priority": "P2" },
     { "id": "GAP-004", "description": "Documenter les 6 statuts alertes officiellement", "interaction": "INT-002/004", "priority": "P2" },
-    { "id": "GAP-005", "description": "OBD CALL_MISSED lors expiration TTL", "interaction": "INT-005", "priority": "P2" },
+    { "id": "GAP-005", "description": "OBD CALL_MISSED lors expiration TTL", "interaction": "INT-005", "priority": "P2", "status": "RESOLVED-SESSION-23" },
     { "id": "GAP-006", "description": "WebRTC voix Phase B", "interaction": "INT-005", "priority": "P3" },
     { "id": "GAP-007", "description": "Recherche dans les messages", "interaction": "INT-001", "priority": "P3" },
     { "id": "GAP-008", "description": "Fiches flottantes légères au tap alerte", "interaction": "INT-002/003", "priority": "P3" }
