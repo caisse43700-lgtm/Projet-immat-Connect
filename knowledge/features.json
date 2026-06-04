@@ -56,7 +56,7 @@
       "description": "Demander de l'aide aux conducteurs proches (panne, carburant, batterie...)",
       "actions": ["Choisir type aide", "Envoyer demande", "Marquer résolu"],
       "statut": "actif",
-      "intentions": ["INT-REQUEST-HELP", "INT-HELP-DRIVER", "INT-RESOLVE-ALERT"],
+      "intentions": ["INT-REQUEST-HELP", "INT-HELP-DRIVER", "INT-RESOLVE-ALERT", "INT-REPLY-TO-ALERT", "INT-CONTACT-FROM-ALERT"],
       "flows": ["FLOW-ASSIST-REQUEST"]
     },
     {
@@ -86,8 +86,8 @@
       "description": "Envoyer une demande de contact audio à un conducteur via call_requests. Phase B = WebRTC.",
       "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser", "Journal d'appels"],
       "statut": "actif",
-      "intentions": ["INT-CONTACT-DRIVER"],
-      "flows": ["FLOW-CALL-REQUEST"],
+      "intentions": ["INT-CONTACT-DRIVER", "INT-CALL-DRIVER", "INT-ANSWER-CALL", "INT-REFUSE-CALL", "INT-END-CALL", "INT-MISS-CALL", "INT-CONTEXTUAL-CALL"],
+      "flows": ["FLOW-CALL-REQUEST", "FLOW-CALL-CONTEXT"],
       "note": "Phase A = demande de contact (call_requests). Phase B = WebRTC P2P audio. Consentement explicite — D-002."
     },
     {
@@ -109,7 +109,7 @@
       "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
       "statut": "actif",
       "intentions": ["INT-ASK-ANGE"],
-      "flows": ["FLOW-ANGE-ASSISTANT"],
+      "flows": ["FLOW-ANGE-ASSISTANT", "FLOW-ANGE-CALL", "FLOW-ANGE-CONVERSATION", "FLOW-ANGE-TRUST", "FLOW-ANGE-SIGNAL", "FLOW-ANGE-NAVIGATE"],
       "throttle": "10 appels/heure par session"
     },
     {
@@ -140,8 +140,8 @@
       "description": "Gérer le niveau de confiance entre conducteurs (NONE, CONTEXT, TRUSTED, FAVORITE)",
       "actions": ["Attribuer confiance", "Révoquer confiance", "Voir niveau confiance", "Épingler favori"],
       "statut": "actif",
-      "intentions": ["INT-MANAGE-TRUST", "INT-REVOKE-TRUST"],
-      "flows": ["FLOW-TRUST"]
+      "intentions": ["INT-MANAGE-TRUST", "INT-REVOKE-TRUST", "INT-UNBLOCK-DRIVER"],
+      "flows": ["FLOW-TRUST", "FLOW-BLOCK"]
     },
     {
       "id": "F-CALL-PERMISSIONS",

@@ -1,0 +1,102 @@
+{
+  "_generated_at": "2026-06-04T13:23:21.811Z",
+  "_session": "OBD-003d",
+  "global_score": 96,
+  "global_label": "OPTIMAL",
+  "scores": {
+    "ORGANISM_COHERENCE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "feature→organe→intention→flow (detect-orphan-chain.js)"
+    },
+    "INTERACTION_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "features couvertes par interactions.json"
+    },
+    "ANGE_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "ange-commands.json (16 attendues)"
+    },
+    "OBD_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "features ayant au moins un .observe() dans le code"
+    },
+    "DATABASE_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "supabase-dependencies.json (tables + EF + localStorage)"
+    },
+    "MEMORY_HEALTH_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "clés ic_* utilisées dans le code et documentées"
+    },
+    "PWA_HEALTH_SCORE": {
+      "value": 85,
+      "unit": "%",
+      "note": "manifest + sw.js + offline.html + icons",
+      "details": [
+        {
+          "file": "manifest.json",
+          "present": true
+        },
+        {
+          "file": "sw.js",
+          "present": true
+        },
+        {
+          "file": "offline.html",
+          "present": true
+        },
+        {
+          "file": "icons/icon-192.png",
+          "present": false
+        },
+        {
+          "file": "icons/icon-512.png",
+          "present": false
+        }
+      ]
+    },
+    "OFFLINE_HEALTH_SCORE": {
+      "value": 80,
+      "unit": "%",
+      "note": "buffers offline + handlers",
+      "details": [
+        {
+          "pattern": "ic_offline_reports",
+          "label": "ic_offline_reports buffer (alertes)",
+          "present": true
+        },
+        {
+          "pattern": "navigator.onLine",
+          "label": "navigator.onLine check",
+          "present": true
+        },
+        {
+          "pattern": "offline",
+          "label": "offline handler",
+          "present": true
+        },
+        {
+          "pattern": "ServiceWorker",
+          "label": "ServiceWorker registration",
+          "present": true
+        },
+        {
+          "pattern": "sw.js",
+          "label": "sw.js reference",
+          "present": false
+        }
+      ]
+    },
+    "COMMUNICATION_HEALTH_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "INV-COM 1→15 + interactions chaîne complète"
+    }
+  }
+}
