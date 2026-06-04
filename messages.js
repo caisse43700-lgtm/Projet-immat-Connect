@@ -266,11 +266,6 @@ function setMode(mode){
   const prev = State.mode;
   State.mode = mode || 'inbox';
 
-  // Tab buttons (backward compat)
-  document.querySelectorAll('.ic-msg-tabs button').forEach(b=>{
-    b.classList.toggle('on', b.dataset.mode === State.mode);
-  });
-
   const compose = $('icComposePanel');
   const callLog = $('icCallLog');
   const list    = $('icMsgList');
@@ -490,6 +485,61 @@ function render(){
       openThread(row.dataset.plate);
     });
     _initRowSwipe(wrap);
+  });
+
+  // ── Section Archivées ─────────────────────────────────────────
+  _renderArchivedSection(list);
+}
+
+function _renderArchivedSection(list){
+  const archived = getArchived();
+  if(!archived.length) return;
+
+  const archThreads = (State.threads || []).filter(t => archived.includes(nPlate(t.plate)));
+  if(!archThreads.length) return;
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'ic-archived-toggle';
+  toggle.innerHTML = `📂 Archivées <span class="ic-arch-count">${archThreads.length}</span>`;
+
+  const section = document.createElement('div');
+  section.style.display = 'none';
+  section.innerHTML = archThreads.map(t => {
+    const last = t.last || {};
+    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+      <div class="ic-mail-row" data-plate="${esc(t.plate)}" style="opacity:.7">
+        <div class="ic-avatar">📂</div>
+        <div class="ic-row-body">
+          <div class="ic-row-top">
+            <span class="ic-plate">${esc(t.plate)}</span>
+            <span class="ic-row-time">${esc(timeStr)}</span>
+          </div>
+          <div class="ic-row-bot">
+            <span class="ic-preview">${esc(last.message || '')}</span>
+          </div>
+        </div>
+        <button type="button" style="font-size:11px;padding:4px 8px;background:#1e3252;border:none;border-radius:8px;color:#7ab3e8;cursor:pointer"
+                onclick="ImmatMessages._unarchiveFromList('${esc(t.plate)}')">Désarchiver</button>
+      </div>`;
+  }).join('');
+
+  toggle.addEventListener('click', () => {
+    const open = section.style.display !== 'none';
+    section.style.display = open ? 'none' : 'block';
+    toggle.querySelector('.ic-arch-count').textContent = open ? archThreads.length : '▲';
+  });
+
+  section.querySelectorAll?.('.ic-mail-row[data-plate]');
+  list.appendChild(toggle);
+  list.appendChild(section);
+
+  section.querySelectorAll('.ic-mail-row[data-plate]').forEach(row => {
+    row.addEventListener('click', e => {
+      if(e.target.tagName === 'BUTTON') return;
+      openThread(row.dataset.plate);
+    });
   });
 }
 
@@ -934,23 +984,44 @@ function closeCompose(){
   render();
 }
 
-// ── Menu thread ──────────────────────────────────────────────────
+// ── Menu thread — bottom sheet ────────────────────────────────────
 function openThreadMenu(){
   if(!State.activePlate) return;
   const plate = State.activePlate;
-  const trust = getTrust(plate);
-  const isFav = getFavorites().includes(nPlate(plate));
+  const isFav  = getFavorites().includes(nPlate(plate));
   const isArch = getArchived().includes(nPlate(plate));
-  const opts = [
-    isFav ? '1. ⭐ Retirer des favoris' : '1. ⭐ Ajouter aux favoris',
-    isArch ? '2. 📂 Désarchiver' : '2. 📁 Archiver',
-    trust === 'TRUSTED' ? '3. ✓ Révoquer confiance' : '3. ✓ Marquer de confiance',
-    '4. ✕ Annuler'
-  ];
-  const choice = prompt(opts.join('\n'));
-  if(choice === '1' || choice?.startsWith('1')) { isFav ? unfavoriteConv(plate) : favoriteConv(plate); }
-  else if(choice === '2' || choice?.startsWith('2')) { isArch ? unarchiveConv(plate) : archiveConv(plate); }
-  else if(choice === '3' || choice?.startsWith('3')) { setTrust(plate, trust==='TRUSTED'?'NONE':'TRUSTED'); }
+  const trust  = getTrust(plate);
+
+  const favBtn   = document.getElementById('icSheetFav');
+  const archBtn  = document.getElementById('icSheetArch');
+  const trustBtn = document.getElementById('icSheetTrust');
+
+  if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
+  if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
+  if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
+
+  const backdrop = document.getElementById('icSheetBackdrop');
+  const sheet    = document.getElementById('icBottomSheet');
+  if(backdrop) backdrop.classList.add('show');
+  if(sheet)    sheet.classList.add('show');
+}
+
+function closeSheet(){
+  document.getElementById('icSheetBackdrop')?.classList.remove('show');
+  document.getElementById('icBottomSheet')?.classList.remove('show');
+}
+
+function _sheetAction(action){
+  closeSheet();
+  if(!State.activePlate) return;
+  const plate = State.activePlate;
+  const isFav  = getFavorites().includes(nPlate(plate));
+  const isArch = getArchived().includes(nPlate(plate));
+  const trust  = getTrust(plate);
+  if(action === 'fav')   { isFav  ? unfavoriteConv(plate)                      : favoriteConv(plate); }
+  else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
+  else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
+  else if(action === 'del')   { deleteThread(plate); }
 }
 
 // ── F-PRESENCE : Statut de présence ─────────────────────────────
@@ -1065,6 +1136,9 @@ window.ImmatMessages = {
   callActive,
   closeCompose,
   openThreadMenu,
+  closeSheet,
+  _sheetAction,
+  _unarchiveFromList: (plate) => { unarchiveConv(plate); render(); },
   setTrust,
   getTrust,
   favoriteConv,

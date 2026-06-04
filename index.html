@@ -201,7 +201,7 @@
         </div>
         <div class="ic-thread-actions">
           <button type="button" id="icCallBtn" class="ic-call-btn" aria-label="Demander un contact" onclick="ImmatMessages.callActive()">📞</button>
-          <button type="button" class="ic-delete-thread" aria-label="Supprimer la conversation" onclick="ImmatMessages.deleteThread()">🗑</button>
+          <button type="button" class="ic-icon-btn" aria-label="Menu conversation" onclick="ImmatMessages.openThreadMenu()">⋯</button>
         </div>
       </div>
 
@@ -357,6 +357,16 @@
   <div class="call-sent-text">Demande de contact envoyée à <strong id="callSentPlate" style="color:var(--primary,#2979ff)"></strong><br><span style="font-size:11px;color:#888">En attente de réponse…</span></div>
   <button class="call-sent-cancel"
     onclick="CallManager.cancelCallRequest(document.getElementById('callSentBanner').dataset.requestId)">Annuler</button>
+</div>
+
+<!-- ── Bottom sheet menu thread ────────────────────────────── -->
+<div id="icSheetBackdrop" class="ic-sheet-backdrop" onclick="ImmatMessages.closeSheet()"></div>
+<div id="icBottomSheet" class="ic-bottom-sheet" role="dialog" aria-modal="true" aria-label="Menu conversation">
+  <div class="ic-sheet-handle"></div>
+  <button type="button" id="icSheetFav"   class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('fav')">⭐ Ajouter aux favoris</button>
+  <button type="button" id="icSheetArch"  class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('arch')">📁 Archiver</button>
+  <button type="button" id="icSheetTrust" class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('trust')">✓ Marquer de confiance</button>
+  <button type="button" id="icSheetDel"   class="ic-sheet-btn danger" onclick="ImmatMessages._sheetAction('del')">🗑 Supprimer la conversation</button>
 </div>
 
 </section>
