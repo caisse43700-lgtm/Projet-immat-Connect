@@ -99,7 +99,7 @@ const ImmatOrganism = (function () {
       const critical = recent.filter(v => v.severity === 'critical');
 
       const health = critical.length > 0 ? 'violated'
-                   : (recent.length > 0 || journal.length === 0) ? 'degraded'
+                   : recent.length > 0 ? 'degraded'
                    : 'ok';
 
       const events = filtered.map(e => ({
@@ -210,4 +210,5 @@ const ImmatOrganism = (function () {
   };
 })();
 
+if (typeof window !== 'undefined') window.ImmatOrganism = ImmatOrganism;
 if (typeof module !== 'undefined') module.exports = { ImmatOrganism };

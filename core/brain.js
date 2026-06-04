@@ -155,4 +155,5 @@ const ImmatBrain = (function () {
   };
 })();
 
+if (typeof window !== 'undefined') window.ImmatBrain = ImmatBrain;
 if (typeof module !== 'undefined') module.exports = { ImmatBrain };
