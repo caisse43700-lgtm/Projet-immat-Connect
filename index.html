@@ -1402,7 +1402,13 @@ App.actQuickReply=async function(plate,msg){
   try{
     if(window.ImmatMessages?.sendToPlate){
       await ImmatMessages.sendToPlate(plate,msg);
-      toast('Message envoyé à '+plate+'.','ok');
+      const isHelp=msg.startsWith("J'arrive")||msg.startsWith("J’arrive");
+      if(isHelp){
+        toast('✋ Aide proposée. Le conducteur sera notifié dès réception.','ok');
+        try{window.ImmatOrganism?.observe?.('HELP_RESPONDED',{to:plate,_src:'ImmatConnect/actQuickReply'})}catch(e){}
+      }else{
+        toast('Message envoyé à '+plate+'.','ok');
+      }
     }else{
       if($('icComposePlate'))$('icComposePlate').value=plate;
       if($('icComposeText'))$('icComposeText').value=msg;
