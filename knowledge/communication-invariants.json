@@ -177,6 +177,24 @@
       "name": "Toute action proposée par Ange doit être validée par les mêmes règles que les actions manuelles",
       "rule": "AngeAction ne court-circuite jamais la Permissions Matrix. Avant toute proposition (message, appel, signalement), Ange vérifie getBlockLevel() et getTrustLevel() exactement comme le ferait une action manuelle.",
       "check": "architecture/ANGE-MESSAGES-APPELS.md · AngeAction.checkPermissions() → getBlockLevel + can_receive_calls · INV-COM-027"
+    },
+    {
+      "id": "INV-ANGE-004",
+      "name": "Toute action Ange doit passer par checkPermissions()",
+      "rule": "Aucune exécution directe d'action par Ange sans appel préalable à AngeAction.checkPermissions(plate). Pas de prepareMessage, prepareCall ou prepareInteraction sans cette vérification. L'ordre est toujours : checkPermissions → prévisualisation → validation conducteur → exécution.",
+      "check": "architecture/ANGE-ACTION-SPEC.md · AngeAction.prepareInteraction() → checkPermissions() obligatoire"
+    },
+    {
+      "id": "INV-COM-028",
+      "name": "Toute décision d'autorisation provient exclusivement de la Permissions Matrix",
+      "rule": "Aucune logique parallèle dans messages.js, calls.js, index.html, ou les futures AngeAction/WebRTC. Les seules sources d'autorisation autorisées sont : getBlockLevel(), getTrustLevel(), can_receive_calls(). Toute vérification en dehors de ces trois fonctions est une violation.",
+      "check": "messages.js sendToPlate() · calls.js requestCall() · normalizeRows() — aucune autre logique d'autorisation dans le code"
+    },
+    {
+      "id": "INV-OBD-001",
+      "name": "Tout événement OBD doit être relié à un Flow et à un Invariant",
+      "rule": "Chaque événement ImmatOrganism.observe() doit référencer un flux métier (JRN-xxx ou FLOW-xxx) et un invariant (INV-xxx) dans knowledge/immat-knowledge-graph.json. Un événement sans flow ou sans invariant est un événement orphelin.",
+      "check": "knowledge/immat-knowledge-graph.json — champ invariant non null pour chaque event · detect-orphan-chain.js NO_ORPHAN_FLOW"
     }
   ]
 }

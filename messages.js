@@ -172,10 +172,24 @@ function getContextTrust(plate){
     if(entry.expiration < Date.now()){
       delete ctx[p];
       try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+      try{ window.ImmatOrganism?.observe?.('TRUST_CONTEXTUAL_EXPIRED',{plate:p,source:entry.context_source,_src:'ImmatConnect/messages/getContextTrust'}); }catch(e){}
       return null;
     }
     return entry;
   }catch(e){ return null; }
+}
+
+function revokePermanentTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return;
+  let contacts = [];
+  try{ contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]'); }catch(e){}
+  const existed = contacts.some(c => nPlate(c.plate) === p);
+  if(existed){
+    contacts = contacts.filter(c => nPlate(c.plate) !== p);
+    try{ localStorage.setItem('ic_trusted_contacts', JSON.stringify(contacts)); }catch(e){}
+    try{ window.ImmatOrganism?.observe?.('CONTACT_REVOKED',{plate:p,level:'PERMANENT',_src:'ImmatConnect/messages/revokePermanentTrust'}); }catch(e){}
+  }
 }
 
 function clearContextTrust(plate){
@@ -1292,6 +1306,7 @@ window.ImmatMessages = {
   setContextTrust,
   getContextTrust,
   clearContextTrust,
+  revokePermanentTrust,
   _reportAbuse,
   BLOCK_LEVELS,
   TRUST_LEVELS,

@@ -241,6 +241,9 @@
     { "id": "INV-COM-026", "name": "Abus → état final requis", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-027", "name": "Toute autorisation passe par Permissions Matrix", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-ANGE-003", "name": "Ange = mêmes règles que manuel", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-ANGE-004", "name": "Toute action Ange passe par checkPermissions()", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-028", "name": "Autorisation = Permissions Matrix exclusivement", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-OBD-001", "name": "Tout OBD event lié à un Flow + Invariant", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-CALL-001", "name": "CALL_MISSED unique par requestId", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-003", "name": "Double consentement appel", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-005", "name": "Autorisation contextuelle expire", "file": "knowledge/communication-invariants.json" },
@@ -252,13 +255,25 @@
     { "id": "INV-COM-015", "name": "Ange ≠ accès messages", "file": "knowledge/communication-invariants.json" }
   ],
 
+  "features_trust_block": [
+    { "id": "F-TRUST-CONTEXTUAL", "storage": "ic_context_trust", "functions": ["setContextTrust","getContextTrust","clearContextTrust"], "invariant": "INV-COM-022", "obd": "TRUST_CONTEXTUAL_EXPIRED", "status": "IMPLÉMENTÉ-SESSION-25" },
+    { "id": "F-TRUST-PERMANENT", "storage": "ic_trusted_contacts", "functions": ["setTrustPermanent","getPermanentTrust","revokePermanentTrust"], "invariant": "INV-COM-023", "obd": "CONTACT_TRUSTED{level:PERMANENT}+CONTACT_REVOKED{level:PERMANENT}", "status": "IMPLÉMENTÉ-SESSION-25" },
+    { "id": "F-BLOCK-MESSAGES", "storage": "ic_block_levels", "functions": ["getBlockLevel","normalizeRows_guard","sendToPlate_guard"], "invariant": "INV-COM-024", "obd": "BLOCK_APPLIED{level:BLOCK_MESSAGES}", "status": "IMPLÉMENTÉ-SESSION-24" },
+    { "id": "F-BLOCK-CALLS", "storage": "ic_block_levels", "functions": ["getBlockLevel","_isCallBlocked"], "invariant": "INV-COM-024", "obd": "BLOCK_APPLIED{level:BLOCK_CALLS}", "status": "IMPLÉMENTÉ-SESSION-24" },
+    { "id": "F-BLOCK-ALL", "storage": "ic_block_levels+ic_blocked", "functions": ["getBlockLevel","normalizeRows_guard","_isCallBlocked","sendToPlate_guard"], "invariant": "INV-COM-024+INV-COM-025", "obd": "BLOCK_APPLIED{level:BLOCK_ALL}", "status": "IMPLÉMENTÉ-SESSION-24" }
+  ],
+
   "gaps": [
     { "id": "GAP-002", "description": "Marqueur lu ✓✓ côté émetteur", "interaction": "INT-001", "priority": "P2" },
-    { "id": "GAP-003", "description": "Bouton Signaler abus sur message", "interaction": "INT-009", "priority": "P2" },
+    { "id": "GAP-003", "description": "Bouton Signaler abus sur message", "interaction": "INT-009", "priority": "P2", "status": "RESOLVED-SESSION-24 (icSheetAbuse)" },
     { "id": "GAP-004", "description": "Documenter les 6 statuts alertes officiellement", "interaction": "INT-002/004", "priority": "P2" },
     { "id": "GAP-005", "description": "OBD CALL_MISSED lors expiration TTL", "interaction": "INT-005", "priority": "P2", "status": "RESOLVED-SESSION-23" },
-    { "id": "GAP-006", "description": "WebRTC voix Phase B", "interaction": "INT-005", "priority": "P3" },
+    { "id": "GAP-006", "description": "WebRTC voix Phase B", "interaction": "INT-005", "priority": "P3", "planned": "SESSION-30" },
     { "id": "GAP-007", "description": "Recherche dans les messages", "interaction": "INT-001", "priority": "P3" },
-    { "id": "GAP-008", "description": "Fiches flottantes légères au tap alerte", "interaction": "INT-002/003", "priority": "P3" }
+    { "id": "GAP-008", "description": "Fiches flottantes légères au tap alerte", "interaction": "INT-002/003", "priority": "P3" },
+    { "id": "GAP-009", "description": "AngeAction API — prepareInteraction()", "interaction": "INT-010", "priority": "P2", "planned": "SESSION-26" },
+    { "id": "GAP-010", "description": "Interaction Engine objet central", "interaction": "ALL", "priority": "P2", "planned": "SESSION-27" },
+    { "id": "GAP-011", "description": "Guardian Intelligence Loop", "interaction": "ALL", "priority": "P2", "planned": "SESSION-28" },
+    { "id": "GAP-012", "description": "Knowledge Graph V2 — 100% 0 nœud isolé", "interaction": "ALL", "priority": "P1", "planned": "SESSION-29" }
   ]
 }
