@@ -586,10 +586,10 @@
   opacity:1;
 }
 
-/* ---- Quick replies ---- */
+/* ---- Quick replies (2×2 pour 4 boutons) ---- */
 .ic-quick {
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:6px;
   padding:0 10px 10px;
 }

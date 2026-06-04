@@ -2,8 +2,8 @@
 (function(){
 'use strict';
 
-if(window.__ImmatMessagesV12) return;
-window.__ImmatMessagesV12 = true;
+if(window.__ImmatMessagesV13) return;
+window.__ImmatMessagesV13 = true;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"']/g,m=>({
@@ -186,25 +186,27 @@ async function refresh(){
   const mp = myPlate();
   const buckets = [];
 
-  async function q(build){
-    try{
-      const {data,error} = await build();
-      if(!error && Array.isArray(data)) buckets.push(...data);
-    }catch(e){}
-  }
-
-  await q(()=>client.from('messages').select('*')
-    .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
-    .order('created_at',{ascending:true})
-    .limit(300));
-
+  // Paralléliser toutes les requêtes (PERF: ~200ms au lieu de ~1200ms)
+  const queries = [
+    client.from('messages').select('*')
+      .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
+      .order('created_at',{ascending:true})
+      .limit(300)
+  ];
   if(mp){
-    await q(()=>client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:true}).limit(300));
+    queries.push(
+      client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:true}).limit(300)
+    );
   }
+  const results = await Promise.all(queries.map(async q=>{
+    try{ const {data,error}=await q; if(!error&&Array.isArray(data)) return data; }catch(e){}
+    return [];
+  }));
+  results.forEach(data=>buckets.push(...data));
 
   const map = new Map();
   buckets.forEach(m => { if(m?.id) map.set(m.id,m); });
@@ -250,6 +252,17 @@ function buildThreads(){
 }
 
 function setMode(mode){
+  // Fermer le thread s'il est ouvert (évite liste + thread simultanés)
+  const threadBox = $('icThread');
+  if(threadBox && threadBox.classList.contains('show')){
+    threadBox.classList.remove('show');
+    State.activePlate = null;
+    const hdr = document.querySelector('#icMessagesPro .ic-conv-header');
+    const sbar = $('icSearchBar');
+    if(hdr) hdr.style.display = '';
+    if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
+  }
+
   const prev = State.mode;
   State.mode = mode || 'inbox';
 
@@ -720,8 +733,7 @@ async function sendToPlate(plate,text){
 
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
-  const client = sb();
-  if(client){ try{ await client.from('messages').delete().eq('id', id); }catch(e){} }
+  // INV-COM-009 : soft-delete local uniquement — pas de DELETE DB
   const sid = String(id);
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
@@ -734,44 +746,34 @@ async function deleteMessage(id){
 async function deleteThread(plate){
   const target = fPlate(plate || State.activePlate || '');
   if(!target) return;
-  if(!plate && !confirm('Supprimer cette conversation ?')) return;
+  // Toujours confirmer, qu'on vienne du swipe ou du header (INV-COM-009)
+  if(!confirm('Supprimer cette conversation ?')) return;
 
+  // INV-COM-009 : soft-delete local uniquement — pas de DELETE DB
   const ids = State.messages
     .filter(m=>m._otherPlate===target)
     .map(m=>String(m.id));
-
-  const client = sb();
-  if(client && ids.length){
-    try{
-      for(let i=0;i<ids.length;i+=100){
-        await client.from('messages').delete().in('id', ids.slice(i,i+100));
-      }
-    }catch(e){}
-  }
 
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
   ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
-  if(!plate) closeThread();
+  closeThread();
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
 }
 
 async function deleteAllMessages(){
-  if(!confirm('Supprimer TOUS vos messages ? Cette action est irréversible.')) return;
-  const client = sb();
-  const ids = State.messages.map(m=>m.id).filter(Boolean);
-  if(client && ids.length){
-    try{
-      for(let i=0;i<ids.length;i+=100){
-        await client.from('messages').delete().in('id', ids.slice(i,i+100));
-      }
-    }catch(e){}
-  }
-  try{ localStorage.removeItem('ic_deleted_msgs'); }catch(e){}
+  if(!confirm('Masquer TOUS vos messages ? Cette action ne supprime pas les données du correspondant.')) return;
+  // INV-COM-009 : soft-delete local uniquement — on ajoute tous les IDs à ic_deleted_msgs
+  const ids = State.messages.map(m=>m.id).filter(Boolean).map(String);
+  let deleted = [];
+  try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
+  try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-2000))); }catch(e){}
+  closeThread();
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
@@ -787,12 +789,26 @@ async function subscribe(){
     State.channel = null;
   }
 
+  const mp = nPlate(myPlate());
+  const uid = State.user?.id;
+
   State.channel = client
-    .channel('immat_messages_v12_' + u.id)
-    .on('postgres_changes',{event:'*',schema:'public',table:'messages'},async()=>{
-      try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+    .channel('immat_messages_v13_' + u.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async(payload)=>{
+      const m = payload.new || {};
+      // MSG_RECEIVED uniquement quand c'est un message adressé à MOI (pas mes propres envois)
+      const isForMe = mp && (
+        nPlate(m.receiver_plate||'') === mp ||
+        nPlate(m.target_plate||'') === mp ||
+        nPlate(m.to_plate||'') === mp ||
+        (uid && m.receiver_id === uid && m.sender_id !== uid)
+      );
+      if(isForMe){
+        try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+      }
       await refresh();
     })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},async()=>{ await refresh(); })
     .subscribe((status,err)=>{
       if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
         console.warn('Realtime messages KO', err);
@@ -825,8 +841,14 @@ function setTrust(plate,level){
   const map = getTrustMap();
   map[nPlate(plate)] = level || 'NONE';
   try{ localStorage.setItem('ic_trust',JSON.stringify(map)); }catch(e){}
-  try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
-  toast('Confiance '+level+' attribuée à '+plate+'.','ok');
+  // Émettre l'événement OBD approprié (INV-COM-007) — literals pour la détection statique
+  if(!level || level === 'NONE'){
+    try{ window.ImmatOrganism?.observe?.('CONTACT_REVOKED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
+    toast('Confiance révoquée pour '+plate+'.','ok');
+  } else {
+    try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
+    toast('Confiance '+level+' attribuée à '+plate+'.','ok');
+  }
   render();
 }
 
@@ -847,6 +869,7 @@ function favoriteConv(plate){
 function unfavoriteConv(plate){
   plate = nPlate(fPlate(plate));
   saveFavorites(getFavorites().filter(p=>p!==plate));
+  try{ window.ImmatOrganism?.observe?.('CONV_FAVORITED',{plate,action:'removed',_src:'ImmatConnect/messages/unfavoriteConv'}); }catch(e){}
   render();
 }
 
@@ -867,6 +890,7 @@ function archiveConv(plate){
 function unarchiveConv(plate){
   plate = nPlate(fPlate(plate));
   saveArchived(getArchived().filter(p=>p!==plate));
+  try{ window.ImmatOrganism?.observe?.('CONV_ARCHIVED',{plate,action:'removed',_src:'ImmatConnect/messages/unarchiveConv'}); }catch(e){}
   render();
 }
 
