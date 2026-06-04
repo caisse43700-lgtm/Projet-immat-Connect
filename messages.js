@@ -582,6 +582,8 @@ async function sendToPlate(plate,text){
 
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
+  const client = sb();
+  if(client){ try{ await client.from('messages').delete().eq('id', id); }catch(e){} }
   const sid = String(id);
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
@@ -600,12 +602,38 @@ async function deleteThread(plate){
     .filter(m=>m._otherPlate===target)
     .map(m=>String(m.id));
 
+  const client = sb();
+  if(client && ids.length){
+    try{
+      for(let i=0;i<ids.length;i+=100){
+        await client.from('messages').delete().in('id', ids.slice(i,i+100));
+      }
+    }catch(e){}
+  }
+
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
   ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
   if(!plate) closeThread();
+  await refresh();
+  try{ window.App?.updateActBadge?.(); }catch(e){}
+  try{ window.App?.renderActivityFeed?.(); }catch(e){}
+}
+
+async function deleteAllMessages(){
+  if(!confirm('Supprimer TOUS vos messages ? Cette action est irréversible.')) return;
+  const client = sb();
+  const ids = State.messages.map(m=>m.id).filter(Boolean);
+  if(client && ids.length){
+    try{
+      for(let i=0;i<ids.length;i+=100){
+        await client.from('messages').delete().in('id', ids.slice(i,i+100));
+      }
+    }catch(e){}
+  }
+  try{ localStorage.removeItem('ic_deleted_msgs'); }catch(e){}
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
@@ -658,6 +686,7 @@ window.ImmatMessages = {
   closeThread,
   deleteThread,
   deleteMessage,
+  deleteAllMessages,
   sendToPlate,
   unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
 };

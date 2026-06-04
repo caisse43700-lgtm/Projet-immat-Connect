@@ -159,6 +159,7 @@
       <button type="button" data-mode="inbox" class="on" onclick="ImmatMessages.setMode('inbox')">Reçus</button>
       <button type="button" data-mode="sent" onclick="ImmatMessages.setMode('sent')">Envoyés</button>
       <button type="button" data-mode="compose" onclick="ImmatMessages.setMode('compose')">Composer ✏️</button>
+      <button type="button" onclick="ImmatMessages.deleteAllMessages()" style="margin-left:auto;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">🗑 Tout</button>
     </div>
 
     <div id="icComposePanel" class="ic-compose-panel">
@@ -200,7 +201,7 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.restoreMessages()">📨 Restaurer msgs</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
 <div id="panelActivite" class="panel">
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
@@ -585,8 +586,7 @@ openGardienDashboard(){
       <div style="background:#0f0f1a;border-radius:10px;padding:12px">
         <b style="color:#c4b5fd">Actions gardien</b>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-          <button onclick="App.restoreMessages();toast('Messages restaurés','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">📨 Restaurer msgs</button>
-          <button onclick="App.forceSyncAlerts();toast('Sync lancée','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Sync alertes</button>
+                    <button onclick="App.forceSyncAlerts();toast('Sync lancée','ok')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Sync alertes</button>
           <button onclick="App.clearOfflineCache()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🧹 Vider cache</button>
           <button onclick="App.openGardienDashboard()" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
         </div>
@@ -1845,7 +1845,7 @@ function showReputationToast(){
 
 <script src="calls.js"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=13"></script>
+<script src="messages.js?v=14"></script>
 <script src="ui.js?v=6"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
