@@ -69,12 +69,32 @@ function loadKnowledge() {
 
   // Événements OBD (ImmatOrganism.observe) connus
   const knownObserveEvents = new Set([
+    // Calls
     'CALL_INITIATED', 'CALL_ACCEPTED', 'CALL_REFUSED', 'CALL_CANCELLED',
     'CALL_RECEIVED', 'CALL_REQUESTED',
+    // Alertes / Signalements
     'ALERT_SENT', 'ALERT_RESOLVED', 'ALERT_CONFIRMED',
-    'MSG_SENT', 'MSG_RECEIVED', 'SOS_TRIGGERED', 'SOS_CANCELLED',
-    'AUTH_OK', 'PROFILE_SAVED', 'MAP_LOCATED', 'REPORT_SENT',
-    'ASSIST_REQUESTED', 'ASSIST_RESOLVED',
+    'ROAD_CREATED', 'HELP_CREATED',
+    'VEHICLE_MESSAGE_SENT', 'VEHICLE_MESSAGE_RECEIVED',
+    // Messages
+    'MSG_SENT', 'MSG_RECEIVED',
+    // SOS
+    'SOS_TRIGGERED', 'SOS_CANCELLED',
+    // Auth / Profil
+    'AUTH_OK', 'PROFILE_SAVED',
+    // Carte / GPS
+    'MAP_SELF_LOCATED', 'MAP_LOCATED', 'GPS_STARTED',
+    // Ange
+    'ANGE_QUERIED',
+    // Badges
+    'BADGE_RECOMPUTED',
+    // Système immunitaire (OBD-002b)
+    'ORPHAN_FEATURE_DETECTED', 'ORPHAN_CHAIN_DETECTED',
+    'ORPHAN_INTENTION_DETECTED', 'ORPHAN_FLOW_DETECTED',
+    'ORPHAN_TEST_DETECTED', 'ORPHAN_OBSERVATION_DETECTED',
+    'ORPHAN_INVARIANT_DETECTED', 'ORPHAN_ORGAN_DETECTED',
+    // Divers
+    'REPORT_SENT', 'ASSIST_REQUESTED', 'ASSIST_RESOLVED',
   ]);
 
   // Edge Functions déclarées
@@ -171,7 +191,7 @@ const UTILITY_APP_FUNCTIONS = new Set([
   'saveCurrentDestination', 'deleteFav', 'deleteHistEntry', 'toggleVoiceGender',
   'updateNavPremium',
   // Gardien / Dashboard
-  'openGardienDashboard', 'closeGardienDashboard',
+  'openGardienDashboard', 'closeGardienDashboard', 'runImmunityCheck',
   // Onboarding
   'dismissOnboarding',
   // Front car

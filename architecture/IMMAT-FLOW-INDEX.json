@@ -168,6 +168,147 @@
       },
       "validation": "Aucune validation requise. Auto-synchronisé par rAF (schedBadge). Idempotent.",
       "mémoire": ["ic_unread_msg_count localStorage", "S.alerts runtime (badges recalculés à chaque sync)", "schedBadge ID rAF (volatile session)"]
+    },
+
+    {
+      "id": "FLOW-GPS-NAVIGATION",
+      "intention": "Permettre au conducteur de naviguer vers une destination en suivant un itinéraire GPS.",
+      "organes": ["Carte"],
+      "repérage": {
+        "ui":    ["#panelDrive .nav-card", "#navPremium", "#gpsSearchBar", "#gpsFavs", "#gpsHist"],
+        "code":  ["App.startNav()", "App.stopGps()", "App.searchGps()", "App.pickDest()", "App.voiceGps()", "App.saveCurrentDestination()", "App.updateNavPremium()"],
+        "state": ["S.hasRoute", "S.lastSpeed", "S.myLat", "S.myLng"],
+        "data":  ["ic_gps_favs localStorage", "ic_gps_hist localStorage"]
+      },
+      "impact": [
+        "affichage itinéraire sur carte",
+        "voix GPS (voiceGps — optionnel)",
+        "navPremium : vitesse actuelle (données simulées P1-002)"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "lancer, arrêter, saisir destination, gérer favoris",
+        "gardien": "audit données simulées navPremium"
+      },
+      "validation": "Conducteur autonome.",
+      "mémoire": ["ic_gps_favs", "ic_gps_hist", "S.hasRoute (runtime session)"]
+    },
+
+    {
+      "id": "FLOW-ROAD-SIGNAL",
+      "intention": "Informer les conducteurs proches d'un danger sur la route et permettre la confirmation ou résolution.",
+      "organes": ["Signalements", "Carte"],
+      "repérage": {
+        "ui":    ["panelAltet sigStep2Route", ".alert-grid (route)", "_actModCard (group='route')", "alerte marker sur carte"],
+        "code":  ["App.sigStepRoute()", "App.roadReport(type)", "App.actConfirmAlert(id,'seen')", "App.actConfirmAlert(id,'resolved')", "App.dismissAlert(id)"],
+        "state": ["S.alerts (group='route')", "a.status ('pending'|'seen'|'resolved')", "S.tapLat", "S.tapLng"],
+        "data":  ["reports (category='route', lat, lng, TTL)", "ic_alerts localStorage"]
+      },
+      "impact": [
+        "alerte visible par tous les conducteurs proches (radius configurable)",
+        "TTL automatique : bouchon 30min, travaux 2h, autres 45min",
+        "marker sur carte Leaflet",
+        "badge Activité"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "créer, confirmer (✓ Toujours là), résoudre (✓ Résolu)",
+        "organisme": "TTL cleanup automatique"
+      },
+      "validation": "Conducteur autonome. Coordonnées tap prioritaires sur GPS.",
+      "mémoire": ["ic_alerts localStorage", "ic_alert_history", "reports DB"]
+    },
+
+    {
+      "id": "FLOW-CALL-REQUEST",
+      "intention": "Initier une demande de contact audio entre deux conducteurs avec consentement explicite.",
+      "organes": ["Messages"],
+      "repérage": {
+        "ui":    ["#callContactModal", "#callIncomingPopup", "#callSentBanner", "#callNotAllowedModal", "#icCallLog"],
+        "code":  ["CallManager.contactByCall(plate)", "CallManager.requestCall(plate,uid)", "CallManager.acceptCall(id)", "CallManager.refuseCall(id)", "CallManager.cancelCallRequest(id)"],
+        "state": ["_pendingCallId", "call_requests.status (pending|accepted|refused|cancelled)"],
+        "data":  ["call_requests DB", "call_preferences DB (allow_calls)", "can_receive_calls() RPC"]
+      },
+      "impact": [
+        "popup appel entrant (30s TTL)",
+        "bannière envoyée (8s visible)",
+        "ouverture conversation si accepté",
+        "anti-spam : triggers DB + cooldown",
+        "OBD : CALL_INITIATED / CALL_ACCEPTED / CALL_REFUSED"
+      ],
+      "qui_peut_agir": {
+        "conducteur_emetteur": "initier, annuler",
+        "conducteur_recepteur": "accepter, refuser",
+        "gardien": "activer/désactiver allow_calls (Dashboard)"
+      },
+      "validation": "RPC can_receive_calls() vérifie call_preferences. Triggers DB = anti-spam + unicité.",
+      "mémoire": ["call_requests DB (persistant)", "call_preferences DB", "_pendingCallId (runtime session)"]
+    },
+
+    {
+      "id": "FLOW-SOS-EMERGENCY",
+      "intention": "Déclencher une alerte d'urgence maximale protégée contre les déclenchements accidentels.",
+      "organes": ["Signalements"],
+      "repérage": {
+        "ui":    ["#sosBtn (appui long 3s)", "#sosConfirmOverlay", "alerte SOS sur carte (urgent)"],
+        "code":  ["App.startSosHold()", "App.cancelSosHold()", "App.sos()", "App.dismissAlert(id)"],
+        "state": ["S._sosTimer", "S.alerts (group='sos')"],
+        "data":  ["reports (category='sos', urgent=true)", "ic_alerts localStorage"]
+      },
+      "impact": [
+        "alerte maximale visible par tous les conducteurs proches",
+        "notification push si activée",
+        "protection double : appui long + confirmation (D-005)"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "déclencher (appui long 3s) + confirmer, annuler avant envoi",
+        "organisme": "TTL 45min auto-cleanup"
+      },
+      "validation": "Double protection obligatoire : startSosHold (3s) + confirm. Impossible à déclencher accidentellement.",
+      "mémoire": ["reports DB", "ic_alerts localStorage", "S._sosTimer (runtime — annulable)"]
+    },
+
+    {
+      "id": "FLOW-ANGE-ASSISTANT",
+      "intention": "Obtenir une réponse contextuelle intelligente selon le rôle et la situation actuelle.",
+      "organes": ["Ange"],
+      "repérage": {
+        "ui":    ["#angeFab", "#angeOverlay", "#angePanel", ".ange-options (boutons cliquables)"],
+        "code":  ["App.openAnge()", "App.closeAnge()", "supabase.functions.invoke('immat-brain-dialog')"],
+        "state": ["S.isGardien", "snapshot anonymisé (health, violations, panel, speed_cat, driving, hasRoute, nearby, alerts)"],
+        "data":  ["immat-brain-dialog Edge Function", "knowledge-conducteur.ts", "knowledge-gardien.ts"]
+      },
+      "impact": [
+        "réponse contextuelle selon rôle (conducteur / gardien)",
+        "throttle 10 appels/heure/session",
+        "vitesse transmise en catégorie (jamais valeur exacte — INV-014)"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "poser question, sélectionner option rapide",
+        "gardien": "même interface + contexte gardien enrichi"
+      },
+      "validation": "INV-014 : vitesse catégorisée. ANTHROPIC_API_KEY en Supabase secrets uniquement.",
+      "mémoire": ["session runtime uniquement — pas de persistance historique Ange"]
+    },
+
+    {
+      "id": "FLOW-PROFILE-EDIT",
+      "intention": "Permettre au conducteur de personnaliser son identité visible par les autres conducteurs.",
+      "organes": ["Profil"],
+      "repérage": {
+        "ui":    ["#panelSettings .profile-section", "#editPseudo", "#editPhone", "#editColor", "#editProfileOverlay"],
+        "code":  ["App.saveProfile()", "App.openEditProfile()", "db.profiles.upsert"],
+        "state": ["S.myPlate", "S.myColor", "S.myPseudo", "S.myPhone"],
+        "data":  ["profiles DB (owner_plate immuable — INV-006)", "profiles.pseudo", "profiles.vehicle_color", "profiles.phone"]
+      },
+      "impact": [
+        "couleur marqueur mise à jour immédiatement sur carte (colorHex() INV-011)",
+        "pseudo visible dans Activité + messages",
+        "plaque JAMAIS modifiable (INV-006)"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "modifier pseudo, téléphone, couleur uniquement"
+      },
+      "validation": "INV-006 : owner_plate immuable. INV-011 : colorHex() = source canonique.",
+      "mémoire": ["profiles DB (persistant)", "S.myColor / S.myPseudo (runtime sync)"]
     }
 
   ]

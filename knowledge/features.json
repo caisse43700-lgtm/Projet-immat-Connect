@@ -1,8 +1,9 @@
 {
-  "_v": 1,
-  "_role": "Inventaire des fonctionnalités — relie usage → organe → flux",
+  "_v": 2,
+  "_role": "Inventaire des fonctionnalités — relie usage → organe → flux → intention",
   "_rule": "Chaque feature = ce que le conducteur peut faire, pas comment le code fonctionne. Ref FLOW-INDEX pour les flux critiques.",
   "_ref": "architecture/IMMAT-FLOW-INDEX.json",
+  "_updated": "SESSION OBD-002b — ajout champ intentions + flows manquants",
   "features": [
     {
       "id": "F-CARTE",
@@ -11,6 +12,7 @@
       "description": "Voir sa position et les véhicules proches sur une carte interactive",
       "actions": ["Se localiser", "Voir les conducteurs proches", "Naviguer vers un marqueur", "Mode invisible"],
       "statut": "actif",
+      "intentions": ["INT-LOCATE-SELF", "INT-UNDERSTAND-ENV", "INT-FEEL-SAFE"],
       "flows": ["FLOW-MAP-SELF-MARKER"]
     },
     {
@@ -20,7 +22,8 @@
       "description": "Rechercher une destination et suivre un itinéraire en temps réel",
       "actions": ["Rechercher adresse", "Lancer GPS", "Arrêter GPS", "Favoris GPS", "Historique GPS"],
       "statut": "actif",
-      "flows": [],
+      "intentions": ["INT-NAVIGATE"],
+      "flows": ["FLOW-GPS-NAVIGATION"],
       "note": "navPremium (trafic, limite vitesse, voies) = données SIMULÉES — P1-002 en attente"
     },
     {
@@ -30,6 +33,7 @@
       "description": "Prévenir un conducteur d'un problème sur son véhicule (feux, pneu, porte...)",
       "actions": ["Choisir type alerte", "Cibler une plaque", "Envoyer alerte"],
       "statut": "actif",
+      "intentions": ["INT-SIGNAL-VEHICLE"],
       "flows": ["FLOW-VEHICLE-ALERT"]
     },
     {
@@ -40,7 +44,8 @@
       "actions": ["Accident", "Bouchon", "Obstacle", "Verglas", "Contrôle police"],
       "entry_points": ["FAB Signaler (onglet Altet)", "Clic droit carte → 📍 Signaler ici (P2-002)"],
       "statut": "actif",
-      "flows": [],
+      "intentions": ["INT-SIGNAL-ROAD", "INT-CONFIRM-DANGER"],
+      "flows": ["FLOW-ROAD-SIGNAL"],
       "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
       "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
     },
@@ -51,6 +56,7 @@
       "description": "Demander de l'aide aux conducteurs proches (panne, carburant, batterie...)",
       "actions": ["Choisir type aide", "Envoyer demande", "Marquer résolu"],
       "statut": "actif",
+      "intentions": ["INT-REQUEST-HELP", "INT-HELP-DRIVER", "INT-RESOLVE-ALERT"],
       "flows": ["FLOW-ASSIST-REQUEST"]
     },
     {
@@ -60,6 +66,7 @@
       "description": "Envoyer et recevoir des messages privés entre deux conducteurs par plaque",
       "actions": ["Composer message", "Répondre", "Réponses rapides", "Bloquer"],
       "statut": "actif",
+      "intentions": ["INT-CONTACT-DRIVER"],
       "flows": ["FLOW-DIRECT-MESSAGE"]
     },
     {
@@ -69,16 +76,19 @@
       "description": "Consulter les messages reçus et alertes avec filtres Tout/Messages/Alertes",
       "actions": ["Filtrer par type", "Voir détail", "Marquer vu", "Répondre"],
       "statut": "actif",
+      "intentions": ["INT-CHECK-ACTIVITY"],
       "flows": ["FLOW-BADGES"]
     },
     {
       "id": "F-APPEL",
-      "nom": "Appels audio",
+      "nom": "Demandes de contact / Appels",
       "organe": "Messages",
-      "description": "Appeler un conducteur en audio P2P via WebRTC",
-      "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser"],
+      "description": "Envoyer une demande de contact audio à un conducteur via call_requests. Phase B = WebRTC.",
+      "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser", "Journal d'appels"],
       "statut": "actif",
-      "note": "Consentement explicite requis — D-002"
+      "intentions": ["INT-CONTACT-DRIVER"],
+      "flows": ["FLOW-CALL-REQUEST"],
+      "note": "Phase A = demande de contact (call_requests). Phase B = WebRTC P2P audio. Consentement explicite — D-002."
     },
     {
       "id": "F-SOS",
@@ -87,6 +97,8 @@
       "description": "Déclencher une alerte d'urgence protégée par appui long",
       "actions": ["Appui long 3s → confirmation → envoi"],
       "statut": "actif",
+      "intentions": ["INT-SOS"],
+      "flows": ["FLOW-SOS-EMERGENCY"],
       "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
     },
     {
@@ -96,6 +108,8 @@
       "description": "Assistant contextuel intelligent — répond selon rôle conducteur/gardien",
       "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
       "statut": "actif",
+      "intentions": ["INT-ASK-ANGE"],
+      "flows": ["FLOW-ANGE-ASSISTANT"],
       "throttle": "10 appels/heure par session"
     },
     {
@@ -105,6 +119,8 @@
       "description": "Gérer son pseudo, téléphone, couleur véhicule. La plaque est immuable.",
       "actions": ["Modifier pseudo", "Modifier téléphone", "Modifier couleur"],
       "statut": "actif",
+      "intentions": ["INT-MANAGE-PROFILE"],
+      "flows": ["FLOW-PROFILE-EDIT"],
       "note": "Plaque immuable après création — INV-006"
     }
   ]

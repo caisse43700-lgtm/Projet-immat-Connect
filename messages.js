@@ -605,6 +605,7 @@ async function sendToPlate(plate,text){
   State.activePlate = receiverPlate;
   toast('Message envoyé à ' + receiverPlate + '.','ok');
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
+  try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);
