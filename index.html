@@ -1326,7 +1326,7 @@ App.updateActBadge=function(){
     }).length;
     try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
-    const total=unreadAlerts+(Number(S.unreadMsgCount)||0);
+    const total=unreadAlerts+unreadMsgs;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
