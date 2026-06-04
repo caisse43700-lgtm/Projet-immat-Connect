@@ -107,8 +107,11 @@ function loadKnowledge() {
     'CALL_MISSED', 'CALL_UNREACHABLE',
     // DAM-COMMUNICATION Phase 1 — F-TRUST
     'CONTACT_TRUSTED', 'CONTACT_REVOKED',
-    'TRUST_LEVEL_CHANGED', 'ABUSE_REPORTED',
+    'TRUST_LEVEL_CHANGED', 'TRUST_CONTEXTUAL_SET', 'TRUST_CONTEXTUAL_EXPIRED',
+    'ABUSE_REPORTED', 'ABUSE_REVIEWED', 'ABUSE_DISMISSED', 'ABUSE_CONFIRMED',
     'BLOCK_APPLIED', 'BLOCK_CREATED', 'BLOCK_REMOVED', 'CONTEXT_GRANTED', 'CONTEXT_EXPIRED',
+    // Phase B — WebRTC (réservés, whitelist uniquement)
+    'CALL_CONNECTED', 'CALL_FAILED', 'CALL_NETWORK_LOST', 'CALL_RECONNECTED',
     // DAM-COMMUNICATION Phase 1 — F-SPAM-PROTECTION
     'SPAM_DETECTED',
     // DAM-COMMUNICATION Phase 1 — F-FAVORITES / F-ARCHIVE / F-SEARCH
@@ -152,6 +155,8 @@ function loadKnowledge() {
     'archived', 'favorites', 'spam_log', 'presence',
     // SESSION 24 — Trust/Block Engine
     'block_levels', 'trusted',
+    // SESSION 25 — Trust Contextual + Permanent
+    'context_trust', 'trusted_contacts',
   ]);
 
   return {

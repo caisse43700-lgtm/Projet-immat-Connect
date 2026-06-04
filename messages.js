@@ -153,9 +153,67 @@ function getBlockLevel(plate){
   return BLOCK_LEVELS.NONE;
 }
 
+function setContextTrust(plate, source, reason, ttlMs){
+  const p = nPlate(plate);
+  if(!p) return;
+  let ctx = {};
+  try{ ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}'); }catch(e){}
+  ctx[p] = { expiration: Date.now() + (ttlMs || 3600000), context_source: source || 'unknown', trust_reason: reason || '' };
+  try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+}
+
+function getContextTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return null;
+  try{
+    const ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}');
+    const entry = ctx[p];
+    if(!entry) return null;
+    if(entry.expiration < Date.now()){
+      delete ctx[p];
+      try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+      return null;
+    }
+    return entry;
+  }catch(e){ return null; }
+}
+
+function clearContextTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return;
+  try{
+    const ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}');
+    delete ctx[p];
+    localStorage.setItem('ic_context_trust', JSON.stringify(ctx));
+  }catch(e){}
+}
+
+function getPermanentTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return null;
+  try{
+    const contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]');
+    return contacts.find(c => nPlate(c.plate) === p) || null;
+  }catch(e){ return null; }
+}
+
+function setTrustPermanent(plate, source){
+  const p = nPlate(plate);
+  if(!p) return;
+  let contacts = [];
+  try{ contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]'); }catch(e){}
+  if(!contacts.find(c => nPlate(c.plate) === p)){
+    contacts.push({ plate:p, created_at:new Date().toISOString(), source:source||'manual' });
+    try{ localStorage.setItem('ic_trusted_contacts', JSON.stringify(contacts)); }catch(e){}
+    try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate:p,level:'PERMANENT',_src:'ImmatConnect/messages/setTrustPermanent'}); }catch(e){}
+  }
+}
+
 function getTrustLevel(plate){
+  if(getPermanentTrust(plate)) return TRUST_LEVELS.PERMANENT;
   const trust = getTrust(plate);
   if(trust === 'TRUSTED') return TRUST_LEVELS.CONTACT;
+  if(getContextTrust(plate)) return TRUST_LEVELS.CONTEXTUAL;
   return TRUST_LEVELS.NONE;
 }
 
@@ -758,6 +816,12 @@ async function sendToPlate(plate,text){
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
 
+  // Bloc bidirectionnel : A ne peut pas contacter une plaque qu'il a bloquée (INV-COM-024)
+  const outgoingBlock = getBlockLevel(plate);
+  if(outgoingBlock === BLOCK_LEVELS.MESSAGES || outgoingBlock === BLOCK_LEVELS.ALL){
+    toast('Vous avez bloqué ce conducteur.','bad'); return false;
+  }
+
   // Anti-spam (F-SPAM-PROTECTION)
   if(_checkSpam(plate)){ toast('Trop de messages envoyés rapidement.','bad'); return false; }
 
@@ -1223,6 +1287,11 @@ window.ImmatMessages = {
   getTrust,
   getBlockLevel,
   getTrustLevel,
+  getPermanentTrust,
+  setTrustPermanent,
+  setContextTrust,
+  getContextTrust,
+  clearContextTrust,
   _reportAbuse,
   BLOCK_LEVELS,
   TRUST_LEVELS,

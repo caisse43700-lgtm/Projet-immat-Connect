@@ -217,7 +217,15 @@
     { "event": "ABUSE_REPORTED", "emitted_by": "messages.js/_sheetAction/abuse", "invariant": "INV-COM-006" },
     { "event": "PROFILE_SAVED", "emitted_by": "index.html/saveProfile", "invariant": null },
     { "event": "BADGE_RECOMPUTED", "emitted_by": "badge.js", "invariant": null },
-    { "event": "ANGE_QUERIED", "emitted_by": "index.html/AngeDialog", "invariant": "INV-COM-015" }
+    { "event": "ANGE_QUERIED", "emitted_by": "index.html/AngeDialog", "invariant": "INV-COM-015" },
+    { "event": "TRUST_CONTEXTUAL_SET", "emitted_by": "messages.js/setContextTrust", "invariant": "INV-COM-022", "status": "PENDING — OBD à ajouter SESSION 26" },
+    { "event": "ABUSE_REVIEWED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
+    { "event": "ABUSE_DISMISSED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
+    { "event": "ABUSE_CONFIRMED", "emitted_by": "GARDIEN", "invariant": "INV-COM-026", "status": "RÉSERVÉ — Phase Gardien" },
+    { "event": "CALL_CONNECTED", "emitted_by": "RÉSERVÉ WebRTC Phase B", "invariant": "INV-COM-013", "status": "RÉSERVÉ" },
+    { "event": "CALL_FAILED", "emitted_by": "RÉSERVÉ WebRTC Phase B", "invariant": "INV-COM-013", "status": "RÉSERVÉ" },
+    { "event": "CALL_NETWORK_LOST", "emitted_by": "RÉSERVÉ WebRTC Phase B", "invariant": "INV-COM-013", "status": "RÉSERVÉ" },
+    { "event": "CALL_RECONNECTED", "emitted_by": "RÉSERVÉ WebRTC Phase B", "invariant": "INV-COM-013", "status": "RÉSERVÉ" }
   ],
 
   "invariants": [
@@ -226,6 +234,13 @@
     { "id": "INV-COM-019", "name": "Blocage = périmètre défini", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-020", "name": "Confiance observable OBD", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-021", "name": "Blocage observable OBD", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-022", "name": "Trust contextuel = origine + expiration", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-023", "name": "Trust permanent = acte explicite uniquement", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-024", "name": "Blocage complet bidirectionnel", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-025", "name": "Blocage > Confiance toujours", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-026", "name": "Abus → état final requis", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-027", "name": "Toute autorisation passe par Permissions Matrix", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-ANGE-003", "name": "Ange = mêmes règles que manuel", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-CALL-001", "name": "CALL_MISSED unique par requestId", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-003", "name": "Double consentement appel", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-005", "name": "Autorisation contextuelle expire", "file": "knowledge/communication-invariants.json" },

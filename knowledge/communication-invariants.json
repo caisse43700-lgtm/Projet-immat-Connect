@@ -135,6 +135,48 @@
       "name": "Un call_request ne produit qu'un seul CALL_MISSED",
       "rule": "L'événement CALL_MISSED est gardé par _missedCallIds Set. Si le même requestId expire deux fois (ex: reprise réseau), le second CALL_MISSED est ignoré.",
       "check": "calls.js — _missedCallIds Set · _showIncomingPopup() TTL guard"
+    },
+    {
+      "id": "INV-COM-022",
+      "name": "Une confiance contextuelle doit toujours avoir une origine et une date d'expiration",
+      "rule": "Chaque entrée ic_context_trust doit posséder context_source, trust_reason et expiration (timestamp). Une confiance contextuelle sans expiration est invalide. Elle est purgée automatiquement à lecture.",
+      "check": "messages.js — setContextTrust() {source, reason, ttlMs} · getContextTrust() purge automatique si expiration < Date.now()"
+    },
+    {
+      "id": "INV-COM-023",
+      "name": "Une confiance permanente ne peut être créée qu'à partir d'une action explicite",
+      "rule": "setTrustPermanent(plate, source) ne peut être appelé que suite à une action consciente du conducteur. Aucune logique automatique ne crée un TRUST_PERMANENT sans interaction humaine.",
+      "check": "messages.js — setTrustPermanent() : source obligatoire · aucun appel automatique sans intent utilisateur"
+    },
+    {
+      "id": "INV-COM-024",
+      "name": "Un blocage complet est toujours bidirectionnel",
+      "rule": "BLOCK_ALL ou BLOCK_MESSAGES : A ne peut ni recevoir NI envoyer des messages à B. BLOCK_CALLS : A ne peut ni recevoir NI initier d'appel avec B. Le blocage s'applique dans les deux directions pour le canal concerné.",
+      "check": "messages.js — sendToPlate() outgoingBlock guard · normalizeRows() incomingBlock guard · calls.js — _isCallBlocked() guard requestCall()"
+    },
+    {
+      "id": "INV-COM-025",
+      "name": "Le blocage prévaut toujours sur la confiance",
+      "rule": "Si BLOCK_ALL et TRUST_PERMANENT sont actifs simultanément, BLOCK_ALL prime. Aucune combinaison de niveaux de confiance ne peut outrepasser un blocage.",
+      "check": "messages.js — sendToPlate() : getBlockLevel vérifié AVANT getTrustLevel · normalizeRows() : block filter avant trust check"
+    },
+    {
+      "id": "INV-COM-026",
+      "name": "Un signalement d'abus doit posséder un état final",
+      "rule": "ABUSE_REPORTED démarre le cycle. Le Gardien doit clôturer avec ABUSE_REVIEWED, ABUSE_DISMISSED ou ABUSE_CONFIRMED. Un abus sans état final est un GAP de traçabilité.",
+      "check": "knowledge/immat-knowledge-graph.json — ABUSE_REPORTED, ABUSE_REVIEWED, ABUSE_DISMISSED, ABUSE_CONFIRMED · Gardien: état final obligatoire"
+    },
+    {
+      "id": "INV-COM-027",
+      "name": "Toute autorisation de communication passe par la Permissions Matrix",
+      "rule": "Aucune logique parallèle ne peut accorder ou refuser une communication sans passer par getBlockLevel() + getTrustLevel() + can_receive_calls(). Aucune règle spéciale cachée.",
+      "check": "architecture/PERMISSIONS-MATRIX.md · calls.js requestCall() · messages.js sendToPlate() · normalizeRows()"
+    },
+    {
+      "id": "INV-ANGE-003",
+      "name": "Toute action proposée par Ange doit être validée par les mêmes règles que les actions manuelles",
+      "rule": "AngeAction ne court-circuite jamais la Permissions Matrix. Avant toute proposition (message, appel, signalement), Ange vérifie getBlockLevel() et getTrustLevel() exactement comme le ferait une action manuelle.",
+      "check": "architecture/ANGE-MESSAGES-APPELS.md · AngeAction.checkPermissions() → getBlockLevel + can_receive_calls · INV-COM-027"
     }
   ]
 }
