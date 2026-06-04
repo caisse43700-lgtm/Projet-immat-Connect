@@ -114,9 +114,27 @@
     },
     {
       "id": "INV-COM-019",
-      "name": "Un blocage interdit toute communication y compris OBD",
-      "rule": "Quand blockPlate() est appelé, l'OBD BLOCK_APPLIED est émis immédiatement, puis loadMsgs() masque la conversation. Aucun message, appel ou alerte de la plaque bloquée ne peut parvenir à l'utilisateur.",
-      "check": "index.html — blockPlate() → BLOCK_APPLIED OBD → loadMsgs() normalizeRows() blocked filter"
+      "name": "Un blocage possède toujours un périmètre défini",
+      "rule": "Chaque blocage a un niveau explicite : BLOCK_MESSAGES, BLOCK_CALLS, ou BLOCK_ALL. Le niveau est stocké dans ic_block_levels et vérifié par getBlockLevel(plate) avant chaque envoi et avant chaque appel.",
+      "check": "index.html — blockPlate(p, level) → ic_block_levels · messages.js — normalizeRows() getBlockLevel · calls.js — _isCallBlocked()"
+    },
+    {
+      "id": "INV-COM-020",
+      "name": "Toute décision de confiance est observable dans l'OBD",
+      "rule": "Chaque modification du niveau de confiance (setCallLevel, setTrust) émet un OBD event. Aucune élévation de niveau n'est silencieuse.",
+      "check": "messages.js — setCallLevel() → TRUST_LEVEL_CHANGED {oldLevel, newLevel} · setTrust() → CONTACT_TRUSTED | CONTACT_REVOKED"
+    },
+    {
+      "id": "INV-COM-021",
+      "name": "Toute décision de blocage est observable dans l'OBD",
+      "rule": "Chaque blocage émet BLOCK_APPLIED {plate, level}. Aucun blocage n'est silencieux.",
+      "check": "index.html — blockPlate() → BLOCK_APPLIED {plate, level, _src}"
+    },
+    {
+      "id": "INV-CALL-001",
+      "name": "Un call_request ne produit qu'un seul CALL_MISSED",
+      "rule": "L'événement CALL_MISSED est gardé par _missedCallIds Set. Si le même requestId expire deux fois (ex: reprise réseau), le second CALL_MISSED est ignoré.",
+      "check": "calls.js — _missedCallIds Set · _showIncomingPopup() TTL guard"
     }
   ]
 }

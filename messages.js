@@ -137,6 +137,28 @@ async function profilesByIds(ids){
   return out;
 }
 
+// ── Trust & Block levels ─────────────────────────────────────────
+const TRUST_LEVELS = { NONE:'TRUST_NONE', CONTEXTUAL:'TRUST_CONTEXTUAL', CONTACT:'TRUST_CONTACT', PERMANENT:'TRUST_PERMANENT' };
+const BLOCK_LEVELS = { NONE:'BLOCK_NONE', MESSAGES:'BLOCK_MESSAGES', CALLS:'BLOCK_CALLS', ALL:'BLOCK_ALL' };
+
+function getBlockLevel(plate){
+  const p = nPlate(plate);
+  if(!p) return BLOCK_LEVELS.NONE;
+  try{
+    const levels = JSON.parse(localStorage.getItem('ic_block_levels') || '{}');
+    if(levels[p]) return levels[p];
+  }catch(e){}
+  const blocked = window.S?.blocked || [];
+  if(blocked.includes(p)) return BLOCK_LEVELS.ALL;
+  return BLOCK_LEVELS.NONE;
+}
+
+function getTrustLevel(plate){
+  const trust = getTrust(plate);
+  if(trust === 'TRUSTED') return TRUST_LEVELS.CONTACT;
+  return TRUST_LEVELS.NONE;
+}
+
 function normalizeRows(rows, profs){
   const mp = nPlate(myPlate());
   const uid = State.user?.id;
@@ -168,8 +190,9 @@ function normalizeRows(rows, profs){
       _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
   }).filter(m => {
-    const blocked = window.S?.blocked || [];
-    return m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)) && !blocked.includes(nPlate(m._otherPlate));
+    if(!m._otherPlate || m.status === 'rejected' || deletedIds.includes(String(m.id))) return false;
+    const bl = getBlockLevel(m._otherPlate);
+    return bl !== BLOCK_LEVELS.MESSAGES && bl !== BLOCK_LEVELS.ALL;
   });
 }
 
@@ -1004,6 +1027,8 @@ function openThreadMenu(){
   _initSheetTouch();
   if(backdrop) backdrop.classList.add('show');
   if(sheet)    sheet.classList.add('show');
+  const cats = document.getElementById('icAbuseCategories');
+  if(cats) cats.style.display = 'none';
 }
 
 function closeSheet(){
@@ -1046,21 +1071,34 @@ function _initSheetTouch(){
 }
 
 function _sheetAction(action){
-  closeSheet();
   if(!State.activePlate) return;
   const plate = State.activePlate;
   const isFav  = getFavorites().includes(nPlate(plate));
   const isArch = getArchived().includes(nPlate(plate));
   const trust  = getTrust(plate);
+  if(action === 'abuse') {
+    const cats = document.getElementById('icAbuseCategories');
+    if(cats) cats.style.display = cats.style.display === 'none' ? '' : 'none';
+    return;
+  }
+  closeSheet();
   if(action === 'fav')   { isFav  ? unfavoriteConv(plate)                      : favoriteConv(plate); }
   else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
   else if(action === 'del')   { deleteThread(plate); }
-  else if(action === 'abuse') {
-    if(!confirm('Signaler un abus de '+plate+' ?')) return;
-    try{ window.ImmatOrganism?.observe?.('ABUSE_REPORTED',{plate,_src:'ImmatConnect/messages/_sheetAction/abuse'}); }catch(e){}
-    toast('Abus signalé. Merci pour votre vigilance.','ok');
-  }
+}
+
+function _reportAbuse(category){
+  const plate = State.activePlate;
+  if(!plate) return;
+  const labels = {ABUSE_SPAM:'Spam',ABUSE_HARASSMENT:'Harcèlement',ABUSE_INSULT:'Insulte',ABUSE_FALSE_ALERT:'Fausse alerte',ABUSE_CALL_MISUSE:"Abus d'appel",ABUSE_OTHER:'Autre'};
+  const label = labels[category] || category;
+  if(!confirm('Signaler un abus ('+label+') de '+plate+' ?')) return;
+  const cats = document.getElementById('icAbuseCategories');
+  if(cats) cats.style.display = 'none';
+  closeSheet();
+  try{ window.ImmatOrganism?.observe?.('ABUSE_REPORTED',{plate,category,label,_src:'ImmatConnect/messages/_reportAbuse'}); }catch(e){}
+  toast('Abus ('+label+') signalé. Merci pour votre vigilance.','ok');
 }
 
 // ── F-PRESENCE : Statut de présence ─────────────────────────────
@@ -1076,12 +1114,14 @@ function setPresence(status){
 
 // ── F-CALL-PERMISSIONS : Niveau d'accès appels ──────────────────
 function setCallLevel(level){
+  let oldLevel = 1;
+  try{ oldLevel = parseInt(localStorage.getItem('ic_call_perm') || '1', 10); }catch(e){}
   try{ localStorage.setItem('ic_call_perm',String(level)); }catch(e){}
   document.querySelectorAll('.call-level-btn').forEach(b=>{
     b.classList.toggle('on', String(b.dataset.level) === String(level));
   });
   saveCallSettings();
-  try{ window.ImmatOrganism?.observe?.('TRUST_LEVEL_CHANGED',{level,_src:'ImmatConnect/messages/setCallLevel'}); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('TRUST_LEVEL_CHANGED',{oldLevel,newLevel:level,_src:'ImmatConnect/messages/setCallLevel'}); }catch(e){}
   const labels = {1:'Personne ne peut vous appeler.',2:'Contacts de confiance uniquement.',3:'Confiance + contexte actif.',4:'Tout le monde peut vous appeler.'};
   toast('Niveau '+level+' : '+(labels[level]||''),'ok');
 }
@@ -1181,6 +1221,11 @@ window.ImmatMessages = {
   _unarchiveFromList: (plate) => { unarchiveConv(plate); },
   setTrust,
   getTrust,
+  getBlockLevel,
+  getTrustLevel,
+  _reportAbuse,
+  BLOCK_LEVELS,
+  TRUST_LEVELS,
   favoriteConv,
   unfavoriteConv,
   archiveConv,

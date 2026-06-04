@@ -24,6 +24,7 @@ const CallManager = (function () {
   let _chCalls = null;
   let _pendingCallId = null;
   let _visibilityBound = false;
+  const _missedCallIds = new Set();
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -111,8 +112,28 @@ const CallManager = (function () {
   }
 
   // ── Envoyer une demande d'appel ──────────────────────────────────
+  function _isCallBlocked(plate) {
+    const p = String(plate || '').replace(/[\s-]/g,'').toUpperCase();
+    if(!p) return false;
+    try{
+      const levels = JSON.parse(localStorage.getItem('ic_block_levels') || '{}');
+      const lv = levels[p];
+      if(lv === 'BLOCK_CALLS' || lv === 'BLOCK_ALL') return true;
+    }catch(e){}
+    try{
+      const blocked = JSON.parse(localStorage.getItem('ic_blocked') || '[]');
+      return blocked.includes(p);
+    }catch(e){}
+    return false;
+  }
+
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
+
+    if(_isCallBlocked(receiverPlate)){
+      _showCallsNotAllowed(receiverPlate);
+      return;
+    }
 
     // Vérifier call_preferences via RPC sécurisée (évite d'exposer la table)
     const { data: canCall, error: rpcErr } = await _sb
@@ -265,7 +286,10 @@ const CallManager = (function () {
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
     if (ms > 0) setTimeout(() => {
       popup.classList.remove('show');
-      try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+      if(!_missedCallIds.has(req.id)){
+        _missedCallIds.add(req.id);
+        try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+      }
     }, ms);
     try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
   }

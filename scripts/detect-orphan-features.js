@@ -150,6 +150,8 @@ function loadKnowledge() {
     // DAM-COMMUNICATION Phase 1
     'trust', 'call_perm', 'dnd', 'dnd_from', 'dnd_to',
     'archived', 'favorites', 'spam_log', 'presence',
+    // SESSION 24 — Trust/Block Engine
+    'block_levels', 'trusted',
   ]);
 
   return {

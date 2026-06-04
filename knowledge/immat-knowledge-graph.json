@@ -222,6 +222,11 @@
 
   "invariants": [
     { "id": "INV-COM-001", "name": "Conversation = 2 plaques", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-018", "name": "Confiance = acte explicite", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-019", "name": "Blocage = périmètre défini", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-020", "name": "Confiance observable OBD", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-COM-021", "name": "Blocage observable OBD", "file": "knowledge/communication-invariants.json" },
+    { "id": "INV-CALL-001", "name": "CALL_MISSED unique par requestId", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-003", "name": "Double consentement appel", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-005", "name": "Autorisation contextuelle expire", "file": "knowledge/communication-invariants.json" },
     { "id": "INV-COM-006", "name": "Aucune feature orpheline", "file": "knowledge/communication-invariants.json" },

@@ -69,31 +69,51 @@ localStorage.ic_trust = JSON { [normalized_plate]: 'TRUSTED' | 'NONE' }
 
 ---
 
-## 3. Blocage (ic_blocked)
+## 3. Blocage (ic_blocked + ic_block_levels)
 
 ### Stockage
 ```
-localStorage.ic_blocked = JSON Array [normalized_plate, ...]
+localStorage.ic_blocked      = JSON Array [normalized_plate, ...]   (backward compat → BLOCK_ALL)
+localStorage.ic_block_levels = JSON { [plate]: 'BLOCK_MESSAGES'|'BLOCK_CALLS'|'BLOCK_ALL' }
 ```
+
+### Niveaux (SESSION 24)
+| Niveau | Messages | Appels | Alertes |
+|---|---|---|---|
+| `BLOCK_NONE` | ✓ | ✓ | ✓ |
+| `BLOCK_MESSAGES` | ✗ | ✓ | ✓ |
+| `BLOCK_CALLS` | ✓ | ✗ | ✓ |
+| `BLOCK_ALL` | ✗ | ✗ | ✗ |
 
 ### Fonctions
 | Fonction | Rôle |
 |---|---|
-| `App.blockPlate(plate)` | Ajoute à ic_blocked |
-| `App.unblockPlate(plate)` | Retire de ic_blocked |
+| `App.blockPlate(plate, level='BLOCK_ALL')` | Ajoute à ic_blocked + ic_block_levels |
+| `App.unblockPlate(plate)` | Retire de ic_blocked + supprime ic_block_levels[plate] |
+| `ImmatMessages.getBlockLevel(plate)` | Retourne le niveau de blocage actuel |
+
+### Guards
+- `messages.js normalizeRows()` → filtre `BLOCK_MESSAGES` et `BLOCK_ALL`
+- `calls.js _isCallBlocked()` → rejette `BLOCK_CALLS` et `BLOCK_ALL` avant RPC
 
 ### UI
-- Carte → contextMenu → "Bloquer"
+- Carte → contextMenu → "Bloquer" (BLOCK_ALL par défaut)
 - Settings → "🚫 Bloqués" → liste + débloquer
-- Messages → (pas encore de bouton dans thread)
+- Messages → bottom sheet → (sélection niveau : phase future)
 
 ### Effets
-- Véhicule bloqué disparaît de la carte (côté client)
-- Messages filtrés côté client
-- Appels bloqués via `callLevel` (si BLOCKED, callLevel = 0)
+- BLOCK_ALL : Messages filtrés, appels rejetés avant RPC
+- BLOCK_MESSAGES : appels et alertes toujours visibles
+- BLOCK_CALLS : messages et alertes toujours visibles
+
+### OBD
+- `BLOCK_APPLIED {plate, level}` — émis à chaque blockPlate()
 
 ### Invariants
+- INV-COM-004 : Un blocage interdit toute communication
 - INV-COM-014 : BLOCKED > TRUSTED (le blocage prime toujours)
+- INV-COM-019 : Un blocage possède toujours un périmètre défini
+- INV-COM-021 : Toute décision de blocage est observable dans l'OBD
 - B n'est jamais informé du blocage (privé pour A par conception)
 
 ### Décision ouverte DA-004
@@ -153,7 +173,23 @@ BLOCKED > TRUSTED > CONTEXTE > TOUT > PERSONNE
 
 ---
 
-## 7. Ce qui n'existe pas (par choix)
+## 7. Trust Engine formel (SESSION 24)
+
+Voir `architecture/TRUST-ENGINE.md` pour la spécification complète des 4 niveaux.
+
+```javascript
+TRUST_LEVELS = { NONE, CONTEXTUAL, CONTACT, PERMANENT }
+BLOCK_LEVELS = { NONE, MESSAGES, CALLS, ALL }
+```
+
+Fonctions disponibles via `window.ImmatMessages` :
+- `getBlockLevel(plate)` → BLOCK_NONE | BLOCK_MESSAGES | BLOCK_CALLS | BLOCK_ALL
+- `getTrustLevel(plate)` → TRUST_NONE | TRUST_CONTACT
+- `TRUST_LEVELS` · `BLOCK_LEVELS` (constantes exportées)
+
+---
+
+## 8. Ce qui n'existe pas (par choix)
 
 - Pas de score public visible par les autres (D-004 / DR-001 rejeté)
 - Pas de réputation personnelle partagée
