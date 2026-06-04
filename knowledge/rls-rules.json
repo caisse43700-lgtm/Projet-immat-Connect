@@ -1,0 +1,176 @@
+{
+  "_v": 1,
+  "_role": "Documentation Row Level Security par table Supabase — isolation utilisateur",
+  "_rule": "Chaque table active doit avoir RLS activé. Aucun utilisateur ne lit/modifie les données privées d'un autre.",
+  "_ref": "SESSION OBD-003e — Audit RLS §12",
+  "tables": [
+    {
+      "name": "profiles",
+      "rls_enabled": true,
+      "policies": [
+        {
+          "id": "RLS-PROF-001",
+          "type": "SELECT",
+          "rule": "Tout conducteur authentifié peut lire les profils publics (plaque, pseudo, couleur)",
+          "check": "auth.role() = 'authenticated'",
+          "rationale": "Nécessaire pour afficher les autres conducteurs sur la carte"
+        },
+        {
+          "id": "RLS-PROF-002",
+          "type": "UPDATE",
+          "rule": "Seul le propriétaire peut modifier son profil",
+          "check": "owner_plate = auth.uid()",
+          "rationale": "INV-006 — plaque immuable après création"
+        },
+        {
+          "id": "RLS-PROF-003",
+          "type": "INSERT",
+          "rule": "Seul l'utilisateur authentifié peut créer son propre profil",
+          "check": "owner_plate = auth.uid()",
+          "rationale": "Un conducteur ne peut pas créer un profil au nom d'un autre"
+        }
+      ],
+      "isolation_guarantees": [
+        "A ne peut pas modifier le profil de B",
+        "Plaque immuable après création (INV-006)",
+        "Pas d'accès aux données privées (téléphone) d'un autre conducteur"
+      ],
+      "public_columns": ["owner_plate", "pseudo", "vehicle_color"],
+      "private_columns": ["phone"]
+    },
+    {
+      "name": "messages",
+      "rls_enabled": true,
+      "policies": [
+        {
+          "id": "RLS-MSG-001",
+          "type": "SELECT",
+          "rule": "Seuls sender_id et receiver_id peuvent lire un message",
+          "check": "sender_id = auth.uid() OR receiver_id = auth.uid()",
+          "rationale": "Messages strictement privés — B ne lit pas A↔C"
+        },
+        {
+          "id": "RLS-MSG-002",
+          "type": "INSERT",
+          "rule": "Seul l'expéditeur authentifié peut créer un message",
+          "check": "sender_id = auth.uid()",
+          "rationale": "Empêche l'usurpation d'identité"
+        },
+        {
+          "id": "RLS-MSG-003",
+          "type": "DELETE",
+          "rule": "Aucun DELETE autorisé — soft-delete localStorage uniquement",
+          "check": "false",
+          "rationale": "INV-COM-009 — pas de suppression DB sans consentement explicite"
+        }
+      ],
+      "isolation_guarantees": [
+        "A ne lit pas les messages privés B↔C",
+        "Pas de DELETE DB (INV-COM-009)",
+        "Soft-delete via ic_deleted_msgs localStorage uniquement"
+      ]
+    },
+    {
+      "name": "call_requests",
+      "rls_enabled": true,
+      "policies": [
+        {
+          "id": "RLS-CALL-001",
+          "type": "SELECT",
+          "rule": "caller_id ou callee_id peut lire la demande d'appel",
+          "check": "caller_id = auth.uid() OR callee_id = auth.uid()",
+          "rationale": "Les deux parties concernées ont accès à leur demande"
+        },
+        {
+          "id": "RLS-CALL-002",
+          "type": "INSERT",
+          "rule": "Seul le demandeur peut créer une demande d'appel",
+          "check": "caller_id = auth.uid()",
+          "rationale": "Via Edge Function create-call-request uniquement"
+        },
+        {
+          "id": "RLS-CALL-003",
+          "type": "UPDATE",
+          "rule": "Seul le callee peut répondre (accept/refuse) — via Edge Function respond-call-request",
+          "check": "callee_id = auth.uid()",
+          "rationale": "A ne peut pas accepter/refuser au nom de B"
+        }
+      ],
+      "isolation_guarantees": [
+        "A ne peut pas répondre à un appel destiné à B",
+        "Cooldown 5 minutes après refus (trigger DB)",
+        "can_receive_calls() RPC vérifie DND + niveau autorisation (INV-COM-003)"
+      ]
+    },
+    {
+      "name": "reports",
+      "rls_enabled": true,
+      "policies": [
+        {
+          "id": "RLS-REP-001",
+          "type": "SELECT",
+          "rule": "Signalements route/aide/SOS visibles par tous conducteurs authentifiés (community). Véhicule = auteur uniquement.",
+          "check": "category IN ('route','help','sos') AND status != 'deleted' OR plate = auth.uid()",
+          "rationale": "Route/aide = broadcast communauté. Véhicule = privé entre émetteur et cible."
+        },
+        {
+          "id": "RLS-REP-002",
+          "type": "INSERT",
+          "rule": "Seul l'auteur authentifié peut créer un signalement",
+          "check": "plate = auth.uid()",
+          "rationale": "Empêche la création de faux signalements au nom d'un autre"
+        },
+        {
+          "id": "RLS-REP-003",
+          "type": "UPDATE",
+          "rule": "Seul l'auteur peut mettre à jour son signalement (résoudre, confirmer)",
+          "check": "plate = auth.uid()",
+          "rationale": "B ne peut pas résoudre un signalement créé par A"
+        }
+      ],
+      "isolation_guarantees": [
+        "Signalements véhicule non visibles comme community broadcast",
+        "Auteur seul peut modifier/résoudre son signalement",
+        "Conducteur ne lit pas les diagnostics internes (gardien uniquement)"
+      ]
+    },
+    {
+      "name": "call_preferences",
+      "rls_enabled": true,
+      "policies": [
+        {
+          "id": "RLS-CPREF-001",
+          "type": "SELECT",
+          "rule": "Chaque conducteur lit uniquement ses propres préférences",
+          "check": "owner_plate = auth.uid()",
+          "rationale": "Niveau autorisation d'appel strictement privé"
+        },
+        {
+          "id": "RLS-CPREF-002",
+          "type": "UPDATE",
+          "rule": "Seul le propriétaire peut modifier ses préférences d'appel",
+          "check": "owner_plate = auth.uid()",
+          "rationale": "B ne peut pas modifier le niveau d'autorisation de A"
+        }
+      ],
+      "isolation_guarantees": [
+        "Niveau d'autorisation d'appel strictement privé",
+        "Mode DND strictement privé"
+      ]
+    }
+  ],
+  "gardien_access": {
+    "role": "gardien",
+    "rpc": "get_my_role()",
+    "access": [
+      "Lecture agrégats anonymisés — jamais données individuelles non consenties",
+      "Accès diagnostics organisme via ImmatOrganism.diagnose()",
+      "Pas d'accès messages privés ni call_requests d'autres conducteurs"
+    ]
+  },
+  "conducteur_restrictions": [
+    "Jamais accès aux diagnostics internes (ORGANISM_COHERENCE_SCORE, etc.)",
+    "Jamais lecture des call_preferences d'un autre conducteur",
+    "Jamais lecture des messages privés d'une autre paire"
+  ]
+}

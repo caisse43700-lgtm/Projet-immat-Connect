@@ -60,9 +60,9 @@
     },
     {
       "id": "INV-COM-010",
-      "name": "Aucune donnée privée ne remonte au Dashboard Gardien",
-      "rule": "Le Dashboard Gardien ne voit que des métriques agrégées. Aucun contenu de message ni identité de correspondant n'est exposé.",
-      "check": "OBD.observe() — payload anonymisé uniquement"
+      "name": "Présence ≠ Géolocalisation",
+      "rule": "La présence d'un conducteur sur la carte ne transmet pas sa géolocalisation exacte aux autres. Seule la zone ou le snapshot agrégé est partagé, jamais les coordonnées GPS brutes (myLat/myLng).",
+      "check": "snapshot Ange : myLat/myLng absents du payload — présence sans géolocalisation"
     },
     {
       "id": "INV-COM-011",

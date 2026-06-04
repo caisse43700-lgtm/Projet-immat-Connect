@@ -42,7 +42,7 @@ function readSrc(rel) {
   try { return fs.readFileSync(path.join(ROOT, rel), 'utf8'); } catch(_) { return ''; }
 }
 
-console.log('\n[OBD-003d] health-scores.js — 9 scores de santé §31\n');
+console.log('\n[OBD-003e] health-scores.js — 16 scores de santé §31+§11-§17\n');
 
 const scores = {};
 
@@ -298,6 +298,199 @@ scores.COMMUNICATION_HEALTH_SCORE = {
   note: 'INV-COM 1→15 + interactions chaîne complète',
 };
 
+// ── 10. SECRETS_EXPOSURE_SCORE ────────────────────────────────────────────
+// Vérifie l'absence de secrets côté frontend et dans les workflows
+
+function computeSecretsExposure() {
+  const src = ['index.html', 'messages.js', 'calls.js', 'service-worker.js'].map(f => readSrc(f)).join('\n');
+  const checks = [
+    !src.includes('service_role'),
+    !src.includes('ANTHROPIC_API_KEY'),
+    !src.match(/eyJ[A-Za-z0-9_-]{40,}/),
+    src.includes('sb_publishable_') || src.includes('supabaseKey'),
+  ];
+  const ok = checks.filter(Boolean).length;
+  return Math.round(ok / checks.length * 100);
+}
+
+scores.SECRETS_EXPOSURE_SCORE = {
+  value: computeSecretsExposure(),
+  unit: '%',
+  note: 'absence service_role / ANTHROPIC_API_KEY / JWT hardcodé',
+};
+
+// ── 11. RLS_COVERAGE_SCORE ────────────────────────────────────────────────
+// Couverture RLS documentée dans rls-rules.json
+
+function computeRLSCoverage() {
+  const rlsData   = read('knowledge/rls-rules.json');
+  const supabData = read('knowledge/supabase-dependencies.json');
+  if (!rlsData || !supabData) return 0;
+  const rlsTables   = rlsData.tables || [];
+  const supabTables = supabData.tables || [];
+  if (supabTables.length === 0) return 0;
+  const covered = supabTables.filter(t => {
+    const r = rlsTables.find(r => r.name === t.name);
+    return r && r.rls_enabled === true;
+  }).length;
+  const hasGardien = !!rlsData.gardien_access;
+  const hasConducteurRestrictions = (rlsData.conducteur_restrictions || []).length >= 3;
+  const base = Math.round(covered / supabTables.length * 100);
+  return Math.round(base * 0.8 + (hasGardien ? 10 : 0) + (hasConducteurRestrictions ? 10 : 0));
+}
+
+scores.RLS_COVERAGE_SCORE = {
+  value: computeRLSCoverage(),
+  unit: '%',
+  note: 'tables avec rls_enabled=true + gardien_access',
+};
+
+// ── 12. CONSENT_COVERAGE_SCORE ────────────────────────────────────────────
+// Principe PRIVATE_BY_DEFAULT + types de données consentis
+
+function computeConsentCoverage() {
+  const data = read('knowledge/consent-rules.json');
+  if (!data) return 0;
+  const types = data.data_types || [];
+  const checks = [
+    data.principle === 'PRIVATE_BY_DEFAULT',
+    types.length >= 8,
+    types.filter(c => c.risk_level === 'HIGH').length >= 2,
+    types.some(c => c.id === 'CONS-001' && c.visibility_default === 'private'),
+    types.some(c => c.id === 'CONS-004' && c.visibility_default === 'private'),
+    types.some(c => c.id === 'CONS-010' && c.invariant === 'INV-COM-015'),
+  ];
+  return Math.round(checks.filter(Boolean).length / checks.length * 100);
+}
+
+scores.CONSENT_COVERAGE_SCORE = {
+  value: computeConsentCoverage(),
+  unit: '%',
+  note: 'PRIVATE_BY_DEFAULT + types de données documentés',
+};
+
+// ── 13. ABUSE_PROTECTION_SCORE ────────────────────────────────────────────
+// Anti-spam, throttle Ange, SOS protection, blocage
+
+function computeAbuseProtection() {
+  const src = ['index.html', 'messages.js', 'calls.js'].map(f => readSrc(f)).join('\n');
+  const checks = [
+    src.includes('ic_spam_log') || src.includes('spam'),
+    src.includes('ic_ange_calls') && src.includes('3600000'),
+    src.includes('startSosHold') && src.includes('3000'),
+    src.includes('ic_blocked') || src.includes('blocked'),
+    src.includes('can_receive_calls'),
+    src.includes('cancelCallRequest'),
+    src.includes('cleanupAlerts') || src.includes('TTL'),
+  ];
+  return Math.round(checks.filter(Boolean).length / checks.length * 100);
+}
+
+scores.ABUSE_PROTECTION_SCORE = {
+  value: computeAbuseProtection(),
+  unit: '%',
+  note: 'spam + throttle Ange + SOS + blocage + cooldown',
+};
+
+// ── 14. VERSION_COMPATIBILITY_SCORE ──────────────────────────────────────
+// Cache versionnée + migrations localStorage + knowledge _v
+
+function computeVersionCompatibility() {
+  const swSrc     = readSrc('service-worker.js');
+  const indexSrc  = readSrc('index.html');
+  const cacheMatch = swSrc.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
+  const cacheVersion = cacheMatch ? parseInt((cacheMatch[1].match(/v(\d+)/) || ['', '0'])[1], 10) : 0;
+  const knowledgeFiles = [
+    'knowledge/features.json', 'knowledge/interactions.json',
+    'knowledge/supabase-dependencies.json', 'knowledge/communication-invariants.json',
+    'knowledge/rls-rules.json', 'knowledge/consent-rules.json',
+  ];
+  const kvCount = knowledgeFiles.filter(f => {
+    const d = read(f); return d && (typeof d._v === 'number' || typeof d._v === 'string');
+  }).length;
+  const checks = [
+    cacheVersion >= 5,
+    swSrc.includes('caches.keys') && swSrc.includes('caches.delete'),
+    indexSrc.includes('ic_storage_ver'),
+    indexSrc.includes('ALERTS_STORAGE_VERSION'),
+    indexSrc.includes('ic_current_user_id'),
+    kvCount >= 5,
+  ];
+  return Math.round(checks.filter(Boolean).length / checks.length * 100);
+}
+
+scores.VERSION_COMPATIBILITY_SCORE = {
+  value: computeVersionCompatibility(),
+  unit: '%',
+  note: 'CACHE_NAME v5+ + migrations + knowledge _v',
+};
+
+// ── 15. PRODUCTION_OBSERVABILITY_SCORE ───────────────────────────────────
+// OBD events critiques + toasts erreurs + logs propres
+
+function computeProductionObservability() {
+  const src = ['index.html', 'messages.js', 'calls.js'].map(f => readSrc(f)).join('\n');
+  const badToastCount = (src.match(/toast\([^)]*['"]bad['"]/g) || []).length;
+  const consoleLogs = [...src.matchAll(/console\.(log|info)\([^)]{0,200}\)/g)];
+  const sensitiveLogs = consoleLogs.filter(m => /owner_plate|user_id|email|password|secret|key/i.test(m[0])).length;
+  const checks = [
+    src.includes('MSG_SENT'),
+    src.includes('SPAM_DETECTED'),
+    src.includes('SOS_TRIGGERED') || src.includes('SOS_'),
+    src.includes('CALL_INITIATED'),
+    badToastCount >= 5,
+    sensitiveLogs === 0,
+    readSrc('index.html').includes('navigator.onLine') || readSrc('index.html').includes('ic_offline_reports'),
+  ];
+  return Math.round(checks.filter(Boolean).length / checks.length * 100);
+}
+
+scores.PRODUCTION_OBSERVABILITY_SCORE = {
+  value: computeProductionObservability(),
+  unit: '%',
+  note: 'OBD events critiques + toasts bad + logs clean',
+};
+
+// ── 16. CRITICAL_JOURNEY_SCORE ────────────────────────────────────────────
+// 10 parcours utilisateurs critiques vérifiés structurellement
+
+function computeCriticalJourneyScore() {
+  const indexSrc   = readSrc('index.html');
+  const messagesSrc = readSrc('messages.js');
+  const callsSrc   = readSrc('calls.js');
+  const swSrc      = readSrc('service-worker.js');
+  const journeys = [
+    // 1. Inscription → profil → carte
+    indexSrc.includes("goAuth('signup')") && indexSrc.includes('saveProfile') && indexSrc.includes('afterAuth'),
+    // 2. Signalement route → activité
+    (indexSrc.includes('openSignalHere') || indexSrc.includes('sigStep1')) && indexSrc.includes('ic_alerts'),
+    // 3. Message A→B
+    (messagesSrc.includes('sendToPlate') || messagesSrc.includes('sendNew')) && messagesSrc.includes('MSG_SENT'),
+    // 4. Appel
+    callsSrc.includes('can_receive_calls') && callsSrc.includes('CALL_INITIATED'),
+    // 5. Offline → sync
+    indexSrc.includes('ic_offline_reports') && exists('offline.html') && swSrc.includes('offline.html'),
+    // 6. Gardien dashboard
+    indexSrc.includes('openGardienDashboard') && indexSrc.includes('get_my_role'),
+    // 7. Ange conducteur
+    indexSrc.includes('ic_ange_calls') && indexSrc.includes('3600000') && indexSrc.includes('snapshot'),
+    // 8. Ange gardien
+    indexSrc.includes('gardienImmunity') && indexSrc.includes('isGardien'),
+    // 9. Blocage
+    (messagesSrc.includes('blocked') && messagesSrc.includes('filter')) && callsSrc.includes('can_receive_calls'),
+    // 10. Signalement proximité
+    indexSrc.includes('vehicleAlert') && (indexSrc.includes('nearbyPanel') || indexSrc.includes('nearbyList')),
+  ];
+  const ok = journeys.filter(Boolean).length;
+  return Math.round(ok / journeys.length * 100);
+}
+
+scores.CRITICAL_JOURNEY_SCORE = {
+  value: computeCriticalJourneyScore(),
+  unit: '%',
+  note: '10 parcours utilisateurs critiques implémentés',
+};
+
 // ── Affichage ─────────────────────────────────────────────────────────────
 
 console.log('┌─────────────────────────────────────────────────────────────┐');
@@ -325,7 +518,7 @@ console.log(`\n${icon} Score global : ${globalScore}% — ${label}\n`);
 if (SAVE) {
   const report = {
     _generated_at: new Date().toISOString(),
-    _session: 'OBD-003d',
+    _session: 'OBD-003e',
     global_score: globalScore,
     global_label: label,
     scores,

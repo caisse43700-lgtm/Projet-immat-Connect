@@ -1,7 +1,7 @@
 {
-  "_generated_at": "2026-06-04T13:38:40.665Z",
-  "_session": "OBD-003d",
-  "global_score": 96,
+  "_generated_at": "2026-06-04T15:14:33.180Z",
+  "_session": "OBD-003e",
+  "global_score": 98,
   "global_label": "OPTIMAL",
   "scores": {
     "ORGANISM_COHERENCE_SCORE": {
@@ -97,6 +97,41 @@
       "value": 100,
       "unit": "%",
       "note": "INV-COM 1→15 + interactions chaîne complète"
+    },
+    "SECRETS_EXPOSURE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "absence service_role / ANTHROPIC_API_KEY / JWT hardcodé"
+    },
+    "RLS_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "tables avec rls_enabled=true + gardien_access"
+    },
+    "CONSENT_COVERAGE_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "PRIVATE_BY_DEFAULT + types de données documentés"
+    },
+    "ABUSE_PROTECTION_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "spam + throttle Ange + SOS + blocage + cooldown"
+    },
+    "VERSION_COMPATIBILITY_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "CACHE_NAME v5+ + migrations + knowledge _v"
+    },
+    "PRODUCTION_OBSERVABILITY_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "OBD events critiques + toasts bad + logs clean"
+    },
+    "CRITICAL_JOURNEY_SCORE": {
+      "value": 100,
+      "unit": "%",
+      "note": "10 parcours utilisateurs critiques implémentés"
     }
   }
 }

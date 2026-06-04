@@ -1,0 +1,109 @@
+{
+  "_v": 1,
+  "_role": "Règles de consentement par type de donnée — Privé par défaut, partage explicite seulement",
+  "_rule": "PRIVATE_BY_DEFAULT. Aucune donnée partagée sans action explicite du conducteur.",
+  "_ref": "SESSION OBD-003e — Audit Consentement §13",
+  "principle": "PRIVATE_BY_DEFAULT",
+  "data_types": [
+    {
+      "id": "CONS-001",
+      "data": "position GPS",
+      "visibility_default": "private",
+      "shared_with": "nobody",
+      "consent_mechanism": "Position jamais transmise aux autres conducteurs en direct. Présence sur carte si connecté (non masquée) = uniquement plaque + couleur, pas les coordonnées exactes.",
+      "invariant": "INV-COM-010",
+      "privacy_control": "ic_invisible=1 → masqué de la carte",
+      "risk_level": "HIGH"
+    },
+    {
+      "id": "CONS-002",
+      "data": "plaque immatriculation",
+      "visibility_default": "semi-public",
+      "shared_with": "conducteurs proches connectés",
+      "consent_mechanism": "Consentement explicite lors de la création du profil. Plaque immuable après validation (INV-006).",
+      "invariant": "INV-006",
+      "privacy_control": "Mode invisible masque la plaque sur la carte",
+      "risk_level": "MEDIUM"
+    },
+    {
+      "id": "CONS-003",
+      "data": "statut de présence",
+      "visibility_default": "private",
+      "shared_with": "conducteurs en conversation active uniquement",
+      "consent_mechanism": "Choix explicite via panelSettings → Présence : disponible/conduite/occupé/invisible/hors-ligne.",
+      "invariant": "INV-COM-010",
+      "privacy_control": "ic_presence, ic_invisible",
+      "risk_level": "LOW"
+    },
+    {
+      "id": "CONS-004",
+      "data": "numéro de téléphone",
+      "visibility_default": "private",
+      "shared_with": "nobody — jamais partagé automatiquement",
+      "consent_mechanism": "Stocké uniquement dans profiles.phone — non exposé dans les queries frontend",
+      "invariant": "INV-COM-010",
+      "privacy_control": "RLS-PROF-001 n'expose pas phone dans SELECT public",
+      "risk_level": "HIGH"
+    },
+    {
+      "id": "CONS-005",
+      "data": "messages privés",
+      "visibility_default": "private",
+      "shared_with": "sender et receiver uniquement",
+      "consent_mechanism": "Message envoyé volontairement. Destinataire connu avant envoi. Pas de forward automatique.",
+      "invariant": "INV-COM-001",
+      "privacy_control": "RLS-MSG-001. Soft-delete ic_deleted_msgs local.",
+      "risk_level": "HIGH"
+    },
+    {
+      "id": "CONS-006",
+      "data": "signalements route/aide",
+      "visibility_default": "community",
+      "shared_with": "tous conducteurs proches",
+      "consent_mechanism": "Acte explicite : bouton Signaler → choix type → Envoyer. Le conducteur sait que le signalement est public.",
+      "invariant": "INV-COM-011",
+      "privacy_control": "TTL automatique (30–120 min selon catégorie). Auteur peut résoudre.",
+      "risk_level": "LOW"
+    },
+    {
+      "id": "CONS-007",
+      "data": "signalements véhicule (alerte vers cible)",
+      "visibility_default": "directed",
+      "shared_with": "conducteur ciblé uniquement",
+      "consent_mechanism": "Acte explicite : menu véhicule → Signaler → choix type → Envoyer vers plaque cible.",
+      "invariant": "INV-COM-011",
+      "privacy_control": "Non community broadcast. RLS-REP-001.",
+      "risk_level": "LOW"
+    },
+    {
+      "id": "CONS-008",
+      "data": "niveau de confiance attribué à un pair",
+      "visibility_default": "private",
+      "shared_with": "nobody — local uniquement",
+      "consent_mechanism": "Attribution explicite via menu conducteur → Faire confiance. Stocké ic_trust localStorage uniquement.",
+      "invariant": "INV-COM-014",
+      "privacy_control": "ic_trust localStorage — jamais synchronisé DB",
+      "risk_level": "LOW"
+    },
+    {
+      "id": "CONS-009",
+      "data": "demande de contact audio (appel)",
+      "visibility_default": "directed",
+      "shared_with": "callee uniquement",
+      "consent_mechanism": "Appel initié explicitement. Callee peut refuser. can_receive_calls() vérifié (INV-COM-003). Consentement double obligatoire.",
+      "invariant": "INV-COM-003",
+      "privacy_control": "ic_call_perm, ic_dnd. CONTR-001 : blocage > confiance.",
+      "risk_level": "MEDIUM"
+    },
+    {
+      "id": "CONS-010",
+      "data": "contexte Ange (snapshot anonymisé)",
+      "visibility_default": "edge-function-only",
+      "shared_with": "Edge Function immat-brain-dialog uniquement",
+      "consent_mechanism": "Envoyé uniquement lors d'une question Ange explicite. Payload anonymisé : speed_cat, panel, driving, nearby_count. Jamais plaque, jamais contenu message.",
+      "invariant": "INV-COM-015",
+      "privacy_control": "INV-COM-010 + INV-COM-015. Throttle 10/heure.",
+      "risk_level": "LOW"
+    }
+  ]
+}
