@@ -68,6 +68,8 @@ function loadKnowledge() {
     // DAM-COMMUNICATION Phase 1
     'icSearchBar', 'icContextCard', 'callLevelSelector', 'presenceSelector', 'dndHours',
     'icThread', 'icCallLog',
+    // SESSION 19 — Bottom sheet menu thread
+    'icSheetBackdrop', 'icBottomSheet', 'icSheetFav', 'icSheetArch', 'icSheetTrust', 'icSheetDel',
   ]);
 
   // Événements OBD (ImmatOrganism.observe) connus
@@ -109,7 +111,7 @@ function loadKnowledge() {
     // DAM-COMMUNICATION Phase 1 — F-SPAM-PROTECTION
     'SPAM_DETECTED',
     // DAM-COMMUNICATION Phase 1 — F-FAVORITES / F-ARCHIVE / F-SEARCH
-    'CONV_FAVORITED', 'CONV_ARCHIVED', 'CONV_SEARCHED',
+    'CONV_FAVORITED', 'CONV_ARCHIVED', 'CONV_SEARCHED', 'CONV_DELETED',
     // DAM-COMMUNICATION Phase 1 — F-PRESENCE
     'PRESENCE_CHANGED',
     // F-PROXIMITY-SIGNAL

@@ -809,6 +809,7 @@ async function deleteThread(plate){
   ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
+  try{ window.ImmatOrganism?.observe?.('CONV_DELETED',{plate:target,_src:'ImmatConnect/messages/deleteThread'}); }catch(e){}
   closeThread();
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
@@ -1138,7 +1139,7 @@ window.ImmatMessages = {
   openThreadMenu,
   closeSheet,
   _sheetAction,
-  _unarchiveFromList: (plate) => { unarchiveConv(plate); render(); },
+  _unarchiveFromList: (plate) => { unarchiveConv(plate); },
   setTrust,
   getTrust,
   favoriteConv,
