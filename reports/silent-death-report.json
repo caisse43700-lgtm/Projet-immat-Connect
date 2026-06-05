@@ -1,0 +1,227 @@
+{
+  "_generated_at": "2026-06-04T13:19:28.550Z",
+  "_rule": "SILENT_DEATH",
+  "_session": "OBD-003d",
+  "orphan_flows": [
+    {
+      "id": "FLOW-CALL-CONTEXT",
+      "intention": "Initier ou répondre à un appel dans le contexte d'un signalement actif."
+    },
+    {
+      "id": "FLOW-BLOCK",
+      "intention": "Bloquer tout contact d'un conducteur (messages + appels + notifications)."
+    },
+    {
+      "id": "FLOW-ANGE-CALL",
+      "intention": "Permettre à l'Ange d'accompagner le conducteur dans ses décisions de communicati"
+    },
+    {
+      "id": "FLOW-ANGE-CONVERSATION",
+      "intention": "Permettre à l'Ange d'ouvrir ou retrouver une conversation par plaque à la voix."
+    },
+    {
+      "id": "FLOW-ANGE-TRUST",
+      "intention": "Permettre à l'Ange d'expliquer les niveaux de confiance et d'orienter vers le ré"
+    },
+    {
+      "id": "FLOW-ANGE-SIGNAL",
+      "intention": "Permettre à l'Ange de déclencher ou orienter un signalement selon le contexte ac"
+    },
+    {
+      "id": "FLOW-ANGE-NAVIGATE",
+      "intention": "Permettre à l'Ange d'orienter le conducteur dans la navigation GPS ou la carte."
+    }
+  ],
+  "orphan_intentions": [
+    {
+      "id": "INT-CALL-DRIVER",
+      "besoin": "Je veux appeler un conducteur via une demande de contact"
+    },
+    {
+      "id": "INT-ANSWER-CALL",
+      "besoin": "Je veux accepter une demande de contact entrant"
+    },
+    {
+      "id": "INT-REFUSE-CALL",
+      "besoin": "Je veux refuser une demande de contact"
+    },
+    {
+      "id": "INT-END-CALL",
+      "besoin": "Je veux mettre fin à un appel"
+    },
+    {
+      "id": "INT-MISS-CALL",
+      "besoin": "Je veux voir les appels manqués"
+    },
+    {
+      "id": "INT-UNBLOCK-DRIVER",
+      "besoin": "Je veux débloquer un conducteur"
+    },
+    {
+      "id": "INT-CONTACT-FROM-ALERT",
+      "besoin": "Je veux contacter le conducteur qui m'a signalé une alerte"
+    },
+    {
+      "id": "INT-REPLY-TO-ALERT",
+      "besoin": "Je veux répondre à une alerte avec un message contextuel"
+    },
+    {
+      "id": "INT-CONTEXTUAL-CALL",
+      "besoin": "Je veux appeler un conducteur dans le contexte d'une alerte active"
+    }
+  ],
+  "phantom_features": [
+    {
+      "id": "F-PROXIMITY-SIGNAL",
+      "nom": "Signal de proximité véhicule"
+    }
+  ],
+  "dead_localStorage": [],
+  "silent_flows": [
+    {
+      "id": "FLOW-MAP-SELF-MARKER"
+    },
+    {
+      "id": "FLOW-VEHICLE-ALERT"
+    },
+    {
+      "id": "FLOW-ASSIST-REQUEST"
+    },
+    {
+      "id": "FLOW-DIRECT-MESSAGE"
+    },
+    {
+      "id": "FLOW-BADGES"
+    },
+    {
+      "id": "FLOW-GPS-NAVIGATION"
+    },
+    {
+      "id": "FLOW-ROAD-SIGNAL"
+    },
+    {
+      "id": "FLOW-CALL-REQUEST"
+    },
+    {
+      "id": "FLOW-SOS-EMERGENCY"
+    },
+    {
+      "id": "FLOW-ANGE-ASSISTANT"
+    },
+    {
+      "id": "FLOW-PROFILE-EDIT"
+    },
+    {
+      "id": "FLOW-CONVERSATION"
+    },
+    {
+      "id": "FLOW-MESSAGE"
+    },
+    {
+      "id": "FLOW-CALL"
+    },
+    {
+      "id": "FLOW-CALL-CONTEXT"
+    },
+    {
+      "id": "FLOW-TRUST"
+    },
+    {
+      "id": "FLOW-BLOCK"
+    },
+    {
+      "id": "FLOW-SEARCH"
+    },
+    {
+      "id": "FLOW-ARCHIVE"
+    },
+    {
+      "id": "FLOW-FAVORITE"
+    },
+    {
+      "id": "FLOW-PRESENCE"
+    },
+    {
+      "id": "FLOW-SPAM-PROTECTION"
+    },
+    {
+      "id": "FLOW-ANGE-CALL"
+    },
+    {
+      "id": "FLOW-PROXIMITY-SIGNAL"
+    },
+    {
+      "id": "FLOW-ANGE-CONVERSATION"
+    },
+    {
+      "id": "FLOW-ANGE-TRUST"
+    },
+    {
+      "id": "FLOW-ANGE-SIGNAL"
+    },
+    {
+      "id": "FLOW-ANGE-NAVIGATE"
+    }
+  ],
+  "never_emitted_events": [
+    "ALERT_SENT",
+    "ALERT_RESOLVED",
+    "ALERT_CONFIRMED",
+    "SOS_CANCELLED",
+    "AUTH_OK",
+    "MAP_LOCATED",
+    "REPORT_SENT",
+    "ASSIST_REQUESTED",
+    "ASSIST_RESOLVED",
+    "MSG_FAILED",
+    "CALL_RINGING",
+    "CALL_ENDED",
+    "CALL_MISSED",
+    "CALL_UNREACHABLE",
+    "BLOCK_CREATED",
+    "BLOCK_REMOVED",
+    "CONTEXT_GRANTED",
+    "CONTEXT_EXPIRED",
+    "PROXIMITY_SIGNAL_SENT",
+    "PROXIMITY_SIGNAL_RECEIVED",
+    "CONV_OPENED",
+    "CONV_CLOSED",
+    "CONV_UNARCHIVE",
+    "CONV_UNFAVORITE",
+    "MESSAGE_READ",
+    "MESSAGE_UNREAD",
+    "MESSAGE_RETRY",
+    "MESSAGE_SYNCED",
+    "MESSAGE_DELETED_LOCAL",
+    "MESSAGE_REPORTED",
+    "MESSAGE_FROM_ALERT",
+    "MESSAGE_FROM_CONTEXT",
+    "MESSAGE_FROM_CALL",
+    "QUICK_REPLY_USED",
+    "THREAD_RESTORED",
+    "THREAD_REFRESH",
+    "UNREAD_BADGE_UPDATED",
+    "CALL_TIMEOUT",
+    "CALL_CONNECTED",
+    "CALL_INTERRUPTED",
+    "CALL_NETWORK_LOST",
+    "CALL_RECONNECTED",
+    "CALL_PERMISSION_DENIED",
+    "CALL_TRUSTED",
+    "CALL_EMERGENCY",
+    "CALL_FROM_ALERT",
+    "CALL_FROM_MESSAGE",
+    "CALL_FROM_PROXIMITY_SIGNAL",
+    "NO_ORPHAN_FEATURE",
+    "UNDECLARED_APP_FUNCTION",
+    "UNDECLARED_PANEL",
+    "UNDECLARED_OBSERVE_EVENT",
+    "UNDECLARED_EDGE_FUNCTION",
+    "UNDECLARED_LOCALSTORAGE_KEY",
+    "SCAN_ERROR"
+  ],
+  "stats": {
+    "totalDeaths": 17,
+    "totalWarnings": 83
+  }
+}

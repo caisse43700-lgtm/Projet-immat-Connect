@@ -1,0 +1,88 @@
+{
+  "_generated_at": "2026-06-04T08:27:25.548Z",
+  "_rule": "ORPHAN_CHAIN",
+  "_session": "OBD-002b",
+  "_version": 1,
+  "features_checked": 11,
+  "coherence_score": {
+    "score": 100,
+    "label": "OPTIMAL",
+    "max_points": 66,
+    "deducted": 0
+  },
+  "stats": {
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "total": 0
+  },
+  "per_feature": {
+    "F-CARTE": {
+      "nom": "Carte temps réel",
+      "organe": "Carte",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-GPS": {
+      "nom": "Navigation GPS",
+      "organe": "Carte",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-SIGNAL-VEHICULE": {
+      "nom": "Alerte véhicule",
+      "organe": "Signalements",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-SIGNAL-ROUTE": {
+      "nom": "Signalement route",
+      "organe": "Signalements",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-ASSIST": {
+      "nom": "Demande d'aide",
+      "organe": "Signalements",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-MESSAGES": {
+      "nom": "Messages directs",
+      "organe": "Messages",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-ACTIVITE": {
+      "nom": "Activité (notifications)",
+      "organe": "Messages",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-APPEL": {
+      "nom": "Demandes de contact / Appels",
+      "organe": "Messages",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-SOS": {
+      "nom": "SOS urgence",
+      "organe": "Signalements",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-ANGE": {
+      "nom": "Ange IA",
+      "organe": "Ange",
+      "chain_complete": true,
+      "findings_count": 0
+    },
+    "F-PROFIL": {
+      "nom": "Profil conducteur",
+      "organe": "Profil",
+      "chain_complete": true,
+      "findings_count": 0
+    }
+  },
+  "findings": []
+}

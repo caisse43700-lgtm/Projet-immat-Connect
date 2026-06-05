@@ -1,0 +1,72 @@
+{
+  "_v": 1,
+  "_role": "Invariants du système immunitaire d'architecture — SESSION OBD-002b",
+  "_rule": "Ces invariants protègent la cohérence entre le code, l'organisme, les référentiels et l'OBD. Toute violation = dérive silencieuse.",
+  "_ref": "scripts/detect-orphan-chain.js, scripts/detect-orphan-features.js",
+  "invariants": [
+    {
+      "id": "INV-ORG-001",
+      "name": "Toute feature appartient à un organe",
+      "rule": "Chaque feature déclarée dans knowledge/features.json référence un organe existant dans knowledge/organs.json.",
+      "rule_id": "NO_ORPHAN_ORGAN",
+      "severity": "critical",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_ORGAN"
+    },
+    {
+      "id": "INV-ORG-002",
+      "name": "Toute feature possède une intention",
+      "rule": "Chaque feature est reliée à au moins une intention dans knowledge/intentions.json — via features.intentions[] ou organ.intentions[].",
+      "rule_id": "NO_ORPHAN_INTENTION",
+      "severity": "high",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_INTENTION"
+    },
+    {
+      "id": "INV-ORG-003",
+      "name": "Toute feature possède un flow",
+      "rule": "Chaque feature référence au moins un flow dans architecture/IMMAT-FLOW-INDEX.json via features.flows[].",
+      "rule_id": "NO_ORPHAN_FLOW",
+      "severity": "high",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_FLOW"
+    },
+    {
+      "id": "INV-ORG-004",
+      "name": "Toute feature possède un test",
+      "rule": "Chaque feature est référencée dans au moins un fichier du répertoire tests/ (par son ID F-X ou son flow FLOW-X).",
+      "rule_id": "NO_ORPHAN_TEST",
+      "severity": "medium",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_TEST"
+    },
+    {
+      "id": "INV-ORG-005",
+      "name": "Toute feature produit une observation OBD",
+      "rule": "Chaque feature déclenche au moins un appel window.ImmatOrganism?.observe?.() dans son code d'implémentation.",
+      "rule_id": "NO_ORPHAN_OBSERVATION",
+      "severity": "medium",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_OBSERVATION"
+    },
+    {
+      "id": "INV-ORG-006",
+      "name": "Toute feature est protégée par un invariant",
+      "rule": "L'organe responsable de la feature référence au moins un INV-* dans son champ constraints[].",
+      "rule_id": "NO_ORPHAN_INVARIANT",
+      "severity": "medium",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_INVARIANT"
+    },
+    {
+      "id": "INV-ORG-007",
+      "name": "Toute feature est documentée",
+      "rule": "Chaque feature a un champ description non vide et au moins une action dans features.json.",
+      "rule_id": "NO_ORPHAN_FEATURE",
+      "severity": "medium",
+      "check": "detect-orphan-features.js"
+    },
+    {
+      "id": "INV-ORG-008",
+      "name": "Aucune chaîne orpheline n'est autorisée en production",
+      "rule": "Le score de cohérence ORGANISM_COHERENCE_SCORE doit être ≥ 60% avant tout déploiement. Les findings HIGH bloquent le merge.",
+      "rule_id": "ORPHAN_CHAIN",
+      "severity": "critical",
+      "check": "detect-orphan-chain.js --check"
+    }
+  ]
+}

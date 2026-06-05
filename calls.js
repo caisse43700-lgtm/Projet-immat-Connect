@@ -24,6 +24,7 @@ const CallManager = (function () {
   let _chCalls = null;
   let _pendingCallId = null;
   let _visibilityBound = false;
+  const _missedCallIds = new Set();
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -111,8 +112,28 @@ const CallManager = (function () {
   }
 
   // ── Envoyer une demande d'appel ──────────────────────────────────
+  function _isCallBlocked(plate) {
+    const p = String(plate || '').replace(/[\s-]/g,'').toUpperCase();
+    if(!p) return false;
+    try{
+      const levels = JSON.parse(localStorage.getItem('ic_block_levels') || '{}');
+      const lv = levels[p];
+      if(lv === 'BLOCK_CALLS' || lv === 'BLOCK_ALL') return true;
+    }catch(e){}
+    try{
+      const blocked = JSON.parse(localStorage.getItem('ic_blocked') || '[]');
+      return blocked.includes(p);
+    }catch(e){}
+    return false;
+  }
+
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
+
+    if(_isCallBlocked(receiverPlate)){
+      _showCallsNotAllowed(receiverPlate);
+      return;
+    }
 
     // Vérifier call_preferences via RPC sécurisée (évite d'exposer la table)
     const { data: canCall, error: rpcErr } = await _sb
@@ -160,6 +181,7 @@ const CallManager = (function () {
 
     _pendingCallId = data.id;
     _showSentBanner(receiverPlate, data.id);
+    try{ window.ImmatOrganism?.observe?.('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'}); }catch(e){}
   }
 
   // ── Accepter ─────────────────────────────────────────────────────
@@ -176,6 +198,7 @@ const CallManager = (function () {
       .maybeSingle();
     if (data?.requester_plate) {
       try { window.App?.actOpenConv?.(data.requester_plate); } catch (e) {}
+      try{ window.ImmatOrganism?.observe?.('CALL_ACCEPTED', {with: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'}); }catch(e){}
     }
     if (error) console.warn('acceptCall UPDATE error', error);
   }
@@ -190,6 +213,7 @@ const CallManager = (function () {
       .eq('id', requestId)
       .eq('receiver_id', _uid)
       .eq('status', 'pending');
+    try{ window.ImmatOrganism?.observe?.('CALL_REFUSED', {requestId, _src:'ImmatConnect/calls/refuseCall'}); }catch(e){}
   }
 
   // ── Annuler une demande envoyée ───────────────────────────────────
@@ -203,6 +227,7 @@ const CallManager = (function () {
       .eq('requester_id', _uid)
       .eq('status', 'pending');
     _pendingCallId = null;
+    try{ window.ImmatOrganism?.observe?.('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'}); }catch(e){}
   }
 
   // ── Réabonnement realtime ────────────────────────────────────────
@@ -259,7 +284,14 @@ const CallManager = (function () {
     popup.dataset.requestId = req.id;
     popup.classList.add('show');
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
-    if (ms > 0) setTimeout(() => popup.classList.remove('show'), ms);
+    if (ms > 0) setTimeout(() => {
+      popup.classList.remove('show');
+      if(!_missedCallIds.has(req.id)){
+        _missedCallIds.add(req.id);
+        try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+      }
+    }, ms);
+    try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
   }
 
   function _hideIncomingPopup() {
@@ -324,6 +356,24 @@ const CallManager = (function () {
     });
   }
 
+  // ── Journal d'appels ─────────────────────────────────────────────
+  async function loadCallLog(limit) {
+    if (!_sb || !_uid) return [];
+    const { data } = await _sb
+      .from('call_requests')
+      .select('id, requester_id, requester_plate, receiver_plate, status, created_at')
+      .or(`requester_id.eq.${_uid},receiver_id.eq.${_uid}`)
+      .order('created_at', { ascending: false })
+      .limit(limit || 50);
+    return (data || []).map(r => ({
+      id: r.id,
+      outgoing: r.requester_id === _uid,
+      plate: r.requester_id === _uid ? (r.receiver_plate || '?') : (r.requester_plate || '?'),
+      status: r.status,
+      at: r.created_at,
+    }));
+  }
+
   // ── API publique ─────────────────────────────────────────────────
   return {
     init,
@@ -339,5 +389,7 @@ const CallManager = (function () {
     closeNotAllowedModal,
     loadCallPreferences,
     setCallPreferences,
+    loadCallLog,
+    isCallBlocked: _isCallBlocked,
   };
 })();

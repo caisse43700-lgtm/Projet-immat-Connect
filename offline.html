@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImmatConnect — Hors ligne</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0f1a;color:#e0e7ef;font-family:system-ui,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       min-height:100vh;padding:24px;text-align:center}
+  .icon{font-size:64px;margin-bottom:16px}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;color:#fff}
+  p{color:#8899aa;font-size:15px;line-height:1.5;max-width:320px}
+  .btn{display:inline-block;margin-top:24px;padding:12px 28px;
+       background:#1a56db;color:#fff;border-radius:8px;text-decoration:none;
+       font-weight:600;font-size:15px;cursor:pointer;border:none}
+  .btn:active{opacity:.8}
+</style>
+</head>
+<body>
+<div class="icon">🚗</div>
+<h1>Vous êtes hors ligne</h1>
+<p>ImmatConnect nécessite une connexion réseau pour fonctionner. Vérifiez votre connexion et réessayez.</p>
+<button class="btn" onclick="location.reload()">Réessayer</button>
+</body>
+</html>

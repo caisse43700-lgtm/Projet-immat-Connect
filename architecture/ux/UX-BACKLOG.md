@@ -1,19 +1,20 @@
+# Amélioration Navigation Fonctionnalités
+
 # UX-BACKLOG — ImmatConnect
-> Source : UX-DECISIONS.md · UX-FRICTIONS.json · INVENTAIRE-PRODUIT.md Phase 9 · AUDIT-2026-06.md · UX-INTERACTION-SKELETON.md
+> Source : UX-DECISIONS.md · UX-FRICTIONS.json · INVENTAIRE-PRODUIT.md Phase 9 · AUDIT-2026-06.md · UX-001-AUDIT-ETAT-REEL.md
 > Statut de chaque item : ✅ fait · 🔧 à implémenter · 💬 à décider · 🔲 futur
+> Dernière mise à jour : 2026-06-04 (SESSION 22 — correction statuts stales)
 
 ---
 
 ## P0 — Bloquants utilisateur
 
-Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
-
 | ID | Item | Friction | Statut |
 |---|---|---|---|
-| P0-001 | Cycle aide sans confirmation helper | FRI-009 | 💬 à concevoir |
+| P0-001 | Cycle aide : confirmation retour helper | FRI-009 | ✅ fait (SESSION 22 — toast + OBD HELP_RESPONDED) |
 | P0-002 | Retour émetteur quand alerte véhicule vue | JRN-005 | ✅ fait (SESSION 19 — broadcast vehicle_seen) |
 | P0-003 | Pas de confirmation lecture message | FRI-006 | 💬 à concevoir (P2) |
-| P0-004 | `App.callSignalPlate()` inexistante — ReferenceError si appelée | MORT-001 | ✅ fait (SESSION 12) |
+| P0-004 | `App.callSignalPlate()` inexistante — ReferenceError | MORT-001 | ✅ fait (SESSION 12) |
 
 ---
 
@@ -60,8 +61,8 @@ Ces items affectent directement des parcours P0 (JRN-001 à JRN-006).
 | P2-002 | FAB "Signaler ici" contextuel avec coordonnées du tap | BTN-MISS02 | ✅ fait (SESSION 23) — clic droit / long press carte → FAB positionné → roadReport utilise S.tapLat/S.tapLng |
 | P2-003 | Score fiabilité visible dans profil/drawer | PROP-09 | 🔲 futur |
 | P2-004 | Marqueur "lu" côté émetteur (confirmation lecture message) | FRI-006 | 💬 à concevoir |
-| P2-005 | Bouton "Je viens aider" — réponse structurée aide | BTN-MISS03 / FRI-009 | 💬 à concevoir |
-| P2-006 | Fil de réponse helper → demandeur d'aide | FRI-009 | 💬 à concevoir |
+| P2-005 | Bouton "Je viens aider" — réponse structurée aide | BTN-MISS03 / FRI-009 | ✅ fait — "✋ J'arrive" via actQuickReply (UX-001 SESSION 22) |
+| P2-006 | Fil de réponse helper → demandeur d'aide | FRI-009 | ✅ fait — helper_coming + FloatingCard + toast + HELP_RESPONDED (SESSION 22) |
 | P2-014 | Bouton "Signaler abus" sur message reçu | BTN-MISS04 / INT-010 | 💬 à concevoir |
 | P2-015 | Exposer `App.actViewOnMap()` avec un bouton dans la card alerte | MORT-002 | ✅ fait (déjà implémenté — `_actModCard` ligne ~1178) |
 | P2-016 | Unifier status enum alertes (seen / present / gone / resolved) | UX-INTERACTION-SKELETON §5 | 💬 à décider |
@@ -165,7 +166,7 @@ Ces items sont bloqués sur une décision explicite du Gardien :
 | DEC-001 Indicateur progression sigStep (barres Étape 1/2 · 2/2) | SESSION 19 |
 | DEC-003 Filtres type Activité (Tout / Messages / Alertes) | SESSION 19 |
 | DEC-006 alertsPanel DOM mort supprimé (INV-015 restored) | SESSION 19 |
-| Appel audio WebRTC (ImmatCall) | SESSION 8 |
+| Appel audio WebRTC (ImmatCall) | ⚠️ SESSION 8 — STALE : Phase 1 uniquement (contact-request → Messages). Aucun RTCPeerConnection dans le code. WebRTC Phase B = chantier non démarré. |
 | navPremium données temps réel (Vitesse / Autour / Alertes) | SESSION 8 |
 | Bouton × supprimer favori GPS | SESSION 8 |
 | INC-006 corrigé (carte → act-mod-selected) | SESSION 8 |

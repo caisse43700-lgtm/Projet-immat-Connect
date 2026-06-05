@@ -26,36 +26,84 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-/* ---- Tabs ---- */
-.ic-msg-tabs {
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:6px;
-  background:#142334;
-  border-radius:16px;
-  padding:5px;
-  margin-bottom:10px;
+/* ---- Bottom sheet (menu thread) ---- */
+.ic-sheet-backdrop {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  background:rgba(0,0,0,.55);
+  -webkit-tap-highlight-color:transparent;
+}
+.ic-sheet-backdrop.show { display:block; }
+
+.ic-bottom-sheet {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:5001;
+  background:#111d2e;
+  border-radius:22px 22px 0 0;
+  padding:16px 12px 32px;
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  max-width:480px;
+  margin:0 auto;
+}
+.ic-bottom-sheet.show { transform:translateY(0); }
+
+.ic-sheet-handle {
+  width:36px;
+  height:4px;
+  background:#2a3c56;
+  border-radius:2px;
+  margin:0 auto 16px;
 }
 
-.ic-msg-tabs button {
-  min-height:38px;
-  border-radius:13px;
+.ic-sheet-btn {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:52px;
+  background:none;
   border:none;
-  background:transparent;
+  border-radius:14px;
+  color:#eef6ff;
+  font-size:15px;
+  font-weight:600;
+  padding:0 14px;
+  cursor:pointer;
+  text-align:left;
+  -webkit-tap-highlight-color:transparent;
+}
+.ic-sheet-btn:active { background:#1a2d45; }
+.ic-sheet-btn.danger { color:#f87171; }
+.ic-sheet-btn + .ic-sheet-btn { border-top:1px solid #1a2a3e; }
+
+/* ---- Archived section ---- */
+.ic-archived-toggle {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  background:none;
+  border:none;
+  border-top:1px solid #1a2a3e;
+  padding:10px 8px;
   color:#9aacc2;
-  font-weight:950;
   font-size:12px;
-  transition:.18s ease;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:8px;
 }
-
-.ic-msg-tabs button:active {
-  transform:scale(.97);
-}
-
-.ic-msg-tabs button.on {
-  background:#00ffb3;
-  color:#06140f;
-  box-shadow:0 0 14px rgba(0,255,179,.22);
+.ic-archived-toggle .ic-arch-count {
+  background:#1e3252;
+  border-radius:10px;
+  padding:1px 7px;
+  font-size:11px;
+  color:#7ab3e8;
 }
 
 /* ---- Compose panel ---- */
@@ -274,10 +322,60 @@
   font-size:13px;
 }
 
+/* ---- iMessage-style conversation header ---- */
+.ic-conv-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 2px 10px;
+}
+
+.ic-conv-title {
+  font-size:17px;
+  font-weight:950;
+  color:#eef6ff;
+  letter-spacing:.3px;
+}
+
+.ic-conv-header-acts {
+  display:flex;
+  gap:6px;
+}
+
+.ic-icon-btn {
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  background:#19283a;
+  border:1px solid #2a3c56;
+  color:#eef6ff;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+}
+.ic-icon-btn:active { transform:scale(.92); }
+
+/* ---- Search bar ---- */
+.ic-search-bar { padding:0 0 8px; }
+.ic-search-bar input {
+  width:100%;
+  min-height:40px;
+  border:1px solid #26364d;
+  border-radius:14px;
+  background:#0b1420;
+  color:#eef6ff;
+  padding:0 12px;
+  outline:none;
+  font-size:13px;
+  box-sizing:border-box;
+}
+.ic-search-bar input:focus { border-color:#00ffb3; }
+
 /* ---- Thread ---- */
 .ic-thread {
   display:none;
-  margin-top:10px;
   border:1px solid #2a3c56;
   border-radius:20px;
   background:#0d1723;
@@ -285,7 +383,115 @@
 }
 
 .ic-thread.show {
-  display:block;
+  display:flex;
+  flex-direction:column;
+  min-height:380px;
+}
+
+/* ---- Back button ---- */
+.ic-back-btn {
+  width:34px;
+  height:34px;
+  min-width:34px;
+  border-radius:12px;
+  background:#19283a;
+  border:1px solid #2a3c56;
+  color:#00ffb3;
+  font-size:20px;
+  font-weight:950;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+  line-height:1;
+  padding:0;
+}
+.ic-back-btn:active { transform:scale(.92); }
+
+/* ---- Thread info ---- */
+.ic-thread-info {
+  flex:1;
+  min-width:0;
+  padding:0 6px;
+}
+
+/* ---- Call button ---- */
+.ic-call-btn {
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  background:rgba(0,200,100,.15);
+  border:1px solid rgba(0,200,100,.3);
+  color:#00e070;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s ease;
+}
+.ic-call-btn:active { transform:scale(.92); }
+
+/* ---- Context card (alerte active) ---- */
+.ic-context-card {
+  margin:8px 12px 0;
+  padding:8px 12px;
+  border-radius:12px;
+  background:rgba(255,180,0,.1);
+  border:1px solid rgba(255,180,0,.28);
+  color:#ffd966;
+  font-size:12px;
+  line-height:1.4;
+}
+
+/* ---- Compose panel header ---- */
+.ic-compose-hd {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:10px;
+}
+.ic-compose-title {
+  font-size:14px;
+  font-weight:950;
+  color:#eef6ff;
+  flex:1;
+  text-align:center;
+}
+
+/* ---- Trust badges in conversation list ---- */
+.ic-trust-fav  { color:#f5c518; font-size:11px; margin-left:4px; }
+.ic-trust-ok   { color:#00ffb3; font-size:11px; margin-left:4px; }
+.ic-trust-ctx  { color:#7bb8ff; font-size:11px; margin-left:4px; }
+
+/* ---- Call event bubbles ---- */
+.ic-bubble.call-recv {
+  align-self:flex-start;
+  background:rgba(0,200,100,.1);
+  color:#00e070;
+  border:1px solid rgba(0,200,100,.22);
+  border-bottom-left-radius:6px;
+}
+.ic-bubble.call-sent {
+  align-self:flex-end;
+  background:rgba(0,200,100,.14);
+  color:#00c878;
+  border:1px solid rgba(0,200,100,.28);
+  border-bottom-right-radius:6px;
+}
+.ic-bubble.call-missed {
+  align-self:center;
+  background:rgba(255,60,60,.1);
+  color:#ff7070;
+  border:1px solid rgba(255,60,60,.22);
+  border-radius:999px;
+}
+.ic-bubble.call-refused {
+  align-self:center;
+  background:rgba(150,150,150,.07);
+  color:#9aacc2;
+  border:1px solid rgba(150,150,150,.18);
+  border-radius:999px;
 }
 
 /* ---- Thread header ---- */
@@ -293,7 +499,7 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap:8px;
   padding:10px 12px;
   background:#132033;
   border-bottom:1px solid #2a3c56;
@@ -345,7 +551,9 @@
   display:flex;
   flex-direction:column;
   gap:8px;
-  max-height:260px;
+  flex:1;
+  min-height:140px;
+  max-height:320px;
   overflow:auto;
   padding:12px;
   overscroll-behavior:contain;
@@ -426,10 +634,10 @@
   opacity:1;
 }
 
-/* ---- Quick replies ---- */
+/* ---- Quick replies (2×2 pour 4 boutons) ---- */
 .ic-quick {
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:6px;
   padding:0 10px 10px;
 }
@@ -526,3 +734,68 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* ---- Call level selector (Settings) ---- */
+.settings-call-levels {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  padding:6px 0 4px;
+}
+.call-level-btn {
+  min-height:40px;
+  border-radius:14px;
+  border:1px solid #2a3c56;
+  background:#19283a;
+  color:#9aacc2;
+  font-size:12px;
+  font-weight:700;
+  transition:.15s ease;
+}
+.call-level-btn.on {
+  background:rgba(0,255,179,.14);
+  border-color:#00ffb3;
+  color:#00ffb3;
+}
+.call-level-btn:active { transform:scale(.96); }
+
+/* ---- Presence selector (Settings) ---- */
+.settings-presence-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  padding:6px 0 4px;
+}
+.presence-btn {
+  min-height:40px;
+  border-radius:14px;
+  border:1px solid #2a3c56;
+  background:#19283a;
+  color:#9aacc2;
+  font-size:12px;
+  font-weight:700;
+  transition:.15s ease;
+}
+.presence-btn.on {
+  background:rgba(0,255,179,.14);
+  border-color:#00ffb3;
+  color:#00ffb3;
+}
+.presence-btn:active { transform:scale(.96); }
+
+/* ---- DND hours (Settings) ---- */
+.settings-dnd-hours {
+  padding:6px 0 2px;
+  border-top:1px solid #1a2d44;
+  margin-top:6px;
+}
+.settings-time-input {
+  background:#0b1420;
+  border:1px solid #2a3c56;
+  border-radius:10px;
+  color:#eef6ff;
+  padding:6px 10px;
+  font-size:13px;
+  outline:none;
+}
+.settings-time-input:focus { border-color:#00ffb3; }

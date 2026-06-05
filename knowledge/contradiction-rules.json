@@ -1,0 +1,98 @@
+{
+  "_v": 1,
+  "_role": "Registre des conflits de règles métier — résolution en faveur de la sécurité (INV-COM-014)",
+  "_rule": "Quand deux règles s'affrontent, la règle la plus restrictive ou protectrice s'applique toujours.",
+  "_ref": "SESSION OBD-003c — Audit ultime de cohérence",
+  "rules": [
+    {
+      "id": "CONTR-001",
+      "conflit": "BLOCKED + TRUSTED",
+      "description": "Un conducteur A bloque B, mais B est marqué TRUSTED dans ic_trust.",
+      "resolution_winner": "BLOCKED",
+      "resolution_rule": "Le blocage interdit toute communication, quelle que soit la confiance déclarée. ic_blocked vérifiée AVANT ic_trust.",
+      "invariant": "INV-COM-004",
+      "check": "normalizeRows() filtre ic_blocked avant d'appliquer le tri confiance"
+    },
+    {
+      "id": "CONTR-002",
+      "conflit": "DND + URGENCY",
+      "description": "Ne-pas-déranger actif (ic_dnd=true), mais un conducteur en URGENCE tente d'appeler.",
+      "resolution_winner": "URGENCY",
+      "resolution_rule": "Le mode urgence (SOS, alerte feu/incendie) bypass le DND. can_receive_calls() RPC retourne true pour les appels de contexte SOS.",
+      "invariant": "INV-COM-003",
+      "check": "can_receive_calls() RPC — paramètre context_type='sos' ignore ic_dnd"
+    },
+    {
+      "id": "CONTR-003",
+      "conflit": "INVISIBLE + SOS",
+      "description": "Le conducteur est en mode invisible (ic_invisible=true), mais déclenche un SOS.",
+      "resolution_winner": "SOS",
+      "resolution_rule": "Le SOS rend le conducteur visible pour les conducteurs proches malgré le mode invisible. La sécurité prime sur la discrétion.",
+      "invariant": "INV-COM-014",
+      "check": "App.sos() — force la localisation visible indépendamment de S.invisible"
+    },
+    {
+      "id": "CONTR-004",
+      "conflit": "TRUSTED + SPAM_LIMIT",
+      "description": "Un conducteur TRUSTED envoie plus de 20 messages en 60s.",
+      "resolution_winner": "SPAM_LIMIT",
+      "resolution_rule": "Le seuil anti-spam s'applique à tous les conducteurs quelle que soit leur confiance. La confiance n'achète pas de quota spam.",
+      "invariant": "INV-COM-011",
+      "check": "_checkSpam(plate) — vérifie ic_spam_log indépendamment de ic_trust"
+    },
+    {
+      "id": "CONTR-005",
+      "conflit": "CONTEXT_TRUST + ALERT_RESOLVED",
+      "description": "La confiance CONTEXT est accordée car une alerte est active. L'alerte est ensuite résolue.",
+      "resolution_winner": "CONTEXT_REVERTS",
+      "resolution_rule": "INV-COM-005 : le niveau CONTEXT expire automatiquement quand l'alerte associée est résolue ou expirée. Retour à NONE automatique.",
+      "invariant": "INV-COM-005",
+      "check": "F-TRUST — logique d'expiration liée à l'état des alertes actives"
+    },
+    {
+      "id": "CONTR-006",
+      "conflit": "CALL_LEVEL_ALL + DND_ACTIVE",
+      "description": "Le conducteur a configuré niveau d'appel 4 (Tous peuvent appeler), mais DND est activé.",
+      "resolution_winner": "DND",
+      "resolution_rule": "Le mode Ne-pas-déranger bloque les appels non-urgents même si le niveau d'autorisation est maximal. Exception : URGENCY (CONTR-002).",
+      "invariant": "INV-COM-003",
+      "check": "can_receive_calls() RPC — ic_dnd évalué après call_level"
+    },
+    {
+      "id": "CONTR-007",
+      "conflit": "FAVORITE + BLOCK",
+      "description": "Un conducteur est à la fois dans ic_favorites et dans ic_blocked.",
+      "resolution_winner": "BLOCK",
+      "resolution_rule": "Le blocage annule le favori. La conversation peut rester archivée localement (INV-COM-009), mais toute communication est suspendue.",
+      "invariant": "INV-COM-004",
+      "check": "normalizeRows() : blocked check avant favorite tri"
+    },
+    {
+      "id": "CONTR-008",
+      "conflit": "PRESENCE_INVISIBLE + EMERGENCY_ALERT",
+      "description": "Le conducteur est en statut Invisible dans ic_presence, mais une alerte d'urgence est envoyée à son attention.",
+      "resolution_winner": "EMERGENCY",
+      "resolution_rule": "Les alertes d'urgence (SOS, incendie) sont délivrées indépendamment du statut de présence. L'invisible cache la géolocalisation, pas les alertes critiques.",
+      "invariant": "INV-COM-014",
+      "check": "showFloatingCard() — urgent=true ignore ic_presence"
+    },
+    {
+      "id": "CONTR-009",
+      "conflit": "DELETE_LOCAL + PARTNER_HISTORY",
+      "description": "Le conducteur A supprime sa conversation avec B. B a le droit de conserver son historique.",
+      "resolution_winner": "SOFT_DELETE_LOCAL_ONLY",
+      "resolution_rule": "INV-COM-009 : suppression = marquage local ic_deleted_msgs uniquement. Aucun DELETE DB. L'historique de B est inviolable.",
+      "invariant": "INV-COM-009",
+      "check": "deleteThread() — localStorage ic_deleted_msgs, pas de DELETE sur messages DB"
+    },
+    {
+      "id": "CONTR-010",
+      "conflit": "ANGE_CONTEXT + MESSAGE_CONTENT",
+      "description": "L'Ange est interrogé dans un contexte de conversation active. Pourrait-il accéder au contenu du message ?",
+      "resolution_winner": "NO_CONTENT",
+      "resolution_rule": "INV-COM-015 : le snapshot transmis à immat-brain-dialog ne contient jamais de texte de message. Seules métriques agrégées transmises.",
+      "invariant": "INV-COM-015",
+      "check": "FLOW-ANGE-ASSISTANT — snapshot : health, panel, speed_cat, driving, hasRoute, nearby, alerts (sans plaque ni contenu)"
+    }
+  ]
+}

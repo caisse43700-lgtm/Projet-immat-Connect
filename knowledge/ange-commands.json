@@ -1,0 +1,153 @@
+{
+  "_v": 1,
+  "_role": "Registre des commandes Ange — 16 intentions déclenchables via l'assistant IA",
+  "_rule": "Chaque commande Ange doit référencer une intention, un flow et des invariants. INV-COM-010 et INV-COM-015 s'appliquent à toutes.",
+  "_ref": "SESSION OBD-003c — Audit ultime de cohérence",
+  "_invariants_globaux": ["INV-COM-010", "INV-COM-015"],
+  "commands": [
+    {
+      "id": "ANGE_OPEN_CONVERSATION",
+      "label": "Ouvrir une conversation",
+      "exemple": "Ouvre la conversation avec AB-123-CD",
+      "intention_id": "INT-CONTACT-DRIVER",
+      "flow_id": "FLOW-ANGE-CONVERSATION",
+      "action_code": "ImmatMessages.openThread(plate)",
+      "contraintes": ["plaque valide requise", "INV-COM-004 : bloqué = refus silencieux"]
+    },
+    {
+      "id": "ANGE_COMPOSE_MESSAGE",
+      "label": "Composer un message",
+      "exemple": "Envoie un message à AB-123-CD",
+      "intention_id": "INT-SEND-MESSAGE",
+      "flow_id": "FLOW-MESSAGE",
+      "action_code": "ImmatMessages.setMode('compose')",
+      "contraintes": ["INV-COM-002 : plaque ≠ ma plaque", "INV-COM-004 : non bloqué"]
+    },
+    {
+      "id": "ANGE_SIGNAL_ROAD",
+      "label": "Signaler un danger route",
+      "exemple": "Il y a un accident devant moi",
+      "intention_id": "INT-SIGNAL-ROAD",
+      "flow_id": "FLOW-ANGE-SIGNAL",
+      "action_code": "App.sigStepRoute()",
+      "contraintes": ["géolocalisation active requise", "TTL 30-120min selon type"]
+    },
+    {
+      "id": "ANGE_SIGNAL_VEHICLE",
+      "label": "Signaler un problème sur un véhicule",
+      "exemple": "Le véhicule XX-111-XX a un pneu crevé",
+      "intention_id": "INT-SIGNAL-VEHICLE",
+      "flow_id": "FLOW-VEHICLE-ALERT",
+      "action_code": "App.vehicleAlertQuick(label)",
+      "contraintes": ["plaque cible requise ou détectée via S.contextVehicle"]
+    },
+    {
+      "id": "ANGE_REPORT_VEHICLE",
+      "label": "Signaler le véhicule immédiatement devant",
+      "exemple": "Le véhicule devant a un coffre ouvert",
+      "intention_id": "INT-PROXIMITY-SIGNAL",
+      "flow_id": "FLOW-PROXIMITY-SIGNAL",
+      "action_code": "App.contactFrontVehicle()",
+      "contraintes": ["S.contextVehicle ou S.frontCarPlate requis"]
+    },
+    {
+      "id": "ANGE_REQUEST_HELP",
+      "label": "Demander de l'aide",
+      "exemple": "J'ai une panne, j'ai besoin d'aide",
+      "intention_id": "INT-REQUEST-HELP",
+      "flow_id": "FLOW-ASSIST-REQUEST",
+      "action_code": "App.assist(type)",
+      "contraintes": ["géolocalisation active", "TTL 30min", "résolution uniquement par créateur"]
+    },
+    {
+      "id": "ANGE_CALL_DRIVER",
+      "label": "Appeler un conducteur",
+      "exemple": "Appelle le conducteur AB-123-CD",
+      "intention_id": "INT-CALL-DRIVER",
+      "flow_id": "FLOW-ANGE-CALL",
+      "action_code": "CallManager.contactByCall(plate)",
+      "contraintes": ["INV-COM-003 : can_receive_calls() vérifié", "INV-COM-004 : non bloqué", "DND respecté"]
+    },
+    {
+      "id": "ANGE_SOS",
+      "label": "Déclencher le SOS",
+      "exemple": "Je suis en danger, lance le SOS",
+      "intention_id": "INT-SOS",
+      "flow_id": "FLOW-SOS-EMERGENCY",
+      "action_code": "App.startSosHold()",
+      "contraintes": ["appui long 3s + confirmation obligatoire (D-005)", "INV-COM-014 : SOS > INVISIBLE"]
+    },
+    {
+      "id": "ANGE_MANAGE_TRUST",
+      "label": "Gérer la confiance d'un conducteur",
+      "exemple": "Fais confiance au conducteur AB-123-CD",
+      "intention_id": "INT-MANAGE-TRUST",
+      "flow_id": "FLOW-TRUST",
+      "action_code": "ImmatMessages.setTrust(plate, level)",
+      "contraintes": ["INV-COM-005 : CONTEXT expire avec l'alerte"]
+    },
+    {
+      "id": "ANGE_EXPLAIN_TRUST",
+      "label": "Expliquer les niveaux de confiance",
+      "exemple": "C'est quoi la confiance dans ImmatConnect ?",
+      "intention_id": "INT-ASK-ANGE",
+      "flow_id": "FLOW-ANGE-TRUST",
+      "action_code": "App.openAnge() — réponse explicative",
+      "contraintes": ["INV-COM-015 : réponse sans données privées"]
+    },
+    {
+      "id": "ANGE_START_NAVIGATION",
+      "label": "Lancer la navigation GPS",
+      "exemple": "Emmène-moi à Paris Gare de Lyon",
+      "intention_id": "INT-NAVIGATE",
+      "flow_id": "FLOW-ANGE-NAVIGATE",
+      "action_code": "App.startNav(destination)",
+      "contraintes": ["géolocalisation active", "Nominatim geocoding"]
+    },
+    {
+      "id": "ANGE_STOP_NAVIGATION",
+      "label": "Arrêter la navigation",
+      "exemple": "Arrête le GPS",
+      "intention_id": "INT-NAVIGATE",
+      "flow_id": "FLOW-GPS-NAVIGATION",
+      "action_code": "App.stopGps()",
+      "contraintes": ["navigation active requise"]
+    },
+    {
+      "id": "ANGE_CHECK_NEARBY",
+      "label": "Voir les conducteurs proches",
+      "exemple": "Qui est autour de moi ?",
+      "intention_id": "INT-UNDERSTAND-ENV",
+      "flow_id": "FLOW-MAP-SELF-MARKER",
+      "action_code": "App.loadOthers()",
+      "contraintes": ["géolocalisation active", "mode invisible = résultat réduit"]
+    },
+    {
+      "id": "ANGE_MANAGE_PRESENCE",
+      "label": "Changer le statut de présence",
+      "exemple": "Je suis occupé, cache-moi",
+      "intention_id": "INT-MANAGE-PRESENCE",
+      "flow_id": "FLOW-PRESENCE",
+      "action_code": "ImmatMessages.setPresence(status)",
+      "contraintes": ["INV-COM-010 : aucune géolocalisation dans le statut"]
+    },
+    {
+      "id": "ANGE_CHECK_ACTIVITY",
+      "label": "Voir l'activité récente",
+      "exemple": "Est-ce que j'ai des messages non lus ?",
+      "intention_id": "INT-CHECK-ACTIVITY",
+      "flow_id": "FLOW-BADGES",
+      "action_code": "App.renderActivityFeed()",
+      "contraintes": ["INV-COM-010 : métriques agrégées uniquement pour Gardien"]
+    },
+    {
+      "id": "ANGE_LOCATE_SELF",
+      "label": "Me localiser sur la carte",
+      "exemple": "Où est-ce que je suis ?",
+      "intention_id": "INT-LOCATE-SELF",
+      "flow_id": "FLOW-MAP-SELF-MARKER",
+      "action_code": "App.locate()",
+      "contraintes": ["géolocalisation active", "mode invisible = non partagé aux autres"]
+    }
+  ]
+}

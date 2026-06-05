@@ -1,0 +1,272 @@
+{
+  "_v": 1,
+  "_role": "Invariants de l'organe Communication — DAM-COMMUNICATION Phase 1",
+  "_rule": "Ces invariants gouvernent toute communication entre conducteurs. Violation = risque utilisateur réel.",
+  "_ref": "architecture/DAM-COMMUNICATION-PHASE1.md",
+  "invariants": [
+    {
+      "id": "INV-COM-001",
+      "name": "Toute interaction appartient à une conversation",
+      "rule": "Tout message, appel ou événement de contexte est rattaché à une relation identifiée par deux plaques. Aucune communication ne flotte sans relation.",
+      "check": "messages.js — chaque item possède un _otherPlate non vide"
+    },
+    {
+      "id": "INV-COM-002",
+      "name": "Toute conversation possède au minimum deux participants",
+      "rule": "Une conversation ne peut exister avec un seul participant. La plaque émetteur ≠ plaque destinataire.",
+      "check": "sendToPlate() : plate === senderPlate → rejeté"
+    },
+    {
+      "id": "INV-COM-003",
+      "name": "Tout appel nécessite une permission valide",
+      "rule": "Avant tout appel, la RPC can_receive_calls() doit valider que le destinataire autorise les appels du niveau de confiance de l'émetteur.",
+      "check": "CallManager.requestCall() → can_receive_calls() RPC + ic_call_perm localStorage"
+    },
+    {
+      "id": "INV-COM-004",
+      "name": "Un blocage interdit toute communication",
+      "rule": "Si A bloque B, B ne peut ni envoyer de message ni initier d'appel vers A. Le blocage est bilatéral pour la réception.",
+      "check": "normalizeRows() : blocked filter · sendToPlate() : ic_blocked check"
+    },
+    {
+      "id": "INV-COM-005",
+      "name": "Une autorisation contextuelle expire automatiquement",
+      "rule": "Le niveau CONTEXT est lié à un signalement actif. Quand le signalement est résolu/expiré, le niveau repasse à NONE automatiquement.",
+      "check": "F-TRUST — expiration liée à l'état des alertes actives"
+    },
+    {
+      "id": "INV-COM-006",
+      "name": "Aucune fonctionnalité communication ne peut être orpheline",
+      "rule": "Toute feature de l'organe Communication doit être déclarée dans features.json et couverte par au moins un test structurel.",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_TEST"
+    },
+    {
+      "id": "INV-COM-007",
+      "name": "Toute observation communication remonte à l'OBD",
+      "rule": "Tout événement de communication significatif (envoi, appel, blocage) doit appeler ImmatOrganism.observe().",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_OBSERVATION"
+    },
+    {
+      "id": "INV-COM-008",
+      "name": "Toute feature communication possède au minimum un test",
+      "rule": "Chaque feature de l'organe Communication doit être référencée dans tests/organism/organism-features.test.js.",
+      "check": "organism-features.test.js — suite 2 couvre toutes les features"
+    },
+    {
+      "id": "INV-COM-009",
+      "name": "Aucune suppression physique d'historique utilisateur",
+      "rule": "La suppression d'une conversation n'efface pas les données de l'autre participant. Les messages sont marqués deleted côté local uniquement (ic_deleted_msgs).",
+      "check": "deleteThread() : localStorage ic_deleted_msgs — pas de DELETE DB sur messages reçus"
+    },
+    {
+      "id": "INV-COM-010",
+      "name": "Présence ≠ Géolocalisation",
+      "rule": "La présence d'un conducteur sur la carte ne transmet pas sa géolocalisation exacte aux autres. Seule la zone ou le snapshot agrégé est partagé, jamais les coordonnées GPS brutes (myLat/myLng).",
+      "check": "snapshot Ange : myLat/myLng absents du payload — présence sans géolocalisation"
+    },
+    {
+      "id": "INV-COM-011",
+      "name": "Toute interaction est observable par l'OBD",
+      "rule": "Chaque action significative de communication (envoi, appel, blocage, confiance, spam) doit émettre un événement ImmatOrganism.observe() avec payload anonymisé.",
+      "check": "detect-orphan-chain.js → NO_ORPHAN_OBSERVATION — tous les préfixes FEATURE_OBD_HINTS trouvés dans le code"
+    },
+    {
+      "id": "INV-COM-012",
+      "name": "Toute interaction est référencée dans interactions.json",
+      "rule": "Chaque flux d'interaction conducteur→conducteur est documenté dans knowledge/interactions.json avec sa chaîne complète feature→organe→intention→flow→OBD→invariant→test.",
+      "check": "knowledge/interactions.json — champ obligatoire : id, titre, acteur, declencheur, organe, intention_id, flow_id, events_obd, invariants"
+    },
+    {
+      "id": "INV-COM-013",
+      "name": "Aucun composant Phase B/C ne peut être activé sans validation Gardien",
+      "rule": "Les composants réservés (WebRTC, ConversationEngine Cloud, TrustManager DB) ne peuvent pas être activés côté conducteur sans déploiement explicitement approuvé en knowledge/future-components.json.",
+      "check": "knowledge/future-components.json — champ status:'reserved' ou 'approved' selon état réel"
+    },
+    {
+      "id": "INV-COM-014",
+      "name": "Les contradictions de règles métier sont résolues en faveur de la sécurité",
+      "rule": "Quand deux règles s'affrontent (BLOCKED+TRUSTED, DND+URGENCY, INVISIBLE+SOS), la règle la plus restrictive ou protectrice s'applique. Priorité : BLOCKED > TRUSTED, URGENCY > DND, SOS > INVISIBLE.",
+      "check": "knowledge/contradiction-rules.json — champ resolution_winner documenté pour chaque conflit"
+    },
+    {
+      "id": "INV-COM-015",
+      "name": "L'Ange n'accède jamais au contenu des messages",
+      "rule": "Le snapshot transmis à immat-brain-dialog ne contient jamais de texte de message, de plaque de correspondant ni d'historique de conversation. Seules des métriques agrégées et anonymisées sont transmises.",
+      "check": "FLOW-ANGE-ASSISTANT — snapshot : health, panel, speed_cat, driving, hasRoute, nearby, alerts (sans plaque ni contenu)"
+    },
+    {
+      "id": "INV-COM-016",
+      "name": "Aucune interaction orpheline",
+      "rule": "Tout bouton onclick doit appartenir à un INT-xxx documenté dans UX-INTERACTIONS.md. Toute interaction sans documentation de flux est invalide.",
+      "check": "detect-orphan-features.js — knownPanels + knownObserveEvents exhaustifs"
+    },
+    {
+      "id": "INV-COM-017",
+      "name": "Tout flux A↔B émet au moins un OBD event",
+      "rule": "Un flux sans observation OBD est invisible pour l'Ange et le Gardien. Chaque JRN-xxx doit avoir au moins un event ImmatOrganism.observe() émis par l'initiateur.",
+      "check": "UX-JOURNEYS.md — colonne OBD manquants vide pour tous les JRN"
+    },
+    {
+      "id": "INV-COM-018",
+      "name": "La confiance est toujours un acte explicite conducteur",
+      "rule": "Le niveau de confiance (callLevel 1-4) ne peut être modifié qu'avec une action consciente de l'utilisateur via setCallLevel(). Aucune logique automatique ne peut élever le niveau sans confirmation.",
+      "check": "messages.js — setCallLevel() : toast + OBD TRUST_LEVEL_CHANGED — aucun appel automatique sans interaction utilisateur"
+    },
+    {
+      "id": "INV-COM-019",
+      "name": "Un blocage possède toujours un périmètre défini",
+      "rule": "Chaque blocage a un niveau explicite : BLOCK_MESSAGES, BLOCK_CALLS, ou BLOCK_ALL. Le niveau est stocké dans ic_block_levels et vérifié par getBlockLevel(plate) avant chaque envoi et avant chaque appel.",
+      "check": "index.html — blockPlate(p, level) → ic_block_levels · messages.js — normalizeRows() getBlockLevel · calls.js — _isCallBlocked()"
+    },
+    {
+      "id": "INV-COM-020",
+      "name": "Toute décision de confiance est observable dans l'OBD",
+      "rule": "Chaque modification du niveau de confiance (setCallLevel, setTrust) émet un OBD event. Aucune élévation de niveau n'est silencieuse.",
+      "check": "messages.js — setCallLevel() → TRUST_LEVEL_CHANGED {oldLevel, newLevel} · setTrust() → CONTACT_TRUSTED | CONTACT_REVOKED"
+    },
+    {
+      "id": "INV-COM-021",
+      "name": "Toute décision de blocage est observable dans l'OBD",
+      "rule": "Chaque blocage émet BLOCK_APPLIED {plate, level}. Aucun blocage n'est silencieux.",
+      "check": "index.html — blockPlate() → BLOCK_APPLIED {plate, level, _src}"
+    },
+    {
+      "id": "INV-CALL-001",
+      "name": "Un call_request ne produit qu'un seul CALL_MISSED",
+      "rule": "L'événement CALL_MISSED est gardé par _missedCallIds Set. Si le même requestId expire deux fois (ex: reprise réseau), le second CALL_MISSED est ignoré.",
+      "check": "calls.js — _missedCallIds Set · _showIncomingPopup() TTL guard"
+    },
+    {
+      "id": "INV-COM-022",
+      "name": "Une confiance contextuelle doit toujours avoir une origine et une date d'expiration",
+      "rule": "Chaque entrée ic_context_trust doit posséder context_source, trust_reason et expiration (timestamp). Une confiance contextuelle sans expiration est invalide. Elle est purgée automatiquement à lecture.",
+      "check": "messages.js — setContextTrust() {source, reason, ttlMs} · getContextTrust() purge automatique si expiration < Date.now()"
+    },
+    {
+      "id": "INV-COM-023",
+      "name": "Une confiance permanente ne peut être créée qu'à partir d'une action explicite",
+      "rule": "setTrustPermanent(plate, source) ne peut être appelé que suite à une action consciente du conducteur. Aucune logique automatique ne crée un TRUST_PERMANENT sans interaction humaine.",
+      "check": "messages.js — setTrustPermanent() : source obligatoire · aucun appel automatique sans intent utilisateur"
+    },
+    {
+      "id": "INV-COM-024",
+      "name": "Un blocage complet est toujours bidirectionnel",
+      "rule": "BLOCK_ALL ou BLOCK_MESSAGES : A ne peut ni recevoir NI envoyer des messages à B. BLOCK_CALLS : A ne peut ni recevoir NI initier d'appel avec B. Le blocage s'applique dans les deux directions pour le canal concerné.",
+      "check": "messages.js — sendToPlate() outgoingBlock guard · normalizeRows() incomingBlock guard · calls.js — _isCallBlocked() guard requestCall()"
+    },
+    {
+      "id": "INV-COM-025",
+      "name": "Le blocage prévaut toujours sur la confiance",
+      "rule": "Si BLOCK_ALL et TRUST_PERMANENT sont actifs simultanément, BLOCK_ALL prime. Aucune combinaison de niveaux de confiance ne peut outrepasser un blocage.",
+      "check": "messages.js — sendToPlate() : getBlockLevel vérifié AVANT getTrustLevel · normalizeRows() : block filter avant trust check"
+    },
+    {
+      "id": "INV-COM-026",
+      "name": "Un signalement d'abus doit posséder un état final",
+      "rule": "ABUSE_REPORTED démarre le cycle. Le Gardien doit clôturer avec ABUSE_REVIEWED, ABUSE_DISMISSED ou ABUSE_CONFIRMED. Un abus sans état final est un GAP de traçabilité.",
+      "check": "knowledge/immat-knowledge-graph.json — ABUSE_REPORTED, ABUSE_REVIEWED, ABUSE_DISMISSED, ABUSE_CONFIRMED · Gardien: état final obligatoire"
+    },
+    {
+      "id": "INV-COM-027",
+      "name": "Toute autorisation de communication passe par la Permissions Matrix",
+      "rule": "Aucune logique parallèle ne peut accorder ou refuser une communication sans passer par getBlockLevel() + getTrustLevel() + can_receive_calls(). Aucune règle spéciale cachée.",
+      "check": "architecture/PERMISSIONS-MATRIX.md · calls.js requestCall() · messages.js sendToPlate() · normalizeRows()"
+    },
+    {
+      "id": "INV-ANGE-003",
+      "name": "Toute action proposée par Ange doit être validée par les mêmes règles que les actions manuelles",
+      "rule": "AngeAction ne court-circuite jamais la Permissions Matrix. Avant toute proposition (message, appel, signalement), Ange vérifie getBlockLevel() et getTrustLevel() exactement comme le ferait une action manuelle.",
+      "check": "architecture/ANGE-MESSAGES-APPELS.md · AngeAction.checkPermissions() → getBlockLevel + can_receive_calls · INV-COM-027"
+    },
+    {
+      "id": "INV-ANGE-004",
+      "name": "Toute action Ange doit passer par checkPermissions()",
+      "rule": "Aucune exécution directe d'action par Ange sans appel préalable à AngeAction.checkPermissions(plate). Pas de prepareMessage, prepareCall ou prepareInteraction sans cette vérification. L'ordre est toujours : checkPermissions → prévisualisation → validation conducteur → exécution.",
+      "check": "architecture/ANGE-ACTION-SPEC.md · AngeAction.prepareInteraction() → checkPermissions() obligatoire"
+    },
+    {
+      "id": "INV-COM-028",
+      "name": "Toute décision d'autorisation provient exclusivement de la Permissions Matrix",
+      "rule": "Aucune logique parallèle dans messages.js, calls.js, index.html, ou les futures AngeAction/WebRTC. Les seules sources d'autorisation autorisées sont : getBlockLevel(), getTrustLevel(), can_receive_calls(). Toute vérification en dehors de ces trois fonctions est une violation.",
+      "check": "messages.js sendToPlate() · calls.js requestCall() · normalizeRows() — aucune autre logique d'autorisation dans le code"
+    },
+    {
+      "id": "INV-OBD-001",
+      "name": "Tout événement OBD doit être relié à un Flow et à un Invariant",
+      "rule": "Chaque événement ImmatOrganism.observe() doit référencer un flux métier (JRN-xxx ou FLOW-xxx) et un invariant (INV-xxx) dans knowledge/immat-knowledge-graph.json. Un événement sans flow ou sans invariant est un événement orphelin.",
+      "check": "knowledge/immat-knowledge-graph.json — champ invariant non null pour chaque event · detect-orphan-chain.js NO_ORPHAN_FLOW"
+    },
+    {
+      "id": "INV-INT-001",
+      "name": "Toute action conducteur produit une Interaction",
+      "rule": "Chaque action significative d'un conducteur (message, appel, signalement, aide, SOS, confiance, blocage, abus) doit créer un objet Interaction dans ic_interactions via InteractionEngine.create(). Aucune action ne peut être silencieuse.",
+      "check": "core/interaction-engine.js — create() · AngeAction.execute() → InteractionEngine.create()"
+    },
+    {
+      "id": "INV-INT-002",
+      "name": "Toute notification référence une Interaction",
+      "rule": "Chaque notification créée via InteractionEngine.createNotification() doit posséder un interaction_id valide. Une notification sans interaction référencée est orpheline.",
+      "check": "core/interaction-engine.js — createNotification() champ interaction_id obligatoire"
+    },
+    {
+      "id": "INV-INT-003",
+      "name": "Toute Interaction possède un statut normalisé",
+      "rule": "Le statut d'une Interaction doit appartenir à la liste : pending, received, viewed, responded, accepted, rejected, expired, resolved, archived, cancelled, blocked, failed. Aucun statut libre n'est autorisé.",
+      "check": "core/interaction-engine.js — STATUSES + VALID_STATUSES Set · updateStatus() valide avant toute mise à jour"
+    },
+    {
+      "id": "INV-INT-004",
+      "name": "Toute Interaction possède un Flow",
+      "rule": "Chaque Interaction doit avoir un flow_id non nul. Le flow est résolu automatiquement depuis TYPE_META si non fourni explicitement.",
+      "check": "core/interaction-engine.js — create() : flow_id = flow_id || meta.flow || null"
+    },
+    {
+      "id": "INV-INT-005",
+      "name": "Toute Interaction possède un Invariant",
+      "rule": "Chaque Interaction doit référencer au moins un invariant dans son tableau invariants[]. Les invariants sont résolus automatiquement depuis TYPE_META si non fournis explicitement.",
+      "check": "core/interaction-engine.js — create() : invariants = invariants || meta.invariants || []"
+    },
+    {
+      "id": "INV-INT-006",
+      "name": "Toute Interaction possède un test",
+      "rule": "Chaque type d'Interaction déclaré dans TYPE_META doit être couvert par au moins un test dans tests/organism/. Tout type sans test est un GAP de traçabilité.",
+      "check": "tests/organism/interaction-engine.test.js · tests/organism/interaction-engine-extended.test.js"
+    },
+    {
+      "id": "INV-INT-007",
+      "name": "Toute Interaction observable remonte à l'OBD",
+      "rule": "Chaque InteractionEngine.create() déclenche automatiquement _emitObd() qui émet l'event OBD correspondant au type. Aucune Interaction n'est invisible pour le Guardian et l'Ange.",
+      "check": "core/interaction-engine.js — create() → _emitObd() · TYPE_META.obd non null pour chaque type"
+    },
+    {
+      "id": "INV-INT-008",
+      "name": "Toute Interaction est indexée dans le Knowledge Graph",
+      "rule": "Chaque nouveau type d'Interaction doit être déclaré dans knowledge/immat-knowledge-graph.json avec son type, OBD event, flow_id et invariant. Un type sans entrée dans le Knowledge Graph est un nœud isolé.",
+      "check": "knowledge/immat-knowledge-graph.json — TYPE_META de interaction-engine.js ↔ obd_events + intentions"
+    },
+    {
+      "id": "INV-CALL-002",
+      "name": "Le modèle Interaction est extensible WebRTC sans migration",
+      "rule": "Les types WebRTC Phase B (CALL_CONNECTED, CALL_ENDED, CALL_FAILED, CALL_NETWORK_LOST, CALL_RECONNECTED) doivent être réservés dans TYPE_META avec reserved:true dès SESSION 27. Aucune modification de la structure Interaction ne doit être nécessaire lors de l'activation en SESSION 30.",
+      "check": "core/interaction-engine.js — TYPE_META : CALL_CONNECTED→CALL_RECONNECTED reserved:true · FLOW-008-B"
+    },
+    {
+      "id": "INV-COM-029",
+      "name": "Tout signalement d'abus doit être représenté par une Interaction",
+      "rule": "Chaque appel à _reportAbuse() doit créer ou référencer une Interaction de type ABUSE. Un abus sans Interaction est invisible pour le Guardian et non traçable dans le Knowledge Graph.",
+      "check": "core/interaction-engine.js — TYPE_META.ABUSE · INV-COM-026 complémentaire"
+    },
+    {
+      "id": "INV-COM-030",
+      "name": "Toute relation de confiance débute par une Interaction observable",
+      "rule": "Chaque CONTACT_REQUEST, CONTACT_ACCEPTED ou CONTACT_REJECTED doit être représenté par une Interaction. Aucune modification de niveau de confiance ne peut être silencieuse pour le Guardian.",
+      "check": "core/interaction-engine.js — TYPE_META.CONTACT_REQUEST/ACCEPTED/REJECTED · INV-COM-018 complémentaire"
+    },
+    {
+      "id": "INV-GUARD-001",
+      "name": "Toute Recommendation Guardian référence au moins une Interaction",
+      "rule": "Chaque objet Recommendation émis par le Guardian Loop (SESSION 28) doit posséder un champ interaction_id ou evidence[] pointant vers au moins une Interaction existante dans ic_interactions. Une recommandation sans preuve d'Interaction est invalide.",
+      "check": "SESSION 28 — Recommendation.evidence[] → Interaction.id · core/interaction-engine.js getHistory()"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "_v": 1,
+  "_role": "Inventaire exhaustif des dépendances Supabase — tables, RPC, Edge Functions, Realtime, Auth",
+  "_rule": "Ne pas modifier le schéma DB sans validation Gardien. Ce fichier documente l'état réel, pas une spécification.",
+  "_ref": "SESSION OBD-003c — Audit ultime de cohérence",
+  "tables": [
+    {
+      "name": "profiles",
+      "role": "Identité des conducteurs — plaque, pseudo, couleur, téléphone",
+      "colonnes_cles": ["owner_plate (PK immuable)", "pseudo", "vehicle_color", "phone"],
+      "invariants": ["INV-006 : owner_plate immuable", "INV-011 : colorHex() source canonique"],
+      "rls": "owner_plate = auth.uid() pour UPDATE/INSERT",
+      "features": ["F-PROFIL", "F-CARTE", "F-MESSAGES"]
+    },
+    {
+      "name": "reports",
+      "role": "Signalements route, véhicule, aide et SOS",
+      "colonnes_cles": ["id", "plate (auteur)", "target_plate (véhicule cible)", "category", "reason", "lat", "lng", "status", "created_at"],
+      "categories": ["route", "vehicle", "help", "sos"],
+      "invariants": ["TTL auto-cleanup cleanupAlerts()", "INV-COM-009 : pas de DELETE sans consentement"],
+      "features": ["F-SIGNAL-ROUTE", "F-SIGNAL-VEHICULE", "F-ASSIST", "F-SOS", "F-PROXIMITY-SIGNAL"]
+    },
+    {
+      "name": "messages",
+      "role": "Messages directs entre conducteurs identifiés par plaque",
+      "colonnes_cles": ["id", "sender_id", "receiver_id", "target_plate", "message", "status", "created_at"],
+      "invariants": ["INV-COM-001 : toujours rattaché à une relation", "INV-COM-002 : sender ≠ receiver", "INV-COM-009 : pas de DELETE DB"],
+      "note": "Suppression = soft-delete ic_deleted_msgs localStorage uniquement",
+      "features": ["F-MESSAGES", "F-CONVERSATION-ENGINE", "F-SIGNAL-VEHICULE"],
+      "realtime": "immat_messages_v13_{plate}"
+    },
+    {
+      "name": "call_requests",
+      "role": "Demandes de contact audio entre conducteurs (Phase A)",
+      "colonnes_cles": ["id", "caller_id", "callee_id", "caller_plate", "callee_plate", "status", "created_at"],
+      "statuts": ["pending", "accepted", "refused", "cancelled"],
+      "invariants": ["INV-COM-003 : permission valide requise avant appel"],
+      "features": ["F-APPEL", "F-CALL-PERMISSIONS"]
+    },
+    {
+      "name": "call_preferences",
+      "role": "Préférences d'appel par conducteur — niveau autorisation",
+      "colonnes_cles": ["owner_plate", "allow_calls (bool)", "call_level (1-4)"],
+      "features": ["F-CALL-PERMISSIONS"],
+      "rpc_associee": "can_receive_calls()"
+    }
+  ],
+  "rpc_functions": [
+    {
+      "name": "can_receive_calls",
+      "role": "Vérifier si un conducteur peut recevoir un appel selon son niveau et le DND",
+      "params": ["callee_plate", "caller_level", "context_type"],
+      "retour": "boolean",
+      "invariants": ["INV-COM-003", "CONTR-002 : urgence bypass DND"],
+      "features": ["F-APPEL", "F-CALL-PERMISSIONS"]
+    }
+  ],
+  "edge_functions": [
+    {
+      "name": "immat-brain-dialog",
+      "role": "Assistant Ange IA — réponse contextuelle selon rôle conducteur/gardien",
+      "params": ["message", "snapshot_anonymise", "role"],
+      "snapshot_champs": ["health", "panel", "speed_cat", "driving", "hasRoute", "nearby_count", "active_alerts_count"],
+      "invariants": ["INV-COM-010 : payload anonymisé", "INV-COM-015 : aucun contenu message", "INV-014 : vitesse = catégorie"],
+      "api_key": "ANTHROPIC_API_KEY en Supabase secrets uniquement — jamais dans le code",
+      "throttle": "10 appels/heure/session",
+      "features": ["F-ANGE"]
+    },
+    {
+      "name": "create-call-request",
+      "role": "Créer une demande de contact audio avec vérifications RLS",
+      "params": ["caller_plate", "callee_plate"],
+      "invariants": ["INV-COM-003", "anti-spam triggers DB"],
+      "features": ["F-APPEL"]
+    },
+    {
+      "name": "respond-call-request",
+      "role": "Accepter ou refuser une demande de contact audio",
+      "params": ["request_id", "action (accept|refuse)"],
+      "invariants": ["INV-COM-003"],
+      "features": ["F-APPEL"]
+    }
+  ],
+  "realtime_channels": [
+    {
+      "pattern": "immat_messages_v13_{plate}",
+      "role": "Écoute des nouveaux messages entrants pour une plaque donnée",
+      "events": ["INSERT (nouveaux messages)", "UPDATE (status lu/vu)"],
+      "note": "MSG_RECEIVED uniquement sur INSERT adressé à ma plaque — SESSION 18 bug fix"
+    },
+    {
+      "pattern": "community_reports",
+      "role": "Broadcast des signalements route et aide à tous les conducteurs proches",
+      "events": ["INSERT (nouveau signalement)", "UPDATE (statut changé)"],
+      "features": ["F-SIGNAL-ROUTE", "F-ASSIST", "F-SOS"]
+    }
+  ],
+  "auth": {
+    "provider": "Supabase Auth (email + magic link)",
+    "session_storage": "localStorage ic_last_role, Supabase JWT",
+    "notes": "Plaque = owner_plate = identifiant métier immuable (INV-006). UID Supabase ≠ plaque."
+  },
+  "localStorage_keys": [
+    { "key": "trust", "role": "Niveaux confiance { plate: NONE|CONTEXT|TRUSTED|FAVORITE }", "feature": "F-TRUST" },
+    { "key": "call_perm", "role": "Niveau autorisation appels (1-4)", "feature": "F-CALL-PERMISSIONS" },
+    { "key": "dnd", "role": "Mode Ne-pas-déranger (bool)", "feature": "F-CALL-PERMISSIONS" },
+    { "key": "dnd_from", "role": "Début plage DND (HH:MM)", "feature": "F-CALL-PERMISSIONS" },
+    { "key": "dnd_to", "role": "Fin plage DND (HH:MM)", "feature": "F-CALL-PERMISSIONS" },
+    { "key": "presence", "role": "Statut de présence (conduite|disponible|occupé|invisible|hors-ligne)", "feature": "F-PRESENCE" },
+    { "key": "favorites", "role": "Conversations épinglées [plate1, plate2...]", "feature": "F-FAVORITES" },
+    { "key": "archived", "role": "Conversations archivées [plate1, plate2...]", "feature": "F-ARCHIVE" },
+    { "key": "spam_log", "role": "Log anti-spam { plate: {count, ts} }", "feature": "F-SPAM-PROTECTION" },
+    { "key": "deleted_msgs", "role": "IDs messages supprimés localement (soft-delete INV-COM-009)", "feature": "F-MESSAGES" },
+    { "key": "blocked", "role": "Plaques bloquées [plate1, plate2...]", "feature": "F-MESSAGES" },
+    { "key": "alerts", "role": "Cache local des alertes actives", "feature": "F-SIGNAL-ROUTE" },
+    { "key": "gps_history", "role": "Historique destinations GPS (noms + coordonnées)", "feature": "F-GPS" },
+    { "key": "view", "role": "Vue carte persistée (drive|2d)", "feature": "F-CARTE" },
+    { "key": "invisible", "role": "Mode invisible (bool)", "feature": "F-CARTE" },
+    { "key": "radius", "role": "Rayon de détection véhicules proches (km)", "feature": "F-CARTE" },
+    { "key": "recent_vehicles", "role": "Plaques vues récemment [plate1, plate2...]", "feature": "F-CARTE" },
+    { "key": "alert_filter", "role": "Filtre actif pour l'affichage des alertes (type/sévérité)", "feature": "F-SIGNAL-ROUTE" },
+    { "key": "voice", "role": "Voix GPS activée (bool)", "feature": "F-GPS" },
+    { "key": "sounds", "role": "Sons activés (bool)", "feature": "F-GPS" },
+    { "key": "trust_scores", "role": "Scores de confiance calculés par l'Ange { plate: score }", "feature": "F-TRUST" },
+    { "key": "voice_gender", "role": "Genre de la voix GPS (femme|homme)", "feature": "F-GPS" },
+    { "key": "reduce_effects", "role": "Mode performance — animations réduites (bool)", "feature": "F-PROFIL" },
+    { "key": "ange_history", "role": "Historique des échanges avec l'Ange [messages...]", "feature": "F-ANGE" }
+  ]
+}

@@ -1,9 +1,9 @@
-/* ===== IMMATCONNECT MESSAGES — V12 COMPLET SUPABASE ===== */
+/* ===== IMMATCONNECT MESSAGES — V13 DAM-COMMUNICATION PHASE 1 ===== */
 (function(){
 'use strict';
 
-if(window.__ImmatMessagesV12) return;
-window.__ImmatMessagesV12 = true;
+if(window.__ImmatMessagesV13) return;
+window.__ImmatMessagesV13 = true;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"']/g,m=>({
@@ -61,7 +61,9 @@ const State = {
   messages:[],
   threads:[],
   activePlate:null,
-  channel:null
+  channel:null,
+  searchQuery:'',
+  callEventsCache:{}
 };
 
 async function getUser(){
@@ -135,11 +137,105 @@ async function profilesByIds(ids){
   return out;
 }
 
+// ── Trust & Block levels ─────────────────────────────────────────
+const TRUST_LEVELS = { NONE:'TRUST_NONE', CONTEXTUAL:'TRUST_CONTEXTUAL', CONTACT:'TRUST_CONTACT', PERMANENT:'TRUST_PERMANENT' };
+const BLOCK_LEVELS = { NONE:'BLOCK_NONE', MESSAGES:'BLOCK_MESSAGES', CALLS:'BLOCK_CALLS', ALL:'BLOCK_ALL' };
+
+function getBlockLevel(plate){
+  const p = nPlate(plate);
+  if(!p) return BLOCK_LEVELS.NONE;
+  try{
+    const levels = JSON.parse(localStorage.getItem('ic_block_levels') || '{}');
+    if(levels[p]) return levels[p];
+  }catch(e){}
+  const blocked = window.S?.blocked || [];
+  if(blocked.includes(p)) return BLOCK_LEVELS.ALL;
+  return BLOCK_LEVELS.NONE;
+}
+
+function setContextTrust(plate, source, reason, ttlMs){
+  const p = nPlate(plate);
+  if(!p) return;
+  let ctx = {};
+  try{ ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}'); }catch(e){}
+  ctx[p] = { expiration: Date.now() + (ttlMs || 3600000), context_source: source || 'unknown', trust_reason: reason || '' };
+  try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('TRUST_CONTEXTUAL_SET',{plate:p,source:source||'unknown',reason:reason||'',ttlMs:ttlMs||3600000,_src:'ImmatConnect/messages/setContextTrust'}); }catch(e){}
+}
+
+function getContextTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return null;
+  try{
+    const ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}');
+    const entry = ctx[p];
+    if(!entry) return null;
+    if(entry.expiration < Date.now()){
+      delete ctx[p];
+      try{ localStorage.setItem('ic_context_trust', JSON.stringify(ctx)); }catch(e){}
+      try{ window.ImmatOrganism?.observe?.('TRUST_CONTEXTUAL_EXPIRED',{plate:p,source:entry.context_source,_src:'ImmatConnect/messages/getContextTrust'}); }catch(e){}
+      return null;
+    }
+    return entry;
+  }catch(e){ return null; }
+}
+
+function revokePermanentTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return;
+  let contacts = [];
+  try{ contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]'); }catch(e){}
+  const existed = contacts.some(c => nPlate(c.plate) === p);
+  if(existed){
+    contacts = contacts.filter(c => nPlate(c.plate) !== p);
+    try{ localStorage.setItem('ic_trusted_contacts', JSON.stringify(contacts)); }catch(e){}
+    try{ window.ImmatOrganism?.observe?.('CONTACT_REVOKED',{plate:p,level:'PERMANENT',_src:'ImmatConnect/messages/revokePermanentTrust'}); }catch(e){}
+  }
+}
+
+function clearContextTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return;
+  try{
+    const ctx = JSON.parse(localStorage.getItem('ic_context_trust') || '{}');
+    delete ctx[p];
+    localStorage.setItem('ic_context_trust', JSON.stringify(ctx));
+  }catch(e){}
+}
+
+function getPermanentTrust(plate){
+  const p = nPlate(plate);
+  if(!p) return null;
+  try{
+    const contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]');
+    return contacts.find(c => nPlate(c.plate) === p) || null;
+  }catch(e){ return null; }
+}
+
+function setTrustPermanent(plate, source){
+  const p = nPlate(plate);
+  if(!p) return;
+  let contacts = [];
+  try{ contacts = JSON.parse(localStorage.getItem('ic_trusted_contacts') || '[]'); }catch(e){}
+  if(!contacts.find(c => nPlate(c.plate) === p)){
+    contacts.push({ plate:p, created_at:new Date().toISOString(), source:source||'manual' });
+    try{ localStorage.setItem('ic_trusted_contacts', JSON.stringify(contacts)); }catch(e){}
+    try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate:p,level:'PERMANENT',_src:'ImmatConnect/messages/setTrustPermanent'}); }catch(e){}
+  }
+}
+
+function getTrustLevel(plate){
+  if(getPermanentTrust(plate)) return TRUST_LEVELS.PERMANENT;
+  const trust = getTrust(plate);
+  if(trust === 'TRUSTED') return TRUST_LEVELS.CONTACT;
+  if(getContextTrust(plate)) return TRUST_LEVELS.CONTEXTUAL;
+  return TRUST_LEVELS.NONE;
+}
+
 function normalizeRows(rows, profs){
   const mp = nPlate(myPlate());
   const uid = State.user?.id;
 
-  // Récupère les IDs supprimés localement
   let deletedIds = [];
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
@@ -147,7 +243,6 @@ function normalizeRows(rows, profs){
     const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
     const rp = fPlate(m.receiver_plate || m.to_plate || profs[m.receiver_id]?.owner_plate || m.target_plate || '');
 
-    // BUG 2 fix: si on est l'expéditeur, on ne peut pas être aussi récepteur (sauf conversation avec soi-même)
     const sent = (m.sender_id === uid) || (mp && nPlate(sp) === mp);
     const received = !sent && (
       m.receiver_id === uid ||
@@ -165,13 +260,12 @@ function normalizeRows(rows, profs){
       _received: received,
       _senderPlate: sp || 'INCONNU',
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
-      // sent → other = receiver (rp) ; received → other = sender (sp)
-      // NE PAS tomber sur rp si reçu et sp vide (sinon _otherPlate = MA plaque)
       _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
   }).filter(m => {
-    const blocked = window.S?.blocked || [];
-    return m._otherPlate && m.status !== 'rejected' && !deletedIds.includes(String(m.id)) && !blocked.includes(nPlate(m._otherPlate));
+    if(!m._otherPlate || m.status === 'rejected' || deletedIds.includes(String(m.id))) return false;
+    const bl = getBlockLevel(m._otherPlate);
+    return bl !== BLOCK_LEVELS.MESSAGES && bl !== BLOCK_LEVELS.ALL;
   });
 }
 
@@ -188,25 +282,27 @@ async function refresh(){
   const mp = myPlate();
   const buckets = [];
 
-  async function q(build){
-    try{
-      const {data,error} = await build();
-      if(!error && Array.isArray(data)) buckets.push(...data);
-    }catch(e){}
-  }
-
-  await q(()=>client.from('messages').select('*')
-    .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
-    .order('created_at',{ascending:true})
-    .limit(300));
-
+  // Paralléliser toutes les requêtes (PERF: ~200ms au lieu de ~1200ms)
+  const queries = [
+    client.from('messages').select('*')
+      .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
+      .order('created_at',{ascending:true})
+      .limit(300)
+  ];
   if(mp){
-    await q(()=>client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:true}).limit(300));
-    await q(()=>client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:true}).limit(300));
+    queries.push(
+      client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:true}).limit(300),
+      client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:true}).limit(300)
+    );
   }
+  const results = await Promise.all(queries.map(async q=>{
+    try{ const {data,error}=await q; if(!error&&Array.isArray(data)) return data; }catch(e){}
+    return [];
+  }));
+  results.forEach(data=>buckets.push(...data));
 
   const map = new Map();
   buckets.forEach(m => { if(m?.id) map.set(m.id,m); });
@@ -215,7 +311,6 @@ async function refresh(){
   const profs = await profilesByIds(raw.flatMap(m=>[m.sender_id,m.receiver_id]));
   State.messages = normalizeRows(raw, profs);
 
-  // Connexion messages → Activité
   try{ if(window.S) window.S._actMessages = State.messages; }catch(e){}
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
@@ -223,11 +318,10 @@ async function refresh(){
   buildThreads();
   render();
   refreshThread();
-  subscribe();
+  if(!State.channel) subscribe();
 }
 
 function buildThreads(){
-  // BUG 3: filtrer les messages supprimés localement
   let deletedIds = [];
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
@@ -254,16 +348,70 @@ function buildThreads(){
 }
 
 function setMode(mode){
+  // Fermer le thread s'il est ouvert (évite liste + thread simultanés)
+  const threadBox = $('icThread');
+  if(threadBox && threadBox.classList.contains('show')){
+    threadBox.classList.remove('show');
+    State.activePlate = null;
+    const hdr = document.querySelector('#icMessagesPro .ic-conv-header');
+    const sbar = $('icSearchBar');
+    if(hdr) hdr.style.display = '';
+    if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
+  }
+
+  const prev = State.mode;
   State.mode = mode || 'inbox';
 
-  document.querySelectorAll('.ic-msg-tabs button').forEach(b=>{
-    b.classList.toggle('on', b.dataset.mode === State.mode);
-  });
-
   const compose = $('icComposePanel');
-  if(compose) compose.classList.toggle('show', State.mode === 'compose');
+  const callLog = $('icCallLog');
+  const list    = $('icMsgList');
 
+  if(compose) compose.classList.remove('show');
+  if(callLog) callLog.style.display = 'none';
+
+  if(State.mode === 'compose'){
+    if(list) list.style.display = 'none';
+    if(compose) compose.classList.add('show');
+    return;
+  }
+
+  if(State.mode === 'calls'){
+    if(list) list.style.display = 'none';
+    if(callLog) callLog.style.display = '';
+    renderCallLog();
+    return;
+  }
+
+  // inbox / sent / default
+  if(list) list.style.display = '';
   render();
+}
+
+async function renderCallLog(){
+  const list = $('icCallLog');
+  if(!list) return;
+  list.innerHTML = '<div class="ic-empty">Chargement…</div>';
+  let calls = [];
+  try{ calls = await (window.CallManager?.loadCallLog?.() || Promise.resolve([])); }catch(e){}
+  if(!calls.length){
+    list.innerHTML = '<div class="ic-empty ic-empty-help">📞 Aucun appel pour l\'instant.</div>';
+    return;
+  }
+  const statusLabel = {pending:'En attente',accepted:'Accepté ✅',refused:'Refusé',cancelled:'Annulé'};
+  list.innerHTML = calls.map(c=>{
+    const dir = c.outgoing ? '📤 Émis' : '📥 Reçu';
+    const sl = statusLabel[c.status] || c.status;
+    const time = c.at ? new Date(c.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:18px">${c.outgoing?'📤':'📥'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">${esc(c.plate)}</div>
+        <div style="font-size:11px;color:#888">${dir} · ${sl}</div>
+      </div>
+      <div style="font-size:11px;color:#555;flex-shrink:0">${time}</div>
+      <button type="button" onclick="CallManager.openContactOptions('${esc(c.plate)}')" style="background:rgba(41,121,255,.15);color:#2979ff;border:1px solid rgba(41,121,255,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">📞 Rappeler</button>
+    </div>`;
+  }).join('');
 }
 
 function renderEmpty(text){
@@ -356,21 +504,42 @@ function render(){
   if(State.mode === 'sent'){
     threads = threads.filter(t => t.list.some(m=>m._sent));
   }
-
   if(State.mode === 'inbox'){
     threads = threads.filter(t => t.list.some(m=>m._received));
   }
-
   if(State.mode === 'compose'){
     list.innerHTML = `<div class="ic-empty">Écris une plaque et un message puis appuie sur ➤.</div>`;
-    closeThread();
     return;
+  }
+
+  // Filtre recherche (F-SEARCH)
+  if(State.searchQuery){
+    const q = State.searchQuery;
+    threads = threads.filter(t =>
+      nPlate(t.plate).includes(q) ||
+      (t.last?.message || '').toUpperCase().includes(q)
+    );
+  }
+
+  // Filtre archives (F-ARCHIVE)
+  const archived = getArchived();
+  threads = threads.filter(t => !archived.includes(nPlate(t.plate)));
+
+  // Favoris en tête (F-FAVORITES)
+  const favs = getFavorites();
+  if(favs.length > 0){
+    threads = [
+      ...threads.filter(t => favs.includes(nPlate(t.plate))),
+      ...threads.filter(t => !favs.includes(nPlate(t.plate)))
+    ];
   }
 
   if(!threads.length){
     const helpText = State.mode === 'sent'
       ? 'Aucun message envoyé.'
-      : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
+      : State.searchQuery
+        ? `Aucune conversation pour "${State.searchQuery}".`
+        : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
     list.innerHTML = `<div class="ic-empty">${helpText}</div>`;
     closeThread();
     return;
@@ -379,6 +548,11 @@ function render(){
   list.innerHTML = threads.map(t=>{
     const last = t.last || {};
     const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const trust = getTrust(t.plate);
+    const isFav = favs.includes(nPlate(t.plate));
+    const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
+      trust === 'TRUSTED'  ? '<span class="ic-trust-ok">✓</span>' :
+      trust === 'CONTEXT'  ? '<span class="ic-trust-ctx">📍</span>' : '';
     return `
       <div class="ic-swipe-wrap">
         <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
@@ -386,7 +560,7 @@ function render(){
           <div class="ic-avatar">🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}</span>
+              <span class="ic-plate">${esc(t.plate)}${trustBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
@@ -408,6 +582,63 @@ function render(){
     });
     _initRowSwipe(wrap);
   });
+
+  // ── Section Archivées ─────────────────────────────────────────
+  _renderArchivedSection(list);
+}
+
+function _renderArchivedSection(list){
+  const archived = getArchived();
+  if(!archived.length) return;
+
+  const archThreads = (State.threads || [])
+    .filter(t => archived.includes(nPlate(t.plate)))
+    .sort((a,b) => new Date(b.last?.created_at||0) - new Date(a.last?.created_at||0));
+  if(!archThreads.length) return;
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'ic-archived-toggle';
+  toggle.innerHTML = `📂 Archivées <span class="ic-arch-count">${archThreads.length}</span>`;
+
+  const section = document.createElement('div');
+  section.style.display = 'none';
+  section.innerHTML = archThreads.map(t => {
+    const last = t.last || {};
+    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+      <div class="ic-mail-row" data-plate="${esc(t.plate)}" style="opacity:.7">
+        <div class="ic-avatar">📂</div>
+        <div class="ic-row-body">
+          <div class="ic-row-top">
+            <span class="ic-plate">${esc(t.plate)}</span>
+            <span class="ic-row-time">${esc(timeStr)}</span>
+          </div>
+          <div class="ic-row-bot">
+            <span class="ic-preview">${esc(last.message || '')}</span>
+          </div>
+        </div>
+        <button type="button" style="font-size:11px;padding:4px 8px;background:#1e3252;border:none;border-radius:8px;color:#7ab3e8;cursor:pointer"
+                onclick="ImmatMessages._unarchiveFromList('${esc(t.plate)}')">Désarchiver</button>
+      </div>`;
+  }).join('');
+
+  toggle.addEventListener('click', () => {
+    const open = section.style.display !== 'none';
+    section.style.display = open ? 'none' : 'block';
+    toggle.querySelector('.ic-arch-count').textContent = open ? archThreads.length : '▲';
+  });
+
+  section.querySelectorAll?.('.ic-mail-row[data-plate]');
+  list.appendChild(toggle);
+  list.appendChild(section);
+
+  section.querySelectorAll('.ic-mail-row[data-plate]').forEach(row => {
+    row.addEventListener('click', e => {
+      if(e.target.tagName === 'BUTTON') return;
+      openThread(row.dataset.plate);
+    });
+  });
 }
 
 async function markThreadRead(plate){
@@ -428,6 +659,39 @@ async function markThreadRead(plate){
   try{window.App?.updateActBadge?.()}catch(e){}
 }
 
+// ── Timeline unifiée (messages + appels) ────────────────────────
+function _renderTimeline(body, messages, callEvents){
+  const allEvents = [
+    ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
+    ...(callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()}))
+  ].sort((a,b) => a._ts - b._ts);
+
+  body.innerHTML = allEvents.map(item => {
+    const timeStr = item._ts ? new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(item._type === 'call'){
+      const isOut = item.outgoing;
+      const statusLabel = {
+        pending:'En attente',accepted:'Accepté ✅',refused:'Refusé ❌',
+        cancelled:'Annulé',missed:'Manqué ☎️'
+      }[item.status] || item.status;
+      const cls = item.status==='missed' ? 'call-missed' :
+                  item.status==='refused' ? 'call-refused' :
+                  isOut ? 'call-sent' : 'call-recv';
+      return `<div class="ic-bubble ${cls}">
+        <div class="ic-bubble-text">📞 ${isOut ? 'Appel émis' : 'Appel reçu'} · ${statusLabel}</div>
+        <div class="ic-bubble-footer"><span class="ic-time">${esc(timeStr)}</span></div>
+      </div>`;
+    }
+    return `<div class="ic-bubble ${item._sent?'sent':'recv'}">
+      <div class="ic-bubble-text">${esc(item.message||'')}</div>
+      <div class="ic-bubble-footer">
+        <span class="ic-time">${esc(timeStr)}</span>
+        <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
@@ -439,23 +703,58 @@ async function openThread(plate){
   const box = $('icThread');
   const body = $('icThreadBody');
   const title = $('icThreadTitle');
+  const sub = $('icThreadSub');
 
   if(!box || !body || !t) return;
 
   if(title) title.textContent = localPlate;
 
-  body.innerHTML = t.list.map(m=>{
-    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `
-      <div class="ic-bubble ${m._sent?'sent':'recv'}">
-        <div class="ic-bubble-text">${esc(m.message || '')}</div>
-        <div class="ic-bubble-footer">
-          <span class="ic-time">${esc(timeStr)}</span>
-          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  // Sous-titre : niveau confiance (F-TRUST)
+  if(sub){
+    const trust = getTrust(localPlate);
+    const subLabels = {
+      NONE:     'Appuie sur 📞 pour demander un contact',
+      CONTEXT:  '📍 Contexte actif',
+      TRUSTED:  '✓ Conducteur de confiance',
+      FAVORITE: '⭐ Favori prioritaire'
+    };
+    sub.textContent = subLabels[trust] || subLabels.NONE;
+  }
+
+  // Carte contexte alerte active (F-CALL-CONTEXT)
+  const ctxCard = $('icContextCard');
+  if(ctxCard){
+    const alerts = (window.S?.alerts || []).filter(a =>
+      a.status !== 'resolved' &&
+      (nPlate(a.plate||a.target_plate||'') === nPlate(localPlate) ||
+       nPlate(a.sender_plate||'') === nPlate(localPlate))
+    );
+    if(alerts.length > 0){
+      const a = alerts[0];
+      ctxCard.style.display = '';
+      ctxCard.innerHTML = `⚠️ <strong>Alerte active</strong> : ${esc(a.reason || a.category || 'Signalement')}`;
+    } else {
+      ctxCard.style.display = 'none';
+    }
+  }
+
+  // Masquer la liste (thread prend la place)
+  const listEl = $('icMsgList');
+  const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
+  const sbar   = $('icSearchBar');
+  if(listEl) listEl.style.display = 'none';
+  if(hdr)    hdr.style.display    = 'none';
+  if(sbar)   sbar.style.display   = 'none';
+
+  // Chargement événements d'appel (F-CONVERSATION-ENGINE + F-APPEL)
+  let callEvents = [];
+  try{
+    const allCalls = await (window.CallManager?.loadCallLog?.() || Promise.resolve([]));
+    callEvents = (allCalls||[]).filter(c => nPlate(fPlate(c.plate)) === nPlate(localPlate));
+    State.callEventsCache[nPlate(localPlate)] = callEvents;
+  }catch(e){ callEvents = []; }
+
+  _renderTimeline(body, t.list, callEvents);
 
   box.classList.add('show');
   body.scrollTop = body.scrollHeight;
@@ -463,8 +762,14 @@ async function openThread(plate){
 }
 
 function closeThread(){
-  const box = $('icThread');
-  if(box) box.classList.remove('show');
+  const box    = $('icThread');
+  const listEl = $('icMsgList');
+  const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
+  const sbar   = $('icSearchBar');
+  if(box)    box.classList.remove('show');
+  if(listEl) listEl.style.display = '';
+  if(hdr)    hdr.style.display    = '';
+  if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
 }
 
@@ -476,21 +781,12 @@ function refreshThread(){
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
   if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
-  body.innerHTML = t.list.map(m=>{
-    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div class="ic-bubble ${m._sent?'sent':'recv'}">
-        <div class="ic-bubble-text">${esc(m.message || '')}</div>
-        <div class="ic-bubble-footer">
-          <span class="ic-time">${esc(timeStr)}</span>
-          <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(m.id)}')">×</button>
-        </div>
-      </div>`;
-  }).join('');
+  const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
+  _renderTimeline(body, t.list, callEvents);
   body.scrollTop = body.scrollHeight;
 }
 
 async function sendNew(){
-  // Désactiver le bouton pendant l'envoi pour éviter les doubles clics
   const btn = document.querySelector('#icComposePanel .ic-send-btn');
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
@@ -506,7 +802,6 @@ async function sendNew(){
 async function reply(){
   if(!State.activePlate) return toast('Choisis une conversation.','bad');
   const text = ($('icReplyText')?.value || '').trim();
-  // Désactiver le bouton pendant l'envoi
   const btn = document.querySelector('#icThread .ic-send-btn');
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
@@ -535,6 +830,15 @@ async function sendToPlate(plate,text){
   if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
+
+  // Bloc bidirectionnel : A ne peut pas contacter une plaque qu'il a bloquée (INV-COM-024)
+  const outgoingBlock = getBlockLevel(plate);
+  if(outgoingBlock === BLOCK_LEVELS.MESSAGES || outgoingBlock === BLOCK_LEVELS.ALL){
+    toast('Vous avez bloqué ce conducteur.','bad'); return false;
+  }
+
+  // Anti-spam (F-SPAM-PROTECTION)
+  if(_checkSpam(plate)){ toast('Trop de messages envoyés rapidement.','bad'); return false; }
 
   const target = await findProfileByPlate(plate);
   if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
@@ -574,6 +878,7 @@ async function sendToPlate(plate,text){
   State.activePlate = receiverPlate;
   toast('Message envoyé à ' + receiverPlate + '.','ok');
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
+  try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);
@@ -582,6 +887,7 @@ async function sendToPlate(plate,text){
 
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
+  // INV-COM-009 : soft-delete local uniquement — pas de DELETE DB
   const sid = String(id);
   let deleted = [];
   try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
@@ -594,8 +900,10 @@ async function deleteMessage(id){
 async function deleteThread(plate){
   const target = fPlate(plate || State.activePlate || '');
   if(!target) return;
-  if(!plate && !confirm('Supprimer cette conversation ?')) return;
+  // Toujours confirmer, qu'on vienne du swipe ou du header (INV-COM-009)
+  if(!confirm('Supprimer cette conversation ?')) return;
 
+  // INV-COM-009 : soft-delete local uniquement — pas de DELETE DB
   const ids = State.messages
     .filter(m=>m._otherPlate===target)
     .map(m=>String(m.id));
@@ -605,7 +913,22 @@ async function deleteThread(plate){
   ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
   try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-500))); }catch(e){}
 
-  if(!plate) closeThread();
+  try{ window.ImmatOrganism?.observe?.('CONV_DELETED',{plate:target,_src:'ImmatConnect/messages/deleteThread'}); }catch(e){}
+  closeThread();
+  await refresh();
+  try{ window.App?.updateActBadge?.(); }catch(e){}
+  try{ window.App?.renderActivityFeed?.(); }catch(e){}
+}
+
+async function deleteAllMessages(){
+  if(!confirm('Masquer TOUS vos messages ? Cette action ne supprime pas les données du correspondant.')) return;
+  // INV-COM-009 : soft-delete local uniquement — on ajoute tous les IDs à ic_deleted_msgs
+  const ids = State.messages.map(m=>m.id).filter(Boolean).map(String);
+  let deleted = [];
+  try{ deleted = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]'); }catch(e){}
+  ids.forEach(id => { if(!deleted.includes(id)) deleted.push(id); });
+  try{ localStorage.setItem('ic_deleted_msgs', JSON.stringify(deleted.slice(-2000))); }catch(e){}
+  closeThread();
   await refresh();
   try{ window.App?.updateActBadge?.(); }catch(e){}
   try{ window.App?.renderActivityFeed?.(); }catch(e){}
@@ -615,18 +938,28 @@ async function subscribe(){
   const client = sb();
   const u = State.user || await getUser();
   if(!client || !u) return;
+  if(State.channel) return;
 
-  // Si un channel existe déjà et est actif, ne pas recréer
-  if(State.channel) {
-    try{ await client.removeChannel(State.channel); }catch(e){}
-    State.channel = null;
-  }
+  const mp = nPlate(myPlate());
+  const uid = State.user?.id;
 
   State.channel = client
-    .channel('immat_messages_v12_' + u.id)
-    .on('postgres_changes',{event:'*',schema:'public',table:'messages'},async()=>{
+    .channel('immat_messages_v13_' + u.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async(payload)=>{
+      const m = payload.new || {};
+      // MSG_RECEIVED uniquement quand c'est un message adressé à MOI (pas mes propres envois)
+      const isForMe = mp && (
+        nPlate(m.receiver_plate||'') === mp ||
+        nPlate(m.target_plate||'') === mp ||
+        nPlate(m.to_plate||'') === mp ||
+        (uid && m.receiver_id === uid && m.sender_id !== uid)
+      );
+      if(isForMe){
+        try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+      }
       await refresh();
     })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},async()=>{ await refresh(); })
     .subscribe((status,err)=>{
       if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
         console.warn('Realtime messages KO', err);
@@ -646,6 +979,300 @@ function installInputs(){
   });
 }
 
+// ── F-TRUST : Gestion de confiance ──────────────────────────────
+function getTrustMap(){
+  try{ return JSON.parse(localStorage.getItem('ic_trust')||'{}'); }catch(e){ return {}; }
+}
+function getTrust(plate){
+  return getTrustMap()[nPlate(fPlate(plate))] || 'NONE';
+}
+function setTrust(plate,level){
+  plate = fPlate(plate);
+  if(!plate) return;
+  const map = getTrustMap();
+  map[nPlate(plate)] = level || 'NONE';
+  try{ localStorage.setItem('ic_trust',JSON.stringify(map)); }catch(e){}
+  // Émettre l'événement OBD approprié (INV-COM-007) — literals pour la détection statique
+  if(!level || level === 'NONE'){
+    try{ window.ImmatOrganism?.observe?.('CONTACT_REVOKED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
+    toast('Confiance révoquée pour '+plate+'.','ok');
+  } else {
+    try{ window.ImmatOrganism?.observe?.('CONTACT_TRUSTED',{plate,level,_src:'ImmatConnect/messages/setTrust'}); }catch(e){}
+    toast('Confiance '+level+' attribuée à '+plate+'.','ok');
+  }
+  render();
+}
+
+// ── F-FAVORITES : Conversations favorites ───────────────────────
+function getFavorites(){
+  try{ return JSON.parse(localStorage.getItem('ic_favorites')||'[]'); }catch(e){ return []; }
+}
+function saveFavorites(arr){
+  try{ localStorage.setItem('ic_favorites',JSON.stringify(arr)); }catch(e){}
+}
+function favoriteConv(plate){
+  plate = nPlate(fPlate(plate));
+  const favs = getFavorites();
+  if(!favs.includes(plate)) saveFavorites([...favs,plate]);
+  try{ window.ImmatOrganism?.observe?.('CONV_FAVORITED',{plate,_src:'ImmatConnect/messages/favoriteConv'}); }catch(e){}
+  render();
+}
+function unfavoriteConv(plate){
+  plate = nPlate(fPlate(plate));
+  saveFavorites(getFavorites().filter(p=>p!==plate));
+  try{ window.ImmatOrganism?.observe?.('CONV_FAVORITED',{plate,action:'removed',_src:'ImmatConnect/messages/unfavoriteConv'}); }catch(e){}
+  render();
+}
+
+// ── F-ARCHIVE : Archivage de conversations ──────────────────────
+function getArchived(){
+  try{ return JSON.parse(localStorage.getItem('ic_archived')||'[]'); }catch(e){ return []; }
+}
+function saveArchived(arr){
+  try{ localStorage.setItem('ic_archived',JSON.stringify(arr)); }catch(e){}
+}
+function archiveConv(plate){
+  plate = nPlate(fPlate(plate));
+  const arch = getArchived();
+  if(!arch.includes(plate)) saveArchived([...arch,plate]);
+  try{ window.ImmatOrganism?.observe?.('CONV_ARCHIVED',{plate,_src:'ImmatConnect/messages/archiveConv'}); }catch(e){}
+  render();
+}
+function unarchiveConv(plate){
+  plate = nPlate(fPlate(plate));
+  saveArchived(getArchived().filter(p=>p!==plate));
+  try{ window.ImmatOrganism?.observe?.('CONV_ARCHIVED',{plate,action:'removed',_src:'ImmatConnect/messages/unarchiveConv'}); }catch(e){}
+  render();
+}
+
+// ── F-SEARCH : Recherche dans les conversations ─────────────────
+function toggleSearch(){
+  const bar = $('icSearchBar');
+  if(!bar) return;
+  const hidden = bar.style.display === 'none' || !bar.style.display;
+  bar.style.display = hidden ? '' : 'none';
+  try{ localStorage.setItem('_icSearchOpen', hidden ? '1' : '0'); }catch(e){}
+  if(hidden){
+    const inp = $('icSearchInput');
+    if(inp){ inp.value=''; inp.focus(); }
+  } else {
+    State.searchQuery = '';
+    render();
+  }
+}
+function filterConv(query){
+  State.searchQuery = (query||'').trim().toUpperCase();
+  try{ window.ImmatOrganism?.observe?.('CONV_SEARCHED',{_src:'ImmatConnect/messages/filterConv'}); }catch(e){}
+  render();
+}
+
+// ── Appel depuis thread (F-APPEL) ────────────────────────────────
+function callActive(){
+  if(!State.activePlate) return toast('Aucune conversation active.','bad');
+  try{
+    window.CallManager?.openContactOptions?.(State.activePlate) ||
+    window.CallManager?.contactByCall?.(State.activePlate);
+  }catch(e){}
+}
+
+// ── Fermer composition ───────────────────────────────────────────
+function closeCompose(){
+  const compose = $('icComposePanel');
+  const list    = $('icMsgList');
+  if(compose) compose.classList.remove('show');
+  if(list)    list.style.display = '';
+  State.mode = 'inbox';
+  render();
+}
+
+// ── Menu thread — bottom sheet ────────────────────────────────────
+function openThreadMenu(){
+  if(!State.activePlate) return;
+  const plate = State.activePlate;
+  const isFav  = getFavorites().includes(nPlate(plate));
+  const isArch = getArchived().includes(nPlate(plate));
+  const trust  = getTrust(plate);
+
+  const favBtn   = document.getElementById('icSheetFav');
+  const archBtn  = document.getElementById('icSheetArch');
+  const trustBtn = document.getElementById('icSheetTrust');
+
+  if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
+  if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
+  if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
+
+  const backdrop = document.getElementById('icSheetBackdrop');
+  const sheet    = document.getElementById('icBottomSheet');
+  _initSheetTouch();
+  if(backdrop) backdrop.classList.add('show');
+  if(sheet)    sheet.classList.add('show');
+  const cats = document.getElementById('icAbuseCategories');
+  if(cats) cats.style.display = 'none';
+}
+
+function closeSheet(){
+  const sheet    = document.getElementById('icBottomSheet');
+  const backdrop = document.getElementById('icSheetBackdrop');
+  if(sheet){
+    sheet.style.transform  = '';
+    sheet.style.transition = '';
+    sheet.classList.remove('show');
+  }
+  if(backdrop) backdrop.classList.remove('show');
+}
+
+let _sheetTouchInit = false;
+function _initSheetTouch(){
+  if(_sheetTouchInit) return;
+  const sheet = document.getElementById('icBottomSheet');
+  if(!sheet) return;
+  _sheetTouchInit = true;
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    startY   = e.touches[0].clientY;
+    dragging = true;
+    sheet.style.transition = 'none';
+  }, {passive:true});
+  sheet.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = Math.max(0, e.touches[0].clientY - startY);
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  sheet.addEventListener('touchend', () => {
+    if(!dragging) return;
+    dragging = false;
+    const m  = sheet.style.transform.match(/translateY\((\d+(?:\.\d+)?)px\)/);
+    const dy = m ? parseFloat(m[1]) : 0;
+    sheet.style.transition = '';
+    if(dy > 60){ closeSheet(); }
+    else        { sheet.style.transform = ''; }
+  });
+}
+
+function _sheetAction(action){
+  if(!State.activePlate) return;
+  const plate = State.activePlate;
+  const isFav  = getFavorites().includes(nPlate(plate));
+  const isArch = getArchived().includes(nPlate(plate));
+  const trust  = getTrust(plate);
+  if(action === 'abuse') {
+    const cats = document.getElementById('icAbuseCategories');
+    if(cats) cats.style.display = cats.style.display === 'none' ? '' : 'none';
+    return;
+  }
+  closeSheet();
+  if(action === 'fav')   { isFav  ? unfavoriteConv(plate)                      : favoriteConv(plate); }
+  else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
+  else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
+  else if(action === 'del')   { deleteThread(plate); }
+}
+
+function _reportAbuse(category){
+  const plate = State.activePlate;
+  if(!plate) return;
+  const labels = {ABUSE_SPAM:'Spam',ABUSE_HARASSMENT:'Harcèlement',ABUSE_INSULT:'Insulte',ABUSE_FALSE_ALERT:'Fausse alerte',ABUSE_CALL_MISUSE:"Abus d'appel",ABUSE_OTHER:'Autre'};
+  const label = labels[category] || category;
+  if(!confirm('Signaler un abus ('+label+') de '+plate+' ?')) return;
+  const cats = document.getElementById('icAbuseCategories');
+  if(cats) cats.style.display = 'none';
+  closeSheet();
+  try{ window.ImmatOrganism?.observe?.('ABUSE_REPORTED',{plate,category,label,_src:'ImmatConnect/messages/_reportAbuse'}); }catch(e){}
+  toast('Abus ('+label+') signalé. Merci pour votre vigilance.','ok');
+}
+
+// ── F-PRESENCE : Statut de présence ─────────────────────────────
+function setPresence(status){
+  try{ localStorage.setItem('ic_presence',status); }catch(e){}
+  try{ window.ImmatOrganism?.observe?.('PRESENCE_CHANGED',{status,_src:'ImmatConnect/messages/setPresence'}); }catch(e){}
+  document.querySelectorAll('.presence-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.status === status);
+  });
+  const labels = {disponible:'🟢 Disponible',conduite:'🚗 Conduite',occupé:'🟡 Occupé',invisible:'⚫ Invisible','hors-ligne':'⭕ Hors ligne'};
+  toast('Statut : '+(labels[status]||status)+'.','ok');
+}
+
+// ── F-CALL-PERMISSIONS : Niveau d'accès appels ──────────────────
+function setCallLevel(level){
+  let oldLevel = 1;
+  try{ oldLevel = parseInt(localStorage.getItem('ic_call_perm') || '1', 10); }catch(e){}
+  try{ localStorage.setItem('ic_call_perm',String(level)); }catch(e){}
+  document.querySelectorAll('.call-level-btn').forEach(b=>{
+    b.classList.toggle('on', String(b.dataset.level) === String(level));
+  });
+  saveCallSettings();
+  try{ window.ImmatOrganism?.observe?.('TRUST_LEVEL_CHANGED',{oldLevel,newLevel:level,_src:'ImmatConnect/messages/setCallLevel'}); }catch(e){}
+  const labels = {1:'Personne ne peut vous appeler.',2:'Contacts de confiance uniquement.',3:'Confiance + contexte actif.',4:'Tout le monde peut vous appeler.'};
+  toast('Niveau '+level+' : '+(labels[level]||''),'ok');
+}
+
+function setDnd(enabled){
+  try{ localStorage.setItem('ic_dnd',enabled?'1':'0'); }catch(e){}
+  const hours = $('dndHours');
+  if(hours) hours.style.display = enabled ? '' : 'none';
+  const sub = $('dndSub');
+  if(sub) _updateDndSub();
+  saveCallSettings();
+}
+
+function saveDndHours(){
+  const from = $('dndFrom')?.value || '22:00';
+  const to   = $('dndTo')?.value   || '07:00';
+  try{ localStorage.setItem('ic_dnd_from',from); localStorage.setItem('ic_dnd_to',to); }catch(e){}
+  _updateDndSub();
+  saveCallSettings();
+}
+
+function _updateDndSub(){
+  const sub = $('dndSub');
+  if(!sub) return;
+  const dndOn = localStorage.getItem('ic_dnd') === '1';
+  const from  = localStorage.getItem('ic_dnd_from') || '22:00';
+  const to    = localStorage.getItem('ic_dnd_to')   || '07:00';
+  sub.textContent = dndOn ? 'Activé : '+from+' → '+to : 'Désactivé';
+}
+
+function saveCallSettings(){
+  try{ window.ImmatOrganism?.observe?.('CALL_PREFERENCES_UPDATED',{_src:'ImmatConnect/messages/saveCallSettings'}); }catch(e){}
+}
+
+// ── F-SPAM-PROTECTION : Anti-spam ───────────────────────────────
+function _checkSpam(plate){
+  plate = nPlate(fPlate(plate));
+  const now = Date.now();
+  let log = {};
+  try{ log = JSON.parse(localStorage.getItem('ic_spam_log')||'{}'); }catch(e){}
+  const entry = log[plate] || {count:0,ts:now};
+  if(now - entry.ts > 60000){ entry.count = 1; entry.ts = now; }
+  else { entry.count++; }
+  log[plate] = entry;
+  try{ localStorage.setItem('ic_spam_log',JSON.stringify(log)); }catch(e){}
+  if(entry.count > 20){
+    try{ window.ImmatOrganism?.observe?.('SPAM_DETECTED',{plate,count:entry.count,_src:'ImmatConnect/messages/sendToPlate'}); }catch(e){}
+    return true;
+  }
+  return false;
+}
+
+// ── Initialiser les paramètres UI ───────────────────────────────
+function initSettings(){
+  try{
+    const callPerm = localStorage.getItem('ic_call_perm');
+    if(callPerm) setCallLevel(parseInt(callPerm,10));
+    const presence = localStorage.getItem('ic_presence');
+    if(presence) document.querySelectorAll('.presence-btn').forEach(b=>b.classList.toggle('on',b.dataset.status===presence));
+    const dnd = localStorage.getItem('ic_dnd') === '1';
+    const dndToggle = $('dndToggle');
+    if(dndToggle) dndToggle.checked = dnd;
+    const hoursEl = $('dndHours');
+    if(hoursEl) hoursEl.style.display = dnd ? '' : 'none';
+    const from = localStorage.getItem('ic_dnd_from');
+    const to   = localStorage.getItem('ic_dnd_to');
+    if(from && $('dndFrom')) $('dndFrom').value = from;
+    if(to   && $('dndTo'))   $('dndTo').value   = to;
+    _updateDndSub();
+  }catch(e){}
+}
+
 window.ImmatMessages = {
   mode:State.mode,
   refresh,
@@ -658,14 +1285,48 @@ window.ImmatMessages = {
   closeThread,
   deleteThread,
   deleteMessage,
+  deleteAllMessages,
+  renderCallLog,
   sendToPlate,
-  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}}
+  unsubscribe:function(){if(State.channel){const client=sb();if(client){try{client.removeChannel(State.channel)}catch(e){}}State.channel=null;}},
+  // Phase 1 — DAM-COMMUNICATION
+  toggleSearch,
+  filterConv,
+  callActive,
+  closeCompose,
+  openThreadMenu,
+  closeSheet,
+  _sheetAction,
+  _unarchiveFromList: (plate) => { unarchiveConv(plate); },
+  setTrust,
+  getTrust,
+  getBlockLevel,
+  getTrustLevel,
+  getPermanentTrust,
+  setTrustPermanent,
+  setContextTrust,
+  getContextTrust,
+  clearContextTrust,
+  revokePermanentTrust,
+  _reportAbuse,
+  BLOCK_LEVELS,
+  TRUST_LEVELS,
+  favoriteConv,
+  unfavoriteConv,
+  archiveConv,
+  unarchiveConv,
+  setPresence,
+  setCallLevel,
+  setDnd,
+  saveDndHours,
+  saveCallSettings,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
 
 async function boot(){
   installInputs();
+  initSettings();
   const u = await getUser();
   if(u) await refresh();
 }

@@ -1,8 +1,10 @@
 {
   "_v": 2,
+  "_role": "Inventaire des fonctionnalités — relie usage → organe → flux → intention",
   "_role": "Inventaire des fonctionnalités — relie usage → organe → flux",
   "_rule": "Chaque feature = ce que le conducteur peut faire, pas comment le code fonctionne. Ref FLOW-INDEX pour les flux critiques.",
   "_ref": "architecture/IMMAT-FLOW-INDEX.json",
+  "_updated": "SESSION OBD-002b — ajout champ intentions + flows manquants",
   "features": [
     {
       "id": "F-CARTE",
@@ -11,6 +13,7 @@
       "description": "Voir sa position et les véhicules proches sur une carte interactive",
       "actions": ["Se localiser", "Voir les conducteurs proches", "Naviguer vers un marqueur", "Mode invisible"],
       "statut": "actif",
+      "intentions": ["INT-LOCATE-SELF", "INT-UNDERSTAND-ENV", "INT-FEEL-SAFE"],
       "flows": ["FLOW-MAP-SELF-MARKER"]
     },
     {
@@ -20,6 +23,7 @@
       "description": "Rechercher une destination et suivre un itinéraire en temps réel",
       "actions": ["Rechercher adresse", "Lancer GPS", "Arrêter GPS", "Favoris GPS", "Historique GPS"],
       "statut": "actif",
+      "intentions": ["INT-NAVIGATE"],
       "flows": ["FLOW-GPS-NAVIGATION"],
       "note": "navPremium (trafic, limite vitesse, voies) = données SIMULÉES — P1-002 en attente"
     },
@@ -30,6 +34,7 @@
       "description": "Prévenir un conducteur d'un problème sur son véhicule (feux, pneu, porte...)",
       "actions": ["Choisir type alerte", "Cibler une plaque", "Envoyer alerte"],
       "statut": "actif",
+      "intentions": ["INT-SIGNAL-VEHICLE"],
       "flows": ["FLOW-VEHICLE-ALERT"]
     },
     {
@@ -40,6 +45,8 @@
       "actions": ["Accident", "Bouchon", "Obstacle", "Verglas", "Contrôle police"],
       "entry_points": ["FAB Signaler (onglet Altet)", "Clic droit carte → 📍 Signaler ici (P2-002)"],
       "statut": "actif",
+      "intentions": ["INT-SIGNAL-ROAD", "INT-CONFIRM-DANGER"],
+      "flows": ["FLOW-ROAD-SIGNAL"],
       "flows": ["FLOW-ROAD-REPORT"],
       "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
       "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
@@ -51,6 +58,7 @@
       "description": "Demander de l'aide aux conducteurs proches (panne, carburant, batterie...)",
       "actions": ["Choisir type aide", "Envoyer demande", "Marquer résolu"],
       "statut": "actif",
+      "intentions": ["INT-REQUEST-HELP", "INT-HELP-DRIVER", "INT-RESOLVE-ALERT", "INT-REPLY-TO-ALERT", "INT-CONTACT-FROM-ALERT"],
       "flows": ["FLOW-ASSIST-REQUEST"]
     },
     {
@@ -60,6 +68,7 @@
       "description": "Envoyer et recevoir des messages privés entre deux conducteurs par plaque",
       "actions": ["Composer message", "Répondre", "Réponses rapides", "Bloquer"],
       "statut": "actif",
+      "intentions": ["INT-CONTACT-DRIVER"],
       "flows": ["FLOW-DIRECT-MESSAGE"]
     },
     {
@@ -69,15 +78,19 @@
       "description": "Consulter les messages reçus et alertes avec filtres Tout/Messages/Alertes",
       "actions": ["Filtrer par type", "Voir détail", "Marquer vu", "Répondre"],
       "statut": "actif",
+      "intentions": ["INT-CHECK-ACTIVITY"],
       "flows": ["FLOW-BADGES"]
     },
     {
       "id": "F-APPEL",
-      "nom": "Appels audio",
+      "nom": "Demandes de contact / Appels",
       "organe": "Messages",
-      "description": "Appeler un conducteur en audio P2P via WebRTC",
-      "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser"],
+      "description": "Envoyer une demande de contact audio à un conducteur via call_requests. Phase B = WebRTC.",
+      "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser", "Journal d'appels"],
       "statut": "actif",
+      "intentions": ["INT-CONTACT-DRIVER", "INT-CALL-DRIVER", "INT-ANSWER-CALL", "INT-REFUSE-CALL", "INT-END-CALL", "INT-MISS-CALL", "INT-CONTEXTUAL-CALL"],
+      "flows": ["FLOW-CALL-REQUEST", "FLOW-CALL-CONTEXT"],
+      "note": "Phase A = demande de contact (call_requests). Phase B = WebRTC P2P audio. Consentement explicite — D-002."
       "flows": ["FLOW-AUDIO-CALL"],
       "note": "Consentement explicite requis — D-002"
     },
@@ -88,6 +101,8 @@
       "description": "Déclencher une alerte d'urgence protégée par appui long",
       "actions": ["Appui long 3s → confirmation → envoi"],
       "statut": "actif",
+      "intentions": ["INT-SOS"],
+      "flows": ["FLOW-SOS-EMERGENCY"],
       "flows": ["FLOW-SOS"],
       "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
     },
@@ -98,6 +113,8 @@
       "description": "Assistant contextuel intelligent — répond selon rôle conducteur/gardien",
       "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
       "statut": "actif",
+      "intentions": ["INT-ASK-ANGE"],
+      "flows": ["FLOW-ANGE-ASSISTANT", "FLOW-ANGE-CALL", "FLOW-ANGE-CONVERSATION", "FLOW-ANGE-TRUST", "FLOW-ANGE-SIGNAL", "FLOW-ANGE-NAVIGATE"],
       "flows": ["FLOW-ANGE-DIALOG"],
       "throttle": "10 appels/heure par session"
     },
@@ -108,8 +125,101 @@
       "description": "Gérer son pseudo, téléphone, couleur véhicule. La plaque est immuable.",
       "actions": ["Modifier pseudo", "Modifier téléphone", "Modifier couleur"],
       "statut": "actif",
+      "intentions": ["INT-MANAGE-PROFILE"],
+      "flows": ["FLOW-PROFILE-EDIT"],
       "flows": ["FLOW-PROFILE-MANAGEMENT"],
       "note": "Plaque immuable après création — INV-006"
+    },
+    {
+      "id": "F-CONVERSATION-ENGINE",
+      "nom": "Moteur de conversation unifié",
+      "organe": "Messages",
+      "description": "Regrouper en une timeline unique tous les échanges entre deux conducteurs : messages, appels, contexte",
+      "actions": ["Afficher liste conversations", "Ouvrir thread", "Vue timeline unifiée", "Fermer thread"],
+      "statut": "actif",
+      "intentions": ["INT-SEND-MESSAGE", "INT-RECEIVE-MESSAGE"],
+      "flows": ["FLOW-CONVERSATION", "FLOW-MESSAGE"]
+    },
+    {
+      "id": "F-TRUST",
+      "nom": "Gestion de confiance",
+      "organe": "Messages",
+      "description": "Gérer le niveau de confiance entre conducteurs (NONE, CONTEXT, TRUSTED, FAVORITE)",
+      "actions": ["Attribuer confiance", "Révoquer confiance", "Voir niveau confiance", "Épingler favori"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-TRUST", "INT-REVOKE-TRUST", "INT-UNBLOCK-DRIVER"],
+      "flows": ["FLOW-TRUST", "FLOW-BLOCK"]
+    },
+    {
+      "id": "F-CALL-PERMISSIONS",
+      "nom": "Paramètres d'appel",
+      "organe": "Messages",
+      "description": "Configurer les niveaux d'autorisation d'appel (1-4) et le mode Ne pas déranger",
+      "actions": ["Choisir niveau permission (1-4)", "Activer Ne pas déranger", "Configurer plage horaire", "Gérer exceptions"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-CALLS"],
+      "flows": ["FLOW-CALL"]
+    },
+    {
+      "id": "F-PRESENCE",
+      "nom": "Statut de présence",
+      "organe": "Messages",
+      "description": "Indiquer sa disponibilité aux autres conducteurs sans révéler sa géolocalisation",
+      "actions": ["Changer statut", "Voir statut d'un pair", "Mode Conduite automatique"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-PRESENCE"],
+      "flows": ["FLOW-PRESENCE"],
+      "note": "Aucune géolocalisation dans le statut — INV-COM-010"
+    },
+    {
+      "id": "F-FAVORITES",
+      "nom": "Conversations favorites",
+      "organe": "Messages",
+      "description": "Épingler des conversations pour y accéder prioritairement",
+      "actions": ["Épingler conversation", "Désépingler", "Accès prioritaire"],
+      "statut": "actif",
+      "intentions": ["INT-MANAGE-TRUST"],
+      "flows": ["FLOW-FAVORITE"]
+    },
+    {
+      "id": "F-ARCHIVE",
+      "nom": "Archivage de conversations",
+      "organe": "Messages",
+      "description": "Archiver une conversation localement sans la supprimer",
+      "actions": ["Archiver", "Désarchiver", "Voir archives"],
+      "statut": "actif",
+      "intentions": ["INT-ARCHIVE-CONVERSATION"],
+      "flows": ["FLOW-ARCHIVE"]
+    },
+    {
+      "id": "F-SEARCH",
+      "nom": "Recherche dans les conversations",
+      "organe": "Messages",
+      "description": "Rechercher une conversation par plaque ou contenu de message",
+      "actions": ["Rechercher par plaque", "Rechercher dans les messages", "Effacer recherche"],
+      "statut": "actif",
+      "intentions": ["INT-FIND-CONVERSATION"],
+      "flows": ["FLOW-SEARCH"]
+    },
+    {
+      "id": "F-SPAM-PROTECTION",
+      "nom": "Protection anti-spam",
+      "organe": "Messages",
+      "description": "Détecter et bloquer automatiquement les comportements répétitifs abusifs",
+      "actions": ["Détecter spam", "Cooldown automatique", "Alerter OBD"],
+      "statut": "actif",
+      "intentions": ["INT-BLOCK-DRIVER"],
+      "flows": ["FLOW-SPAM-PROTECTION"]
+    },
+    {
+      "id": "F-PROXIMITY-SIGNAL",
+      "nom": "Signal de proximité véhicule",
+      "organe": "Signalements",
+      "description": "Signaler discrètement au véhicule devant soi un problème visible (pneu, coffre ouvert, feu cassé…) via l'Ange ou le menu contextuel",
+      "actions": ["Signaler via Ange (voix)", "Signaler via menu véhicule devant", "Recevoir signal de proximité"],
+      "statut": "actif",
+      "intentions": ["INT-PROXIMITY-SIGNAL"],
+      "flows": ["FLOW-PROXIMITY-SIGNAL"]
     }
   ]
 }
