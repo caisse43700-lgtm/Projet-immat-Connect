@@ -27,6 +27,9 @@ jobs:
       - name: Verify generated knowledge
         run: node scripts/sync-knowledge.js --check
 
+      - name: Run organic audit
+        run: node scripts/organic-audit.js
+
       - name: Commit OBD changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
