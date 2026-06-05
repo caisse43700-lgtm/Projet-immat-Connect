@@ -1,6 +1,7 @@
 {
   "_v": 2,
   "_role": "Inventaire des fonctionnalités — relie usage → organe → flux → intention",
+  "_role": "Inventaire des fonctionnalités — relie usage → organe → flux",
   "_rule": "Chaque feature = ce que le conducteur peut faire, pas comment le code fonctionne. Ref FLOW-INDEX pour les flux critiques.",
   "_ref": "architecture/IMMAT-FLOW-INDEX.json",
   "_updated": "SESSION OBD-002b — ajout champ intentions + flows manquants",
@@ -46,6 +47,7 @@
       "statut": "actif",
       "intentions": ["INT-SIGNAL-ROAD", "INT-CONFIRM-DANGER"],
       "flows": ["FLOW-ROAD-SIGNAL"],
+      "flows": ["FLOW-ROAD-REPORT"],
       "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
       "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
     },
@@ -89,6 +91,8 @@
       "intentions": ["INT-CONTACT-DRIVER", "INT-CALL-DRIVER", "INT-ANSWER-CALL", "INT-REFUSE-CALL", "INT-END-CALL", "INT-MISS-CALL", "INT-CONTEXTUAL-CALL"],
       "flows": ["FLOW-CALL-REQUEST", "FLOW-CALL-CONTEXT"],
       "note": "Phase A = demande de contact (call_requests). Phase B = WebRTC P2P audio. Consentement explicite — D-002."
+      "flows": ["FLOW-AUDIO-CALL"],
+      "note": "Consentement explicite requis — D-002"
     },
     {
       "id": "F-SOS",
@@ -99,6 +103,7 @@
       "statut": "actif",
       "intentions": ["INT-SOS"],
       "flows": ["FLOW-SOS-EMERGENCY"],
+      "flows": ["FLOW-SOS"],
       "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
     },
     {
@@ -110,6 +115,7 @@
       "statut": "actif",
       "intentions": ["INT-ASK-ANGE"],
       "flows": ["FLOW-ANGE-ASSISTANT", "FLOW-ANGE-CALL", "FLOW-ANGE-CONVERSATION", "FLOW-ANGE-TRUST", "FLOW-ANGE-SIGNAL", "FLOW-ANGE-NAVIGATE"],
+      "flows": ["FLOW-ANGE-DIALOG"],
       "throttle": "10 appels/heure par session"
     },
     {
@@ -121,6 +127,7 @@
       "statut": "actif",
       "intentions": ["INT-MANAGE-PROFILE"],
       "flows": ["FLOW-PROFILE-EDIT"],
+      "flows": ["FLOW-PROFILE-MANAGEMENT"],
       "note": "Plaque immuable après création — INV-006"
     },
     {

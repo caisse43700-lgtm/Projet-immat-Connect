@@ -1,0 +1,42 @@
+name: OBD Apply Links
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-obd-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Apply OBD links
+        run: node scripts/sync-knowledge.js --apply-obd-links
+
+      - name: Enrich OBD flows
+        run: node scripts/enrich-obd-flows.js
+
+      - name: Generate knowledge projections
+        run: node scripts/sync-knowledge.js
+
+      - name: Integrated knowledge check
+        run: node scripts/check-knowledge.js
+
+      - name: Commit OBD changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: apply OBD organic flow links"
+          file_pattern: |
+            architecture/IMMAT-FLOW-INDEX.json
+            knowledge/features.json
+            knowledge/intentions.json
+            supabase/functions/_shared/knowledge-conducteur.ts
+            supabase/functions/_shared/knowledge-gardien.ts
