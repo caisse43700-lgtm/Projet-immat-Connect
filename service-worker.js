@@ -1,4 +1,4 @@
-/* service-worker.js — ImmatConnect — désactivation cache urgence */
+/* service-worker.js — ImmatConnect — désactivation cache sans boucle */
 'use strict';
 
 self.addEventListener('install', event => {
@@ -10,8 +10,6 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(keys.map(key => caches.delete(key))))
       .then(() => self.registration.unregister())
-      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      .then(clients => clients.forEach(client => client.navigate(client.url)))
       .catch(() => undefined)
   );
 });
