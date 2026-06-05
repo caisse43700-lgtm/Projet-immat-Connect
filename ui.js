@@ -1,9 +1,9 @@
-/* ===== IMMATCONNECT UI — V6 SAFE LOGIN BRIDGE ===== */
+/* ===== IMMATCONNECT UI — V6 SAFE AUTH BRIDGE ===== */
 (function () {
   'use strict';
 
-  if (window.__ImmatConnectUISafeLoginBridge) return;
-  window.__ImmatConnectUISafeLoginBridge = true;
+  if (window.__ImmatConnectUISafeAuthBridge) return;
+  window.__ImmatConnectUISafeAuthBridge = true;
 
   const $ = id => document.getElementById(id);
 
@@ -15,25 +15,46 @@
     }catch(e){}
   }
 
+  function showStatus(message, type){
+    const el = $('authSt');
+    if (!el) return;
+    el.textContent = message || '';
+    el.className = 'status-msg ' + (type || '') + (message ? ' visible' : '');
+  }
+
+  function authBtnText(){
+    try { return window.S && window.S.mode === 'signup' ? 'Créer mon compte' : 'Se connecter'; }
+    catch(e){ return 'Se connecter'; }
+  }
+
+  function unlockAuth(){
+    const b = $('authBtn');
+    if (b) {
+      b.disabled = false;
+      b.textContent = authBtnText();
+    }
+  }
+
   function showAuth(mode){
     exposeAppIfPossible();
 
     try{
       if (window.App && typeof window.App.goAuth === 'function') {
         window.App.goAuth(mode || 'login');
+        bindAuthButton();
         return;
       }
     }catch(e){
       console.warn('[UI bridge] App.goAuth failed, fallback auth screen', e);
     }
 
-    // Fallback direct : ouvre l'écran auth même si App n'est pas disponible.
     try{
       ['sw','sa','sp','sr'].forEach(id => $(id)?.classList.remove('active'));
       $('appScreen')?.classList.remove('active');
       $('sa')?.classList.add('active');
 
       const signup = mode === 'signup';
+      if (window.S) window.S.mode = signup ? 'signup' : 'login';
       if ($('authTitle')) $('authTitle').textContent = signup ? 'Créer un compte' : 'Connexion';
       if ($('authSubtitle')) $('authSubtitle').textContent = signup ? 'Renseigne tes informations conducteur.' : 'Entre ton email et ton mot de passe.';
       if ($('authBtn')) {
@@ -46,8 +67,77 @@
       $('confirmWrap')?.classList.toggle('hidden', !signup);
       $('forgotPwdBtn')?.classList.toggle('hidden', signup);
       setTimeout(() => $('iEmail')?.focus(), 60);
+      bindAuthButton();
     }catch(e){
       console.error('[UI bridge] fallback auth failed', e);
+    }
+  }
+
+  async function fallbackLogin(){
+    const email = String($('iEmail')?.value || '').trim();
+    const password = String($('iPwd')?.value || '');
+    if (!email || !password) {
+      showStatus('Email et mot de passe requis.', 'error');
+      return;
+    }
+    const sb = window.sb || window.supabaseClient || null;
+    if (!sb || !sb.auth || typeof sb.auth.signInWithPassword !== 'function') {
+      showStatus('Connexion indisponible : Supabase non initialisé.', 'error');
+      return;
+    }
+    const b = $('authBtn');
+    if (b) { b.disabled = true; b.textContent = 'Connexion…'; }
+    showStatus('Connexion en cours…', 'success');
+    try{
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      showStatus('Connecté. Ouverture…', 'success');
+      try{
+        if (window.App && typeof window.App.afterAuth === 'function') {
+          await window.App.afterAuth(data?.user || null);
+          return;
+        }
+      }catch(e){ console.warn('[UI bridge] afterAuth fallback ignored', e); }
+      try{
+        ['sw','sa','sp','sr'].forEach(id => $(id)?.classList.remove('active'));
+        $('appScreen')?.classList.add('active');
+      }catch(e){}
+    }catch(e){
+      console.warn('[UI bridge] fallback login failed', e);
+      showStatus((e && e.message) ? e.message : 'Connexion impossible.', 'error');
+    }finally{
+      unlockAuth();
+    }
+  }
+
+  async function submitAuth(){
+    exposeAppIfPossible();
+    const b = $('authBtn');
+    if (!b) return;
+    try{
+      if (window.App && typeof window.App.handleAuth === 'function') {
+        await window.App.handleAuth();
+        return;
+      }
+      if (window.App && typeof window.App.auth === 'function') {
+        await window.App.auth();
+        return;
+      }
+    }catch(e){
+      console.warn('[UI bridge] App auth failed, trying fallback login', e);
+    }
+    await fallbackLogin();
+  }
+
+  function bindAuthButton(){
+    const b = $('authBtn');
+    if (b && !b.__safeAuthBridge) {
+      b.__safeAuthBridge = true;
+      b.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        submitAuth();
+      }, true);
     }
   }
 
@@ -159,12 +249,14 @@
     hideSheetCompletely: hideSheet,
     showSheetAgain: showSheet,
     syncBadge,
-    showAuth
+    showAuth,
+    submitAuth
   };
 
   function install() {
     exposeAppIfPossible();
     bindWelcomeButtons();
+    bindAuthButton();
 
     if (!window.App) {
       setTimeout(install, 250);
@@ -242,4 +334,6 @@
 
   setTimeout(bindWelcomeButtons, 300);
   setTimeout(bindWelcomeButtons, 1000);
+  setTimeout(bindAuthButton, 300);
+  setTimeout(bindAuthButton, 1000);
 })();
