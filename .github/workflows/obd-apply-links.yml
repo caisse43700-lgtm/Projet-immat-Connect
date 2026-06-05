@@ -21,14 +21,14 @@ jobs:
       - name: Apply OBD links
         run: node scripts/sync-knowledge.js --apply-obd-links
 
+      - name: Enrich OBD flows
+        run: node scripts/enrich-obd-flows.js
+
       - name: Generate knowledge projections
         run: node scripts/sync-knowledge.js
 
-      - name: Verify generated knowledge
-        run: node scripts/sync-knowledge.js --check
-
-      - name: Run organic audit
-        run: node scripts/organic-audit.js
+      - name: Integrated knowledge check
+        run: node scripts/check-knowledge.js
 
       - name: Commit OBD changes
         uses: stefanzweifel/git-auto-commit-action@v5
