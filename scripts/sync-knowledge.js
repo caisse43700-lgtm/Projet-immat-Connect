@@ -4,8 +4,9 @@
 // + immat-nervous-system.json (senses + governance) + architecture/IMMAT-FLOW-INDEX.json (flows)
 //
 // Usage:
-//   node scripts/sync-knowledge.js          → génère les deux TS
-//   node scripts/sync-knowledge.js --check  → vérifie que les TS sont à jour (exit 1 si non)
+//   node scripts/sync-knowledge.js                    → génère les deux TS
+//   node scripts/sync-knowledge.js --check            → vérifie que les TS sont à jour
+//   node scripts/sync-knowledge.js --apply-obd-links  → applique les liens OBD organiques aux JSON sources
 
 const fs   = require('fs');
 const path = require('path');
@@ -14,18 +15,99 @@ const ROOT  = path.join(__dirname, '..');
 const KDIR  = path.join(ROOT, 'knowledge');
 const SDIR  = path.join(ROOT, 'supabase', 'functions', '_shared');
 
-// Charger tous les JSON nécessaires
 const INDEX   = JSON.parse(fs.readFileSync(path.join(KDIR, 'knowledge-index.json'), 'utf8'));
 const ADN     = JSON.parse(fs.readFileSync(path.join(ROOT, 'immat-nervous-system.json'), 'utf8'));
 const FLOWS   = JSON.parse(fs.readFileSync(path.join(ROOT, 'architecture', 'IMMAT-FLOW-INDEX.json'), 'utf8'));
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function writeJson(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', 'utf8');
+}
 
 function loadKnowledge(fileKeys) {
   const r = {};
   for (const key of fileKeys) {
     const info = INDEX.files[key];
-    r[key] = JSON.parse(fs.readFileSync(path.join(ROOT, info.path), 'utf8'));
+    r[key] = readJson(path.join(ROOT, info.path));
   }
   return r;
+}
+
+function applyObdLinks() {
+  const flowPath = path.join(ROOT, 'architecture', 'IMMAT-FLOW-INDEX.json');
+  const featuresPath = path.join(KDIR, 'features.json');
+  const intentionsPath = path.join(KDIR, 'intentions.json');
+
+  const flows = readJson(flowPath);
+  const features = readJson(featuresPath);
+  const intentions = readJson(intentionsPath);
+
+  const featureLinks = {
+    'F-GPS': ['FLOW-GPS-NAVIGATION'],
+    'F-SIGNAL-ROUTE': ['FLOW-ROAD-REPORT'],
+    'F-APPEL': ['FLOW-AUDIO-CALL'],
+    'F-SOS': ['FLOW-SOS'],
+    'F-ANGE': ['FLOW-ANGE-DIALOG'],
+    'F-PROFIL': ['FLOW-PROFILE-MANAGEMENT']
+  };
+
+  const intentionLinks = {
+    'INT-SIGNAL-ROAD': 'FLOW-ROAD-REPORT',
+    'INT-NAVIGATE': 'FLOW-GPS-NAVIGATION',
+    'INT-SOS': 'FLOW-SOS',
+    'INT-ASK-ANGE': 'FLOW-ANGE-DIALOG',
+    'INT-MANAGE-PROFILE': 'FLOW-PROFILE-MANAGEMENT',
+    'INT-CONFIRM-DANGER': 'FLOW-ROAD-REPORT',
+    'INT-RESOLVE-ALERT': 'FLOW-ROAD-REPORT',
+    'INT-FEEL-SAFE': 'FLOW-SOS'
+  };
+
+  const newFlows = [
+    ['FLOW-ROAD-REPORT', 'Informer la communaute d un evenement route visible.', ['Signalements', 'Carte', 'Messages'], ['FAB Signaler', 'carte', 'Activite'], ['actConfirmAlert', 'cleanupAlerts'], ['S.alerts', 'S.tapLat', 'S.tapLng', 'S.myLat', 'S.myLng'], ['reports', 'ic_alerts']],
+    ['FLOW-SOS', 'Declencher un canal prioritaire protege.', ['Signalements', 'Carte'], ['panelDrive'], ['appui long', 'confirmation'], ['S.alerts', 'S.myLat', 'S.myLng'], ['reports']],
+    ['FLOW-AUDIO-CALL', 'Etablir un contact audio consenti entre conducteurs.', ['Messages'], ['nearbyPanel', 'contextMenu'], ['CallManager', 'WebRTC'], ['call state'], ['call events']],
+    ['FLOW-GPS-NAVIGATION', 'Rechercher et suivre un itineraire.', ['Carte'], ['panelDrive', 'recherche'], ['Nominatim', 'route'], ['S.myLat', 'S.myLng', 'route state'], ['history', 'favorites']],
+    ['FLOW-PROFILE-MANAGEMENT', 'Mettre a jour les informations sociales du profil.', ['Profil'], ['panelSettings'], ['profile update', 'colorHex'], ['profile state'], ['profiles']],
+    ['FLOW-ANGE-DIALOG', 'Obtenir une aide contextuelle sans action autonome.', ['Ange'], ['angeFab', 'dialogue'], ['immat-brain-dialog'], ['session'], ['knowledge-conducteur', 'knowledge-gardien']]
+  ].map(([id, intention, organes, ui, code, state, data]) => ({
+    id,
+    intention,
+    organes,
+    repérage: { ui, code, state, data },
+    impact: ['coherence organique', 'tracabilite', 'stabilite'],
+    options: ['utiliser', 'verifier', 'clore si applicable'],
+    qui_peut_agir: { conducteur: 'action native existante', gardien: 'audit et validation si evolution' },
+    validation: 'Rattachement documentaire sans changement runtime.',
+    mémoire: data
+  }));
+
+  flows.flows = flows.flows || [];
+  for (const nf of newFlows) {
+    if (!flows.flows.some(f => f.id === nf.id)) flows.flows.push(nf);
+  }
+  flows._v = Math.max(Number(flows._v || 1), 2);
+
+  for (const f of features.features || []) {
+    if (featureLinks[f.id]) f.flows = featureLinks[f.id];
+  }
+  features._v = Math.max(Number(features._v || 1), 2);
+
+  for (const it of intentions.intentions || []) {
+    if (intentionLinks[it.id] && (it.flow === null || it.flow === undefined || it.flow === '')) {
+      it.flow = intentionLinks[it.id];
+    }
+  }
+  intentions._v = Math.max(Number(intentions._v || 1), 5);
+
+  writeJson(flowPath, flows);
+  writeJson(featuresPath, features);
+  writeJson(intentionsPath, intentions);
+
+  console.log('[sync-knowledge] ✓ OBD links appliqués aux JSON sources');
+  console.log('[sync-knowledge] → Relancer ensuite: node scripts/sync-knowledge.js --check');
 }
 
 // ─── CONDUCTEUR ─────────────────────────────────────────────────────────────
@@ -44,17 +126,13 @@ function generateConducteur(d) {
     '',
   ];
 
-  // COMMENT PUIS-JE VOUS AIDER ? (intentions primaires)
   lines.push('## COMMENT PUIS-JE VOUS AIDER ?');
   lines.push('Commence toujours par identifier l\'intention du conducteur :');
   if (d.intentions.intentions_primaires) {
-    for (const p of d.intentions.intentions_primaires) {
-      lines.push(`${p.icone} ${p.label} — ${p.description}`);
-    }
+    for (const p of d.intentions.intentions_primaires) lines.push(`${p.icone} ${p.label} — ${p.description}`);
   }
   lines.push('');
 
-  // ORIENTATION MENTALE
   if (d.intentions.orientation_mentale) {
     lines.push('## ORIENTATION MENTALE');
     const om = d.intentions.orientation_mentale;
@@ -65,7 +143,6 @@ function generateConducteur(d) {
   }
 
   lines.push('## CE QUE TU PEUX FAIRE');
-
   for (const f of d.features.features) {
     let line = `${f.id} — ${f.nom} : ${f.description}`;
     if (f.note) line += ` [⚠️ ${f.note}]`;
@@ -91,7 +168,6 @@ function generateConducteur(d) {
     lines.push(`  → ${i.chemin}`);
   }
 
-  // RESSOURCES PAR INTENTION — ponts vers tutorials + interactions + flows
   lines.push('', '## RESSOURCES PAR INTENTION');
   lines.push('Quand tu identifies une intention, cite la ressource correspondante :');
   for (const intent of d.intentions.intentions) {
@@ -114,8 +190,6 @@ function generateConducteur(d) {
   return lines.join('\n');
 }
 
-// ─── GARDIEN ─────────────────────────────────────────────────────────────────
-
 function generateGardien(d) {
   const lines = [
     '// _shared/knowledge-gardien.ts',
@@ -130,44 +204,29 @@ function generateGardien(d) {
     '',
   ];
 
-  // FICHIERS CLÉS
   lines.push('FICHIERS CLÉS :');
-  for (const f of d.meta.fichiers_cles) {
-    lines.push(`${f.path} — ${f.role}`);
-  }
+  for (const f of d.meta.fichiers_cles) lines.push(`${f.path} — ${f.role}`);
 
-  // ORGANES
   lines.push('', "ORGANES — POINTS D'ENTRÉE CODE :");
-  for (const o of d.organs.organs) {
-    lines.push(`${o.id} → ${o.code_entry}`);
-  }
+  for (const o of d.organs.organs) lines.push(`${o.id} → ${o.code_entry}`);
 
-  // INHIBITIONS
   lines.push('', 'INHIBITIONS (verrous en mémoire) :');
-  for (const inh of d.meta.inhibitions) {
-    lines.push(`${inh.id} — ${inh.desc}`);
-  }
+  for (const inh of d.meta.inhibitions) lines.push(`${inh.id} — ${inh.desc}`);
 
-  // INVARIANTS CRITIQUES
   lines.push('', 'INVARIANTS CRITIQUES (ne jamais violer) :');
-  for (const inv of d.decisions.invariants_critiques) {
-    lines.push(`${inv.id} — ${inv.règle}`);
-  }
+  for (const inv of d.decisions.invariants_critiques) lines.push(`${inv.id} — ${inv.règle}`);
 
-  // SNAPSHOT ANGE
   const snap = d.meta.snapshot_ange;
   lines.push('', 'PROFIL TECHNIQUE SNAPSHOT ANGE (état actuel) :');
   lines.push(snap.champs.join(' · '));
   lines.push(`IMPORTANT : ${snap.note}`);
   lines.push(`Throttle : ${snap.throttle}`);
 
-  // CINQ SENS (depuis ADN)
   const senses = ADN.senses;
   lines.push('', `CINQ SENS ORGANIQUES — ADN _v:${ADN._v} (section "senses") :`);
-  lines.push("Vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l'organisme.");
+  lines.push('Vocabulaire secondaire de la boucle intention→mémoire. Chaque sens traduit une capacité de l\'organisme.');
   lines.push('');
-  const sensOrder = ['voir', 'entendre', 'gouter', 'toucher', 'sentir'];
-  for (const s of sensOrder) {
+  for (const s of ['voir', 'entendre', 'gouter', 'toucher', 'sentir']) {
     if (!senses[s]) continue;
     const sv = senses[s];
     const note = sv.note ? ` [${sv.note}]` : '';
@@ -175,37 +234,29 @@ function generateGardien(d) {
   }
   lines.push('');
   lines.push('Lien avec la boucle organique :');
-  for (const [sense, label] of Object.entries(senses._boucle_mapping || {})) {
-    lines.push(`${sense.padEnd(9)} → ${label}`);
-  }
+  for (const [sense, label] of Object.entries(senses._boucle_mapping || {})) lines.push(`${sense.padEnd(9)} → ${label}`);
 
-  // GRILLE SENSORIELLE PAR ORGANE
   lines.push('', 'GRILLE SENSORIELLE PAR ORGANE :');
   for (const o of d.organs.organs) {
     const marker = o.id === 'Ange' ? '  ← seul organe à cinq sens complets' : '';
     lines.push(`  ${o.id.padEnd(14)}: ${o.senses.join(' · ')}${marker}`);
   }
 
-  // PHASES (depuis ADN governance)
   if (ADN.governance && ADN.governance.phases) {
     lines.push('', 'PHASES (core/governance.js) :');
     for (const [phaseNum, phaseVal] of Object.entries(ADN.governance.phases)) {
-      const req = phaseVal.requires && phaseVal.requires.length
-        ? `  [${phaseVal.requires.join(', ')} requis]`
-        : '';
+      const req = phaseVal.requires && phaseVal.requires.length ? `  [${phaseVal.requires.join(', ')} requis]` : '';
       const note = phaseVal.note ? `  (${phaseVal.note})` : '';
       lines.push(`  Phase ${phaseNum} ${phaseVal.label.padEnd(16)} : ${phaseVal.senses_actifs.join(' + ')}${req}${note}`);
     }
   }
 
-  // CYCLE DE VIE ADN
   lines.push('', 'CYCLE DE VIE ADN :');
   lines.push('Modifier immat-nervous-system.json → node scripts/sync-ns.js → nervous-system.ts mis à jour');
   lines.push('Modifier knowledge/*.json → node scripts/sync-knowledge.js → knowledge-conducteur.ts + knowledge-gardien.ts');
   lines.push('Ne jamais éditer les TS directement (violation INV-015)');
   lines.push('Après modification ADN : incrémenter _v');
 
-  // IMMATORGANISM
   const io = d.meta.immatorganism;
   lines.push('', 'IMMATORGANISM — OBSERVATEUR :');
   lines.push(`ImmatOrganism.diagnose() — ${io.diagnose}`);
@@ -214,10 +265,9 @@ function generateGardien(d) {
   lines.push(`Phase actuelle : ${io.phase_courante} (observateur) — Phase 3 (gardien) bloquera les violations en production`);
   lines.push(`Méthodes brain jamais câblées en prod : ${io.methodes_non_cablees.join(' · ')}`);
 
-  // FLUX ORGANIQUES (depuis IMMAT-FLOW-INDEX)
   lines.push('', `FLUX ORGANIQUES — IMMAT-FLOW-INDEX v${FLOWS._v} (architecture/IMMAT-FLOW-INDEX.json) :`);
   lines.push('Boucle : ' + FLOWS._boucle.join(' → '));
-  lines.push("Quand une demande arrive, identifier le FLOW concerné, puis lire : repérage / impact / validation.");
+  lines.push('Quand une demande arrive, identifier le FLOW concerné, puis lire : repérage / impact / validation.');
   lines.push('');
   for (const flow of FLOWS.flows) {
     lines.push(`${flow.id}  ${flow.intention}`);
@@ -225,9 +275,8 @@ function generateGardien(d) {
     lines.push(`  validation: ${flow.validation}`);
   }
   lines.push('');
-  lines.push("RÈGLE : Si la demande touche un FLOW → identifier organes + impacts avant de proposer. Si aucun FLOW trouvé → demander au Gardien de créer ou rattacher un FLOW avant de patcher.");
+  lines.push('RÈGLE : Si la demande touche un FLOW → identifier organes + impacts avant de proposer. Si aucun FLOW trouvé → demander au Gardien de créer ou rattacher un FLOW avant de patcher.');
 
-  // PONT CLAUDE
   const pc = d.meta.pont_claude;
   lines.push('', 'PONT CLAUDE — FORMULER UNE DEMANDE DE MODIFICATION :');
   lines.push(`Structure attendue : "${pc.structure}"`);
@@ -235,15 +284,12 @@ function generateGardien(d) {
   for (const ex of pc.exemples) lines.push(`  "${ex}"`);
   lines.push(`Règles : ${pc.regles.join(' · ')}`);
 
-  // TENSIONS
   lines.push('', 'TENSIONS ARCHITECTURALES À CONNAÎTRE :');
   for (const t of d.meta.tensions) lines.push(t);
 
-  // PROTOCOLE MODIFICATION
   lines.push('', 'PROTOCOLE MODIFICATION SÛRE (5 règles) :');
   for (const r of d.meta.protocole_modification) lines.push(r);
 
-  // THÉORIE DU TOUT
   if (d.intentions.theorie_du_tout) {
     lines.push('', 'THÉORIE DU TOUT — HIÉRARCHIE DE L\'ORGANISME :');
     lines.push(d.intentions.theorie_du_tout.join(' → '));
@@ -254,53 +300,36 @@ function generateGardien(d) {
     }
   }
 
-  // ANALYSE D'IMPACT PAR ORGANE (pour Gardien — dette #6)
   lines.push('', 'ANALYSE D\'IMPACT PAR ORGANE (répondre sans ouvrir le code) :');
   lines.push('Organe'.padEnd(16) + 'UX'.padEnd(8) + 'ADN'.padEnd(8) + 'Sécurité'.padEnd(12) + 'Risque');
   for (const o of d.organs.organs) {
     if (!o.impact_analyse) continue;
     const ia = o.impact_analyse;
-    lines.push(
-      o.id.padEnd(16) +
-      ia.ux.padEnd(8) +
-      ia.adn.padEnd(8) +
-      ia.securite.padEnd(12) +
-      ia.risque_modification
-    );
+    lines.push(o.id.padEnd(16) + ia.ux.padEnd(8) + ia.adn.padEnd(8) + ia.securite.padEnd(12) + ia.risque_modification);
   }
   lines.push('');
   lines.push('Exemple d\'analyse (modifier le marqueur véhicule) :');
   lines.push('  Organe : Carte  |  UX : fort  |  ADN : nul  |  Sécurité : nul  |  Risque : faible');
   lines.push('  → Patch Claude autorisé. Tester sur mobile après modification.');
 
-  // DÉCISIONS
   lines.push('', 'DÉCISIONS IMPLÉMENTÉES (sessions récentes) :');
-  for (const dec of d.decisions.decisions_implementees) {
-    lines.push(`${dec.id} (S${dec.session}) — ${dec.quoi}`);
-  }
+  for (const dec of d.decisions.decisions_implementees) lines.push(`${dec.id} (S${dec.session}) — ${dec.quoi}`);
   lines.push('', 'DÉCISIONS EN ATTENTE (Gardien requis) :');
   for (const dec of d.decisions.decisions_en_attente) {
     const bloque = dec.bloque ? ` → bloque ${dec.bloque}` : '';
     lines.push(`${dec.id} — ${dec.question}${bloque}`);
   }
 
-  // RÈGLES ORGANIQUES
   if (d.decisions.regles_organiques && d.decisions.regles_organiques.length) {
     lines.push('', 'RÈGLES ORGANIQUES (respecter lors de toute évolution) :');
-    for (const r of d.decisions.regles_organiques) {
-      lines.push(`${r.id.padEnd(22)} — ${r.principe}`);
-    }
+    for (const r of d.decisions.regles_organiques) lines.push(`${r.id.padEnd(22)} — ${r.principe}`);
   }
 
-  // BOUCLES VITALES
   if (d.decisions.boucles_vitales && d.decisions.boucles_vitales.length) {
     lines.push('', 'BOUCLES VITALES (toute évolution doit renforcer au moins une boucle) :');
-    for (const b of d.decisions.boucles_vitales) {
-      lines.push(`${b.id.padEnd(14)} — ${b.role} [${b.features.join(', ')}]`);
-    }
+    for (const b of d.decisions.boucles_vitales) lines.push(`${b.id.padEnd(14)} — ${b.role} [${b.features.join(', ')}]`);
   }
 
-  // INTENTION → FLOW + TUTORIAL — raccourci diagnostic Gardien
   lines.push('', 'INTENTION → FLOW + TUTORIAL (diagnostic rapide) :');
   lines.push('Intention'.padEnd(24) + 'Flow'.padEnd(24) + 'Tutorial');
   for (const intent of d.intentions.intentions) {
@@ -309,19 +338,20 @@ function generateGardien(d) {
     lines.push(intent.id.padEnd(24) + flowStr.padEnd(24) + tutStr);
   }
 
-  // HISTORIQUE SESSIONS
   lines.push('', 'HISTORIQUE SESSIONS :');
-  for (const s of d.commits.sessions) {
-    lines.push(`Session ${s.session} — ${s.titre}`);
-  }
+  for (const s of d.commits.sessions) lines.push(`Session ${s.session} — ${s.titre}`);
 
   lines.push("\`.trim();", '');
   return lines.join('\n');
 }
 
-// ─── MAIN ────────────────────────────────────────────────────────────────────
-
 const check = process.argv.includes('--check');
+const applyLinks = process.argv.includes('--apply-obd-links');
+
+if (applyLinks) {
+  applyObdLinks();
+  process.exit(0);
+}
 
 const conducteurFiles = INDEX.projections.conducteur.files;
 const gardienFiles    = INDEX.projections.gardien.files;
@@ -361,10 +391,9 @@ if (check) {
     console.error('[sync-knowledge] ✗ knowledge-gardien.ts désynchronisé');
     ok = false;
   }
-  // R-04 : vérification croisée decisions.json ↔ ORGANISM-RULES.json (SESSION 36)
   const orgRulesPath = path.join(ROOT, 'architecture', 'organism', 'ORGANISM-RULES.json');
   if (fs.existsSync(orgRulesPath)) {
-    const orgRules = JSON.parse(fs.readFileSync(orgRulesPath, 'utf8'));
+    const orgRules = readJson(orgRulesPath);
     const orgIds = (orgRules.organic_rules || []).map(r => r.id).sort().join(',');
     const decIds = (d.decisions.regles_organiques || []).map(r => r.id).sort().join(',');
     if (orgIds !== decIds) {
@@ -377,12 +406,11 @@ if (check) {
   if (ok) {
     console.log('[sync-knowledge] ✓ Les deux TS sont à jour');
     process.exit(0);
-  } else {
-    process.exit(1);
   }
-} else {
-  fs.writeFileSync(dstConducteur, conducteurTS, 'utf8');
-  console.log(`[sync-knowledge] ✓ knowledge-conducteur.ts généré (${conducteurTS.split('\n').length} lignes)`);
-  fs.writeFileSync(dstGardien, gardienTS, 'utf8');
-  console.log(`[sync-knowledge] ✓ knowledge-gardien.ts généré (${gardienTS.split('\n').length} lignes)`);
+  process.exit(1);
 }
+
+fs.writeFileSync(dstConducteur, conducteurTS, 'utf8');
+console.log(`[sync-knowledge] ✓ knowledge-conducteur.ts généré (${conducteurTS.split('\n').length} lignes)`);
+fs.writeFileSync(dstGardien, gardienTS, 'utf8');
+console.log(`[sync-knowledge] ✓ knowledge-gardien.ts généré (${gardienTS.split('\n').length} lignes)`);
