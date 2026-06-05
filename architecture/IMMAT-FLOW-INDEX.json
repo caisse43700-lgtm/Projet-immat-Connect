@@ -1,27 +1,58 @@
 {
-  "_v": 1,
+  "_v": 2,
   "_doc": "Index des flux organiques d'ImmatConnect. Chaque flux répond à 7 questions : pourquoi · où visible · où stocké · qui peut agir · quel impact · comment valider · comment mémoriser.",
   "_source": "Audit ANGE — Fluidité, simplicité, intention, mémoire, action",
-  "_boucle": ["intention", "repérage", "impact", "option", "validation", "action", "mémoire"],
+  "_boucle": [
+    "intention",
+    "repérage",
+    "impact",
+    "option",
+    "validation",
+    "action",
+    "mémoire"
+  ],
   "_senses_mapping": {
     "entendre": "identifier l'intention",
-    "voir":     "repérer les composants concernés",
-    "sentir":   "comprendre le contexte et l'environnement",
-    "toucher":  "mesurer l'impact avant d'agir",
-    "goûter":   "tester et comparer les options"
+    "voir": "repérer les composants concernés",
+    "sentir": "comprendre le contexte et l'environnement",
+    "toucher": "mesurer l'impact avant d'agir",
+    "goûter": "tester et comparer les options"
   },
-
   "flows": [
-
     {
       "id": "FLOW-MAP-SELF-MARKER",
       "intention": "Permettre au conducteur de se repérer immédiatement sur la carte en temps réel.",
-      "organes": ["Carte", "Profil"],
+      "organes": [
+        "Carte",
+        "Profil"
+      ],
       "repérage": {
-        "ui":    ["#map (Leaflet marker self)", "#frontCarBanner", "#invisBtn", "nav#navMap"],
-        "code":  ["App.locate()", "App.loadOthers()", "App.cycleView()", "App.toggleInvisible()", "App.recenter()"],
-        "state": ["S.myMarker", "S.myLat", "S.myLng", "S.driveMode", "S.mapView ('drive'|'2d')", "S.invisible"],
-        "data":  ["profiles.vehicle_color", "ic_view (localStorage)", "ic_invisible (localStorage)"]
+        "ui": [
+          "#map (Leaflet marker self)",
+          "#frontCarBanner",
+          "#invisBtn",
+          "nav#navMap"
+        ],
+        "code": [
+          "App.locate()",
+          "App.loadOthers()",
+          "App.cycleView()",
+          "App.toggleInvisible()",
+          "App.recenter()"
+        ],
+        "state": [
+          "S.myMarker",
+          "S.myLat",
+          "S.myLng",
+          "S.driveMode",
+          "S.mapView ('drive'|'2d')",
+          "S.invisible"
+        ],
+        "data": [
+          "profiles.vehicle_color",
+          "ic_view (localStorage)",
+          "ic_invisible (localStorage)"
+        ]
       },
       "impact": [
         "consommation GPS / batterie",
@@ -40,18 +71,45 @@
         "gardien": "modification du design du marqueur (impact visibilité + P3-001)"
       },
       "validation": "Conducteur autonome pour usage. Gardien requis pour modification du marqueur ou de la logique de localisation.",
-      "mémoire": ["ic_view (localStorage — vue persistée)", "ic_invisible (localStorage)", "S.myMarker (runtime — reset à logout)"]
+      "mémoire": [
+        "ic_view (localStorage — vue persistée)",
+        "ic_invisible (localStorage)",
+        "S.myMarker (runtime — reset à logout)"
+      ]
     },
-
     {
       "id": "FLOW-VEHICLE-ALERT",
       "intention": "Prévenir un conducteur identifié d'un problème visible sur son véhicule, et lui permettre de confirmer.",
-      "organes": ["Signalements", "Messages", "Carte"],
+      "organes": [
+        "Signalements",
+        "Messages",
+        "Carte"
+      ],
       "repérage": {
-        "ui":    ["panelAltet sigStep2Vehicle", "#sigVehiclePlate", ".alert-grid (vehicule)", "_actModCard (group='vehicle')", "showFloatingCard (alerte reçue)"],
-        "code":  ["App.vehicleAlertQuick(label)", "App.sigStepVehicle()", "App.actConfirmAlert(id,'seen')", "broadcast 'vehicle_seen' → notifyAlert", "App.vehicleAlert(label) (overlay legacy)"],
-        "state": ["S.alerts (group='vehicle')", "S.contextVehicle.plate", "S.selPlate", "a.status ('pending'|'seen'|'resolved')"],
-        "data":  ["reports (plate, reason, lat, lng, category='vehicle')", "messages (receiver_id = a.sender_id, message=label)"]
+        "ui": [
+          "panelAltet sigStep2Vehicle",
+          "#sigVehiclePlate",
+          ".alert-grid (vehicule)",
+          "_actModCard (group='vehicle')",
+          "showFloatingCard (alerte reçue)"
+        ],
+        "code": [
+          "App.vehicleAlertQuick(label)",
+          "App.sigStepVehicle()",
+          "App.actConfirmAlert(id,'seen')",
+          "broadcast 'vehicle_seen' → notifyAlert",
+          "App.vehicleAlert(label) (overlay legacy)"
+        ],
+        "state": [
+          "S.alerts (group='vehicle')",
+          "S.contextVehicle.plate",
+          "S.selPlate",
+          "a.status ('pending'|'seen'|'resolved')"
+        ],
+        "data": [
+          "reports (plate, reason, lat, lng, category='vehicle')",
+          "messages (receiver_id = a.sender_id, message=label)"
+        ]
       },
       "impact": [
         "message auto envoyé au conducteur cible (DB messages)",
@@ -73,18 +131,49 @@
         "destinataire": "répondre '✓ J'ai vérifié' / '✓ C'est bon' / '🙏 Merci'"
       },
       "validation": "Conducteur autonome. Plaque cible requise (sigVehiclePlate). Pas de validation Gardien.",
-      "mémoire": ["S.alerts + ic_alerts (localStorage)", "S.alertHistory + ic_alert_history", "ic_resolved_remote_ids", "reports DB", "messages DB"]
+      "mémoire": [
+        "S.alerts + ic_alerts (localStorage)",
+        "S.alertHistory + ic_alert_history",
+        "ic_resolved_remote_ids",
+        "reports DB",
+        "messages DB"
+      ]
     },
-
     {
       "id": "FLOW-ASSIST-REQUEST",
       "intention": "Demander de l'aide aux conducteurs proches et coordonner la réponse (helper + demandeur).",
-      "organes": ["Signalements", "Messages", "Carte"],
+      "organes": [
+        "Signalements",
+        "Messages",
+        "Carte"
+      ],
       "repérage": {
-        "ui":    ["panelAltet sigStep2Aide", ".alert-grid (assist)", "_actModCard (group='assist')", "#aideCallSection", "showFloatingCard ('✋ J'aide')", "badge '✋ En route · plaque'"],
-        "code":  ["App.assist(type)", "App.actHelpReply(plate)", "App.actQuickReply(plate,'J\\'arrive...')", "App.cleanupAlerts() TTL", "canResolveAlert(a) — seul le créateur peut clôturer"],
-        "state": ["S.alerts (group='assist', _mine=true)", "a.status ('pending'|'helper_coming')", "a._helperPlate", "a._own"],
-        "data":  ["reports (category='help', TTL 30min)", "ic_alerts localStorage", "ic_offline_reports (offline buffer)"]
+        "ui": [
+          "panelAltet sigStep2Aide",
+          ".alert-grid (assist)",
+          "_actModCard (group='assist')",
+          "#aideCallSection",
+          "showFloatingCard ('✋ J'aide')",
+          "badge '✋ En route · plaque'"
+        ],
+        "code": [
+          "App.assist(type)",
+          "App.actHelpReply(plate)",
+          "App.actQuickReply(plate,'J\\'arrive...')",
+          "App.cleanupAlerts() TTL",
+          "canResolveAlert(a) — seul le créateur peut clôturer"
+        ],
+        "state": [
+          "S.alerts (group='assist', _mine=true)",
+          "a.status ('pending'|'helper_coming')",
+          "a._helperPlate",
+          "a._own"
+        ],
+        "data": [
+          "reports (category='help', TTL 30min)",
+          "ic_alerts localStorage",
+          "ic_offline_reports (offline buffer)"
+        ]
       },
       "impact": [
         "notification TTL si non répondue après 30min (cleanupAlerts → notifyAlert urgent)",
@@ -107,18 +196,48 @@
         "organisme": "TTL cleanup (cleanupAlerts), notifications automatiques"
       },
       "validation": "Seul le créateur peut clôturer (canResolveAlert). Incendie = P0 = urgent = Gardien informé si besoin.",
-      "mémoire": ["S.alerts + ic_alerts", "ic_offline_reports (offline buffer)", "a._helperPlate sur l'alerte", "reports DB (resolved_at si résolu)"]
+      "mémoire": [
+        "S.alerts + ic_alerts",
+        "ic_offline_reports (offline buffer)",
+        "a._helperPlate sur l'alerte",
+        "reports DB (resolved_at si résolu)"
+      ]
     },
-
     {
       "id": "FLOW-DIRECT-MESSAGE",
       "intention": "Communication directe et privée entre deux conducteurs identifiés par leur plaque.",
-      "organes": ["Messages", "Profil"],
+      "organes": [
+        "Messages",
+        "Profil"
+      ],
       "repérage": {
-        "ui":    ["panelMessages (#icMessagesPro)", "#icComposePlate + #icComposeText", ".ic-quick (quick replies)", "ic-thread (fil conversation)", "_actModCard (kind='msg')", "actCatPanel filtres 💬 Messages"],
-        "code":  ["ImmatMessages.sendNew()", "ImmatMessages.quick(txt)", "ImmatMessages.reply()", "App.actQuickReply(plate,msg)", "App.pickPlate(plate)", "App.actOpenConv(plate)"],
-        "state": ["S.conv (plaque active ou 'all')", "S.selPlate", "S.unreadMsgCount", "S._actMessages"],
-        "data":  ["messages DB (sender_id, receiver_id, target_plate, message, status)", "ic_deleted_msgs", "ic_unread_msg_count"]
+        "ui": [
+          "panelMessages (#icMessagesPro)",
+          "#icComposePlate + #icComposeText",
+          ".ic-quick (quick replies)",
+          "ic-thread (fil conversation)",
+          "_actModCard (kind='msg')",
+          "actCatPanel filtres 💬 Messages"
+        ],
+        "code": [
+          "ImmatMessages.sendNew()",
+          "ImmatMessages.quick(txt)",
+          "ImmatMessages.reply()",
+          "App.actQuickReply(plate,msg)",
+          "App.pickPlate(plate)",
+          "App.actOpenConv(plate)"
+        ],
+        "state": [
+          "S.conv (plaque active ou 'all')",
+          "S.selPlate",
+          "S.unreadMsgCount",
+          "S._actMessages"
+        ],
+        "data": [
+          "messages DB (sender_id, receiver_id, target_plate, message, status)",
+          "ic_deleted_msgs",
+          "ic_unread_msg_count"
+        ]
       },
       "impact": [
         "trust delta via signalFeedback() (utile +8 / réglé +3 / faux -12)",
@@ -137,18 +256,44 @@
         "bloqueur": "ic_blocked localStorage (INV-010) — bloque réception + envoi"
       },
       "validation": "Conducteur autonome. Blocage via ic_blocked sans validation Gardien (INV-010).",
-      "mémoire": ["messages DB (persistant)", "ic_deleted_msgs localStorage", "ic_unread_msg_count localStorage", "S._actMessages runtime session"]
+      "mémoire": [
+        "messages DB (persistant)",
+        "ic_deleted_msgs localStorage",
+        "ic_unread_msg_count localStorage",
+        "S._actMessages runtime session"
+      ]
     },
-
     {
       "id": "FLOW-BADGES",
       "intention": "Signaler en temps réel au conducteur les items non lus et actions en attente, sans surcharger l'attention.",
-      "organes": ["Messages", "Signalements", "Ange"],
+      "organes": [
+        "Messages",
+        "Signalements",
+        "Ange"
+      ],
       "repérage": {
-        "ui":    ["#actBadge (nav Activité)", "#actTabBadge (onglet Reçus)", "#catBadgeRoute/Vehicle/Aide (catégories)", "#resumeNewBadge + #resumeEncBadge (résumé rapide)", "#communityStatus (dot + compteurs)"],
-        "code":  ["App.updateActBadge()", "App.renderActivityMain()", "setUnreadMsgCount(n)", "schedBadge() (rAF)", "syncDerivedAlertUI()"],
-        "state": ["S.unreadMsgCount", "S.alerts (non-seen, non-mine, non-expired)", "S._actMessages (unread)"],
-        "data":  ["ic_unread_msg_count localStorage"]
+        "ui": [
+          "#actBadge (nav Activité)",
+          "#actTabBadge (onglet Reçus)",
+          "#catBadgeRoute/Vehicle/Aide (catégories)",
+          "#resumeNewBadge + #resumeEncBadge (résumé rapide)",
+          "#communityStatus (dot + compteurs)"
+        ],
+        "code": [
+          "App.updateActBadge()",
+          "App.renderActivityMain()",
+          "setUnreadMsgCount(n)",
+          "schedBadge() (rAF)",
+          "syncDerivedAlertUI()"
+        ],
+        "state": [
+          "S.unreadMsgCount",
+          "S.alerts (non-seen, non-mine, non-expired)",
+          "S._actMessages (unread)"
+        ],
+        "data": [
+          "ic_unread_msg_count localStorage"
+        ]
       },
       "impact": [
         "attention conducteur dirigée vers l'onglet Activité",
@@ -167,8 +312,341 @@
         "gardien": "audit seulement — pas de modification directe"
       },
       "validation": "Aucune validation requise. Auto-synchronisé par rAF (schedBadge). Idempotent.",
-      "mémoire": ["ic_unread_msg_count localStorage", "S.alerts runtime (badges recalculés à chaque sync)", "schedBadge ID rAF (volatile session)"]
+      "mémoire": [
+        "ic_unread_msg_count localStorage",
+        "S.alerts runtime (badges recalculés à chaque sync)",
+        "schedBadge ID rAF (volatile session)"
+      ]
+    },
+    {
+      "id": "FLOW-ROAD-REPORT",
+      "intention": "Informer la communaute d un evenement route visible.",
+      "organes": [
+        "Signalements",
+        "Carte",
+        "Messages"
+      ],
+      "repérage": {
+        "ui": [
+          "FAB Signaler",
+          "carte",
+          "Activite"
+        ],
+        "code": [
+          "actConfirmAlert",
+          "cleanupAlerts"
+        ],
+        "state": [
+          "S.alerts",
+          "S.tapLat",
+          "S.tapLng",
+          "S.myLat",
+          "S.myLng"
+        ],
+        "data": [
+          "reports",
+          "ic_alerts"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "reports",
+        "ic_alerts"
+      ],
+      "invariants": [
+        "INV-002",
+        "INV-014",
+        "INV-015"
+      ],
+      "preuve": [
+        "creer signalement",
+        "afficher sur carte",
+        "rendre visible dans activite",
+        "confirmer ou clore",
+        "respecter TTL ou resolution"
+      ]
+    },
+    {
+      "id": "FLOW-SOS",
+      "intention": "Declencher un canal prioritaire protege.",
+      "organes": [
+        "Signalements",
+        "Carte"
+      ],
+      "repérage": {
+        "ui": [
+          "panelDrive"
+        ],
+        "code": [
+          "appui long",
+          "confirmation"
+        ],
+        "state": [
+          "S.alerts",
+          "S.myLat",
+          "S.myLng"
+        ],
+        "data": [
+          "reports"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "reports"
+      ],
+      "invariants": [
+        "INV-003",
+        "INV-010",
+        "INV-015"
+      ],
+      "preuve": [
+        "geste protege",
+        "confirmation explicite",
+        "emission prioritaire",
+        "visibilite",
+        "cloture ou suivi"
+      ]
+    },
+    {
+      "id": "FLOW-AUDIO-CALL",
+      "intention": "Etablir un contact audio consenti entre conducteurs.",
+      "organes": [
+        "Messages"
+      ],
+      "repérage": {
+        "ui": [
+          "nearbyPanel",
+          "contextMenu"
+        ],
+        "code": [
+          "CallManager",
+          "WebRTC"
+        ],
+        "state": [
+          "call state"
+        ],
+        "data": [
+          "call events"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "call events"
+      ],
+      "invariants": [
+        "INV-010",
+        "INV-CALL-002",
+        "INV-015"
+      ],
+      "preuve": [
+        "demande appel",
+        "sonnerie",
+        "acceptation ou refus",
+        "session observable",
+        "fin ou echec observable"
+      ]
+    },
+    {
+      "id": "FLOW-GPS-NAVIGATION",
+      "intention": "Rechercher et suivre un itineraire.",
+      "organes": [
+        "Carte"
+      ],
+      "repérage": {
+        "ui": [
+          "panelDrive",
+          "recherche"
+        ],
+        "code": [
+          "Nominatim",
+          "route"
+        ],
+        "state": [
+          "S.myLat",
+          "S.myLng",
+          "route state"
+        ],
+        "data": [
+          "history",
+          "favorites"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "history",
+        "favorites"
+      ],
+      "invariants": [
+        "INV-014",
+        "INV-015"
+      ],
+      "preuve": [
+        "rechercher destination",
+        "afficher itineraire",
+        "suivre trajet",
+        "arreter navigation",
+        "etat carte stable"
+      ]
+    },
+    {
+      "id": "FLOW-PROFILE-MANAGEMENT",
+      "intention": "Mettre a jour les informations sociales du profil.",
+      "organes": [
+        "Profil"
+      ],
+      "repérage": {
+        "ui": [
+          "panelSettings"
+        ],
+        "code": [
+          "profile update",
+          "colorHex"
+        ],
+        "state": [
+          "profile state"
+        ],
+        "data": [
+          "profiles"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "profiles"
+      ],
+      "invariants": [
+        "INV-006",
+        "INV-011",
+        "INV-015"
+      ],
+      "preuve": [
+        "modifier profil",
+        "sauvegarder",
+        "afficher etat coherent",
+        "preserver plaque immuable"
+      ]
+    },
+    {
+      "id": "FLOW-ANGE-DIALOG",
+      "intention": "Obtenir une aide contextuelle sans action autonome.",
+      "organes": [
+        "Ange"
+      ],
+      "repérage": {
+        "ui": [
+          "angeFab",
+          "dialogue"
+        ],
+        "code": [
+          "immat-brain-dialog"
+        ],
+        "state": [
+          "session"
+        ],
+        "data": [
+          "knowledge-conducteur",
+          "knowledge-gardien"
+        ]
+      },
+      "impact": [
+        "coherence organique",
+        "tracabilite",
+        "stabilite"
+      ],
+      "options": [
+        "utiliser",
+        "verifier",
+        "clore si applicable"
+      ],
+      "qui_peut_agir": {
+        "conducteur": "action native existante",
+        "gardien": "audit et validation si evolution"
+      },
+      "validation": "Rattachement documentaire sans changement runtime.",
+      "mémoire": [
+        "knowledge-conducteur",
+        "knowledge-gardien"
+      ],
+      "invariants": [
+        "INV-010",
+        "INV-014",
+        "INV-015"
+      ],
+      "preuve": [
+        "poser question",
+        "reponse contextualisee",
+        "aucune action autonome",
+        "chemin natif disponible"
+      ]
     }
-
   ]
 }
