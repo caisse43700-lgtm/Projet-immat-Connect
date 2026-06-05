@@ -1,90 +1,113 @@
-/* ===== IMMATCONNECT UI — V6 FINAL ===== */
+/* ===== IMMATCONNECT UI — V6 SAFE LOGIN BRIDGE ===== */
 (function () {
   'use strict';
 
-  if (window.__ImmatConnectUIV6) return;
-  window.__ImmatConnectUIV6 = true;
+  if (window.__ImmatConnectUISafeLoginBridge) return;
+  window.__ImmatConnectUISafeLoginBridge = true;
 
   const $ = id => document.getElementById(id);
 
+  function exposeAppIfPossible(){
+    try{
+      if (!window.App && typeof App !== 'undefined') {
+        window.App = App;
+      }
+    }catch(e){}
+  }
+
+  function showAuth(mode){
+    exposeAppIfPossible();
+
+    try{
+      if (window.App && typeof window.App.goAuth === 'function') {
+        window.App.goAuth(mode || 'login');
+        return;
+      }
+    }catch(e){
+      console.warn('[UI bridge] App.goAuth failed, fallback auth screen', e);
+    }
+
+    // Fallback direct : ouvre l'écran auth même si App n'est pas disponible.
+    try{
+      ['sw','sa','sp','sr'].forEach(id => $(id)?.classList.remove('active'));
+      $('appScreen')?.classList.remove('active');
+      $('sa')?.classList.add('active');
+
+      const signup = mode === 'signup';
+      if ($('authTitle')) $('authTitle').textContent = signup ? 'Créer un compte' : 'Connexion';
+      if ($('authSubtitle')) $('authSubtitle').textContent = signup ? 'Renseigne tes informations conducteur.' : 'Entre ton email et ton mot de passe.';
+      if ($('authBtn')) {
+        $('authBtn').disabled = false;
+        $('authBtn').textContent = signup ? 'Créer mon compte' : 'Se connecter';
+      }
+      $('tabSignup')?.classList.toggle('active', signup);
+      $('tabLogin')?.classList.toggle('active', !signup);
+      $('suExtras')?.classList.toggle('hidden', !signup);
+      $('confirmWrap')?.classList.toggle('hidden', !signup);
+      $('forgotPwdBtn')?.classList.toggle('hidden', signup);
+      setTimeout(() => $('iEmail')?.focus(), 60);
+    }catch(e){
+      console.error('[UI bridge] fallback auth failed', e);
+    }
+  }
+
+  function bindWelcomeButtons(){
+    exposeAppIfPossible();
+
+    const login = $('welcomeLoginBtn');
+    if (login && !login.__safeLoginBridge) {
+      login.__safeLoginBridge = true;
+      login.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        showAuth('login');
+      }, true);
+    }
+
+    const signup = $('welcomeSignupBtn');
+    if (signup && !signup.__safeLoginBridge) {
+      signup.__safeLoginBridge = true;
+      signup.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        showAuth('signup');
+      }, true);
+    }
+  }
+
   function normalize(name) {
     name = String(name || '').toLowerCase();
-
-    if (name === 'alert' || name === 'alerte') {
-      return 'altet';
-    }
-
-    if (
-      name === 'contact' ||
-      name === 'message' ||
-      name === 'reçus' ||
-      name === 'received'
-    ) {
-      return 'messages';
-    }
-
-    if (name === 'activité' || name === 'activity') {
-      return 'activite';
-    }
-
+    if (name === 'alert' || name === 'alerte') return 'altet';
+    if (name === 'contact' || name === 'message' || name === 'reçus' || name === 'received') return 'messages';
+    if (name === 'activité' || name === 'activity') return 'activite';
     return name;
   }
 
   function hide(el) {
     if (!el) return;
-
-    el.classList.remove(
-      'show',
-      'open',
-      'active'
-    );
+    el.classList.remove('show', 'open', 'active');
   }
 
-  const floating = [
-
-    'nearbyPanel',
-    'drawer',
-    'legal',
-    'blocked',
-    'recent',
-    'vehicleContextMenu'
-  ];
-
-  const panels = [
-    ['altet', 'Altet'],
-    ['drive', 'Drive'],
-    ['messages', 'Messages'],
-    ['settings', 'Settings'],
-    ['activite', 'Activite']
-  ];
+  const floating = ['nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu'];
+  const panels = [['altet','Altet'],['drive','Drive'],['messages','Messages'],['settings','Settings'],['activite','Activite']];
 
   function closeFloating(except) {
-    floating.forEach(id => {
-      if (id !== except) {
-        hide($(id));
-      }
-    });
+    floating.forEach(id => { if (id !== except) hide($(id)); });
   }
 
   function showSheet() {
     const sheet = $('sheet');
-
     if (!sheet) return;
-
     sheet.style.display = '';
     sheet.classList.remove('mini');
-
     delete sheet.dataset.uiHidden;
   }
 
   function hideSheet() {
     const sheet = $('sheet');
-
     if (!sheet) return;
-
     sheet.dataset.uiHidden = '1';
     sheet.style.display = 'none';
-
     sheet.classList.add('mini');
     sheet.classList.remove('full');
   }
@@ -99,75 +122,32 @@
 
   function setPanel(name) {
     name = normalize(name);
-
     syncNav(name);
-
     panels.forEach(([key, id]) => {
       const active = key === name;
-
-      const panel = $('panel' + id);
-      const tab = $('tab' + id);
-
-      if (panel) {
-        panel.classList.toggle('on', active);
-      }
-
-      if (tab) {
-        tab.classList.toggle('on', active);
-      }
+      $('panel' + id)?.classList.toggle('on', active);
+      $('tab' + id)?.classList.toggle('on', active);
     });
-
-    const oldContact = $('panelContact');
-
-    if (oldContact) {
-      oldContact.classList.remove('on');
-    }
-
+    $('panelContact')?.classList.remove('on');
     showSheet();
-
-    try {
-      window.App?.openSheet?.();
-    } catch (e) {}
+    try { window.App?.openSheet?.(); } catch (e) {}
   }
 
   function syncBadge() {
     try {
-      const count = Number(
-        window.S?.unreadMsgCount ||
-        localStorage.getItem('ic_unread_msg_count') ||
-        0
-      );
-
-      if (typeof window.setUnreadMsgCount === 'function') {
-        window.setUnreadMsgCount(count);
-      }
-
-      document
-        .querySelectorAll('.status-mail-badge')
-        .forEach(b => {
-          b.textContent = '';
-          b.style.display = 'none';
-        });
-
+      const count = Number(window.S?.unreadMsgCount || localStorage.getItem('ic_unread_msg_count') || 0);
+      if (typeof window.setUnreadMsgCount === 'function') window.setUnreadMsgCount(count);
+      document.querySelectorAll('.status-mail-badge').forEach(b => { b.textContent = ''; b.style.display = 'none'; });
     } catch (e) {}
   }
 
   function openMessagesInbox() {
     showSheet();
-
     closeFloating(null);
-
     setPanel('messages');
-
     setTimeout(() => {
-      try {
-        window.ImmatMessages?.setMode?.('inbox');
-      } catch (e) {}
-
-      try {
-        window.ImmatMessages?.refresh?.();
-      } catch (e) {}
-
+      try { window.ImmatMessages?.setMode?.('inbox'); } catch (e) {}
+      try { window.ImmatMessages?.refresh?.(); } catch (e) {}
       syncBadge();
     }, 80);
   }
@@ -178,188 +158,76 @@
     closeFloatingPanels: closeFloating,
     hideSheetCompletely: hideSheet,
     showSheetAgain: showSheet,
-    syncBadge
+    syncBadge,
+    showAuth
   };
 
   function install() {
+    exposeAppIfPossible();
+    bindWelcomeButtons();
+
     if (!window.App) {
       setTimeout(install, 250);
       return;
     }
 
-    if (App.__ImmatConnectUIV6Patched) {
-      return;
-    }
+    if (window.App.__ImmatConnectUIV6Patched) return;
+    window.App.__ImmatConnectUIV6Patched = true;
 
-    App.__ImmatConnectUIV6Patched = true;
-
-    const oldPanel =
-      typeof App.panel === 'function'
-        ? App.panel.bind(App)
-        : null;
-
-    App.panel = function (name) {
+    const oldPanel = typeof window.App.panel === 'function' ? window.App.panel.bind(window.App) : null;
+    window.App.panel = function (name) {
       name = normalize(name);
-
       closeFloating(null);
-
       showSheet();
-
-      if (oldPanel) {
-        try {
-          oldPanel(name);
-        } catch (e) {}
-      }
-
+      if (oldPanel) { try { oldPanel(name); } catch (e) {} }
       setPanel(name);
-
-      if (name === 'messages') {
-        setTimeout(() => {
-          try {
-            window.ImmatMessages?.refresh?.();
-          } catch (e) {}
-
-          syncBadge();
-        }, 100);
-      }
-
-      if (name === 'altet') {
-        setTimeout(() => {
-          try {
-            App.renderAlerts?.();
-          } catch (e) {}
-
-          try {
-            App.renderMyAlertsBlock?.();
-          } catch (e) {}
-
-          syncBadge();
-        }, 100);
-      }
-
-      if (name === 'activite') {
-        setTimeout(() => {
-          try {
-            App.renderActivityFeed?.();
-          } catch (e) {}
-
-          try {
-            App.updateActBadge?.();
-          } catch (e) {}
-        }, 100);
-      }
+      if (name === 'messages') setTimeout(() => { try { window.ImmatMessages?.refresh?.(); } catch (e) {} syncBadge(); }, 100);
+      if (name === 'altet') setTimeout(() => { try { window.App.renderAlerts?.(); } catch (e) {} try { window.App.renderMyAlertsBlock?.(); } catch (e) {} syncBadge(); }, 100);
+      if (name === 'activite') setTimeout(() => { try { window.App.renderActivityFeed?.(); } catch (e) {} try { window.App.updateActBadge?.(); } catch (e) {} }, 100);
     };
 
-    App.openInboxBadge = function () {
-      openMessagesInbox();
-    };
+    window.App.openInboxBadge = function () { openMessagesInbox(); };
 
-    const oldUpdate =
-      typeof App.updateCommunityStatus === 'function'
-        ? App.updateCommunityStatus.bind(App)
-        : null;
+    const oldUpdate = typeof window.App.updateCommunityStatus === 'function' ? window.App.updateCommunityStatus.bind(window.App) : null;
+    window.App.updateCommunityStatus = function () { if (oldUpdate) { try { oldUpdate(); } catch (e) {} } syncBadge(); };
 
-    App.updateCommunityStatus = function () {
-      if (oldUpdate) {
-        try {
-          oldUpdate();
-        } catch (e) {}
-      }
+    window.App.openReport = function () { try { window.App.panel('altet'); } catch(e) {} try { window.App._sigReset?.(); } catch(e) {} };
 
-      syncBadge();
-    };
-
-    const oldOpenReport =
-      typeof App.openReport === 'function'
-        ? App.openReport.bind(App)
-        : null;
-
-    App.openReport = function () {
-      try { App.panel('altet'); } catch(e) {}
-      try { App._sigReset?.(); } catch(e) {}
-    };
-
-    const oldOpenNearby =
-      typeof App.openNearby === 'function'
-        ? App.openNearby.bind(App)
-        : null;
-
-    App.openNearby = function () {
+    const oldOpenNearby = typeof window.App.openNearby === 'function' ? window.App.openNearby.bind(window.App) : null;
+    window.App.openNearby = function () {
       hideSheet();
-
       closeFloating('nearbyPanel');
-
-      if (oldOpenNearby) {
-        oldOpenNearby();
-      }
-
+      if (oldOpenNearby) oldOpenNearby();
       $('nearbyPanel')?.classList.add('show');
     };
 
-    const oldCloseOverlay =
-      typeof App.closeOverlay === 'function'
-        ? App.closeOverlay.bind(App)
-        : null;
-
-    App.closeOverlay = function (id) {
-      if (oldCloseOverlay) {
-        oldCloseOverlay(id);
-      } else {
-        hide($(id));
-      }
-
+    const oldCloseOverlay = typeof window.App.closeOverlay === 'function' ? window.App.closeOverlay.bind(window.App) : null;
+    window.App.closeOverlay = function (id) {
+      if (oldCloseOverlay) oldCloseOverlay(id); else hide($(id));
       setTimeout(() => {
-        if (
-          !document.querySelector(
-            '.overlay.show,.modal.show,.drawer.show'
-          )
-        ) {
-          showSheet();
-        }
+        if (!document.querySelector('.overlay.show,.modal.show,.drawer.show')) showSheet();
       }, 30);
     };
 
-    const oldOpenDrawer =
-      typeof App.openDrawer === 'function'
-        ? App.openDrawer.bind(App)
-        : null;
-
-    App.openDrawer = function () {
+    const oldOpenDrawer = typeof window.App.openDrawer === 'function' ? window.App.openDrawer.bind(window.App) : null;
+    window.App.openDrawer = function () {
       hideSheet();
-
       closeFloating('drawer');
-
-      if (oldOpenDrawer) {
-        oldOpenDrawer();
-      }
-
+      if (oldOpenDrawer) oldOpenDrawer();
       $('drawer')?.classList.add('show');
     };
 
-    const oldCloseDrawer =
-      typeof App.closeDrawer === 'function'
-        ? App.closeDrawer.bind(App)
-        : null;
-
-    App.closeDrawer = function () {
-      if (oldCloseDrawer) {
-        oldCloseDrawer();
-      } else {
-        hide($('drawer'));
-      }
-
+    const oldCloseDrawer = typeof window.App.closeDrawer === 'function' ? window.App.closeDrawer.bind(window.App) : null;
+    window.App.closeDrawer = function () {
+      if (oldCloseDrawer) oldCloseDrawer(); else hide($('drawer'));
       showSheet();
     };
 
     document.addEventListener('click', function (e) {
-      const mailBtn =
-        e.target.closest('.top-mail-btn');
-
+      const mailBtn = e.target.closest('.top-mail-btn');
       if (!mailBtn) return;
-
       e.preventDefault();
       e.stopPropagation();
-
       openMessagesInbox();
     }, true);
 
@@ -367,12 +235,11 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener(
-      'DOMContentLoaded',
-      install
-    );
+    document.addEventListener('DOMContentLoaded', install);
   } else {
     install();
   }
 
+  setTimeout(bindWelcomeButtons, 300);
+  setTimeout(bindWelcomeButtons, 1000);
 })();
