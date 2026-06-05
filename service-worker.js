@@ -1,44 +1,79 @@
-/* service-worker.js — ImmatConnect — SESSION OBD-003d §18 */
+/* service-worker.js — ImmatConnect — cache sûr post-merge PR #50 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v5';
-const OFFLINE_URL = '/offline.html';
+const CACHE_NAME = 'immatconnect-pro-v6-safe';
 const STATIC_CACHE = [
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/calls.js',
-  '/messages.js',
+  './manifest.json',
+  './app.css?v=3',
+  './messages.css?v=4',
+  './calls.css?v=3',
+  './utils.js?v=3',
+  './core/invariants.js?v=45',
+  './core/bus.js?v=45',
+  './core/brain.js?v=45',
+  './core/governance.js?v=45',
+  './core/immatOrganism.js?v=45',
+  './core/interaction-engine.js?v=1',
+  './calls.js?v=2',
+  './badge.js',
+  './messages.js?v=15',
+  './ui.js?v=6'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_CACHE)).then(() => self.skipWaiting())
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_CACHE).catch(() => undefined))
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  // Supabase API — réseau uniquement, jamais mis en cache
-  if (e.request.url.includes('supabase.co')) return;
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200 && e.request.url.startsWith(self.location.origin)) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
-  );
+  const url = new URL(req.url);
+
+  // Auth / Supabase / CDN : toujours réseau, jamais cache applicatif.
+  if (
+    url.hostname.includes('supabase.co') ||
+    url.hostname.includes('supabase.com') ||
+    url.hostname.includes('unpkg.com') ||
+    url.hostname.includes('jsdelivr.net')
+  ) {
+    return;
+  }
+
+  // Navigation HTML : réseau d'abord pour éviter ancien index + nouveaux scripts.
+  if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' })
+        .then(res => res)
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Assets locaux : réseau d'abord, cache seulement en secours.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => undefined);
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+  }
 });
