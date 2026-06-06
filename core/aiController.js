@@ -28,7 +28,7 @@
     if (text.includes('defaut') || text.includes('défaut') || text.includes('code')) return 'codes_defauts';
     if (text.includes('temps reel') || text.includes('temps réel') || text.includes('direct')) return 'donnees_temps_reel';
     if (text.includes('import')) return 'importer_infos_vehicule';
-    if (text.includes('info') || text.includes('vehicule' ) || text.includes('véhicule')) return 'infos_vehicule';
+    if (text.includes('info') || text.includes('vehicule') || text.includes('véhicule')) return 'infos_vehicule';
     return null;
   }
 
