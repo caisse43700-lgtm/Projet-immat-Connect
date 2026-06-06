@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node tests.js",
+    "test": "node tests.js && node diagnostic-tests.js",
+    "test:diagnostic": "node diagnostic-tests.js",
     "test:e2e": "playwright test",
     "serve": "serve . -l 4000"
   },
