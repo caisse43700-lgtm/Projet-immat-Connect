@@ -88,6 +88,34 @@
     };
   }
 
+  function installMobileStatusButton() {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('immat-obd-status-button')) return;
+
+    const button = document.createElement('button');
+    button.id = 'immat-obd-status-button';
+    button.textContent = 'Test OBD/IA';
+    button.style.position = 'fixed';
+    button.style.right = '12px';
+    button.style.bottom = '12px';
+    button.style.zIndex = '9999';
+    button.style.padding = '10px 12px';
+    button.style.borderRadius = '12px';
+    button.style.border = '1px solid #999';
+    button.style.background = '#fff';
+    button.style.fontSize = '14px';
+
+    button.addEventListener('click', function () {
+      const status = getObdStatus();
+      const message = status.ready
+        ? 'OBD/IA OK : tous les modules sont chargés.'
+        : 'OBD/IA incomplet : session=' + status.session + ', gateway=' + status.gateway + ', controller=' + status.controller;
+      alert(message);
+    });
+
+    document.body.appendChild(button);
+  }
+
   w.AiController = {
     handleAiRequest,
     needsConfirmation,
@@ -97,6 +125,14 @@
 
   w.handleAiRequest = handleAiRequest;
   w.ImmatObdStatus = getObdStatus;
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', installMobileStatusButton);
+    } else {
+      installMobileStatusButton();
+    }
+  }
 
   if (typeof module !== 'undefined') module.exports = { AiController: w.AiController };
 })(typeof window !== 'undefined' ? window : globalThis);
