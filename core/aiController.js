@@ -28,7 +28,7 @@
     if (text.includes('defaut') || text.includes('défaut') || text.includes('code')) return 'codes_defauts';
     if (text.includes('temps reel') || text.includes('temps réel') || text.includes('direct')) return 'donnees_temps_reel';
     if (text.includes('import')) return 'importer_infos_vehicule';
-    if (text.includes('info') || text.includes('vehicule') || text.includes('véhicule')) return 'infos_vehicule';
+    if (text.includes('info') || text.includes('vehicule' ) || text.includes('véhicule')) return 'infos_vehicule';
     return null;
   }
 
@@ -75,13 +75,28 @@
     return gateway.runAction(action);
   }
 
+  function getObdStatus() {
+    const session = !!w.ObdSession;
+    const gateway = !!w.ObdGateway;
+    const controller = !!w.AiController;
+
+    return {
+      session,
+      gateway,
+      controller,
+      ready: session && gateway && controller
+    };
+  }
+
   w.AiController = {
     handleAiRequest,
     needsConfirmation,
-    detectAction
+    detectAction,
+    getObdStatus
   };
 
   w.handleAiRequest = handleAiRequest;
+  w.ImmatObdStatus = getObdStatus;
 
   if (typeof module !== 'undefined') module.exports = { AiController: w.AiController };
 })(typeof window !== 'undefined' ? window : globalThis);
