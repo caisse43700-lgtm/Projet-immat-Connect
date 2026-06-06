@@ -56,6 +56,8 @@
   }
 
   const floating = [
+    'angeOverlay',
+    'angePanel',
     'reportPanel',
     'nearbyPanel',
     'alertsPanel',
