@@ -1,0 +1,72 @@
+name: E2E Diagnostics
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e-diagnostics:
+    name: Playwright evidence collection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install chromium
+
+      - name: Run unit and diagnostic tests
+        run: npm test
+
+      - name: Run Playwright with evidence
+        id: playwright
+        continue-on-error: true
+        env:
+          CI: true
+        run: |
+          mkdir -p diagnostic-artifacts
+          npx playwright test --reporter=list,html --trace=retain-on-failure --screenshot=only-on-failure 2>&1 | tee diagnostic-artifacts/playwright-output.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Build OBD incident metadata
+        if: always()
+        run: |
+          mkdir -p diagnostic-artifacts
+          cat > diagnostic-artifacts/metadata.json <<EOF
+          {
+            "workflow": "E2E Diagnostics",
+            "job": "Playwright evidence collection",
+            "commit": "${GITHUB_SHA}",
+            "ref": "${GITHUB_REF}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "playwright_exit_code": "${{ steps.playwright.outputs.exit_code }}",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Upload OBD evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: obd-e2e-evidence
+          path: |
+            diagnostic-artifacts/
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail if Playwright failed
+        if: steps.playwright.outputs.exit_code != '0'
+        run: exit 1
