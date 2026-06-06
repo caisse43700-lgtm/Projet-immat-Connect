@@ -38,6 +38,21 @@
       'open',
       'active'
     );
+
+    // Belt-and-suspenders: neutralise les éléments ouverts via style.display
+    if (el.style.display && el.style.display !== 'none') {
+      el.style.display = 'none';
+    }
+  }
+
+  // Ferme le backdrop messages (z-index 5000) qui peut bloquer l'interface entière
+  function closeMessagesBackdrop() {
+    try { window.ImmatMessages?.closeSheet?.(); } catch (e) {}
+    // Fallback direct si ImmatMessages non prêt
+    const bd = document.getElementById('icSheetBackdrop');
+    if (bd) bd.classList.remove('show');
+    const bs = document.getElementById('icBottomSheet');
+    if (bs) bs.classList.remove('show');
   }
 
   const floating = [
@@ -212,6 +227,7 @@
     App.panel = function (name) {
       name = normalize(name);
 
+      closeMessagesBackdrop();
       closeFloating(null);
 
       showSheet();
@@ -298,6 +314,7 @@
         : null;
 
     App.openNearby = function () {
+      closeMessagesBackdrop();
       hideSheet();
 
       closeFloating('nearbyPanel');
@@ -315,10 +332,21 @@
         : null;
 
     App.closeOverlay = function (id) {
+      closeMessagesBackdrop();
+
       if (oldCloseOverlay) {
         oldCloseOverlay(id);
       } else {
         hide($(id));
+      }
+
+      // Double fallback : force display:none sur l'élément fermé
+      const el = $(id);
+      if (el) {
+        el.classList.remove('show', 'open', 'active');
+        if (el.style.display && el.style.display !== 'none') {
+          el.style.display = 'none';
+        }
       }
 
       setTimeout(() => {
@@ -338,6 +366,7 @@
         : null;
 
     App.openDrawer = function () {
+      closeMessagesBackdrop();
       hideSheet();
 
       closeFloating('drawer');
@@ -375,6 +404,34 @@
 
       openMessagesInbox();
     }, true);
+
+    // Escape hatch : double-tap sur la carte = reset complet des overlays bloquants
+    let _lastTapMap = 0;
+    const mapEl = document.getElementById('map');
+    if (mapEl) {
+      mapEl.addEventListener('touchend', function (e) {
+        const now = Date.now();
+        if (now - _lastTapMap < 350) {
+          // Double-tap détecté
+          closeMessagesBackdrop();
+          closeFloating(null);
+          // Fermer onboardingOverlay si coincé
+          const ob = document.getElementById('onboardingOverlay');
+          if (ob && ob.style.display !== 'none') {
+            try { window.App?.dismissOnboarding?.(); } catch (_) {}
+          }
+          // Fermer gardienDashboard si ouvert
+          const gd = document.getElementById('gardienDashboard');
+          if (gd && gd.style.display !== 'none') {
+            try { window.App?.closeGardienDashboard?.(); } catch (_) {
+              gd.style.display = 'none';
+            }
+          }
+          showSheet();
+        }
+        _lastTapMap = now;
+      }, { passive: true });
+    }
 
     syncBadge();
   }
