@@ -40,7 +40,7 @@ jobs:
           CI: true
         run: |
           mkdir -p diagnostic-artifacts
-          npx playwright test --reporter=list,html --trace=retain-on-failure --screenshot=only-on-failure 2>&1 | tee diagnostic-artifacts/playwright-output.log
+          npx playwright test --reporter=list,html --trace=retain-on-failure 2>&1 | tee diagnostic-artifacts/playwright-output.log
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Build OBD incident metadata
