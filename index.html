@@ -393,7 +393,7 @@
   <div class="menu-list">
     <button type="button" class="menu-btn" onclick="App.closeDrawer();App.panel('drive')"><span>Navigation GPS</span><span class="menu-icon">🧭</span></button>
     <button type="button" class="menu-btn" onclick="App.closeDrawer();App.openNearby()"><span>Conducteurs proches</span><span class="menu-icon">👥</span></button>
-    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.toggleInvisible()" id="invisBtn"><span>Mode invisible</span><span class="menu-icon">👻</span></button>
+    <button type="button" class="menu-btn" onclick="App.closeDrawer();App.toggleInvisible()" id="invisDrawerBtn"><span>Mode invisible</span><span class="menu-icon">👻</span></button>
   </div>
   <div class="drawer-section">Paramètres</div>
   <div class="menu-list">
@@ -1974,7 +1974,8 @@ function showReputationToast(){
 
 
 <script src="core/interaction-engine.js?v=1"></script>
-<script src="calls.js?v=2"></script>
+<script src="core/guardian-loop.js?v=1"></script>
+<script src="calls.js?v=3"></script>
 <script src="badge.js"></script>
 <script src="messages.js?v=15"></script>
 <script src="ui.js?v=6"></script>
