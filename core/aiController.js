@@ -75,13 +75,28 @@
     return gateway.runAction(action);
   }
 
+  function getObdStatus() {
+    const session = !!w.ObdSession;
+    const gateway = !!w.ObdGateway;
+    const controller = !!w.AiController;
+
+    return {
+      session,
+      gateway,
+      controller,
+      ready: session && gateway && controller
+    };
+  }
+
   w.AiController = {
     handleAiRequest,
     needsConfirmation,
-    detectAction
+    detectAction,
+    getObdStatus
   };
 
   w.handleAiRequest = handleAiRequest;
+  w.ImmatObdStatus = getObdStatus;
 
   if (typeof module !== 'undefined') module.exports = { AiController: w.AiController };
 })(typeof window !== 'undefined' ? window : globalThis);
