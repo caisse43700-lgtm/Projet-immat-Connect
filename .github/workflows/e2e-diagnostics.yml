@@ -5,6 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
 jobs:
   e2e-diagnostics:
     name: Playwright evidence collection
@@ -50,6 +55,8 @@ jobs:
             "ref": "${GITHUB_REF}",
             "run_id": "${GITHUB_RUN_ID}",
             "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+            "artifact_name": "obd-e2e-evidence",
             "playwright_exit_code": "${{ steps.playwright.outputs.exit_code }}",
             "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
@@ -66,6 +73,46 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Create OBD incident issue
+        if: steps.playwright.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `OBD Incident: E2E failure ${process.env.GITHUB_SHA.slice(0, 7)} run ${process.env.GITHUB_RUN_ID}`;
+            const body = [
+              '## OBD Incident',
+              '',
+              'Playwright E2E diagnostics failed and evidence was uploaded automatically.',
+              '',
+              `- Workflow: E2E Diagnostics`,
+              `- Run ID: ${process.env.GITHUB_RUN_ID}`,
+              `- Run URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+              `- Commit: ${process.env.GITHUB_SHA}`,
+              `- Ref: ${process.env.GITHUB_REF}`,
+              `- Artifact: obd-e2e-evidence`,
+              '',
+              '### Investigation order',
+              '1. Open the workflow run.',
+              '2. Download artifact `obd-e2e-evidence`.',
+              '3. Inspect `diagnostic-artifacts/playwright-output.log`.',
+              '4. Inspect `playwright-report/` and `test-results/`.',
+              '5. Identify the first broken step before fixing symptoms.',
+              '',
+              '### OBD classification',
+              '- Category: e2e',
+              '- Chain candidate: APP_BOOT_FLOW',
+              '- Evidence status: uploaded',
+              '- Root cause: pending analysis'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['obd-incident', 'e2e', 'needs-triage']
+            });
 
       - name: Fail if Playwright failed
         if: steps.playwright.outputs.exit_code != '0'
