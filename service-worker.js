@@ -1,14 +1,27 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §18 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v5';
+const CACHE_NAME  = 'immatconnect-pro-v6';
 const OFFLINE_URL = '/offline.html';
 const STATIC_CACHE = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/utils.js',
   '/calls.js',
   '/messages.js',
+  '/badge.js',
+  '/ui.js',
+  '/core/invariants.js',
+  '/core/bus.js',
+  '/core/brain.js',
+  '/core/governance.js',
+  '/core/immatOrganism.js',
+  '/core/interaction-engine.js',
+  '/core/guardian-loop.js',
+  '/core/obdSession.js',
+  '/core/obdGateway.js',
+  '/core/aiController.js',
 ];
 
 self.addEventListener('install', (e) => {

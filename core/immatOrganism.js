@@ -212,3 +212,22 @@ const ImmatOrganism = (function () {
 
 if (typeof window !== 'undefined') window.ImmatOrganism = ImmatOrganism;
 if (typeof module !== 'undefined') module.exports = { ImmatOrganism };
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  (function loadObdModules() {
+    const modules = [
+      'core/obdSession.js?v=1',
+      'core/obdGateway.js?v=1',
+      'core/aiController.js?v=1'
+    ];
+    modules.forEach(src => {
+      const path = src.split('?')[0];
+      const exists = Array.from(document.scripts || []).some(s => (s.getAttribute('src') || '').includes(path));
+      if (exists) return;
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false;
+      document.head.appendChild(script);
+    });
+  })();
+}

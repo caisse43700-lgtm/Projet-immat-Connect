@@ -393,3 +393,5 @@ const CallManager = (function () {
     isCallBlocked: _isCallBlocked,
   };
 })();
+
+window.CallManager = CallManager;
