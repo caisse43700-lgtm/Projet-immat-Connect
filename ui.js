@@ -13,8 +13,8 @@
   function status(id,msg,type){ const el=$(id); if(!el) return; el.textContent=msg||''; el.className='status-msg '+(type||'')+(msg?' visible':''); }
   function showSheet(){ const s=$('sheet'); if(!s) return; s.style.display=''; s.classList.remove('mini'); delete s.dataset.uiHidden; }
   function hideSheet(){ const s=$('sheet'); if(!s) return; s.dataset.uiHidden='1'; s.style.display='none'; s.classList.add('mini'); s.classList.remove('full'); }
-  function hide(el){ if(el) el.classList.remove('show','open','active'); }
-  function closeFloating(except){ ['nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu'].forEach(id=>{ if(id!==except) hide($(id)); }); }
+  function hide(el){ if(!el) return; el.classList.remove('show','open','active'); if(el.style.display && el.style.display!=='none') el.style.display='none'; }
+  function closeFloating(except){ ['angeOverlay','angePanel','nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu'].forEach(id=>{ if(id!==except) hide($(id)); }); }
 
   function loadScript(src,test){
     return new Promise(resolve=>{
