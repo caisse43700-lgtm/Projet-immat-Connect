@@ -88,7 +88,16 @@
     };
   }
 
+  function isObdDebugMode() {
+    return !!(
+      w.location &&
+      typeof w.location.search === 'string' &&
+      w.location.search.includes('debug=obd')
+    );
+  }
+
   function installMobileStatusButton() {
+    if (!isObdDebugMode()) return;
     if (typeof document === 'undefined') return;
     if (document.getElementById('immat-obd-status-button')) return;
 
