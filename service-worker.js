@@ -4,6 +4,7 @@
 const CACHE_NAME  = 'immatconnect-pro-v7';
 const OFFLINE_URL = './offline.html';
 const STATIC_CACHE = [
+  './',
   './index.html',
   './offline.html',
   './manifest.json',
@@ -26,7 +27,9 @@ const STATIC_CACHE = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_CACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => Promise.allSettled(STATIC_CACHE.map(url => cache.add(url))))
+      .then(() => self.skipWaiting())
   );
 });
 
