@@ -504,9 +504,6 @@ function render(){
   if(State.mode === 'sent'){
     threads = threads.filter(t => t.list.some(m=>m._sent));
   }
-  if(State.mode === 'inbox'){
-    threads = threads.filter(t => t.list.some(m=>m._received));
-  }
   if(State.mode === 'compose'){
     list.innerHTML = `<div class="ic-empty">Écris une plaque et un message puis appuie sur ➤.</div>`;
     return;

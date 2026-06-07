@@ -1212,6 +1212,7 @@ App.actCatTab=function(tab){
   S._actTypeFilter='all';
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   this._renderTypeFilterBar(S._actCat||'all');
+  if(tab==='envoyes'){try{window.ImmatMessages?.refresh?.().then(()=>this.renderCategoryFeed(S._actCat||'all',tab)).catch(()=>this.renderCategoryFeed(S._actCat||'all',tab));}catch(e){this.renderCategoryFeed(S._actCat||'all',tab);}return;}
   this.renderCategoryFeed(S._actCat||'all',tab);
 };
 App.actTypeFilter=function(type){
