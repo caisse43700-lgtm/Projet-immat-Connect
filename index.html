@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=4">
+  <link rel="stylesheet" href="app.css?v=5">
   <link rel="stylesheet" href="messages.css?v=4">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -1055,6 +1055,9 @@ App.navActivite=function(){
   this.updateActBadge?.();
 };
 App.navMap=function(){
+  ['altet','drive','messages','settings','activite'].forEach(x=>{
+    document.getElementById('panel'+x[0].toUpperCase()+x.slice(1))?.classList.remove('on');
+  });
   this.closeSheet();
   document.getElementById('navMap')?.classList.add('on');
   document.getElementById('navSignaler')?.classList.remove('on');

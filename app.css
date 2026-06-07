@@ -316,7 +316,7 @@ button { border: 0; cursor: pointer; }
   will-change: transform;
   overscroll-behavior: contain;
 }
-.sheet.mini { transform: translateY(100%); }
+.sheet.mini { transform: translateY(100%); pointer-events: none; }
 .sheet.full {
   max-height: calc(100dvh - var(--safe-top) - 8px);
   top: calc(var(--safe-top) + 8px);
