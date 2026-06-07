@@ -143,7 +143,7 @@
 
     try {
       const sw = await readTextFresh('./service-worker.js');
-      result.checks.swV7 = sw.ok && sw.text.includes('immatconnect-pro-v7');
+      result.checks.swV7 = sw.ok && sw.text.includes('immatconnect-pro-v8');
       result.checks.relativePaths = sw.ok && sw.text.includes('./index.html') && sw.text.includes('./ui.js');
     } catch (e) {
       result.errors.push('fetch-sw:' + (e && e.message || e));
@@ -174,7 +174,7 @@
     }
 
     const oldCaches = result.caches.filter(function (key) {
-      return /immatconnect-pro-v[0-6]\b/i.test(key) || /immatconnect/i.test(key) && !/v7\b/i.test(key);
+      return /immatconnect-pro-v[0-7]\b/i.test(key) || /immatconnect/i.test(key) && !/v8\b/i.test(key);
     });
 
     if (!result.sw.supported) result.status = 'NO_SW_SUPPORT';
@@ -387,7 +387,7 @@
       'Caches: ' + (diag.caches.length ? diag.caches.join(', ') : '-'),
       'Anciens caches: ' + (diag.oldCaches && diag.oldCaches.length ? diag.oldCaches.join(', ') : '-'),
       '',
-      'service-worker v7: ' + !!checks.swV7,
+      'service-worker v8: ' + !!checks.swV7,
       'chemins relatifs: ' + !!checks.relativePaths,
       'ui angeOverlay: ' + !!checks.uiAngeOverlay,
       'ui angePanel: ' + !!checks.uiAngePanel,
