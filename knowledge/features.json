@@ -11,7 +11,7 @@
       "nom": "Carte temps réel",
       "organe": "Carte",
       "description": "Voir sa position et les véhicules proches sur une carte interactive",
-      "actions": ["Se localiser", "Voir les conducteurs proches", "Naviguer vers un marqueur", "Mode invisible"],
+      "actions": ["Se localiser", "Voir les conducteurs proches", "Naviguer vers un marqueur", "Mode invisible", "Clic marqueur propre → Signaler ici / Composer message"],
       "statut": "actif",
       "intentions": ["INT-LOCATE-SELF", "INT-UNDERSTAND-ENV", "INT-FEEL-SAFE"],
       "flows": ["FLOW-MAP-SELF-MARKER"]
@@ -46,8 +46,7 @@
       "entry_points": ["FAB Signaler (onglet Altet)", "Clic droit carte → 📍 Signaler ici (P2-002)"],
       "statut": "actif",
       "intentions": ["INT-SIGNAL-ROAD", "INT-CONFIRM-DANGER"],
-      "flows": ["FLOW-ROAD-SIGNAL"],
-      "flows": ["FLOW-ROAD-REPORT"],
+      "flows": ["FLOW-ROAD-SIGNAL", "FLOW-ROAD-REPORT"],
       "ttl": { "bouchon": "30min", "travaux": "2h", "autres": "45min" },
       "note": "Coordonnées tap (S.tapLat/S.tapLng) utilisées si disponibles, sinon GPS (S.myLat/S.myLng)"
     },
@@ -89,10 +88,8 @@
       "actions": ["Appeler depuis nearbyPanel", "Appeler depuis contextMenu", "Accepter/Refuser", "Journal d'appels"],
       "statut": "actif",
       "intentions": ["INT-CONTACT-DRIVER", "INT-CALL-DRIVER", "INT-ANSWER-CALL", "INT-REFUSE-CALL", "INT-END-CALL", "INT-MISS-CALL", "INT-CONTEXTUAL-CALL"],
-      "flows": ["FLOW-CALL-REQUEST", "FLOW-CALL-CONTEXT"],
+      "flows": ["FLOW-CALL-REQUEST", "FLOW-CALL-CONTEXT", "FLOW-AUDIO-CALL"],
       "note": "Phase A = demande de contact (call_requests). Phase B = WebRTC P2P audio. Consentement explicite — D-002."
-      "flows": ["FLOW-AUDIO-CALL"],
-      "note": "Consentement explicite requis — D-002"
     },
     {
       "id": "F-SOS",
@@ -102,8 +99,7 @@
       "actions": ["Appui long 3s → confirmation → envoi"],
       "statut": "actif",
       "intentions": ["INT-SOS"],
-      "flows": ["FLOW-SOS-EMERGENCY"],
-      "flows": ["FLOW-SOS"],
+      "flows": ["FLOW-SOS-EMERGENCY", "FLOW-SOS"],
       "note": "Protégé D-005. Canal SOS distinct = futur P3-023."
     },
     {
@@ -114,8 +110,7 @@
       "actions": ["Poser une question", "Options cliquables", "Réponse vocale (futur)"],
       "statut": "actif",
       "intentions": ["INT-ASK-ANGE"],
-      "flows": ["FLOW-ANGE-ASSISTANT", "FLOW-ANGE-CALL", "FLOW-ANGE-CONVERSATION", "FLOW-ANGE-TRUST", "FLOW-ANGE-SIGNAL", "FLOW-ANGE-NAVIGATE"],
-      "flows": ["FLOW-ANGE-DIALOG"],
+      "flows": ["FLOW-ANGE-ASSISTANT", "FLOW-ANGE-CALL", "FLOW-ANGE-CONVERSATION", "FLOW-ANGE-TRUST", "FLOW-ANGE-SIGNAL", "FLOW-ANGE-NAVIGATE", "FLOW-ANGE-DIALOG"],
       "throttle": "10 appels/heure par session"
     },
     {
@@ -126,8 +121,7 @@
       "actions": ["Modifier pseudo", "Modifier téléphone", "Modifier couleur"],
       "statut": "actif",
       "intentions": ["INT-MANAGE-PROFILE"],
-      "flows": ["FLOW-PROFILE-EDIT"],
-      "flows": ["FLOW-PROFILE-MANAGEMENT"],
+      "flows": ["FLOW-PROFILE-EDIT", "FLOW-PROFILE-MANAGEMENT"],
       "note": "Plaque immuable après création — INV-006"
     },
     {

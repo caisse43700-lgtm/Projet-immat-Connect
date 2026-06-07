@@ -730,11 +730,6 @@
       "qui_peut_agir": { "conducteur": "demander à l'Ange de l'aider à naviguer" },
       "validation": "Conducteur autonome. INV-014 : vitesse catégorisée.",
       "mémoire": ["session runtime uniquement"]
-      "mémoire": [
-        "ic_unread_msg_count localStorage",
-        "S.alerts runtime (badges recalculés à chaque sync)",
-        "schedBadge ID rAF (volatile session)"
-      ]
     },
     {
       "id": "FLOW-ROAD-REPORT",
@@ -904,62 +899,6 @@
         "acceptation ou refus",
         "session observable",
         "fin ou echec observable"
-      ]
-    },
-    {
-      "id": "FLOW-GPS-NAVIGATION",
-      "intention": "Rechercher et suivre un itineraire.",
-      "organes": [
-        "Carte"
-      ],
-      "repérage": {
-        "ui": [
-          "panelDrive",
-          "recherche"
-        ],
-        "code": [
-          "Nominatim",
-          "route"
-        ],
-        "state": [
-          "S.myLat",
-          "S.myLng",
-          "route state"
-        ],
-        "data": [
-          "history",
-          "favorites"
-        ]
-      },
-      "impact": [
-        "coherence organique",
-        "tracabilite",
-        "stabilite"
-      ],
-      "options": [
-        "utiliser",
-        "verifier",
-        "clore si applicable"
-      ],
-      "qui_peut_agir": {
-        "conducteur": "action native existante",
-        "gardien": "audit et validation si evolution"
-      },
-      "validation": "Rattachement documentaire sans changement runtime.",
-      "mémoire": [
-        "history",
-        "favorites"
-      ],
-      "invariants": [
-        "INV-014",
-        "INV-015"
-      ],
-      "preuve": [
-        "rechercher destination",
-        "afficher itineraire",
-        "suivre trajet",
-        "arreter navigation",
-        "etat carte stable"
       ]
     },
     {

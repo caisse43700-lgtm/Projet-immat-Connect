@@ -175,7 +175,7 @@
       "type": "fab-gardien",
       "position": "bas-gauche carte",
       "statut": "actif",
-      "acces": "Gardien uniquement (isGardien === true)"
+      "acces": "Tous conducteurs connectés (angeFab affiché pour tous — nervous-system.ts)"
     },
     {
       "id": "BTN-C07",
@@ -833,13 +833,13 @@
     {
       "id": "BTN-MISS02",
       "label": "FAB Signaler ici (contextuel sur la carte)",
-      "panel": "panelAltet",
+      "panel": "carte (position fixe, z:800)",
       "organe": "SIGNAL",
-      "action": "App.openReport() avec coordonnées de tap",
+      "action": "App.openSignalHere()",
+      "html_id": "fabSignalHere",
       "type": "fab",
-      "statut": "manquant",
-      "ref": "INVENTAIRE B2-3",
-      "priorite": "P2"
+      "statut": "actif",
+      "ref": "index.html:32 — affiché sur longPress carte (showSignalHere)"
     },
     {
       "id": "BTN-MISS03",

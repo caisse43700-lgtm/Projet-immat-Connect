@@ -13,16 +13,25 @@
 | ID | Nom | Organe | Statut | Flows |
 |----|-----|--------|--------|-------|
 | F-CARTE | Carte temps réel | Carte | actif | FLOW-MAP-SELF-MARKER |
-| F-GPS | Navigation GPS | Carte | actif | — |
+| F-GPS | Navigation GPS | Carte | actif | FLOW-GPS-NAVIGATION |
 | F-SIGNAL-VEHICULE | Alerte véhicule | Signalements | actif | FLOW-VEHICLE-ALERT |
-| F-SIGNAL-ROUTE | Signalement route | Signalements | actif | — |
+| F-SIGNAL-ROUTE | Signalement route | Signalements | actif | FLOW-ROAD-SIGNAL, FLOW-ROAD-REPORT |
 | F-ASSIST | Demande d'aide | Signalements | actif | FLOW-ASSIST-REQUEST |
 | F-MESSAGES | Messages directs | Messages | actif | FLOW-DIRECT-MESSAGE |
 | F-ACTIVITE | Activité (notifications) | Messages | actif | FLOW-BADGES |
-| F-APPEL | Appels audio | Messages | actif | — |
-| F-SOS | SOS urgence | Signalements | actif | — |
-| F-ANGE | Ange IA | Ange | actif | — |
-| F-PROFIL | Profil conducteur | Profil | actif | — |
+| F-APPEL | Appels audio | Messages | actif | FLOW-CALL-REQUEST, FLOW-CALL-CONTEXT, FLOW-AUDIO-CALL |
+| F-SOS | SOS urgence | Signalements | actif | FLOW-SOS-EMERGENCY, FLOW-SOS |
+| F-ANGE | Ange IA | Ange | actif | FLOW-ANGE-ASSISTANT, FLOW-ANGE-CALL, FLOW-ANGE-CONVERSATION, FLOW-ANGE-TRUST, FLOW-ANGE-SIGNAL, FLOW-ANGE-NAVIGATE, FLOW-ANGE-DIALOG |
+| F-PROFIL | Profil conducteur | Profil | actif | FLOW-PROFILE-EDIT, FLOW-PROFILE-MANAGEMENT |
+| F-CONVERSATION-ENGINE | Moteur conversation unifié | Messages | actif | FLOW-CONVERSATION, FLOW-MESSAGE |
+| F-TRUST | Gestion de confiance | Messages | actif | FLOW-TRUST, FLOW-BLOCK |
+| F-CALL-PERMISSIONS | Paramètres d'appel | Messages | actif | FLOW-CALL |
+| F-PRESENCE | Statut de présence | Messages | actif | FLOW-PRESENCE |
+| F-FAVORITES | Conversations favorites | Messages | actif | FLOW-FAVORITE |
+| F-ARCHIVE | Archivage conversations | Messages | actif | FLOW-ARCHIVE |
+| F-SEARCH | Recherche conversations | Messages | actif | FLOW-SEARCH |
+| F-SPAM-PROTECTION | Protection anti-spam | Messages | actif | FLOW-SPAM-PROTECTION |
+| F-PROXIMITY-SIGNAL | Signal de proximité véhicule | Signalements | actif | FLOW-PROXIMITY-SIGNAL |
 
 ---
 
