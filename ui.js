@@ -36,6 +36,15 @@
     ['angeOverlay','angePanel','nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu','onboardingOverlay'].forEach(id=>{ if(id!==except) hide($(id)); });
   }
 
+  function showAngeFab(){ const fab=$('angeFab'); if(fab){ fab.style.display='flex'; fab.style.zIndex='3000'; } }
+  async function openAppFallback(){
+    ['sw','sa','sp','sr'].forEach(id=>$(id)?.classList.remove('active'));
+    $('appScreen')?.classList.add('active');
+    closeFloating();
+    showAngeFab();
+    await recoverMap();
+  }
+
   function loadScript(src,test){
     return new Promise(resolve=>{
       try{ if(test && test()) return resolve(true); }catch(e){}
@@ -69,7 +78,7 @@
       await ensureLeaflet();
       if(!window.L?.map) return;
       if(!window.S) window.S={};
-      if(window.App?.initMap){ try{ window.App.initMap(); }catch(e){ console.warn('[safe-ui] initMap failed',e); } }
+      if(window.App?.initMap && !window.App.__safeFallbackOnly){ try{ window.App.initMap(); }catch(e){ console.warn('[safe-ui] initMap failed',e); } }
       if(!window.S.map){
         try{ window.S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6); }catch(e){}
       }
@@ -97,6 +106,13 @@
     setTimeout(()=>$('iEmail')?.focus(),60); bindAuthButton();
   }
 
+  function withTimeout(promise, ms){
+    return Promise.race([
+      promise,
+      new Promise((_, reject)=>setTimeout(()=>reject(new Error('afterAuth timeout')), ms))
+    ]);
+  }
+
   async function loginDirect(){
     const email=String($('iEmail')?.value||'').trim();
     const password=String($('iPwd')?.value||'');
@@ -109,9 +125,19 @@
       const {data,error}=await sb.auth.signInWithPassword({email,password});
       if(error) throw error;
       status('authSt','Connecté. Ouverture…','success');
-      try{ if(window.App?.afterAuth && !window.App.__safeFallbackOnly){ await window.App.afterAuth(data?.user||null); await recoverMap(); return; } }catch(e){ console.warn('[safe-ui] afterAuth failed',e); }
-      ['sw','sa','sp','sr'].forEach(id=>$(id)?.classList.remove('active'));
-      $('appScreen')?.classList.add('active'); await recoverMap();
+      const app=ensureAppFallbacks();
+      if(app?.afterAuth && !app.__safeFallbackOnly){
+        try{
+          await withTimeout(app.afterAuth(data?.user||null), 4500);
+          await openAppFallback();
+          return;
+        }catch(e){
+          console.warn('[safe-ui] afterAuth timeout/fallback', e);
+          status('authSt','Connecté. Ouverture carte en mode sécurisé…','success');
+        }
+      }
+      await openAppFallback();
+      setTimeout(()=>locateDirect(),500);
     }catch(e){
       const msg=String(e?.message||'Connexion impossible.');
       status('authSt',msg.includes('Invalid')?'Email ou mot de passe incorrect.':msg,'error');
@@ -155,7 +181,6 @@
   function fallbackCloseDrawer(){ hide($('drawer')); }
   function fallbackCloseOverlay(){ closeFloating(); hideSheet(); }
   function fallbackOpenNearby(){ closeFloating('nearbyPanel'); const p=$('nearbyPanel'); if(p){ p.style.display='block'; p.classList.add('show'); } }
-  function showAngeFab(){ const fab=$('angeFab'); if(fab){ fab.style.display='flex'; fab.style.zIndex='3000'; } }
 
   function ensureAppFallbacks(){
     const app=exposeApp();
@@ -169,7 +194,7 @@
       if(typeof app.locate!=='function') app.locate=locateDirect;
       if(typeof app.recenter!=='function') app.recenter=function(){ if(window.S){ S.autoFollow=true; } if(window.S?.myLat!=null && window.S?.map){ try{S.map.setView([S.myLat,S.myLng],16,{animate:true});}catch(e){} } else locateDirect(); };
       if(typeof app.panel!=='function') app.panel=setPanel;
-      if(typeof app.openMap!=='function') app.openMap=async function(){ $('appScreen')?.classList.add('active'); showAngeFab(); await recoverMap(); };
+      if(typeof app.openMap!=='function') app.openMap=async function(){ await openAppFallback(); };
     }
     return app;
   }
@@ -197,12 +222,12 @@
     const oldPanel=typeof app.panel==='function'?app.panel.bind(app):null;
     app.panel=function(name){ closeFloating(); try{ oldPanel?.(name); }catch(e){} setPanel(String(name||'').toLowerCase()); };
     const oldOpenMap=typeof app.openMap==='function'?app.openMap.bind(app):null;
-    if(oldOpenMap) app.openMap=async function(){ const r=await oldOpenMap(...arguments); showAngeFab(); await recoverMap(); return r; };
+    if(oldOpenMap) app.openMap=async function(){ const r=await oldOpenMap(...arguments); await openAppFallback(); return r; };
     app.openInboxBadge=function(){ setPanel('messages'); try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.refresh?.();}catch(e){} };
   }
 
-  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); patchApp(); closeMessagesBottomSheet(); showAngeFab(); recoverMap(); }
+  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); patchApp(); closeMessagesBottomSheet(); recoverMap(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
-  window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp};
+  window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,openAppFallback};
 })();
