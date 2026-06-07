@@ -192,6 +192,36 @@
     showSheet(); if(name==='drive') recoverMap();
   }
 
+  function openSignalStep(stepId){
+    showSheet();
+    ['sigStep1','sigStep2Route','sigStep2Vehicle','sigStep2Aide'].forEach(id=>$(id)?.classList.toggle('active',id===stepId));
+  }
+
+  function openAngePanel(){
+    showAngeFab();
+    try{ if(window.AngeDialog?.open){ window.AngeDialog.open(); return; } }catch(e){ console.warn('[safe-ui] AngeDialog.open failed',e); }
+    const overlay=$('angeOverlay'), panel=$('angePanel');
+    if(overlay){ overlay.style.display='block'; overlay.classList.add('show','active'); }
+    if(panel){ panel.style.display='flex'; panel.classList.add('show','active'); }
+  }
+
+  function installCriticalButtonHotfix(){
+    if(window.__ImmatCriticalButtonHotfixV1) return;
+    window.__ImmatCriticalButtonHotfixV1=true;
+    document.addEventListener('click',e=>{
+      const el=e.target && e.target.closest && e.target.closest('#angeFab,.sig-cat-btn');
+      if(!el) return;
+      if(el.id==='angeFab'){
+        e.preventDefault(); e.stopPropagation();
+        openAngePanel();
+        return;
+      }
+      if(el.classList.contains('cat-route')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepRoute?.(); }catch(err){} openSignalStep('sigStep2Route'); }
+      else if(el.classList.contains('cat-vehicle')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepVehicle?.(); }catch(err){} openSignalStep('sigStep2Vehicle'); }
+      else if(el.classList.contains('cat-aide')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepAide?.(); }catch(err){} openSignalStep('sigStep2Aide'); }
+    },true);
+  }
+
   function fallbackOpenDrawer(){ closeFloating('drawer'); const d=$('drawer'); if(d){ d.style.display='block'; d.classList.add('show'); } }
   function fallbackCloseDrawer(){ hide($('drawer')); }
   function fallbackCloseOverlay(){ closeFloating(); hideSheet(); }
@@ -262,7 +292,7 @@
     },700);
   }
 
-  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); patchApp(); closeMessagesBottomSheet(); if(!$('appScreen')?.classList.contains('active')) hideAngeFab(); installAuthOpenWatchdog(); recoverMap(); }
+  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); installCriticalButtonHotfix(); patchApp(); closeMessagesBottomSheet(); if(!$('appScreen')?.classList.contains('active')) hideAngeFab(); installAuthOpenWatchdog(); recoverMap(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
   window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
