@@ -1182,7 +1182,6 @@ App.openActivityCat=function(cat){
   this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
   if(main)main.style.display='none';if(panel)panel.style.display='flex';
-  try{window.ImmatMessages?.refresh?.().then(()=>this.renderCategoryFeed(cat,S._actCatTab||'recus')).catch(()=>{});}catch(e){}
   const meta={route:{icon:'🚦',title:'Route',sub:'Incidents de circulation'},vehicle:{icon:'🚘',title:'Véhicule',sub:'Prévenir un conducteur'},aide:{icon:'🆘',title:'Aide',sub:'Demandes d\'assistance'},all:{icon:'🔔',title:'Tout',sub:'Toutes les alertes et messages'}};
   const m=meta[cat]||meta.all;
   const iconEl=document.getElementById('actCatIcon'),titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
@@ -1199,7 +1198,7 @@ App.openActivityCat=function(cat){
     if(match&&isNearby(a)){a.status='seen';_changed=true;}
   });
   if(_changed&&typeof saveAlerts==='function')saveAlerts();
-  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,'recus');if((cat==='vehicle'||cat==='all')&&window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
+  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,'recus');if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
   try{this.updateActBadge?.()}catch(e){};
 };
 App.closeActivityCat=function(){
