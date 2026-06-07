@@ -79,13 +79,9 @@
     const session = !!w.ObdSession;
     const gateway = !!w.ObdGateway;
     const controller = !!w.AiController;
-
-    return {
-      session,
-      gateway,
-      controller,
-      ready: session && gateway && controller
-    };
+    const ready = session && gateway && controller;
+    try{if(w.ImmatBus)w.ImmatBus.emit('OBD_STATUS_CHECKED',{session,gateway,controller,ready})}catch(e){}
+    return { session, gateway, controller, ready };
   }
 
   function includesAny(text, needles) {
@@ -189,6 +185,9 @@
     else result.status = 'OK';
 
     result.oldCaches = oldCaches;
+    if(result.status !== 'OK' && result.status !== 'UNKNOWN'){
+      try{if(w.ImmatBus)w.ImmatBus.emit('OBD_FINDING_CREATED',{status:result.status,errors:(result.errors||[]).length,oldCaches:(result.oldCaches||[]).length})}catch(e){}
+    }
     return result;
   }
 

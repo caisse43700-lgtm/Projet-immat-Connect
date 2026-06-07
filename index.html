@@ -2105,6 +2105,7 @@ const AngeDialog={
     // TTS — lire la réponse si la voix est activée (gated par S.voice)
     const _tts=(r.juste||r.sources||'').replace(/<[^>]*>/g,'').slice(0,200);
     if(_tts&&typeof speak==='function'&&S.voice)setTimeout(()=>speak(_tts,false),200);
+    try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{panel:S?.panel||'GENERAL'})}catch(e){}
   },
   feedback(v,btn){
     // Remplace les boutons par un remerciement
@@ -2161,7 +2162,6 @@ const AngeDialog={
       if(error)throw error;
       try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',_src:'ImmatConnect/ange'})}catch(e){}
       this.renderResponse(data);
-      try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{panel:S.panel||'GENERAL'})}catch(e){}
       // Sauvegarder l'échange dans l'historique de session
       try{
         const _respTxt=(data.juste||data.sources||'').slice(0,400);
