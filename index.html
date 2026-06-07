@@ -403,6 +403,7 @@
 <div id="legal" class="modal"><div class="modal-back" onclick="App.closeLegal()"></div><div class="modal-card"><h2>Confidentialité</h2><p>Ton téléphone n'est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button type="button" class="btn primary" style="margin-top:14px" onclick="App.closeLegal()">J'ai compris</button></div></div><div id="blocked" class="modal"><div class="modal-back" onclick="App.closeBlocked()"></div><div class="modal-card"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="modal-back" onclick="App.closeRecent()"></div><div class="modal-card"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn secondary" style="flex:1;color:#e53935" onclick="App.clearRecent()">Vider</button><button type="button" class="btn secondary" style="flex:1;color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div></div>
 <div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
 <script>
+window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window.__lastJsError=(msg||'')+(err?'\n'+err.stack.split('\n').slice(0,3).join(' | '):'');};window.addEventListener('unhandledrejection',function(e){window.__lastJsError='Unhandled rejection: '+(e?.reason?.message||String(e?.reason||''));});
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
@@ -607,6 +608,7 @@ openGardienDashboard(){
     const _evtColor=ev=>{if(/^GUARDIAN/.test(ev))return'#c4b5fd';if(/^ANGE/.test(ev))return'#a78bfa';if(/^(MAP_|GPS_|VEHICLES_)/.test(ev))return'#4caf50';if(/^OBD_/.test(ev))return'#38bdf8';if(/^CALL_/.test(ev))return'#fb923c';if(/^INVARIANT_VIOLATED/.test(ev))return'#e57373';if(/^(ROAD_|HELP_|VEHICLE_MESSAGE_|QUICK_)/.test(ev))return'#f0a500';return'#64748b';};
     const _tlRows=_jrnl.length===0?'<div style="color:#555;padding:4px 0">Aucun événement enregistré.</div>':_jrnl.slice().reverse().slice(0,50).map(e=>{const t=new Date(e.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const c=_evtColor(e.event||'');return'<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #0a0a14;font-size:11px"><span style="color:#555;flex-shrink:0;font-variant-numeric:tabular-nums;letter-spacing:.02em">'+esc(t)+'</span><span style="color:'+c+';font-weight:600;word-break:break-all">'+esc(e.event||'?')+'</span></div>';}).join('');
     const timelineHtml='<div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#c4b5fd">📋 Timeline OBD</b><span style="color:#555;font-size:10px">'+_jrnl.length+' evt · <button onclick="window.ImmatBus&&window.ImmatBus.clearJournal();App.openGardienDashboard()" style="background:none;border:none;color:#555;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">Vider</button></span></div><div style="max-height:220px;overflow-y:auto">'+_tlRows+'</div></div>';
+    const runtimeHtml=(function(){try{const _sb=window.sb,_s=window.S,_app=window.App,_im=window.ImmatMessages;const _kv=rows=>rows.map(([k,v])=>{const sv=String(v);const bad=sv==='false'||sv==='null'||sv==='missing'||sv==='n/a'||sv==='undefined';const ok=sv==='true'||sv==='function'||(typeof v==='number'&&v>=0);const col=bad?'#e57373':ok?'#4caf50':'#e2e8f0';return'<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0a0a14;font-size:11px"><span style="color:#888">'+esc(String(k))+'</span><span style="color:'+col+';word-break:break-all">'+esc(sv)+'</span></div>';}).join('');const _top=el=>{if(!el)return'missing';const r=el.getBoundingClientRect();if(!r.width&&!r.height)return'0\xd70';try{const t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return t?(t.tagName+(t.id?'#'+t.id:'')+(t.className?'.'+String(t.className).trim().split(/\s+/).join('.'):'')):' null';}catch(ex){return'err';}};const _hd=s=>'<div style="color:#a5b4fc;font-size:10px;font-weight:700;letter-spacing:.06em;margin:10px 0 4px">'+s+'</div>';return'<div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><b style="color:#38bdf8">🔬 Runtime Data</b><div style="margin-top:8px">'+_hd('SESSION')+_kv([['hasSupabase',!!_sb],['hasAuth',!!_sb?.auth],['S.uid',_s?.uid?_s.uid.slice(0,8)+'…':'null'],['S.plate',_s?.profile?.owner_plate||'null']])+_hd('STATE')+_kv([['hasS',!!_s],['S.myLat',_s?.myLat??'null'],['S.myLng',_s?.myLng??'null'],['S.invisible',!!_s?.invisible],['S.radiusKm',_s?.radiusKm??'null'],['S.nearby.length',Array.isArray(_s?.nearby)?_s.nearby.length:'n/a'],['S.otherMkrs.length',Array.isArray(_s?.otherMkrs)?_s.otherMkrs.length:'n/a'],['S.alerts.length',Array.isArray(_s?.alerts)?_s.alerts.length:'n/a'],['App.ownPlate()',typeof _app?.ownPlate==='function'?(_app.ownPlate()||'null'):'n/a']])+_hd('APP FUNCTIONS')+_kv(['loadOthers','renderNearby','showVehicleContextMenu','vehicleContextAction','closeOverlay','closeSheet','panel','pickPlate','vehicleAlertQuick','roadReport','assist'].map(fn=>[fn,typeof _app?.[fn]]))+_hd('MAP')+_kv([['S.map',!!_s?.map],['S.otherMkrs (layers)',Array.isArray(_s?.otherMkrs)?_s.otherMkrs.length:'n/a']])+_hd('MESSAGES')+_kv([['ImmatMessages',!!_im],['typeof init',typeof _im?.init],['typeof sendToPlate',typeof _im?.sendToPlate],['typeof setMode',typeof _im?.setMode],['typeof refresh',typeof _im?.refresh],['#icSendBtn',!!$('icSendBtn')],['icSendBtn top',_top($('icSendBtn'))],['#icComposePlate',!!$('icComposePlate')],['#icComposeText',!!$('icComposeText')]])+_hd('UI BLOCKERS (visibles)')+_kv(['sheet','nearbyPanel','drawer','vehicleContextMenu','angeOverlay','angePanel','onboardingOverlay','icSheetBackdrop','icBottomSheet','callContactModal','callIncomingPopup','callSentBanner','callNotAllowedModal'].map(id=>{const el=$(id);if(!el)return[id,'missing'];const cs=getComputedStyle(el),r=el.getBoundingClientRect();if(cs.display==='none'||(!r.width&&!r.height))return[id,'hidden'];return[id,'z='+cs.zIndex+' pe='+cs.pointerEvents+' '+Math.round(r.width)+'\xd7'+Math.round(r.height)];}))+_hd('BUTTON TOP-AT')+_kv(['navMap','navSignaler','navActivite','angeFab','icSendBtn'].map(id=>[id,_top($(id))]))+_hd('CACHE')+_kv([['ui.js hotfix',typeof window.__ImmatCriticalButtonHotfixV1!=='undefined'],['ImmatBus',!!window.ImmatBus],['GuardianLoop',!!window.GuardianLoop],['AngeDialog',!!window.AngeDialog]])+_hd('ACTQUICKREPLY CHECK')+_kv([['actQuickReply type',typeof _app?.actQuickReply],['test J’arrive match',String((()=>{try{const m="J’arrive, test.";return m.startsWith("J'arrive")||m.startsWith("J’arrive");}catch(e){return'err';}})())]])+_hd('NETWORK')+_kv([['S.networkOnline',_s?.networkOnline]])+_hd('JS ERRORS (last)')+_kv([['window.onerror',typeof window.__lastJsError!=='undefined'?window.__lastJsError:'none recorded']])+'</div></div>';}catch(ex){return'<div style="color:#e57373;background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">runtimeData err: '+esc(ex?.message||String(ex))+'</div>';}})();
     body.innerHTML=`
       <div style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -640,7 +642,7 @@ openGardienDashboard(){
           </div>
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">BUILD_SHA</div>
-            <div style="color:#38bdf8;font-weight:700;font-size:11px">a39cea8</div>
+            <div style="color:#38bdf8;font-weight:700;font-size:11px">1776887</div>
           </div>
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">CACHE_NAME</div>
@@ -671,6 +673,7 @@ openGardienDashboard(){
         <div style="margin-top:8px">${eHtml}</div>
       </div>
       ${timelineHtml}
+      ${runtimeHtml}
       <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
         <b style="color:#c4b5fd">Ange — session</b>
         <div style="margin-top:6px;color:#888">Appels : <b>${callsData.n||0}/10</b> · Feedback 👍 <b>${fbPos}</b> · 👎 <b>${fbNeg}</b></div>
@@ -1431,11 +1434,11 @@ App.actQuickReply=async function(plate,msg){
   try{
     if(window.ImmatMessages?.sendToPlate){
       await ImmatMessages.sendToPlate(plate,msg);
-      const isHelp=msg.startsWith("J’arrive")||msg.startsWith("J’arrive");
+      const isHelp=msg.startsWith("J'arrive")||msg.startsWith("J’arrive");
       if(isHelp){
-        toast(‘✋ Aide proposée. Le conducteur sera notifié dès réception.’,’ok’);
-        try{window.ImmatOrganism?.observe?.(‘HELP_RESPONDED’,{to:plate,_src:’ImmatConnect/actQuickReply’})}catch(e){}
-        try{window.ImmatMessages?.setContextTrust?.(plate,’help’,’aide en cours’,3600000)}catch(e){}
+        toast('✋ Aide proposée. Le conducteur sera notifié dès réception.','ok');
+        try{window.ImmatOrganism?.observe?.('HELP_RESPONDED',{to:plate,_src:'ImmatConnect/actQuickReply'})}catch(e){}
+        try{window.ImmatMessages?.setContextTrust?.(plate,'help','aide en cours',3600000)}catch(e){}
       }else{
         toast('Message envoyé à '+plate+'.','ok');
       }
@@ -1998,7 +2001,7 @@ function showReputationToast(){
 <script src="calls.js?v=4"></script>
 <script src="badge.js"></script>
 <script src="messages.js?v=16"></script>
-<script src="ui.js?v=7"></script>
+<script src="ui.js?v=8"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center">
