@@ -124,6 +124,9 @@
     { "key": "trust_scores", "role": "Scores de confiance calculés par l'Ange { plate: score }", "feature": "F-TRUST" },
     { "key": "voice_gender", "role": "Genre de la voix GPS (femme|homme)", "feature": "F-GPS" },
     { "key": "reduce_effects", "role": "Mode performance — animations réduites (bool)", "feature": "F-PROFIL" },
-    { "key": "ange_history", "role": "Historique des échanges avec l'Ange [messages...]", "feature": "F-ANGE" }
+    { "key": "ange_history",     "role": "Historique des échanges avec l'Ange [messages...]", "feature": "F-ANGE" },
+    { "key": "block_levels",     "role": "Niveaux de blocage par plaque { plate: level }", "feature": "F-TRUST" },
+    { "key": "context_trust",    "role": "Confiance contextuelle temporaire { plate: { level, expires } }", "feature": "F-TRUST" },
+    { "key": "trusted_contacts", "role": "Contacts de confiance explicite [plate1, plate2...]", "feature": "F-TRUST" }
   ]
 }
