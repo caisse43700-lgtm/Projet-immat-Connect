@@ -54,7 +54,8 @@
       "element": "authBtn",
       "panel": "sa",
       "organe": null,
-      "action": "App.login() ou App.signup()",
+      "action": "App.handleAuth()",
+      "note": "handleAuth() dispatch vers App.login() ou App.signup() selon S._authMode",
       "type": "btn-primary",
       "position": "auth form",
       "statut": "actif"
@@ -293,9 +294,9 @@
       "panel": "nearbyPanel",
       "organe": "CONTACT",
       "action": "CallManager.openContactOptions(plate)",
+      "note": "Défini dans calls.js — ouvre callContactModal avec options Appel / Message",
       "type": "btn-action",
-      "statut": "actif",
-      "note": "Disponible pour chaque conducteur dans la liste"
+      "statut": "actif"
     }
 
   ],
@@ -384,6 +385,7 @@
       "panel": "panelMessages",
       "organe": "CONTACT",
       "action": "CallManager.openContactOptions(plate)",
+      "note": "Défini dans calls.js — ouvre callContactModal avec options Appel / Message",
       "type": "btn-action",
       "statut": "actif"
     },
@@ -643,11 +645,13 @@
     },
     {
       "id": "BTN-S11",
-      "label": "Autoriser les appels",
+      "label": "Autoriser les demandes de contact",
+      "element": "allowCallsToggle",
       "panel": "panelSettings",
       "organe": "CONTACT",
-      "action": "toggle preference appels",
-      "type": "toggle",
+      "action": "CallManager.setCallPreferences(this.checked)",
+      "note": "Checkbox onchange — index.html:228. Niveaux 1-4 gérés par ImmatMessages.setCallLevel(n) (boutons callLevelSelector). DND géré par ImmatMessages.setDnd(this.checked) (#dndToggle).",
+      "type": "checkbox",
       "statut": "actif"
     }
 
@@ -753,9 +757,11 @@
     {
       "id": "BTN-V04",
       "label": "Contacter le véhicule devant",
-      "panel": "FloatingCard / carte",
+      "element": "frontCarBanner",
+      "panel": "frontCarBanner (position:fixed, z:800)",
       "organe": "CONTACT",
       "action": "App.contactFrontVehicle()",
+      "note": "Bouton dans #frontCarBanner — index.html:48. Affiché quand S.frontVehicle détecté en mode conduite.",
       "type": "btn-action",
       "statut": "actif"
     },
