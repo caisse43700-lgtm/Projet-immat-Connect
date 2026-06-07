@@ -3,6 +3,8 @@
 
 const CACHE_NAME  = 'immatconnect-pro-v7';
 const OFFLINE_URL = './offline.html';
+
+// Fichiers critiques — addAll() atomique : tout ou rien
 const STATIC_CACHE = [
   './',
   './index.html',
@@ -25,9 +27,23 @@ const STATIC_CACHE = [
   './core/aiController.js',
 ];
 
+// Scripts CDN tiers — cache optionnel, non bloquant
+const CDN_CACHE = [
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+];
+
+const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com'];
+
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_CACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => Promise.all([
+        cache.addAll(STATIC_CACHE),
+        Promise.allSettled(CDN_CACHE.map(url => cache.add(url))),
+      ]))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -44,10 +60,13 @@ self.addEventListener('fetch', (e) => {
   // Supabase API — réseau uniquement, jamais mis en cache
   if (e.request.url.includes('supabase.co')) return;
 
+  const isCacheable = e.request.url.startsWith(self.location.origin)
+    || CDN_HOSTS.some(h => e.request.url.includes(h));
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        if (res && res.status === 200 && e.request.url.startsWith(self.location.origin)) {
+        if (res && res.status === 200 && isCacheable) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, copy));
         }
