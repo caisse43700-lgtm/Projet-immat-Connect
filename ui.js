@@ -36,10 +36,21 @@
     ['angeOverlay','angePanel','nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu','onboardingOverlay'].forEach(id=>{ if(id!==except) hide($(id)); });
   }
 
-  function showAngeFab(){ const fab=$('angeFab'); if(fab){ fab.style.display='flex'; fab.style.zIndex='3000'; } }
-  async function openAppFallback(){
-    ['sw','sa','sp','sr'].forEach(id=>$(id)?.classList.remove('active'));
-    $('appScreen')?.classList.add('active');
+  function hideAngeFab(){ const fab=$('angeFab'); if(fab) fab.style.display='none'; }
+  function showAngeFab(){ const fab=$('angeFab'); if(fab && $('appScreen')?.classList.contains('active')){ fab.style.display='flex'; fab.style.zIndex='3000'; } }
+  function hideAuthScreens(){
+    ['sw','sa','sp','sr'].forEach(id=>{
+      const el=$(id);
+      if(!el) return;
+      el.classList.remove('active');
+      el.style.display='none';
+    });
+  }
+  async function forceOpenApp(reason){
+    try{ console.info('[safe-ui] forceOpenApp', reason||'manual'); }catch(e){}
+    hideAuthScreens();
+    const app=$('appScreen');
+    if(app){ app.classList.add('active'); app.style.display='block'; }
     closeFloating();
     showAngeFab();
     await recoverMap();
@@ -94,9 +105,12 @@
 
   function showAuth(mode){
     exposeApp();
-    try{ if(window.App?.goAuth && !window.App.__safeFallbackOnly){ window.App.goAuth(mode||'login'); bindAuthButton(); return; } }catch(e){}
-    ['sw','sa','sp','sr'].forEach(id=>$(id)?.classList.remove('active'));
-    $('appScreen')?.classList.remove('active'); $('sa')?.classList.add('active');
+    try{ if(window.App?.goAuth && !window.App.__safeFallbackOnly){ window.App.goAuth(mode||'login'); bindAuthButton(); hideAngeFab(); return; } }catch(e){}
+    ['sw','sa','sp','sr'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('active'); el.style.display=''; } });
+    $('appScreen')?.classList.remove('active');
+    if($('appScreen')) $('appScreen').style.display='none';
+    const auth=$('sa'); if(auth){ auth.classList.add('active'); auth.style.display='flex'; }
+    hideAngeFab();
     const signup=mode==='signup'; if(window.S) window.S.mode=signup?'signup':'login';
     if($('authTitle')) $('authTitle').textContent=signup?'Créer un compte':'Connexion';
     if($('authSubtitle')) $('authSubtitle').textContent=signup?'Renseigne tes informations conducteur.':'Entre ton email et ton mot de passe.';
@@ -125,18 +139,19 @@
       const {data,error}=await sb.auth.signInWithPassword({email,password});
       if(error) throw error;
       status('authSt','Connecté. Ouverture…','success');
+      setTimeout(()=>forceOpenApp('auth-success-immediate'), 800);
       const app=ensureAppFallbacks();
       if(app?.afterAuth && !app.__safeFallbackOnly){
         try{
           await withTimeout(app.afterAuth(data?.user||null), 4500);
-          await openAppFallback();
+          await forceOpenApp('afterAuth-ok');
           return;
         }catch(e){
           console.warn('[safe-ui] afterAuth timeout/fallback', e);
           status('authSt','Connecté. Ouverture carte en mode sécurisé…','success');
         }
       }
-      await openAppFallback();
+      await forceOpenApp('auth-fallback');
       setTimeout(()=>locateDirect(),500);
     }catch(e){
       const msg=String(e?.message||'Connexion impossible.');
@@ -194,7 +209,7 @@
       if(typeof app.locate!=='function') app.locate=locateDirect;
       if(typeof app.recenter!=='function') app.recenter=function(){ if(window.S){ S.autoFollow=true; } if(window.S?.myLat!=null && window.S?.map){ try{S.map.setView([S.myLat,S.myLng],16,{animate:true});}catch(e){} } else locateDirect(); };
       if(typeof app.panel!=='function') app.panel=setPanel;
-      if(typeof app.openMap!=='function') app.openMap=async function(){ await openAppFallback(); };
+      if(typeof app.openMap!=='function') app.openMap=async function(){ await forceOpenApp('app-openMap-fallback'); };
     }
     return app;
   }
@@ -222,12 +237,33 @@
     const oldPanel=typeof app.panel==='function'?app.panel.bind(app):null;
     app.panel=function(name){ closeFloating(); try{ oldPanel?.(name); }catch(e){} setPanel(String(name||'').toLowerCase()); };
     const oldOpenMap=typeof app.openMap==='function'?app.openMap.bind(app):null;
-    if(oldOpenMap) app.openMap=async function(){ const r=await oldOpenMap(...arguments); await openAppFallback(); return r; };
+    if(oldOpenMap) app.openMap=async function(){ const r=await oldOpenMap(...arguments); await forceOpenApp('app-openMap'); return r; };
     app.openInboxBadge=function(){ setPanel('messages'); try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.refresh?.();}catch(e){} };
   }
 
-  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); patchApp(); closeMessagesBottomSheet(); recoverMap(); }
+  function installAuthOpenWatchdog(){
+    if(window.__immatAuthOpenWatchdog) return;
+    window.__immatAuthOpenWatchdog = true;
+    setInterval(async ()=>{
+      try{
+        const auth=$('sa');
+        const st=$('authSt');
+        if(!auth?.classList.contains('active')){ if(auth) auth.dataset.openingSince=''; return; }
+        const txt=String(st?.textContent||'');
+        const connected=/Connecté/i.test(txt);
+        if(!connected){ auth.dataset.openingSince=''; return; }
+        const since=Number(auth.dataset.openingSince||0);
+        if(!since){ auth.dataset.openingSince=String(Date.now()); return; }
+        if(Date.now()-since < 2500) return;
+        await forceOpenApp('auth-watchdog');
+        setTimeout(()=>locateDirect(),500);
+        auth.dataset.openingSince='';
+      }catch(e){ console.warn('[safe-ui] auth watchdog failed', e); }
+    },700);
+  }
+
+  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); patchApp(); closeMessagesBottomSheet(); hideAngeFab(); installAuthOpenWatchdog(); recoverMap(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
-  window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,openAppFallback};
+  window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
 })();
