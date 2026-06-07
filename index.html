@@ -17,10 +17,10 @@
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
   <script src="core/invariants.js?v=45"></script>
-  <script src="core/bus.js?v=45"></script>
+  <script src="core/bus.js?v=46"></script>
   <script src="core/brain.js?v=45"></script>
   <script src="core/governance.js?v=45"></script>
-  <script src="core/immatOrganism.js?v=45"></script>
+  <script src="core/immatOrganism.js?v=46"></script>
 </head>
 <body>
 <section id="sw" class="auth-screen active"><div class="app-card"><div class="brand">Immat<span>Connect</span></div><p class="intro">Communique avec les conducteurs proches par immatriculation. Signale des incidents, envoie des messages et reste informé en temps réel.</p><button type="button" id="welcomeLoginBtn" class="btn primary" onclick="App.goAuth('login')">Se connecter</button><button type="button" id="welcomeSignupBtn" class="btn secondary" onclick="App.goAuth('signup')">Créer un compte gratuit</button></div></section>
@@ -637,6 +637,14 @@ openGardienDashboard(){
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">DATABASE_COVERAGE</div>
             <div style="color:#4caf50;font-weight:700">5 tables · 3 EF ✅</div>
+          </div>
+          <div style="background:#0f0f1a;border-radius:6px;padding:8px">
+            <div style="color:#555;font-size:10px;margin-bottom:2px">BUILD_SHA</div>
+            <div style="color:#38bdf8;font-weight:700;font-size:11px">a39cea8</div>
+          </div>
+          <div style="background:#0f0f1a;border-radius:6px;padding:8px">
+            <div style="color:#555;font-size:10px;margin-bottom:2px">CACHE_NAME</div>
+            <div style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v8</div>
           </div>
         </div>
         <div style="margin-top:8px;font-size:10px;color:#555">Recalcul complet : <code>node scripts/health-scores.js</code></div>
@@ -1986,11 +1994,11 @@ function showReputationToast(){
 
 
 <script src="core/interaction-engine.js?v=1"></script>
-<script src="core/guardian-loop.js?v=1"></script>
-<script src="calls.js?v=3"></script>
+<script src="core/guardian-loop.js?v=2"></script>
+<script src="calls.js?v=4"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=15"></script>
-<script src="ui.js?v=6"></script>
+<script src="messages.js?v=16"></script>
+<script src="ui.js?v=7"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center">
