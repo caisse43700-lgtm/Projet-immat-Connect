@@ -33,7 +33,8 @@
   }
   function closeFloating(except){
     closeMessagesBottomSheet();
-    ['angeOverlay','angePanel','nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu','onboardingOverlay'].forEach(id=>{ if(id!==except) hide($(id)); });
+    ['angeOverlay','angePanel','nearbyPanel','drawer','legal','blocked','recent','vehicleContextMenu','onboardingOverlay',
+     'callContactModal','callNotAllowedModal'].forEach(id=>{ if(id!==except) hide($(id)); });
   }
 
   function hideAngeFab(){ const fab=$('angeFab'); if(fab) fab.style.display='none'; }
