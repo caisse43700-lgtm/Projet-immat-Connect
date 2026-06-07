@@ -192,6 +192,189 @@
     return result;
   }
 
+  function cssInfo(id) {
+    const el = document.getElementById(id);
+    if (!el) return { id: id, exists: false };
+    const cs = w.getComputedStyle ? w.getComputedStyle(el) : null;
+    const rect = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+    return {
+      id: id,
+      exists: true,
+      display: cs ? cs.display : el.style.display || '',
+      visibility: cs ? cs.visibility : '',
+      opacity: cs ? cs.opacity : '',
+      zIndex: cs ? cs.zIndex : '',
+      pointerEvents: cs ? cs.pointerEvents : '',
+      className: String(el.className || ''),
+      inlineDisplay: el.style && el.style.display || '',
+      rect: rect ? {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        w: Math.round(rect.width),
+        h: Math.round(rect.height)
+      } : null
+    };
+  }
+
+  function describeElement(el) {
+    if (!el) return '-';
+    const id = el.id ? '#' + el.id : '';
+    const cls = el.className && typeof el.className === 'string'
+      ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.')
+      : '';
+    return (el.tagName || '').toLowerCase() + id + cls;
+  }
+
+  function elementAtCenterOf(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.getBoundingClientRect || !document.elementFromPoint) return '-';
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return 'no-rect';
+    const x = Math.max(1, Math.min(w.innerWidth - 1, r.left + r.width / 2));
+    const y = Math.max(1, Math.min(w.innerHeight - 1, r.top + r.height / 2));
+    return describeElement(document.elementFromPoint(x, y));
+  }
+
+  function getUiRuntimeDiagnostic() {
+    const ids = [
+      'appScreen',
+      'sheet',
+      'nearbyPanel',
+      'drawer',
+      'angeFab',
+      'angeOverlay',
+      'angePanel',
+      'onboardingOverlay',
+      'icSheetBackdrop',
+      'icBottomSheet',
+      'navMap',
+      'navSignaler',
+      'navActivite',
+      'longSos'
+    ];
+
+    const selectors = {
+      profileChip: '.profile-chip',
+      recenterFab: 'button[title="Recentrer"]',
+      nearbyFab: 'button[title="Conducteurs proches"]',
+      viewFab: 'button[title="Vue"]'
+    };
+
+    const selectorInfo = {};
+    Object.keys(selectors).forEach(function (key) {
+      const el = document.querySelector(selectors[key]);
+      if (!el) {
+        selectorInfo[key] = { exists: false, selector: selectors[key] };
+        return;
+      }
+      const cs = w.getComputedStyle ? w.getComputedStyle(el) : null;
+      const r = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+      selectorInfo[key] = {
+        exists: true,
+        selector: selectors[key],
+        display: cs ? cs.display : '',
+        visibility: cs ? cs.visibility : '',
+        zIndex: cs ? cs.zIndex : '',
+        pointerEvents: cs ? cs.pointerEvents : '',
+        className: String(el.className || ''),
+        onclick: typeof el.onclick === 'function',
+        topElement: r && document.elementFromPoint
+          ? describeElement(document.elementFromPoint(
+              Math.max(1, Math.min(w.innerWidth - 1, r.left + r.width / 2)),
+              Math.max(1, Math.min(w.innerHeight - 1, r.top + r.height / 2))
+            ))
+          : '-',
+        rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } : null
+      };
+    });
+
+    const visibleBlockers = ids.map(cssInfo).filter(function (x) {
+      if (!x.exists) return false;
+      if (x.display === 'none' || x.visibility === 'hidden' || x.opacity === '0') return false;
+      const z = Number(x.zIndex);
+      return (x.rect && x.rect.w > 0 && x.rect.h > 0 && z >= 90) || ['angeOverlay', 'onboardingOverlay', 'icSheetBackdrop', 'drawer'].includes(x.id);
+    });
+
+    return {
+      viewport: { w: w.innerWidth, h: w.innerHeight, dpr: w.devicePixelRatio || 1 },
+      app: {
+        hasApp: !!w.App,
+        hasOpenDrawer: typeof w.App?.openDrawer === 'function',
+        hasCloseDrawer: typeof w.App?.closeDrawer === 'function',
+        hasOpenNearby: typeof w.App?.openNearby === 'function',
+        hasCloseOverlay: typeof w.App?.closeOverlay === 'function',
+        hasPanel: typeof w.App?.panel === 'function',
+        hasLocate: typeof w.App?.locate === 'function',
+        hasRecenter: typeof w.App?.recenter === 'function',
+        isGardien: !!w.S?.isGardien,
+        invisible: !!w.S?.invisible,
+        myLat: w.S?.myLat ?? null,
+        myLng: w.S?.myLng ?? null,
+        hasMap: !!w.S?.map,
+        hasMyMarker: !!w.S?.myMarker,
+        watchId: w.S?.watchId ?? null
+      },
+      elements: ids.reduce(function (acc, id) { acc[id] = cssInfo(id); return acc; }, {}),
+      selectors: selectorInfo,
+      topAt: {
+        profileChip: selectorInfo.profileChip?.topElement || '-',
+        recenterFab: selectorInfo.recenterFab?.topElement || '-',
+        nearbyFab: selectorInfo.nearbyFab?.topElement || '-',
+        angeFab: elementAtCenterOf('angeFab'),
+        navMap: elementAtCenterOf('navMap'),
+        navSignaler: elementAtCenterOf('navSignaler'),
+        navActivite: elementAtCenterOf('navActivite')
+      },
+      visibleBlockers: visibleBlockers.map(function (x) {
+        return x.id + ':display=' + x.display + ',z=' + x.zIndex + ',pe=' + x.pointerEvents + ',class=' + x.className;
+      })
+    };
+  }
+
+  function shortEl(info) {
+    if (!info || !info.exists) return 'absent';
+    return 'display=' + info.display + ', z=' + info.zIndex + ', pe=' + info.pointerEvents + ', class=' + info.className + ', rect=' + (info.rect ? info.rect.w + 'x' + info.rect.h + '@' + info.rect.x + ',' + info.rect.y : '-');
+  }
+
+  function formatUiRuntimeDiagnostic(diag) {
+    const e = diag.elements || {};
+    const s = diag.selectors || {};
+    return [
+      'OBD UI runtime',
+      'viewport: ' + diag.viewport.w + 'x' + diag.viewport.h + ' dpr ' + diag.viewport.dpr,
+      '',
+      'App.openDrawer: ' + diag.app.hasOpenDrawer,
+      'App.openNearby: ' + diag.app.hasOpenNearby,
+      'App.closeOverlay: ' + diag.app.hasCloseOverlay,
+      'App.locate/recenter: ' + diag.app.hasLocate + '/' + diag.app.hasRecenter,
+      'GPS: lat=' + diag.app.myLat + ', lng=' + diag.app.myLng + ', marker=' + diag.app.hasMyMarker + ', watchId=' + diag.app.watchId + ', invisible=' + diag.app.invisible,
+      '',
+      'profileChip: ' + (s.profileChip ? shortEl(s.profileChip) : 'absent'),
+      'top profileChip: ' + diag.topAt.profileChip,
+      'recenterFab: ' + (s.recenterFab ? shortEl(s.recenterFab) : 'absent'),
+      'top recenterFab: ' + diag.topAt.recenterFab,
+      'nearbyFab: ' + (s.nearbyFab ? shortEl(s.nearbyFab) : 'absent'),
+      'top nearbyFab: ' + diag.topAt.nearbyFab,
+      '',
+      'angeFab: ' + shortEl(e.angeFab),
+      'top angeFab: ' + diag.topAt.angeFab,
+      'angeOverlay: ' + shortEl(e.angeOverlay),
+      'angePanel: ' + shortEl(e.angePanel),
+      'onboardingOverlay: ' + shortEl(e.onboardingOverlay),
+      'icSheetBackdrop: ' + shortEl(e.icSheetBackdrop),
+      'icBottomSheet: ' + shortEl(e.icBottomSheet),
+      'drawer: ' + shortEl(e.drawer),
+      'nearbyPanel: ' + shortEl(e.nearbyPanel),
+      'sheet: ' + shortEl(e.sheet),
+      '',
+      'top navMap: ' + diag.topAt.navMap,
+      'top navSignaler: ' + diag.topAt.navSignaler,
+      'top navActivite: ' + diag.topAt.navActivite,
+      '',
+      'blockers: ' + (diag.visibleBlockers.length ? diag.visibleBlockers.join(' | ') : '-')
+    ].join('\n');
+  }
+
   function formatCacheDiagnostic(diag) {
     const checks = diag.checks || {};
     return [
@@ -244,13 +427,15 @@
     button.addEventListener('click', async function () {
       const status = getObdStatus();
       let cacheMessage = '';
+      let uiMessage = '';
       try {
         button.disabled = true;
         button.textContent = 'Test...';
         const diag = await getCacheDiagnostic();
         cacheMessage = '\n\n' + formatCacheDiagnostic(diag);
+        uiMessage = '\n\n' + formatUiRuntimeDiagnostic(getUiRuntimeDiagnostic());
       } catch (e) {
-        cacheMessage = '\n\nOBD cache/SW indisponible : ' + (e && e.message || e);
+        cacheMessage = '\n\nOBD cache/UI indisponible : ' + (e && e.message || e);
       } finally {
         button.disabled = false;
         button.textContent = 'Test OBD/IA';
@@ -259,7 +444,7 @@
       const message = status.ready
         ? 'OBD/IA OK : tous les modules sont chargés.'
         : 'OBD/IA incomplet : session=' + status.session + ', gateway=' + status.gateway + ', controller=' + status.controller;
-      alert(message + cacheMessage);
+      alert(message + cacheMessage + uiMessage);
     });
 
     document.body.appendChild(button);
@@ -270,12 +455,14 @@
     needsConfirmation,
     detectAction,
     getObdStatus,
-    getCacheDiagnostic
+    getCacheDiagnostic,
+    getUiRuntimeDiagnostic
   };
 
   w.handleAiRequest = handleAiRequest;
   w.ImmatObdStatus = getObdStatus;
   w.ImmatCacheDiagnostic = getCacheDiagnostic;
+  w.ImmatUiRuntimeDiagnostic = getUiRuntimeDiagnostic;
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
