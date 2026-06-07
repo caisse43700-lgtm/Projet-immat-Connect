@@ -67,4 +67,5 @@ const ImmatBus = (function () {
   return { emit, on, off, getJournal, clearJournal, EVENTS };
 })();
 
+if (typeof window !== 'undefined') window.ImmatBus = ImmatBus;
 if (typeof module !== 'undefined') module.exports = { ImmatBus, EVENTS };

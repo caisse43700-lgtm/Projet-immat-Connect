@@ -140,7 +140,6 @@
       const {data,error}=await sb.auth.signInWithPassword({email,password});
       if(error) throw error;
       status('authSt','Connecté. Ouverture…','success');
-      setTimeout(()=>forceOpenApp('auth-success-immediate'), 800);
       const app=ensureAppFallbacks();
       if(app?.afterAuth && !app.__safeFallbackOnly){
         try{
