@@ -1182,6 +1182,7 @@ App.openActivityCat=function(cat){
   this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
   if(main)main.style.display='none';if(panel)panel.style.display='flex';
+  try{window.ImmatMessages?.refresh?.().then(()=>this.renderCategoryFeed(cat,S._actCatTab||'recus')).catch(()=>{});}catch(e){}
   const meta={route:{icon:'🚦',title:'Route',sub:'Incidents de circulation'},vehicle:{icon:'🚘',title:'Véhicule',sub:'Prévenir un conducteur'},aide:{icon:'🆘',title:'Aide',sub:'Demandes d\'assistance'},all:{icon:'🔔',title:'Tout',sub:'Toutes les alertes et messages'}};
   const m=meta[cat]||meta.all;
   const iconEl=document.getElementById('actCatIcon'),titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
@@ -1212,7 +1213,6 @@ App.actCatTab=function(tab){
   S._actTypeFilter='all';
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   this._renderTypeFilterBar(S._actCat||'all');
-  if(tab==='envoyes'){try{window.ImmatMessages?.refresh?.().then(()=>this.renderCategoryFeed(S._actCat||'all',tab)).catch(()=>this.renderCategoryFeed(S._actCat||'all',tab));}catch(e){this.renderCategoryFeed(S._actCat||'all',tab);}return;}
   this.renderCategoryFeed(S._actCat||'all',tab);
 };
 App.actTypeFilter=function(type){
