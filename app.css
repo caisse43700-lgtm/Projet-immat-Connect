@@ -230,6 +230,7 @@ button { border: 0; cursor: pointer; }
 .vehicle-bubble.contact-main { background: var(--green) !important; color: #06140f !important; border-color: transparent !important; }
 .vehicle-bubble.alert-main { background: var(--red) !important; color: #fff !important; border-color: transparent !important; }
 .vehicle-bubble.block-main { background: rgba(255,255,255,.1) !important; }
+.vehicle-context-menu.is-self .block-main { display: none; }
 .vehicle-context-plate { font-size: 14px; font-weight: 950; text-align: center; color: #eef6ff; padding: 0 4px 10px; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 10px; letter-spacing: 1px; }
 .vehicle-alert-orbit { position: absolute; z-index: 60; pointer-events: none; }
 
