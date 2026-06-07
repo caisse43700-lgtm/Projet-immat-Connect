@@ -415,7 +415,7 @@
     button.textContent = 'Test OBD/IA';
     button.style.position = 'fixed';
     button.style.right = '12px';
-    button.style.bottom = '84px';
+    button.style.bottom = 'calc(var(--nav-h, 64px) + var(--safe-bottom, 0px) + 16px)';
     button.style.zIndex = '9999';
     button.style.padding = '10px 12px';
     button.style.borderRadius = '12px';
