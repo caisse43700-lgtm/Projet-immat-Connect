@@ -577,7 +577,7 @@ async afterAuth(){
   }finally{S._authRunning=false;}
 },
 async saveProfile(){try{let{data:ud}=await sb.auth.getUser(),u=ud?.user;if(!u)return;let pseudo=$('iPseudo').value.trim(),pl=fPlate($('iProPlate').value),ph=nPhone($('iProPhone').value),c=$('iProColor').value;if(!pseudo)return st('profileSt','Entre un pseudo.','error');if(!vPlate(pl)){hint('hProPlate','error','Format attendu : AB-123-CD');return}if(!vPhone(ph)){hint('hProPhone','error','Format attendu : 0612345678');return}if(!c)return st('profileSt','Choisis une couleur de véhicule.','error');if(!await this.plateAvailable(pl,u.id)){hint('hProPlate','error','Plaque déjà utilisée.');return}await sb.from('profiles').upsert({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c});try{window.ImmatOrganism?.observe?.('PROFILE_SAVED',{plate:pl,_src:'ImmatConnect/saveProfile'})}catch(e){}this.openMap({id:u.id,email:u.email,pseudo,owner_plate:pl,phone:ph,vehicle_color:c},u.email)}catch(e){st('profileSt',e?.message||'Erreur profil.','error')}},
-openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();const _app=this,_id=p.id,_pl=p.owner_plate||'';(function _mi(n){if(window.CallManager&&!_mi._cm){_mi._cm=1;try{CallManager.init(sb,_id,_pl)}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v})}catch(e){}}if(window.ImmatMessages&&!_mi._im){_mi._im=1;_app.startMsgs()}if((!_mi._cm||!_mi._im)&&n<15)setTimeout(()=>_mi(n+1),250);})(0);try{if(window.GuardianLoop&&_pl)window.GuardianLoop.observe(_pl)}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o)_o.style.display='flex';}},1400)},
+openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}S.profile=p;this.show('sm');const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);this.subLocs();this.subReports();this.syncCommunityAlerts();this.subscribeCommunityReports();const _app=this,_id=p.id,_pl=p.owner_plate||'';(function _mi(n){if(window.CallManager&&!_mi._cm){_mi._cm=1;try{CallManager.init(sb,_id,_pl)}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v})}catch(e){}}if(window.ImmatMessages&&!_mi._im){_mi._im=1;_app.startMsgs()}if((!_mi._cm||!_mi._im)&&n<15)setTimeout(()=>_mi(n+1),250);})(0);try{if(window.GuardianLoop&&_pl)window.GuardianLoop.observe(_pl)}catch(e){}setTimeout(()=>this.updateActBadge?.(),2500);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');try{if(window.ImmatBus)window.ImmatBus.emit('MAP_OPENED',{plate:p.owner_plate||'',_src:'openMap'})}catch(e){}setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o)_o.style.display='flex';}},1400)},
 dismissOnboarding(){set('ic_onboarded','1');const _o=$('onboardingOverlay');if(_o)_o.style.display='none';},
 openGardienDashboard(){
   try{window.ImmatOrganism?.init?.()}catch(e){}
@@ -597,6 +597,12 @@ openGardienDashboard(){
     const callsData=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0}');
     const fbData=JSON.parse(localStorage.getItem('ic_ange_feedback')||'[]');
     const fbPos=fbData.filter(f=>f.v===1).length,fbNeg=fbData.filter(f=>f.v===0).length;
+    const _sevCol={LOW:'#4caf50',MEDIUM:'#f0a500',HIGH:'#e57373',CRITICAL:'#e53935'};
+    const _pend=(window.GuardianLoop&&typeof window.GuardianLoop.getPending==='function')?window.GuardianLoop.getPending():[];
+    try{window.ImmatOrganism?.observe?.('GUARDIAN_PENDING_VIEWED',{count:_pend.length,_src:'ImmatConnect/openGardienDashboard'})}catch(e){}
+    try{if(window.ImmatBus){window.ImmatBus.emit('GUARDIAN_RECOMMENDATIONS_RENDERED',{count:_pend.length});window.ImmatBus.emit('OBD_STATUS_CHECKED',{health:d.health,violations:(d.violations||[]).length,_src:'openGardienDashboard'});}}catch(e){}
+    const _gRows=_pend.length===0?'<div style="color:#555;padding:4px 0">✅ Aucune recommandation en attente.</div>':_pend.map(function(r){const sCol=_sevCol[r.severity]||'#888';const rid=String(r.id||'').replace(/'/g,'');const dt=r.created_at?new Date(r.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';return'<div style="background:#0a0f1a;border-left:3px solid '+sCol+';border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="color:'+sCol+';font-weight:700;font-size:11px">'+esc(r.severity||'?')+'</span><span style="color:#555;font-size:10px">'+esc(dt)+'</span></div>'+(r.plate?'<div style="color:#a5b4fc;font-size:11px;margin-bottom:4px">Plaque : '+esc(r.plate)+'</div>':'')+'<div style="color:#e2e8f0;margin-bottom:8px">'+esc(r.message||'')+'</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="GuardianLoop.validate(\''+rid+'\',\'approved\');App.openGardienDashboard()" style="background:#14532d;color:#4caf50;border:1px solid #4caf50;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">✓ Valider</button><button onclick="GuardianLoop.validate(\''+rid+'\',\'rejected\');App.openGardienDashboard()" style="background:#3b0f0f;color:#e57373;border:1px solid #e57373;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">✕ Rejeter</button><button onclick="GuardianLoop.expire(\''+rid+'\');App.openGardienDashboard()" style="background:#1e1b4b;color:#888;border:1px solid #444;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">⏭ Reporter</button></div></div>';}).join('');
+    const guardianHtml='<div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><b style="color:#c4b5fd">🛡 Recommandations GuardianLoop</b><div style="margin-top:8px">'+_gRows+'</div></div>';
     body.innerHTML=`
       <div style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -656,6 +662,7 @@ openGardienDashboard(){
         <b style="color:#c4b5fd">Ange — session</b>
         <div style="margin-top:6px;color:#888">Appels : <b>${callsData.n||0}/10</b> · Feedback 👍 <b>${fbPos}</b> · 👎 <b>${fbNeg}</b></div>
       </div>
+      ${guardianHtml}
       <div style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px">
         <b style="color:#c4b5fd">Scores fiabilité conducteurs</b>
         <div style="margin-top:6px;font-size:12px;line-height:1.8">${trust}</div>
@@ -721,7 +728,7 @@ toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Vo
 locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed,heading}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true,heading!=null&&!isNaN(heading)?heading:null),zIndexOffset:0,riseOnHover:false}).addTo(S.map);S.myMarker.on('click',()=>{S.contextVehicle={plate:this.ownPlate()||'',lat:S.myLat,lng:S.myLng,marker:S.myMarker,_self:true};this.showVehicleContextMenu(S.contextVehicle);});this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
         await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
         if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
-        if(S.firstFix===false&&!S._locateObserved){S._locateObserved=true;try{window.ImmatOrganism?.observe?.('MAP_SELF_LOCATED',{lat,lng,_src:'ImmatConnect/locate'})}catch(e){}}
+        if(S.firstFix===false&&!S._locateObserved){S._locateObserved=true;try{window.ImmatOrganism?.observe?.('MAP_SELF_LOCATED',{lat,lng,_src:'ImmatConnect/locate'})}catch(e){}try{if(window.ImmatBus)window.ImmatBus.emit('GPS_LOCATED',{lat,lng})}catch(e){}}
       }},function(err){
   const code=err&&err.code;
   const gpsMsg=$('gpsErrorMsg');
@@ -834,6 +841,7 @@ async loadOthers(){
 
   S.nearby=rows.sort((a,b)=>(a.dist??999)-(b.dist??999));
   try{console.info('[ImmatConnect] véhicules détectés :',S.nearby.length);}catch(e){}
+  try{if(window.ImmatBus)window.ImmatBus.emit('VEHICLES_LOADED',{count:S.nearby.length})}catch(e){}
   S.frontVehicle=S.nearby.filter(x=>x.dist!==null&&x.dist<.35).sort((a,b)=>a.dist-b.dist)[0]||null;
   this.clusterCloseVehicles();
   this.renderNearby();
@@ -2057,6 +2065,7 @@ const AngeDialog={
       resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';
     }
     setTimeout(()=>$('angeMsg')?.focus(),100);
+    try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
     $('angePanel').style.display='none';
@@ -2128,6 +2137,7 @@ const AngeDialog={
     if(_now-_aData.t>3600000){_aData.n=0;} // reset après 1h
     if(_aData.n>=10){toast('Limite Ange atteinte (10/heure). Réessaie dans quelques minutes.','bad');return;}
     _aData.n++;_aData.t=_now;sessionStorage.setItem(_aKey,JSON.stringify(_aData));
+    try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_MESSAGE_SENT',{panel:S.panel||'GENERAL'})}catch(e){}
     // Historique de la session (3 derniers échanges = 6 messages)
     const _hKey='ic_ange_history';
     const _history=JSON.parse(sessionStorage.getItem(_hKey)||'[]');
@@ -2151,6 +2161,7 @@ const AngeDialog={
       if(error)throw error;
       try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',_src:'ImmatConnect/ange'})}catch(e){}
       this.renderResponse(data);
+      try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{panel:S.panel||'GENERAL'})}catch(e){}
       // Sauvegarder l'échange dans l'historique de session
       try{
         const _respTxt=(data.juste||data.sources||'').slice(0,400);
@@ -2163,6 +2174,7 @@ const AngeDialog={
       }catch(e){}
       $('angeMsg').value='';
     }catch(e){
+      try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_ERROR',{error:(e?.message||String(e))})}catch(_e){}
       $('angeResponse').style.display='block';
       $('angeResponse').textContent='Erreur : '+(e?.message||String(e));
     }finally{

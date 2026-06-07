@@ -116,6 +116,7 @@ const GuardianLoop = (function () {
       heuristic:         rec.heuristic,
       invariant:         rec.invariant_id,
     });
+    try{if(window.ImmatBus)window.ImmatBus.emit('GUARDIAN_RECOMMENDATION_CREATED',{recommendation_id:rec.id,category:rec.category,severity:rec.severity,plate:rec.plate,heuristic:rec.heuristic})}catch(e){}
 
     return rec;
   }
@@ -140,6 +141,7 @@ const GuardianLoop = (function () {
       decision,
       reason: reason || null,
     });
+    try{if(window.ImmatBus)window.ImmatBus.emit('GUARDIAN_RECOMMENDATION_REVIEWED',{recommendation_id:rec.id,decision,reason:reason||null})}catch(e){}
 
     return true;
   }
