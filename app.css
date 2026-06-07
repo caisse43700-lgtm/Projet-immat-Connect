@@ -149,7 +149,7 @@ button { border: 0; cursor: pointer; }
 /* ── FAB STACK (droite) ── */
 .fab-stack {
   position: absolute;
-  z-index: 70;
+  z-index: 150;
   right: 14px;
   bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
   display: flex;
@@ -237,7 +237,7 @@ button { border: 0; cursor: pointer; }
 /* ── BOTTOM NAV ── */
 .bottom-nav {
   position: absolute;
-  z-index: 95;
+  z-index: 1000;
   left: 0; right: 0;
   bottom: 0;
   height: calc(var(--nav-h) + var(--safe-bottom));

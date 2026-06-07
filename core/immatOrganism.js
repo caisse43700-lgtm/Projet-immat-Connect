@@ -217,7 +217,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const modules = [
       'core/obdSession.js?v=1',
       'core/obdGateway.js?v=1',
-      'core/aiController.js?v=1'
+      'core/aiController.js?v=2'
     ];
 
     modules.forEach(src => {
@@ -239,7 +239,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const modules = [
       'core/obdSession.js?v=1',
       'core/obdGateway.js?v=1',
-      'core/aiController.js?v=1'
+      'core/aiController.js?v=2'
     ];
     modules.forEach(src => {
       const path = src.split('?')[0];
