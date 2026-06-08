@@ -396,4 +396,49 @@
       },t);
     });
   })();
+
+  // Inject messages-runtime-diagnostics dynamically (works even with cached old index.html)
+  (function(){
+    function loadDiag(cb){
+      if(window.ImmatMessagesRuntimeDiagnostics){cb&&cb();return;}
+      var s=document.createElement('script');
+      s.src='./core/messages-runtime-diagnostics.js?v=1';
+      s.onload=cb||null;
+      document.head.appendChild(s);
+    }
+    function patchDashboard(){
+      var _app=window.App;
+      if(!_app||!_app.openGardienDashboard||_app.__msgRuntimePatched)return;
+      _app.__msgRuntimePatched=true;
+      var _orig=_app.openGardienDashboard.bind(_app);
+      _app.openGardienDashboard=function(){
+        _orig();
+        setTimeout(function(){
+          var body=document.getElementById('gardienDashboardBody');
+          if(!body||body.querySelector('.ic-msgs-rt'))return;
+          loadDiag(function(){
+            if(!window.ImmatMessagesRuntimeDiagnostics)return;
+            try{
+              var mr=window.ImmatMessagesRuntimeDiagnostics.run();
+              var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+              var _r=function(o){return Object.entries(o||{}).map(function(e){
+                var k=e[0],v=e[1];
+                var fv=typeof v==='object'&&v!==null?JSON.stringify(v).slice(0,80):String(v);
+                var col=fv==='false'||fv==='null'?'#e57373':fv==='true'||(typeof v==='number'&&v>0)?'#4caf50':'#e2e8f0';
+                return'<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0a0a14;font-size:11px"><span style="color:#888">'+esc(k)+'</span><span style="color:'+col+';word-break:break-all;max-width:60%;text-align:right">'+esc(fv)+'</span></div>';
+              }).join('');};
+              var _hd=function(s){return'<div style="color:#a5b4fc;font-size:10px;font-weight:700;letter-spacing:.06em;margin:10px 0 4px">'+s+'</div>';};
+              var div=document.createElement('div');
+              div.className='ic-msgs-rt';
+              div.style.cssText='background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px';
+              div.innerHTML='<b style="color:#a78bfa">💬 Messages Runtime</b><div style="margin-top:8px">'+_hd('MODULE')+_r(mr.module)+_hd('STORAGE')+_r(mr.storage)+_hd('DOM')+_r(mr.dom)+_hd('VISIBLE')+_r(mr.visible)+'</div>';
+              body.appendChild(div);
+            }catch(ex){console.warn('[msgs-rt]',ex);}
+          });
+        },80);
+      };
+    }
+    loadDiag();
+    [200,600,1500].forEach(function(t){setTimeout(patchDashboard,t);});
+  })();
 })();
