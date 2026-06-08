@@ -296,4 +296,104 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
   window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
+
+  // Fix: panneau Messages blanc quand icMsgList reste display:none sans thread visible
+  (function(){
+    function fixMsgPanel(){
+      try{
+        var panelEl=document.getElementById('panelMessages');
+        if(!panelEl||!panelEl.classList.contains('on'))return;
+        var list=document.getElementById('icMsgList');
+        if(!list||list.style.display!=='none')return;
+        var thread=document.getElementById('icThread');
+        if(thread&&thread.classList.contains('show'))return;
+        var compose=document.getElementById('icComposePanel');
+        if(compose&&compose.classList.contains('show'))return;
+        var callLog=document.getElementById('icCallLog');
+        if(callLog&&callLog.style.display&&callLog.style.display!=='none')return;
+        list.style.display='';
+        try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+      }catch(e){}
+    }
+    [400,1000,2000,4000].forEach(function(t){setTimeout(fixMsgPanel,t);});
+    [300,800,2000].forEach(function(t){
+      setTimeout(function(){
+        if(!window.App?.panel||window.App.__msgPanelPatched)return;
+        window.App.__msgPanelPatched=true;
+        var _orig=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _orig(p);
+          if(p==='messages'){
+            setTimeout(function(){
+              try{
+                var list=document.getElementById('icMsgList');
+                var thread=document.getElementById('icThread');
+                var compose=document.getElementById('icComposePanel');
+                var callLog=document.getElementById('icCallLog');
+                if(list&&list.style.display==='none'
+                  &&!(thread&&thread.classList.contains('show'))
+                  &&!(compose&&compose.classList.contains('show'))
+                  &&!(callLog&&callLog.style.display&&callLog.style.display!=='none')){
+                  list.style.display='';
+                  try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+                }
+              }catch(e){}
+            },150);
+          }
+        };
+      },t);
+    });
+  })();
+
+  // Fix: éléments haute priorité (z-index > 2000) restant collés et bloquant le contenu
+  (function(){
+    function clearStaleOverlays(){
+      try{
+        var popup=document.getElementById('callIncomingPopup');
+        var banner=document.getElementById('callSentBanner');
+        if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+        if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+        // floatingCard (z-10200) : masquer si display orphelin (timer JS raté)
+        var fc=document.getElementById('floatingCard');
+        if(fc&&fc.style.display&&fc.style.display!=='none')fc.style.display='none';
+      }catch(e){}
+    }
+    function ensureSheetOpen(){
+      // Si un panel a class 'on' mais que la sheet est toujours 'mini' → l'ouvrir
+      try{
+        var sheet=document.getElementById('sheet');
+        if(!sheet||!sheet.classList.contains('mini'))return;
+        var panelIds=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'];
+        var anyOn=panelIds.some(function(id){
+          var el=document.getElementById(id);
+          return el&&el.classList.contains('on');
+        });
+        if(anyOn&&window.App&&typeof window.App.openSheet==='function'){
+          window.App.openSheet();
+        }
+      }catch(e){}
+    }
+    [1500,4000,8000].forEach(function(t){setTimeout(clearStaleOverlays,t);});
+    [600,1500,3000].forEach(function(t){setTimeout(ensureSheetOpen,t);});
+    [400,1000,2000].forEach(function(t){
+      setTimeout(function(){
+        if(!window.App?.panel||window.App.__callUIPatchDone)return;
+        window.App.__callUIPatchDone=true;
+        var _orig=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _orig(p);
+          setTimeout(function(){
+            try{
+              var popup=document.getElementById('callIncomingPopup');
+              var banner=document.getElementById('callSentBanner');
+              var fc=document.getElementById('floatingCard');
+              if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+              if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+              if(fc&&fc.style.display&&fc.style.display!=='none')fc.style.display='none';
+            }catch(e){}
+          },200);
+        };
+      },t);
+    });
+  })();
 })();
