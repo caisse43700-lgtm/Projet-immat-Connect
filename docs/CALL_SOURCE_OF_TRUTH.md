@@ -1,5 +1,82 @@
 # CALL SOURCE OF TRUTH
 
+## Status: audit grid, not confirmed truth yet
+
+This document is a working audit grid.
+
+It defines the target model and the questions to answer before building `CallScreen`, but it is **not yet proof** that `calls.js` currently implements these states exactly.
+
+Claude / future agent must:
+
+1. read `calls.js` fully;
+2. fill every `TODO` in the source-of-truth table;
+3. cite the exact function that writes each state;
+4. verify who reads each state;
+5. only then implement `CallManager.getRuntimeState()` or `CallScreen`.
+
+Do not assume `pendingOutgoing`, `pendingIncoming`, `activeCall`, or `lastCallStatus` already exist. They are target diagnostic concepts until audited.
+
+---
+
+## Audit output format — mandatory
+
+For every audited function, write the result in this format:
+
+```text
+Function:
+State written:
+Storage/source:
+Supabase table/channel:
+Realtime impact:
+Message/call_event impact:
+Activity impact:
+UI impact:
+Privacy risk:
+Overlay risk:
+Failure path:
+Evidence in code:
+Required change:
+```
+
+For every call state, write:
+
+```text
+State:
+Source of truth:
+Writer function:
+Reader functions/UI:
+Message representation:
+Activity representation:
+OBD representation:
+Expiration rule:
+Terminal state:
+Open question:
+```
+
+A correction is acceptable only if it is backed by code evidence from `calls.js` or the latest Playwright artifact.
+
+---
+
+## What a correction should look like
+
+A useful correction must be evidence-based:
+
+- identify the actual writer in `calls.js`;
+- identify the stored field/table/local state;
+- identify the reader/UI/OBD consumer;
+- update this document;
+- add or adjust read-only diagnostics only after the source is known.
+
+A bad correction:
+
+- invents a new state without auditing existing state;
+- makes `call_event` the source of truth;
+- builds `CallScreen` from assumptions;
+- writes Supabase/localStorage from diagnostics;
+- creates another parallel call history.
+
+---
+
 This document defines the business source of truth for ImmatConnect calls before building `CallScreen`.
 
 Critical rule:
