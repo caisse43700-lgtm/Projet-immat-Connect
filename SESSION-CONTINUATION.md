@@ -24,25 +24,24 @@ PR       : #260 — MERGED (squash 4912734 → main)
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : messages.js (subscribe — isForMe branch)
-Tâche            : DIRECT_MESSAGE_RECEIVED → InteractionEngine (résiduelle basse priorité)
-Fix              : ajout InteractionEngine.create({type:'MESSAGE',...}) dans subscribe()
-                   quand isForMe=true (message entrant réel)
-CI précédent     : GREEN sur ba6242e (3/3 workflows)
+Fichiers touchés : index.html (blockPlate)
+Tâche            : App.blockPlate() → InteractionEngine (résiduelle basse priorité)
+Fix              : ajout InteractionEngine.create({type:'BLOCK',...}) dans blockPlate()
+                   après ImmatOrganism.observe('BLOCK_APPLIED')
+                   Permet à HEURISTIC-001 du Guardian de détecter les blocages répétés.
+CI précédent     : GREEN sur f21e668 (tests + e2e-diagnostics)
 ```
 
 ## ACTION EN COURS
 
 ```
-Push messages.js sur post-merge/residual-tasks.
+Push index.html sur post-merge/residual-tasks.
 ```
 
 ## PROCHAINE ACTION UNIQUE
 
 ```
-Après CI green : traiter la tâche résiduelle suivante.
-Candidats :
-  - App.blockPlate() direct → InteractionEngine (index.html)
+Après CI green : dernière tâche résiduelle non-bloquée.
   - source_module/privacy_level dans IE events (core/interaction-engine.js)
   - Assets audio (bloqué par SW/cache — reporter)
 ```
