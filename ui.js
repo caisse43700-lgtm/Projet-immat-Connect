@@ -296,4 +296,149 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
   window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
+
+  // Fix: panneau Messages blanc quand icMsgList reste display:none sans thread visible
+  (function(){
+    function fixMsgPanel(){
+      try{
+        var panelEl=document.getElementById('panelMessages');
+        if(!panelEl||!panelEl.classList.contains('on'))return;
+        var list=document.getElementById('icMsgList');
+        if(!list||list.style.display!=='none')return;
+        var thread=document.getElementById('icThread');
+        if(thread&&thread.classList.contains('show'))return;
+        var compose=document.getElementById('icComposePanel');
+        if(compose&&compose.classList.contains('show'))return;
+        var callLog=document.getElementById('icCallLog');
+        if(callLog&&callLog.style.display&&callLog.style.display!=='none')return;
+        list.style.display='';
+        try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+      }catch(e){}
+    }
+    [400,1000,2000,4000].forEach(function(t){setTimeout(fixMsgPanel,t);});
+    [300,800,2000].forEach(function(t){
+      setTimeout(function(){
+        if(!window.App?.panel||window.App.__msgPanelPatched)return;
+        window.App.__msgPanelPatched=true;
+        var _orig=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _orig(p);
+          if(p==='messages'){
+            setTimeout(function(){
+              try{
+                var list=document.getElementById('icMsgList');
+                var thread=document.getElementById('icThread');
+                var compose=document.getElementById('icComposePanel');
+                var callLog=document.getElementById('icCallLog');
+                if(list&&list.style.display==='none'
+                  &&!(thread&&thread.classList.contains('show'))
+                  &&!(compose&&compose.classList.contains('show'))
+                  &&!(callLog&&callLog.style.display&&callLog.style.display!=='none')){
+                  list.style.display='';
+                  try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+                }
+              }catch(e){}
+            },150);
+          }
+        };
+      },t);
+    });
+  })();
+
+  // Fix: éléments haute priorité (z-index > 2000) restant collés et bloquant le contenu
+  (function(){
+    function clearStaleOverlays(){
+      try{
+        var popup=document.getElementById('callIncomingPopup');
+        var banner=document.getElementById('callSentBanner');
+        if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+        if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+        // floatingCard (z-10200) : masquer si display orphelin (timer JS raté)
+        var fc=document.getElementById('floatingCard');
+        if(fc&&fc.style.display&&fc.style.display!=='none')fc.style.display='none';
+      }catch(e){}
+    }
+    function ensureSheetOpen(){
+      // Si un panel a class 'on' mais que la sheet est toujours 'mini' → l'ouvrir
+      try{
+        var sheet=document.getElementById('sheet');
+        if(!sheet||!sheet.classList.contains('mini'))return;
+        var panelIds=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'];
+        var anyOn=panelIds.some(function(id){
+          var el=document.getElementById(id);
+          return el&&el.classList.contains('on');
+        });
+        if(anyOn&&window.App&&typeof window.App.openSheet==='function'){
+          window.App.openSheet();
+        }
+      }catch(e){}
+    }
+    [1500,4000,8000].forEach(function(t){setTimeout(clearStaleOverlays,t);});
+    [600,1500,3000].forEach(function(t){setTimeout(ensureSheetOpen,t);});
+    [400,1000,2000].forEach(function(t){
+      setTimeout(function(){
+        if(!window.App?.panel||window.App.__callUIPatchDone)return;
+        window.App.__callUIPatchDone=true;
+        var _orig=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _orig(p);
+          setTimeout(function(){
+            try{
+              var popup=document.getElementById('callIncomingPopup');
+              var banner=document.getElementById('callSentBanner');
+              var fc=document.getElementById('floatingCard');
+              if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+              if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+              if(fc&&fc.style.display&&fc.style.display!=='none')fc.style.display='none';
+            }catch(e){}
+          },200);
+        };
+      },t);
+    });
+  })();
+
+  // Inject messages-runtime-diagnostics dynamically (works even with cached old index.html)
+  (function(){
+    function loadDiag(cb){
+      if(window.ImmatMessagesRuntimeDiagnostics){cb&&cb();return;}
+      var s=document.createElement('script');
+      s.src='./core/messages-runtime-diagnostics.js?v=1';
+      s.onload=cb||null;
+      document.head.appendChild(s);
+    }
+    function patchDashboard(){
+      var _app=window.App;
+      if(!_app||!_app.openGardienDashboard||_app.__msgRuntimePatched)return;
+      _app.__msgRuntimePatched=true;
+      var _orig=_app.openGardienDashboard.bind(_app);
+      _app.openGardienDashboard=function(){
+        _orig();
+        setTimeout(function(){
+          var body=document.getElementById('gardienDashboardBody');
+          if(!body||body.querySelector('.ic-msgs-rt'))return;
+          loadDiag(function(){
+            if(!window.ImmatMessagesRuntimeDiagnostics)return;
+            try{
+              var mr=window.ImmatMessagesRuntimeDiagnostics.run();
+              var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+              var _r=function(o){return Object.entries(o||{}).map(function(e){
+                var k=e[0],v=e[1];
+                var fv=typeof v==='object'&&v!==null?JSON.stringify(v).slice(0,80):String(v);
+                var col=fv==='false'||fv==='null'?'#e57373':fv==='true'||(typeof v==='number'&&v>0)?'#4caf50':'#e2e8f0';
+                return'<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0a0a14;font-size:11px"><span style="color:#888">'+esc(k)+'</span><span style="color:'+col+';word-break:break-all;max-width:60%;text-align:right">'+esc(fv)+'</span></div>';
+              }).join('');};
+              var _hd=function(s){return'<div style="color:#a5b4fc;font-size:10px;font-weight:700;letter-spacing:.06em;margin:10px 0 4px">'+s+'</div>';};
+              var div=document.createElement('div');
+              div.className='ic-msgs-rt';
+              div.style.cssText='background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px';
+              div.innerHTML='<b style="color:#a78bfa">💬 Messages Runtime</b><div style="margin-top:8px">'+_hd('MODULE')+_r(mr.module)+_hd('STORAGE')+_r(mr.storage)+_hd('DOM')+_r(mr.dom)+_hd('VISIBLE')+_r(mr.visible)+'</div>';
+              body.appendChild(div);
+            }catch(ex){console.warn('[msgs-rt]',ex);}
+          });
+        },80);
+      };
+    }
+    loadDiag();
+    [200,600,1500].forEach(function(t){setTimeout(patchDashboard,t);});
+  })();
 })();

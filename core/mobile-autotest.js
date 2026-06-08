@@ -150,8 +150,47 @@
   }
 
   function panels(){
-    var ids=['appScreen','sheet','nearbyPanel','drawer','vehicleContextMenu','angeFab','angeOverlay','angePanel','onboardingOverlay','icSheetBackdrop','icBottomSheet','callContactModal','callIncomingPopup','callSentBanner','callNotAllowedModal','navMap','navSignaler','navActivite'];
+    var ids=['appScreen','sheet','nearbyPanel','drawer','vehicleContextMenu','angeFab','angeOverlay','angePanel','onboardingOverlay','icSheetBackdrop','icBottomSheet','callContactModal','callIncomingPopup','callSentBanner','callNotAllowedModal','navMap','navSignaler','navActivite',
+      'floatingCard','callOverlay'];
     return ids.map(function(id){ return byId(id,id); });
+  }
+
+  function sheetState(){
+    var sheet=document.getElementById('sheet');
+    if(!sheet) return {exists:false};
+    var cs=w.getComputedStyle?w.getComputedStyle(sheet):null;
+    var cl=sheet.className||'';
+    var isMini=sheet.classList.contains('mini');
+    var isFull=sheet.classList.contains('full');
+    var pe=cs?cs.pointerEvents:'';
+    var tr=cs?cs.transform:'';
+    return {
+      exists:true,
+      classes:cl,
+      isMini:isMini,
+      isFull:isFull,
+      pointerEvents:pe,
+      transform:tr.slice(0,60),
+      rect:rectOf(sheet)
+    };
+  }
+
+  function activePanels(){
+    var panelIds=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'];
+    var active=panelIds.filter(function(id){
+      var el=document.getElementById(id);
+      return el&&el.classList.contains('on');
+    });
+    var content={
+      icMsgListDisplay: (function(){var e=document.getElementById('icMsgList');return e?e.style.display||'(css)':'missing';})(),
+      icThreadShow: (function(){var e=document.getElementById('icThread');return e?e.classList.contains('show'):'missing';})(),
+      icComposePanelShow: (function(){var e=document.getElementById('icComposePanel');return e?e.classList.contains('show'):'missing';})(),
+      actCatPanelDisplay: (function(){var e=document.getElementById('actCatPanel');return e?e.style.display||'(css)':'missing';})(),
+      sigStep1Active: (function(){var e=document.getElementById('sigStep1');return e?e.classList.contains('active'):'missing';})(),
+      floatingCardDisplay: (function(){var e=document.getElementById('floatingCard');return e?e.style.display||'(css)':'missing';})(),
+      callOverlayDisplay: (function(){var e=document.getElementById('callOverlay');return e?e.style.display||'(css)':'missing';})()
+    };
+    return {active:active, content:content};
   }
 
   function buttons(){
@@ -358,6 +397,8 @@
       messagesRuntime: messagesRuntime(),
       callsRuntime: callsRuntime(),
       panels: panels(),
+      sheetState: sheetState(),
+      activePanels: activePanels(),
       messagesAutotest: messagesAutotest(),
       callsAutotest: callsAutotest(),
       helpAutotest: helpAutotest(),
