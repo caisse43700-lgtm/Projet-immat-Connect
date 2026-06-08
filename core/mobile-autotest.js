@@ -101,6 +101,7 @@
       ImmatBus: !!w.ImmatBus,
       ImmatBusGetJournal: typeof w.ImmatBus?.getJournal === 'function',
       ImmatMessages: !!w.ImmatMessages,
+      ImmatMessagesRuntimeDiagnostics: !!w.ImmatMessagesRuntimeDiagnostics,
       CallManager: !!w.CallManager,
       GuardianLoop: !!w.GuardianLoop,
       AngeDialog: !!w.AngeDialog,
@@ -116,6 +117,17 @@
         navActivite: typeof w.App?.navActivite === 'function'
       }
     };
+  }
+
+  function messagesRuntime(){
+    try{
+      if(w.ImmatMessagesRuntimeDiagnostics && typeof w.ImmatMessagesRuntimeDiagnostics.run === 'function'){
+        return w.ImmatMessagesRuntimeDiagnostics.run();
+      }
+      return {available:false, reason:'ImmatMessagesRuntimeDiagnostics not loaded'};
+    }catch(e){
+      return {available:false, error:String(e && (e.stack || e.message) || e)};
+    }
   }
 
   function panels(){
@@ -145,6 +157,7 @@
       selfMarker: selfMarker(),
       ange: ange(),
       signaler: signaler(),
+      messagesRuntime: messagesRuntime(),
       panels: panels()
     };
     try{ if(w.ImmatBus) w.ImmatBus.emit('OBD_STATUS_CHECKED',{source:'mobileAutotest', ok:true}); }catch(e){}
