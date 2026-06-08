@@ -4,6 +4,7 @@
  * INV-GUARD-002 : le système PROPOSE, le Gardien VALIDE — jamais automatique
  * INV-GUARD-003 : chaque heuristique est observable via OBD GUARDIAN_RECOMMENDATION_CREATED
  */
+(function(){
 'use strict';
 if (window.__GuardianLoopV1) return;
 window.__GuardianLoopV1 = true;
@@ -306,3 +307,4 @@ const GuardianLoop = (function () {
 })();
 
 window.GuardianLoop = GuardianLoop;
+})();
