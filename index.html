@@ -291,6 +291,11 @@
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     <span>Signaler</span>
   </button>
+  <button class="nav-btn" id="navMessages" onclick="App.navMessages()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Messages</span>
+    <span id="msgNavBadge" class="nav-badge" style="display:none">0</span>
+  </button>
   <button class="nav-btn" id="navActivite" onclick="App.navActivite()">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     <span>Activité</span>
@@ -1036,9 +1041,18 @@ if(get('ic_reduce_effects','0')==='1')document.body.classList.add('reduce-effect
 App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.classList.toggle('on',b.dataset.sigtab===name));const ids={route:'sigTabRoute',vehicule:'sigTabVehicule',aide:'sigTabAide'};Object.values(ids).forEach(id=>{const el=$(id);if(el)el.classList.remove('on')});const el=$(ids[name]);if(el)el.classList.add('on')};
 
 // ── Navigation
+App.navMessages=function(){
+  document.getElementById('navMap')?.classList.remove('on');
+  document.getElementById('navSignaler')?.classList.remove('on');
+  document.getElementById('navActivite')?.classList.remove('on');
+  document.getElementById('navMessages')?.classList.add('on');
+  this.panel('messages');
+  try{window.ImmatMessages?.refresh?.();}catch(e){}
+};
 App.navSignaler=function(){
   document.getElementById('navMap')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
+  document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navSignaler')?.classList.add('on');
   this.panel('altet');
   this.sigBack();
@@ -1046,6 +1060,7 @@ App.navSignaler=function(){
 App.navActivite=function(){
   document.getElementById('navMap')?.classList.remove('on');
   document.getElementById('navSignaler')?.classList.remove('on');
+  document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.add('on');
   this.panel('activite');
   this.renderActivityMain?.();
@@ -1067,6 +1082,7 @@ App.navMap=function(){
   this.closeSheet();
   document.getElementById('navMap')?.classList.add('on');
   document.getElementById('navSignaler')?.classList.remove('on');
+  document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
   this.initMap?.();
   this.syncAlertMarkers?.();
@@ -1491,6 +1507,8 @@ App.updateActBadge=function(){
     const badge=$('actBadge');
     const total=unreadAlerts+unreadMsgs;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
+    const msgBadge=$('msgNavBadge');
+    if(msgBadge){msgBadge.textContent=unreadMsgs>99?'99+':String(unreadMsgs);msgBadge.style.display=unreadMsgs>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
 };
