@@ -1,13 +1,12 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §18 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v9';
+const CACHE_NAME  = 'immatconnect-pro-v10';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien
+// index.html intentionnellement absent : toujours servi depuis le réseau
 const STATIC_CACHE = [
-  './',
-  './index.html',
   './offline.html',
   './manifest.json',
   './utils.js',
@@ -60,6 +59,11 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   // Supabase API — réseau uniquement, jamais mis en cache
   if (e.request.url.includes('supabase.co')) return;
+  // Navigation HTML — toujours réseau, jamais mis en cache
+  if (e.request.mode === 'navigate') {
+    e.respondWith(fetch(e.request).catch(() => caches.match(OFFLINE_URL)));
+    return;
+  }
 
   const isCacheable = e.request.url.startsWith(self.location.origin)
     || CDN_HOSTS.some(h => e.request.url.includes(h));
