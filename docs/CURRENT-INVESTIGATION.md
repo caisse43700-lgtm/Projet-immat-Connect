@@ -42,7 +42,7 @@ Do not merge to `main` until CI is green and OBD calls runtime is stable.
 
 ## Why
 
-The file contains a top-level `return`:
+The original file contained a top-level `return`:
 
 ```js
 'use strict';
@@ -56,21 +56,60 @@ A `return` statement is illegal at top level in a classic browser script. This m
 SyntaxError: Illegal return statement
 ```
 
-## Expected fix
+## Anti-duplication note for Claude
 
-Wrap `core/guardian-loop.js` in an IIFE, preserving all existing business logic:
+A later commit was found with an explicit fix for the same T05 error:
+
+```text
+103d4ea1deb2ab2b84f5a90648e1cab5130cf5cf
+fix(e2e): supprimer return global dans guardian-loop.js (T05 — SyntaxError)
+```
+
+That fix uses this shape:
+
+```js
+'use strict';
+if (!window.__GuardianLoopV1) {
+  window.__GuardianLoopV1 = true;
+
+  const GuardianLoop = (function () {
+    // existing content
+  })();
+
+  window.GuardianLoop = GuardianLoop;
+}
+```
+
+Do not mix both styles.
+
+Do not wrap again with an extra IIFE if the file already uses the `if (!window.__GuardianLoopV1) { ... }` guard.
+
+Use one single guard strategy only. Prefer the existing Claude/T05 style if present, because it is already tied to the Playwright error and avoids redundant wrappers.
+
+## Accepted fix shape
+
+Preferred final shape:
+
+```js
+'use strict';
+if (!window.__GuardianLoopV1) {
+  window.__GuardianLoopV1 = true;
+  // existing GuardianLoop definition and export
+}
+```
+
+Alternative valid shape if already applied:
 
 ```js
 (function(){
   'use strict';
-
   if (window.__GuardianLoopV1) return;
   window.__GuardianLoopV1 = true;
-
-  // existing content unchanged
-
+  // existing GuardianLoop definition and export
 })();
 ```
+
+Only one of these should be present.
 
 ## Do not modify yet
 
@@ -83,7 +122,7 @@ Wrap `core/guardian-loop.js` in an IIFE, preserving all existing business logic:
 
 ## Next action
 
-1. Fix `core/guardian-loop.js` with the minimal IIFE correction.
+1. Ensure `core/guardian-loop.js` has exactly one guard strategy, preferably the T05 `if (!window.__GuardianLoopV1) { ... }` style if that commit is present.
 2. Rerun CI.
 3. Download the new `obd-e2e-evidence` artifact.
 4. Read `diagnostic-artifacts/playwright-output.log`.
@@ -344,7 +383,7 @@ No ghost overlay may block clicks.
 # Future order after CI green
 
 1. Audit `calls.js` completely.
-2. Create `docs/CALL_SOURCE_OF_TRUTH.md`.
+2. Complete `docs/CALL_SOURCE_OF_TRUTH.md`.
 3. Add `CallManager.getRuntimeState()` read-only.
 4. Validate `callsRuntime`.
 5. Integrate `callsRuntime` into `core/mobile-autotest.js`.
