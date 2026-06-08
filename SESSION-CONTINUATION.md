@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — protocole continuité IA + organisation archivage
+**Dernière mise à jour** : 2026-06-08 — SQL Priorité 1 exécuté : 0 lignes → HYP-001 DB affaiblie, HYP-002 dominante
 
 ---
 
@@ -61,19 +61,26 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 
 ## HYPOTHÈSES — INC-001
 
-### Confirmées (code source)
+### Confirmées côté client — infirmées côté DB par SQL Priorité 1
 
-| ID | Énoncé | Preuve | Confiance |
+| ID | Énoncé | Preuve | Statut |
 |---|---|---|---|
-| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` — ligne reste `pending` en DB | Analyse statique — `calls.js` : `_showSentBanner`, `_onMissed`, `_recoverPendingRequest` — zéro écriture DB à l'expiration | 85 % |
-| HYP-003 | Expiration UI ≠ expiration DB | Corollaire direct de HYP-001 — analyse statique | 85 % |
+| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` | Analyse statique `calls.js` — zéro écriture DB à l'expiration | Confirmé côté client / **DB infirmée** : SQL Priorité 1 = 0 lignes pending expirées |
+| HYP-003 | Expiration UI ≠ expiration DB (côté logique client) | Corollaire de HYP-001 — analyse statique | Confirmé côté client seulement |
 
-### Ouvertes (SQL requis)
+> **Interprétation SQL Priorité 1** : 0 lignes `pending` expirées en DB au moment du test. Deux possibilités : (a) un mécanisme DB nettoie automatiquement les expirés, ou (b) les lignes ont été mises à jour par une autre voie. La contrainte 23505 reste le fait observé — son comportement exact dépend de sa définition.
+
+### Dominante — SQL Priorité 2 requis
 
 | ID | Énoncé | Preuve manquante | Confiance |
 |---|---|---|---|
-| HYP-002 | Contrainte anti-doublon sans filtre `expires_at` | `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='call_requests'::regclass` | 75 % |
-| HYP-003b | Aucun cron/trigger DB ne nettoie les pending expirés | Supabase Dashboard → Cron Jobs | 55 % |
+| **HYP-002** | **Contrainte anti-doublon sans filtre `status` ni `expires_at` — bloque toute paire A↔B même après expiration** | `SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='call_requests'::regclass` | **85 %** |
+
+### Ouvertes (vérification requise)
+
+| ID | Énoncé | Preuve manquante | Confiance |
+|---|---|---|---|
+| HYP-003b | Mécanisme DB (cron/trigger) nettoie les pending expirés — expliquerait 0 lignes SQL Priorité 1 | Supabase Dashboard → Cron Jobs + Database Functions | 65 % |
 | HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` peut se rompre silencieusement | `ImmatBus.getJournal()` côté B après appel propre | 40 % |
 
 ### Infirmées (conservées avec raison)
@@ -94,37 +101,44 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 |---|---|---|
 | `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
 | `"Appel émis · expired"` + `"Appel reçu · expired"` dans l'historique | Observation UI | HYP-004 affaiblie |
-| Deuxième appel → erreur `23505` | Observation UI | Confirme HYP-001 |
-| Aucun `UPDATE status='expired'` dans `calls.js` | Analyse statique du code | Confirme HYP-001 |
+| Deuxième appel → erreur `23505` | Observation UI | Fait observé — cause : contrainte DB (HYP-002) |
+| Aucun `UPDATE status='expired'` dans `calls.js` | Analyse statique du code | HYP-001 confirmé côté client |
+| **SQL Priorité 1 : 0 lignes `pending` expirées** | Supabase SQL Editor — 2026-06-08 | **HYP-001 DB affaiblie — HYP-002 dominante** |
 
 ### Dernier test réalisé
 
-Analyse statique `calls.js` — 2026-06-08
+**SQL Priorité 1** — 2026-06-08 — Résultat : **0 lignes** (aucun `pending` expiré en DB au moment du test)
 
 ### Prochain test — PRIORITÉ ABSOLUE
 
 ```sql
--- Supabase SQL Editor
-SELECT id, requester_plate, receiver_plate, receiver_id,
-       status, expires_at, created_at
-FROM call_requests
-WHERE status = 'pending' AND expires_at < NOW()
-ORDER BY expires_at DESC LIMIT 10;
+-- Supabase SQL Editor — SQL Priorité 2
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid = 'call_requests'::regclass;
 ```
 
-**> 0 lignes** → HYP-001 confirmée à 100 % → passer à vérification contrainte  
-**0 lignes** → HYP-001 infirmée → repartir du diagnostic consolidé
+**Résultat attendu** : définition exacte de la contrainte unique sur `call_requests`  
+**Si la contrainte ne filtre pas `status`** → HYP-002 confirmée → correctif ciblé à proposer  
+**Si la contrainte filtre `status='pending'`** → HYP-002 infirmée → investigation HYP-003b (cron/trigger)
 
 ---
 
 ## PROCHAINE ACTION
 
-Attente résultat SQL (accès Supabase Dashboard — action utilisateur).  
-**Aucune modification de code avant confirmation SQL.**
+**SQL Priorité 2** — exécuter dans Supabase SQL Editor (accès utilisateur requis) :
 
-Après SQL positif :
-1. Vérifier définition contrainte anti-doublon
-2. Proposer correctif minimal + test de validation avant application
+```sql
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid = 'call_requests'::regclass;
+```
+
+**Aucune modification de code avant résultat SQL Priorité 2.**
+
+Après résultat :
+1. Si contrainte sans filtre `status` : HYP-002 confirmée → proposer correctif minimal (partial index ou WHERE clause)
+2. Si contrainte avec filtre `status='pending'` : HYP-002 infirmée → vérifier cron/trigger DB (HYP-003b)
 
 ---
 

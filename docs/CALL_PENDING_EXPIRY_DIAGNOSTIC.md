@@ -116,49 +116,54 @@ runtime.missedCallsCount        0
 
 ### HYP-001 — Ligne `pending` orpheline en DB
 
-**Statut : FORTEMENT PROBABLE — non confirmée sans SQL**
+**Statut : CONFIRMÉE côté logique client — AFFAIBLIE côté DB par SQL Priorité 1**
 
 **Énoncé** : après expiration, aucun code client ne met à jour `status='expired'` en DB. La ligne reste `pending`. La contrainte rejette tout nouvel INSERT.
 
-**Preuves observées** :
+**Preuves côté client (certaines)** :
 - `_showSentBanner()` : `_pendingCallId = null` local uniquement après 31s (ligne 323 calls.js) — zéro écriture DB
 - `_onMissed()` : émet ImmatOrganism + IE uniquement — zéro écriture DB (lignes 290–291)
 - `_recoverPendingRequest()` : si `expires_at < now()` → **retourne sans toucher la DB** (ligne 56)
-- Historique "expired" + deuxième tentative bloquée : cohérent avec ce mécanisme
 
-**Preuve manquante** :
+**SQL Priorité 1 — Résultat : 0 lignes** (2026-06-08)
 ```sql
-SELECT COUNT(*) FROM call_requests WHERE status='pending' AND expires_at < NOW();
+SELECT id, requester_plate, receiver_plate, receiver_id,
+       status, expires_at, created_at
+FROM call_requests
+WHERE status = 'pending' AND expires_at < NOW()
+ORDER BY expires_at DESC LIMIT 10;
 ```
-→ Si > 0 : confirmée à 100 %
+→ Aucune ligne `pending` expirée au moment du test.
 
-**Contre-preuve possible** : un cron Supabase ou trigger `BEFORE INSERT` pourrait nettoyer les expirés côté DB — non visible dans le code client.
+**Interprétation** : soit un mécanisme DB (cron/trigger — HYP-003b) nettoie les expirés, soit les tests ont eu lieu après nettoyage naturel. La logique client reste prouvée, mais la persistance DB n'est pas confirmée au moment du test.
 
-**Niveau de confiance : 85 %**
-
-**Ce qui la réfuterait** : requête SQL retourne 0 lignes orphelines.
+**Niveau de confiance DB : affaiblie — investigation HYP-002 et HYP-003b prioritaires**
 
 ---
 
 ### HYP-002 — Contrainte anti-doublon sans filtre `expires_at`
 
-**Statut : PROBABLE — non confirmée sans SQL**
+**Statut : DOMINANTE — SQL Priorité 2 requis**
 
-**Énoncé** : la contrainte unique vérifie `status='pending'` sans tenir compte de `expires_at`. Une ligne expirée mais encore `pending` bloque indéfiniment les nouveaux INSERTs.
+**Énoncé** : la contrainte unique bloque tout INSERT pour une paire `(requester_id, receiver_id)` sans tenir compte de `status` ou `expires_at`. Même si la ligne expirée a été nettoyée par un mécanisme DB, la contrainte peut bloquer immédiatement si la ligne est encore présente à l'instant du deuxième INSERT.
 
 **Preuves observées** :
 - Erreur `23505` au INSERT → unique constraint violation confirmée par le code (ligne 165 calls.js)
 - Commentaire ligne 13 : *"Anti-spam + unicité pending garantis par triggers DB (backend)"* — contrainte entièrement côté DB, boîte noire
+- SQL Priorité 1 : 0 lignes expirées — n'élimine pas HYP-002 si la contrainte frappe avant nettoyage
 
-**Preuve manquante** :
+**SQL Priorité 2 — PRIORITÉ ABSOLUE** :
 ```sql
 SELECT conname, pg_get_constraintdef(oid)
-FROM pg_constraint WHERE conrelid='call_requests'::regclass;
+FROM pg_constraint WHERE conrelid='call_requests'::regclass AND contype IN ('u','x');
+
+SELECT trigger_name, event_manipulation, action_statement
+FROM information_schema.triggers WHERE event_object_table='call_requests';
 ```
 
 **Contre-preuve possible** : contrainte déjà définie avec `WHERE status='pending' AND expires_at > NOW()`.
 
-**Niveau de confiance : 75 %**
+**Niveau de confiance : 85 %** (élevée après SQL Priorité 1 négatif — mécanisme de nettoyage probable mais contrainte reste le point de blocage direct)
 
 ---
 
@@ -264,9 +269,10 @@ FROM pg_constraint WHERE conrelid='call_requests'::regclass;
 
 | Hypothèse | Explique BUG A (blocage) | Explique BUG B (pas de popup) | Confiance | Statut |
 |---|:---:|:---:|---:|---|
-| HYP-001 pending expiré en DB | ✅ Oui | ❌ Non | 85 % | Probable — SQL requis |
-| HYP-002 anti-doublon sans expires_at | ✅ Oui | ❌ Non | 75 % | Probable — SQL requis |
-| HYP-003 UI expired ≠ DB pending | ✅ Oui | Partiel | 85 % | Corollaire HYP-001 |
+| HYP-001 pending expiré en DB | ✅ Oui | ❌ Non | Affaiblie DB | Confirmée client / affaiblie DB (SQL P1 = 0 lignes) |
+| **HYP-002 contrainte sans filtre status** | **✅ Oui** | **❌ Non** | **85 %** | **DOMINANTE — SQL P2 requis** |
+| HYP-003 UI expired ≠ DB pending | ✅ Oui | Partiel | 85 % | Confirmée côté logique client |
+| HYP-003b cron/trigger nettoie expirés | Partiel | ❌ Non | 65 % | Ouverte — expliquerait 0 lignes SQL P1 |
 | HYP-004 receiver_id incorrect | Possible | ✅ Oui | 20 % | Probable infirmée |
 | HYP-005 realtime cassé côté B | ❌ Non | ✅ Oui | 30 % | Affaiblie (OBD) |
 | HYP-006 popup live ratée | ❌ Non | ✅ Oui | 40 % | Ouverte |
@@ -278,7 +284,7 @@ FROM pg_constraint WHERE conrelid='call_requests'::regclass;
 
 ## Tests — dans cet ordre strict
 
-### TEST-01 — SQL : lignes pending expirées ← PRIORITÉ ABSOLUE
+### TEST-01 — SQL : lignes pending expirées ✅ EXÉCUTÉ
 
 ```sql
 SELECT id, requester_plate, receiver_plate, receiver_id,
@@ -288,13 +294,13 @@ WHERE status = 'pending' AND expires_at < NOW()
 ORDER BY expires_at DESC LIMIT 20;
 ```
 
-**> 0 lignes** → HYP-001 confirmée à 100 %. Passer à TEST-02.  
-**0 lignes** → HYP-001 infirmée. Chercher HYP-003 ou cause ailleurs.  
-**Ne prouve pas** : définition de la contrainte.
+**Résultat (2026-06-08) : 0 lignes**
+
+Interprétation : HYP-001 DB affaiblie. Soit un mécanisme DB nettoie les expirés (HYP-003b), soit le test a eu lieu après expiration naturelle. HYP-002 reste dominante — contrainte peut bloquer même si la ligne est ensuite nettoyée.
 
 ---
 
-### TEST-02 — SQL : définition contrainte anti-doublon
+### TEST-02 — SQL : définition contrainte anti-doublon ← PRIORITÉ ABSOLUE
 
 ```sql
 SELECT conname, pg_get_constraintdef(oid)
@@ -408,14 +414,13 @@ Vérifier : `realtimeSubscribed`, `module.hasCallScreen`, `dom.callIncomingPopup
 ```
 Date             : 2026-06-08
 Branche          : diagnostic/call-pending-expiry-obd
-Commits          : 4a2c232 (analyse statique) + ca5e7bf (analyse externe) → fusion c03edf2
 
 BUG A — Blocage 23505
-  Hypothèse active : HYP-001 + HYP-002
-  Confiance        : 85 % / 75 %
-  Preuve code      : aucun client ne fait UPDATE status=expired
-  Preuve terrain   : historique expired + deuxième appel bloqué
-  Preuve manquante : SQL Supabase (TEST-01 + TEST-02)
+  SQL Priorité 1   : EXÉCUTÉ — 0 lignes pending expirées
+  Hypothèse active : HYP-002 (DOMINANTE, 85 %) + HYP-003b (65 %)
+  Preuve code      : aucun client ne fait UPDATE status=expired (certain)
+  Preuve DB        : SQL P1 = 0 lignes — HYP-001 DB affaiblie
+  Preuve manquante : SQL Priorité 2 — définition contrainte (TEST-02)
 
 BUG B — B ne reçoit rien
   Hypothèse active : indéterminée — HYP-006 / HYP-007 / HYP-008 ouvertes
@@ -424,7 +429,7 @@ BUG B — B ne reçoit rien
   Preuve manquante : ImmatBus.getJournal() côté B après appel propre
 
 Bloquant         : accès Supabase Dashboard (action utilisateur)
-Prochaine action : exécuter TEST-01 dans SQL Editor Supabase
-                   documenter le résultat ici
+Prochaine action : exécuter TEST-02 dans SQL Editor Supabase
+                   documenter la définition de la contrainte ici
                    ne pas corriger avant
 ```
