@@ -348,6 +348,39 @@
     });
   })();
 
+  // Fix: callIncomingPopup / callSentBanner restent collés avec class 'show' si timer JS raté
+  (function(){
+    function clearStaleCallUI(){
+      try{
+        var popup=document.getElementById('callIncomingPopup');
+        var banner=document.getElementById('callSentBanner');
+        if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+        if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+      }catch(e){}
+    }
+    // Au chargement : aucun appel entrant ne peut être légitime depuis une session précédente
+    [1500,4000,8000].forEach(function(t){setTimeout(clearStaleCallUI,t);});
+    // À chaque navigation de panel : nettoyer si aucun appel actif connu
+    [400,1000,2000].forEach(function(t){
+      setTimeout(function(){
+        if(!window.App?.panel||window.App.__callUIPatchDone)return;
+        window.App.__callUIPatchDone=true;
+        var _origPanel=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _origPanel(p);
+          setTimeout(function(){
+            try{
+              var popup=document.getElementById('callIncomingPopup');
+              var banner=document.getElementById('callSentBanner');
+              if(popup&&popup.classList.contains('show'))popup.classList.remove('show');
+              if(banner&&banner.classList.contains('show'))banner.classList.remove('show');
+            }catch(e){}
+          },200);
+        };
+      },t);
+    });
+  })();
+
   // Inject messages-runtime-diagnostics dynamically (works even with cached old index.html)
   (function(){
     function loadDiag(cb){
