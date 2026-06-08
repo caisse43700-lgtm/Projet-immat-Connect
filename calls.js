@@ -276,9 +276,25 @@ const CallManager = (function () {
 
   // ── UI interne ───────────────────────────────────────────────────
   function _showIncomingPopup(req) {
+    const plate = req.requester_plate || 'Conducteur';
+    // Émet l'événement bus (CallScreen l'écoute si disponible)
+    try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+
+    // Délègue à CallScreen si chargé — pas de double UI
+    if (window.CallScreen && typeof window.CallScreen.showIncoming === 'function') {
+      const ms = Math.max(0, new Date(req.expires_at) - new Date());
+      if (ms > 0) setTimeout(() => {
+        if (!_missedCallIds.has(req.id)) {
+          _missedCallIds.add(req.id);
+          try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+        }
+      }, ms);
+      return;
+    }
+
+    // Fallback : popup legacy
     const popup = document.getElementById('callIncomingPopup');
     if (!popup) return;
-    const plate = req.requester_plate || 'Conducteur';
     const el = document.getElementById('callIncomingPlate');
     if (el) el.textContent = plate;
     popup.dataset.requestId = req.id;
@@ -286,19 +302,30 @@ const CallManager = (function () {
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
     if (ms > 0) setTimeout(() => {
       popup.classList.remove('show');
-      if(!_missedCallIds.has(req.id)){
+      if (!_missedCallIds.has(req.id)) {
         _missedCallIds.add(req.id);
         try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
       }
     }, ms);
-    try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
   }
 
   function _hideIncomingPopup() {
     document.getElementById('callIncomingPopup')?.classList.remove('show');
+    try{ if (window.CallScreen?.getState?.().mode === 'incoming') window.CallScreen.hide(); }catch(e){}
   }
 
   function _showSentBanner(plate, requestId) {
+    // Dans tous les cas : nettoyer _pendingCallId à l'expiration (30s DB)
+    setTimeout(() => {
+      if (_pendingCallId === requestId) _pendingCallId = null;
+    }, 31000);
+
+    // Délègue à CallScreen si chargé (CallScreen gère son propre auto-hide)
+    if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
+      return;
+    }
+
+    // Fallback : bannière legacy avec auto-hide 8s
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
@@ -313,6 +340,7 @@ const CallManager = (function () {
 
   function _hideSentBanner() {
     document.getElementById('callSentBanner')?.classList.remove('show');
+    try{ if (window.CallScreen?.getState?.().mode === 'outgoing') window.CallScreen.hide(); }catch(e){}
   }
 
   function _showCallsNotAllowed(plate) {
