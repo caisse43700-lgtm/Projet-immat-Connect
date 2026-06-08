@@ -24,26 +24,27 @@ PR       : #260 — MERGED (squash 4912734 → main)
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : index.html (lignes 619-621), docs/SESSION-LOG.md
-Cause : guillemets typographiques U+2018/U+2019 utilisés comme délimiteurs
-        de chaîne JS dans callsRuntimeHtml/runtimeHtml/messagesRuntimeHtml
-        → "Invalid or unexpected token" → App non initialisé → 9 tests failed
-Fix   : remplacement Python binaire \xe2\x80\x98/\x99 → ASCII '  (468 occurrences)
-Vérifié : node --check sur tous les 27 scripts inline → 0 erreur
+Fichiers touchés : messages.js (subscribe — isForMe branch)
+Tâche            : DIRECT_MESSAGE_RECEIVED → InteractionEngine (résiduelle basse priorité)
+Fix              : ajout InteractionEngine.create({type:'MESSAGE',...}) dans subscribe()
+                   quand isForMe=true (message entrant réel)
+CI précédent     : GREEN sur ba6242e (3/3 workflows)
 ```
 
 ## ACTION EN COURS
 
 ```
-Push du fix sur post-merge/residual-tasks.
-Attendre CI green.
+Push messages.js sur post-merge/residual-tasks.
 ```
 
 ## PROCHAINE ACTION UNIQUE
 
 ```
-Après CI green : traiter les tâches résiduelles basse priorité.
-Commencer par : DIRECT_MESSAGE_RECEIVED → InteractionEngine (messages.js).
+Après CI green : traiter la tâche résiduelle suivante.
+Candidats :
+  - App.blockPlate() direct → InteractionEngine (index.html)
+  - source_module/privacy_level dans IE events (core/interaction-engine.js)
+  - Assets audio (bloqué par SW/cache — reporter)
 ```
 
 ## NE PAS REFAIRE

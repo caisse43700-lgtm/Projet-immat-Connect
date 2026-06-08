@@ -968,6 +968,16 @@ async function subscribe(){
       );
       if(isForMe){
         try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+        try{
+          const _sp=fPlate(m.sender_plate||m.from_plate||'');
+          window.InteractionEngine?.create?.({
+            type:'MESSAGE',
+            initiator:_sp||'UNKNOWN',
+            target:fPlate(myPlate()),
+            payload:{from:_sp,to:fPlate(myPlate())},
+            status:'resolved'
+          });
+        }catch(e){}
       }
       await refresh();
     })
