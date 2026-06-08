@@ -23,9 +23,6 @@ core/guardian-loop.js
 Latest guardian-loop alignment commit:
 07b6d3d233dc6a1035844866c379c9615ec3c358
 
-Latest docs/status commit:
-fae8cd7a8dc8114d788eaae6dc5c26b7dc35fb97 and later docs updates
-
 CI status after guardian-loop alignment:
 UNKNOWN until a new GitHub Actions run is inspected.
 
@@ -58,6 +55,26 @@ Use this before editing code.
 3. Fix only the first real error, then update `docs/SESSION-LOG.md`.
 
 Do not jump to `CallScreen`, `mobile-autotest`, or `getRuntimeState()` until CI status is known.
+
+---
+
+## Architecture map for planning after CI
+
+When CI is green and planning resumes, read these in order:
+
+1. `docs/INTERACTION_ORGANISM_MAP.md` — who owns what: Messages, Calls, Help, Reports, Activity, Map, Ange, Guardian, Registry, OBD.
+2. `docs/INTERACTION_LEDGER_REGISTRY.md` — global event table: owner, writer, readers, Ange/Guardian/OBD/autotest links.
+3. `docs/CALL_SOURCE_OF_TRUTH.md` — call state audit grid; not confirmed truth until `calls.js` is audited.
+4. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md` — call ringtone, message beep, iOS fallback, visual call delivery.
+5. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md` — executable skeleton: proposed files, APIs, DOM IDs, triggers, tests.
+
+Important:
+
+```text
+These docs are planning/audit blueprints.
+They do not replace code evidence.
+Audit existing code before implementing.
+```
 
 ---
 
@@ -160,9 +177,13 @@ Known context:
 2. `docs/SESSION-LOG.md`
 3. `docs/OBD-RECOVERY-PROTOCOL.md`
 4. `docs/CALL_SOURCE_OF_TRUTH.md`
-5. Latest failed GitHub Actions run
-6. Artifact `obd-e2e-evidence`
-7. `diagnostic-artifacts/playwright-output.log`
+5. `docs/INTERACTION_ORGANISM_MAP.md`
+6. `docs/INTERACTION_LEDGER_REGISTRY.md`
+7. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md`
+8. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md`
+9. Latest failed GitHub Actions run
+10. Artifact `obd-e2e-evidence`
+11. `diagnostic-artifacts/playwright-output.log`
 
 ---
 
