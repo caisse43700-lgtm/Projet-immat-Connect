@@ -1,13 +1,13 @@
-# CALL_PENDING_EXPIRY — Audit statique du code source
+# CALL_PENDING_EXPIRY — Analyse statique du code source
 
-**Auteur** : Claude (analyse statique)  
+**Source** : Analyse statique du code  
 **Branche** : `diagnostic/call-pending-expiry-obd`  
 **Fichier analysé** : `calls.js` — commit main `68f322b`  
 **À lire avec** : `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` (diagnostic consolidé)
 
 > Ce fichier documente uniquement ce qui est observable dans le code source.
 > Aucune observation terrain, aucune donnée OBD runtime ici.
-> Séparation stricte : code source ↔ observations terrain ↔ diagnostic consolidé.
+> Séparation stricte : analyse statique ↔ observations terrain ↔ diagnostic consolidé.
 
 ---
 

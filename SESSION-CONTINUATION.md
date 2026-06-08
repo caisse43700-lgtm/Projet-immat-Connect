@@ -54,8 +54,8 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 
 **Annexes de diagnostic** (ne pas modifier directement — passer par ce fichier) :
 - `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — état consolidé : terrain + OBD + hypothèses
-- `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` — audit statique `calls.js` par Claude
-- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue et analyse par ChatGPT
+- `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` — analyse statique du code (`calls.js`)
+- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue et analyse externe
 
 ---
 
@@ -65,8 +65,8 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 
 | ID | Énoncé | Preuve | Confiance |
 |---|---|---|---|
-| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` — ligne reste `pending` en DB | `calls.js` : `_showSentBanner`, `_onMissed`, `_recoverPendingRequest` — zéro écriture DB à l'expiration | 85 % |
-| HYP-003 | Expiration UI ≠ expiration DB | Corollaire direct de HYP-001 | 85 % |
+| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` — ligne reste `pending` en DB | Analyse statique — `calls.js` : `_showSentBanner`, `_onMissed`, `_recoverPendingRequest` — zéro écriture DB à l'expiration | 85 % |
+| HYP-003 | Expiration UI ≠ expiration DB | Corollaire direct de HYP-001 — analyse statique | 85 % |
 
 ### Ouvertes (SQL requis)
 
@@ -95,11 +95,11 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 | `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
 | `"Appel émis · expired"` + `"Appel reçu · expired"` dans l'historique | Observation UI | HYP-004 affaiblie |
 | Deuxième appel → erreur `23505` | Observation UI | Confirme HYP-001 |
-| Aucun `UPDATE status='expired'` dans `calls.js` | Audit statique | Confirme HYP-001 |
+| Aucun `UPDATE status='expired'` dans `calls.js` | Analyse statique du code | Confirme HYP-001 |
 
 ### Dernier test réalisé
 
-Audit statique `calls.js` — 2026-06-08
+Analyse statique `calls.js` — 2026-06-08
 
 ### Prochain test — PRIORITÉ ABSOLUE
 
@@ -133,8 +133,8 @@ Après SQL positif :
 | Document | Rôle | Type |
 |---|---|---|
 | `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe incident actif |
-| `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` | Audit statique `calls.js` — Claude | Annexe incident actif |
-| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue critique — ChatGPT | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` | Analyse statique du code — `calls.js` | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue et analyse externe | Annexe incident actif |
 | `docs/ROADMAP-NEXT.md` | Prochaines priorités hors incidents | Référence permanente |
 | `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
 | `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
