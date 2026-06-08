@@ -1,33 +1,31 @@
 # CLAUDE START HERE
 
-Read this first when reconnecting to the repository.
+> **⚠️ Ce fichier a été mis à jour. Lire `SESSION-CONTINUATION.md` en premier.**
 
-## Latest known status
+---
+
+## SITUATION ACTUELLE (2026-06-08)
 
 ```text
-Branch:
-feature-calls-runtime-diagnostics
+Branche  : feature-calls-runtime-diagnostics
+Commit   : e154e43  (Phase 8 — Ange integration)
+CI       : GREEN sur c40adcf (Phase 7). Phase 8 push pending.
+```
 
-Last originally failed run analyzed:
-27133682666
+**Première action obligatoire** : inspecter CI sur `e154e43` avant de toucher quoi que ce soit.
 
-Artifact:
-obd-e2e-evidence
+**Prochaines phases** : Phase 9 (Guardian integration) ou Phase 10 (Mobile autotest expansion).
 
-Original blocker:
-SyntaxError: Illegal return statement
+**Journal complet** → `SESSION-CONTINUATION.md`
 
-Original suspect:
-core/guardian-loop.js
+---
 
-Latest guardian-loop alignment commit:
-07b6d3d233dc6a1035844866c379c9615ec3c358
+## HISTOIRE (conservée pour contexte)
 
-CI status after guardian-loop alignment:
-UNKNOWN until a new GitHub Actions run is inspected.
-
-Immediate action:
-Trigger or inspect CI before coding anything else.
+```text
+Original blocker: SyntaxError: Illegal return statement dans core/guardian-loop.js
+Fix commit      : 4950cb7 (IIFE wrapper)
+CI après fix    : GREEN — toutes phases suivantes green
 ```
 
 ---
