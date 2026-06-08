@@ -1,6 +1,7 @@
 # CLAUDE START HERE
 
-> **⚠️ Ce fichier a été mis à jour. Lire `SESSION-CONTINUATION.md` en premier.**
+> **⚑ Ce fichier est obsolète. Lire `SESSION-CONTINUATION.md` en premier.**
+> **Le point d'entrée officiel est désormais `CLAUDE.md` → `SESSION-CONTINUATION.md`.**
 
 ---
 
