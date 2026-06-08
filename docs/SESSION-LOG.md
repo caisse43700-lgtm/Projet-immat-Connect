@@ -206,6 +206,95 @@ Search for a similar obvious pattern `if (window.__...) return;` did not return 
 
 ---
 
+---
+
+## 2026-06-08 — CI green confirmed + calls.js audit
+
+### CI status
+
+Branch: `feature-calls-runtime-diagnostics`
+
+Runs inspected (from saved GitHub Actions result):
+
+```
+27140587060  feature-calls-runtime-diagnostics  completed  success  2026-06-08T13:21:58
+27140587074  feature-calls-runtime-diagnostics  completed  success  2026-06-08T13:21:58
+27140587128  feature-calls-runtime-diagnostics  completed  success  2026-06-08T13:21:58
+```
+
+All runs: `completed / success`. CI is green.
+
+### First action per decision matrix (CI green)
+
+Audit `calls.js` and complete `docs/CALL_SOURCE_OF_TRUTH.md`.
+
+### calls.js audit — summary
+
+File: `calls.js` — 397 lines. Module pattern, `window.CallManager` exposed.
+
+Key findings:
+
+1. **CALL_PENDING_OUTGOING**: DB `call_requests.status='pending'` + `_pendingCallId` module var. Recovered on init/visibilitychange via `_recoverPendingRequest()`. UI: `callSentBanner` 8 s auto-dismiss.
+
+2. **CALL_PENDING_INCOMING**: Realtime only. No recovery on reload — receiver must get a new push. Expiry from `expires_at` field.
+
+3. **CALL_ACCEPTED**: Resolves immediately to Messages thread via `App.actOpenConv(requester_plate)`. No `activeCall` state variable exists. Requester notified via realtime UPDATE subscription.
+
+4. **CALL_MISSED**: In-memory `_missedCallIds` Set only. Not persisted. `ImmatOrganism.observe('CALL_MISSED', ...)` fired.
+
+5. **CALL_FAILED**: Toast only. No persistent error state.
+
+6. **CALL_ENDED**: Not implemented — Phase 1 has no real-time audio. Not needed yet.
+
+7. **call_event**: Not written by any function in current calls.js. Messages / Activity integration is not yet wired.
+
+8. **cancelCallRequest caveat**: Receiver popup is NOT explicitly dismissed on cancel — relies on `expires_at` timeout only.
+
+### getRuntimeState() added
+
+Added `CallManager.getRuntimeState()` read-only at lines 378-396 of `calls.js`.
+
+Returns:
+
+```js
+{
+  initialized, myPlate, pendingCallId, hasPendingOutgoing,
+  sentBannerVisible, incomingPopupVisible, contactModalVisible,
+  notAllowedModalVisible, realtimeSubscribed, missedCallsCount
+}
+```
+
+Safe if CallManager is not initialized (try/catch, returns `{initialized:false, error:...}`).
+
+### CALL_SOURCE_OF_TRUTH.md
+
+Status updated from "audit grid" → **audit complete**.
+
+All TODO entries in the source-of-truth table filled.
+
+All audit questions for `requestCall`, `acceptCall`, `refuseCall`, `cancelCallRequest`, `subscribeIncomingCalls`, `loadCallLog` answered with code-line citations.
+
+### What remains
+
+Per `docs/CALL_SOURCE_OF_TRUTH.md` "Next work after CI green":
+
+- [ ] Step 3 (done): `getRuntimeState()` added
+- [ ] Step 4: Update `core/calls-runtime-diagnostics.js` to use `getRuntimeState()`
+- [ ] Step 5: Integrate calls runtime into `core/mobile-autotest.js`
+- [ ] Step 6 (future): `CallScreen` skeleton (closed by default)
+
+### Risk
+
+Low. `getRuntimeState()` is read-only, no DB writes, no localStorage writes, no UI mutation.
+
+### Next action
+
+1. Update `core/calls-runtime-diagnostics.js` to consume `CallManager.getRuntimeState()`.
+2. Push and rerun CI.
+3. Document result here.
+
+---
+
 # Blocker template
 
 When blocked, append a section with:

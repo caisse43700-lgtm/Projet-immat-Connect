@@ -374,6 +374,26 @@ const CallManager = (function () {
     }));
   }
 
+  // ── Diagnostic lecture seule ─────────────────────────────────────
+  function getRuntimeState() {
+    try {
+      return {
+        initialized: !!_sb && !!_uid,
+        myPlate: _myPlate || null,
+        pendingCallId: _pendingCallId || null,
+        hasPendingOutgoing: !!_pendingCallId,
+        sentBannerVisible: !!document.getElementById('callSentBanner')?.classList.contains('show'),
+        incomingPopupVisible: !!document.getElementById('callIncomingPopup')?.classList.contains('show'),
+        contactModalVisible: !!document.getElementById('callContactModal')?.classList.contains('show'),
+        notAllowedModalVisible: !!document.getElementById('callNotAllowedModal')?.classList.contains('show'),
+        realtimeSubscribed: !!_chCalls,
+        missedCallsCount: _missedCallIds.size,
+      };
+    } catch (e) {
+      return { initialized: false, error: String(e?.message || e) };
+    }
+  }
+
   // ── API publique ─────────────────────────────────────────────────
   return {
     init,
@@ -391,6 +411,7 @@ const CallManager = (function () {
     setCallPreferences,
     loadCallLog,
     isCallBlocked: _isCallBlocked,
+    getRuntimeState,
   };
 })();
 

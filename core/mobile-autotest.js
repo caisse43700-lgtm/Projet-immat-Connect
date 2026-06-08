@@ -130,6 +130,17 @@
     }
   }
 
+  function callsRuntime(){
+    try{
+      if(w.ImmatCallsRuntimeDiagnostics && typeof w.ImmatCallsRuntimeDiagnostics.run === 'function'){
+        return w.ImmatCallsRuntimeDiagnostics.run();
+      }
+      return {available:false, reason:'ImmatCallsRuntimeDiagnostics not loaded'};
+    }catch(e){
+      return {available:false, error:String(e && (e.stack || e.message) || e)};
+    }
+  }
+
   function panels(){
     var ids=['appScreen','sheet','nearbyPanel','drawer','vehicleContextMenu','angeFab','angeOverlay','angePanel','onboardingOverlay','icSheetBackdrop','icBottomSheet','callContactModal','callIncomingPopup','callSentBanner','callNotAllowedModal','navMap','navSignaler','navActivite'];
     return ids.map(function(id){ return byId(id,id); });
@@ -158,6 +169,7 @@
       ange: ange(),
       signaler: signaler(),
       messagesRuntime: messagesRuntime(),
+      callsRuntime: callsRuntime(),
       panels: panels()
     };
     try{ if(w.ImmatBus) w.ImmatBus.emit('OBD_STATUS_CHECKED',{source:'mobileAutotest', ok:true}); }catch(e){}

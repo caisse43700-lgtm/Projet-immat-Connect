@@ -273,71 +273,74 @@ CALL_FAILED
 
 ## Source of truth table
 
-This table must be completed during the `calls.js` audit.
+Completed 2026-06-08 — audit of `calls.js` (397 lines, commit `63047d0`).
 
 | State | Source of truth | Writer | Readers | Message representation | Activity representation | OBD fields |
 |---|---|---|---|---|---|---|
-| CALL_PENDING_OUTGOING | TODO: call request record / Supabase table | `requestCall()` | CallManager, Messages, OBD, CallScreen | `call_event` outgoing pending | optional quick status | `pendingOutgoing` |
-| CALL_PENDING_INCOMING | TODO: call request record / Supabase realtime | `subscribeIncomingCalls()` receives remote request | CallManager, Messages, OBD, CallScreen | `call_event` incoming pending | optional quick status | `pendingIncoming` |
-| CALL_ACCEPTED | TODO | `acceptCall()` / realtime update | CallManager, Messages, OBD, CallScreen | `call_event` accepted | accepted/contact active | `activeCall` or accepted count |
-| CALL_REFUSED | TODO | `refuseCall()` / realtime update | CallManager, Messages, OBD, CallScreen | `call_event` refused | closed/refused | `lastCallStatus` |
-| CALL_CANCELLED | TODO | `cancelCallRequest()` / realtime update | CallManager, Messages, OBD, CallScreen | `call_event` cancelled | closed/cancelled | `lastCallStatus` |
-| CALL_EXPIRED | TODO: timeout rule | timeout worker / query / runtime check | CallManager, Messages, OBD, CallScreen | `call_event` expired | expired | `expiredCalls` |
-| CALL_MISSED | TODO: receiver-side timeout | timeout worker / runtime check | CallManager, Messages, OBD, CallScreen, GuardianLoop | `call_event` missed | missed | `missedCalls` |
-| CALL_FAILED | TODO | catch blocks / Supabase errors | CallManager, OBD, UI | optional failure event | failed | `lastCallError` |
-| CALL_ENDED | TODO | future hangup/end logic | CallManager, Messages, OBD, CallScreen | `call_event` ended | ended | `activeCall:null` |
+| CALL_PENDING_OUTGOING | DB: `call_requests.status='pending'` + `_pendingCallId` (module-private var, line 25) | `requestCall()` line 130 — INSERT `call_requests` → `_pendingCallId = data.id` | CallManager internally; recovered on init/visibilitychange via `_recoverPendingRequest()`; UI: `callSentBanner` (8 s auto-dismiss) | **Not wired** — no `call_event` row written yet | **Not wired** | `pendingCallId`, `hasPendingOutgoing`, `sentBannerVisible` via `getRuntimeState()` |
+| CALL_PENDING_INCOMING | DB: realtime INSERT on `call_requests` filtered `receiver_id=eq.uid` (channel `ic_calls_${uid}`) | `subscribeIncomingCalls()` line 239 — Supabase Realtime postgres_changes INSERT | CallManager DOM `callIncomingPopup`; expiry timer set from `expires_at`; **not recovered on reload** (incoming state lost on refresh) | **Not wired** | **Not wired** | `incomingPopupVisible` via `getRuntimeState()` |
+| CALL_ACCEPTED | DB: `call_requests.status='accepted'`, `responded_at=now` (written by receiver) | `acceptCall()` line 188 — UPDATE; requester notified via realtime UPDATE subscription (line 252) | Requester: realtime UPDATE → `_hideSentBanner()` + `App.actOpenConv(receiver_plate)`. **No dedicated activeCall state** — resolves immediately to Messages thread | Resolves to Messages thread for requester_plate | Surfaces via existing message thread in Activité | No dedicated field — `hasPendingOutgoing:false` signals cleared |
+| CALL_REFUSED | DB: `call_requests.status='refused'`, `responded_at=now` | `refuseCall()` line 207 — UPDATE; requester notified via realtime UPDATE → toast 'Refusée' + `_hideSentBanner()` | Toast only on requester side; popup hidden on receiver side | **Not wired** — no `call_event` written | **Not wired** | `lastCallStatus` not yet tracked in state |
+| CALL_CANCELLED | DB: `call_requests.status='cancelled'` | `cancelCallRequest()` line 220 — UPDATE; `_pendingCallId=null` | `_hideSentBanner()` on requester. **Receiver popup not explicitly dismissed** — expires via `expires_at` timer | **Not wired** | **Not wired** | `lastCallStatus` not yet tracked |
+| CALL_EXPIRED | DB: `call_requests.expires_at < now` (checked at popup-open time) | DB-side expiry field; UI: `_showSentBanner` 8 s auto-close (line 308); popup timer from `expires_at` (line 286) | Popup/banner removed; `CALL_MISSED` OrgObserve fired if popup was visible (line 291) | **Not wired** | **Not wired** | `expiredCalls` not yet tracked |
+| CALL_MISSED | In-memory only: `_missedCallIds` Set (line 27) — **not persisted, lost on reload** | Timeout in `_showIncomingPopup` line 287 — fires `ImmatOrganism.observe('CALL_MISSED', ...)` when popup auto-closes | ImmatOrganism bus only | **Not wired** | **Not wired** | `missedCallsCount` via `_missedCallIds.size` in `getRuntimeState()` |
+| CALL_FAILED | No persistent state — toast only | `requestCall()` catch blocks (lines 164-175): codes `23505`, `spam_limit`, `cooldown_active`, generic error → `_showError(toast)` | Toast only | **Not wired** | **Not wired** | `lastCallError` not yet tracked |
+| CALL_ENDED | **Not implemented** — no hangup/end concept in current model. Calls resolve to Messages threads; there is no real-time audio call. | N/A — out of scope for Phase 1 | N/A | N/A | N/A | N/A |
 
 ---
 
 ## Required audit questions for `calls.js`
 
-For each function, answer these questions before UI work.
+Completed 2026-06-08. Evidence from `calls.js` lines cited.
 
 ### `requestCall(receiverPlate, receiverId)`
 
-- Where is the pending request written?
-- What ID is returned or stored?
-- Is there a requester/receiver direction field?
-- Does it create a message/call event now?
-- Does it update UI directly?
-- How is failure stored?
+- **Pending request written:** INSERT into `call_requests` (lines 152-162). Fields: `requester_id`, `receiver_id`, `requester_plate`, `receiver_plate`, `source='vehicle_contact'`. DB triggers enforce anti-spam and uniqueness.
+- **ID stored:** `_pendingCallId = data.id` (line 182). Returned by `.select().maybeSingle()`.
+- **Direction fields:** Yes — `requester_plate` / `requester_id` vs `receiver_plate` / `receiver_id`.
+- **call_event written:** No. No messages INSERT occurs. No call_event row.
+- **UI update:** `_showSentBanner(receiverPlate, data.id)` (line 183). Banner auto-removes after 8 s (line 308-311).
+- **Failure:** toast via `_showError()`. Codes handled: `23505` (duplicate), `spam_limit`, `cooldown_active`, generic.
 
 ### `acceptCall(requestId)`
 
-- Where is accepted state written?
-- Does requester receive realtime update?
-- Is real contact info exposed only after acceptance?
-- Is a message/call event written?
-- Does it close overlays safely?
+- **Accepted state written:** UPDATE `call_requests` SET `status='accepted'`, `responded_at=now` WHERE `id=requestId AND receiver_id=_uid AND status='pending'` (lines 191-198).
+- **Requester realtime update:** Yes — `subscribeIncomingCalls` has a second subscription on `UPDATE` filtered `requester_id=eq.uid` (lines 252-268). When status changes to `accepted`, requester banner hides and `App.actOpenConv(receiver_plate)` opens Messages.
+- **Contact info exposed:** Only `requester_plate` from the accepted record (line 199-200). No phone/contact data.
+- **call_event written:** No.
+- **Overlay:** `_hideIncomingPopup()` called before DB write (line 189).
 
 ### `refuseCall(requestId)`
 
-- Where is refused state written?
-- Does requester receive realtime update?
-- Is a message/call event written?
-- Does it close overlays safely?
+- **Refused state written:** UPDATE `call_requests` SET `status='refused'`, `responded_at=now` WHERE `id=requestId AND receiver_id=_uid AND status='pending'` (lines 210-215).
+- **Requester realtime:** Yes — same UPDATE subscription at requester triggers `toast('Refusée', 'bad')` and `_hideSentBanner()` (lines 265-267).
+- **call_event written:** No.
+- **Overlay:** `_hideIncomingPopup()` called before DB write (line 208).
 
 ### `cancelCallRequest(requestId)`
 
-- Where is cancelled state written?
-- Does receiver receive realtime update?
-- Is a message/call event written?
-- Does it close overlays safely?
+- **Cancelled state written:** UPDATE `call_requests` SET `status='cancelled'` WHERE `id=requestId AND requester_id=_uid AND status='pending'` (lines 224-228). `_pendingCallId=null` (line 229).
+- **Receiver realtime update:** The receiver's INSERT subscription does not watch UPDATE events. **Receiver popup is not explicitly dismissed by cancellation.** The popup auto-hides only when `expires_at` is reached or receiver takes action.
+- **call_event written:** No.
+- **Overlay:** `_hideSentBanner()` called before DB write (line 221).
 
 ### `subscribeIncomingCalls(uid)`
 
-- Which table/channel is subscribed?
-- How are pending incoming calls identified?
-- Is duplicate subscription prevented?
-- How is unsubscribe handled?
-- What happens on reload?
+- **Table/channel:** `call_requests` table, channel `ic_calls_${uid}` (line 238).
+- **Two subscriptions on the same channel:**
+  1. INSERT filter `receiver_id=eq.uid` → shows incoming popup (lines 240-250).
+  2. UPDATE filter `requester_id=eq.uid` → handles response to outgoing (lines 252-268).
+- **Incoming identified by:** `status='pending'` check + `expires_at` not past (lines 247-248).
+- **Duplicate subscription:** `try { if (_chCalls) _sb.removeChannel(_chCalls) }` before creating new (lines 236-237).
+- **Unsubscribe:** Only on resubscription. No public `unsubscribe()` exported. On CHANNEL_ERROR/TIMED_OUT: auto-retry after 5 s (lines 269-273).
+- **On reload:** `_recoverPendingRequest()` restores outgoing banner if a pending outgoing exists in DB (lines 45-68). **Incoming not recovered** — receiver must receive a new realtime event.
 
 ### `loadCallLog(limit)`
 
-- Does this return business state or history?
-- Does it include pending calls?
-- Is it used by Messages?
-- Is it used by Activity?
+- **Returns:** history + all statuses (pending, accepted, refused, cancelled, etc.) — no status filter applied (lines 361-374).
+- **Includes pending:** Yes.
+- **Used by Messages:** No — not wired.
+- **Used by Activity:** No — not wired. Standalone diagnostic/journal function.
 
 ---
 
