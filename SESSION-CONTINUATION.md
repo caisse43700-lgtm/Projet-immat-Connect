@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — BUG A résolu et validé terrain — SESSION consolidée pour continuité inter-IA
+**Dernière mise à jour** : 2026-06-08 — PR #269 mergé — BUG A archivé — BUG B priorité 1
 
 ---
 
@@ -34,9 +34,8 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
 
 ```
 Dépôt          : caisse43700-lgtm/Projet-immat-Connect
-Main           : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
-Branche active : diagnostic/call-pending-expiry-obd (commit 0cf24f1)
-BUG A (INC-001): RÉSOLU — correctif appliqué + validé terrain 2026-06-08
+Main           : 5859393 — CI GREEN 3/3 — PR #269 mergé 2026-06-08
+BUG A (INC-001): ARCHIVÉ — mergé dans main (5859393)
 BUG B (INC-001): ACTIF — B ne reçoit pas la popup au premier appel
 ```
 
@@ -46,14 +45,12 @@ BUG B (INC-001): ACTIF — B ne reçoit pas la popup au premier appel
 
 ### INC-001 — Bug appel A → B
 
-**Symptôme ALPHA** ✅ RÉSOLU (2026-06-08) :
-~~Deuxième appel de A vers B refusé avec erreur `23505` alors que les deux côtés affichent `expired`~~
-→ Cause racine identifiée, correctif appliqué, validé terrain.
+**Symptôme ALPHA** ✅ ARCHIVÉ (2026-06-08) — mergé PR #269 → main `5859393`
 
 **Symptôme BETA** (actif — priorité 1) :
 B ne voit aucune popup ni sonnerie lors du premier appel. L'historique montre `"Appel reçu · expired"` — la ligne existe mais la popup live n'a pas été déclenchée.
 
-**Branche** : `diagnostic/call-pending-expiry-obd`
+**Branche** : `main` (diagnostic BUG B à démarrer sur nouvelle branche si nécessaire)
 
 **Annexes** :
 - `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — diagnostic consolidé complet
@@ -187,13 +184,15 @@ ImmatBus.getJournal()
 
 ## PROCHAINE ACTION
 
-**Deux actions disponibles :**
+**Investiguer BUG B** — `ImmatBus.getJournal()` côté B (voir §PREUVES ET TESTS — INC-001 BUG B)
 
-1. **Merger BUG A vers main** — ouvrir PR `diagnostic/call-pending-expiry-obd` → `main`
-   - Vérifier CI green 4/4 avant merge
-   - Ne pas merger si CI rouge
-
-2. **Investiguer BUG B** — `ImmatBus.getJournal()` côté B (voir prochain test ci-dessus)
+Conditions : B écran allumé, app au premier plan, connexion stable.
+Exécuter juste après un appel de A :
+```js
+ImmatBus.getJournal()
+```
+- `CALL_RECEIVED` **absent** → rupture avant le Bus (realtime ou `_showIncomingPopup`)
+- `CALL_RECEIVED` **présent** + popup absente → rupture Bus → CallScreen (HYP-006)
 
 ---
 
@@ -216,6 +215,7 @@ ImmatBus.getJournal()
 | Incident | Date | Cause racine | Archive |
 |---|---|---|---|
 | Phases 0–10 + post-merge | 2026-06-08 | Architecture complète — CI green 4/4 | `docs/archives/ARCHIVE_PHASES_0_10.md` |
+| INC-001 BUG A (Symptôme ALPHA) | 2026-06-08 | `call_requests_unique_pending_idx` UNIQUE partiel — aucun UPDATE status='expired' en DB → 23505 | `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` |
 
 ---
 
