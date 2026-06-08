@@ -5,7 +5,7 @@
  * INV-GUARD-003 : chaque heuristique est observable via OBD GUARDIAN_RECOMMENDATION_CREATED
  */
 'use strict';
-if (window.__GuardianLoopV1) return;
+if (!window.__GuardianLoopV1) {
 window.__GuardianLoopV1 = true;
 
 const GuardianLoop = (function () {
@@ -306,3 +306,4 @@ const GuardianLoop = (function () {
 })();
 
 window.GuardianLoop = GuardianLoop;
+}
