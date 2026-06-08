@@ -167,6 +167,185 @@
     ];
   }
 
+  // ── Phase 10 — Expanded autotests ───────────────────────────────────────────
+
+  function messagesAutotest(){
+    var im = w.ImmatMessages;
+    var ie = w.InteractionEngine;
+    var byType = {};
+    try{ if(ie && typeof ie.getRuntimeState==='function') byType=ie.getRuntimeState().byType||{}; }catch(e){}
+    var orphans = [];
+    try{
+      orphans = Array.prototype.slice.call(document.querySelectorAll('.conversation,.thread-panel,.message-thread')).filter(function(el){
+        return !el.closest('#panelMessages') && el.offsetParent!==null;
+      });
+    }catch(e){}
+    return {
+      moduleLoaded: !!im,
+      hasSendToPlate: typeof (im && im.sendToPlate)==='function',
+      hasSetMode: typeof (im && im.setMode)==='function',
+      contextBadgesSupported: typeof (im && im.sendToPlate)==='function',
+      dom: {
+        panel: byId('panelMessages','panelMessages'),
+        composePlate: byId('icComposePlate','icComposePlate'),
+        composeText: byId('icComposeText','icComposeText'),
+      },
+      noParallelThreads: orphans.length===0,
+      parallelThreadCount: orphans.length,
+      ledgerMessages: (byType.MESSAGE||0)+(byType.THANKS||0),
+    };
+  }
+
+  function callsAutotest(){
+    var callScrMod = w.CallScreen;
+    var audioMgr = w.AudioManager;
+    var audioBlocked = false;
+    var callScreenHiddenByDefault = true;
+    var ghostEls = [];
+    var privacyOk = true;
+    try{
+      if(audioMgr && typeof audioMgr.getRuntimeState==='function'){
+        var amState = audioMgr.getRuntimeState();
+        audioBlocked = !(amState && amState.incomingRingtoneReady);
+      }
+    }catch(e){}
+    try{
+      var co = $('callOverlay');
+      if(co){ var cr = rectOf(co); callScreenHiddenByDefault = !(cr && cr.w>0 && cr.h>0); }
+    }catch(e){}
+    try{
+      var authorizedIds = ['callOverlay','callScreen','angeOverlay','onboardingOverlay','vehicleContextMenu','drawer','nearbyPanel'];
+      var allEls = Array.prototype.slice.call(document.body ? document.body.querySelectorAll('*') : []);
+      for(var i=0; i<Math.min(allEls.length,2000) && ghostEls.length<5; i++){
+        var el = allEls[i];
+        var elCss = w.getComputedStyle ? w.getComputedStyle(el) : null;
+        if(!elCss) continue;
+        var zi = parseInt(elCss.zIndex,10)||0;
+        if((elCss.position==='fixed'||elCss.position==='sticky') && zi>100 && elCss.display!=='none' && elCss.visibility!=='hidden'){
+          var er = rectOf(el);
+          if(er && er.w>0 && er.h>0 && authorizedIds.indexOf(el.id)===-1 && !el.closest('#callOverlay') && !el.closest('#angeOverlay') && !el.closest('#drawer')){
+            ghostEls.push(desc(el));
+          }
+        }
+      }
+    }catch(e){}
+    try{
+      if(callScrMod && typeof callScrMod.getState==='function'){
+        var csState = callScrMod.getState();
+        if(csState && csState.mode && csState.mode!=='accepted' && csState.mode!=='idle'){
+          var platEl = $('callScreenPlate')||$('callIncomingPlate');
+          if(platEl){ var pr = rectOf(platEl); if(pr && pr.w>0 && pr.h>0) privacyOk=false; }
+        }
+      }
+    }catch(e){}
+    return {
+      callScreenHiddenByDefault: callScreenHiddenByDefault,
+      audioBlocked: audioBlocked,
+      visualFallbackAvailable: !!callScrMod,
+      privacyPreCallAcceptance: privacyOk,
+      ghostOverlayCount: ghostEls.length,
+      ghostOverlays: ghostEls,
+      dom: {
+        callOverlay: byId('callOverlay','callOverlay'),
+        callIncomingPopup: byId('callIncomingPopup','callIncomingPopup'),
+        callSentBanner: byId('callSentBanner','callSentBanner'),
+      },
+    };
+  }
+
+  function helpAutotest(){
+    var ie = w.InteractionEngine;
+    var byType = {};
+    try{ if(ie && typeof ie.getRuntimeState==='function') byType=ie.getRuntimeState().byType||{}; }catch(e){}
+    return {
+      hasAssistFn: typeof (w.App && w.App.assist)==='function',
+      hasMapLink: !!(w.App && (typeof w.App.locate==='function' || typeof w.App.navMap==='function')),
+      hasMessageLink: typeof (w.ImmatMessages && w.ImmatMessages.sendToPlate)==='function',
+      dom: {
+        panelAltet: byId('panelAltet','panelAltet'),
+        sigStep1: byId('sigStep1','sigStep1'),
+      },
+      ledgerHelp: byType.HELP||0,
+    };
+  }
+
+  function reportsAutotest(){
+    var ie = w.InteractionEngine;
+    var byType = {};
+    try{ if(ie && typeof ie.getRuntimeState==='function') byType=ie.getRuntimeState().byType||{}; }catch(e){}
+    var sigBtns = 0;
+    try{ sigBtns = document.querySelectorAll('.sig-cat-btn').length; }catch(e){}
+    return {
+      hasNavSignaler: typeof (w.App && w.App.navSignaler)==='function',
+      hasRoadReport: typeof (w.App && w.App.roadReport)==='function',
+      hasMessageLink: typeof (w.ImmatMessages && w.ImmatMessages.sendToPlate)==='function',
+      hasMapLink: typeof (w.App && w.App.locate)==='function',
+      dom: {
+        panelAltet: byId('panelAltet','panelAltet'),
+        sigCatBtnCount: sigBtns,
+      },
+      ledgerVehicleAlerts: byType.VEHICLE_ALERT||0,
+      ledgerRoadAlerts: byType.ROAD_ALERT||0,
+    };
+  }
+
+  function registryAutotest(){
+    var ie = w.InteractionEngine;
+    var state = null;
+    try{ if(ie && typeof ie.getRuntimeState==='function') state=ie.getRuntimeState(); }catch(e){}
+    return {
+      moduleLoaded: !!ie,
+      hasGetHistory: typeof (ie && ie.getHistory)==='function',
+      hasGetAnalytics: typeof (ie && ie.getAnalytics)==='function',
+      state: state,
+      readOnly: true,
+      noFailedWrites: state ? state.failedWrites===0 : null,
+      canRebuildConversation: state ? state.canRebuildConversation : null,
+    };
+  }
+
+  function angeGuardianAutotest(){
+    var gl = w.GuardianLoop;
+    var pending = [];
+    var allHaveEvidence = true;
+    var noAutoApplied = true;
+    try{
+      if(gl && typeof gl.getPending==='function'){
+        pending = gl.getPending()||[];
+        allHaveEvidence = pending.every(function(r){ return r.evidence && r.evidence.length>0; });
+        if(typeof gl.getAll==='function'){
+          var all = gl.getAll(null,{limit:50})||[];
+          noAutoApplied = all.every(function(r){ return r.status!=='applied'||r.decision!==null; });
+        }
+      }
+    }catch(e){}
+    var angeOrphanThread = false;
+    try{
+      angeOrphanThread = document.querySelectorAll('[id^="angeThread"],[id^="ange-thread"],.ange-conversation').length>0;
+    }catch(e){}
+    return {
+      ange: {
+        moduleLoaded: !!w.AngeDialog,
+        hasOpen: typeof (w.AngeDialog && w.AngeDialog.open)==='function',
+        hasSend: typeof (w.AngeDialog && w.AngeDialog.send)==='function',
+        noOrphanThread: !angeOrphanThread,
+        dom: {
+          fab: byId('angeFab','angeFab'),
+          overlay: byId('angeOverlay','angeOverlay'),
+        },
+      },
+      guardian: {
+        moduleLoaded: !!gl,
+        hasObserve: typeof (gl && gl.observe)==='function',
+        hasValidate: typeof (gl && gl.validate)==='function',
+        hasGetRuntimeState: typeof (gl && gl.getRuntimeState)==='function',
+        pendingCount: pending.length,
+        allHaveEvidence: allHaveEvidence,
+        noAutoApplied: noAutoApplied,
+      },
+    };
+  }
+
   function run(){
     var out={
       at: Date.now(),
@@ -178,7 +357,13 @@
       signaler: signaler(),
       messagesRuntime: messagesRuntime(),
       callsRuntime: callsRuntime(),
-      panels: panels()
+      panels: panels(),
+      messagesAutotest: messagesAutotest(),
+      callsAutotest: callsAutotest(),
+      helpAutotest: helpAutotest(),
+      reportsAutotest: reportsAutotest(),
+      registryAutotest: registryAutotest(),
+      angeGuardianAutotest: angeGuardianAutotest(),
     };
     try{ if(w.ImmatBus) w.ImmatBus.emit('OBD_STATUS_CHECKED',{source:'mobileAutotest', ok:true}); }catch(e){}
     return out;

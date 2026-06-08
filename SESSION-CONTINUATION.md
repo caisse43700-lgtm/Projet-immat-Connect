@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — Phase 9 Guardian integration
+**Dernière mise à jour** : 2026-06-08 — Phase 10 Mobile autotest expansion
 
 ---
 
@@ -17,7 +17,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
 Commit   : Phase 9 (voir tableau)
-CI       : GREEN sur c40adcf (Phase 7) — e154e43 (Phase 8) + Phase 9 pending vérification
+CI       : GREEN sur c40adcf (Phase 7) — Phases 8/9/10 pending vérification CI
 ```
 
 ---
@@ -52,13 +52,42 @@ Le résultat est trop grand pour être lu directement — extraire avec python3 
 | 5 | — | roadReport/assist/vehicleAlertQuick → InteractionEngine | `5b26eab` | green |
 | 7 | 7 — Audio | AudioManager + CallNotificationRuntime squelettes | `c40adcf` | green |
 | 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | pending |
-| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | Phase 9 commit | pending |
+| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | `7ba25f3` | pending |
+| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | Phase 10 commit | pending |
 
 ---
 
 ## PROCHAINES PHASES
 
-### Phase 10 — Mobile autotest expansion (prochain)
+### Roadmap COMPLÈTE — toutes phases implémentées
+
+Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation globaux du MASTER_IMPLEMENTATION_ROADMAP :
+- CI green requis avant merge
+- OBD stable (read-only, modulaire)
+- Pas de return illégal / erreurs de parse
+- Pas de ghost overlays (autotest)
+- Pas de messagerie parallèle (autotest)
+- Source de vérité appels documentée
+- Messages avec contexte
+- Appels visibles sans audio
+- Audio différencié
+- Privacy avant acceptation (autotest)
+- Ange route correctement
+- Guardian basé sur evidence
+- Autotests couvrent les flux critiques
+
+### Tâches résiduelles connues (non bloquantes)
+
+| Tâche | Priorité | Note |
+|---|---|---|
+| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | Realtime subscription dans messages.js |
+| Assets audio (src) | Basse | Bloqué par stratégie Service Worker/cache |
+| `App.blockPlate()` direct → InteractionEngine | Basse | Seuls blocages Ange-triggered sont loggés |
+| `source_module`/`privacy_level` dans IE events | Basse | Champ structurel, non bloquant |
+
+---
+
+### Phase 10 — Mobile autotest expansion (COMPLÉTÉE)
 
 **Objectif** : Valider l'organisme complet interaction via `core/mobile-autotest.js`.
 
