@@ -469,6 +469,48 @@ Push en attente.
 
 ---
 
+## 2026-06-08 — Phase 5 : Câblage roadReport / assist / vehicleAlertQuick → InteractionEngine
+
+### Contexte
+
+CI green sur Phase 4 (run 27145171809, commit c27c29d).
+Phase 5 : compléter le câblage InteractionEngine pour les événements non-messagerie.
+
+### Fichiers modifiés
+
+- `index.html` — 3 insertions ciblées dans fonctions existantes
+
+### Détail
+
+| Fonction | Ajout |
+|---|---|
+| `roadReport(type)` | `InteractionEngine.create({type:'VEHICLE_REPORT_CREATED', initiator, context_id:_dbId, payload:{reportType,lat,lng}, status:'active'})` après `ROAD_CREATED` |
+| `assist(type)` | `InteractionEngine.create({type:'HELP_REQUEST_CREATED', initiator, context_id:_dbId, payload:{assistType,lat,lng}, status:'active'})` après `HELP_CREATED` |
+| `vehicleAlertQuick(label)` | `sendToPlate(plate, msg, {context_type:'vehicle_report'})` — passe le contexte vehicle_report à l'événement MESSAGE déjà enregistré par sendToPlate |
+
+### Gaps restants (non câblés, acceptés pour cette phase)
+
+- `vehicleAlert()` → ouvre Messages avec compose prérempli — l'envoi est déclenché par l'utilisateur via Send, déjà couvert par `sendToPlate` + InteractionEngine.create(MESSAGE)
+- `driverInfo()` → envoie à 'CONDUCTEURS' (pseudo-plaque), pas de profil Supabase → sendToPlate échoue silencieusement ; pas de `InteractionEngine.create` nécessaire ici
+- `DIRECT_MESSAGE_RECEIVED` → câblage futur via realtime subscription dans messages.js
+
+### RISQUE
+
+Low. Tous les appels InteractionEngine sont dans try/catch, non-bloquants.
+`context_id` est `_dbId ?? null` — si `saveReportRemote` échoue ou retourne null, l'événement ledger est quand même enregistré sans ID.
+
+### STATUT CI
+
+Push en attente.
+
+### PROCHAINE ACTION
+
+1. Push + attendre CI.
+2. Si vert : audit `DIRECT_MESSAGE_RECEIVED` ou câblage `source_module`/`context_type`/`privacy_level` dans InteractionEngine event shape (gaps identifiés en Phase 3).
+3. Si rouge : artifact + playwright-output.log.
+
+---
+
 # Blocker template
 
 When blocked, append a section with:
