@@ -608,7 +608,8 @@ BUG B — B ne reçoit rien
   OBD B            : realtimeSubscribed=true, initialized=true, myPlate correct
   Preuve manquante : ImmatBus.getJournal() côté B après appel propre
 
-Prochaine action  : valider le correctif BUG A — voir section CORRECTIF PROPOSÉ
+BUG A            : RÉSOLU — validé terrain 2026-06-08 ✅
+Prochaine action  : merge PR vers main + investigation BUG B (ImmatBus.getJournal() côté B)
 ```
 
 ---

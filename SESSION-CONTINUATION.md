@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — BUG A correctif appliqué dans `calls.js` — en attente de test terrain
+**Dernière mise à jour** : 2026-06-08 — BUG A résolu et validé terrain — BUG B investigation suivante
 
 ---
 
@@ -35,7 +35,9 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
 ```
 Dépôt          : caisse43700-lgtm/Projet-immat-Connect
 Main           : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
-Branche active : diagnostic/call-pending-expiry-obd (commit 5f3b30a)
+Branche active : diagnostic/call-pending-expiry-obd (commit 28d66f0)
+BUG A          : RÉSOLU — validé terrain 2026-06-08
+BUG B          : en investigation (B ne reçoit pas la popup au premier appel)
 ```
 
 ---
@@ -44,10 +46,11 @@ Branche active : diagnostic/call-pending-expiry-obd (commit 5f3b30a)
 
 ### INC-001 — Bug appel A → B
 
-**Symptôme ALPHA** (priorité 1) :
-Deuxième appel de A vers B refusé avec `"Une demande est déjà en attente de réponse"` — erreur `23505` alors que les deux côtés affichent `expired` dans l'historique.
+**Symptôme ALPHA** ✅ RÉSOLU (2026-06-08) :
+~~Deuxième appel refusé avec erreur 23505~~  
+Fix : `calls.js` — UPDATE status='expired' à l'expiration — libère l'index UNIQUE `WHERE status='pending'`
 
-**Symptôme BETA** (secondaire, après ALPHA) :
+**Symptôme BETA** (actif — priorité 1 désormais) :
 B ne voit aucune popup ni sonnerie lors du premier appel.
 
 **Branche** : `diagnostic/call-pending-expiry-obd`
@@ -155,23 +158,18 @@ FROM pg_proc WHERE proname='call_request_on_update';
 
 ## PROCHAINE ACTION
 
-**BUG A — CORRECTIF APPLIQUÉ** dans `calls.js` (commit à venir).
+**BUG A résolu — deux actions à faire en parallèle :**
 
-Deux changements :
-1. `_showSentBanner()` — setTimeout devient async → UPDATE status='expired' après 31s
-2. `_recoverPendingRequest()` ligne ~56 — UPDATE status='expired' sur ligne expirée au rechargement
+1. **Merge vers main** — ouvrir PR `diagnostic/call-pending-expiry-obd` → `main` — vérifier CI green 4/4
 
-**Test de validation requis (action utilisateur) :**
-```
-1. Exécuter le nettoyage SQL des orphelins avant test :
-   UPDATE call_requests SET status='expired' WHERE status='pending' AND expires_at < NOW();
-2. A appelle B (premier appel)
-3. Attendre 35 secondes
-4. A rappelle B (deuxième appel)
-5. Résultat attendu : appel émis sans erreur 23505
-```
-
-**Après test positif :** ouvrir PR vers main — CI doit rester green 4/4.
+2. **Investigation BUG B** — B ne reçoit pas la popup au premier appel  
+   Test requis (B écran allumé, app au premier plan, appel propre sans pending orphelin) :
+   ```js
+   // Console B — juste après appel de A :
+   ImmatBus.getJournal()
+   ```
+   - `CALL_RECEIVED` absent → rupture avant Bus (realtime ou _showIncomingPopup)
+   - `CALL_RECEIVED` présent + popup absente → rupture Bus → CallScreen (HYP-006)
 
 ---
 
