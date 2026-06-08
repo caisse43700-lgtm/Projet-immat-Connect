@@ -6,6 +6,7 @@
 
   function $(id){ return document.getElementById(id); }
   function safe(fn, fallback){ try{ return fn(); }catch(e){ return fallback; } }
+  function hasFn(obj, name){ return !!(obj && typeof obj[name] === 'function'); }
   function desc(el){
     if(!el) return '-';
     var id = el.id ? '#' + el.id : '';
@@ -42,6 +43,12 @@
     var y = Math.max(1, Math.min(w.innerHeight - 1, r.top + r.height / 2));
     return desc(document.elementFromPoint(x, y));
   }
+  function copyDataset(el){
+    var out = {};
+    if(!el || !el.dataset) return out;
+    for(var k in el.dataset){ if(Object.prototype.hasOwnProperty.call(el.dataset, k)) out[k] = el.dataset[k]; }
+    return out;
+  }
   function elState(id){
     var el = $(id);
     var css = cssOf(el);
@@ -55,7 +62,7 @@
       css: css,
       rect: rect,
       topElement: topAt(el),
-      dataset: el ? Object.assign({}, el.dataset || {}) : null,
+      dataset: el ? copyDataset(el) : null,
       text: el && visible ? String(el.textContent || '').trim().slice(0,240) : ''
     };
   }
@@ -65,7 +72,7 @@
       return {
         element: desc(el),
         text: String(el.textContent || '').trim().replace(/\s+/g,' ').slice(0,240),
-        dataset: Object.assign({}, el.dataset || {}),
+        dataset: copyDataset(el),
         rect: rectOf(el),
         topElement: topAt(el)
       };
@@ -85,46 +92,47 @@
     }
     return matches;
   }
+  function containsText(haystack, needle){ return String(haystack || '').indexOf(needle) !== -1; }
   function expectedActionsFromText(text){
     var t = String(text || '').toLowerCase();
     if(!t) return [];
-    if(t.includes('en attente') && (t.includes('reçu') || t.includes('entrant'))) return ['accept','refuse','message'];
-    if(t.includes('en attente') && (t.includes('émis') || t.includes('sortant'))) return ['cancel','message'];
-    if(t.includes('expired') || t.includes('expir')) return ['retry','message','close'];
-    if(t.includes('accept')) return ['message','close'];
-    if(t.includes('refus')) return ['message','close'];
+    if(containsText(t,'en attente') && (containsText(t,'reçu') || containsText(t,'entrant'))) return ['accept','refuse','message'];
+    if(containsText(t,'en attente') && (containsText(t,'émis') || containsText(t,'sortant'))) return ['cancel','message'];
+    if(containsText(t,'expired') || containsText(t,'expir')) return ['retry','message','close'];
+    if(containsText(t,'accept')) return ['message','close'];
+    if(containsText(t,'refus')) return ['message','close'];
     return [];
   }
   function buttonPresence(){
     var labels = ['Accepter','Refuser','Décrocher','Raccrocher','Annuler','Haut-parleur','Message','Je te rappelle','Écris-moi'];
     var buttons = Array.prototype.slice.call(document.querySelectorAll('button, [role="button"]'));
     return labels.map(function(label){
-      var found = buttons.filter(function(b){ return String(b.textContent || '').toLowerCase().includes(label.toLowerCase()); });
-      return { label: label, count: found.length, visibleCount: found.filter(function(b){ return !!rectOf(b) && rectOf(b).w > 0 && rectOf(b).h > 0; }).length };
+      var found = buttons.filter(function(b){ return containsText(String(b.textContent || '').toLowerCase(), label.toLowerCase()); });
+      return { label: label, count: found.length, visibleCount: found.filter(function(b){ var r = rectOf(b); return !!(r && r.w > 0 && r.h > 0); }).length };
     });
   }
   function moduleInfo(){
     var cm = w.CallManager;
     return {
       hasCallManager: !!cm,
-      hasOpenContactOptions: typeof cm?.openContactOptions === 'function',
-      hasContactByMessage: typeof cm?.contactByMessage === 'function',
-      hasContactByCall: typeof cm?.contactByCall === 'function',
-      hasRequestCall: typeof cm?.requestCall === 'function',
-      hasAcceptCall: typeof cm?.acceptCall === 'function',
-      hasRefuseCall: typeof cm?.refuseCall === 'function',
-      hasCancelCallRequest: typeof cm?.cancelCallRequest === 'function',
-      hasSubscribeIncomingCalls: typeof cm?.subscribeIncomingCalls === 'function',
-      hasLoadCallPreferences: typeof cm?.loadCallPreferences === 'function',
-      hasSetCallPreferences: typeof cm?.setCallPreferences === 'function',
-      hasLoadCallLog: typeof cm?.loadCallLog === 'function',
-      hasIsCallBlocked: typeof cm?.isCallBlocked === 'function',
-      hasGetRuntimeState: typeof cm?.getRuntimeState === 'function'
+      hasOpenContactOptions: hasFn(cm, 'openContactOptions'),
+      hasContactByMessage: hasFn(cm, 'contactByMessage'),
+      hasContactByCall: hasFn(cm, 'contactByCall'),
+      hasRequestCall: hasFn(cm, 'requestCall'),
+      hasAcceptCall: hasFn(cm, 'acceptCall'),
+      hasRefuseCall: hasFn(cm, 'refuseCall'),
+      hasCancelCallRequest: hasFn(cm, 'cancelCallRequest'),
+      hasSubscribeIncomingCalls: hasFn(cm, 'subscribeIncomingCalls'),
+      hasLoadCallPreferences: hasFn(cm, 'loadCallPreferences'),
+      hasSetCallPreferences: hasFn(cm, 'setCallPreferences'),
+      hasLoadCallLog: hasFn(cm, 'loadCallLog'),
+      hasIsCallBlocked: hasFn(cm, 'isCallBlocked'),
+      hasGetRuntimeState: hasFn(cm, 'getRuntimeState')
     };
   }
   function runtimeState(){
     var cm = w.CallManager;
-    if(cm && typeof cm.getRuntimeState === 'function'){
+    if(hasFn(cm, 'getRuntimeState')){
       return safe(function(){ return cm.getRuntimeState(); }, { available:false, error:'getRuntimeState threw' });
     }
     return { available:false, reason:'CallManager.getRuntimeState not exposed' };
@@ -138,6 +146,7 @@
   }
   function run(){
     var timeline = timelineCallText();
+    var structured = callEvents();
     return {
       at: Date.now(),
       build: 'calls-runtime-diagnostics-v1',
@@ -156,8 +165,8 @@
         callSentPlate: elState('callSentPlate')
       },
       visible: {
-        structuredCallEventsCount: callEvents().length,
-        structuredCallEvents: callEvents(),
+        structuredCallEventsCount: structured.length,
+        structuredCallEvents: structured,
         timelineCallTextsCount: timeline.length,
         timelineCallTexts: timeline.map(function(x){
           x.expectedActions = expectedActionsFromText(x.text);
