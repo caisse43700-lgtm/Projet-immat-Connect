@@ -111,6 +111,7 @@
       InteractionEngine: !!w.InteractionEngine,
       InteractionEngineGetRuntimeState: typeof w.InteractionEngine?.getRuntimeState === 'function',
       GuardianLoop: !!w.GuardianLoop,
+      GuardianLoopGetRuntimeState: typeof w.GuardianLoop?.getRuntimeState === 'function',
       AngeDialog: !!w.AngeDialog,
       journalCount: (typeof w.ImmatBus?.getJournal === 'function') ? w.ImmatBus.getJournal().length : null,
       appFns: {

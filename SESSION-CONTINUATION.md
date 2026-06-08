@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — commit 9a254a9
+**Dernière mise à jour** : 2026-06-08 — Phase 9 Guardian integration
 
 ---
 
@@ -16,8 +16,8 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
-Commit   : 9a254a9  (journal de continuation créé)
-CI       : GREEN sur c40adcf (Phase 7) — e154e43 (Phase 8) pending vérification
+Commit   : Phase 9 (voir tableau)
+CI       : GREEN sur c40adcf (Phase 7) — e154e43 (Phase 8) + Phase 9 pending vérification
 ```
 
 ---
@@ -52,12 +52,29 @@ Le résultat est trop grand pour être lu directement — extraire avec python3 
 | 5 | — | roadReport/assist/vehicleAlertQuick → InteractionEngine | `5b26eab` | green |
 | 7 | 7 — Audio | AudioManager + CallNotificationRuntime squelettes | `c40adcf` | green |
 | 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | pending |
+| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | Phase 9 commit | pending |
 
 ---
 
 ## PROCHAINES PHASES
 
-### Phase 9 — Guardian integration (roadmap)
+### Phase 10 — Mobile autotest expansion (prochain)
+
+**Objectif** : Valider l'organisme complet interaction via `core/mobile-autotest.js`.
+
+**Catégories de tests à ajouter** :
+- Messages : send/receive/reload, local delete, context badges
+- Calls : outgoing/incoming pending, accept/refuse/cancel, expired/missed, quick reply contextuel, audio blocked fallback, no ghost overlay
+- Help : create, accept, resolve, message link, map link, resolved/expired terminal
+- Reports : create, activity entry, message link, map link, treated/expired
+- Registry/OBD : ledger event created, diagnostics read-only, reconstruction safe
+- Ange/Guardian : Ange routes to owner, Guardian cites evidence, no auto unsafe action
+
+**Fichier concerné** : `core/mobile-autotest.js`
+
+---
+
+### Phase 9 — Guardian integration (COMPLÉTÉE)
 
 **Objectif** : Guardian utilise les evidence du ledger pour recommander des actions sécurité/confiance.
 

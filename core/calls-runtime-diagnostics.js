@@ -160,6 +160,13 @@
     }
     return { available:false, reason:'CallNotificationRuntime not loaded or getRuntimeState missing' };
   }
+  function guardianRuntime(){
+    var gl = w.GuardianLoop;
+    if(hasFn(gl, 'getRuntimeState')){
+      return safe(function(){ return gl.getRuntimeState(); }, { available:false, error:'getRuntimeState threw' });
+    }
+    return { available:false, reason:'GuardianLoop not loaded or getRuntimeState missing' };
+  }
   function storage(){
     return {
       blockedCount: safe(function(){ return JSON.parse(localStorage.getItem('ic_blocked') || '[]').length; }, null),
@@ -178,6 +185,7 @@
       registryRuntime: registryRuntime(),
       audioRuntime: audioRuntime(),
       notificationRuntime: notificationRuntime(),
+      guardianRuntime: guardianRuntime(),
       storage: storage(),
       dom: {
         callScreen: elState('callScreen'),
