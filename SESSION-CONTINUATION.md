@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — CI fix parse error guillemets typographiques
+**Dernière mise à jour** : 2026-06-08 — source_module/privacy_level dans IE events
 
 ---
 
@@ -16,34 +16,34 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : post-merge/residual-tasks
-Commit   : en attente de push (fix parse error)
-CI       : RED → fix appliqué, push en cours
+Commit   : en attente de push (source_module/privacy_level dans IE)
+CI       : GREEN sur b545b50 (tests + e2e)
 PR       : #260 — MERGED (squash 4912734 → main)
 ```
 
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : index.html (blockPlate)
-Tâche            : App.blockPlate() → InteractionEngine (résiduelle basse priorité)
-Fix              : ajout InteractionEngine.create({type:'BLOCK',...}) dans blockPlate()
-                   après ImmatOrganism.observe('BLOCK_APPLIED')
-                   Permet à HEURISTIC-001 du Guardian de détecter les blocages répétés.
-CI précédent     : GREEN sur f21e668 (tests + e2e-diagnostics)
+Fichiers touchés : core/interaction-engine.js
+Tâche            : source_module + privacy_level dans IE events (résiduelle basse priorité)
+Fix              : ajout de source_module et privacy_level comme champs optionnels
+                   dans l'objet interaction de create() — backward compatible (null si absent)
+                   Permet aux appelants de documenter le module source et le niveau de privacité.
+CI précédent     : GREEN sur b545b50 (tests + e2e)
 ```
 
 ## ACTION EN COURS
 
 ```
-Push index.html sur post-merge/residual-tasks.
+Push core/interaction-engine.js sur post-merge/residual-tasks.
 ```
 
 ## PROCHAINE ACTION UNIQUE
 
 ```
-Après CI green : dernière tâche résiduelle non-bloquée.
-  - source_module/privacy_level dans IE events (core/interaction-engine.js)
-  - Assets audio (bloqué par SW/cache — reporter)
+Toutes les tâches résiduelles non-bloquées sont terminées.
+  - Assets audio (bloqué par SW/cache — reporter jusqu'à audit stratégie SW)
+Vérifier CI green. Branche prête pour merge si souhaité.
 ```
 
 ## NE PAS REFAIRE
@@ -118,8 +118,8 @@ Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation g
 |---|---|---|
 | `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | `messages.js` realtime subscription |
 | Assets audio réels (src) | Basse | Bloqué par stratégie Service Worker/cache |
-| `App.blockPlate()` direct → InteractionEngine | Basse | `index.html` blocage direct |
-| `source_module`/`privacy_level` dans IE events | Basse | `core/interaction-engine.js` |
+| `App.blockPlate()` direct → InteractionEngine | ~~Basse~~ FAIT | `index.html` blocage direct |
+| `source_module`/`privacy_level` dans IE events | ~~Basse~~ FAIT | `core/interaction-engine.js` |
 
 ---
 
