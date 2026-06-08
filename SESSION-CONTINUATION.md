@@ -16,7 +16,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
-Commit   : Phase 9 (voir tableau)
+Commit   : 792f31f  (Phase 10 — dernier commit, roadmap complète)
 CI       : GREEN sur c40adcf (Phase 7) — Phases 8/9/10 pending vérification CI
 ```
 
@@ -30,7 +30,7 @@ CI       : GREEN sur c40adcf (Phase 7) — Phases 8/9/10 pending vérification C
 3. Si CI red → télécharger artifact obd-e2e-evidence
                 lire diagnostic-artifacts/playwright-output.log
                 corriger UNIQUEMENT la première vraie erreur
-4. Si CI green → continuer selon roadmap (Phase 9 ou Phase 10)
+4. Si CI green → roadmap complète. Traiter les tâches résiduelles si besoin (voir tableau "Tâches résiduelles connues")
 5. Toujours mettre à jour docs/SESSION-LOG.md après chaque correction
 ```
 
@@ -53,7 +53,7 @@ Le résultat est trop grand pour être lu directement — extraire avec python3 
 | 7 | 7 — Audio | AudioManager + CallNotificationRuntime squelettes | `c40adcf` | green |
 | 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | pending |
 | 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | `7ba25f3` | pending |
-| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | Phase 10 commit | pending |
+| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | `792f31f` | pending |
 
 ---
 
@@ -254,7 +254,7 @@ runs = re.findall(
 for r in runs[:5]: print(r)
 ```
 
-Chercher `e154e43` dans head_sha — conclusion doit être `"success"`.
+Chercher `792f31f` dans head_sha — conclusion doit être `"success"`.
 
 ---
 
@@ -263,7 +263,7 @@ Chercher `e154e43` dans head_sha — conclusion doit être `"success"`.
 | Situation | Action |
 |---|---|
 | CI inconnu | Ne pas coder. Inspecter CI. |
-| CI green | Continuer roadmap (Phase 9 ou 10) |
+| CI green | Roadmap complète. Traiter tâches résiduelles ou préparer merge. |
 | CI red | Télécharger obd-e2e-evidence → lire playwright-output.log → corriger première erreur uniquement |
 | Blocker inconnu | Documenter dans docs/SESSION-LOG.md avec template BLOCAGE |
 | Tentation de gros refactor | Stop. Correction ciblée uniquement. |
