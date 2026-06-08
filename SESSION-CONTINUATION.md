@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — CI green 578593d, toutes tâches résiduelles terminées
+**Dernière mise à jour** : 2026-06-08 — PR #268 mergée sur main (68f322b)
 
 ---
 
@@ -15,25 +15,24 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
-Branche  : post-merge/residual-tasks
-Commit   : 578593d — feat(ie): source_module + privacy_level dans IE events
-CI       : GREEN ✓ (3/3 workflows : Tests unitaires + E2E Playwright + E2E Diagnostics)
-PR       : #260 — MERGED (squash 4912734 → main)
+Branche  : main
+Commit   : 68f322b — PR #268 squash-mergée (corrections post-merge phases 0-10)
+CI       : GREEN ✓ sur post-merge/residual-tasks avant merge (3/3 workflows)
+PR       : #268 — MERGED (squash 9c39a30 → main 68f322b)
 ```
 
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : core/interaction-engine.js, SESSION-CONTINUATION.md
-Tâche            : source_module + privacy_level dans IE events (dernière résiduelle non-bloquée)
-Fix              : champs optionnels dans create() — backward compatible (null si absent)
-CI vérifié       : GREEN sur 578593d (vérifié après push)
+Merge PR #268 : corrections post-merge — CI preflight, IE wiring, navigation, SW
+Main est à jour avec toutes les phases 0-10 + corrections résiduelles.
+CI vérifié sur SHA exact 9c39a30 avant merge (3/3 green).
 ```
 
 ## ACTION EN COURS
 
 ```
-Aucune. Toutes les tâches non-bloquées sont terminées et CI est green.
+Aucune.
 ```
 
 ## PROCHAINE ACTION UNIQUE
