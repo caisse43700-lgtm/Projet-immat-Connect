@@ -17,7 +17,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : main
 Commit   : 68f322b — PR #268 squash-mergée (corrections post-merge phases 0-10)
-CI       : GREEN ✓ sur post-merge/residual-tasks avant merge (3/3 workflows)
+CI       : GREEN ✓ sur main 68f322b (4/4 workflows : unitaires + E2E + diagnostics + Pages)
 PR       : #268 — MERGED (squash 9c39a30 → main 68f322b)
 ```
 
@@ -45,10 +45,10 @@ Ne pas implémenter sans décision explicite sur la stratégie SW.
 ## NE PAS REFAIRE
 
 ```
-- Ne pas recréer de PR depuis feature-calls-runtime-diagnostics (déjà mergée)
+- Ne pas recréer de PR depuis feature-calls-runtime-diagnostics (mergée → main via #260)
+- Ne pas recréer de PR depuis post-merge/residual-tasks (mergée → main via #268)
 - Ne pas modifier main directement
 - Ne pas toucher à guardian-loop.js sans preuve de régression CI
-- Ne pas refaire le rebase main→branche (déjà fait dans a00d165)
 - Les frictions P1 navigation (FRI-001/002/003, FLOW-005) sont toutes déjà résolues
 ```
 
@@ -57,16 +57,15 @@ Ne pas implémenter sans décision explicite sur la stratégie SW.
 ## PROTOCOLE OBLIGATOIRE AVANT TOUT CODE
 
 ```
-1. Inspecter CI sur la branche feature-calls-runtime-diagnostics
+1. Inspecter CI sur main (branch: main)
 2. Si CI unknown ou pending → attendre ou déclencher
-3. Si CI red → télécharger artifact obd-e2e-evidence
-                lire diagnostic-artifacts/playwright-output.log
+3. Si CI red → lire logs via mcp__github__get_job_logs (return_content: true)
                 corriger UNIQUEMENT la première vraie erreur
-4. Si CI green → roadmap complète. Traiter les tâches résiduelles si besoin (voir tableau "Tâches résiduelles connues")
-5. Toujours mettre à jour docs/SESSION-LOG.md après chaque correction
+4. Si CI green → consulter ROADMAP-NEXT.md pour les prochaines priorités
+5. Toujours mettre à jour SESSION-CONTINUATION.md dans le même commit que le code
 ```
 
-Outil CI : `mcp__github__actions_list` avec `method: list_workflow_runs` + `branch: feature-calls-runtime-diagnostics`.
+Outil CI : `mcp__github__actions_list` avec `method: list_workflow_runs` + `branch: main`.
 Le résultat est trop grand pour être lu directement — extraire avec python3 + regex.
 
 ---
@@ -307,7 +306,8 @@ Chercher `792f31f` dans head_sha — conclusion doit être `"success"`.
 ## DOCS DE RÉFÉRENCE ARCHITECTURALE
 
 ```
-docs/MASTER_IMPLEMENTATION_ROADMAP.md    → roadmap complet phases 0-10
+docs/ROADMAP-NEXT.md                     → prochaines priorités (dette / améliorations / features)
+docs/MASTER_IMPLEMENTATION_ROADMAP.md    → roadmap complet phases 0-10 (COMPLÉTÉ)
 docs/INTERACTION_ORGANISM_MAP.md         → qui possède quoi
 docs/INTERACTION_LEDGER_REGISTRY.md      → forme événements + câblage
 docs/CALL_SOURCE_OF_TRUTH.md             → états appel documentés
