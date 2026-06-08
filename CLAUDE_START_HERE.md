@@ -35,6 +35,22 @@ Trigger or inspect CI before coding anything else.
 
 ---
 
+## Decision matrix
+
+Use this before editing code.
+
+| Situation | Action |
+|---|---|
+| CI status is unknown | Do not code. Trigger or inspect CI first. |
+| CI is red and artifact exists | Read `diagnostic-artifacts/playwright-output.log`; fix first real error only. |
+| CI is red and no artifact exists | Inspect workflow job logs; document missing artifact in `SESSION-LOG.md`. |
+| `Illegal return statement` is still present | Verify `guardian-loop.js` guard shape; fix only that. |
+| `Illegal return statement` disappeared | Do not touch `guardian-loop.js`; move to next first error. |
+| CI is green | Start `calls.js` audit and complete `CALL_SOURCE_OF_TRUTH.md`. |
+| Unsure what to do | Stop and update `SESSION-LOG.md` with blocker/evidence; do not guess. |
+
+---
+
 ## Next 3 actions only
 
 1. Inspect or trigger the latest GitHub Actions run for `feature-calls-runtime-diagnostics`.
@@ -65,6 +81,24 @@ if (!window.__GuardianLoopV1) {
 7. Read `diagnostic-artifacts/playwright-output.log`.
 8. Fix only the first real error.
 9. Record every blocker in `docs/SESSION-LOG.md`.
+
+---
+
+## Validation checklist after any fix
+
+After a fix, verify and document:
+
+```text
+1. What was the first real error?
+2. What file was changed?
+3. Why is the fix minimal?
+4. What risk remains?
+5. Was CI rerun?
+6. Is there a new artifact?
+7. What is the next first error, if any?
+```
+
+Append the answer to `docs/SESSION-LOG.md`.
 
 ---
 
