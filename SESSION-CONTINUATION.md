@@ -97,7 +97,7 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 
 | ID | Énoncé | Preuve manquante | Confiance |
 |---|---|---|---|
-| **HYP-013** | **Index UNIQUE `(requester_id, receiver_id) WHERE status='pending'`** — bloque si ligne non nettoyée | `SELECT indexname, indexdef FROM pg_indexes WHERE tablename='call_requests'` | **95 %** |
+| **HYP-013** | **`call_requests_unique_pending_idx` — index UNIQUE confirmé — clause WHERE inconnue** | `SELECT indexdef FROM pg_indexes WHERE indexname='call_requests_unique_pending_idx'` | **CONFIRMÉ index existe — WHERE clause requise** |
 | HYP-003b | `call_request_on_update()` nettoie / expire les pending | Lire corps de `call_request_on_update()` | 65 % |
 | HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` peut se rompre silencieusement | `ImmatBus.getJournal()` côté B | 40 % |
 
@@ -128,43 +128,44 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 | SQL P1 : 0 lignes `pending` expirées | Supabase SQL Editor — 2026-06-08 | HYP-001 DB affaiblie |
 | SQL P2 : 5 contraintes, zéro UNIQUE | Supabase SQL Editor — 2026-06-08 | HYP-002 infirmée |
 | SQL P3 : 2 triggers (`trg_call_req_on_insert`, `trg_call_req_on_update`) | Supabase SQL Editor — 2026-06-08 | Trigger existe — résultat pg_indexes non capturé |
-| **SQL P4 : `call_request_on_insert()` = spam + cooldown seulement — zéro 23505** | Supabase SQL Editor — 2026-06-08 | **HYP-011/012 infirmées — HYP-013 seule cause restante** |
+| SQL P4 : `call_request_on_insert()` = spam + cooldown seulement — zéro 23505 | Supabase SQL Editor — 2026-06-08 | HYP-011/012 infirmées |
+| **SQL P5 : `call_requests_unique_pending_idx` — index UNIQUE confirmé** | Supabase SQL Editor — 2026-06-08 | **HYP-013 confirmée — WHERE clause non encore lue** |
 
 ### Dernier test réalisé
 
-**SQL Priorité 4** — 2026-06-08 — Corps de `call_request_on_insert()` lu intégralement — ne lève que `check_violation`
+**SQL Priorité 5** — 2026-06-08 — 5 index sur `call_requests` — `call_requests_unique_pending_idx` = UNIQUE — définition tronquée
 
 ### Prochain test — PRIORITÉ ABSOLUE
 
 ```sql
--- Supabase SQL Editor — SQL Priorité 5 (séparé — une seule requête)
-SELECT indexname, indexdef
+-- Supabase SQL Editor — SQL Priorité 6 (une seule requête)
+SELECT indexdef
 FROM pg_indexes
-WHERE tablename = 'call_requests';
+WHERE indexname = 'call_requests_unique_pending_idx';
 ```
 
-**Résultat attendu** : liste complète des index sur `call_requests` — révèle l'index UNIQUE source du 23505  
-**Index UNIQUE sans filtre `status`** → HYP-013 confirmée variante A → correctif : ajouter `WHERE status='pending'`  
-**Index UNIQUE avec `WHERE status='pending'` sans `expires_at`** → HYP-013 confirmée variante B → correctif : ajouter filtre `expires_at`  
-**Aucun index UNIQUE** → chercher dans les Edge Functions ou RLS
+**Résultat attendu** : définition complète de l'index — révèle exactement les colonnes et le WHERE clause  
+**Sans WHERE clause** → bloque toute paire indéfiniment → correctif : ajouter `WHERE status='pending'`  
+**`WHERE status='pending'` sans `expires_at`** → bloque tant que ligne reste pending → correctif : ajouter nettoyage à l'expiration  
+**`WHERE status='pending' AND expires_at > X`** → impossible (now() non immutable) → autre piste
 
 ---
 
 ## PROCHAINE ACTION
 
-**SQL Priorité 5** — une seule requête, séparée (accès utilisateur requis) :
+**SQL Priorité 6** — une seule requête, séparée (accès utilisateur requis) :
 
 ```sql
-SELECT indexname, indexdef
+SELECT indexdef
 FROM pg_indexes
-WHERE tablename = 'call_requests';
+WHERE indexname = 'call_requests_unique_pending_idx';
 ```
 
-**Aucune modification de code avant résultat SQL Priorité 5.**
+**Aucune modification de code avant résultat SQL Priorité 6.**
 
 Après résultat :
-- Index UNIQUE trouvé → définition exacte révèle variante A ou B → correctif proposé immédiatement
-- Aucun index UNIQUE → chercher dans les Edge Functions ou RLS Supabase
+- Définition sans `WHERE status` → correctif : recréer l'index avec `WHERE status='pending'`
+- Définition avec `WHERE status='pending'` → correctif : ajouter nettoyage DB à l'expiration (UPDATE ou Supabase cron)
 
 ---
 

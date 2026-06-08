@@ -437,7 +437,7 @@ $function$
 
 ---
 
-### TEST-05 — SQL : index UNIQUE sur `call_requests` ← PRIORITÉ ABSOLUE
+### TEST-05 — SQL : index UNIQUE sur `call_requests` ✅ EXÉCUTÉ
 
 ```sql
 SELECT indexname, indexdef
@@ -445,9 +445,29 @@ FROM pg_indexes
 WHERE tablename = 'call_requests';
 ```
 
-**Index UNIQUE sans `WHERE status='pending'`** → HYP-013 variante A → correctif : ajouter clause WHERE.  
-**Index UNIQUE avec `WHERE status='pending'` sans `expires_at`** → HYP-013 variante B → correctif : ajouter filtre `expires_at > now()`.  
-**Aucun index UNIQUE** → HYP-013 infirmée → chercher dans Edge Functions / RLS.
+**Résultat (2026-06-08) — 5 index :**
+- `call_requests_pkey` → UNIQUE (PRIMARY KEY)
+- **`call_requests_unique_pending_idx` → UNIQUE ← SOURCE DU 23505**
+- `call_requests_receiver_pending_idx` → INDEX (non unique)
+- `call_requests_requester_recent_idx` → INDEX (non unique)
+- `call_requests_expires_idx` → INDEX (non unique)
+
+**HYP-013 CONFIRMÉE** : l'index UNIQUE `call_requests_unique_pending_idx` existe.  
+Définition tronquée — WHERE clause inconnue → TEST-06 requis.
+
+---
+
+### TEST-06 — SQL : définition complète de `call_requests_unique_pending_idx` ← PRIORITÉ ABSOLUE
+
+```sql
+SELECT indexdef
+FROM pg_indexes
+WHERE indexname = 'call_requests_unique_pending_idx';
+```
+
+**Sans WHERE clause** → index sur toute la table → bloque toute paire définitivement → correctif : recréer avec `WHERE status='pending'`.  
+**`WHERE status='pending'`** → bloque tant que ligne non nettoyée → correctif : UPDATE status lors de l'expiration.  
+**Autre filtre** → analyser.
 
 ---
 
@@ -554,11 +574,10 @@ Branche          : diagnostic/call-pending-expiry-obd
 BUG A — Blocage 23505
   SQL P1 (EXÉCUTÉ) : 0 lignes pending expirées → HYP-001 DB affaiblie
   SQL P2 (EXÉCUTÉ) : 5 contraintes, zéro UNIQUE → HYP-002 infirmée
-  SQL P3 (EXÉCUTÉ) : 2 triggers trouvés — résultat pg_indexes non capturé
+  SQL P3 (EXÉCUTÉ) : 2 triggers trouvés — pg_indexes résultat non capturé
   SQL P4 (EXÉCUTÉ) : call_request_on_insert() = spam + cooldown seulement
-                     → HYP-011 INFIRMÉE, HYP-012 INFIRMÉE
-  Hypothèse active : HYP-013 — index UNIQUE dans pg_indexes (95 %)
-  Preuve manquante : TEST-05 — pg_indexes séparé
+  SQL P5 (EXÉCUTÉ) : call_requests_unique_pending_idx = UNIQUE — HYP-013 CONFIRMÉE
+  Preuve manquante : TEST-06 — WHERE clause complète de l'index (SQL P6)
 
 BUG B — B ne reçoit rien
   Hypothèse active : indéterminée — HYP-006 / HYP-007 / HYP-008 ouvertes
