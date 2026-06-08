@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — source_module/privacy_level dans IE events
+**Dernière mise à jour** : 2026-06-08 — CI green 578593d, toutes tâches résiduelles terminées
 
 ---
 
@@ -16,34 +16,31 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : post-merge/residual-tasks
-Commit   : en attente de push (source_module/privacy_level dans IE)
-CI       : GREEN sur b545b50 (tests + e2e)
+Commit   : 578593d — feat(ie): source_module + privacy_level dans IE events
+CI       : GREEN ✓ (3/3 workflows : Tests unitaires + E2E Playwright + E2E Diagnostics)
 PR       : #260 — MERGED (squash 4912734 → main)
 ```
 
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : core/interaction-engine.js
-Tâche            : source_module + privacy_level dans IE events (résiduelle basse priorité)
-Fix              : ajout de source_module et privacy_level comme champs optionnels
-                   dans l'objet interaction de create() — backward compatible (null si absent)
-                   Permet aux appelants de documenter le module source et le niveau de privacité.
-CI précédent     : GREEN sur b545b50 (tests + e2e)
+Fichiers touchés : core/interaction-engine.js, SESSION-CONTINUATION.md
+Tâche            : source_module + privacy_level dans IE events (dernière résiduelle non-bloquée)
+Fix              : champs optionnels dans create() — backward compatible (null si absent)
+CI vérifié       : GREEN sur 578593d (vérifié après push)
 ```
 
 ## ACTION EN COURS
 
 ```
-Push core/interaction-engine.js sur post-merge/residual-tasks.
+Aucune. Toutes les tâches non-bloquées sont terminées et CI est green.
 ```
 
 ## PROCHAINE ACTION UNIQUE
 
 ```
-Toutes les tâches résiduelles non-bloquées sont terminées.
-  - Assets audio (bloqué par SW/cache — reporter jusqu'à audit stratégie SW)
-Vérifier CI green. Branche prête pour merge si souhaité.
+Assets audio (src) — bloqué en attente d'audit stratégie Service Worker/cache.
+Ne pas implémenter sans décision explicite sur la stratégie SW.
 ```
 
 ## NE PAS REFAIRE
@@ -116,10 +113,10 @@ Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation g
 
 | Tâche | Priorité | Fichier |
 |---|---|---|
-| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | `messages.js` realtime subscription |
-| Assets audio réels (src) | Basse | Bloqué par stratégie Service Worker/cache |
+| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | ~~Basse~~ FAIT | `messages.js` realtime subscription |
 | `App.blockPlate()` direct → InteractionEngine | ~~Basse~~ FAIT | `index.html` blocage direct |
 | `source_module`/`privacy_level` dans IE events | ~~Basse~~ FAIT | `core/interaction-engine.js` |
+| Assets audio réels (src) | **BLOQUÉ** | En attente stratégie Service Worker/cache |
 
 ---
 
