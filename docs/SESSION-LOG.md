@@ -511,6 +511,74 @@ Push en attente.
 
 ---
 
+## 2026-06-08 — Phase 8 : Ange integration
+
+### Contexte
+
+CI green sur Phase 7 (run 27145649337, commit c40adcf).
+Phase 8 : enrichir le contexte Ange + routage Activité/Carte + enregistrement suggestion.
+
+### Audit Ange préalable
+
+- `AngeDialog.send()` → Edge Function `immat-brain-dialog` avec snapshot
+- `AngeAction.execute()` → route vers Messages / Calls / Signaler / Safety
+- Manque : `call_mode`, `audio_blocked` dans snapshot ; `NAVIGATE_ACTIVITY`/`NAVIGATE_MAP` ; log suggestion
+
+### Fichiers modifiés
+
+- `index.html` — 3 changements ciblés dans AngeDialog.send() et AngeAction.execute()
+
+### Détail
+
+#### 1. Snapshot enrichi (AngeDialog.send)
+
+Ajout après le snapshot organism :
+```js
+try{
+  const _cs = window.CallScreen?.getState?.();
+  const _ar = window.AudioManager?.getRuntimeState?.();
+  snapshot.call_mode = _cs?.mode || 'idle';          // 'idle'|'incoming'|'outgoing'|'missed'|'accepted'
+  snapshot.audio_blocked = !!(_ar?.lastAudioBlocked); // true si autoplay bloqué
+  snapshot.sounds_enabled = window.S?.sounds !== false;
+}catch(e){}
+```
+
+L'Edge Function peut maintenant adapter la suggestion Ange selon l'état d'appel et audio.
+
+#### 2. ANGE_SUGGESTION enregistré dans InteractionEngine
+
+Après `renderResponse(data)`, avant sauvegarde historique :
+```js
+InteractionEngine?.create?.({type:'ANGE_SUGGESTION', initiator, payload:{query, panel, options_count}, status:'resolved'})
+```
+
+Permet à OBD de compter les suggestions et à Guardian de citer les échanges Ange comme evidence.
+
+#### 3. NAVIGATE_ACTIVITY + NAVIGATE_MAP dans execute()
+
+2 nouveaux types d'action dans `AngeAction.execute()` :
+- `NAVIGATE_ACTIVITY` → `App.navActivite()`
+- `NAVIGATE_MAP` → `App.navMap()`
+
+Ange peut maintenant dire "Voir dans Activité" et le bouton route correctement.
+
+### RISQUE
+
+Low. Tous les ajouts sont non-bloquants (try/catch). Les nouveaux types d'action sont inoffensifs si App non initialisé.
+Snapshot enrichi est additionnel — ne casse pas le schéma Edge Function.
+
+### STATUT CI
+
+Push en attente.
+
+### PROCHAINE ACTION
+
+1. Push + attendre CI.
+2. Si vert : Phase 9 (Guardian integration) ou Phase 10 (Mobile autotest expansion).
+3. Si rouge : artifact + playwright-output.log.
+
+---
+
 # Blocker template
 
 When blocked, append a section with:

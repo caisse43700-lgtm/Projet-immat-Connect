@@ -2184,6 +2184,7 @@ const AngeDialog={
       const _spd=S.lastSpeed||0;
       const _spdCat=_spd>90?'rapide':_spd>30?'normale':_spd>0?'lente':'arrêt';
       try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed_cat:_spdCat,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
+      try{const _cs=window.CallScreen?.getState?.();const _ar=window.AudioManager?.getRuntimeState?.();snapshot.call_mode=_cs?.mode||'idle';snapshot.audio_blocked=!!(_ar?.lastAudioBlocked);snapshot.sounds_enabled=window.S?.sounds!==false;}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
@@ -2196,6 +2197,7 @@ const AngeDialog={
       if(error)throw error;
       try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',_src:'ImmatConnect/ange'})}catch(e){}
       this.renderResponse(data);
+      try{window.InteractionEngine?.create?.({type:'ANGE_SUGGESTION',initiator:window.S?.profile?.owner_plate||'',payload:{query:msg.slice(0,200),panel:S.panel||'GENERAL',options_count:(data?.options||[]).length},status:'resolved'});}catch(e){}
       // Sauvegarder l'échange dans l'historique de session
       try{
         const _respTxt=(data.juste||data.sources||'').slice(0,400);
@@ -2324,6 +2326,10 @@ const AngeAction = {
         window.ImmatMessages?.setTrust?.(target,'TRUSTED');
       } else if(type==='BLOCK'){
         window.App?.blockPlate?.(target);
+      } else if(type==='NAVIGATE_ACTIVITY'){
+        window.App?.navActivite?.();
+      } else if(type==='NAVIGATE_MAP'){
+        window.App?.navMap?.();
       }
       try{ window.ImmatOrganism?.observe?.('ANGE_ACTION_EXECUTED',{type,hasTarget:!!target,_src:'ImmatConnect/ange/AngeAction'}); }catch(e){}
       // Phase 1 : enregistrement dans l'Interaction Engine (INV-OBD-001)
