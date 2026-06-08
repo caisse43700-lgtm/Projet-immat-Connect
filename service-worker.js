@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §18 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v8';
+const CACHE_NAME  = 'immatconnect-pro-v9';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien
@@ -22,6 +22,7 @@ const STATIC_CACHE = [
   './core/immatOrganism.js',
   './core/interaction-engine.js',
   './core/guardian-loop.js',
+  './core/messages-runtime-diagnostics.js',
   './core/obdSession.js',
   './core/obdGateway.js',
   './core/aiController.js',
