@@ -78,19 +78,29 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 
 > **Implication** : l'erreur `23505` vient d'un **index UNIQUE** (non visible dans `pg_constraint`) ou d'un **trigger** levant `RAISE EXCEPTION ERRCODE='23505'`. Le commentaire `calls.js` ligne 13 : *"garantis par triggers DB (backend)"*.
 
-### Ouvertes — SQL Priorité 3 requis
+### Confirmé — SQL Priorité 3 exécuté
+
+| ID | Énoncé | Preuve | Statut |
+|---|---|---|---|
+| HYP-010 | Index UNIQUE hors contrainte | SQL P3 : pg_indexes — aucun index UNIQUE distinct | **INFIRMÉ** |
+| **HYP-011** | **Trigger BEFORE INSERT lève `RAISE EXCEPTION ERRCODE='23505'`** | SQL P3 : `trg_call_req_on_insert` → `call_request_on_insert()` | **CONFIRMÉ** |
+
+> **Source du 23505 identifiée** : trigger `trg_call_req_on_insert` appelle `call_request_on_insert()`. Cette fonction PL/pgSQL implémente le contrôle d'unicité et lève l'exception. Son corps est la clé du diagnostic.
+
+### Ouvertes — SQL Priorité 4 requis
 
 | ID | Énoncé | Preuve manquante | Confiance |
 |---|---|---|---|
-| **HYP-010** | **Index UNIQUE sur `call_requests` (hors contrainte)** — filtre inconnu | `SELECT indexname, indexdef FROM pg_indexes WHERE tablename='call_requests'` | **85 %** |
-| **HYP-011** | **Trigger BEFORE INSERT lève `RAISE EXCEPTION ERRCODE='23505'`** | `SELECT trigger_name, action_statement FROM information_schema.triggers WHERE event_object_table='call_requests'` | **75 %** |
-| HYP-003b | Mécanisme DB nettoie les pending expirés — expliquerait 0 lignes SQL P1 | Supabase Dashboard → Cron Jobs | 65 % |
+| **HYP-012** | **`call_request_on_insert()` vérifie l'unicité sans filtre `expires_at` — bloque après expiration** | Lire le corps de la fonction | **90 %** |
+| HYP-003b | `call_request_on_update()` met à jour `status='expired'` — expliquerait 0 lignes SQL P1 | Lire le corps de `call_request_on_update()` | 65 % |
 | HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` peut se rompre silencieusement | `ImmatBus.getJournal()` côté B | 40 % |
 
 ### Infirmées (conservées avec raison)
 
 | ID | Énoncé | Raison |
 |---|---|---|
+| HYP-002 | Contrainte UNIQUE dans `pg_constraint` | SQL P2 : zéro UNIQUE constraint |
+| HYP-010 | Index UNIQUE hors contrainte | SQL P3 : pg_indexes — aucun index UNIQUE distinct |
 | HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` + OBD `myPlate=BE-521-MM` correct — non définitive |
 | HYP-005 | Realtime cassé côté B | OBD `realtimeSubscribed=true` — prouve création du channel, pas réception de l'événement |
 | "Même téléphone / compte" | — | Éliminé : test refait avec deux téléphones, deux comptes, deux plaques |
@@ -105,52 +115,46 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 |---|---|---|
 | `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
 | `"Appel émis · expired"` + `"Appel reçu · expired"` dans l'historique | Observation UI | HYP-004 affaiblie |
-| Deuxième appel → erreur `23505` | Observation UI | Fait observé — source : index UNIQUE ou trigger (HYP-010/011) |
+| Deuxième appel → erreur `23505` | Observation UI | Source : trigger `call_request_on_insert()` (HYP-011 confirmée) |
 | Aucun `UPDATE status='expired'` dans `calls.js` | Analyse statique du code | HYP-001 confirmé côté client |
-| SQL Priorité 1 : 0 lignes `pending` expirées | Supabase SQL Editor — 2026-06-08 | HYP-001 DB affaiblie |
-| **SQL Priorité 2 : 5 contraintes, zéro UNIQUE** | Supabase SQL Editor — 2026-06-08 | **HYP-002 infirmée (no UNIQUE constraint) — HYP-010/011 ouvertes** |
+| SQL P1 : 0 lignes `pending` expirées | Supabase SQL Editor — 2026-06-08 | HYP-001 DB affaiblie — HYP-003b ouverte |
+| SQL P2 : 5 contraintes, zéro UNIQUE | Supabase SQL Editor — 2026-06-08 | HYP-002 infirmée |
+| **SQL P3 : 2 triggers — `trg_call_req_on_insert` → `call_request_on_insert()`** | Supabase SQL Editor — 2026-06-08 | **HYP-011 confirmée — source du 23505 identifiée** |
 
 ### Dernier test réalisé
 
-**SQL Priorité 2** — 2026-06-08 — Résultat : **5 contraintes** (PK + 2 FK + 2 CHECK) — **aucune UNIQUE**
+**SQL Priorité 3** — 2026-06-08 — Résultat : **2 triggers** (`trg_call_req_on_insert` + `trg_call_req_on_update`) — HYP-011 confirmée
 
 ### Prochain test — PRIORITÉ ABSOLUE
 
 ```sql
--- Supabase SQL Editor — SQL Priorité 2
-SELECT conname, pg_get_constraintdef(oid)
-FROM pg_constraint
-WHERE conrelid = 'call_requests'::regclass;
+-- Supabase SQL Editor — SQL Priorité 4
+SELECT pg_get_functiondef(oid)
+FROM pg_proc
+WHERE proname = 'call_request_on_insert';
 ```
 
-**Résultat attendu** : définition exacte de la contrainte unique sur `call_requests`  
-**Si la contrainte ne filtre pas `status`** → HYP-002 confirmée → correctif ciblé à proposer  
-**Si la contrainte filtre `status='pending'`** → HYP-002 infirmée → investigation HYP-003b (cron/trigger)
+**Résultat attendu** : corps complet de la fonction trigger — révèle la condition d'unicité exacte  
+**Si filtre sans `expires_at`** → HYP-012 confirmée → correctif minimal proposé immédiatement  
+**Si filtre inclut `expires_at`** → HYP-012 infirmée → chercher ailleurs
 
 ---
 
 ## PROCHAINE ACTION
 
-**SQL Priorité 3** — exécuter dans Supabase SQL Editor (accès utilisateur requis) :
+**SQL Priorité 4** — lire le corps de la fonction trigger (accès utilisateur requis) :
 
 ```sql
--- Recherche index UNIQUE (hors contrainte)
-SELECT indexname, indexdef
-FROM pg_indexes
-WHERE tablename = 'call_requests';
-
--- Recherche triggers sur call_requests
-SELECT trigger_name, event_manipulation, action_statement
-FROM information_schema.triggers
-WHERE event_object_table = 'call_requests';
+SELECT pg_get_functiondef(oid)
+FROM pg_proc
+WHERE proname = 'call_request_on_insert';
 ```
 
-**Aucune modification de code avant résultat SQL Priorité 3.**
+**Aucune modification de code avant résultat SQL Priorité 4.**
 
 Après résultat :
-- Si index UNIQUE trouvé sans filtre `status`/`expires_at` → source du 23505 identifiée → correctif minimal proposé
-- Si trigger BEFORE INSERT trouvé → lire `action_statement` pour comprendre la logique anti-doublon
-- Si aucun index ni trigger → chercher dans les Edge Functions Supabase
+- Si filtre sans `expires_at` → HYP-012 confirmée → correctif ciblé proposé immédiatement
+- Si filtre avec `expires_at` → HYP-012 infirmée → lire `call_request_on_update()` pour comprendre HYP-003b
 
 ---
 

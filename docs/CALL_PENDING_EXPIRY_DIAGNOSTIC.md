@@ -345,7 +345,7 @@ HYP-002 infirmée dans sa formulation originale. Source du 23505 : index UNIQUE 
 
 ---
 
-### TEST-03 — SQL : index UNIQUE et triggers ← PRIORITÉ ABSOLUE
+### TEST-03 — SQL : index UNIQUE et triggers ✅ EXÉCUTÉ
 
 ```sql
 -- Index UNIQUE (hors contrainte formelle)
@@ -359,8 +359,26 @@ FROM information_schema.triggers
 WHERE event_object_table = 'call_requests';
 ```
 
-**Index UNIQUE sans filtre `status`/`expires_at`** → HYP-010 confirmée → correctif : ajouter clause `WHERE`.  
-**Trigger vérifiant unicité** → HYP-011 confirmée → lire `action_statement` pour identifier le filtre manquant.
+**Résultat (2026-06-08) :**
+- Index UNIQUE : aucun distinct trouvé → HYP-010 infirmée
+- Triggers : 2 triggers trouvés
+  - `trg_call_req_on_insert` — INSERT — `EXECUTE FUNCTION call_request_on_insert()`
+  - `trg_call_req_on_update` — UPDATE — `EXECUTE FUNCTION call_request_on_update()`
+
+**HYP-011 confirmée.** Source du 23505 : `call_request_on_insert()`.
+
+---
+
+### TEST-04 — SQL : corps de `call_request_on_insert()` ← PRIORITÉ ABSOLUE
+
+```sql
+SELECT pg_get_functiondef(oid)
+FROM pg_proc
+WHERE proname = 'call_request_on_insert';
+```
+
+**Corps sans filtre `expires_at`** → HYP-012 confirmée → correctif ciblé proposé.  
+**Corps avec filtre `expires_at`** → HYP-012 infirmée → lire `call_request_on_update()`.
 
 ---
 
@@ -467,9 +485,10 @@ Branche          : diagnostic/call-pending-expiry-obd
 BUG A — Blocage 23505
   SQL P1 (EXÉCUTÉ) : 0 lignes pending expirées → HYP-001 DB affaiblie
   SQL P2 (EXÉCUTÉ) : 5 contraintes, zéro UNIQUE → HYP-002 infirmée
-  Hypothèse active : HYP-010 (index UNIQUE hors pg_constraint, 85 %)
-                     HYP-011 (trigger BEFORE INSERT, 75 %)
-  Preuve manquante : SQL Priorité 3 — pg_indexes + triggers (TEST-03)
+  SQL P3 (EXÉCUTÉ) : 2 triggers — trg_call_req_on_insert → call_request_on_insert()
+  HYP-011 CONFIRMÉE : source du 23505 = call_request_on_insert()
+  Hypothèse active : HYP-012 — filtre de la fonction sans expires_at (90 %)
+  Preuve manquante : corps de call_request_on_insert() (TEST-04)
 
 BUG B — B ne reçoit rien
   Hypothèse active : indéterminée — HYP-006 / HYP-007 / HYP-008 ouvertes
@@ -478,7 +497,7 @@ BUG B — B ne reçoit rien
   Preuve manquante : ImmatBus.getJournal() côté B après appel propre
 
 Bloquant         : accès Supabase Dashboard (action utilisateur)
-Prochaine action : exécuter TEST-03 dans SQL Editor Supabase
-                   documenter le résultat ici
+Prochaine action : exécuter TEST-04 dans SQL Editor Supabase
+                   coller le corps complet de call_request_on_insert()
                    ne pas corriger avant
 ```
