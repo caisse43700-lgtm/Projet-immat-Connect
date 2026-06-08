@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — SQL Priorité 1 exécuté : 0 lignes → HYP-001 DB affaiblie, HYP-002 dominante
+**Dernière mise à jour** : 2026-06-08 — BUG A correctif appliqué dans `calls.js` — en attente de test terrain
 
 ---
 
@@ -155,21 +155,23 @@ FROM pg_proc WHERE proname='call_request_on_update';
 
 ## PROCHAINE ACTION
 
-**CAUSE RACINE CONFIRMÉE — BUG A.** Deux vérifications avant d'implémenter le correctif :
+**BUG A — CORRECTIF APPLIQUÉ** dans `calls.js` (commit à venir).
 
-```sql
--- 1. 'expired' autorisé par le CHECK constraint ?
-SELECT pg_get_constraintdef(oid)
-FROM pg_constraint
-WHERE conrelid='call_requests'::regclass AND conname='call_requests_status_check';
+Deux changements :
+1. `_showSentBanner()` — setTimeout devient async → UPDATE status='expired' après 31s
+2. `_recoverPendingRequest()` ligne ~56 — UPDATE status='expired' sur ligne expirée au rechargement
 
--- 2. call_request_on_update() — pas d'effet de bord ?
-SELECT pg_get_functiondef(oid)
-FROM pg_proc WHERE proname='call_request_on_update';
+**Test de validation requis (action utilisateur) :**
+```
+1. Exécuter le nettoyage SQL des orphelins avant test :
+   UPDATE call_requests SET status='expired' WHERE status='pending' AND expires_at < NOW();
+2. A appelle B (premier appel)
+3. Attendre 35 secondes
+4. A rappelle B (deuxième appel)
+5. Résultat attendu : appel émis sans erreur 23505
 ```
 
-Correctif prêt à implémenter dans `calls.js` — 2 changements ciblés (voir `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` § CORRECTIF PROPOSÉ).  
-**Aucun code modifié avant résultats des 2 requêtes ci-dessus.**
+**Après test positif :** ouvrir PR vers main — CI doit rester green 4/4.
 
 ---
 
