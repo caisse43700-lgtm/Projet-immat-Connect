@@ -6,7 +6,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Il doit refléter l'état exact du point de reprise.
 > Objectif : permettre à Claude ou à une autre IA de reprendre exactement au bon endroit.
 
-**Dernière mise à jour** : 2026-06-08 — BLOCAGE ACTIF `index.html` script inline #8
+**Dernière mise à jour** : 2026-06-08 — BLOCAGE ACTIF `index.html` script inline #8 + actions ChatGPT consignées
 
 ---
 
@@ -49,6 +49,31 @@ Investigation Claude via captures :
 Vérification ChatGPT :
 - fetch index.html confirme encore la présence de `sv===’false’`, `return’...`, `.join(‘’)` dans la zone callsRuntimeHtml/runtimeHtml ;
 - correction non confirmée sur la branche au moment de cette mise à jour.
+```
+
+---
+
+## ACTIONS EFFECTUÉES PAR CHATGPT APRÈS EXPIRATION SESSION CLAUDE
+
+```text
+1. Analyse des captures Claude :
+   - identification du nouveau statut réel : CI/merge historique invalidé par un nouveau parse error ;
+   - conclusion : ne plus dire “branche prête pour merge” tant que T05 actuel n'est pas corrigé.
+
+2. Vérification GitHub :
+   - lecture de SESSION-CONTINUATION.md existant ;
+   - constat : le fichier disait encore “CI green / prêt pour merge”, donc reprise dangereuse ;
+   - lecture de index.html lignes ~600-630 ;
+   - confirmation de guillemets typographiques dans callsRuntimeHtml/runtimeHtml : `sv===’false’`, `return’...`, `.join(‘’)`.
+
+3. Mise à jour du fichier de reprise :
+   - SESSION-CONTINUATION.md a été modifié pour remplacer l'ancien état “prêt pour merge” par “BLOCAGE ACTIF index.html script inline #8” ;
+   - commit de cette mise à jour : 82678e082300d3f004eb604d93f86c3a0554a133.
+
+4. Décision de sécurité :
+   - ChatGPT n'a pas corrigé index.html car le fetch complet du gros fichier est tronqué par l'outil ;
+   - correction directe jugée trop risquée sans accès fiable à la portion complète ;
+   - la cause est confirmée, mais la réparation doit être faite par l'agent ayant accès local complet ou un outil de patch ciblé fiable.
 ```
 
 ---
