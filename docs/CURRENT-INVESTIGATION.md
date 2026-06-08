@@ -24,23 +24,35 @@ Do not merge to `main` until CI is green and OBD calls runtime is stable.
 
 ---
 
-## Current blocker
+## Current operational status
+
+```text
+CI status after guardian-loop alignment:
+UNKNOWN until a new GitHub Actions run is inspected.
+
+Do not code from the old error alone.
+
+Immediate action:
+Inspect or trigger CI, then read the latest artifact/log.
+```
+
+## Historical blocker from run 27133682666
 
 `SyntaxError: Illegal return statement`
 
 ## Evidence
 
-- Last analyzed commit: `a8cbb1b722b308094bed41527856392ba7d2dd9f`
-- Last analyzed GitHub Actions run: `27133682666`
+- Last originally failed commit analyzed: `a8cbb1b722b308094bed41527856392ba7d2dd9f`
+- Last originally failed GitHub Actions run analyzed: `27133682666`
 - Issue: `#253 — OBD Incident: E2E failure a8cbb1b run 27133682666`
 - Artifact: `obd-e2e-evidence`
 - Log to inspect: `diagnostic-artifacts/playwright-output.log`
 
-## Current suspect
+## Historical suspect
 
 `core/guardian-loop.js`
 
-## Why
+## Why it failed
 
 The original file contained a top-level `return`:
 
@@ -50,7 +62,7 @@ if (window.__GuardianLoopV1) return;
 window.__GuardianLoopV1 = true;
 ```
 
-A `return` statement is illegal at top level in a classic browser script. This matches the observed Playwright error:
+A `return` statement is illegal at top level in a classic browser script. This matched the observed Playwright error:
 
 ```text
 SyntaxError: Illegal return statement
@@ -80,13 +92,15 @@ if (!window.__GuardianLoopV1) {
 }
 ```
 
+The branch was aligned to that single-guard style.
+
 Do not mix both styles.
 
 Do not wrap again with an extra IIFE if the file already uses the `if (!window.__GuardianLoopV1) { ... }` guard.
 
 Use one single guard strategy only. Prefer the existing Claude/T05 style if present, because it is already tied to the Playwright error and avoids redundant wrappers.
 
-## Accepted fix shape
+## Accepted final shape
 
 Preferred final shape:
 
@@ -98,18 +112,7 @@ if (!window.__GuardianLoopV1) {
 }
 ```
 
-Alternative valid shape if already applied:
-
-```js
-(function(){
-  'use strict';
-  if (window.__GuardianLoopV1) return;
-  window.__GuardianLoopV1 = true;
-  // existing GuardianLoop definition and export
-})();
-```
-
-Only one of these should be present.
+Only one guard strategy should be present.
 
 ## Do not modify yet
 
@@ -122,10 +125,10 @@ Only one of these should be present.
 
 ## Next action
 
-1. Ensure `core/guardian-loop.js` has exactly one guard strategy, preferably the T05 `if (!window.__GuardianLoopV1) { ... }` style if that commit is present.
-2. Rerun CI.
-3. Download the new `obd-e2e-evidence` artifact.
-4. Read `diagnostic-artifacts/playwright-output.log`.
+1. Inspect or trigger CI for `feature-calls-runtime-diagnostics`.
+2. If red, download the new `obd-e2e-evidence` artifact.
+3. Read `diagnostic-artifacts/playwright-output.log`.
+4. Confirm whether `Illegal return statement` disappeared.
 5. Fix only the first remaining real error.
 6. Update this file and `docs/SESSION-LOG.md`.
 
