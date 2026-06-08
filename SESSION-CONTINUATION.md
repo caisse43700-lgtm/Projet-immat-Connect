@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — BUG A résolu et validé terrain — BUG B investigation suivante
+**Dernière mise à jour** : 2026-06-08 — BUG A résolu et validé terrain — SESSION consolidée pour continuité inter-IA
 
 ---
 
@@ -35,9 +35,9 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
 ```
 Dépôt          : caisse43700-lgtm/Projet-immat-Connect
 Main           : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
-Branche active : diagnostic/call-pending-expiry-obd (commit 28d66f0)
-BUG A          : RÉSOLU — validé terrain 2026-06-08
-BUG B          : en investigation (B ne reçoit pas la popup au premier appel)
+Branche active : diagnostic/call-pending-expiry-obd (commit 0cf24f1)
+BUG A (INC-001): RÉSOLU — correctif appliqué + validé terrain 2026-06-08
+BUG B (INC-001): ACTIF — B ne reçoit pas la popup au premier appel
 ```
 
 ---
@@ -47,129 +47,153 @@ BUG B          : en investigation (B ne reçoit pas la popup au premier appel)
 ### INC-001 — Bug appel A → B
 
 **Symptôme ALPHA** ✅ RÉSOLU (2026-06-08) :
-~~Deuxième appel refusé avec erreur 23505~~  
-Fix : `calls.js` — UPDATE status='expired' à l'expiration — libère l'index UNIQUE `WHERE status='pending'`
+~~Deuxième appel de A vers B refusé avec erreur `23505` alors que les deux côtés affichent `expired`~~
+→ Cause racine identifiée, correctif appliqué, validé terrain.
 
-**Symptôme BETA** (actif — priorité 1 désormais) :
-B ne voit aucune popup ni sonnerie lors du premier appel.
+**Symptôme BETA** (actif — priorité 1) :
+B ne voit aucune popup ni sonnerie lors du premier appel. L'historique montre `"Appel reçu · expired"` — la ligne existe mais la popup live n'a pas été déclenchée.
 
 **Branche** : `diagnostic/call-pending-expiry-obd`
 
-**Annexes de diagnostic** (ne pas modifier directement — passer par ce fichier) :
-- `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — état consolidé : terrain + OBD + hypothèses
-- `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` — analyse statique du code (`calls.js`)
-- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue et analyse externe
+**Annexes** :
+- `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — diagnostic consolidé complet
+- `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` — analyse statique `calls.js`
+- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue externe
 
 ---
 
-## HYPOTHÈSES — INC-001
+## DIAGNOSTIC COMPLET — BUG A (RÉSOLU)
 
-### Confirmées côté client — infirmées côté DB par SQL Priorité 1
+### SQL exécutés — résultats — conclusions
 
-| ID | Énoncé | Preuve | Statut |
-|---|---|---|---|
-| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` | Analyse statique `calls.js` — zéro écriture DB à l'expiration | Confirmé côté client / **DB infirmée** : SQL Priorité 1 = 0 lignes pending expirées |
-| HYP-003 | Expiration UI ≠ expiration DB (côté logique client) | Corollaire de HYP-001 — analyse statique | Confirmé côté client seulement |
+| SQL | Requête | Résultat | Confirme | Infirme |
+|---|---|---|---|---|
+| P1 | `SELECT ... WHERE status='pending' AND expires_at < NOW()` | **0 lignes** | Pas de pending expiré au moment du test | HYP-001 côté DB affaiblie |
+| P2 | `SELECT conname, pg_get_constraintdef FROM pg_constraint` | **5 contraintes : PK + 2 FK + 2 CHECK — zéro UNIQUE** | Aucune contrainte UNIQUE | HYP-002 (contrainte UNIQUE sans filtre) |
+| P3 | `pg_indexes + triggers` (même bloc — résultat pg_indexes perdu) | **2 triggers : trg_call_req_on_insert + trg_call_req_on_update** | Triggers existent | — |
+| P4 | `pg_get_functiondef('call_request_on_insert')` | **Spam limit (≥3 en 10min) + cooldown (refused <5min) — zéro RAISE 23505** | Trigger ≠ source du 23505 | HYP-011, HYP-012 |
+| P5 | `SELECT indexname, indexdef FROM pg_indexes` (séparé) | **5 index dont `call_requests_unique_pending_idx` UNIQUE** | Index UNIQUE existe | — |
+| P6 | `SELECT indexdef WHERE indexname='call_requests_unique_pending_idx'` | **`UNIQUE (requester_id, receiver_id) WHERE (status = 'pending'::text)`** | **CAUSE RACINE CONFIRMÉE** | — |
+| P7 | `pg_get_functiondef('call_request_on_update')` | **Guard `old.status != 'pending'` + auto `responded_at` — compatible avec UPDATE→expired** | UPDATE pending→expired autorisé | Effets de bord incompatibles |
+| P8 | `pg_get_constraintdef('call_requests_status_check')` | **`status IN ('pending','accepted','refused','expired','cancelled')`** | 'expired' est un statut valide | Migration de schéma requise |
 
-> **Interprétation SQL Priorité 1** : 0 lignes `pending` expirées en DB au moment du test. Deux possibilités : (a) un mécanisme DB nettoie automatiquement les expirés, ou (b) les lignes ont été mises à jour par une autre voie. La contrainte 23505 reste le fait observé — son comportement exact dépend de sa définition.
+### Cause racine finale
 
-### Confirmé — SQL Priorité 2 exécuté
+```
+Index : CREATE UNIQUE INDEX call_requests_unique_pending_idx
+        ON call_requests (requester_id, receiver_id)
+        WHERE (status = 'pending')
 
-| ID | Énoncé | Preuve | Statut |
-|---|---|---|---|
-| HYP-002-REV | **Aucune contrainte UNIQUE dans `pg_constraint`** | SQL P2 : 5 contraintes — PRIMARY KEY + 2 FK + 2 CHECK — zéro UNIQUE | **CONFIRMÉ** |
+Bug   : aucun code ne fait jamais UPDATE status='expired' en DB
+        → la ligne reste 'pending' après l'expiration UI (30s)
+        → le second INSERT viole l'index → erreur 23505
+        → message affiché : "Une demande est déjà en attente de réponse"
+```
 
-> **Implication** : l'erreur `23505` vient d'un **index UNIQUE** (non visible dans `pg_constraint`) ou d'un **trigger** levant `RAISE EXCEPTION ERRCODE='23505'`. Le commentaire `calls.js` ligne 13 : *"garantis par triggers DB (backend)"*.
+### Correctif appliqué dans `calls.js`
 
-### Confirmé — SQL Priorité 3 exécuté
+**Changement 1 — `_showSentBanner()` (expiration côté A après 31s)**
+```js
+// AVANT
+setTimeout(() => {
+  if (_pendingCallId === requestId) _pendingCallId = null;
+}, 31000);
 
-| ID | Énoncé | Preuve | Statut |
-|---|---|---|---|
-| HYP-011 | Trigger BEFORE INSERT existe | SQL P3 : `trg_call_req_on_insert` → `call_request_on_insert()` | **CONFIRMÉ** |
+// APRÈS
+setTimeout(async () => {
+  if (_pendingCallId !== requestId) return;
+  _pendingCallId = null;
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', requestId)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+}, 31000);
+```
 
-### Confirmé — SQL Priorité 4 exécuté
+**Changement 2 — `_recoverPendingRequest()` (nettoyage au rechargement de page)**
+```js
+// AVANT (ligne 56)
+if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
 
-| ID | Énoncé | Preuve | Statut |
-|---|---|---|---|
-| **HYP-012** | **`call_request_on_insert()` ne lève PAS de 23505** | SQL P4 : corps complet lu — seuls codes levés : `check_violation` (spam_limit, cooldown_active) | **INFIRMÉ — trigger n'est pas la source du 23505** |
-| **HYP-013** | **Index UNIQUE dans `pg_indexes` (non vu car résultat P3 écrasé)** | `SELECT indexname, indexdef FROM pg_indexes WHERE tablename='call_requests'` séparé | **95 % — seule cause restante possible** |
+// APRÈS
+if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', data.id)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+  return;
+}
+```
 
-> **Raisonnement** : la fonction `call_request_on_insert()` ne fait que spam (>= 3 en 10 min) et cooldown (refused < 5 min). Elle retourne `new` sans lever 23505. La seule source restante d'un 23505 sur INSERT est un **index UNIQUE** créé avec `CREATE UNIQUE INDEX` — invisible dans `pg_constraint` mais visible dans `pg_indexes`. La requête pg_indexes de SQL P3 a été écrasée par le résultat triggers dans le SQL Editor Supabase.
+### Preuve de fonctionnement
+
+```
+Test terrain — 2026-06-08
+1. A appelle B (premier appel)
+2. Attente 35 secondes (expiration + marge)
+3. A rappelle B (deuxième appel)
+Résultat : SUCCÈS — pas d'erreur 23505 — appel émis normalement
+```
+
+---
+
+## HYPOTHÈSES — INC-001 BUG B (actif)
 
 ### Ouvertes
 
-| ID | Énoncé | Preuve manquante | Confiance |
+| ID | Énoncé | Test requis | Confiance |
 |---|---|---|---|
-| **HYP-013** | **`call_requests_unique_pending_idx` — index UNIQUE confirmé — clause WHERE inconnue** | `SELECT indexdef FROM pg_indexes WHERE indexname='call_requests_unique_pending_idx'` | **CONFIRMÉ index existe — WHERE clause requise** |
-| HYP-003b | `call_request_on_update()` nettoie / expire les pending | Lire corps de `call_request_on_update()` | 65 % |
-| HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` peut se rompre silencieusement | `ImmatBus.getJournal()` côté B | 40 % |
+| **HYP-006** | Chaîne `ImmatOrganism → ImmatBus → CallScreen` rompue silencieusement | `ImmatBus.getJournal()` côté B juste après appel | 40 % |
+| HYP-007 | B avait l'écran verrouillé / app en arrière-plan au moment de l'appel | Refaire le test avec B écran allumé, app au premier plan | 35 % |
+| HYP-008 | Filtre realtime `receiver_id=eq.uid` ne matche pas l'uid réel de B | SQL : comparer `receiver_id` de la ligne avec auth.uid() de B | 30 % |
 
-### Infirmées (conservées avec raison)
+### Infirmées (conservées)
 
 | ID | Énoncé | Raison |
 |---|---|---|
-| HYP-002 | Contrainte UNIQUE dans `pg_constraint` | SQL P2 : zéro UNIQUE constraint |
-| HYP-010 | Index UNIQUE hors contrainte (SQL P3) | SQL P3 écrasé — résultat pg_indexes non capturé — non définitivement infirmé |
-| HYP-011 | Trigger lève 23505 | SQL P4 : `call_request_on_insert()` ne lève que check_violation |
-| HYP-012 | Filtre expires_at manquant dans trigger | SQL P4 : trigger ne vérifie pas les doublons du tout |
-| HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` + OBD correct |
-| HYP-005 | Realtime cassé côté B | OBD `realtimeSubscribed=true` |
-| "Même téléphone / compte" | — | Test refait avec deux téléphones, deux comptes |
+| HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` — ligne DB correcte |
+| HYP-005 | Realtime cassé côté B | OBD : `realtimeSubscribed=true` |
+| "Même téléphone / compte" | — | Test refait avec deux téléphones, deux comptes, deux plaques |
 
 ---
 
-## PREUVES ET TESTS
-
-### Dernières preuves
+## PREUVES ET TESTS — INC-001 BUG B
 
 | Preuve | Source | Effet |
 |---|---|---|
 | `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
-| `"Appel émis · expired"` + `"Appel reçu · expired"` dans l'historique | Observation UI | HYP-004 affaiblie |
-| Deuxième appel → erreur `23505` | Observation UI | Source : index UNIQUE (HYP-013) — trigger ne lève pas 23505 |
-| Aucun `UPDATE status='expired'` dans `calls.js` | Analyse statique du code | HYP-001 confirmé côté client |
-| SQL P1 : 0 lignes `pending` expirées | Supabase SQL Editor — 2026-06-08 | HYP-001 DB affaiblie |
-| SQL P2 : 5 contraintes, zéro UNIQUE | Supabase SQL Editor — 2026-06-08 | HYP-002 infirmée |
-| SQL P3 : 2 triggers (`trg_call_req_on_insert`, `trg_call_req_on_update`) | Supabase SQL Editor — 2026-06-08 | Trigger existe — résultat pg_indexes non capturé |
-| SQL P4 : `call_request_on_insert()` = spam + cooldown seulement — zéro 23505 | Supabase SQL Editor — 2026-06-08 | HYP-011/012 infirmées |
-| SQL P5 : `call_requests_unique_pending_idx` — UNIQUE confirmé | Supabase SQL Editor — 2026-06-08 | HYP-013 confirmée |
-| **SQL P6 : `WHERE (status = 'pending'::text)` — définition complète** | Supabase SQL Editor — 2026-06-08 | **CAUSE RACINE CONFIRMÉE À 100 %** |
+| `"Appel reçu · expired"` dans l'historique B | Observation UI | HYP-004 affaiblie — ligne bien reçue |
+| Pas de popup visible, pas de sonnerie | Observation terrain | Rupture quelque part dans la chaîne live |
 
-### Dernier test réalisé
+### Prochain test — PRIORITÉ ABSOLUE
 
-**SQL Priorité 6** — 2026-06-08 — **Cause racine confirmée** : `UNIQUE (requester_id, receiver_id) WHERE status='pending'` — aucun code ne libère cet index à l'expiration
+Conditions requises : B écran allumé, app au premier plan, connexion stable.
 
-### Prochaines actions avant correctif
-
-Deux vérifications SQL requises avant d'implémenter :
-
-```sql
--- 1. 'expired' dans le CHECK constraint ?
-SELECT pg_get_constraintdef(oid)
-FROM pg_constraint
-WHERE conrelid='call_requests'::regclass AND conname='call_requests_status_check';
-
--- 2. call_request_on_update() — effets de bord ?
-SELECT pg_get_functiondef(oid)
-FROM pg_proc WHERE proname='call_request_on_update';
+```js
+// Console de B — juste après un appel de A :
+ImmatBus.getJournal()
 ```
+
+- `CALL_RECEIVED` **absent** → rupture avant le Bus (realtime ou `_showIncomingPopup`)
+- `CALL_RECEIVED` **présent** + popup absente → rupture Bus → CallScreen (HYP-006)
 
 ---
 
 ## PROCHAINE ACTION
 
-**BUG A résolu — deux actions à faire en parallèle :**
+**Deux actions disponibles :**
 
-1. **Merge vers main** — ouvrir PR `diagnostic/call-pending-expiry-obd` → `main` — vérifier CI green 4/4
+1. **Merger BUG A vers main** — ouvrir PR `diagnostic/call-pending-expiry-obd` → `main`
+   - Vérifier CI green 4/4 avant merge
+   - Ne pas merger si CI rouge
 
-2. **Investigation BUG B** — B ne reçoit pas la popup au premier appel  
-   Test requis (B écran allumé, app au premier plan, appel propre sans pending orphelin) :
-   ```js
-   // Console B — juste après appel de A :
-   ImmatBus.getJournal()
-   ```
-   - `CALL_RECEIVED` absent → rupture avant Bus (realtime ou _showIncomingPopup)
-   - `CALL_RECEIVED` présent + popup absente → rupture Bus → CallScreen (HYP-006)
+2. **Investiguer BUG B** — `ImmatBus.getJournal()` côté B (voir prochain test ci-dessus)
 
 ---
 
@@ -179,7 +203,7 @@ FROM pg_proc WHERE proname='call_request_on_update';
 |---|---|---|
 | `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe incident actif |
 | `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` | Analyse statique du code — `calls.js` | Annexe incident actif |
-| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue et analyse externe | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue externe | Annexe incident actif |
 | `docs/ROADMAP-NEXT.md` | Prochaines priorités hors incidents | Référence permanente |
 | `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
 | `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
