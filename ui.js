@@ -297,6 +297,57 @@
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
   window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
 
+  // Fix: panneau Messages blanc quand icMsgList reste display:none sans thread visible
+  (function(){
+    function fixMsgPanel(){
+      try{
+        var panel=$('icMessagesPro');
+        if(!panel)return;
+        var panelEl=document.getElementById('panelMessages');
+        if(!panelEl||!panelEl.classList.contains('on'))return;
+        var list=$('icMsgList');
+        if(!list||list.style.display!=='none')return;
+        var thread=$('icThread');
+        if(thread&&thread.classList.contains('show'))return;
+        var compose=$('icComposePanel');
+        if(compose&&compose.classList.contains('show'))return;
+        var callLog=$('icCallLog');
+        if(callLog&&callLog.style.display&&callLog.style.display!=='none')return;
+        list.style.display='';
+        try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+      }catch(e){}
+    }
+    [400,1000,2000,4000].forEach(function(t){setTimeout(fixMsgPanel,t);});
+    var _origPanel=null;
+    [300,800,2000].forEach(function(t){
+      setTimeout(function(){
+        if(_origPanel||!window.App?.panel||window.App.__msgPanelPatched)return;
+        window.App.__msgPanelPatched=true;
+        _origPanel=window.App.panel.bind(window.App);
+        window.App.panel=function(p){
+          _origPanel(p);
+          if(p==='messages'){
+            setTimeout(function(){
+              try{
+                var list=$('icMsgList');
+                var thread=$('icThread');
+                var compose=$('icComposePanel');
+                var callLog=$('icCallLog');
+                var threadOpen=thread&&thread.classList.contains('show');
+                var composeOpen=compose&&compose.classList.contains('show');
+                var callsOpen=callLog&&callLog.style.display&&callLog.style.display!=='none';
+                if(list&&list.style.display==='none'&&!threadOpen&&!composeOpen&&!callsOpen){
+                  list.style.display='';
+                  try{if(window.ImmatMessages?.render)window.ImmatMessages.render();}catch(e){}
+                }
+              }catch(e){}
+            },150);
+          }
+        };
+      },t);
+    });
+  })();
+
   // Inject messages-runtime-diagnostics dynamically (works even with cached old index.html)
   (function(){
     function loadDiag(cb){
