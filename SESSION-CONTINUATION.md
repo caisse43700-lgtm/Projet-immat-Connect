@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — MERGE EFFECTUÉ — branche post-merge active
+**Dernière mise à jour** : 2026-06-08 — CI fix parse error guillemets typographiques
 
 ---
 
@@ -15,36 +15,35 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
-Branche  : post-merge/residual-tasks  (créée depuis main post-merge)
-Commit   : 4912734  (squash merge PR #260 → main)
-CI       : GREEN — merge squash sur main confirmé
-PR       : #260 — MERGED (squash)
-Merge    : FAIT le 2026-06-08
+Branche  : post-merge/residual-tasks
+Commit   : en attente de push (fix parse error)
+CI       : RED → fix appliqué, push en cours
+PR       : #260 — MERGED (squash 4912734 → main)
 ```
 
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-Fichiers touchés : guardian-loop.js, mobile-autotest.js, index.html, messages.js
-                   (résolution conflits avec main + merge commit a00d165)
-Commit merge : a00d165 sur feature-calls-runtime-diagnostics
-Squash SHA   : 4912734 sur main
-Résultat     : PR #260 mergée avec succès
+Fichiers touchés : index.html (lignes 619-621), docs/SESSION-LOG.md
+Cause : guillemets typographiques U+2018/U+2019 utilisés comme délimiteurs
+        de chaîne JS dans callsRuntimeHtml/runtimeHtml/messagesRuntimeHtml
+        → "Invalid or unexpected token" → App non initialisé → 9 tests failed
+Fix   : remplacement Python binaire \xe2\x80\x98/\x99 → ASCII '  (468 occurrences)
+Vérifié : node --check sur tous les 27 scripts inline → 0 erreur
 ```
 
 ## ACTION EN COURS
 
 ```
-Aucune. Le merge est terminé.
-Branche post-merge/residual-tasks créée et prête pour les tâches résiduelles.
+Push du fix sur post-merge/residual-tasks.
+Attendre CI green.
 ```
 
 ## PROCHAINE ACTION UNIQUE
 
 ```
-Traiter les tâches résiduelles basse priorité sur post-merge/residual-tasks.
-Commencer par la plus simple : DIRECT_MESSAGE_RECEIVED → InteractionEngine.
-Ne PAS revenir sur feature-calls-runtime-diagnostics.
+Après CI green : traiter les tâches résiduelles basse priorité.
+Commencer par : DIRECT_MESSAGE_RECEIVED → InteractionEngine (messages.js).
 ```
 
 ## NE PAS REFAIRE
