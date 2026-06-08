@@ -1,7 +1,7 @@
-/* service-worker.js — ImmatConnect — SESSION OBD-003d §18 */
+/* service-worker.js — ImmatConnect — SESSION OBD-003d §19 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v10';
+const CACHE_NAME  = 'immatconnect-pro-v11';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien
@@ -22,6 +22,7 @@ const STATIC_CACHE = [
   './core/interaction-engine.js',
   './core/guardian-loop.js',
   './core/messages-runtime-diagnostics.js',
+  './core/mobile-autotest.js',
   './core/obdSession.js',
   './core/obdGateway.js',
   './core/aiController.js',
@@ -49,9 +50,13 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => clients.forEach(c => {
+        try { c.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME }); } catch (e) {}
+      }))
   );
 });
 
