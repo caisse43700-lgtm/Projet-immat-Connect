@@ -7,36 +7,54 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — CI green confirmé, branche prête pour merge
+**Dernière mise à jour** : 2026-06-08 — MERGE EFFECTUÉ — branche post-merge active
 
 ---
 
-## SITUATION EXACTE
+## ÉTAT ACTUEL
 
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
-Branche  : feature-calls-runtime-diagnostics
-Commit   : 69b5135  (CI green confirmé — dernier commit)
-CI       : GREEN TOTAL — tous commits vérifiés
-           e154e43 (P8 Ange)      → success ✓
-           7ba25f3 (P9 Guardian)  → success ✓
-           792f31f (P10 Autotest) → success ✓
-           511c24c (docs)         → success ✓
-           69b5135 (CI confirm)   → success ✓
+Branche  : post-merge/residual-tasks  (créée depuis main post-merge)
+Commit   : 4912734  (squash merge PR #260 → main)
+CI       : GREEN — merge squash sur main confirmé
+PR       : #260 — MERGED (squash)
+Merge    : FAIT le 2026-06-08
 ```
 
-## PROCHAINE ACTION RECOMMANDÉE
+## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-La branche est PRÊTE POUR MERGE.
-Roadmap phases 0–10 : toutes complètes.
-CI : green sur tous les commits.
-Frictions navigation P1 (FRI-001/002/003, FLOW-005) : toutes déjà résolues dans le code.
+Fichiers touchés : guardian-loop.js, mobile-autotest.js, index.html, messages.js
+                   (résolution conflits avec main + merge commit a00d165)
+Commit merge : a00d165 sur feature-calls-runtime-diagnostics
+Squash SHA   : 4912734 sur main
+Résultat     : PR #260 mergée avec succès
+```
 
-→ Créer une pull request feature-calls-runtime-diagnostics → main (ou master)
-  si l'utilisateur le demande explicitement.
+## ACTION EN COURS
 
-→ Sinon, traiter les tâches résiduelles basse priorité (voir tableau plus bas).
+```
+Aucune. Le merge est terminé.
+Branche post-merge/residual-tasks créée et prête pour les tâches résiduelles.
+```
+
+## PROCHAINE ACTION UNIQUE
+
+```
+Traiter les tâches résiduelles basse priorité sur post-merge/residual-tasks.
+Commencer par la plus simple : DIRECT_MESSAGE_RECEIVED → InteractionEngine.
+Ne PAS revenir sur feature-calls-runtime-diagnostics.
+```
+
+## NE PAS REFAIRE
+
+```
+- Ne pas recréer de PR depuis feature-calls-runtime-diagnostics (déjà mergée)
+- Ne pas modifier main directement
+- Ne pas toucher à guardian-loop.js sans preuve de régression CI
+- Ne pas refaire le rebase main→branche (déjà fait dans a00d165)
+- Les frictions P1 navigation (FRI-001/002/003, FLOW-005) sont toutes déjà résolues
 ```
 
 ---
@@ -95,14 +113,14 @@ Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation g
 - Guardian basé sur evidence
 - Autotests couvrent les flux critiques
 
-### Tâches résiduelles connues (non bloquantes)
+### Tâches résiduelles — branche post-merge/residual-tasks
 
-| Tâche | Priorité | Note |
+| Tâche | Priorité | Fichier |
 |---|---|---|
-| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | Realtime subscription dans messages.js |
-| Assets audio (src) | Basse | Bloqué par stratégie Service Worker/cache |
-| `App.blockPlate()` direct → InteractionEngine | Basse | Seuls blocages Ange-triggered sont loggés |
-| `source_module`/`privacy_level` dans IE events | Basse | Champ structurel, non bloquant |
+| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | `messages.js` realtime subscription |
+| Assets audio réels (src) | Basse | Bloqué par stratégie Service Worker/cache |
+| `App.blockPlate()` direct → InteractionEngine | Basse | `index.html` blocage direct |
+| `source_module`/`privacy_level` dans IE events | Basse | `core/interaction-engine.js` |
 
 ---
 
