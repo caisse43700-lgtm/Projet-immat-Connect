@@ -18,6 +18,9 @@ CI       : GREEN sur c40adcf (Phase 7). Phase 8 push pending.
 
 **Journal complet** → `SESSION-CONTINUATION.md`
 
+> **RÈGLE** : `SESSION-CONTINUATION.md` doit être mis à jour dans **chaque commit de phase**.
+> Toujours l'inclure dans `git add` avec le code. Mettre à jour : commit, CI, tableau phases, prochaine phase.
+
 ---
 
 ## HISTOIRE (conservée pour contexte)

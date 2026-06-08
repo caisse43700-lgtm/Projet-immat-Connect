@@ -1,9 +1,13 @@
 # SESSION CONTINUATION — ImmatConnect Pro
 
 Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
-Il est mis à jour à chaque fin de session importante.
 
-**Dernière mise à jour** : 2026-06-08
+> **RÈGLE OBLIGATOIRE** : Ce fichier doit être mis à jour dans **chaque commit de phase**.
+> Il doit toujours refléter l'état exact du commit dans lequel il se trouve.
+> Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
+> L'ajouter dans chaque `git add` avec le code de la phase.
+
+**Dernière mise à jour** : 2026-06-08 — commit 9a254a9
 
 ---
 
@@ -12,8 +16,8 @@ Il est mis à jour à chaque fin de session importante.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
-Commit   : e154e43
-CI       : GREEN (run 27145649337 sur c40adcf, Phase 7 — Phase 8 non encore vérifiée)
+Commit   : 9a254a9  (journal de continuation créé)
+CI       : GREEN sur c40adcf (Phase 7) — e154e43 (Phase 8) pending vérification
 ```
 
 ---
