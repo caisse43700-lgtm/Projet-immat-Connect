@@ -287,11 +287,73 @@ Per `docs/CALL_SOURCE_OF_TRUTH.md` "Next work after CI green":
 
 Low. `getRuntimeState()` is read-only, no DB writes, no localStorage writes, no UI mutation.
 
-### Next action
+### Next action (complété)
 
-1. Update `core/calls-runtime-diagnostics.js` to consume `CallManager.getRuntimeState()`.
-2. Push and rerun CI.
-3. Document result here.
+CI green sur commit `10c775c` (runs 27141437150/207/649 — 2026-06-08T13:36:00).
+
+Étape suivante : CallScreen squelette → voir section ci-dessous.
+
+---
+
+## 2026-06-08 — CallScreen squelette Phase 1
+
+### Contexte
+
+CI green confirmé sur `10c775c`. `calls.js` audité, `CALL_SOURCE_OF_TRUTH.md` complété.
+Condition remplie : squelette `CallScreen` peut démarrer.
+
+### Fichiers créés / modifiés
+
+- `core/call-screen.js` (nouveau) — `window.CallScreen` squelette
+- `calls.css` — classes `.cs-btn` pour les boutons CallScreen
+- `index.html` — chargement `core/call-screen.js?v=1`
+- `core/mobile-autotest.js` — `CallScreen` dans modules info
+- `core/calls-runtime-diagnostics.js` — `hasCallScreen` + `callScreenState`
+
+### Architecture CallScreen
+
+```
+Source of truth : CallManager (call_requests DB + _pendingCallId)
+CallScreen      : observateur ImmatBus uniquement
+DOM             : #callOverlay (display:none par défaut)
+```
+
+Abonnements ImmatBus :
+
+| Événement bus | Méthode CallScreen |
+|---|---|
+| CALL_INITIATED | showOutgoing(payload) |
+| CALL_RECEIVED  | showIncoming(payload) |
+| CALL_ACCEPTED  | showAccepted(payload) |
+| CALL_REFUSED   | hide() |
+| CALL_CANCELLED | hide() |
+| CALL_MISSED    | showMissed(payload) |
+
+### État fermé par défaut
+
+`#callOverlay` reste `display:none` jusqu'au premier événement bus.
+
+Aucun overlay fantôme — `hide()` réinitialise `_state` et cache `callOverlay`.
+
+### Limites connues du squelette (Phase 1)
+
+1. `callIncomingPopup` et `callSentBanner` (CallManager) restent actifs en parallèle — double UI possible. Nettoyage prévu Phase 2 en refactorisant CallManager pour déléguer à CallScreen.
+2. `callOverlay` HTML actuel n'a pas de bouton "Fermer en-dehors" — à ajouter si UX le requiert.
+3. Auto-hide 30 s pour outgoing : aligné sur `expires_at` DB. Si la DB expire avant, le popup CallManager cache déjà la bannière ; CallScreen se cache seul après 30 s.
+
+### RISQUE
+
+Low. CallScreen est lecture seule. Ne modifie pas CallManager, ne touche pas Supabase, ne modifie pas localStorage.
+
+### STATUT CI
+
+Commit en attente de push — CI UNKNOWN.
+
+### PROCHAINE ACTION
+
+1. Push et attendre CI.
+2. Si vert : Phase 2 = refactoriser CallManager pour masquer popup/banner quand CallScreen est chargé.
+3. Si rouge : lire artifact playwright-output.log, corriger uniquement le premier vrai bug.
 
 ---
 

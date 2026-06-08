@@ -127,7 +127,9 @@
       hasSetCallPreferences: hasFn(cm, 'setCallPreferences'),
       hasLoadCallLog: hasFn(cm, 'loadCallLog'),
       hasIsCallBlocked: hasFn(cm, 'isCallBlocked'),
-      hasGetRuntimeState: hasFn(cm, 'getRuntimeState')
+      hasGetRuntimeState: hasFn(cm, 'getRuntimeState'),
+      hasCallScreen: !!w.CallScreen,
+      callScreenState: safe(function(){ return w.CallScreen ? w.CallScreen.getState() : null; }, null)
     };
   }
   function runtimeState(){

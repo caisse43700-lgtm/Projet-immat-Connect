@@ -311,3 +311,21 @@
 .settings-toggle input:checked + .settings-toggle-track::after {
   transform: translateX(20px);
 }
+
+/* ── CallScreen boutons (générés par core/call-screen.js) ────────── */
+.cs-btn {
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  border: none;
+  min-width: 100px;
+}
+.cs-btn:active { opacity: .75; }
+.cs-btn-accept { background: #2979ff; color: #fff; }
+.cs-btn-refuse { background: rgba(255,45,85,.14); color: #ff2d55; border: 1.5px solid rgba(255,45,85,.3) !important; }
+.cs-btn-cancel { background: rgba(255,255,255,.08); color: #888; border: 1px solid rgba(255,255,255,.12) !important; }
+.cs-btn-msg    { background: #2979ff; color: #fff; }
+.cs-btn-close  { background: rgba(255,255,255,.08); color: #888; border: 1px solid rgba(255,255,255,.12) !important; }

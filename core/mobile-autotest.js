@@ -103,6 +103,7 @@
       ImmatMessages: !!w.ImmatMessages,
       ImmatMessagesRuntimeDiagnostics: !!w.ImmatMessagesRuntimeDiagnostics,
       CallManager: !!w.CallManager,
+      CallScreen: !!w.CallScreen,
       GuardianLoop: !!w.GuardianLoop,
       AngeDialog: !!w.AngeDialog,
       journalCount: (typeof w.ImmatBus?.getJournal === 'function') ? w.ImmatBus.getJournal().length : null,
