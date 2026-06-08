@@ -7,7 +7,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — Phase 10 Mobile autotest expansion
+**Dernière mise à jour** : 2026-06-08 — CI green confirmé, branche prête pour merge
 
 ---
 
@@ -16,8 +16,27 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
-Commit   : 792f31f  (Phase 10 — dernier commit, roadmap complète)
-CI       : GREEN sur tous les commits — e154e43 (P8) ✓  7ba25f3 (P9) ✓  792f31f (P10) ✓  511c24c (docs) ✓
+Commit   : 69b5135  (CI green confirmé — dernier commit)
+CI       : GREEN TOTAL — tous commits vérifiés
+           e154e43 (P8 Ange)      → success ✓
+           7ba25f3 (P9 Guardian)  → success ✓
+           792f31f (P10 Autotest) → success ✓
+           511c24c (docs)         → success ✓
+           69b5135 (CI confirm)   → success ✓
+```
+
+## PROCHAINE ACTION RECOMMANDÉE
+
+```
+La branche est PRÊTE POUR MERGE.
+Roadmap phases 0–10 : toutes complètes.
+CI : green sur tous les commits.
+Frictions navigation P1 (FRI-001/002/003, FLOW-005) : toutes déjà résolues dans le code.
+
+→ Créer une pull request feature-calls-runtime-diagnostics → main (ou master)
+  si l'utilisateur le demande explicitement.
+
+→ Sinon, traiter les tâches résiduelles basse priorité (voir tableau plus bas).
 ```
 
 ---
