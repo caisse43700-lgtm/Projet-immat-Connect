@@ -5,8 +5,11 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > **RÈGLE OBLIGATOIRE** : Ce fichier doit être mis à jour après chaque action importante.
 > Il doit refléter l'état exact du point de reprise.
 > Objectif : permettre à Claude ou à une autre IA de reprendre exactement au bon endroit.
+>
+> **RÈGLE D'AUTO-VÉRIFICATION** : après chaque modification, vérifier immédiatement que l'action n'a rien cassé ni empiré.
+> Chaque entrée importante doit indiquer : AVANT → ACTION → VÉRIFICATION → RÉSULTAT → RISQUE RESTANT.
 
-**Dernière mise à jour** : 2026-06-08 — BLOCAGE ACTIF `index.html` script inline #8 + actions ChatGPT consignées
+**Dernière mise à jour** : 2026-06-08 — règle d'auto-vérification ajoutée + blocage actif `index.html` script inline #8
 
 ---
 
@@ -36,6 +39,39 @@ puis revérifier les scripts inline et relancer/inspecter CI.
 
 ---
 
+## PROTOCOLE D'AUTO-VÉRIFICATION APRÈS CHAQUE ACTION
+
+À chaque correction ou modification de documentation/code, ajouter une trace courte :
+
+```text
+AVANT:
+Ce qui était vrai avant l'action.
+
+ACTION:
+Ce qui a été modifié exactement.
+
+VÉRIFICATION:
+Ce qui a été relu/testé/inspecté juste après.
+
+RÉSULTAT:
+OK / KO / Incomplet.
+
+RISQUE RESTANT:
+Ce qui n'est pas encore confirmé.
+```
+
+Règles :
+
+```text
+- Ne jamais supposer qu'une modification a réussi : relire le fichier après update.
+- Ne jamais dire CI verte sans run exact ou preuve récente.
+- Ne jamais corriger un symptôme avant la première erreur réelle.
+- Ne jamais continuer vers merge si le fichier de continuité indique un blocage actif.
+- Si l'outil tronque un gros fichier, ne pas patcher à l'aveugle.
+```
+
+---
+
 ## DERNIÈRE ACTION EFFECTUÉE
 
 ```text
@@ -57,23 +93,40 @@ Vérification ChatGPT :
 
 ```text
 1. Analyse des captures Claude :
-   - identification du nouveau statut réel : CI/merge historique invalidé par un nouveau parse error ;
-   - conclusion : ne plus dire “branche prête pour merge” tant que T05 actuel n'est pas corrigé.
+   - AVANT : captures indiquaient CI/failures contradictoires avec ancien état “prêt pour merge”.
+   - ACTION : identifier le nouveau statut réel : CI/merge historique invalidé par parse error.
+   - VÉRIFICATION : comparaison avec SESSION-CONTINUATION.md existant.
+   - RÉSULTAT : ancien état “prêt pour merge” dangereux.
+   - RISQUE RESTANT : CI à revérifier après correction.
 
 2. Vérification GitHub :
-   - lecture de SESSION-CONTINUATION.md existant ;
-   - constat : le fichier disait encore “CI green / prêt pour merge”, donc reprise dangereuse ;
-   - lecture de index.html lignes ~600-630 ;
-   - confirmation de guillemets typographiques dans callsRuntimeHtml/runtimeHtml : `sv===’false’`, `return’...`, `.join(‘’)`.
+   - AVANT : cause racine seulement visible dans captures Claude.
+   - ACTION : lecture de index.html lignes ~600-630.
+   - VÉRIFICATION : présence confirmée de `sv===’false’`, `return’...`, `.join(‘’)`.
+   - RÉSULTAT : cause guillemets typographiques confirmée.
+   - RISQUE RESTANT : correction index.html non appliquée par ChatGPT.
 
 3. Mise à jour du fichier de reprise :
-   - SESSION-CONTINUATION.md a été modifié pour remplacer l'ancien état “prêt pour merge” par “BLOCAGE ACTIF index.html script inline #8” ;
-   - commit de cette mise à jour : 82678e082300d3f004eb604d93f86c3a0554a133.
+   - AVANT : SESSION-CONTINUATION.md disait “CI green / prêt pour merge”.
+   - ACTION : remplacement par “BLOCAGE ACTIF index.html script inline #8”.
+   - VÉRIFICATION : relecture du fichier après update.
+   - RÉSULTAT : état courant désormais visible en haut du fichier.
+   - RISQUE RESTANT : docs/SESSION-LOG.md devra aussi être mis à jour après correction code.
+   - Commit : 82678e082300d3f004eb604d93f86c3a0554a133.
 
 4. Décision de sécurité :
-   - ChatGPT n'a pas corrigé index.html car le fetch complet du gros fichier est tronqué par l'outil ;
-   - correction directe jugée trop risquée sans accès fiable à la portion complète ;
-   - la cause est confirmée, mais la réparation doit être faite par l'agent ayant accès local complet ou un outil de patch ciblé fiable.
+   - AVANT : possibilité théorique de patcher index.html.
+   - ACTION : refus de patcher sans accès complet fiable.
+   - VÉRIFICATION : fetch complet tronqué par l'outil.
+   - RÉSULTAT : pas de modification risquée du code.
+   - RISQUE RESTANT : Claude/local agent doit appliquer le patch ciblé.
+
+5. Ajout de la règle d'auto-vérification :
+   - AVANT : le fichier listait l'état et la prochaine action, mais pas l'obligation de vérifier chaque action.
+   - ACTION : ajout du protocole AVANT/ACTION/VÉRIFICATION/RÉSULTAT/RISQUE RESTANT.
+   - VÉRIFICATION : relire ce fichier après commit.
+   - RÉSULTAT : à confirmer par fetch après update.
+   - RISQUE RESTANT : aucune CI déclenchée, car modification documentaire seulement.
 ```
 
 ---
