@@ -643,10 +643,12 @@ async function markThreadRead(plate){
   if(!client || !State.user) return;
 
   const unread = State.messages.filter(m=>m._otherPlate===plate && m._received && !m.read_at);
-  for(const m of unread){
+  if(unread.length){
+    const now = new Date().toISOString();
+    const ids = unread.map(m=>m.id);
     try{
-      await client.from('messages').update({read_at:new Date().toISOString()}).eq('id',m.id);
-      m.read_at = new Date().toISOString();
+      await client.from('messages').update({read_at:now}).in('id',ids);
+      unread.forEach(m=>{ m.read_at = now; });
     }catch(e){}
   }
 
@@ -937,13 +939,13 @@ async function subscribe(){
   if(!client || !u) return;
   if(State.channel) return;
 
-  const mp = nPlate(myPlate());
-  const uid = State.user?.id;
-
   State.channel = client
     .channel('immat_messages_v13_' + u.id)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async(payload)=>{
       const m = payload.new || {};
+      // mp/uid relus au moment de l'event (profile peut être chargé après subscribe)
+      const mp  = nPlate(myPlate());
+      const uid = State.user?.id;
       // MSG_RECEIVED uniquement quand c'est un message adressé à MOI (pas mes propres envois)
       const isForMe = mp && (
         nPlate(m.receiver_plate||'') === mp ||
