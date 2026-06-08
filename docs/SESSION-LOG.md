@@ -407,6 +407,68 @@ Push en attente.
 
 ---
 
+## 2026-06-08 — Phase 4 : Messages context model
+
+### Contexte
+
+CI green sur Phase 3 (InteractionEngine câblage calls.js).
+Phase 4 : câblage messages.js → InteractionEngine + context_type/context_id dans actQuickReply.
+
+### Fichiers modifiés
+
+- `messages.js` — `sendToPlate(plate, text, opts)` : paramètre `opts` ajouté + `InteractionEngine.create()` avec contexte
+- `index.html` — `actQuickReply(plate, msg, contextType, contextId)` : signature étendue + passage context aux boutons d'activité
+
+### Détail
+
+#### messages.js — sendToPlate
+
+Signature : `sendToPlate(plate, text, opts)` (opts optionnel, rétrocompatible).
+
+Après envoi réussi, ajout non-bloquant :
+```js
+window.InteractionEngine?.create?.({
+  type: 'MESSAGE',
+  initiator: senderPlate,
+  target: receiverPlate,
+  payload: { to, from, context_type?, context_id? },
+  status: 'resolved'
+});
+```
+
+#### index.html — actQuickReply
+
+Signature : `actQuickReply(plate, msg, contextType, contextId)`.
+
+Passe `context_type` + `context_id` à `sendToPlate` si `contextType` est fourni.
+
+#### index.html — boutons activité
+
+6 boutons actQuickReply mis à jour pour passer le contexte :
+
+| Carte | Bouton | context_type | context_id |
+|---|---|---|---|
+| own assist (Merci helper) | 🙏 Merci | help_request | a.id |
+| vehicle card (autre) | Je m'arrête / Je vérifie / Merci | vehicle_report | a.id |
+| assist card (helper potential) | ✋ J'arrive / Je ne peux pas | help_request | a.id |
+
+### RISQUE
+
+Low. `sendToPlate` opts est optionnel — tous les appels sans opts continuent de fonctionner.
+`InteractionEngine.create()` est dans try/catch, non-bloquant.
+
+### STATUT CI
+
+Push en attente.
+
+### PROCHAINE ACTION
+
+1. Push + attendre CI.
+2. Si vert : câblage `roadReport`/`vehicleAlert`/`assist` → InteractionEngine (VEHICLE_REPORT_CREATED, HELP_REQUEST_CREATED).
+3. Si rouge : artifact + playwright-output.log.
+
+---
+
 # Blocker template
 
 When blocked, append a section with:

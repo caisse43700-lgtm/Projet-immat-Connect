@@ -1331,11 +1331,11 @@ App._actModCard=function(item,cat){
   let statusBadge=isOwn?(a.status==='helper_coming'?`<span class="act-mod-status-lbl vu">✋ En route${a._helperPlate?' · '+e(a._helperPlate):''}</span>`:'<span class="act-mod-status-lbl mine">Mon signalement</span>'):(a.status==='seen'||a.status==='present')?'<span class="act-mod-status-lbl vu">Vu</span>':(a.status==='seen_by_driver'?'<span class="act-mod-status-lbl vu">Vu par le conducteur</span>':'');
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
-  if(isOwn&&a.group==='assist')actions=`${a.status==='helper_coming'&&a._helperPlate?`<button class="act-mod-btn-ok" onclick="App.actQuickReply('${e(a._helperPlate||'')}','🙏 Merci pour votre aide !')">🙏 Merci</button>`:''}<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','resolved')">✓ Résolu</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
+  if(isOwn&&a.group==='assist')actions=`${a.status==='helper_coming'&&a._helperPlate?`<button class="act-mod-btn-ok" onclick="App.actQuickReply('${e(a._helperPlate||'')}','🙏 Merci pour votre aide !','help_request','${e(a.id)}')">🙏 Merci</button>`:''}<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','resolved')">✓ Résolu</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
   else if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.')">Merci</button>${_vp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_vp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_vp}','')">📞 Appel</button>`:''}`; }
+  else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.','vehicle_report','${e(a.id)}')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.','vehicle_report','${e(a.id)}')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.','vehicle_report','${e(a.id)}')">Merci</button>${_vp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_vp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_vp}','')">📞 Appel</button>`:''}`; }
   else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_rp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_rp}','')">📞 Appel</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
-  else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(plate)}','')">📞 Appel</button>`;
+  else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.','help_request','${e(a.id)}')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.','help_request','${e(a.id)}')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(plate)}','')">📞 Appel</button>`;
   if(a.lat!=null)actions+=`<button class="act-mod-btn-map" onclick="App.actViewOnMap('${e(a.id)}')">📍 Voir</button>`;
   const isSelAlert=S.selPlate&&nPlate(a.plate||a.sender_plate||a.from_plate||'')===S.selPlate;
   return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSelAlert?' act-mod-selected':''}">
@@ -1436,11 +1436,12 @@ App.actDeleteConv=function(plate){
   setTimeout(()=>{this.renderActivityFeed();try{this.updateActBadge?.()}catch(e){}},300);
   toast('Conversation supprimée.','ok');
 };
-App.actQuickReply=async function(plate,msg){
+App.actQuickReply=async function(plate,msg,contextType,contextId){
   if(!plate||!msg)return;
   try{
     if(window.ImmatMessages?.sendToPlate){
-      await ImmatMessages.sendToPlate(plate,msg);
+      const _opts=contextType?{context_type:contextType,context_id:contextId||undefined}:{};
+      await ImmatMessages.sendToPlate(plate,msg,_opts);
       const isHelp=msg.startsWith("J'arrive")||msg.startsWith("J’arrive");
       if(isHelp){
         toast('✋ Aide proposée. Le conducteur sera notifié dès réception.','ok');
