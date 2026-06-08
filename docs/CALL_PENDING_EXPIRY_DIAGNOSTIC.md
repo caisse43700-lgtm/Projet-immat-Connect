@@ -8,7 +8,20 @@
 > Chaque hypothèse reste dans le journal même si infirmée.
 > Aucun correctif sans résultat de test explicite.
 > Une autre IA doit pouvoir reprendre instantanément depuis "Dernier état connu".
-> Lire aussi : `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md`
+
+## Sources — provenance des informations
+
+| Section | Source | Fichier de référence |
+|---|---|---|
+| Preuves terrain (deux téléphones, historique, message 23505) | Observations utilisateur | Ce fichier — section "Preuves terrain" |
+| Capture OBD B (BE-521-MM) | Dashboard Gardien — runtime côté B | Ce fichier — section "Capture OBD terrain" |
+| HYP-001, HYP-002, HYP-003 (code) | Audit statique `calls.js` — Claude | `CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` |
+| HYP-001b `_recoverPendingRequest` | Audit statique `calls.js` — Claude | `CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` §3 |
+| HYP-006 chaîne ImmatOrg→Bus→CallScreen | Audit statique `calls.js` — Claude | `CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` §6 |
+| HYP-004, HYP-005 (receiver_id, realtime) | Audit externe — ChatGPT | `CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` |
+| HYP-007, HYP-008, HYP-009 | Audit externe — ChatGPT | `CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` |
+| Matrice BUG A / BUG B | Synthèse — les deux audits | Ce fichier |
+| SQL prioritaires | Les deux audits | Ce fichier — section "Tests" |
 
 ---
 
