@@ -816,10 +816,11 @@ async function quick(text){
   await sendToPlate(State.activePlate,text);
 }
 
-async function sendToPlate(plate,text){
+async function sendToPlate(plate,text,opts){
   const client = sb();
   const u = await getUser();
   const me = await getProfile();
+  const _ctx = opts && typeof opts === 'object' ? opts : {};
 
   plate = fPlate(plate);
   const senderPlate = fPlate(me?.owner_plate || myPlate());
@@ -878,6 +879,18 @@ async function sendToPlate(plate,text){
   toast('Message envoyé à ' + receiverPlate + '.','ok');
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
+  try{
+    const _iePayload = {to:receiverPlate, from:senderPlate};
+    if(_ctx.context_type) _iePayload.context_type = _ctx.context_type;
+    if(_ctx.context_id)   _iePayload.context_id   = _ctx.context_id;
+    window.InteractionEngine?.create?.({
+      type:'MESSAGE',
+      initiator: senderPlate,
+      target: receiverPlate,
+      payload: _iePayload,
+      status:'resolved'
+    });
+  }catch(e){}
   await refresh();
   setMode('inbox');
   openThread(receiverPlate);

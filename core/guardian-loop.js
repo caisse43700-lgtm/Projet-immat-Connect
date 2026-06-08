@@ -295,15 +295,71 @@ const GuardianLoop = (function () {
     };
   }
 
+  // ── getRuntimeState — lecture seule pour OBD ────────────────────────────────
+
+  function getRuntimeState() {
+    try {
+      const list = _load();
+      const pending = list.filter(r => r.status === REC_STATUS.PENDING);
+      const byCategory = {};
+      pending.forEach(r => { byCategory[r.category] = (byCategory[r.category] || 0) + 1; });
+      return {
+        available:              true,
+        pendingRecommendations: pending.length,
+        totalRecommendations:   list.length,
+        pendingCritical:        pending.filter(r => r.severity === SEVERITIES.CRITICAL).length,
+        pendingHigh:            pending.filter(r => r.severity === SEVERITIES.HIGH).length,
+        byCategory,
+        lastRecommendationAt:   list.length ? list[list.length - 1].created_at : null,
+        lastGuardianError:      null,
+      };
+    } catch (e) {
+      return { available: false, error: String(e && (e.message || e)) };
+    }
+  }
+
   // ── API publique ─────────────────────────────────────────────────────────────
 
   return {
     recommend, validate, markApplied, expire, observe,
-    getPending, getAll, getStats,
+    getPending, getAll, getStats, getRuntimeState,
     SEVERITIES, CATEGORIES, REC_STATUS, HEURISTICS,
   };
 
 })();
 
 window.GuardianLoop = GuardianLoop;
+
+// ── Auto-trigger observe() via ImmatBus ─────────────────────────────────────
+// Déclenché après les événements les plus directement liés aux heuristiques.
+// InteractionEngine.create() est appelé AVANT ImmatBus.emit() dans chaque module,
+// donc le ledger est déjà à jour quand observe() lit les interactions.
+(function _guardianBusSubscribe() {
+  function _plate(payload) {
+    return payload && (_nPlate(payload.from) || _nPlate(payload.plate) || _nPlate(payload.to) || '');
+  }
+  function _nPlate(p) { return String(p || '').replace(/[\s-]/g, '').toUpperCase(); }
+  function _trigger(payload) {
+    var p = _plate(payload);
+    if (!p) return;
+    try { window.GuardianLoop.observe(p); } catch (e) {}
+  }
+  function _sub() {
+    var bus = window.ImmatBus;
+    if (!bus || typeof bus.on !== 'function') return;
+    // HEURISTIC-003 : appels manqués
+    bus.on('CALL_MISSED',    function (e) { _trigger(e.payload); });
+    // HEURISTIC-002 : abus signalés
+    bus.on('ABUSE_REPORTED', function (e) { _trigger(e.payload); });
+    // HEURISTIC-001 : blocages
+    bus.on('BLOCK_APPLIED',  function (e) { _trigger(e.payload); });
+    // HEURISTIC-004 : interactions positives
+    bus.on('CALL_ACCEPTED',  function (e) { _trigger(e.payload); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _sub);
+  } else {
+    _sub();
+  }
+})();
 }
