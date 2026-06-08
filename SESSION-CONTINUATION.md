@@ -1,21 +1,41 @@
 # SESSION CONTINUATION — ImmatConnect Pro
 
-> **PROTOCOLE OBLIGATOIRE**
-> 1. Toute IA lit ce fichier en premier.
-> 2. Toute IA met ce fichier à jour avant de quitter.
-> 3. Diagnostics détaillés → leurs fichiers dédiés. Ce fichier reste court.
-> 4. Incident résolu → résumé en archive, lien ici.
+## ⚑ POINT D'ENTRÉE OFFICIEL
 
-**Dernière mise à jour** : 2026-06-08 — restructuration protocole continuité IA
+> Ce fichier est **le seul point d'entrée** pour toute IA reprenant le projet.
+> Aucun fichier de diagnostic, d'audit ou de roadmap ne remplace ce fichier.
+> Un nouveau fichier créé pour un diagnostic reste une **annexe** — jamais un point d'entrée.
+
+### Protocole obligatoire pour toute IA
+
+```
+AVANT de travailler  → lire ce fichier intégralement
+PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (voir §DOCUMENTS)
+AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
+```
+
+### Procédure d'archivage (incident résolu)
+
+```
+Conditions : cause racine identifiée + correctif validé + tests passés + merge effectué
+Étapes     :
+  1. Déplacer les fichiers de diagnostic vers docs/archives/
+  2. Supprimer les entrées de §INCIDENTS ACTIFS et §HYPOTHÈSES
+  3. Ajouter une ligne dans §ARCHIVES avec : nom, date, cause racine, lien archive
+  4. Mettre à jour §ÉTAT DU PROJET et §PROCHAINE ACTION
+  5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
+```
+
+**Dernière mise à jour** : 2026-06-08 — protocole continuité IA + organisation archivage
 
 ---
 
 ## ÉTAT DU PROJET
 
 ```
-Dépôt   : caisse43700-lgtm/Projet-immat-Connect
-Main    : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
-Branche active : diagnostic/call-pending-expiry-obd (commit c03edf2)
+Dépôt          : caisse43700-lgtm/Projet-immat-Connect
+Main           : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
+Branche active : diagnostic/call-pending-expiry-obd (commit 5f3b30a)
 ```
 
 ---
@@ -25,101 +45,100 @@ Branche active : diagnostic/call-pending-expiry-obd (commit c03edf2)
 ### INC-001 — Bug appel A → B
 
 **Symptôme ALPHA** (priorité 1) :
-Deuxième appel de A vers B refusé avec `"Une demande est déjà en attente de réponse"` — erreur `23505` DB alors que les deux côtés affichent `expired` dans l'historique.
+Deuxième appel de A vers B refusé avec `"Une demande est déjà en attente de réponse"` — erreur `23505` alors que les deux côtés affichent `expired` dans l'historique.
 
-**Symptôme BETA** (secondaire) :
-B ne voit aucune popup ni sonnerie lors du premier appel. À investiguer après ALPHA.
+**Symptôme BETA** (secondaire, après ALPHA) :
+B ne voit aucune popup ni sonnerie lors du premier appel.
 
 **Branche** : `diagnostic/call-pending-expiry-obd`
 
-**Fichiers de diagnostic** :
-- `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — diagnostic consolidé (terrain + code + OBD)
-- `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` — analyse statique `calls.js` (Claude)
-- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue critique (ChatGPT)
+**Annexes de diagnostic** (ne pas modifier directement — passer par ce fichier) :
+- `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — état consolidé : terrain + OBD + hypothèses
+- `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` — audit statique `calls.js` par Claude
+- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue et analyse par ChatGPT
 
 ---
 
 ## HYPOTHÈSES — INC-001
 
-### Confirmées (par code source)
+### Confirmées (code source)
 
 | ID | Énoncé | Preuve | Confiance |
 |---|---|---|---|
-| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` — ligne reste `pending` en DB | Audit `calls.js` : `_showSentBanner`, `_onMissed`, `_recoverPendingRequest` — zéro écriture DB sur expiration | 85 % |
-| HYP-003 | Expiration UI ≠ expiration DB — l'UI calcule `expires_at < now()`, le DB garde `status='pending'` | Corollaire direct de HYP-001 | 85 % |
+| HYP-001 | Aucun chemin client ne fait `UPDATE status='expired'` — ligne reste `pending` en DB | `calls.js` : `_showSentBanner`, `_onMissed`, `_recoverPendingRequest` — zéro écriture DB à l'expiration | 85 % |
+| HYP-003 | Expiration UI ≠ expiration DB | Corollaire direct de HYP-001 | 85 % |
 
-### Ouvertes (non vérifiables sans SQL)
+### Ouvertes (SQL requis)
 
 | ID | Énoncé | Preuve manquante | Confiance |
 |---|---|---|---|
-| HYP-002 | La contrainte anti-doublon ne filtre pas `expires_at` | `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='call_requests'::regclass` | 75 % |
+| HYP-002 | Contrainte anti-doublon sans filtre `expires_at` | `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='call_requests'::regclass` | 75 % |
 | HYP-003b | Aucun cron/trigger DB ne nettoie les pending expirés | Supabase Dashboard → Cron Jobs | 55 % |
 | HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` peut se rompre silencieusement | `ImmatBus.getJournal()` côté B après appel propre | 40 % |
 
-### Infirmées (raison conservée)
+### Infirmées (conservées avec raison)
 
-| ID | Énoncé | Raison d'infirmation |
+| ID | Énoncé | Raison |
 |---|---|---|
-| HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` dans l'historique + OBD `myPlate=BE-521-MM` correct. Non définitive : si historique par `receiver_plate` → reste possible |
-| HYP-005 | Realtime cassé côté B | OBD terrain : `realtimeSubscribed=true`. Non définitive : prouve la création du channel, pas la réception de l'événement |
-| "Même téléphone / même compte" | — | Test refait avec deux téléphones, deux comptes, deux plaques différentes |
+| HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` + OBD `myPlate=BE-521-MM` correct — non définitive |
+| HYP-005 | Realtime cassé côté B | OBD `realtimeSubscribed=true` — prouve création du channel, pas réception de l'événement |
+| "Même téléphone / compte" | — | Éliminé : test refait avec deux téléphones, deux comptes, deux plaques |
 
 ---
 
 ## PREUVES ET TESTS
 
-### Dernières preuves disponibles
+### Dernières preuves
 
-| Preuve | Source | Élimine |
+| Preuve | Source | Effet |
 |---|---|---|
-| `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie, HYP-007 affaiblie |
-| Historique : `Appel émis · expired` + `Appel reçu · expired` | Observation UI | HYP-004 affaiblie |
-| Deuxième appel → `23505` | Observation UI | Confirme HYP-001 |
-| Audit `calls.js` : zéro UPDATE status=expired | Code source | Confirme HYP-001 |
+| `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
+| `"Appel émis · expired"` + `"Appel reçu · expired"` dans l'historique | Observation UI | HYP-004 affaiblie |
+| Deuxième appel → erreur `23505` | Observation UI | Confirme HYP-001 |
+| Aucun `UPDATE status='expired'` dans `calls.js` | Audit statique | Confirme HYP-001 |
 
 ### Dernier test réalisé
 
 Audit statique `calls.js` — 2026-06-08
 
-### Prochain test — PRIORITÉ 1
+### Prochain test — PRIORITÉ ABSOLUE
 
 ```sql
--- Exécuter dans Supabase SQL Editor
+-- Supabase SQL Editor
 SELECT id, requester_plate, receiver_plate, receiver_id,
        status, expires_at, created_at
 FROM call_requests
 WHERE status = 'pending' AND expires_at < NOW()
-ORDER BY expires_at DESC
-LIMIT 10;
+ORDER BY expires_at DESC LIMIT 10;
 ```
 
-**Si > 0 lignes** → HYP-001 confirmée à 100 %, HYP-002 à vérifier ensuite.  
-**Si 0 lignes** → raisonner depuis le début, cause différente.
+**> 0 lignes** → HYP-001 confirmée à 100 % → passer à vérification contrainte  
+**0 lignes** → HYP-001 infirmée → repartir du diagnostic consolidé
 
 ---
 
 ## PROCHAINE ACTION
 
-**Attente de résultat SQL** (action utilisateur requise — accès Supabase Dashboard).  
-**Ne pas modifier le code** avant confirmation SQL.
+Attente résultat SQL (accès Supabase Dashboard — action utilisateur).  
+**Aucune modification de code avant confirmation SQL.**
 
-Après SQL :
-1. Si HYP-001 confirmée → vérifier définition contrainte (SQL priorité 2)
-2. Si HYP-001 + HYP-002 confirmées → proposer correctif minimal avec test de validation
+Après SQL positif :
+1. Vérifier définition contrainte anti-doublon
+2. Proposer correctif minimal + test de validation avant application
 
 ---
 
 ## DOCUMENTS DE RÉFÉRENCE
 
-| Document | Rôle |
-|---|---|
-| `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 — consolidé |
-| `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` | Audit statique code — Claude |
-| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue critique — ChatGPT |
-| `docs/ROADMAP-NEXT.md` | Prochaines priorités (dette / améliorations / features) |
-| `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés |
-| `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE |
-| `docs/INTERACTION_ORGANISM_MAP.md` | Qui possède quoi |
+| Document | Rôle | Type |
+|---|---|---|
+| `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_CODE_AUDIT_CLAUDE.md` | Audit statique `calls.js` — Claude | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue critique — ChatGPT | Annexe incident actif |
+| `docs/ROADMAP-NEXT.md` | Prochaines priorités hors incidents | Référence permanente |
+| `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
+| `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
+| `docs/INTERACTION_ORGANISM_MAP.md` | Qui possède quoi | Référence permanente |
 
 ---
 
@@ -127,7 +146,7 @@ Après SQL :
 
 | Incident | Date | Cause racine | Archive |
 |---|---|---|---|
-| Phases 0–10 + post-merge | 2026-06-08 | Architecture complète implémentée, CI green | `docs/archives/ARCHIVE_PHASES_0_10.md` |
+| Phases 0–10 + post-merge | 2026-06-08 | Architecture complète — CI green 4/4 | `docs/archives/ARCHIVE_PHASES_0_10.md` |
 
 ---
 
@@ -141,4 +160,5 @@ INV-COM-010/015    → payload anonymisé, pas de contenu message dans Edge Func
 InteractionEngine  → tous appels dans try/catch, non-bloquants
 Corrections        → ciblées uniquement, pas de réécriture globale
 CI                 → vérifier green avant chaque merge
+SESSION_CONTINUATION.md → toujours mis à jour dans le même commit que le code
 ```
