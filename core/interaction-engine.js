@@ -84,9 +84,11 @@
       payload:     input.payload || {},
       status:      input.status || STATUSES.PENDING,
       obd_events:  meta.obd ? [meta.obd] : [],
-      journey_id:  input.journey_id || null,
-      flow_id:     flow_id || meta.flow || null,
-      invariants:  invariants || meta.invariants || []
+      journey_id:    input.journey_id || null,
+      flow_id:       flow_id || meta.flow || null,
+      invariants:    invariants || meta.invariants || [],
+      source_module: input.source_module || null,
+      privacy_level: input.privacy_level || null
     };
     const list = _load(STORAGE_KEY);
     list.push(interaction);

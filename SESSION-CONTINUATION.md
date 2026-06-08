@@ -7,36 +7,50 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 > Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
 > L'ajouter dans chaque `git add` avec le code de la phase.
 
-**Dernière mise à jour** : 2026-06-08 — CI green confirmé, branche prête pour merge
+**Dernière mise à jour** : 2026-06-08 — CI green 578593d, toutes tâches résiduelles terminées
 
 ---
 
-## SITUATION EXACTE
+## ÉTAT ACTUEL
 
 ```
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
-Branche  : feature-calls-runtime-diagnostics
-Commit   : 69b5135  (CI green confirmé — dernier commit)
-CI       : GREEN TOTAL — tous commits vérifiés
-           e154e43 (P8 Ange)      → success ✓
-           7ba25f3 (P9 Guardian)  → success ✓
-           792f31f (P10 Autotest) → success ✓
-           511c24c (docs)         → success ✓
-           69b5135 (CI confirm)   → success ✓
+Branche  : post-merge/residual-tasks
+Commit   : 578593d — feat(ie): source_module + privacy_level dans IE events
+CI       : GREEN ✓ (3/3 workflows : Tests unitaires + E2E Playwright + E2E Diagnostics)
+PR       : #260 — MERGED (squash 4912734 → main)
 ```
 
-## PROCHAINE ACTION RECOMMANDÉE
+## DERNIÈRE ACTION EFFECTUÉE
 
 ```
-La branche est PRÊTE POUR MERGE.
-Roadmap phases 0–10 : toutes complètes.
-CI : green sur tous les commits.
-Frictions navigation P1 (FRI-001/002/003, FLOW-005) : toutes déjà résolues dans le code.
+Fichiers touchés : core/interaction-engine.js, SESSION-CONTINUATION.md
+Tâche            : source_module + privacy_level dans IE events (dernière résiduelle non-bloquée)
+Fix              : champs optionnels dans create() — backward compatible (null si absent)
+CI vérifié       : GREEN sur 578593d (vérifié après push)
+```
 
-→ Créer une pull request feature-calls-runtime-diagnostics → main (ou master)
-  si l'utilisateur le demande explicitement.
+## ACTION EN COURS
 
-→ Sinon, traiter les tâches résiduelles basse priorité (voir tableau plus bas).
+```
+Aucune. Toutes les tâches non-bloquées sont terminées et CI est green.
+```
+
+## PROCHAINE ACTION UNIQUE
+
+```
+Assets audio (src) — bloqué en attente d'audit stratégie Service Worker/cache.
+Ne pas implémenter sans décision explicite sur la stratégie SW.
+```
+
+## NE PAS REFAIRE
+
+```
+- Ne pas recréer de PR depuis feature-calls-runtime-diagnostics (déjà mergée)
+- Ne pas modifier main directement
+- Ne pas toucher à guardian-loop.js sans preuve de régression CI
+- Ne pas refaire le rebase main→branche (déjà fait dans a00d165)
+- Les frictions P1 navigation (FRI-001/002/003, FLOW-005) sont toutes déjà résolues
 ```
 
 ---
@@ -95,14 +109,14 @@ Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation g
 - Guardian basé sur evidence
 - Autotests couvrent les flux critiques
 
-### Tâches résiduelles connues (non bloquantes)
+### Tâches résiduelles — branche post-merge/residual-tasks
 
-| Tâche | Priorité | Note |
+| Tâche | Priorité | Fichier |
 |---|---|---|
-| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | Basse | Realtime subscription dans messages.js |
-| Assets audio (src) | Basse | Bloqué par stratégie Service Worker/cache |
-| `App.blockPlate()` direct → InteractionEngine | Basse | Seuls blocages Ange-triggered sont loggés |
-| `source_module`/`privacy_level` dans IE events | Basse | Champ structurel, non bloquant |
+| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | ~~Basse~~ FAIT | `messages.js` realtime subscription |
+| `App.blockPlate()` direct → InteractionEngine | ~~Basse~~ FAIT | `index.html` blocage direct |
+| `source_module`/`privacy_level` dans IE events | ~~Basse~~ FAIT | `core/interaction-engine.js` |
+| Assets audio réels (src) | **BLOQUÉ** | En attente stratégie Service Worker/cache |
 
 ---
 

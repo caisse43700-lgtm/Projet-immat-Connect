@@ -4,6 +4,31 @@ This file records every investigation, correction, blocker and next action so fu
 
 ---
 
+## 2026-06-08 — CI red post-merge : parse error guillemets typographiques
+
+### CAUSE
+Lors de la résolution du conflit de merge sur `index.html`, les lignes 619-621 (fonctions `callsRuntimeHtml`, `runtimeHtml`, `messagesRuntimeHtml`) ont été insérées avec des guillemets typographiques U+2018 `'` et U+2019 `'` utilisés comme délimiteurs de chaîne JS au lieu de l'apostrophe ASCII U+0027 `'`. Ces caractères sont invalides comme délimiteurs en JavaScript — le navigateur lève `"Invalid or unexpected token"` au chargement.
+
+### CORRECTIF
+Remplacement ciblé sur les 3 lignes (619, 620, 621) uniquement — Python binary replace `\xe2\x80\x98` → `'` et `\xe2\x80\x99` → `'`. 68 + 346 + 52 occurrences corrigées. Tous les autres scripts inline restent intacts (les `'` dans `"J'arrive"` sont dans des chaînes à double-guillemets = valide).
+
+### RISQUE
+Faible. Correction mécanique de caractères invalides vers caractères valides sur les seules lignes touchées par le merge.
+
+### IMPACT DES FAILURES
+9 tests échouaient sur 3 devices — tous découlaient du même parse error qui empêchait le script 8 (où `App` est défini) de s'initialiser :
+- T05 × 3 devices : `Invalid or unexpected token` pageerror
+- T08 × 3 devices : `#sw` reste `auth-screen` (bouton "← Retour" inactif car App non initialisé)
+- R01/R02/R03 × Desktop Chrome : `App.subLocs/subscribeCommunityReports/subMsgs` not a function
+
+### STATUT CI
+Fix commité, push en cours — CI attendu green.
+
+### PROCHAINE ACTION
+Confirmer CI green, puis traiter les tâches résiduelles basse priorité.
+
+---
+
 ## 2026-06-08 — OBD Appels / calls runtime diagnostics
 
 ### Context
