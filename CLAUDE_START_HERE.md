@@ -2,6 +2,49 @@
 
 Read this first when reconnecting to the repository.
 
+## Latest known status
+
+```text
+Branch:
+feature-calls-runtime-diagnostics
+
+Last originally failed run analyzed:
+27133682666
+
+Artifact:
+obd-e2e-evidence
+
+Original blocker:
+SyntaxError: Illegal return statement
+
+Original suspect:
+core/guardian-loop.js
+
+Latest guardian-loop alignment commit:
+07b6d3d233dc6a1035844866c379c9615ec3c358
+
+Latest docs/status commit:
+fae8cd7a8dc8114d788eaae6dc5c26b7dc35fb97 and later docs updates
+
+CI status after guardian-loop alignment:
+UNKNOWN until a new GitHub Actions run is inspected.
+
+Immediate action:
+Trigger or inspect CI before coding anything else.
+```
+
+---
+
+## Next 3 actions only
+
+1. Inspect or trigger the latest GitHub Actions run for `feature-calls-runtime-diagnostics`.
+2. If red, download `obd-e2e-evidence` and read `diagnostic-artifacts/playwright-output.log`.
+3. Fix only the first real error, then update `docs/SESSION-LOG.md`.
+
+Do not jump to `CallScreen`, `mobile-autotest`, or `getRuntimeState()` until CI status is known.
+
+---
+
 ## 60-second arrival checklist
 
 1. Confirm branch is `feature-calls-runtime-diagnostics`.
@@ -52,6 +95,28 @@ fix: align guardian loop guard with T05 correction
 ```
 
 Do not reintroduce another wrapper around `guardian-loop.js` unless new logs prove a real issue.
+
+---
+
+## Stable areas — do not touch without evidence
+
+These areas were previously stabilized and must not be changed during the calls/OBD investigation unless logs prove they are the active failure:
+
+- map navigation / `navMap`
+- panels open/close behavior
+- `sheet.mini` pointer behavior
+- drawer z-index / overlay stacking
+- ghost overlay fixes
+- nearby vehicles
+- GPS locate / recenter
+- Service Worker cache/update flow
+- Supabase schema and RLS
+- global `index.html` rewrites
+
+Known context:
+
+- GPS `null` observed earlier is not considered a structural bug by itself.
+- Safari iOS may keep an old Service Worker; handle only with evidence and controlled reload logic.
 
 ---
 
