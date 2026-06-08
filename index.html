@@ -296,6 +296,9 @@
 
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div>
 <div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
+<audio id="callAudioIncoming" loop preload="none" style="display:none"></audio>
+<audio id="callAudioOutgoing" preload="none" style="display:none"></audio>
+<audio id="messageAudioBeep" preload="none" style="display:none"></audio>
 <div id="floatingCard" class="floating-card" style="display:none">
   <div class="fc-icon" id="fcIcon">🚘</div>
   <div class="fc-body">
@@ -2010,6 +2013,8 @@ function showReputationToast(){
 <script src="core/guardian-loop.js?v=2"></script>
 <script src="calls.js?v=5"></script>
 <script src="core/call-screen.js?v=1"></script>
+<script src="core/audio-manager.js?v=1"></script>
+<script src="core/call-notification-runtime.js?v=1"></script>
 <script src="core/calls-runtime-diagnostics.js?v=1"></script>
 <script src="core/mobile-autotest.js?v=1"></script>
 <script src="badge.js"></script>

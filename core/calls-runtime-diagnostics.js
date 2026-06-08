@@ -146,6 +146,20 @@
     }
     return { hasLedger:false, reason:'InteractionEngine.getRuntimeState not exposed' };
   }
+  function audioRuntime(){
+    var am = w.AudioManager;
+    if(hasFn(am, 'getRuntimeState')){
+      return safe(function(){ return am.getRuntimeState(); }, { available:false, error:'getRuntimeState threw' });
+    }
+    return { available:false, reason:'AudioManager not loaded or getRuntimeState missing' };
+  }
+  function notificationRuntime(){
+    var nr = w.CallNotificationRuntime;
+    if(hasFn(nr, 'getRuntimeState')){
+      return safe(function(){ return nr.getRuntimeState(); }, { available:false, error:'getRuntimeState threw' });
+    }
+    return { available:false, reason:'CallNotificationRuntime not loaded or getRuntimeState missing' };
+  }
   function storage(){
     return {
       blockedCount: safe(function(){ return JSON.parse(localStorage.getItem('ic_blocked') || '[]').length; }, null),
@@ -162,6 +176,8 @@
       module: moduleInfo(),
       runtimeState: runtimeState(),
       registryRuntime: registryRuntime(),
+      audioRuntime: audioRuntime(),
+      notificationRuntime: notificationRuntime(),
       storage: storage(),
       dom: {
         callScreen: elState('callScreen'),
@@ -171,6 +187,9 @@
         callContactModal: elState('callContactModal'),
         callNotAllowedModal: elState('callNotAllowedModal'),
         callAudio: elState('callAudio'),
+        callAudioIncoming: elState('callAudioIncoming'),
+        callAudioOutgoing: elState('callAudioOutgoing'),
+        messageAudioBeep: elState('messageAudioBeep'),
         callIncomingPlate: elState('callIncomingPlate'),
         callSentPlate: elState('callSentPlate')
       },
