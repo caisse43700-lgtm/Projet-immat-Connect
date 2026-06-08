@@ -129,43 +129,47 @@ B ne voit aucune popup ni sonnerie lors du premier appel.
 | SQL P2 : 5 contraintes, zéro UNIQUE | Supabase SQL Editor — 2026-06-08 | HYP-002 infirmée |
 | SQL P3 : 2 triggers (`trg_call_req_on_insert`, `trg_call_req_on_update`) | Supabase SQL Editor — 2026-06-08 | Trigger existe — résultat pg_indexes non capturé |
 | SQL P4 : `call_request_on_insert()` = spam + cooldown seulement — zéro 23505 | Supabase SQL Editor — 2026-06-08 | HYP-011/012 infirmées |
-| **SQL P5 : `call_requests_unique_pending_idx` — index UNIQUE confirmé** | Supabase SQL Editor — 2026-06-08 | **HYP-013 confirmée — WHERE clause non encore lue** |
+| SQL P5 : `call_requests_unique_pending_idx` — UNIQUE confirmé | Supabase SQL Editor — 2026-06-08 | HYP-013 confirmée |
+| **SQL P6 : `WHERE (status = 'pending'::text)` — définition complète** | Supabase SQL Editor — 2026-06-08 | **CAUSE RACINE CONFIRMÉE À 100 %** |
 
 ### Dernier test réalisé
 
-**SQL Priorité 5** — 2026-06-08 — 5 index sur `call_requests` — `call_requests_unique_pending_idx` = UNIQUE — définition tronquée
+**SQL Priorité 6** — 2026-06-08 — **Cause racine confirmée** : `UNIQUE (requester_id, receiver_id) WHERE status='pending'` — aucun code ne libère cet index à l'expiration
 
-### Prochain test — PRIORITÉ ABSOLUE
+### Prochaines actions avant correctif
+
+Deux vérifications SQL requises avant d'implémenter :
 
 ```sql
--- Supabase SQL Editor — SQL Priorité 6 (une seule requête)
-SELECT indexdef
-FROM pg_indexes
-WHERE indexname = 'call_requests_unique_pending_idx';
-```
+-- 1. 'expired' dans le CHECK constraint ?
+SELECT pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid='call_requests'::regclass AND conname='call_requests_status_check';
 
-**Résultat attendu** : définition complète de l'index — révèle exactement les colonnes et le WHERE clause  
-**Sans WHERE clause** → bloque toute paire indéfiniment → correctif : ajouter `WHERE status='pending'`  
-**`WHERE status='pending'` sans `expires_at`** → bloque tant que ligne reste pending → correctif : ajouter nettoyage à l'expiration  
-**`WHERE status='pending' AND expires_at > X`** → impossible (now() non immutable) → autre piste
+-- 2. call_request_on_update() — effets de bord ?
+SELECT pg_get_functiondef(oid)
+FROM pg_proc WHERE proname='call_request_on_update';
+```
 
 ---
 
 ## PROCHAINE ACTION
 
-**SQL Priorité 6** — une seule requête, séparée (accès utilisateur requis) :
+**CAUSE RACINE CONFIRMÉE — BUG A.** Deux vérifications avant d'implémenter le correctif :
 
 ```sql
-SELECT indexdef
-FROM pg_indexes
-WHERE indexname = 'call_requests_unique_pending_idx';
+-- 1. 'expired' autorisé par le CHECK constraint ?
+SELECT pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid='call_requests'::regclass AND conname='call_requests_status_check';
+
+-- 2. call_request_on_update() — pas d'effet de bord ?
+SELECT pg_get_functiondef(oid)
+FROM pg_proc WHERE proname='call_request_on_update';
 ```
 
-**Aucune modification de code avant résultat SQL Priorité 6.**
-
-Après résultat :
-- Définition sans `WHERE status` → correctif : recréer l'index avec `WHERE status='pending'`
-- Définition avec `WHERE status='pending'` → correctif : ajouter nettoyage DB à l'expiration (UPDATE ou Supabase cron)
+Correctif prêt à implémenter dans `calls.js` — 2 changements ciblés (voir `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` § CORRECTIF PROPOSÉ).  
+**Aucun code modifié avant résultats des 2 requêtes ci-dessus.**
 
 ---
 

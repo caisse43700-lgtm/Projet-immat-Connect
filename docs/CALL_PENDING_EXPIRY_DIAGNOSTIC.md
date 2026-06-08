@@ -453,16 +453,37 @@ WHERE tablename = 'call_requests';
 - `call_requests_expires_idx` → INDEX (non unique)
 
 **HYP-013 CONFIRMÉE** : l'index UNIQUE `call_requests_unique_pending_idx` existe.  
-Définition tronquée — WHERE clause inconnue → TEST-06 requis.
+Définition tronquée — WHERE clause confirmée → TEST-06 exécuté.
 
 ---
 
-### TEST-06 — SQL : définition complète de `call_requests_unique_pending_idx` ← PRIORITÉ ABSOLUE
+### TEST-06 — SQL : définition complète de `call_requests_unique_pending_idx` ✅ EXÉCUTÉ
 
 ```sql
 SELECT indexdef
 FROM pg_indexes
 WHERE indexname = 'call_requests_unique_pending_idx';
+```
+
+**Résultat (2026-06-08) :**
+```sql
+CREATE UNIQUE INDEX call_requests_unique_pending_idx
+ON public.call_requests
+USING btree (requester_id, receiver_id)
+WHERE (status = 'pending'::text)
+```
+
+**CAUSE RACINE DE BUG A — CONFIRMÉE À 100 %**
+
+L'index interdit deux lignes `pending` pour la même paire `(requester_id, receiver_id)`.  
+Aucun code ne met jamais `status='expired'` → la ligne reste `pending` → le second appel fail avec 23505.
+
+**Chemin exact du bug :**
+```
+1. A appelle B → INSERT status='pending' → OK
+2. 30 secondes → expires_at dépassé → UI affiche "expired" localement
+3. Aucun UPDATE en DB → ligne reste status='pending'
+4. A rappelle B → INSERT → unique index trouve (requester_id, receiver_id) existant → 23505
 ```
 
 **Sans WHERE clause** → index sur toute la table → bloque toute paire définitivement → correctif : recréer avec `WHERE status='pending'`.  
@@ -576,8 +597,10 @@ BUG A — Blocage 23505
   SQL P2 (EXÉCUTÉ) : 5 contraintes, zéro UNIQUE → HYP-002 infirmée
   SQL P3 (EXÉCUTÉ) : 2 triggers trouvés — pg_indexes résultat non capturé
   SQL P4 (EXÉCUTÉ) : call_request_on_insert() = spam + cooldown seulement
-  SQL P5 (EXÉCUTÉ) : call_requests_unique_pending_idx = UNIQUE — HYP-013 CONFIRMÉE
-  Preuve manquante : TEST-06 — WHERE clause complète de l'index (SQL P6)
+  SQL P5 (EXÉCUTÉ) : call_requests_unique_pending_idx = UNIQUE
+  SQL P6 (EXÉCUTÉ) : WHERE (status = 'pending'::text) — HYP-013 CONFIRMÉE À 100 %
+  CAUSE RACINE     : aucun UPDATE status='expired' → index bloque le second INSERT
+  Correctif        : voir section CORRECTIF PROPOSÉ ci-dessous
 
 BUG B — B ne reçoit rien
   Hypothèse active : indéterminée — HYP-006 / HYP-007 / HYP-008 ouvertes
@@ -585,8 +608,89 @@ BUG B — B ne reçoit rien
   OBD B            : realtimeSubscribed=true, initialized=true, myPlate correct
   Preuve manquante : ImmatBus.getJournal() côté B après appel propre
 
-Bloquant         : accès Supabase Dashboard (action utilisateur)
-Prochaine action : exécuter TEST-04 dans SQL Editor Supabase
-                   coller le corps complet de call_request_on_insert()
-                   ne pas corriger avant
+Prochaine action  : valider le correctif BUG A — voir section CORRECTIF PROPOSÉ
 ```
+
+---
+
+## CORRECTIF PROPOSÉ — BUG A (blocage 23505)
+
+### Cause racine
+
+Index UNIQUE `(requester_id, receiver_id) WHERE status='pending'` — aucun code ne libère cet index à l'expiration.
+
+### Prérequis à vérifier avant d'implémenter
+
+```
+□ 'expired' est un statut valide dans call_requests_status_check CHECK constraint
+  (voir pg_get_constraintdef — statuts visibles : pending, accepted, refused... + cancelled implicite)
+□ call_request_on_update() ne fait rien d'incompatible avec UPDATE status='expired'
+  → lire son corps : SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname='call_request_on_update'
+```
+
+Si 'expired' n'est pas dans le CHECK, utiliser 'cancelled' (déjà utilisé dans cancelCallRequest()).
+
+### Changement 1 — `_showSentBanner()` ligne 322 — côté A à l'expiration
+
+```js
+// AVANT (ligne 322-324)
+setTimeout(() => {
+  if (_pendingCallId === requestId) _pendingCallId = null;
+}, 31000);
+
+// APRÈS
+setTimeout(async () => {
+  if (_pendingCallId !== requestId) return;
+  _pendingCallId = null;
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', requestId)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+}, 31000);
+```
+
+### Changement 2 — `_recoverPendingRequest()` ligne 56 — nettoyage au rechargement
+
+```js
+// AVANT (ligne 56)
+if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
+
+// APRÈS
+if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', data.id)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+  return;
+}
+```
+
+### Résultat attendu après correctif
+
+- A appelle B → expires → setTimeout(31s) → UPDATE status='expired' → index libéré
+- A rappelle B → INSERT → pas de ligne pending → OK
+- Rechargement avec pending expiré → UPDATE au démarrage → nettoyage automatique
+
+### Test de validation
+
+```
+1. A appelle B (premier appel)
+2. Attendre 35 secondes (expiration + 5s marge)
+3. A rappelle B (deuxième appel)
+4. Résultat attendu : appel émis sans erreur 23505
+```
+
+### Ce que ce correctif ne couvre pas
+
+- BUG B (B ne reçoit pas la popup) — investigation séparée après BUG A résolu
+- Lignes `pending` orphelines antérieures au déploiement : nettoyage manuel SQL requis
+  ```sql
+  UPDATE call_requests SET status='expired'
+  WHERE status='pending' AND expires_at < NOW();
+  ```
