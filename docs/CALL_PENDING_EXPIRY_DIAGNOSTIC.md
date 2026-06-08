@@ -162,35 +162,53 @@ ORDER BY expires_at DESC LIMIT 10;
 
 ### HYP-010 — Index UNIQUE sur `call_requests` (hors contrainte formelle)
 
-**Statut : OUVERTE — SQL Priorité 3 requis**
+**Statut : RÉOUVERTE — SQL P3 résultat pg_indexes écrasé par résultat triggers**
 
-**Énoncé** : un index UNIQUE existe sur `call_requests` mais a été créé avec `CREATE UNIQUE INDEX` (pas `ALTER TABLE ADD CONSTRAINT`), ce qui le rend invisible dans `pg_constraint`. Son filtre `WHERE` conditionne le comportement.
+Quand les deux requêtes ont été lancées ensemble dans Supabase, seul le résultat de la seconde (triggers) a été affiché. Le résultat de `pg_indexes` n'a pas été capturé.
 
-**SQL Priorité 3** :
+**SQL Priorité 5 (séparé)** :
 ```sql
 SELECT indexname, indexdef
 FROM pg_indexes
 WHERE tablename = 'call_requests';
 ```
 
-**Niveau de confiance : 85 %**
+**Niveau de confiance : 95 % — seule cause restante du 23505**
 
 ---
 
 ### HYP-011 — Trigger BEFORE INSERT lève `RAISE EXCEPTION ERRCODE='23505'`
 
-**Statut : OUVERTE — SQL Priorité 3 requis**
+**Statut : INFIRMÉE — SQL Priorité 4 exécuté**
 
-**Énoncé** : un trigger PostgreSQL sur `call_requests` vérifie si une ligne similaire existe avant d'autoriser l'INSERT, et lève une exception avec le code `23505` si c'est le cas. Ce pattern est courant dans Supabase pour implémenter des règles métier côté DB.
+Corps complet de `call_request_on_insert()` lu (SQL P4). La fonction :
+1. Compte les appels vers la même paire dans les 10 dernières minutes (spam_limit si >= 3)
+2. Vérifie le cooldown si statut 'refused' dans les 5 dernières minutes
+3. Retourne `new` — laisse l'INSERT se faire
 
-**SQL Priorité 3** :
-```sql
-SELECT trigger_name, event_manipulation, action_statement
-FROM information_schema.triggers
-WHERE event_object_table = 'call_requests';
-```
+**Aucun `RAISE EXCEPTION` avec `errcode='23505'`** dans la fonction. Les seuls codes levés sont `check_violation` (23514).
 
-**Niveau de confiance : 75 %**
+---
+
+### HYP-012 — `call_request_on_insert()` vérifie l'unicité sans filtre `expires_at`
+
+**Statut : INFIRMÉE — SQL Priorité 4 exécuté**
+
+La fonction ne vérifie pas les doublons du tout. Elle ne fait que spam + cooldown. La source du 23505 est ailleurs.
+
+---
+
+### HYP-013 — Index UNIQUE `(requester_id, receiver_id)` sans filtre `expires_at`
+
+**Statut : DOMINANTE — SQL Priorité 5 requis**
+
+**Énoncé** : un index UNIQUE a été créé avec `CREATE UNIQUE INDEX` sur la paire `(requester_id, receiver_id)`, possiblement avec `WHERE status='pending'` mais sans tenir compte de `expires_at`. Toute ligne avec `status='pending'` bloque le prochain INSERT même si elle est expirée côté UI.
+
+Ce scénario est cohérent avec :
+- SQL P1 (0 lignes pending expirées) — si l'index est trop restrictif, il bloque immédiatement après l'INSERT initial, avant même que `expires_at` soit dépassé
+- L'erreur 23505 exacte sur le deuxième appel
+
+**Niveau de confiance : 95 %**
 
 ---
 
@@ -296,10 +314,14 @@ WHERE event_object_table = 'call_requests';
 
 | Hypothèse | Explique BUG A (blocage) | Explique BUG B (pas de popup) | Confiance | Statut |
 |---|:---:|:---:|---:|---|
-| HYP-001 pending expiré en DB | ✅ Oui | ❌ Non | Affaiblie DB | Confirmée client / affaiblie DB (SQL P1 = 0 lignes) |
-| **HYP-002 contrainte sans filtre status** | **✅ Oui** | **❌ Non** | **85 %** | **DOMINANTE — SQL P2 requis** |
-| HYP-003 UI expired ≠ DB pending | ✅ Oui | Partiel | 85 % | Confirmée côté logique client |
-| HYP-003b cron/trigger nettoie expirés | Partiel | ❌ Non | 65 % | Ouverte — expliquerait 0 lignes SQL P1 |
+| HYP-001 pending expiré en DB | ✅ Oui | ❌ Non | Client confirmé | Confirmée client / affaiblie DB (SQL P1 = 0 lignes) |
+| HYP-002 contrainte UNIQUE pg_constraint | ✅ Oui | ❌ Non | — | **INFIRMÉE** SQL P2 |
+| HYP-003 UI expired ≠ DB pending | ✅ Oui | Partiel | Client confirmé | Confirmée côté logique client |
+| HYP-003b cron/trigger nettoie expirés | Partiel | ❌ Non | 65 % | Ouverte |
+| HYP-010 index UNIQUE hors pg_constraint | ✅ Oui | ❌ Non | — | Réouverte — résultat pg_indexes non capturé |
+| HYP-011 trigger lève 23505 | ✅ Oui | ❌ Non | — | **INFIRMÉE** SQL P4 |
+| HYP-012 trigger filtre sans expires_at | ✅ Oui | ❌ Non | — | **INFIRMÉE** SQL P4 |
+| **HYP-013 index UNIQUE sans filtre expires_at** | **✅ Oui** | **❌ Non** | **95 %** | **DOMINANTE — SQL P5 requis** |
 | HYP-004 receiver_id incorrect | Possible | ✅ Oui | 20 % | Probable infirmée |
 | HYP-005 realtime cassé côté B | ❌ Non | ✅ Oui | 30 % | Affaiblie (OBD) |
 | HYP-006 popup live ratée | ❌ Non | ✅ Oui | 40 % | Ouverte |
@@ -359,17 +381,18 @@ FROM information_schema.triggers
 WHERE event_object_table = 'call_requests';
 ```
 
-**Résultat (2026-06-08) :**
-- Index UNIQUE : aucun distinct trouvé → HYP-010 infirmée
-- Triggers : 2 triggers trouvés
+**Résultat (2026-06-08) — résultat partiel capturé :**
+- Triggers : 2 triggers trouvés (`trg_call_req_on_insert` + `trg_call_req_on_update`)
+- Index UNIQUE : résultat de `pg_indexes` **non capturé** (écrasé par le résultat triggers dans le SQL Editor)
   - `trg_call_req_on_insert` — INSERT — `EXECUTE FUNCTION call_request_on_insert()`
   - `trg_call_req_on_update` — UPDATE — `EXECUTE FUNCTION call_request_on_update()`
 
-**HYP-011 confirmée.** Source du 23505 : `call_request_on_insert()`.
+HYP-010 : résultat `pg_indexes` non capturé — **réouverte**.  
+HYP-011 (trigger source du 23505) : sera infirmée par TEST-04.
 
 ---
 
-### TEST-04 — SQL : corps de `call_request_on_insert()` ← PRIORITÉ ABSOLUE
+### TEST-04 — SQL : corps de `call_request_on_insert()` ✅ EXÉCUTÉ
 
 ```sql
 SELECT pg_get_functiondef(oid)
@@ -377,8 +400,54 @@ FROM pg_proc
 WHERE proname = 'call_request_on_insert';
 ```
 
-**Corps sans filtre `expires_at`** → HYP-012 confirmée → correctif ciblé proposé.  
-**Corps avec filtre `expires_at`** → HYP-012 infirmée → lire `call_request_on_update()`.
+**Résultat (2026-06-08) — corps complet :**
+```sql
+CREATE OR REPLACE FUNCTION public.call_request_on_insert()
+RETURNS trigger LANGUAGE plpgsql AS $function$
+declare
+  v_count    int;
+  v_cooldown timestamptz;
+begin
+  select count(*) into v_count
+    from public.call_requests
+    where requester_id = new.requester_id
+      and receiver_id  = new.receiver_id
+      and created_at   > now() - interval '10 minutes';
+  if v_count >= 3 then
+    raise exception 'spam_limit' using errcode = 'check_violation';
+  end if;
+
+  select max(responded_at) into v_cooldown
+    from public.call_requests
+    where requester_id = new.requester_id
+      and receiver_id  = new.receiver_id
+      and status       = 'refused';
+  if v_cooldown is not null and v_cooldown > now() - interval '5 minutes' then
+    raise exception 'cooldown_active' using errcode = 'check_violation';
+  end if;
+
+  return new;
+end;
+$function$
+```
+
+**HYP-011 INFIRMÉE** : la fonction ne lève JAMAIS `errcode='23505'`. Seuls codes : `check_violation` (23514).  
+**HYP-012 INFIRMÉE** : pas de vérification de doublons dans la fonction.  
+**HYP-013 DOMINANTE** : la source du 23505 est un index UNIQUE dans `pg_indexes`.
+
+---
+
+### TEST-05 — SQL : index UNIQUE sur `call_requests` ← PRIORITÉ ABSOLUE
+
+```sql
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'call_requests';
+```
+
+**Index UNIQUE sans `WHERE status='pending'`** → HYP-013 variante A → correctif : ajouter clause WHERE.  
+**Index UNIQUE avec `WHERE status='pending'` sans `expires_at`** → HYP-013 variante B → correctif : ajouter filtre `expires_at > now()`.  
+**Aucun index UNIQUE** → HYP-013 infirmée → chercher dans Edge Functions / RLS.
 
 ---
 
@@ -485,10 +554,11 @@ Branche          : diagnostic/call-pending-expiry-obd
 BUG A — Blocage 23505
   SQL P1 (EXÉCUTÉ) : 0 lignes pending expirées → HYP-001 DB affaiblie
   SQL P2 (EXÉCUTÉ) : 5 contraintes, zéro UNIQUE → HYP-002 infirmée
-  SQL P3 (EXÉCUTÉ) : 2 triggers — trg_call_req_on_insert → call_request_on_insert()
-  HYP-011 CONFIRMÉE : source du 23505 = call_request_on_insert()
-  Hypothèse active : HYP-012 — filtre de la fonction sans expires_at (90 %)
-  Preuve manquante : corps de call_request_on_insert() (TEST-04)
+  SQL P3 (EXÉCUTÉ) : 2 triggers trouvés — résultat pg_indexes non capturé
+  SQL P4 (EXÉCUTÉ) : call_request_on_insert() = spam + cooldown seulement
+                     → HYP-011 INFIRMÉE, HYP-012 INFIRMÉE
+  Hypothèse active : HYP-013 — index UNIQUE dans pg_indexes (95 %)
+  Preuve manquante : TEST-05 — pg_indexes séparé
 
 BUG B — B ne reçoit rien
   Hypothèse active : indéterminée — HYP-006 / HYP-007 / HYP-008 ouvertes
