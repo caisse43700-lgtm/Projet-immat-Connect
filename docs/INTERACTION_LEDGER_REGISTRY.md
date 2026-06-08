@@ -364,4 +364,72 @@ Which events are diagnostic-only?
 What does RLS allow each user to read?
 ```
 
+---
+
+## Audit Phase 3 — 2026-06-08
+
+### Réponses aux open questions
+
+| Question | Réponse |
+|---|---|
+| Messages stored | Supabase `messages` table + ImmatMessages State cache in-memory (messages.js) |
+| Call requests stored | Supabase `call_requests` table + `_pendingCallId` module-var dans calls.js |
+| Help requests persisted | Oui — via `saveReportRemote()` dans index.html, table `reports` Supabase |
+| Reports event IDs | Oui — `saveReportRemote()` retourne un `_dbId`; local card dans `S.alerts[]` |
+| InteractionEngine reuse | **Oui — déjà présent** : `core/interaction-engine.js`, `window.InteractionEngine` |
+| Local-only events | CALL_MISSED (in-memory `_missedCallIds`), `S.alerts[]` (local card only) |
+| Supabase writes | messages, call_requests, reports, profiles — tout le reste est local |
+| Diagnostic-only | OBD_FINDING_CREATED, OBD_STATUS_CHECKED, GUARDIAN_RECOMMENDATION_* |
+| RLS | SELECT sur messages filtrée sender_id/receiver_id; call_requests filtrée requester_id/receiver_id |
+
+### État du câblage InteractionEngine (audit du code)
+
+| Module | Appelle InteractionEngine.create() ? | Événements manquants |
+|---|---|---|
+| Ange (index.html:2322) | ✅ Oui | — |
+| calls.js | ✅ Câblé 2026-06-08 | CALL_REQUEST, CALL_ACCEPTED, CALL_REFUSED, CALL_CANCELLED, CALL_MISSED |
+| messages.js | ❌ Non | DIRECT_MESSAGE_SENT, DIRECT_MESSAGE_RECEIVED |
+| index.html roadReport | ❌ Non | VEHICLE_REPORT_CREATED |
+| index.html vehicleAlert | ❌ Non | VEHICLE_REPORT_CREATED |
+| index.html assist | ❌ Non | HELP_REQUEST_CREATED |
+| guardian-loop.js | Lecteur uniquement — `getHistoryUnified()` | — |
+
+### Prochaines étapes câblage (par priorité)
+
+1. `messages.js` — ajouter `InteractionEngine.create({type:'MESSAGE', ...})` dans `sendToPlate()` (ne pas dupliquer le contenu, juste l'event ID + context)
+2. `index.html roadReport` / `vehicleAlert` / `assist` — ajouter `VEHICLE_REPORT_CREATED` / `HELP_REQUEST_CREATED`
+3. `getHistory()` — vérifier que les requêtes Ange → Guardian passent correctement via le ledger
+
+### registryRuntime — confirmé
+
+Champs ajoutés à `InteractionEngine.getRuntimeState()` (2026-06-08) :
+
+```js
+{
+  hasLedger: true,
+  eventCount: <number>,
+  notificationCount: <number>,
+  unviewedNotifications: <number>,
+  byType: { CALL_REQUEST: 3, ... },
+  lastEventType: 'CALL_ACCEPTED',
+  lastEventAt: '...',
+  failedWrites: 0,
+  lastLedgerError: null,
+  canRebuildConversation: false
+}
+```
+
+Exposé via `calls-runtime-diagnostics.js` → `registryRuntime` champ.
+
+### Forme d'événement — confirmée
+
+La forme minimale requise (type, source_module, created_at, context_type, privacy_level) est partiellement satisfaite par InteractionEngine :
+- ✅ type
+- ✅ created_at (timestamp)
+- ⚠️ source_module → non présent dans le shape actuel (à ajouter)
+- ⚠️ context_type → non présent (à ajouter)
+- ⚠️ privacy_level → non présent (à ajouter)
+
+Ces 3 champs manquants sont des améliorations futures — ne pas refactoriser le moteur avant que les besoins Guardian / reconstruction soient confirmés.
+
 If any answer is unknown, audit first. Do not invent a new persistence layer.

@@ -139,6 +139,13 @@
     }
     return { available:false, reason:'CallManager.getRuntimeState not exposed' };
   }
+  function registryRuntime(){
+    var ie = w.InteractionEngine;
+    if(hasFn(ie, 'getRuntimeState')){
+      return safe(function(){ return ie.getRuntimeState(); }, { hasLedger:false, error:'getRuntimeState threw' });
+    }
+    return { hasLedger:false, reason:'InteractionEngine.getRuntimeState not exposed' };
+  }
   function storage(){
     return {
       blockedCount: safe(function(){ return JSON.parse(localStorage.getItem('ic_blocked') || '[]').length; }, null),
@@ -154,6 +161,7 @@
       build: 'calls-runtime-diagnostics-v1',
       module: moduleInfo(),
       runtimeState: runtimeState(),
+      registryRuntime: registryRuntime(),
       storage: storage(),
       dom: {
         callScreen: elState('callScreen'),

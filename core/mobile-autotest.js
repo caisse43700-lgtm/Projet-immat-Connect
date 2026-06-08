@@ -104,6 +104,8 @@
       ImmatMessagesRuntimeDiagnostics: !!w.ImmatMessagesRuntimeDiagnostics,
       CallManager: !!w.CallManager,
       CallScreen: !!w.CallScreen,
+      InteractionEngine: !!w.InteractionEngine,
+      InteractionEngineGetRuntimeState: typeof w.InteractionEngine?.getRuntimeState === 'function',
       GuardianLoop: !!w.GuardianLoop,
       AngeDialog: !!w.AngeDialog,
       journalCount: (typeof w.ImmatBus?.getJournal === 'function') ? w.ImmatBus.getJournal().length : null,

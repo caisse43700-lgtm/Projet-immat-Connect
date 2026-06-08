@@ -349,11 +349,61 @@ Low. CallScreen est lecture seule. Ne modifie pas CallManager, ne touche pas Sup
 
 Commit en attente de push — CI UNKNOWN.
 
+### PROCHAINE ACTION (complété)
+
+Phase 2 (CallManager → CallScreen délégation) : commit c810cea — CI green 3x.
+Phase 3 (Registry / InteractionLedger audit) : voir section ci-dessous.
+
+---
+
+## 2026-06-08 — Phase 3 : Registry / InteractionLedger audit + câblage calls
+
+### Audit
+
+`InteractionEngine` (core/interaction-engine.js) : existant, 208 lignes.
+Seul le flux Ange l'alimentait (index.html:2322).
+calls.js, messages.js, roadReport, vehicleAlert, assist → 0 appel à InteractionEngine.
+
+### Câblage calls.js
+
+Ajout de `InteractionEngine.create()` dans :
+- `requestCall()` : CALL_REQUEST, status pending
+- `acceptCall()` : CALL_ACCEPTED, status resolved
+- `refuseCall()` : CALL_REFUSED, status resolved
+- `cancelCallRequest()` : CALL_CANCELLED, status cancelled
+- `_showIncomingPopup()` timeout (CALL_MISSED) : type CALL_MISSED, status received
+
+Tous les appels sont `try/catch`, non-bloquants, optionnels (InteractionEngine peut être absent).
+
+### Ajout InteractionEngine.getRuntimeState()
+
+Champs : hasLedger, eventCount, notificationCount, unviewedNotifications, byType, lastEventType, lastEventAt.
+
+### Diagnostics
+
+- `calls-runtime-diagnostics.js` : champ `registryRuntime` ajouté
+- `mobile-autotest.js` : InteractionEngine + getRuntimeState dans modules info
+
+### Gaps documentés
+
+Manque dans INTERACTION_LEDGER_REGISTRY.md (câblage futur) :
+- messages.js → DIRECT_MESSAGE_SENT
+- roadReport / vehicleAlert / assist → VEHICLE_REPORT_CREATED / HELP_REQUEST_CREATED
+- InteractionEngine event shape : manque source_module, context_type, privacy_level
+
+### RISQUE
+
+Low. Tous les appels InteractionEngine sont optionnels. L'absence d'InteractionEngine ne casse rien.
+
+### STATUT CI
+
+Push en attente.
+
 ### PROCHAINE ACTION
 
-1. Push et attendre CI.
-2. Si vert : Phase 2 = refactoriser CallManager pour masquer popup/banner quand CallScreen est chargé.
-3. Si rouge : lire artifact playwright-output.log, corriger uniquement le premier vrai bug.
+1. Push + attendre CI.
+2. Si vert : Phase 4 (Messages context model) ou câblage messages.js → InteractionEngine.
+3. Si rouge : artifact + playwright-output.log.
 
 ---
 

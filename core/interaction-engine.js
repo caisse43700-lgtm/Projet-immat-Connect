@@ -182,6 +182,29 @@
     };
   }
 
+  function getRuntimeState() {
+    try {
+      const list = _load(STORAGE_KEY);
+      const notifs = _load(NOTIF_KEY);
+      const byType = {};
+      list.forEach(i => { byType[i.type] = (byType[i.type] || 0) + 1; });
+      return {
+        hasLedger: true,
+        eventCount: list.length,
+        notificationCount: notifs.length,
+        unviewedNotifications: notifs.filter(n => !n.viewed).length,
+        byType,
+        lastEventType: list.length ? list[list.length - 1].type : null,
+        lastEventAt: list.length ? list[list.length - 1].timestamp : null,
+        failedWrites: 0,
+        lastLedgerError: null,
+        canRebuildConversation: false,
+      };
+    } catch(e) {
+      return { hasLedger: false, error: String(e?.message || e) };
+    }
+  }
+
   const InteractionEngine = {
     create,
     resolve:                     (id, status) => updateStatus(id, status || STATUSES.RESOLVED),
@@ -200,6 +223,7 @@
     getPendingNotificationCount: plate => getNotifications({viewed:false, plate}).length,
     search,
     getAnalytics,
+    getRuntimeState,
     STATUSES,
     VALID_STATUSES,
     TYPE_META
