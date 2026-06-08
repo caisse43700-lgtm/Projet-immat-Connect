@@ -62,11 +62,12 @@ Do not jump to `CallScreen`, `mobile-autotest`, or `getRuntimeState()` until CI 
 
 When CI is green and planning resumes, read these in order:
 
-1. `docs/INTERACTION_ORGANISM_MAP.md` — who owns what: Messages, Calls, Help, Reports, Activity, Map, Ange, Guardian, Registry, OBD.
-2. `docs/INTERACTION_LEDGER_REGISTRY.md` — global event table: owner, writer, readers, Ange/Guardian/OBD/autotest links.
-3. `docs/CALL_SOURCE_OF_TRUTH.md` — call state audit grid; not confirmed truth until `calls.js` is audited.
-4. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md` — call ringtone, message beep, iOS fallback, visual call delivery.
-5. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md` — executable skeleton: proposed files, APIs, DOM IDs, triggers, tests.
+1. `docs/MASTER_IMPLEMENTATION_ROADMAP.md` — execution order, phases, acceptance criteria, owner matrix.
+2. `docs/INTERACTION_ORGANISM_MAP.md` — who owns what: Messages, Calls, Help, Reports, Activity, Map, Ange, Guardian, Registry, OBD.
+3. `docs/INTERACTION_LEDGER_REGISTRY.md` — global event table: owner, writer, readers, Ange/Guardian/OBD/autotest links.
+4. `docs/CALL_SOURCE_OF_TRUTH.md` — call state audit grid; not confirmed truth until `calls.js` is audited.
+5. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md` — call ringtone, message beep, iOS fallback, visual call delivery.
+6. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md` — executable skeleton: proposed files, APIs, DOM IDs, triggers, tests.
 
 Important:
 
@@ -176,14 +177,15 @@ Known context:
 1. `docs/CURRENT-INVESTIGATION.md`
 2. `docs/SESSION-LOG.md`
 3. `docs/OBD-RECOVERY-PROTOCOL.md`
-4. `docs/CALL_SOURCE_OF_TRUTH.md`
+4. `docs/MASTER_IMPLEMENTATION_ROADMAP.md`
 5. `docs/INTERACTION_ORGANISM_MAP.md`
 6. `docs/INTERACTION_LEDGER_REGISTRY.md`
-7. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md`
-8. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md`
-9. Latest failed GitHub Actions run
-10. Artifact `obd-e2e-evidence`
-11. `diagnostic-artifacts/playwright-output.log`
+7. `docs/CALL_SOURCE_OF_TRUTH.md`
+8. `docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md`
+9. `docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md`
+10. Latest failed GitHub Actions run
+11. Artifact `obd-e2e-evidence`
+12. `diagnostic-artifacts/playwright-output.log`
 
 ---
 
