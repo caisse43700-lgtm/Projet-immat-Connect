@@ -1,347 +1,233 @@
 # SESSION CONTINUATION — ImmatConnect Pro
 
-Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
+## ⚑ POINT D'ENTRÉE OFFICIEL
 
-> **RÈGLE OBLIGATOIRE** : Ce fichier doit être mis à jour dans **chaque commit de phase**.
-> Il doit toujours refléter l'état exact du commit dans lequel il se trouve.
-> Mettre à jour : SITUATION EXACTE (commit + CI) + tableau des phases + PROCHAINES PHASES.
-> L'ajouter dans chaque `git add` avec le code de la phase.
+> Ce fichier est **le seul point d'entrée** pour toute IA reprenant le projet.
+> Aucun fichier de diagnostic, d'audit ou de roadmap ne remplace ce fichier.
+> Un nouveau fichier créé pour un diagnostic reste une **annexe** — jamais un point d'entrée.
 
-**Dernière mise à jour** : 2026-06-08 — CI green 578593d, toutes tâches résiduelles terminées
+### Protocole obligatoire pour toute IA
+
+```
+AVANT de travailler  → lire ce fichier intégralement
+PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (voir §DOCUMENTS)
+AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
+```
+
+### Procédure d'archivage (incident résolu)
+
+```
+Conditions : cause racine identifiée + correctif validé + tests passés + merge effectué
+Étapes     :
+  1. Déplacer les fichiers de diagnostic vers docs/archives/
+  2. Supprimer les entrées de §INCIDENTS ACTIFS et §HYPOTHÈSES
+  3. Ajouter une ligne dans §ARCHIVES avec : nom, date, cause racine, lien archive
+  4. Mettre à jour §ÉTAT DU PROJET et §PROCHAINE ACTION
+  5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
+```
+
+**Dernière mise à jour** : 2026-06-08 — BUG A résolu et validé terrain — SESSION consolidée pour continuité inter-IA
 
 ---
 
-## ÉTAT ACTUEL
+## ÉTAT DU PROJET
 
 ```
-Dépôt    : caisse43700-lgtm/Projet-immat-Connect
-Branche  : post-merge/residual-tasks
-Commit   : 578593d — feat(ie): source_module + privacy_level dans IE events
-CI       : GREEN ✓ (3/3 workflows : Tests unitaires + E2E Playwright + E2E Diagnostics)
-PR       : #260 — MERGED (squash 4912734 → main)
-```
-
-## DERNIÈRE ACTION EFFECTUÉE
-
-```
-Fichiers touchés : core/interaction-engine.js, SESSION-CONTINUATION.md
-Tâche            : source_module + privacy_level dans IE events (dernière résiduelle non-bloquée)
-Fix              : champs optionnels dans create() — backward compatible (null si absent)
-CI vérifié       : GREEN sur 578593d (vérifié après push)
-```
-
-## ACTION EN COURS
-
-```
-Aucune. Toutes les tâches non-bloquées sont terminées et CI est green.
-```
-
-## PROCHAINE ACTION UNIQUE
-
-```
-Assets audio (src) — bloqué en attente d'audit stratégie Service Worker/cache.
-Ne pas implémenter sans décision explicite sur la stratégie SW.
-```
-
-## NE PAS REFAIRE
-
-```
-- Ne pas recréer de PR depuis feature-calls-runtime-diagnostics (déjà mergée)
-- Ne pas modifier main directement
-- Ne pas toucher à guardian-loop.js sans preuve de régression CI
-- Ne pas refaire le rebase main→branche (déjà fait dans a00d165)
-- Les frictions P1 navigation (FRI-001/002/003, FLOW-005) sont toutes déjà résolues
+Dépôt          : caisse43700-lgtm/Projet-immat-Connect
+Main           : 68f322b — CI GREEN 4/4 (unitaires + E2E + diagnostics + Pages)
+Branche active : diagnostic/call-pending-expiry-obd (commit 0cf24f1)
+BUG A (INC-001): RÉSOLU — correctif appliqué + validé terrain 2026-06-08
+BUG B (INC-001): ACTIF — B ne reçoit pas la popup au premier appel
 ```
 
 ---
 
-## PROTOCOLE OBLIGATOIRE AVANT TOUT CODE
+## INCIDENTS ACTIFS
 
-```
-1. Inspecter CI sur la branche feature-calls-runtime-diagnostics
-2. Si CI unknown ou pending → attendre ou déclencher
-3. Si CI red → télécharger artifact obd-e2e-evidence
-                lire diagnostic-artifacts/playwright-output.log
-                corriger UNIQUEMENT la première vraie erreur
-4. Si CI green → roadmap complète. Traiter les tâches résiduelles si besoin (voir tableau "Tâches résiduelles connues")
-5. Toujours mettre à jour docs/SESSION-LOG.md après chaque correction
-```
+### INC-001 — Bug appel A → B
 
-Outil CI : `mcp__github__actions_list` avec `method: list_workflow_runs` + `branch: feature-calls-runtime-diagnostics`.
-Le résultat est trop grand pour être lu directement — extraire avec python3 + regex.
+**Symptôme ALPHA** ✅ RÉSOLU (2026-06-08) :
+~~Deuxième appel de A vers B refusé avec erreur `23505` alors que les deux côtés affichent `expired`~~
+→ Cause racine identifiée, correctif appliqué, validé terrain.
+
+**Symptôme BETA** (actif — priorité 1) :
+B ne voit aucune popup ni sonnerie lors du premier appel. L'historique montre `"Appel reçu · expired"` — la ligne existe mais la popup live n'a pas été déclenchée.
+
+**Branche** : `diagnostic/call-pending-expiry-obd`
+
+**Annexes** :
+- `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — diagnostic consolidé complet
+- `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` — analyse statique `calls.js`
+- `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` — revue externe
 
 ---
 
-## PHASES COMPLÉTÉES — avec commits
+## DIAGNOSTIC COMPLET — BUG A (RÉSOLU)
 
-| Phase (session) | Phase (roadmap) | Contenu | Commit | CI |
+### SQL exécutés — résultats — conclusions
+
+| SQL | Requête | Résultat | Confirme | Infirme |
 |---|---|---|---|---|
-| 0 | 0 — CI recovery | IIFE guardian-loop (Illegal return) | `4950cb7` | green |
-| 1 | 1 — Audit calls.js | calls.js audit + getRuntimeState() + CALL_SOURCE_OF_TRUTH.md | `10c775c` | green |
-| 2 | 5+6 — CallScreen | CallScreen squelette fermé par défaut | `a2cad44` | green |
-| 2b | — | Délégation CallManager → CallScreen (Phase 2) | `c810cea` | green |
-| 3 | 3 — Registry | InteractionEngine câblage calls.js + registryRuntime | `f2e7b3d` | green |
-| 4 | 4 — Messages | sendToPlate(opts) + actQuickReply context | `c27c29d` | green |
-| 5 | — | roadReport/assist/vehicleAlertQuick → InteractionEngine | `5b26eab` | green |
-| 7 | 7 — Audio | AudioManager + CallNotificationRuntime squelettes | `c40adcf` | green |
-| 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | green ✓ |
-| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | `7ba25f3` | green ✓ |
-| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | `792f31f` | green ✓ |
+| P1 | `SELECT ... WHERE status='pending' AND expires_at < NOW()` | **0 lignes** | Pas de pending expiré au moment du test | HYP-001 côté DB affaiblie |
+| P2 | `SELECT conname, pg_get_constraintdef FROM pg_constraint` | **5 contraintes : PK + 2 FK + 2 CHECK — zéro UNIQUE** | Aucune contrainte UNIQUE | HYP-002 (contrainte UNIQUE sans filtre) |
+| P3 | `pg_indexes + triggers` (même bloc — résultat pg_indexes perdu) | **2 triggers : trg_call_req_on_insert + trg_call_req_on_update** | Triggers existent | — |
+| P4 | `pg_get_functiondef('call_request_on_insert')` | **Spam limit (≥3 en 10min) + cooldown (refused <5min) — zéro RAISE 23505** | Trigger ≠ source du 23505 | HYP-011, HYP-012 |
+| P5 | `SELECT indexname, indexdef FROM pg_indexes` (séparé) | **5 index dont `call_requests_unique_pending_idx` UNIQUE** | Index UNIQUE existe | — |
+| P6 | `SELECT indexdef WHERE indexname='call_requests_unique_pending_idx'` | **`UNIQUE (requester_id, receiver_id) WHERE (status = 'pending'::text)`** | **CAUSE RACINE CONFIRMÉE** | — |
+| P7 | `pg_get_functiondef('call_request_on_update')` | **Guard `old.status != 'pending'` + auto `responded_at` — compatible avec UPDATE→expired** | UPDATE pending→expired autorisé | Effets de bord incompatibles |
+| P8 | `pg_get_constraintdef('call_requests_status_check')` | **`status IN ('pending','accepted','refused','expired','cancelled')`** | 'expired' est un statut valide | Migration de schéma requise |
 
----
-
-## PROCHAINES PHASES
-
-### Roadmap COMPLÈTE — toutes phases implémentées
-
-Phases 0–10 sont terminées. Le projet satisfait les critères d'acceptation globaux du MASTER_IMPLEMENTATION_ROADMAP :
-- CI green requis avant merge
-- OBD stable (read-only, modulaire)
-- Pas de return illégal / erreurs de parse
-- Pas de ghost overlays (autotest)
-- Pas de messagerie parallèle (autotest)
-- Source de vérité appels documentée
-- Messages avec contexte
-- Appels visibles sans audio
-- Audio différencié
-- Privacy avant acceptation (autotest)
-- Ange route correctement
-- Guardian basé sur evidence
-- Autotests couvrent les flux critiques
-
-### Tâches résiduelles — branche post-merge/residual-tasks
-
-| Tâche | Priorité | Fichier |
-|---|---|---|
-| `DIRECT_MESSAGE_RECEIVED` → InteractionEngine | ~~Basse~~ FAIT | `messages.js` realtime subscription |
-| `App.blockPlate()` direct → InteractionEngine | ~~Basse~~ FAIT | `index.html` blocage direct |
-| `source_module`/`privacy_level` dans IE events | ~~Basse~~ FAIT | `core/interaction-engine.js` |
-| Assets audio réels (src) | **BLOQUÉ** | En attente stratégie Service Worker/cache |
-
----
-
-### Phase 10 — Mobile autotest expansion (COMPLÉTÉE)
-
-**Objectif** : Valider l'organisme complet interaction via `core/mobile-autotest.js`.
-
-**Catégories de tests à ajouter** :
-- Messages : send/receive/reload, local delete, context badges
-- Calls : outgoing/incoming pending, accept/refuse/cancel, expired/missed, quick reply contextuel, audio blocked fallback, no ghost overlay
-- Help : create, accept, resolve, message link, map link, resolved/expired terminal
-- Reports : create, activity entry, message link, map link, treated/expired
-- Registry/OBD : ledger event created, diagnostics read-only, reconstruction safe
-- Ange/Guardian : Ange routes to owner, Guardian cites evidence, no auto unsafe action
-
-**Fichier concerné** : `core/mobile-autotest.js`
-
----
-
-### Phase 9 — Guardian integration (COMPLÉTÉE)
-
-**Objectif** : Guardian utilise les evidence du ledger pour recommander des actions sécurité/confiance.
-
-**Lire d'abord** :
-- `docs/INTERACTION_LEDGER_REGISTRY.md`
-- `core/guardian-loop.js`
-
-**Règles** :
-- Guardian PEUT : recommander review/block/trust/abuse, citer evidence
-- Guardian NE PEUT PAS : auto-appliquer sans validation, muter l'état d'appel, devenir UI messagerie
-- Chaque recommandation doit citer un `ledger_event_id`
-
-**Critères d'acceptation** :
-- OBD voit le lifecycle des recommandations
-- Validation utilisateur toujours requise
-- Evidence citée pour chaque recommandation
-
-**Fichiers concernés** :
-- `core/guardian-loop.js` — déjà existant, à auditer + enrichir
-- `core/calls-runtime-diagnostics.js` — ajouter guardianRuntime
-- `core/mobile-autotest.js` — ajouter GuardianLoop checks
-
----
-
-### Phase 10 — Mobile autotest expansion (roadmap)
-
-**Objectif** : Valider l'organisme complet interaction.
-
-**Catégories de tests à ajouter dans `core/mobile-autotest.js`** :
-- Messages : send/receive/reload, local delete, context badges
-- Calls : outgoing/incoming pending, accept/refuse/cancel, expired/missed, quick reply contextuel, audio blocked fallback, no ghost overlay
-- Help : create, accept, resolve, message link, map link, resolved/expired terminal
-- Reports : create, activity entry, message link, map link, treated/expired
-- Registry/OBD : ledger event created, diagnostics read-only, reconstruction safe
-- Ange/Guardian : Ange routes to owner, Guardian cites evidence, no auto unsafe action
-
-**Fichier concerné** :
-- `core/mobile-autotest.js`
-
----
-
-## INVENTAIRE DES FICHIERS CRÉÉS CETTE SESSION
-
-### Nouveaux fichiers core/
-
-| Fichier | API publique | Rôle |
-|---|---|---|
-| `core/call-screen.js` | `CallScreen.showOutgoing/showIncoming/showMissed/showExpired/showAccepted/hide/getState` | Projection visuelle état appel. Observateur ImmatBus uniquement. |
-| `core/audio-manager.js` | `AudioManager.init/unlockFromUserGesture/playMessageBeep/playIncomingRingtone/playOutgoingTone/stopCallAudio/stopAll/getRuntimeState` | Gestion sons. Pas d'assets audio pour l'instant (src vide). |
-| `core/call-notification-runtime.js` | `CallNotificationRuntime.onIncomingPending/.../onMessageReceived/getRuntimeState` | Coordonne audio + vibration + notification navigateur. |
-| `core/calls-runtime-diagnostics.js` | `ImmatCallsRuntimeDiagnostics.run()` | OBD lecture seule : état CallManager, CallScreen, AudioManager, InteractionEngine. |
-| `core/mobile-autotest.js` | `ImmatMobileAutotest.run()` | Autotest DOM : modules, boutons, panels, signaler, ange, messages, calls. |
-| `core/interaction-engine.js` | `InteractionEngine.create/updateStatus/getHistory/getAnalytics/getRuntimeState` | Ledger localStorage des événements interaction. |
-
-### Fichiers modifiés (changements majeurs)
-
-| Fichier | Changement clé |
-|---|---|
-| `calls.js` | `getRuntimeState()` + `InteractionEngine.create()` dans requestCall/acceptCall/refuseCall/cancelCallRequest/CALL_MISSED + délégation CallScreen |
-| `messages.js` | `sendToPlate(plate, text, opts)` — opts optionnel, `InteractionEngine.create(MESSAGE)` avec context_type/context_id |
-| `index.html` | CallScreen + AudioManager + CallNotificationRuntime chargés ; actQuickReply(plate,msg,contextType,contextId) ; boutons activité passent context ; roadReport/assist → InteractionEngine.create ; AngeDialog snapshot enrichi + NAVIGATE_ACTIVITY/MAP ; DOM audio IDs |
-| `core/guardian-loop.js` | Wrappé en IIFE (fix Illegal return) |
-
-### Docs créés/complétés
-
-| Fichier | Statut |
-|---|---|
-| `docs/CALL_SOURCE_OF_TRUTH.md` | Audit complet (tous TODOs remplis) |
-| `docs/INTERACTION_LEDGER_REGISTRY.md` | Audit Phase 3 ajouté (réponses open questions + état câblage) |
-| `docs/SESSION-LOG.md` | Journal technique de toutes les corrections session |
-
----
-
-## ARCHITECTURE — FLUX DONNÉES
+### Cause racine finale
 
 ```
-ImmatBus (core/bus.js)
-  ↓ emit
-CallScreen      ← CALL_INITIATED/RECEIVED/ACCEPTED/REFUSED/CANCELLED/MISSED
-AudioManager    ← (via CallNotificationRuntime)
-CallNotificationRuntime ← CALL_*/MSG_RECEIVED
+Index : CREATE UNIQUE INDEX call_requests_unique_pending_idx
+        ON call_requests (requester_id, receiver_id)
+        WHERE (status = 'pending')
 
-CallManager (calls.js)
-  → InteractionEngine.create(CALL_REQUEST/ACCEPTED/REFUSED/CANCELLED/MISSED)
-  → CallScreen (si chargé, sinon fallback legacy popup/banner)
-
-messages.js
-  → InteractionEngine.create(MESSAGE) avec context_type/context_id optionnel
-
-index.html roadReport
-  → InteractionEngine.create(VEHICLE_REPORT_CREATED)
-
-index.html assist
-  → InteractionEngine.create(HELP_REQUEST_CREATED)
-
-AngeDialog.send()
-  → snapshot enrichi avec call_mode + audio_blocked
-  → InteractionEngine.create(ANGE_SUGGESTION)
-
-AngeAction.execute()
-  → route vers Messages / Calls / Signaler / Safety / Activity / Map
-  → InteractionEngine.create(action type)
+Bug   : aucun code ne fait jamais UPDATE status='expired' en DB
+        → la ligne reste 'pending' après l'expiration UI (30s)
+        → le second INSERT viole l'index → erreur 23505
+        → message affiché : "Une demande est déjà en attente de réponse"
 ```
+
+### Correctif appliqué dans `calls.js`
+
+**Changement 1 — `_showSentBanner()` (expiration côté A après 31s)**
+```js
+// AVANT
+setTimeout(() => {
+  if (_pendingCallId === requestId) _pendingCallId = null;
+}, 31000);
+
+// APRÈS
+setTimeout(async () => {
+  if (_pendingCallId !== requestId) return;
+  _pendingCallId = null;
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', requestId)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+}, 31000);
+```
+
+**Changement 2 — `_recoverPendingRequest()` (nettoyage au rechargement de page)**
+```js
+// AVANT (ligne 56)
+if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
+
+// APRÈS
+if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+  try {
+    await _sb.from('call_requests')
+      .update({ status: 'expired' })
+      .eq('id', data.id)
+      .eq('requester_id', _uid)
+      .eq('status', 'pending');
+  } catch (_) {}
+  return;
+}
+```
+
+### Preuve de fonctionnement
+
+```
+Test terrain — 2026-06-08
+1. A appelle B (premier appel)
+2. Attente 35 secondes (expiration + marge)
+3. A rappelle B (deuxième appel)
+Résultat : SUCCÈS — pas d'erreur 23505 — appel émis normalement
+```
+
+---
+
+## HYPOTHÈSES — INC-001 BUG B (actif)
+
+### Ouvertes
+
+| ID | Énoncé | Test requis | Confiance |
+|---|---|---|---|
+| **HYP-006** | Chaîne `ImmatOrganism → ImmatBus → CallScreen` rompue silencieusement | `ImmatBus.getJournal()` côté B juste après appel | 40 % |
+| HYP-007 | B avait l'écran verrouillé / app en arrière-plan au moment de l'appel | Refaire le test avec B écran allumé, app au premier plan | 35 % |
+| HYP-008 | Filtre realtime `receiver_id=eq.uid` ne matche pas l'uid réel de B | SQL : comparer `receiver_id` de la ligne avec auth.uid() de B | 30 % |
+
+### Infirmées (conservées)
+
+| ID | Énoncé | Raison |
+|---|---|---|
+| HYP-004 | `receiver_id` incorrect | B voit `"Appel reçu · expired"` — ligne DB correcte |
+| HYP-005 | Realtime cassé côté B | OBD : `realtimeSubscribed=true` |
+| "Même téléphone / compte" | — | Test refait avec deux téléphones, deux comptes, deux plaques |
+
+---
+
+## PREUVES ET TESTS — INC-001 BUG B
+
+| Preuve | Source | Effet |
+|---|---|---|
+| `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
+| `"Appel reçu · expired"` dans l'historique B | Observation UI | HYP-004 affaiblie — ligne bien reçue |
+| Pas de popup visible, pas de sonnerie | Observation terrain | Rupture quelque part dans la chaîne live |
+
+### Prochain test — PRIORITÉ ABSOLUE
+
+Conditions requises : B écran allumé, app au premier plan, connexion stable.
+
+```js
+// Console de B — juste après un appel de A :
+ImmatBus.getJournal()
+```
+
+- `CALL_RECEIVED` **absent** → rupture avant le Bus (realtime ou `_showIncomingPopup`)
+- `CALL_RECEIVED` **présent** + popup absente → rupture Bus → CallScreen (HYP-006)
+
+---
+
+## PROCHAINE ACTION
+
+**Deux actions disponibles :**
+
+1. **Merger BUG A vers main** — ouvrir PR `diagnostic/call-pending-expiry-obd` → `main`
+   - Vérifier CI green 4/4 avant merge
+   - Ne pas merger si CI rouge
+
+2. **Investiguer BUG B** — `ImmatBus.getJournal()` côté B (voir prochain test ci-dessus)
+
+---
+
+## DOCUMENTS DE RÉFÉRENCE
+
+| Document | Rôle | Type |
+|---|---|---|
+| `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` | Analyse statique du code — `calls.js` | Annexe incident actif |
+| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue externe | Annexe incident actif |
+| `docs/ROADMAP-NEXT.md` | Prochaines priorités hors incidents | Référence permanente |
+| `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
+| `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
+| `docs/INTERACTION_ORGANISM_MAP.md` | Qui possède quoi | Référence permanente |
+
+---
+
+## ARCHIVES — Incidents résolus
+
+| Incident | Date | Cause racine | Archive |
+|---|---|---|---|
+| Phases 0–10 + post-merge | 2026-06-08 | Architecture complète — CI green 4/4 | `docs/archives/ARCHIVE_PHASES_0_10.md` |
 
 ---
 
 ## INVARIANTS — NE JAMAIS VIOLER
 
 ```
-ANTHROPIC_API_KEY = jamais dans le code — seulement dans Supabase secrets
-owner_plate       = immutable (INV-006)
-INV-COM-009       = pas de DELETE sans consentement explicite
-INV-COM-010/015   = payload anonymisé — pas de contenu message dans Edge Function payloads
-Production        = ne pas auto-corriger
-DB/code           = ne pas modifier automatiquement sans validation
-Gros patchs       = interdits — corrections ciblées uniquement
-ImmatBus Phase 1  = observe/journalise uniquement, ne bloque rien
-InteractionEngine = tous appels dans try/catch, non-bloquants
-```
-
----
-
-## CONTRAINTES TECHNIQUES
-
-```
-- Tous les fichiers core/ sont des IIFE : (function(w){ ... })(window);
-- 'use strict'; en haut de chaque IIFE
-- window.ModuleName = { ... }; à la fin de chaque IIFE
-- Pas d'assets audio (src vide) tant que Service Worker/cache non audité
-- Pas de Supabase write depuis les diagnostics
-- getRuntimeState() = toujours lecture seule
-- CI green requis avant chaque phase product
-- Corrections par string replacement ciblé (Edit tool), pas de réécriture globale
-```
-
----
-
-## COMMENT INSPECTER LE CI
-
-```python
-# Après mcp__github__actions_list (résultat sauvegardé dans fichier)
-import re
-txt = open('/path/to/result.txt').read()
-runs = re.findall(
-  r'"id":\s*(\d+).*?"head_sha":\s*"([^"]+)".*?"status":\s*"([^"]+)".*?"conclusion":\s*("([^"]+)"|null).*?"created_at":\s*"([^"]+)"',
-  txt
-)
-for r in runs[:5]: print(r)
-```
-
-Chercher `792f31f` dans head_sha — conclusion doit être `"success"`.
-
----
-
-## DÉCISION MATRIX
-
-| Situation | Action |
-|---|---|
-| CI inconnu | Ne pas coder. Inspecter CI. |
-| CI green | Roadmap complète. Traiter tâches résiduelles ou préparer merge. |
-| CI red | Télécharger obd-e2e-evidence → lire playwright-output.log → corriger première erreur uniquement |
-| Blocker inconnu | Documenter dans docs/SESSION-LOG.md avec template BLOCAGE |
-| Tentation de gros refactor | Stop. Correction ciblée uniquement. |
-| Doute sur propriétaire d'un état | Consulter docs/INTERACTION_ORGANISM_MAP.md |
-| Doute sur forme d'événement | Consulter docs/INTERACTION_LEDGER_REGISTRY.md |
-
----
-
-## DOCS DE RÉFÉRENCE ARCHITECTURALE
-
-```
-docs/MASTER_IMPLEMENTATION_ROADMAP.md    → roadmap complet phases 0-10
-docs/INTERACTION_ORGANISM_MAP.md         → qui possède quoi
-docs/INTERACTION_LEDGER_REGISTRY.md      → forme événements + câblage
-docs/CALL_SOURCE_OF_TRUTH.md             → états appel documentés
-docs/CALL_AUDIO_NOTIFICATION_ARCHITECTURE.md → règles audio
-docs/CALL_AUDIO_IMPLEMENTATION_SKELETON.md  → plan implémentation audio
-docs/SESSION-LOG.md                      → journal technique de session
-```
-
----
-
-## TEMPLATE CORRECTION (à copier dans SESSION-LOG.md)
-
-```text
-## DATE — Phase X : description
-
-### CAUSE
-### CORRECTIF
-### RISQUE
-### STATUT CI
-### PROCHAINE ACTION
-```
-
-## TEMPLATE BLOCAGE (à copier dans SESSION-LOG.md)
-
-```text
-BLOCAGE
-Date:
-Context:
-Evidence:
-Hypothesis tested:
-Result:
-Invalidated hypotheses:
-Do not repeat:
-Next piste:
-Next action:
+ANTHROPIC_API_KEY  → jamais dans le code
+owner_plate        → immutable (INV-006)
+INV-COM-009        → pas de DELETE sans consentement
+INV-COM-010/015    → payload anonymisé, pas de contenu message dans Edge Functions
+InteractionEngine  → tous appels dans try/catch, non-bloquants
+Corrections        → ciblées uniquement, pas de réécriture globale
+CI                 → vérifier green avant chaque merge
+SESSION_CONTINUATION.md → toujours mis à jour dans le même commit que le code
 ```

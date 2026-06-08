@@ -53,7 +53,16 @@ const CallManager = (function () {
       .limit(1)
       .maybeSingle();
     if (!data) return;
-    if (data.expires_at && new Date(data.expires_at) <= new Date()) return;
+    if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+      try {
+        await _sb.from('call_requests')
+          .update({ status: 'expired' })
+          .eq('id', data.id)
+          .eq('requester_id', _uid)
+          .eq('status', 'pending');
+      } catch (_) {}
+      return;
+    }
     let receiverPlate = data.receiver_plate;
     if (!receiverPlate && data.receiver_id) {
       const { data: prof } = await _sb
@@ -318,9 +327,17 @@ const CallManager = (function () {
   }
 
   function _showSentBanner(plate, requestId) {
-    // Dans tous les cas : nettoyer _pendingCallId à l'expiration (30s DB)
-    setTimeout(() => {
-      if (_pendingCallId === requestId) _pendingCallId = null;
+    // Dans tous les cas : nettoyer _pendingCallId à l'expiration (30s DB) + libérer l'index UNIQUE
+    setTimeout(async () => {
+      if (_pendingCallId !== requestId) return;
+      _pendingCallId = null;
+      try {
+        await _sb.from('call_requests')
+          .update({ status: 'expired' })
+          .eq('id', requestId)
+          .eq('requester_id', _uid)
+          .eq('status', 'pending');
+      } catch (_) {}
     }, 31000);
 
     // Délègue à CallScreen si chargé (CallScreen gère son propre auto-hide)

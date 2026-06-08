@@ -1,5 +1,10 @@
 # AI ENTRYPOINT
 
+> **⚑ Ce fichier date du début du projet et n'est plus à jour.**
+> **Point d'entrée officiel : `CLAUDE.md` → `SESSION-CONTINUATION.md`.**
+
+---
+
 OBD = source des donnees vehicule.
 IA = copilote central.
 Guide = cadre metier.
