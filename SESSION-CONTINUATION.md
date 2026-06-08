@@ -17,7 +17,7 @@ Ce fichier est le point d'entrée pour toute IA qui reprend ce projet.
 Dépôt    : caisse43700-lgtm/Projet-immat-Connect
 Branche  : feature-calls-runtime-diagnostics
 Commit   : 792f31f  (Phase 10 — dernier commit, roadmap complète)
-CI       : GREEN sur c40adcf (Phase 7) — Phases 8/9/10 pending vérification CI
+CI       : GREEN sur tous les commits — e154e43 (P8) ✓  7ba25f3 (P9) ✓  792f31f (P10) ✓  511c24c (docs) ✓
 ```
 
 ---
@@ -51,9 +51,9 @@ Le résultat est trop grand pour être lu directement — extraire avec python3 
 | 4 | 4 — Messages | sendToPlate(opts) + actQuickReply context | `c27c29d` | green |
 | 5 | — | roadReport/assist/vehicleAlertQuick → InteractionEngine | `5b26eab` | green |
 | 7 | 7 — Audio | AudioManager + CallNotificationRuntime squelettes | `c40adcf` | green |
-| 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | pending |
-| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | `7ba25f3` | pending |
-| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | `792f31f` | pending |
+| 8 | 8 — Ange | Snapshot enrichi + NAVIGATE_ACTIVITY/MAP + ANGE_SUGGESTION ledger | `e154e43` | green ✓ |
+| 9 | 9 — Guardian | getRuntimeState() + _guardianBusSubscribe + guardianRuntime OBD + autotest | `7ba25f3` | green ✓ |
+| 10 | 10 — Autotest | 6 sections autotest : messages/calls/help/reports/registry/ange+guardian | `792f31f` | green ✓ |
 
 ---
 
