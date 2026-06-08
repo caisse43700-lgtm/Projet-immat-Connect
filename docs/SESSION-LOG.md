@@ -133,6 +133,79 @@ Do not refactor `calls.js` before the source of truth is documented.
 
 ---
 
+## 2026-06-08 — Correction applied: guardian-loop IIFE
+
+### CAUSE
+
+`core/guardian-loop.js` had a top-level guard:
+
+```js
+if (window.__GuardianLoopV1) return;
+```
+
+This can trigger:
+
+```text
+SyntaxError: Illegal return statement
+```
+
+when loaded as a classic browser script.
+
+### CORRECTIF
+
+Wrapped `core/guardian-loop.js` in an outer IIFE.
+
+The business logic and public export remain the same:
+
+```js
+window.GuardianLoop = GuardianLoop;
+```
+
+Correction commit recorded during session:
+
+```text
+4950cb72a78a4f1ba0d9758ba2ff0e5cd8ee55ad
+```
+
+### RISQUE
+
+Low.
+
+The correction only moves the duplicate-load guard inside a function scope.
+
+Potential risk to verify by CI:
+
+- accidental syntax issue from wrapper
+- GuardianLoop still exported correctly
+- no regression in InteractionEngine / GuardianLoop loading order
+
+### STATUT CI
+
+Not verified yet.
+
+Audit attempted to fetch workflow runs for commit `4950cb72a78a4f1ba0d9758ba2ff0e5cd8ee55ad`, but no workflow run was returned by the GitHub connector at audit time.
+
+### AUDIT LOCAL / STATIC
+
+Verified on branch `feature-calls-runtime-diagnostics`:
+
+- `core/guardian-loop.js` starts with `(function(){`
+- `if (window.__GuardianLoopV1) return;` is now inside the IIFE
+- file ends with `window.GuardianLoop = GuardianLoop;` then `})();`
+
+Search for a similar obvious pattern `if (window.__...) return;` did not return additional results through GitHub search.
+
+### PROCHAINE ACTION
+
+1. Trigger or wait for a GitHub Actions run on the latest branch commit.
+2. If red, download new `obd-e2e-evidence`.
+3. Read `diagnostic-artifacts/playwright-output.log`.
+4. Confirm whether `Illegal return statement` disappeared.
+5. Document the first remaining real error here.
+6. Fix only that first remaining real error.
+
+---
+
 # Blocker template
 
 When blocked, append a section with:
