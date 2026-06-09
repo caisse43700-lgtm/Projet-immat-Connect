@@ -17,7 +17,10 @@
 
   // ── Actions ──────────────────────────────────────────────────────
   function _accept() {
-    var rid = _state.requestId; hide();
+    var rid = _state.requestId;
+    // Ne pas hide() ici : le receiver doit passer de incoming → accepted
+    // sans flash idle. CallManager.acceptCall() déclenchera CALL_ACCEPTED.
+    try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.accept'); } catch(e) {}
     if (rid && w.CallManager) w.CallManager.acceptCall(rid);
   }
   function _refuse() {
