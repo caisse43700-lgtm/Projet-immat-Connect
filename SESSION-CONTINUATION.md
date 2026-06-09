@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-09 — BUG B : audit code complet — HYP-009 confirmée — correctif recovery entrant appliqué
+**Dernière mise à jour** : 2026-06-09 — BUG B : polling recovery entrant ajouté (5s × 12) — realtimeStatus exposé dans OBD
 
 ---
 

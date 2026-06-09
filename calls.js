@@ -22,6 +22,7 @@ const CallManager = (function () {
   let _uid = null;
   let _myPlate = null;
   let _chCalls = null;
+  let _lastSubscribeStatus = null;
   let _pendingCallId = null;
   let _visibilityBound = false;
   const _missedCallIds = new Set();
@@ -35,6 +36,7 @@ const CallManager = (function () {
     subscribeIncomingCalls(uid);
     _recoverPendingRequest();
     _recoverIncomingPendingCalls();
+    _startIncomingRecoveryPolling();
     if (!_visibilityBound) {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {
@@ -79,6 +81,16 @@ const CallManager = (function () {
     }
     _pendingCallId = data.id;
     _showSentBanner(receiverPlate, data.id);
+  }
+
+  // ── Polling recovery entrant : toutes les 5s pendant 60s après init ────
+  function _startIncomingRecoveryPolling() {
+    let n = 0;
+    const id = setInterval(async () => {
+      n++;
+      if (n >= 12) clearInterval(id);
+      await _recoverIncomingPendingCalls();
+    }, 5000);
   }
 
   // ── Recovery : affiche la popup si un appel entrant pending est manqué ──
@@ -303,6 +315,7 @@ const CallManager = (function () {
         }
       })
       .subscribe((status, err) => {
+        _lastSubscribeStatus = status;
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[CallManager] realtime KO, reconnexion dans 5s', err);
           setTimeout(() => subscribeIncomingCalls(uid), 5000);
@@ -457,6 +470,7 @@ const CallManager = (function () {
         pendingCallId: _pendingCallId || null,
         hasPendingOutgoing: !!_pendingCallId,
         realtimeSubscribed: !!_chCalls,
+        realtimeStatus: _lastSubscribeStatus || null,
         missedCallsCount: _missedCallIds.size,
         seenIncomingCount: _seenIncomingCallIds.size,
         callOverlayVisible: callOverlayVisible,
