@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-08 — PR #269 mergé — BUG A archivé — BUG B priorité 1
+**Dernière mise à jour** : 2026-06-09 — BUG B : audit code complet — HYP-009 confirmée — correctif recovery entrant appliqué
 
 ---
 
@@ -146,9 +146,10 @@ Résultat : SUCCÈS — pas d'erreur 23505 — appel émis normalement
 
 | ID | Énoncé | Test requis | Confiance |
 |---|---|---|---|
-| **HYP-006** | Chaîne `ImmatOrganism → ImmatBus → CallScreen` rompue silencieusement | `ImmatBus.getJournal()` côté B juste après appel | 40 % |
+| **HYP-009** | **Recovery entrant absent** — si B manque le realtime INSERT, aucun mécanisme ne récupère les appels entrants pending encore valides | Correctif appliqué — tester si la popup apparaît au chargement | **70 %** |
+| HYP-006 | Chaîne `ImmatOrganism → ImmatBus → CallScreen` rompue silencieusement | `ImmatBus.getJournal().filter(e=>e.event==='CALL_RECEIVED')` côté B | 40 % |
 | HYP-007 | B avait l'écran verrouillé / app en arrière-plan au moment de l'appel | Refaire le test avec B écran allumé, app au premier plan | 35 % |
-| HYP-008 | Filtre realtime `receiver_id=eq.uid` ne matche pas l'uid réel de B | SQL : comparer `receiver_id` de la ligne avec auth.uid() de B | 30 % |
+| HYP-008 | Filtre realtime `receiver_id=eq.uid` ne matche pas l'uid réel de B | SQL : comparer `receiver_id` de la ligne avec `auth.uid()` de B | 30 % |
 
 ### Infirmées (conservées)
 
@@ -160,39 +161,66 @@ Résultat : SUCCÈS — pas d'erreur 23505 — appel émis normalement
 
 ---
 
+## AUDIT CODE — INC-001 BUG B (2026-06-09)
+
+### Constats confirmés par lecture du code
+
+| # | Constat | Fichier | Ligne |
+|---|---|---|---|
+| C1 | Aucune `recoverIncomingPendingCalls()` — recovery entrant absent | `calls.js` | 35 |
+| C2 | `visibilitychange` ne déclenche que `_recoverPendingRequest()` (sortant) | `calls.js` | 38 |
+| C3 | `_showIncomingPopup()` délègue à CallScreen VIA le Bus, pas directement | `calls.js` | 291–308 |
+| C4 | L'élément actif est `#callOverlay` (CallScreen), pas `#callIncomingPopup` (fallback bypassé) | `calls.js` | 304 |
+| C5 | `CALL_RECEIVED` absent du registre `EVENTS` dans `bus.js` | `bus.js` | 8–37 |
+| C6 | Si `ImmatOrganism._initialized=false`, `observe()` fait `return` silencieusement | `immatOrganism.js` | 46 |
+
+### Correctifs appliqués (2026-06-09)
+
+| Correctif | Fichier | Détail |
+|---|---|---|
+| `_recoverIncomingPendingCalls()` ajoutée | `calls.js` | Query `receiver_id=_uid, status=pending, expires_at>now()` + dedup `_seenIncomingCallIds` |
+| Appelée au `init()` et au `visibilitychange` | `calls.js` | Côté B, si realtime raté → popup au retour premier plan |
+| `getRuntimeState()` enrichi | `calls.js` | `callOverlayVisible`, `uidKnown`, `seenIncomingCount`, `visibilityState` |
+| `CALL_RECEIVED` + `CALL_MISSED` + `CALL_CANCELLED` + `CALL_INITIATED` ajoutés au EVENTS | `bus.js` | Cohérence registre |
+
 ## PREUVES ET TESTS — INC-001 BUG B
 
 | Preuve | Source | Effet |
 |---|---|---|
-| `realtimeSubscribed=true`, `myPlate=BE-521-MM`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
+| `realtimeSubscribed=true`, `myPlate=BZ-652-LL`, `initialized=true` | OBD dashboard côté B | HYP-005 affaiblie |
 | `"Appel reçu · expired"` dans l'historique B | Observation UI | HYP-004 affaiblie — ligne bien reçue |
-| Pas de popup visible, pas de sonnerie | Observation terrain | Rupture quelque part dans la chaîne live |
+| Pas de popup visible, pas de sonnerie | Observation terrain | Rupture dans la chaîne live |
+| Audit code : zéro recovery entrant | Lecture `calls.js` | HYP-009 confirmée |
 
-### Prochain test — PRIORITÉ ABSOLUE
+### Prochain test — après déploiement du correctif
 
-Conditions requises : B écran allumé, app au premier plan, connexion stable.
+Conditions : B écran allumé, app au premier plan (ou app rechargée pendant que l'appel est pending).
 
 ```js
-// Console de B — juste après un appel de A :
-ImmatBus.getJournal()
+// Test 1 — le bus a-t-il reçu l'event ?
+ImmatBus.getJournal().filter(e => e.event === 'CALL_RECEIVED')
+
+// Test 2 — l'overlay est-il visible ?
+ImmatCallsRuntimeDiagnostics.run().dom.callOverlay
+
+// Test 3 — ImmatOrganism initialisé ?
+window.ImmatOrganism?._initialized
 ```
 
-- `CALL_RECEIVED` **absent** → rupture avant le Bus (realtime ou `_showIncomingPopup`)
-- `CALL_RECEIVED` **présent** + popup absente → rupture Bus → CallScreen (HYP-006)
+**Interprétations :**
+- `CALL_RECEIVED` absent + popup absente → realtime non reçu — recovery doit avoir rattrapé si appel toujours pending
+- `CALL_RECEIVED` présent + `callOverlay.visible=false` → rupture Bus → CallScreen
+- `callOverlay.visible=true` → popup affichée — BUG B résolu
 
 ---
 
 ## PROCHAINE ACTION
 
-**Investiguer BUG B** — `ImmatBus.getJournal()` côté B (voir §PREUVES ET TESTS — INC-001 BUG B)
+**Tester le correctif HYP-009** — déployé sur branche `claude/immatconnect-pro-app-dEKGR`
 
-Conditions : B écran allumé, app au premier plan, connexion stable.
-Exécuter juste après un appel de A :
-```js
-ImmatBus.getJournal()
-```
-- `CALL_RECEIVED` **absent** → rupture avant le Bus (realtime ou `_showIncomingPopup`)
-- `CALL_RECEIVED` **présent** + popup absente → rupture Bus → CallScreen (HYP-006)
+1. A appelle B (B au premier plan)
+2. Si popup visible → BUG B résolu, merger
+3. Si toujours absent → exécuter les 3 commandes de diagnostic (§PREUVES ET TESTS) et envoyer les résultats (HYP-006)
 
 ---
 

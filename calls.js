@@ -25,6 +25,7 @@ const CallManager = (function () {
   let _pendingCallId = null;
   let _visibilityBound = false;
   const _missedCallIds = new Set();
+  const _seenIncomingCallIds = new Set();
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -33,10 +34,14 @@ const CallManager = (function () {
     _myPlate = String(myPlate || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
     subscribeIncomingCalls(uid);
     _recoverPendingRequest();
+    _recoverIncomingPendingCalls();
     if (!_visibilityBound) {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') _recoverPendingRequest();
+        if (document.visibilityState === 'visible') {
+          _recoverPendingRequest();
+          _recoverIncomingPendingCalls();
+        }
       });
     }
   }
@@ -74,6 +79,24 @@ const CallManager = (function () {
     }
     _pendingCallId = data.id;
     _showSentBanner(receiverPlate, data.id);
+  }
+
+  // ── Recovery : affiche la popup si un appel entrant pending est manqué ──
+  async function _recoverIncomingPendingCalls() {
+    if (!_sb || !_uid) return;
+    const { data } = await _sb
+      .from('call_requests')
+      .select('id, requester_id, requester_plate, receiver_id, receiver_plate, status, expires_at, created_at')
+      .eq('receiver_id', _uid)
+      .eq('status', 'pending')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return;
+    if (_seenIncomingCallIds.has(data.id)) return;
+    _seenIncomingCallIds.add(data.id);
+    _showIncomingPopup(data);
   }
 
   // ── Ouvrir modal "Contacter" ─────────────────────────────────────
@@ -425,17 +448,23 @@ const CallManager = (function () {
   // ── Diagnostic lecture seule ─────────────────────────────────────
   function getRuntimeState() {
     try {
+      const callOverlay = document.getElementById('callOverlay');
+      const callOverlayVisible = !!(callOverlay && callOverlay.style.display !== 'none');
       return {
         initialized: !!_sb && !!_uid,
+        uidKnown: !!_uid,
         myPlate: _myPlate || null,
         pendingCallId: _pendingCallId || null,
         hasPendingOutgoing: !!_pendingCallId,
+        realtimeSubscribed: !!_chCalls,
+        missedCallsCount: _missedCallIds.size,
+        seenIncomingCount: _seenIncomingCallIds.size,
+        callOverlayVisible: callOverlayVisible,
         sentBannerVisible: !!document.getElementById('callSentBanner')?.classList.contains('show'),
         incomingPopupVisible: !!document.getElementById('callIncomingPopup')?.classList.contains('show'),
         contactModalVisible: !!document.getElementById('callContactModal')?.classList.contains('show'),
         notAllowedModalVisible: !!document.getElementById('callNotAllowedModal')?.classList.contains('show'),
-        realtimeSubscribed: !!_chCalls,
-        missedCallsCount: _missedCallIds.size,
+        visibilityState: document.visibilityState || 'unknown',
       };
     } catch (e) {
       return { initialized: false, error: String(e?.message || e) };
