@@ -141,11 +141,14 @@ const CallManager = (function () {
     // Résoudre receiver_id si absent
     let receiverId = uid || '';
     if (!receiverId && plate) {
-      const { data } = await _sb
-        .from('profiles')
-        .select('id')
-        .eq('owner_plate', plate)
-        .maybeSingle();
+      let { data } = await _sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
+      if (!data) {
+        // Essai avec tirets si la plaque n'en a pas (BE521MM → BE-521-MM)
+        const withDashes = plate.replace(/[\s-]/g, '').replace(/^([A-Z]{2})(\d{3})([A-Z]{2})$/i, '$1-$2-$3');
+        if (withDashes !== plate) {
+          ({ data } = await _sb.from('profiles').select('id').eq('owner_plate', withDashes).maybeSingle());
+        }
+      }
       receiverId = data?.id || '';
     }
     if (!receiverId) {

@@ -38,7 +38,7 @@ Main           : 9ed6847 — BUG B realtime résolu
 BUG A (INC-001): ARCHIVÉ — mergé dans main (5859393)
 BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime (2026-06-09)
 BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling déployés
-C1 (actif)     : BZ-652-LL ne peut pas émettre — toggle allow_calls non activé sur BE-521-MM
+C1 (actif)     : BZ-652-LL ne peut pas émettre — nPlate() supprime tirets → query owner_plate échoue — correctif appliqué
 C2 (actif)     : Pas de sonnerie — iOS bloque audio.play() sans geste utilisateur
 C3 (hors scope): Pas de son après décrochage — VoIP non implémenté Phase 1
 ```
