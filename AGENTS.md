@@ -13,7 +13,8 @@
 ## Informations clés
 
 ```
-Dépôt          : caisse43700-lgtm/Projet-immat-Connect
+Repository     : caisse43700-lgtm/Projet-immat-Connect
+URL GitHub     : https://github.com/caisse43700-lgtm/Projet-immat-Connect
 Branche active : claude/immatconnect-pro-app-dEKGR
 Fichier d'état : SESSION-CONTINUATION.md  ← source officielle de vérité
 Point d'entrée : AGENTS.md (ce fichier) pour ChatGPT/Codex
