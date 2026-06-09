@@ -5,7 +5,7 @@
  *   contactByCall(plate)      → vérifie call_preferences → requestCall()
  *   requestCall()             → INSERT call_requests → bannière envoyée
  *   subscribeIncomingCalls()  → postgres_changes → popup appel entrant
- *   acceptCall(id)            → UPDATE accepted → ouvre conversation
+ *   acceptCall(id)            → UPDATE accepted → affiche Contact accepté
  *   refuseCall(id)            → UPDATE refused
  *
  * Anti-abus :
@@ -325,16 +325,12 @@ const CallManager = (function () {
         if (r.status === 'accepted') {
           // Masquer la bannière legacy sans toucher CallScreen
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
-          // Émettre CALL_ACCEPTED → CallScreen affiche "Contact accepté"
+          // Émettre CALL_ACCEPTED → CallScreen affiche "Contact accepté".
+          // Ne jamais ouvrir automatiquement la conversation : l'utilisateur doit appuyer sur Message.
           _emitCallEvent('CALL_ACCEPTED', {
             'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id,
             _src: 'ImmatConnect/calls/outgoingUpdateHandler',
           });
-          // Fallback si CallScreen absent : ouvrir conv directement
-          if (!window.CallScreen) {
-            try { if (typeof toast === 'function') toast('Demande de contact acceptée. Ouverture de la conversation…', 'ok'); } catch (e) {}
-            if (r.receiver_plate) try { window.App?.actOpenConv?.(r.receiver_plate); } catch (e) {}
-          }
         } else if (r.status === 'refused') {
           _hideSentBanner();
           try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
@@ -499,6 +495,8 @@ const CallManager = (function () {
         uidKnown: !!_uid,
         myPlate: _myPlate || null,
         pendingCallId: _pendingCallId || null,
+        recentOutgoingCount: _recentOutgoingIds.size,
+        recentOutgoingIds: Array.from(_recentOutgoingIds).slice(-5),
         hasPendingOutgoing: !!_pendingCallId,
         realtimeSubscribed: !!_chCalls,
         realtimeStatus: _lastSubscribeStatus || null,
