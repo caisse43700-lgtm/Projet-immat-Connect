@@ -14,7 +14,7 @@ PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (vo
 AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
 ```
 
-**Dernière mise à jour** : 2026-06-09 — C1 correctif appliqué (plaque sans tirets) — C2 (sonnerie iOS) ouvert
+**Dernière mise à jour** : 2026-06-09 — C1 correctif appliqué (plaque sans tirets) — C2 sonnerie iOS déployée (Web Audio API)
 
 ---
 
@@ -27,7 +27,7 @@ BUG A          : ARCHIVÉ — mergé PR #269 (5859393) — 2026-06-08
 BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime — 2026-06-09
 BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling 5s×12 — 2026-06-09
 C1             : CORRECTIF DÉPLOYÉ — en attente de test terrain
-C2             : ACTIF — pas de sonnerie iOS (audio.play() bloqué)
+C2             : CORRECTIF DÉPLOYÉ — Web Audio API (oscillateurs synthétisés, pas de fichier audio)
 C3             : HORS SCOPE — pas de son après décrochage (VoIP non implémenté Phase 1)
 ```
 
@@ -116,11 +116,21 @@ if (!data) {
 
 ---
 
-### C2 — Pas de sonnerie à la réception iOS (ACTIF)
+### C2 — Sonnerie iOS (CORRECTIF DÉPLOYÉ)
 
-**Cause :** iOS Safari bloque `audio.play()` sans interaction utilisateur préalable.
-**Fix requis :** déverrouillage audio sur premier geste dans `core/audio-manager.js`.
-**Priorité :** après validation de C1.
+**Cause :** éléments `<audio>` sans `src` → `_play()` retournait false immédiatement ; AudioContext suspendu sans geste utilisateur.
+
+**Correctifs (`core/audio-manager.js` — Phase 7+) :**
+- `_getCtx()` : création lazy de l'AudioContext
+- `_synth(freq, durationSec, startSec)` : oscillateur + enveloppe de gain
+- `_ringOnce()` : pattern ring-ring (880Hz + 1100Hz harmonique × 2 doubles bips)
+- `_outgoingBeep()` : bip sortant unique 660Hz
+- `playIncomingRingtone()` : essaie `<audio src>` d'abord, puis synthèse + `setInterval(_ringOnce, 2600)`
+- `unlockFromUserGesture()` : appelle `ctx.resume()` sur premier clic/touchstart
+- `stopCallAudio()` : arrête `_ringingInterval` + éléments `<audio>`
+- `getRuntimeState()` : ajout `webAudioContextState`, `synthAvailable`
+
+**Statut :** déployé — **test terrain requis** (vérifier que la sonnerie joue sur iOS Safari).
 
 ---
 
@@ -136,17 +146,16 @@ Accepter → ouvre la conversation messages. Aucun canal audio prévu en Phase 1
 ### C1 — Test terrain en attente
 Recharger la page côté BZ-652-LL → appeler BE-521-MM → vérifier que "Conducteur introuvable" n'apparaît plus.
 
-### C2 — Sonnerie iOS
-**Cause :** `audio.play()` bloqué par Safari sans geste utilisateur.
-**Fix :** implémenter déverrouillage audio dans `core/audio-manager.js`.
+### C2 — Test terrain en attente
+Recevoir un appel entrant sur iOS Safari → vérifier que la sonnerie synthétisée joue bien (pas de fichiers audio requis).
 
 ---
 
 ## PROCHAINE ACTION
 
-1. **Tester C1** — BZ-652-LL appelle BE-521-MM après rechargement de page
-2. **Si C1 validé** → implémenter le déverrouillage audio iOS (C2) dans `core/audio-manager.js`
-3. **Si C1 échoue** → envoyer le message d'erreur exact pour diagnostic
+1. **Tester C1** — BZ-652-LL appelle BE-521-MM après rechargement de page → vérifier que "Conducteur introuvable" n'apparaît plus
+2. **Tester C2** — recevoir un appel sur iOS Safari → vérifier que la sonnerie synthétisée joue
+3. **Si C1 ou C2 échoue** → envoyer le message d'erreur exact + résultat `AudioManager.getRuntimeState()` dans la console
 
 ---
 
@@ -170,6 +179,7 @@ Recharger la page côté BZ-652-LL → appeler BE-521-MM → vérifier que "Cond
 | Phases 0–10 + post-merge | 2026-06-08 | Architecture complète — CI green 4/4 | `docs/archives/ARCHIVE_PHASES_0_10.md` |
 | BUG A — 23505 second appel | 2026-06-08 | Index UNIQUE pending jamais libéré côté DB | `5859393` |
 | BUG B — Popup absente | 2026-06-09 | `call_requests` absente de `supabase_realtime` | Fix DB + `9ed6847` |
+| C2 — Sonnerie iOS | 2026-06-09 | `<audio>` sans src + AudioContext suspendu | Web Audio API synthesis |
 
 ---
 
