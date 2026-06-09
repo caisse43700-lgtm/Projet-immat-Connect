@@ -308,7 +308,39 @@
 </nav>
 
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div>
-<div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
+<div id="callOverlay" class="cs-overlay" style="display:none">
+  <!-- Plein écran -->
+  <div id="callOvFull" class="cs-full">
+    <button class="cs-minimize-btn" onclick="CallScreen.minimize()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+      Réduire
+    </button>
+    <div id="callOvAvatarWrap" class="cs-avatar-wrap">
+      <div class="cs-avatar">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor" opacity=".85"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+      </div>
+    </div>
+    <div id="callOvPlate" class="cs-plate">--</div>
+    <div id="callOvStatus" class="cs-status">Appel…</div>
+    <div id="callOvTimer" class="cs-timer" style="display:none">00:00</div>
+    <div id="callOvActions" class="cs-actions"></div>
+  </div>
+  <!-- Barre mini -->
+  <div id="callOvMini" class="cs-mini" style="display:none">
+    <button class="cs-mini-expand" onclick="CallScreen.expand()" title="Agrandir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="cs-mini-info">
+      <span id="callOvMiniPlate" class="cs-mini-plate">--</span>
+      <span id="callOvMiniTimer" class="cs-mini-time">●</span>
+    </div>
+    <div class="cs-mini-btns">
+      <button id="callOvBtnSpeaker" class="cs-mini-ico" onclick="CallScreen.toggleSpeaker()" title="Haut-parleur"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
+      <button id="callOvBtnMute" class="cs-mini-ico" onclick="CallScreen.toggleMute()" title="Sourdine"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></button>
+      <button class="cs-mini-ico cs-mini-end" onclick="CallScreen._hangupFromMini()" title="Raccrocher"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.42 19.42 0 0 1 4.5 9.5a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L10.68 13.31z"/><line x1="23" y1="1" x2="1" y2="23"/></svg></button>
+    </div>
+  </div>
+</div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
 <audio id="callAudioIncoming" loop preload="none" style="display:none"></audio>
 <audio id="callAudioOutgoing" preload="none" style="display:none"></audio>
 <audio id="messageAudioBeep" preload="none" style="display:none"></audio>

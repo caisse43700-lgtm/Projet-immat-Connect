@@ -24,6 +24,7 @@
   var _lastStopReason = null;
   var _ctx = null;
   var _ringingInterval = null;
+  var _volume = 0.25;
 
   function _$(id) { return document.getElementById(id); }
 
@@ -55,8 +56,8 @@
       osc.type = 'sine';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0.0001, startSec);
-      gain.gain.exponentialRampToValueAtTime(0.25, startSec + 0.02);
-      gain.gain.setValueAtTime(0.25, startSec + durationSec - 0.05);
+      gain.gain.exponentialRampToValueAtTime(_volume, startSec + 0.02);
+      gain.gain.setValueAtTime(_volume, startSec + durationSec - 0.05);
       gain.gain.exponentialRampToValueAtTime(0.0001, startSec + durationSec);
       osc.start(startSec);
       osc.stop(startSec + durationSec);
@@ -192,6 +193,10 @@
     _synth(1320, 0.12, t + 0.13);
   }
 
+  function setVolume(v) {
+    _volume = Math.max(0.0001, Math.min(1, v || 0.25));
+  }
+
   // ── Arrêt ────────────────────────────────────────────────────────
 
   function stopCallAudio(reason) {
@@ -262,6 +267,7 @@
     playOutgoingTone:      playOutgoingTone,
     stopCallAudio:         stopCallAudio,
     stopAll:               stopAll,
+    setVolume:             setVolume,
     getRuntimeState:       getRuntimeState,
   };
 
