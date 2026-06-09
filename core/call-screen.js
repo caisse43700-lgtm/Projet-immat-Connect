@@ -134,13 +134,8 @@
       html = '<div class="cs-actions-row cs-actions-row--single">' +
         _btn('csBtnCancel', 'phoneOff', 'Raccrocher', 'cs-round-refuse', 'CallScreen._cancel()') +
       '</div>';
-    } else if (mode === 'incall') {
-      html = '<div class="cs-actions-row cs-actions-row--controls">' +
-        _btn('csBtnSpeakerF', 'speaker', 'Haut-parleur', 'cs-round-ctrl' + (_speaker ? ' cs-round-ctrl--active' : ''), 'CallScreen.toggleSpeaker()') +
-        _btn('csBtnMuteF',    _muted ? 'micOff' : 'mic', 'Sourdine', 'cs-round-ctrl' + (_muted ? ' cs-round-ctrl--active' : ''), 'CallScreen.toggleMute()') +
-      '</div><div class="cs-actions-row cs-actions-row--single">' +
-        _btn('csBtnHangup', 'phoneOff', 'Raccrocher', 'cs-round-refuse', 'CallScreen._hangupIncall()') +
-      '</div>';
+    } else if (mode === 'accepted') {
+      html = '';
     } else if (mode === 'missed' || mode === 'expired') {
       html = '<div class="cs-actions-row">' +
         _btn('csBtnMsg',   'msg',   'Message', 'cs-round-ctrl', 'CallScreen._message()') +
@@ -182,12 +177,14 @@
   function showOutgoing(data) {
     var plate = (data && data.to) || '--', rid = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
-    _render('outgoing', plate, 'Appel en cours…', false, 30000);
+    _render('outgoing', plate, 'Demande de contact envoyée…', false, 30000);
+    try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({to: plate}); } catch(e) {}
   }
   function showIncoming(data) {
     var plate = (data && data.from) || '--', rid = (data && data.requestId) || null;
     _state = { mode: 'incoming', plate: plate, requestId: rid };
-    _render('incoming', plate, 'Appel entrant', false, 0);
+    _render('incoming', plate, 'Demande de contact', false, 0);
+    try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({from: plate}); } catch(e) {}
   }
   function showMissed(data) {
     var plate = (data && data.from) || '--';
@@ -201,11 +198,17 @@
   }
   function showAccepted(data) {
     var plate = (data && (data['with'] || data.plate)) || '--';
-    _state = { mode: 'incall', plate: plate, requestId: null };
-    _render('incall', plate, 'En communication', true, 0);
+    _state = { mode: 'accepted', plate: plate, requestId: null };
+    _render('accepted', plate, 'Contact accepté', false, 2500);
+    setTimeout(function () {
+      if (plate && w.App && typeof w.App.actOpenConv === 'function') {
+        try { w.App.actOpenConv(plate); } catch(e) {}
+      }
+    }, 600);
   }
   function hide() {
     clearTimeout(_autoHideTimer); _stopTimer();
+    try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay'); if (ov) ov.style.display = 'none';
     var mini = _$('callOvMini'); if (mini) mini.style.display = 'none';
     var full = _$('callOvFull'); if (full) full.style.display = 'flex';

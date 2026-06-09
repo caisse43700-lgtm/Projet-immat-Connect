@@ -14,7 +14,7 @@ PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (vo
 AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
 ```
 
-**Dernière mise à jour** : 2026-06-09 — C1 correctif appliqué (plaque sans tirets) — C2 sonnerie iOS déployée (Web Audio API)
+**Dernière mise à jour** : 2026-06-09 — Audit correctifs : AudioManager branché dans CallScreen + SW v12 + 177 tests pass
 
 ---
 
@@ -141,6 +141,24 @@ Accepter → ouvre la conversation messages. Aucun canal audio prévu en Phase 1
 
 ---
 
+## AUDIT CORRECTIFS — 2026-06-09
+
+### Corrections apportées (branch `claude/immatconnect-pro-app-dEKGR`)
+
+| Fichier | Correction | Statut |
+|---|---|---|
+| `core/call-screen.js` | `showIncoming()` appelle `AudioManager.playIncomingRingtone()` | ✅ |
+| `core/call-screen.js` | `showOutgoing()` appelle `AudioManager.playOutgoingTone()` | ✅ |
+| `core/call-screen.js` | `hide()` appelle `AudioManager.stopCallAudio('CallScreen.hide')` | ✅ |
+| `core/call-screen.js` | `showAccepted()` → "Contact accepté", auto-hide 2.5s, pas de timer | ✅ |
+| `core/call-screen.js` | Texte UX : "Demande de contact" / "Demande de contact envoyée…" | ✅ |
+| `calls.js` | Fallback legacy `_showIncomingPopup()` appelle `AudioManager.playIncomingRingtone()` | ✅ |
+| `calls.js` | Expiry timeout legacy appelle `AudioManager.stopCallAudio()` | ✅ |
+| `service-worker.js` | CACHE_NAME `v12` — `audio-manager.js` + `call-screen.js` ajoutés | ✅ |
+| `tests.js` | Suite 21 — AU-01 à AU-15 — 177/177 pass | ✅ |
+
+---
+
 ## INCIDENTS ACTIFS
 
 ### C1 — Test terrain en attente
@@ -148,13 +166,14 @@ Recharger la page côté BZ-652-LL → appeler BE-521-MM → vérifier que "Cond
 
 ### C2 — Test terrain en attente
 Recevoir un appel entrant sur iOS Safari → vérifier que la sonnerie synthétisée joue bien (pas de fichiers audio requis).
+Ouvrir la console → `AudioManager.getRuntimeState()` → vérifier `webAudioContextState: "running"`.
 
 ---
 
 ## PROCHAINE ACTION
 
 1. **Tester C1** — BZ-652-LL appelle BE-521-MM après rechargement de page → vérifier que "Conducteur introuvable" n'apparaît plus
-2. **Tester C2** — recevoir un appel sur iOS Safari → vérifier que la sonnerie synthétisée joue
+2. **Tester C2** — recevoir un appel sur iOS Safari → vérifier sonnerie + console `AudioManager.getRuntimeState()`
 3. **Si C1 ou C2 échoue** → envoyer le message d'erreur exact + résultat `AudioManager.getRuntimeState()` dans la console
 
 ---

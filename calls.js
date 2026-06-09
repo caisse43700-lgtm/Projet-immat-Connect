@@ -346,7 +346,8 @@ const CallManager = (function () {
       return;
     }
 
-    // Fallback : popup legacy
+    // Fallback : popup legacy + audio (CallScreen absent)
+    try { if (window.AudioManager && window.AudioManager.playIncomingRingtone) window.AudioManager.playIncomingRingtone({from: plate, source: 'legacy-popup'}); } catch(e) {}
     const popup = document.getElementById('callIncomingPopup');
     if (!popup) return;
     const el = document.getElementById('callIncomingPlate');
@@ -356,6 +357,7 @@ const CallManager = (function () {
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
     if (ms > 0) setTimeout(() => {
       popup.classList.remove('show');
+      try { if (window.AudioManager && window.AudioManager.stopCallAudio) window.AudioManager.stopCallAudio('legacy-popup-expired'); } catch(e) {}
       _onMissed();
     }, ms);
   }
