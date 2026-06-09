@@ -308,13 +308,25 @@ const CallManager = (function () {
       }, p => {
         const r = p.new;
         if (!r || r.id !== _pendingCallId) return;
-        _hideSentBanner();
         _pendingCallId = null;
         if (r.status === 'accepted') {
-          try { if (typeof toast === 'function') toast('Demande de contact acceptée. Ouverture de la conversation…', 'ok'); } catch (e) {}
-          if (r.receiver_plate) try { window.App?.actOpenConv?.(r.receiver_plate); } catch (e) {}
+          // Masquer la bannière legacy sans toucher CallScreen
+          try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
+          // Émettre CALL_ACCEPTED → CallScreen affiche "Contact accepté" puis ouvre la conv
+          try { window.ImmatOrganism?.observe?.('CALL_ACCEPTED', {
+            'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id,
+            _src: 'ImmatConnect/calls/outgoingUpdateHandler',
+          }); } catch(e) {}
+          // Fallback si CallScreen absent : ouvrir conv directement
+          if (!window.CallScreen) {
+            try { if (typeof toast === 'function') toast('Demande de contact acceptée. Ouverture de la conversation…', 'ok'); } catch (e) {}
+            if (r.receiver_plate) try { window.App?.actOpenConv?.(r.receiver_plate); } catch (e) {}
+          }
         } else if (r.status === 'refused') {
+          _hideSentBanner();
           try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
+        } else {
+          _hideSentBanner();
         }
       })
       .subscribe((status, err) => {
