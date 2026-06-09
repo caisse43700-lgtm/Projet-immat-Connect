@@ -134,7 +134,10 @@
         _btn('csBtnCancel', 'phoneOff', 'Raccrocher', 'cs-round-refuse', 'CallScreen._cancel()') +
       '</div>';
     } else if (mode === 'accepted') {
-      html = '';
+      html = '<div class="cs-actions-row">' +
+        _btn('csBtnMsg',   'msg',   'Message', 'cs-round-ctrl', 'CallScreen._message()') +
+        _btn('csBtnClose', 'close', 'Fermer',  'cs-round-ctrl', 'CallScreen.hide()') +
+      '</div>';
     } else if (mode === 'missed' || mode === 'expired') {
       html = '<div class="cs-actions-row">' +
         _btn('csBtnMsg',   'msg',   'Message', 'cs-round-ctrl', 'CallScreen._message()') +
@@ -198,12 +201,7 @@
   function showAccepted(data) {
     var plate = (data && (data['with'] || data.plate)) || '--';
     _state = { mode: 'accepted', plate: plate, requestId: null };
-    _render('accepted', plate, 'Contact accepté', false, 2500);
-    setTimeout(function () {
-      if (plate && w.App && typeof w.App.actOpenConv === 'function') {
-        try { w.App.actOpenConv(plate); } catch(e) {}
-      }
-    }, 600);
+    _render('accepted', plate, 'Contact accepté', false, 10000);
   }
   function hide() {
     clearTimeout(_autoHideTimer); _stopTimer();

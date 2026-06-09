@@ -245,7 +245,6 @@ const CallManager = (function () {
       .select()
       .maybeSingle();
     if (data?.requester_plate) {
-      try { window.App?.actOpenConv?.(data.requester_plate); } catch (e) {}
       try{ window.ImmatOrganism?.observe?.('CALL_ACCEPTED', {with: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'}); }catch(e){}
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     }
