@@ -14,7 +14,7 @@ PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (vo
 AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
 ```
 
-**Dernière mise à jour** : 2026-06-09 — Audit correctifs : AudioManager branché dans CallScreen + SW v12 + 177 tests pass
+**Dernière mise à jour** : 2026-06-09 — Tests terrain BZ-652-LL/BE-521-MM — 9 bugs trouvés et corrigés — voir §TESTS TERRAIN
 
 ---
 
@@ -141,6 +141,100 @@ Accepter → ouvre la conversation messages. Aucun canal audio prévu en Phase 1
 
 ---
 
+## TESTS TERRAIN — 2026-06-09 (BZ-652-LL ↔ BE-521-MM)
+
+Tests réalisés avec deux appareils réels sur iOS Safari en production.
+Branche : `claude/immatconnect-pro-app-dEKGR`
+
+### T1 — Appel multiple bloqué ✅ RÉSOLU
+**Symptôme :** "Trop de demandes. Réessaie dans quelques minutes." après 3 appels en 10 min.
+**Cause :** Trigger PostgreSQL `call_request_on_insert()` — anti-spam max 3/10min + cooldown 5min après refus. Check localStorage messages (20 msg/min).
+**Correctifs :**
+- `messages.js` : suppression check `_checkSpam()` côté frontend
+- `migration_disable_call_limits.sql` : trigger remplacé par `return new` (sans limites)
+- **Action requise :** exécuter ce SQL dans Supabase → SQL Editor :
+```sql
+create or replace function public.call_request_on_insert()
+returns trigger language plpgsql as $$
+begin
+  return new;
+end;
+$$;
+```
+**Commits :** `d6ec808`
+
+---
+
+### T2 — Caller voit "raccroché" quand receiver accepte ✅ RÉSOLU
+**Symptôme :** Quand BE-521-MM décroche, l'overlay de BZ-652-LL disparaît brutalement (mode outgoing → idle sans transition).
+**Cause :** Handler UPDATE Realtime côté caller appelait `_hideSentBanner()` → `CallScreen.hide()` immédiatement, sans émettre `CALL_ACCEPTED` sur le bus. `showAccepted()` n'était jamais appelé côté caller.
+**Correctif (`calls.js` — handler `requester_id=eq.uid`) :**
+- Suppression de `_hideSentBanner()` dans le chemin `status='accepted'`
+- Émission `ImmatOrganism.observe('CALL_ACCEPTED', ...)` → bus → `CallScreen.showAccepted()`
+- Fallback legacy (sans CallScreen) conservé
+**Commit :** `9a239ed`
+
+---
+
+### T3 — Messages s'ouvrent automatiquement dès l'acceptation ✅ RÉSOLU
+**Symptôme :** "Dès que je décroche voilà les messages, dès que j'appelle voilà les messages."
+**Cause (receiver) :** `acceptCall()` appelait `window.App?.actOpenConv?.(plate)` directement → conversation ouverte AVANT l'overlay "Contact accepté".
+**Cause (caller) :** `showAccepted()` avait un `setTimeout(actOpenConv, 600)` → ouverture automatique 600ms après.
+**Correctifs :**
+- `calls.js` : suppression `actOpenConv()` direct dans `acceptCall()`
+- `call-screen.js` : suppression `setTimeout(actOpenConv, 600)` dans `showAccepted()`
+- `call-screen.js` : ajout boutons **Message** + **Fermer** dans l'overlay mode `'accepted'`
+- `call-screen.js` : auto-hide accepted : 2 500ms → 10 000ms
+**Commit :** `b64f204`
+
+---
+
+### T4 — Bip sortant silencieux sur iOS ✅ RÉSOLU (code review)
+**Symptôme :** Aucun son quand BZ-652-LL initie un appel sur iOS Safari.
+**Cause :** `playOutgoingTone()` condition `ctx.state !== 'suspended'` → inversée. Sur iOS, AudioContext démarre suspendu → condition false → ni beep ni `ctx.resume()`.
+**Correctif (`core/audio-manager.js`) :** alignement sur le pattern de `playIncomingRingtone()` avec `ctx.resume().then(...)`.
+**Commit :** `17385f2`
+
+---
+
+### T5 — Fuite d'interval sonnerie (race condition) ✅ RÉSOLU (code review)
+**Symptôme :** Sonnerie pouvant continuer en boucle après annulation si `stopCallAudio()` appelé pendant `ctx.resume()` en cours.
+**Cause :** Le callback `.then()` de `ctx.resume()` créait `_ringingInterval` sans vérifier si la sonnerie avait été annulée entre temps.
+**Correctif (`core/audio-manager.js`) :** Guard `if (_currentlyPlaying !== null) return` dans les callbacks `.then()`.
+**Commit :** `17385f2`
+
+---
+
+### T6 — Dead code mode 'incall' ✅ RÉSOLU (code review)
+**Symptôme :** `_hangupFromMini()` ne pouvait pas déclencher `_hangupIncall()` — branche morte.
+**Cause :** `_state.mode === 'incall'` jamais assigné (modes réels : idle/incoming/outgoing/accepted/missed/expired).
+**Correctif (`core/call-screen.js`) :** Suppression de la branche `'incall'` dans `toggleMute()` et `_hangupFromMini()`.
+**Commit :** `17385f2`
+
+---
+
+### T7 — CALL_ACCEPTED non émis côté caller (wiring manquant) ✅ RÉSOLU (audit)
+**Symptôme :** CallScreen côté appelant n'affichait pas "Contact accepté" — overlay restait en 'outgoing' sans transition.
+**Cause :** `_showIncomingPopup()` et `_showSentBanner()` ne déclenchaient pas les méthodes CallScreen directement. Le bus ImmatBus gérait le routing mais le handler UPDATE Realtime n'émettait pas `CALL_ACCEPTED`.
+**Correctif :** voir T2.
+
+---
+
+### T8 — audioBlocked check incorrect (audit autotest) ✅ RÉSOLU
+**Symptôme :** `callsAutotest()` signalait `audioBlocked: true` même quand la synthèse Web Audio fonctionnait.
+**Cause :** Check basé sur `incomingRingtoneReady` (présence fichier `<audio src>`) au lieu de `synthAvailable`.
+**Correctif (`core/mobile-autotest.js`) :** `audioBlocked = !(amState.synthAvailable || amState.incomingRingtoneReady)`.
+**Commit :** `0b91115`
+
+---
+
+### T9 — Limites spam trop strictes pour les tests ✅ RÉSOLU
+**Symptôme :** Impossible de tester rapidement — erreur après 3 appels en 10 min.
+**Cause :** Trigger DB + check localStorage messages.
+**Correctif :** voir T1.
+
+---
+
 ## AUDIT CORRECTIFS — 2026-06-09
 
 ### Corrections apportées (branch `claude/immatconnect-pro-app-dEKGR`)
@@ -161,20 +255,20 @@ Accepter → ouvre la conversation messages. Aucun canal audio prévu en Phase 1
 
 ## INCIDENTS ACTIFS
 
-### C1 — Test terrain en attente
-Recharger la page côté BZ-652-LL → appeler BE-521-MM → vérifier que "Conducteur introuvable" n'apparaît plus.
+### Action DB requise — Spam limit appels
+Exécuter `migration_disable_call_limits.sql` dans **Supabase → SQL Editor** pour désactiver le trigger anti-spam sur `call_requests`. Sans cette étape, la limite 3 appels/10min est toujours active en DB.
 
-### C2 — Test terrain en attente
-Recevoir un appel entrant sur iOS Safari → vérifier que la sonnerie synthétisée joue bien (pas de fichiers audio requis).
-Ouvrir la console → `AudioManager.getRuntimeState()` → vérifier `webAudioContextState: "running"`.
+### C2 — Sonnerie iOS à re-tester
+Recharger la page sur iOS Safari → recevoir un appel → vérifier que la sonnerie joue.
+Console : `AudioManager.getRuntimeState()` → `webAudioContextState` doit être `"running"` après un tap.
 
 ---
 
 ## PROCHAINE ACTION
 
-1. **Tester C1** — BZ-652-LL appelle BE-521-MM après rechargement de page → vérifier que "Conducteur introuvable" n'apparaît plus
-2. **Tester C2** — recevoir un appel sur iOS Safari → vérifier sonnerie + console `AudioManager.getRuntimeState()`
-3. **Si C1 ou C2 échoue** → envoyer le message d'erreur exact + résultat `AudioManager.getRuntimeState()` dans la console
+1. **Exécuter le SQL** dans Supabase SQL Editor (voir T1 ci-dessus) pour désactiver le trigger spam
+2. **Re-tester le flux complet** : BZ-652-LL appelle BE-521-MM → BE-521-MM voit l'overlay entrant → accepte → les deux voient "Contact accepté" avec boutons Message/Fermer → taper Message pour ouvrir la conversation
+3. **Vérifier sonnerie iOS** après rechargement (C2)
 
 ---
 
@@ -199,6 +293,13 @@ Ouvrir la console → `AudioManager.getRuntimeState()` → vérifier `webAudioCo
 | BUG A — 23505 second appel | 2026-06-08 | Index UNIQUE pending jamais libéré côté DB | `5859393` |
 | BUG B — Popup absente | 2026-06-09 | `call_requests` absente de `supabase_realtime` | Fix DB + `9ed6847` |
 | C2 — Sonnerie iOS | 2026-06-09 | `<audio>` sans src + AudioContext suspendu | Web Audio API synthesis |
+| T1 — Spam limit trop stricte | 2026-06-09 | Trigger DB 3/10min + localStorage 20 msg/min | `d6ec808` + SQL migration |
+| T2 — Caller voit raccroché | 2026-06-09 | Handler UPDATE ne lançait pas CALL_ACCEPTED sur bus | `9a239ed` |
+| T3 — Messages auto-ouverts | 2026-06-09 | `actOpenConv()` appelé direct dans `acceptCall()` + `showAccepted()` | `b64f204` |
+| T4 — Bip sortant iOS silencieux | 2026-06-09 | Condition `!== 'suspended'` inversée dans `playOutgoingTone()` | `17385f2` |
+| T5 — Fuite interval sonnerie | 2026-06-09 | Promise `.then()` sans guard si `stopCallAudio()` appelé entre temps | `17385f2` |
+| T6 — Dead code 'incall' | 2026-06-09 | Mode jamais assigné dans `toggleMute` + `_hangupFromMini` | `17385f2` |
+| T8 — audioBlocked erroné | 2026-06-09 | Check `incomingRingtoneReady` au lieu de `synthAvailable` | `0b91115` |
 
 ---
 
