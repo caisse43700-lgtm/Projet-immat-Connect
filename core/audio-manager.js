@@ -154,6 +154,7 @@
     if (!ctx) { _lastBlocked = true; return; }
     if (ctx.state === 'suspended') {
       ctx.resume().then(function () {
+        if (_currentlyPlaying !== null) return; // annulé pendant le resume
         _ringOnce();
         _ringingInterval = setInterval(_ringOnce, 2600);
         _currentlyPlaying = 'incoming';
@@ -175,11 +176,21 @@
     if (el && el.src && _play(el, true)) { _currentlyPlaying = 'outgoing'; return; }
     var ctx = _getCtx();
     if (!ctx) return;
-    if (ctx.state !== 'suspended') {
-      _outgoingBeep();
-      _ringingInterval = setInterval(_outgoingBeep, 3000);
-      _currentlyPlaying = 'outgoing';
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function () {
+        if (_currentlyPlaying !== null) return; // annulé pendant le resume
+        _outgoingBeep();
+        _ringingInterval = setInterval(_outgoingBeep, 3000);
+        _currentlyPlaying = 'outgoing';
+      }).catch(function (e) {
+        _lastBlocked = true;
+        _lastError   = String(e && (e.message || e));
+      });
+      return;
     }
+    _outgoingBeep();
+    _ringingInterval = setInterval(_outgoingBeep, 3000);
+    _currentlyPlaying = 'outgoing';
   }
 
   function playMessageBeep(context) {

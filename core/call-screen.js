@@ -54,7 +54,6 @@
         else if (_state.mode === 'outgoing' && w.AudioManager) w.AudioManager.playOutgoingTone();
       }
     } catch(e) {}
-    if (_state.mode === 'incall') _renderActions();
     _refreshControls();
   }
 
@@ -230,7 +229,6 @@
     _hangupFromMini: function () {
       if (_state.mode === 'incoming') _refuse();
       else if (_state.mode === 'outgoing') _cancel();
-      else if (_state.mode === 'incall') _hangupIncall();
       else hide();
     },
   };
