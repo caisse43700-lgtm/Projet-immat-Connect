@@ -312,6 +312,84 @@
   transform: translateX(20px);
 }
 
+/* ── Sous-onglets Contact (Appels | Messages) ────────────────────── */
+.ic-contact-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.ic-contact-tab {
+  flex: 1;
+  padding: 10px 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  letter-spacing: .2px;
+}
+.ic-contact-tab--active {
+  color: var(--green, #00ffb3);
+  border-bottom-color: var(--green, #00ffb3);
+}
+
+/* ── Journal d'appels ────────────────────────────────────────────── */
+.cj-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+.cj-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #444;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.cj-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background .1s;
+}
+.cj-entry:active { background: rgba(255,255,255,.04); }
+.cj-direction {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.cj-info { flex: 1; min-width: 0; }
+.cj-plate {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg, #e8eaf0);
+  letter-spacing: .5px;
+}
+.cj-meta {
+  font-size: 11px;
+  margin-top: 2px;
+}
+.cj-call-btn {
+  background: rgba(41,121,255,.12);
+  border: 1px solid rgba(41,121,255,.28);
+  color: var(--primary, #2979ff);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity .12s;
+}
+.cj-call-btn:active { opacity: .7; }
+
 /* ── CallScreen boutons (générés par core/call-screen.js) ────────── */
 .cs-btn {
   padding: 11px 20px;
