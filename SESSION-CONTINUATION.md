@@ -2,186 +2,159 @@
 
 ## ⚑ POINT D'ENTRÉE OFFICIEL
 
-> Ce fichier est **le seul point d'entrée** pour toute IA reprenant le projet.
-> Aucun fichier de diagnostic, d'audit ou de roadmap ne remplace ce fichier.
-> Un nouveau fichier créé pour un diagnostic reste une **annexe** — jamais un point d'entrée.
+Ce fichier est le point d'entrée de reprise pour l'état de production `main`.
 
-### Protocole obligatoire pour toute IA
+## ÉTAT PRODUCTION — 2026-06-10
 
-```
-AVANT de travailler  → lire ce fichier intégralement
-PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (voir §DOCUMENTS)
-AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
-```
-
-**Dernière mise à jour** : 2026-06-09 — C1 correctif appliqué (plaque sans tirets) — C2 (sonnerie iOS) ouvert
-
----
-
-## ÉTAT DU PROJET
-
-```
-Dépôt          : caisse43700-lgtm/Projet-immat-Connect
-Main           : c20712e — CI GREEN
-BUG A          : ARCHIVÉ — mergé PR #269 (5859393) — 2026-06-08
-BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime — 2026-06-09
-BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling 5s×12 — 2026-06-09
-C1             : CORRECTIF DÉPLOYÉ — en attente de test terrain
-C2             : ACTIF — pas de sonnerie iOS (audio.play() bloqué)
-C3             : HORS SCOPE — pas de son après décrochage (VoIP non implémenté Phase 1)
+```text
+Dépôt                 : caisse43700-lgtm/Projet-immat-Connect
+Branche production     : main — servie par GitHub Pages
+URL terrain            : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
+Produit actuel         : demande de contact temps réel, pas encore appel vocal WebRTC
+Tests terrain          : deux iPhone/Safari, BZ-652-LL ↔ BE-521-MM
 ```
 
----
+## Clarification produit
 
-## HISTORIQUE COMPLET DES CORRECTIFS — SESSION 2026-06-08/09
+Le système actuel n'est pas encore un appel vocal type téléphone.
 
-### BUG A — Erreur 23505 au second appel (ARCHIVÉ)
+Il implémente :
 
-**Cause racine :**
-```
-Index UNIQUE partiel : call_requests_unique_pending_idx
-  ON call_requests (requester_id, receiver_id) WHERE status='pending'
-Aucun code ne faisait UPDATE status='expired' à l'expiration UI (30s)
-→ la ligne restait 'pending' en DB
-→ le second INSERT violait l'index → erreur 23505
-```
-
-**Correctifs (`calls.js`) :**
-- `_showSentBanner()` : timeout 31s → UPDATE status='expired' en DB
-- `_recoverPendingRequest()` : retour anticipé si expiré → UPDATE status='expired' en DB
-
-**Preuve :** test terrain 2026-06-08 — second appel réussi sans erreur 23505.
-**Merge :** PR #269 → main `5859393`.
-
----
-
-### BUG B — B ne reçoit pas la popup (RÉSOLU)
-
-**Cause racine :**
-```
-Table call_requests absente de la publication supabase_realtime
-→ canal realtime subscribed=true mais aucun event INSERT reçu
-→ _showIncomingPopup() jamais appelée
-→ aucune popup, aucune sonnerie
+```text
+A demande un contact avec B
+B reçoit une sonnerie / UI entrante
+B accepte ou refuse
+A et B voient l'état accepté
+L'ouverture des messages doit être explicite via bouton Message
 ```
 
-**Preuve SQL :**
-```sql
-SELECT tablename FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
--- Résultat : uniquement 'messages' — call_requests absente
-```
+Le vrai appel vocal nécessitera une phase séparée WebRTC : micro, remote audio, mute, haut-parleur, raccrocher, signaling offer/answer/ICE.
 
-**Fix DB :**
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE call_requests;
-```
+## Correctifs production récents sur `main`
 
-**Correctifs code (`calls.js`, `bus.js`) déployés :**
-
-| Correctif | Détail |
-|---|---|
-| `_recoverIncomingPendingCalls()` | Query receiver_id=uid, status=pending, expires_at>now() — dedup via `_seenIncomingCallIds` |
-| Polling 5s×12 (`_startIncomingRecoveryPolling`) | Recovery automatique 60s après init — plus besoin de recharger manuellement |
-| `visibilitychange` | Déclenche aussi la recovery entrante au retour au premier plan |
-| `_lastSubscribeStatus` tracé | `realtimeStatus` exposé dans `getRuntimeState()` |
-| `getRuntimeState()` enrichi | `callOverlayVisible`, `uidKnown`, `seenIncomingCount`, `visibilityState` |
-| `bus.js EVENTS` | `CALL_RECEIVED`, `CALL_MISSED`, `CALL_CANCELLED`, `CALL_INITIATED` ajoutés |
-
-**Preuve terrain :** popup "Appel manqué" visible sur écran B après correction DB — 2026-06-09.
-
----
-
-### C1 — BZ-652-LL ne peut pas émettre d'appel (CORRECTIF DÉPLOYÉ)
-
-**Cause racine :**
-```
-vehicleContextAction() applique nPlate() qui supprime les tirets :
-  BE-521-MM → BE521MM
-contactByCall() cherche en DB : eq('owner_plate', 'BE521MM')
-DB contient : owner_plate = 'BE-521-MM' → NO MATCH → "Conducteur introuvable"
-```
-
-**Correctif (`calls.js` — `contactByCall`) :**
-```js
-let { data } = await _sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
-if (!data) {
-    const withDashes = plate.replace(/[\s-]/g,'').replace(/^([A-Z]{2})(\d{3})([A-Z]{2})$/i,'$1-$2-$3');
-    if (withDashes !== plate) {
-        ({ data } = await _sb.from('profiles').select('id').eq('owner_plate', withDashes).maybeSingle());
-    }
-}
-```
-
-**Statut :** déployé sur main `c20712e` — **test terrain requis**.
-
----
-
-### C2 — Pas de sonnerie à la réception iOS (ACTIF)
-
-**Cause :** iOS Safari bloque `audio.play()` sans interaction utilisateur préalable.
-**Fix requis :** déverrouillage audio sur premier geste dans `core/audio-manager.js`.
-**Priorité :** après validation de C1.
-
----
-
-### C3 — Pas de son après décrochage (HORS SCOPE)
-
-L'appel ImmatConnect est une **demande de contact**, pas un appel VoIP.
-Accepter → ouvre la conversation messages. Aucun canal audio prévu en Phase 1.
-
----
-
-## INCIDENTS ACTIFS
-
-### C1 — Test terrain en attente
-Recharger la page côté BZ-652-LL → appeler BE-521-MM → vérifier que "Conducteur introuvable" n'apparaît plus.
-
-### C2 — Sonnerie iOS
-**Cause :** `audio.play()` bloqué par Safari sans geste utilisateur.
-**Fix :** implémenter déverrouillage audio dans `core/audio-manager.js`.
-
----
-
-## PROCHAINE ACTION
-
-1. **Tester C1** — BZ-652-LL appelle BE-521-MM après rechargement de page
-2. **Si C1 validé** → implémenter le déverrouillage audio iOS (C2) dans `core/audio-manager.js`
-3. **Si C1 échoue** → envoyer le message d'erreur exact pour diagnostic
-
----
-
-## DOCUMENTS DE RÉFÉRENCE
-
-| Document | Rôle | Type |
+| Commit | Objet | Statut |
 |---|---|---|
-| `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe |
-| `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` | Analyse statique `calls.js` | Annexe |
-| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue externe | Annexe |
-| `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
-| `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
-| `docs/INTERACTION_ORGANISM_MAP.md` | Qui possède quoi | Référence permanente |
+| `de35c060` | Supprime l'ouverture automatique conversation dans `calls.js` sur accepted | déployé |
+| `a7f6d5f7` | `core/call-screen.js` : accepted doit afficher Message/Fermer au lieu de “conversation ouverte” | déployé |
+| `f9088541` | Nettoie les anciens `pending` avant nouvel appel + retry 23505 | déployé |
+| `ac53d3c` | Ajoute `docs/PROFESSIONAL_STABILIZATION_ROADMAP.md` | déployé |
 
----
+## Constats terrain récents
 
-## ARCHIVES — Incidents résolus
+### 1. Synchronisation acceptée fonctionne partiellement
 
-| Incident | Date | Cause racine | Commit |
-|---|---|---|---|
-| Phases 0–10 + post-merge | 2026-06-08 | Architecture complète — CI green 4/4 | `docs/archives/ARCHIVE_PHASES_0_10.md` |
-| BUG A — 23505 second appel | 2026-06-08 | Index UNIQUE pending jamais libéré côté DB | `5859393` |
-| BUG B — Popup absente | 2026-06-09 | `call_requests` absente de `supabase_realtime` | Fix DB + `9ed6847` |
+Les deux téléphones ont atteint un état accepté, ce qui valide :
 
----
-
-## INVARIANTS — NE JAMAIS VIOLER
-
+```text
+Supabase Realtime actif
+CALL_ACCEPTED circule
+A et B reçoivent l'état accepté
 ```
-ANTHROPIC_API_KEY  → jamais dans le code
-owner_plate        → immutable (INV-006)
-INV-COM-009        → pas de DELETE sans consentement
-INV-COM-010/015    → payload anonymisé, pas de contenu message dans Edge Functions
-InteractionEngine  → tous appels dans try/catch, non-bloquants
-Corrections        → ciblées uniquement, pas de réécriture globale
-CI                 → vérifier green avant chaque merge
-SESSION_CONTINUATION.md → toujours mis à jour dans le même commit que le code
+
+### 2. Ancien wording / ancien comportement détecté
+
+Avant `a7f6d5f7`, `main/core/call-screen.js` affichait :
+
+```text
+Contact accepté — conversation ouverte
+```
+
+et fermait l'overlay après 2 secondes. Ce comportement est contraire au périmètre actuel et a été corrigé.
+
+### 3. Pending fantôme détecté
+
+Guardian OBD a montré côté appelant :
+
+```text
+initialized = true
+uidKnown = true
+myPlate = BZ-652-LL
+realtimeStatus = SUBSCRIBED
+pendingCallId = null
+hasPendingOutgoing = false
+```
+
+mais l'app affichait :
+
+```text
+Une demande est déjà en attente de réponse.
+```
+
+Interprétation : runtime local propre, mais ligne `call_requests.status='pending'` encore présente en DB. Mitigation appliquée : expirer les pending du même caller/receiver avant nouvel insert et retry après 23505.
+
+### 4. Messages présents mais ouverture thread à vérifier
+
+Guardian OBD a montré :
+
+```text
+conversationRowsCount = 1
+threadBubblesCount = 201
+```
+
+Donc les données messages existent. Si l'ouverture par plaque échoue, auditer l'UI/panels/pointer-events plutôt que la donnée.
+
+## Prochaine procédure terrain
+
+Après propagation GitHub Pages, ouvrir sur les deux téléphones :
+
+```text
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?stabilize=f9088541
+```
+
+Puis :
+
+1. Recharger une fois sur les deux téléphones.
+2. Vérifier dans Guardian Dashboard :
+   - `CallManager.loaded = true`
+   - `initialized = true`
+   - `uidKnown = true`
+   - `myPlate` correct
+   - `realtimeStatus = SUBSCRIBED`
+   - `pendingCallId = null` avant appel
+   - `callScreenMode = idle` avant appel
+3. A appelle B.
+4. B accepte.
+5. Attendu :
+   - A et B voient `Contact accepté`
+   - pas de texte `conversation ouverte`
+   - boutons `Message` / `Fermer` visibles
+   - aucune ouverture automatique du thread
+6. Tester ensuite :
+   - rappel immédiat après accepted
+   - refus
+   - expiration
+   - ouverture manuelle du thread via Message
+   - ouverture manuelle du thread depuis liste Messages
+
+## Définition de fini — phase demande de contact
+
+```text
+fresh reload
+A appelle B
+B accepte
+A voit Contact accepté
+B voit Contact accepté
+Message thread ne s'ouvre pas automatiquement
+Message ouvre le thread manuellement
+Fermer ferme l'overlay
+rappel immédiat fonctionne sans pending fantôme
+refus fonctionne
+expiration fonctionne
+liste Messages ouvre encore le thread par plaque
+Guardian Dashboard ne révèle aucun overlay bloquant
+```
+
+## Documents de référence
+
+- `docs/PROFESSIONAL_STABILIZATION_ROADMAP.md` — roadmap professionnelle de stabilisation.
+- `AGENTS.md` — panneau d'entrée IA.
+
+## Invariants
+
+```text
+main = production GitHub Pages
+ne pas confondre branche feature et environnement testé
+pas d'ouverture automatique de messages sur accepted
+pas de suppression DB destructive sans consentement
+call_requests.pending doit toujours sortir vers accepted/refused/cancelled/expired
 ```
