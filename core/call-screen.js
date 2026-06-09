@@ -27,7 +27,7 @@
   // ── Actions déclenchées par les boutons ──────────────────────────
   function _accept() {
     var rid = _state.requestId;
-    hide();
+    try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.accept'); } catch(e) {}
     if (rid && w.CallManager && typeof w.CallManager.acceptCall === 'function') {
       w.CallManager.acceptCall(rid);
     }
@@ -124,11 +124,14 @@
   function showAccepted(data) {
     var plate = (data && (data['with'] || data.plate)) || '--';
     _state = { mode: 'accepted', plate: plate, requestId: null };
-    _render('accepted', plate, 'Contact accepté — conversation ouverte', '', 2000);
+    _render('accepted', plate, 'Contact accepté',
+      _BTN.message + _BTN.close,
+      10000);
   }
 
   function hide() {
     clearTimeout(_autoHideTimer);
+    try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay');
     if (ov) ov.style.display = 'none';
     _state = { mode: 'idle', plate: null, requestId: null };
