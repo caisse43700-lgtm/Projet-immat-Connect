@@ -245,7 +245,8 @@
     try{
       if(audioMgr && typeof audioMgr.getRuntimeState==='function'){
         var amState = audioMgr.getRuntimeState();
-        audioBlocked = !(amState && amState.incomingRingtoneReady);
+        // Phase 7+ : synthèse Web Audio — audioBlocked seulement si ni fichier ni synthèse disponible
+        audioBlocked = !(amState && (amState.synthAvailable || amState.incomingRingtoneReady));
       }
     }catch(e){}
     try{
@@ -277,6 +278,20 @@
         }
       }
     }catch(e){}
+
+    // Phase 2 — CallScreen plein écran iOS-style
+    var csApi = {};
+    var csStateIdle = null;
+    try{
+      ['showIncoming','showOutgoing','showMissed','showExpired','showAccepted',
+       'hide','getState','minimize','expand','toggleSpeaker','toggleMute'].forEach(function(fn){
+        csApi[fn] = typeof (callScrMod && callScrMod[fn])==='function';
+      });
+      if(callScrMod && typeof callScrMod.getState==='function'){
+        var s = callScrMod.getState(); csStateIdle = s ? s.mode==='idle' : null;
+      }
+    }catch(e){}
+
     return {
       callScreenHiddenByDefault: callScreenHiddenByDefault,
       audioBlocked: audioBlocked,
@@ -285,9 +300,54 @@
       ghostOverlayCount: ghostEls.length,
       ghostOverlays: ghostEls,
       dom: {
-        callOverlay: byId('callOverlay','callOverlay'),
+        callOverlay:       byId('callOverlay','callOverlay'),
+        callOvFull:        byId('callOvFull','callOvFull'),
+        callOvMini:        byId('callOvMini','callOvMini'),
+        callOvActions:     byId('callOvActions','callOvActions'),
+        callOvAvatarWrap:  byId('callOvAvatarWrap','callOvAvatarWrap'),
+        callOvBtnSpeaker:  byId('callOvBtnSpeaker','callOvBtnSpeaker'),
+        callOvBtnMute:     byId('callOvBtnMute','callOvBtnMute'),
         callIncomingPopup: byId('callIncomingPopup','callIncomingPopup'),
-        callSentBanner: byId('callSentBanner','callSentBanner'),
+        callSentBanner:    byId('callSentBanner','callSentBanner'),
+      },
+      callScreenApi: csApi,
+      callScreenStateIdle: csStateIdle,
+    };
+  }
+
+  function audioAutotest(){
+    var am = w.AudioManager;
+    var state = null;
+    try{ if(am && typeof am.getRuntimeState==='function') state=am.getRuntimeState(); }catch(e){}
+    return {
+      moduleLoaded:          !!am,
+      hasPlayIncoming:       typeof (am && am.playIncomingRingtone)==='function',
+      hasPlayOutgoing:       typeof (am && am.playOutgoingTone)==='function',
+      hasStopCallAudio:      typeof (am && am.stopCallAudio)==='function',
+      hasStopAll:            typeof (am && am.stopAll)==='function',
+      hasSetVolume:          typeof (am && am.setVolume)==='function',
+      hasUnlockFromGesture:  typeof (am && am.unlockFromUserGesture)==='function',
+      synthAvailable:        state ? !!state.synthAvailable : null,
+      webAudioState:         state ? (state.webAudioContextState||null) : null,
+      unlockedByGesture:     state ? !!state.unlockedByUserGesture : null,
+      currentlyPlaying:      state ? (state.currentlyPlaying||'none') : null,
+      soundsEnabled:         state ? state.soundsEnabled : null,
+      lastError:             state ? (state.lastAudioError||null) : null,
+      lastBlocked:           state ? !!state.lastAudioBlocked : null,
+    };
+  }
+
+  function contactNavAutotest(){
+    return {
+      hasSwitchContactTab:  typeof (w.App && w.App.switchContactTab)==='function',
+      hasRenderCallJournal: typeof (w.App && w.App.renderCallJournal)==='function',
+      hasCallFromJournal:   typeof (w.App && w.App.callFromJournal)==='function',
+      dom: {
+        tabAppels:   byId('icTabAppels','icTabAppels'),
+        tabMessages: byId('icTabMessages','icTabMessages'),
+        appelsPane:  byId('icAppelsPane','icAppelsPane'),
+        callLog:     byId('icCallLog','icCallLog'),
+        msgList:     byId('icMsgList','icMsgList'),
       },
     };
   }
@@ -401,6 +461,8 @@
       activePanels: activePanels(),
       messagesAutotest: messagesAutotest(),
       callsAutotest: callsAutotest(),
+      audioAutotest: audioAutotest(),
+      contactNavAutotest: contactNavAutotest(),
       helpAutotest: helpAutotest(),
       reportsAutotest: reportsAutotest(),
       registryAutotest: registryAutotest(),
