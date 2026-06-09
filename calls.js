@@ -5,7 +5,7 @@
  *   contactByCall(plate)      → vérifie call_preferences → requestCall()
  *   requestCall()             → INSERT call_requests → bannière envoyée
  *   subscribeIncomingCalls()  → postgres_changes → popup appel entrant
- *   acceptCall(id)            → UPDATE accepted → ouvre conversation
+ *   acceptCall(id)            → UPDATE accepted → affiche Contact accepté
  *   refuseCall(id)            → UPDATE refused
  *
  * Anti-abus :
@@ -24,9 +24,16 @@ const CallManager = (function () {
   let _chCalls = null;
   let _lastSubscribeStatus = null;
   let _pendingCallId = null;
+  const _recentOutgoingIds = new Set();
   let _visibilityBound = false;
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
+
+  function _emitCallEvent(eventName, payload) {
+    const p = payload || {};
+    try { window.ImmatBus?.emit?.(eventName, p); } catch(e) {}
+    try { window.ImmatOrganism?.observe?.(eventName, p); } catch(e) {}
+  }
 
   // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
@@ -227,14 +234,17 @@ const CallManager = (function () {
     }
 
     _pendingCallId = data.id;
+    _recentOutgoingIds.add(data.id);
+    setTimeout(function() { _recentOutgoingIds.delete(data.id); }, 90000);
     _showSentBanner(receiverPlate, data.id);
-    try{ window.ImmatOrganism?.observe?.('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'}); }catch(e){}
+    _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
   // ── Accepter ─────────────────────────────────────────────────────
   async function acceptCall(requestId) {
-    _hideIncomingPopup();
+    const wasCallScreenIncoming = window.CallScreen?.getState?.().mode === 'incoming';
+    document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
     const { data, error } = await _sb
       .from('call_requests')
@@ -245,9 +255,11 @@ const CallManager = (function () {
       .select()
       .maybeSingle();
     if (data?.requester_plate) {
-      try { window.App?.actOpenConv?.(data.requester_plate); } catch (e) {}
-      try{ window.ImmatOrganism?.observe?.('CALL_ACCEPTED', {with: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'}); }catch(e){}
+      _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
+    } else if (wasCallScreenIncoming) {
+      // Échec silencieux / RLS / ligne déjà modifiée : ne pas laisser B bloqué en incoming.
+      try { window.CallScreen?.hide?.(); } catch(e) {}
     }
     if (error) console.warn('acceptCall UPDATE error', error);
   }
@@ -262,7 +274,7 @@ const CallManager = (function () {
       .eq('id', requestId)
       .eq('receiver_id', _uid)
       .eq('status', 'pending');
-    try{ window.ImmatOrganism?.observe?.('CALL_REFUSED', {requestId, _src:'ImmatConnect/calls/refuseCall'}); }catch(e){}
+    _emitCallEvent('CALL_REFUSED', {requestId, _src:'ImmatConnect/calls/refuseCall'});
     try{ window.InteractionEngine?.create?.({type:'CALL_REFUSED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'resolved'}); }catch(e){}
   }
 
@@ -277,7 +289,7 @@ const CallManager = (function () {
       .eq('requester_id', _uid)
       .eq('status', 'pending');
     _pendingCallId = null;
-    try{ window.ImmatOrganism?.observe?.('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'}); }catch(e){}
+    _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
 
@@ -307,14 +319,20 @@ const CallManager = (function () {
         filter: 'requester_id=eq.' + uid,
       }, p => {
         const r = p.new;
-        if (!r || r.id !== _pendingCallId) return;
-        _hideSentBanner();
+        if (!r || (r.id !== _pendingCallId && !_recentOutgoingIds.has(r.id))) return;
         _pendingCallId = null;
+        _recentOutgoingIds.delete(r.id);
         if (r.status === 'accepted') {
-          try { if (typeof toast === 'function') toast('Demande de contact acceptée. Ouverture de la conversation…', 'ok'); } catch (e) {}
-          if (r.receiver_plate) try { window.App?.actOpenConv?.(r.receiver_plate); } catch (e) {}
+          try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
+          _emitCallEvent('CALL_ACCEPTED', {
+            'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id,
+            _src: 'ImmatConnect/calls/outgoingUpdateHandler',
+          });
         } else if (r.status === 'refused') {
+          _hideSentBanner();
           try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
+        } else {
+          _hideSentBanner();
         }
       })
       .subscribe((status, err) => {
@@ -329,24 +347,22 @@ const CallManager = (function () {
   // ── UI interne ───────────────────────────────────────────────────
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
-    // Émet l'événement bus (CallScreen l'écoute si disponible)
-    try{ window.ImmatOrganism?.observe?.('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+    _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
 
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
       _missedCallIds.add(req.id);
-      try{ window.ImmatOrganism?.observe?.('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'}); }catch(e){}
+      _emitCallEvent('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'});
       try{ window.InteractionEngine?.create?.({type:'CALL_MISSED', initiator:plate||'', target:_myPlate||null, payload:{requestId:req.id}, status:'received'}); }catch(e){}
     };
 
-    // Délègue à CallScreen si chargé — pas de double UI
     if (window.CallScreen && typeof window.CallScreen.showIncoming === 'function') {
       const ms = Math.max(0, new Date(req.expires_at) - new Date());
       if (ms > 0) setTimeout(_onMissed, ms);
       return;
     }
 
-    // Fallback : popup legacy
+    try { if (window.AudioManager && window.AudioManager.playIncomingRingtone) window.AudioManager.playIncomingRingtone({from: plate, source: 'legacy-popup'}); } catch(e) {}
     const popup = document.getElementById('callIncomingPopup');
     if (!popup) return;
     const el = document.getElementById('callIncomingPlate');
@@ -356,6 +372,7 @@ const CallManager = (function () {
     const ms = Math.max(0, new Date(req.expires_at) - new Date());
     if (ms > 0) setTimeout(() => {
       popup.classList.remove('show');
+      try { if (window.AudioManager && window.AudioManager.stopCallAudio) window.AudioManager.stopCallAudio('legacy-popup-expired'); } catch(e) {}
       _onMissed();
     }, ms);
   }
@@ -366,7 +383,6 @@ const CallManager = (function () {
   }
 
   function _showSentBanner(plate, requestId) {
-    // Dans tous les cas : nettoyer _pendingCallId à l'expiration (30s DB) + libérer l'index UNIQUE
     setTimeout(async () => {
       if (_pendingCallId !== requestId) return;
       _pendingCallId = null;
@@ -379,12 +395,10 @@ const CallManager = (function () {
       } catch (_) {}
     }, 31000);
 
-    // Délègue à CallScreen si chargé (CallScreen gère son propre auto-hide)
     if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
       return;
     }
 
-    // Fallback : bannière legacy avec auto-hide 8s
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
@@ -461,26 +475,32 @@ const CallManager = (function () {
     }));
   }
 
-  // ── Diagnostic lecture seule ─────────────────────────────────────
   function getRuntimeState() {
     try {
       const callOverlay = document.getElementById('callOverlay');
-      const callOverlayVisible = !!(callOverlay && callOverlay.style.display !== 'none');
+      const callScreenState = window.CallScreen?.getState?.() || null;
+      const busJournal = window.ImmatBus?.getJournal?.() || [];
       return {
         initialized: !!_sb && !!_uid,
         uidKnown: !!_uid,
         myPlate: _myPlate || null,
         pendingCallId: _pendingCallId || null,
+        recentOutgoingCount: _recentOutgoingIds.size,
+        recentOutgoingIds: Array.from(_recentOutgoingIds).slice(-5),
         hasPendingOutgoing: !!_pendingCallId,
         realtimeSubscribed: !!_chCalls,
         realtimeStatus: _lastSubscribeStatus || null,
         missedCallsCount: _missedCallIds.size,
         seenIncomingCount: _seenIncomingCallIds.size,
-        callOverlayVisible: callOverlayVisible,
+        callOverlayVisible: !!(callOverlay && callOverlay.style.display !== 'none'),
+        callScreenMode: callScreenState?.mode || null,
+        callScreenPlate: callScreenState?.plate || null,
+        callScreenRequestId: callScreenState?.requestId || null,
         sentBannerVisible: !!document.getElementById('callSentBanner')?.classList.contains('show'),
         incomingPopupVisible: !!document.getElementById('callIncomingPopup')?.classList.contains('show'),
         contactModalVisible: !!document.getElementById('callContactModal')?.classList.contains('show'),
         notAllowedModalVisible: !!document.getElementById('callNotAllowedModal')?.classList.contains('show'),
+        lastCallEvents: busJournal.filter(e => String(e.event || '').startsWith('CALL_')).slice(-8),
         visibilityState: document.visibilityState || 'unknown',
       };
     } catch (e) {
@@ -488,7 +508,6 @@ const CallManager = (function () {
     }
   }
 
-  // ── API publique ─────────────────────────────────────────────────
   return {
     init,
     openContactOptions,
