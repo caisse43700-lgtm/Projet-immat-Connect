@@ -445,6 +445,64 @@
     };
   }
 
+  // ── Autotest comportemental flux appel ───────────────────────────
+  // Simule CALL_RECEIVED → CALL_ACCEPTED via ImmatBus et vérifie que
+  // CallScreen transite correctement sans ouvrir la conversation.
+  function callFlowBehaviorAutotest(){
+    var bus = w.ImmatBus;
+    var cs = w.CallScreen;
+    var result = {
+      hasBus: !!bus,
+      hasCallScreen: !!cs,
+      step1_emit_CALL_RECEIVED: false,
+      step2_state_incoming: false,
+      step3_emit_CALL_ACCEPTED: false,
+      step4_state_accepted: false,
+      step5_no_conv_opened: true,
+      step6_hide_idle: false,
+      pass: false,
+      error: null,
+    };
+    if (!bus || typeof bus.emit !== 'function' || !cs) {
+      result.error = 'ImmatBus ou CallScreen absent';
+      return result;
+    }
+    try {
+      var convOpenCount = 0;
+      var origOpen = w.App && w.App.actOpenConv;
+      if (w.App) w.App.actOpenConv = function() { convOpenCount++; if (origOpen) origOpen.apply(this, arguments); };
+
+      bus.emit('CALL_RECEIVED', { from: 'OBD-TEST', requestId: 'obd-test-001' });
+      result.step1_emit_CALL_RECEIVED = true;
+
+      var s1 = cs.getState();
+      result.step2_state_incoming = s1.mode === 'incoming';
+
+      bus.emit('CALL_ACCEPTED', { 'with': 'OBD-TEST', plate: 'OBD-TEST', requestId: 'obd-test-001' });
+      result.step3_emit_CALL_ACCEPTED = true;
+
+      var s2 = cs.getState();
+      result.step4_state_accepted = s2.mode === 'accepted';
+
+      result.step5_no_conv_opened = convOpenCount === 0;
+
+      cs.hide();
+      result.step6_hide_idle = cs.getState().mode === 'idle';
+
+      if (w.App) w.App.actOpenConv = origOpen;
+
+      result.pass = result.step1_emit_CALL_RECEIVED &&
+        result.step2_state_incoming &&
+        result.step3_emit_CALL_ACCEPTED &&
+        result.step4_state_accepted &&
+        result.step5_no_conv_opened &&
+        result.step6_hide_idle;
+    } catch(e) {
+      result.error = String(e && (e.message || e));
+    }
+    return result;
+  }
+
   function run(){
     var out={
       at: Date.now(),
@@ -461,6 +519,7 @@
       activePanels: activePanels(),
       messagesAutotest: messagesAutotest(),
       callsAutotest: callsAutotest(),
+      callFlowBehaviorAutotest: callFlowBehaviorAutotest(),
       audioAutotest: audioAutotest(),
       contactNavAutotest: contactNavAutotest(),
       helpAutotest: helpAutotest(),

@@ -29,9 +29,10 @@ Source vérité  : SESSION-CONTINUATION.md (lire en premier)
 | Overlay appel plein écran iOS-style + mini-barre | `core/call-screen.js`, `index.html`, `calls.css` | ✅ Déployé |
 | Sonnerie synthétisée Web Audio API (sans fichier audio) | `core/audio-manager.js` | ✅ Déployé |
 | Journal d'appels dans l'onglet Appels | `index.html` | ✅ Déployé |
-| Service Worker v12 (cache audio-manager + call-screen) | `service-worker.js` | ✅ Déployé |
+| Service Worker v13 (cache v13 + ?v= bumps) | `service-worker.js`, `index.html` | ✅ Déployé |
 | Tests Playwright 25 tests e2e | `e2e/call-screen.spec.js` | ✅ 25/25 pass |
-| Autotests OBD audioAutotest + contactNavAutotest | `core/mobile-autotest.js` | ✅ Déployé |
+| Autotests OBD audioAutotest + contactNavAutotest + callFlowBehaviorAutotest | `core/mobile-autotest.js` | ✅ Déployé |
+| Tracker secondaire _recentOutgoingIds (race condition _pendingCallId) | `calls.js` | ✅ Déployé |
 | AGENTS.md (ce fichier) | `AGENTS.md` | ✅ Déployé |
 
 ---
@@ -74,9 +75,28 @@ playwright test   → 25/25  ✅
 
 ---
 
+### Race condition _pendingCallId (documentée + mitigée)
+
+Le timer 31s dans `_showSentBanner()` vide `_pendingCallId`. Si l'UPDATE Realtime arrive après 31s, l'ancienne vérification `r.id !== _pendingCallId` retournait true (null !== id) → CALL_ACCEPTED jamais émis → overlay reste en 'outgoing'.
+
+**Mitigation appliquée :** `_recentOutgoingIds` (Set, TTL 90s) — le handler vérifie les deux :
+```js
+if (!r || (r.id !== _pendingCallId && !_recentOutgoingIds.has(r.id))) return;
+```
+
+### Autotest OBD comportemental
+
+```js
+// Dans la console du navigateur :
+ImmatMobileAutotest.run().callFlowBehaviorAutotest
+// → { pass: true } si T2/T3 résolus
+```
+
 ### Prochaine action
 
-1. Exécuter le SQL Supabase ci-dessus
-2. Re-tester le flux complet : BZ-652-LL appelle BE-521-MM → acceptation → overlay "Contact accepté" avec boutons Message / Fermer
-3. Vérifier sonnerie iOS (C2) : `AudioManager.getRuntimeState()` dans la console → `webAudioContextState: "running"`
-4. Si tout passe → PR `claude/immatconnect-pro-app-dEKGR` → `main`
+1. **Recharger la page** (cache v13 force le rechargement des nouveaux JS)
+2. **Exécuter le SQL** dans Supabase → SQL Editor (migration_disable_call_limits.sql)
+3. **Autotest OBD** : `ImmatMobileAutotest.run().callFlowBehaviorAutotest.pass` → true
+4. **Re-tester le flux** : BZ-652-LL appelle BE-521-MM → acceptation → overlay "Contact accepté" avec boutons Message / Fermer reste visible
+5. Vérifier sonnerie iOS : `AudioManager.getRuntimeState()` → `webAudioContextState: "running"`
+6. Si tout passe → PR `claude/immatconnect-pro-app-dEKGR` → `main`

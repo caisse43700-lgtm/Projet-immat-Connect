@@ -14,7 +14,7 @@ PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (vo
 AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
 ```
 
-**Dernière mise à jour** : 2026-06-09 — Tests terrain BZ-652-LL/BE-521-MM — 9 bugs trouvés et corrigés — voir §TESTS TERRAIN
+**Dernière mise à jour** : 2026-06-09 — _recentOutgoingIds (race _pendingCallId) + cache v13 + callFlowBehaviorAutotest
 
 ---
 
@@ -22,13 +22,18 @@ AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain tes
 
 ```
 Dépôt          : caisse43700-lgtm/Projet-immat-Connect
-Main           : c20712e — CI GREEN
+Branche active : claude/immatconnect-pro-app-dEKGR
+Main           : c20712e — CI GREEN (branche feature en avance sur main)
 BUG A          : ARCHIVÉ — mergé PR #269 (5859393) — 2026-06-08
 BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime — 2026-06-09
 BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling 5s×12 — 2026-06-09
 C1             : CORRECTIF DÉPLOYÉ — en attente de test terrain
 C2             : CORRECTIF DÉPLOYÉ — Web Audio API (oscillateurs synthétisés, pas de fichier audio)
-C3             : HORS SCOPE — pas de son après décrochage (VoIP non implémenté Phase 1)
+T2             : RÉSOLU — 9a239ed + e7058b4 (overlay caller conservé à l'acceptation)
+T3             : RÉSOLU — b64f204 (messages non auto-ouverts)
+SPAM           : RÉSOLU — messages.js + migration_disable_call_limits.sql (SQL manuel requis)
+CACHE          : v13 — service-worker.js + ?v= bumps (calls.js v6, call-screen.js v2...)
+_pendingCallId : MITIGÉ — _recentOutgoingIds TTL 90s (race condition timer 31s)
 ```
 
 ---
@@ -266,9 +271,11 @@ Console : `AudioManager.getRuntimeState()` → `webAudioContextState` doit être
 
 ## PROCHAINE ACTION
 
-1. **Exécuter le SQL** dans Supabase SQL Editor (voir T1 ci-dessus) pour désactiver le trigger spam
-2. **Re-tester le flux complet** : BZ-652-LL appelle BE-521-MM → BE-521-MM voit l'overlay entrant → accepte → les deux voient "Contact accepté" avec boutons Message/Fermer → taper Message pour ouvrir la conversation
-3. **Vérifier sonnerie iOS** après rechargement (C2)
+1. **Recharger la page** sur les deux appareils (cache v13 force le rechargement des JS)
+2. **Autotest OBD** dans la console : `ImmatMobileAutotest.run().callFlowBehaviorAutotest` → vérifier `pass: true`
+3. **Exécuter le SQL** dans Supabase SQL Editor (`migration_disable_call_limits.sql`) pour désactiver le trigger spam
+4. **Re-tester le flux complet** : BZ-652-LL appelle BE-521-MM → BE-521-MM voit l'overlay entrant → accepte → les deux voient "Contact accepté" avec boutons Message/Fermer → taper Message pour ouvrir la conversation
+5. **Vérifier sonnerie iOS** après rechargement : `AudioManager.getRuntimeState().webAudioContextState` → `"running"` après un tap
 
 ---
 

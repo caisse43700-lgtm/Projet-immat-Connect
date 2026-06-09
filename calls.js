@@ -24,6 +24,7 @@ const CallManager = (function () {
   let _chCalls = null;
   let _lastSubscribeStatus = null;
   let _pendingCallId = null;
+  const _recentOutgoingIds = new Set(); // secondary tracker — survives 31s timer, TTL 90s
   let _visibilityBound = false;
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
@@ -233,6 +234,8 @@ const CallManager = (function () {
     }
 
     _pendingCallId = data.id;
+    _recentOutgoingIds.add(data.id);
+    setTimeout(function() { _recentOutgoingIds.delete(data.id); }, 90000);
     _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
@@ -316,8 +319,9 @@ const CallManager = (function () {
         filter: 'requester_id=eq.' + uid,
       }, p => {
         const r = p.new;
-        if (!r || r.id !== _pendingCallId) return;
+        if (!r || (r.id !== _pendingCallId && !_recentOutgoingIds.has(r.id))) return;
         _pendingCallId = null;
+        _recentOutgoingIds.delete(r.id);
         if (r.status === 'accepted') {
           // Masquer la bannière legacy sans toucher CallScreen
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
