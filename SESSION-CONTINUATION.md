@@ -26,7 +26,7 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
   5. Commiter SESSION_CONTINUATION.md dans le même commit que le merge
 ```
 
-**Dernière mise à jour** : 2026-06-09 — BUG B : polling recovery entrant ajouté (5s × 12) — realtimeStatus exposé dans OBD
+**Dernière mise à jour** : 2026-06-09 — BUG B realtime résolu — cause racine DB confirmée — nouveaux symptômes C1/C2 ouverts
 
 ---
 
@@ -34,23 +34,35 @@ Conditions : cause racine identifiée + correctif validé + tests passés + merg
 
 ```
 Dépôt          : caisse43700-lgtm/Projet-immat-Connect
-Main           : 5859393 — CI GREEN 3/3 — PR #269 mergé 2026-06-08
+Main           : 9ed6847 — BUG B realtime résolu
 BUG A (INC-001): ARCHIVÉ — mergé dans main (5859393)
-BUG B (INC-001): ACTIF — B ne reçoit pas la popup au premier appel
+BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime (2026-06-09)
+BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling déployés
+C1 (actif)     : BZ-652-LL ne peut pas émettre — toggle allow_calls non activé sur BE-521-MM
+C2 (actif)     : Pas de sonnerie — iOS bloque audio.play() sans geste utilisateur
+C3 (hors scope): Pas de son après décrochage — VoIP non implémenté Phase 1
 ```
 
 ---
 
 ## INCIDENTS ACTIFS
 
+### C1 — BZ-652-LL ne peut pas émettre d'appel vers BE-521-MM
+Cause probable : toggle `allow_calls` non activé sur BE-521-MM.
+Fix : activer dans les paramètres de l'app sur BE-521-MM.
+
+### C2 — Pas de sonnerie à la réception (iOS)
+Cause : iOS Safari bloque `audio.play()` sans interaction utilisateur préalable.
+Fix requis : déverrouillage audio sur premier geste dans `core/audio-manager.js`.
+
 ### INC-001 — Bug appel A → B
 
 **Symptôme ALPHA** ✅ ARCHIVÉ (2026-06-08) — mergé PR #269 → main `5859393`
 
-**Symptôme BETA** (actif — priorité 1) :
-B ne voit aucune popup ni sonnerie lors du premier appel. L'historique montre `"Appel reçu · expired"` — la ligne existe mais la popup live n'a pas été déclenchée.
-
-**Branche** : `main` (diagnostic BUG B à démarrer sur nouvelle branche si nécessaire)
+**Symptôme BETA** ✅ RÉSOLU (2026-06-09) :
+Cause racine : `call_requests` absente de la publication `supabase_realtime`.
+Fix : `ALTER PUBLICATION supabase_realtime ADD TABLE call_requests` exécuté en DB.
+Preuve : popup "Appel manqué" visible sur écran B après correction.
 
 **Annexes** :
 - `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` — diagnostic consolidé complet
@@ -216,11 +228,13 @@ window.ImmatOrganism?._initialized
 
 ## PROCHAINE ACTION
 
-**Tester le correctif HYP-009** — déployé sur branche `claude/immatconnect-pro-app-dEKGR`
+**C1 — Activer allow_calls sur BE-521-MM**
+Dans l'app sur BE-521-MM → Paramètres → "Autoriser les demandes de contact" → activer.
+Tester ensuite BZ-652-LL → BE-521-MM.
 
-1. A appelle B (B au premier plan)
-2. Si popup visible → BUG B résolu, merger
-3. Si toujours absent → exécuter les 3 commandes de diagnostic (§PREUVES ET TESTS) et envoyer les résultats (HYP-006)
+**C2 — Sonnerie iOS (après C1)**
+AudioManager doit déverrouiller audio sur premier geste utilisateur.
+À implémenter dans `core/audio-manager.js`. (HYP-006)
 
 ---
 
