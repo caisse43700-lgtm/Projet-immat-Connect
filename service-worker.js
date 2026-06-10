@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §19 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v14';
+const CACHE_NAME  = 'immatconnect-pro-v16';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien
@@ -14,8 +14,6 @@ const STATIC_CACHE = [
   './messages.js',
   './badge.js',
   './ui.js',
-  './core/audio-manager.js',
-  './core/call-screen.js',
   './core/invariants.js',
   './core/bus.js',
   './core/brain.js',
@@ -28,6 +26,8 @@ const STATIC_CACHE = [
   './core/obdSession.js',
   './core/obdGateway.js',
   './core/aiController.js',
+  './core/agora-call-engine.js',
+  './core/global-verification-center.js',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant
@@ -35,9 +35,10 @@ const CDN_CACHE = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js',
 ];
 
-const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com'];
+const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com', 'download.agora.io'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(

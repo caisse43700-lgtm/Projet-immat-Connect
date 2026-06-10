@@ -2,198 +2,289 @@
 
 ## ⚑ POINT D'ENTRÉE OFFICIEL
 
-> Ce fichier est **le seul point d'entrée** pour toute IA reprenant le projet.
-> Aucun fichier de diagnostic, d'audit ou de roadmap ne remplace ce fichier.
-> Un nouveau fichier créé pour un diagnostic reste une **annexe** — jamais un point d'entrée.
+Ce fichier est le point d'entrée de reprise pour tout assistant IA.
+Lire ce fichier en entier avant toute action.
 
-### Protocole obligatoire pour toute IA
+## ÉTAT PRODUCTION — 2026-06-10
 
-```
-AVANT de travailler  → lire ce fichier intégralement
-PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (voir §DOCUMENTS)
-AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
-```
-
-**Dernière mise à jour** : 2026-06-10 — SQL spam validé + Phase B WebRTC activée (core/call-webrtc.js) — cache v14
-
----
-
-## ÉTAT DU PROJET
-
-```
-Dépôt          : caisse43700-lgtm/Projet-immat-Connect
-Branche active : claude/immatconnect-pro-app-dEKGR
-Main           : c20712e — CI GREEN (branche feature en avance sur main)
-BUG A          : ARCHIVÉ — mergé PR #269 (5859393) — 2026-06-08
-BUG B realtime : RÉSOLU — call_requests ajoutée à supabase_realtime — 2026-06-09
-BUG B recovery : RÉSOLU — _recoverIncomingPendingCalls() + polling 5s×12 — 2026-06-09
-C1             : CORRECTIF DÉPLOYÉ — en attente de test terrain
-C2             : CORRECTIF DÉPLOYÉ — Web Audio API (oscillateurs synthétisés, pas de fichier audio)
-T2             : RÉSOLU — 9a239ed + e7058b4 (overlay caller conservé à l'acceptation)
-T3             : RÉSOLU — b64f204 (messages non auto-ouverts)
-SPAM           : RÉSOLU — SQL exécuté Supabase 2026-06-10 (`Success. No rows returned.`)
-CACHE          : v14 — service-worker.js + call-webrtc.js ajouté
-_pendingCallId : MITIGÉ — _recentOutgoingIds TTL 90s (race condition timer 31s)
-PHASE B WebRTC : ACTIVÉE — core/call-webrtc.js — Metered TURN — Supabase Broadcast signaling
+```text
+Dépôt                 : caisse43700-lgtm/Projet-immat-Connect
+Branche production     : main — servie par GitHub Pages
+URL terrain            : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
+Tests terrain          : deux iPhone/Safari, BZ-652-LL ↔ BE-521-MM
 ```
 
 ---
 
-## PREUVE DB — 2026-06-10
+## JOURNAL DES ACTIONS — SESSION 2026-06-10
 
-SQL exécuté dans Supabase SQL Editor pour désactiver le trigger anti-spam sur `call_requests` :
+### PR #285 — feat: appels vocaux Agora RTC (mergée main)
 
-```sql
-create or replace function public.call_request_on_insert()
-returns trigger language plpgsql as $$
-begin
-  return new;
-end;
-$$;
-```
+**Pourquoi :** WebRTC natif échoue sur iOS Safari — pas de popup micro, coupure après 5-10s.
+Agora RTC = fiable iOS/Android/Desktop. 10 000 min/mois gratuites (~166h).
 
-Résultat Supabase observé :
+**Fichiers créés :**
 
-```
-Success. No rows returned.
-```
+| Fichier | Rôle |
+|---|---|
+| `core/agora-call-engine.js` | Moteur Agora — rejoint canal sur CALL_ACCEPTED, mute/raccrocher |
+| `supabase/functions/get-agora-token/index.ts` | Edge Function — génère token RTC signé |
 
-Conséquence : la limite DB 3 appels / 10 min ne doit plus fausser les tests terrain.
+**Fichiers modifiés :**
 
----
-
-## HISTORIQUE COMPLET DES CORRECTIFS — SESSION 2026-06-08/09
-
-### BUG A — Erreur 23505 au second appel (ARCHIVÉ)
-
-**Cause racine :**
-```
-Index UNIQUE partiel : call_requests_unique_pending_idx
-  ON call_requests (requester_id, receiver_id) WHERE status='pending'
-Aucun code ne faisait UPDATE status='expired' à l'expiration UI (30s)
-→ la ligne restait 'pending' en DB
-→ le second INSERT violait l'index → erreur 23505
-```
-
-**Correctifs (`calls.js`) :**
-- `_showSentBanner()` : timeout 31s → UPDATE status='expired' en DB
-- `_recoverPendingRequest()` : retour anticipé si expiré → UPDATE status='expired' en DB
-
-**Preuve :** test terrain 2026-06-08 — second appel réussi sans erreur 23505.
-**Merge :** PR #269 → main `5859393`.
+| Fichier | Changement |
+|---|---|
+| `core/call-screen.js` | Mode accepted : boutons Muet + Raccrocher, requestId conservé, auto-hide désactivé |
+| `index.html` | Charge AgoraRTC_N-4.20.0.js (CDN) + agora-call-engine.js |
+| `service-worker.js` | v12 — SDK Agora en cache CDN, download.agora.io dans CDN_HOSTS |
 
 ---
 
-### BUG B — B ne reçoit pas la popup (RÉSOLU)
+### PR #286 — feat: diagnostics Agora (mergée main)
 
-**Cause racine :**
+Audit post-intégration — 3 fichiers de diagnostic mis à jour :
+
+| Fichier | Ajout |
+|---|---|
+| `core/calls-runtime-diagnostics.js` | `agoraRuntime()` → hasAgoraRTC, isJoined, isMuted, currentChannel |
+| `core/mobile-autotest.js` | `agoraAutotest()` + flags AgoraCallEngine/AgoraRTC dans modules() |
+| `core/guardian-summary-engine.js` | 8ème voyant "agora" (computeAgora) — critique si SDK absent |
+
+---
+
+### Déploiement Supabase (fait manuellement par l'utilisateur)
+
+| Élément | Statut |
+|---|---|
+| Edge Function `get-agora-token` | ✅ Déployée via Supabase Editor (version standalone sans _shared/cors.ts) |
+| Secret `AGORA_APP_CERTIFICATE` | ✅ Configuré — Primary Certificate copié depuis console.agora.io |
+
+---
+
+## ÉTAT AGORA
+
+```text
+App ID (public)     : 4771f029e9c6446e872a598870bb74f3
+App Certificate     : dans secrets Supabase → AGORA_APP_CERTIFICATE (jamais dans le code)
+Projet Agora        : Default Project — console.agora.io
+Compte Agora        : connecté via GitHub OAuth
+Quota gratuit       : 10 000 min/mois RTC — 0% utilisé au 2026-06-10
+Edge Function URL   : https://vemgdkkbldgyvaisudkd.supabase.co/functions/v1/get-agora-token
 ```
-Table call_requests absente de la publication supabase_realtime
-→ canal realtime subscribed=true mais aucun event INSERT reçu
-→ _showIncomingPopup() jamais appelée
-→ aucune popup, aucune sonnerie
+
+---
+
+## COMMENT FONCTIONNENT LES APPELS VOCAUX
+
+```text
+A appelle B
+  → calls.js émet CALL_INITIATED → CallScreen.showOutgoing()
+
+B accepte
+  → calls.js émet CALL_ACCEPTED { requestId, plate, _src } sur les deux téléphones
+
+AgoraCallEngine (abonné ImmatBus, s'exécute sur les deux téléphones) :
+  → reçoit CALL_ACCEPTED
+  → POST get-agora-token { channelName: requestId, uid: random(1-999999) }
+  → Edge Function vérifie JWT Bearer, génère token signé (AGORA_APP_CERTIFICATE)
+  → client.join(APP_ID, channelName, token, uid)
+  → createMicrophoneAudioTrack() → publish()
+  → subscribe remote user → audioTrack.play()
+
+CallScreen :
+  → affiche "📞 Appel en cours"
+  → boutons : Muet | Raccrocher | 💬 Message | Fermer
+  → Raccrocher → AgoraCallEngine.leaveCall() + hide()
+  → Muet → AgoraCallEngine.toggleMute()
+
+Fin d'appel (refus/annulation/manqué) :
+  → ImmatBus émet CALL_REFUSED / CALL_CANCELLED / CALL_MISSED
+  → AgoraCallEngine.leaveCall() automatique
 ```
 
-**Fix DB :**
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE call_requests;
-```
+---
 
-**Preuve terrain :** popup "Appel manqué" visible sur écran B après correction DB — 2026-06-09.
+### PR #288 — feat: Global Verification Center + correctif réception (en attente merge)
+
+**Branche :** `global-verification-center`
+
+**Pourquoi :** Deux changements critiques groupés :
+
+1. **CORRECTIF RÉCEPTION (hotfix)** — Plus de réception signalée après PR #285.
+   Cause : `AgoraRTC_N-4.20.0.js` (~600 KB CDN) chargé en synchrone AVANT
+   `call-notification-runtime.js` — bloquait le chargement de ce script sur iOS mobile lent.
+   Fix : `call-notification-runtime.js` déplacé avant le CDN Agora + `async` ajouté au CDN.
+
+2. **Global Verification Center** — Audit 8 sections en lecture seule depuis Dashboard Gardien.
+   Bouton "Global" (vert) dans le header → `window.GlobalVerificationCenter.run()`.
+
+| Fichier | Changement |
+|---|---|
+| `index.html` | `call-notification-runtime.js` avant Agora CDN, CDN Agora `async` |
+| `core/global-verification-center.js` | Nouveau — 8 sections read-only (app/dashboard/messages/calls/audio/webrtc/cache/supabase) |
+| `core/guardian-dashboard-summary.js` | v1.6 — bouton Global + panel _globalCheckInlinePanel |
+| `service-worker.js` | v13 — global-verification-center.js en cache statique |
 
 ---
 
-## TESTS TERRAIN — 2026-06-09/10 (BZ-652-LL ↔ BE-521-MM)
+### Mergé sur main 2026-06-10 (PR #289 + merge direct)
 
-Tests réalisés avec deux appareils réels sur iOS Safari en production.
-Branche : `claude/immatconnect-pro-app-dEKGR`
+Tout ce qui précède est en production. En plus, 5 correctifs appels mergés :
 
-### T1 — Appel multiple bloqué ✅ RÉSOLU + DB VALIDÉE
-
-**Symptôme :** "Trop de demandes. Réessaie dans quelques minutes." après 3 appels en 10 min.
-
-**Cause :** Trigger PostgreSQL `call_request_on_insert()` — anti-spam max 3/10min + cooldown 5min après refus. Check localStorage messages (20 msg/min).
-
-**Correctifs :**
-- `messages.js` : suppression check `_checkSpam()` côté frontend
-- `migration_disable_call_limits.sql` : trigger remplacé par `return new` (sans limites)
-- SQL exécuté manuellement dans Supabase le 2026-06-10
-
-**Preuve :** Supabase SQL Editor → `Success. No rows returned.`
-
----
-
-### T2 — Caller voit "raccroché" quand receiver accepte ✅ RÉSOLU
-
-**Symptôme :** Quand BE-521-MM décroche, l'overlay de BZ-652-LL disparaît brutalement (mode outgoing → idle sans transition).
-
-**Cause :** Handler UPDATE Realtime côté caller appelait `_hideSentBanner()` → `CallScreen.hide()` immédiatement, sans émettre `CALL_ACCEPTED` sur le bus. `showAccepted()` n'était jamais appelé côté caller.
-
-**Correctifs :**
-- Suppression de `_hideSentBanner()` dans le chemin `status='accepted'`
-- Émission `CALL_ACCEPTED` vers bus / CallScreen
-- Hardening `e7058b4` : pont `ImmatBus.emit` + `ImmatOrganism.observe`
-- `_pendingCallId` mitigé par `_recentOutgoingIds` TTL 90s
-
----
-
-### T3 — Messages s'ouvrent automatiquement dès l'acceptation ✅ RÉSOLU
-
-**Symptôme :** "Dès que je décroche voilà les messages, dès que j'appelle voilà les messages."
-
-**Correctifs :**
-- `calls.js` : suppression `actOpenConv()` direct dans `acceptCall()`
-- `call-screen.js` : suppression `setTimeout(actOpenConv, 600)` dans `showAccepted()`
-- `call-screen.js` : ajout boutons **Message** + **Fermer** dans l'overlay mode `'accepted'`
-- L'ouverture conversation doit nécessiter un clic explicite sur **Message**
-
----
-
-## INCIDENTS ACTIFS
-
-### C2 — Sonnerie iOS à re-tester
-
-Recharger la page sur iOS Safari → recevoir un appel → vérifier que la sonnerie joue.
-Console : `AudioManager.getRuntimeState()` → `webAudioContextState` doit être `"running"` après un tap.
-
----
-
-## PROCHAINE ACTION
-
-1. **Recharger la page** sur les deux appareils (cache v14)
-2. **Déployer l'Edge Function** `get-turn-credentials` dans Supabase + ajouter les secrets METERED_TURN_USERNAME / METERED_TURN_CREDENTIAL
-3. **Test terrain Phase B** :
-   - BZ-652-LL appelle BE-521-MM
-   - BE-521-MM accepte → les deux autorisent le micro (popup Safari)
-   - Vérifier audio bidirectionnel
-   - Console : `CallWebRTC.getRuntimeState()` → `state: "connected"`
-4. **Si audio fonctionne** → tester Mute et Speaker
-5. **Si audio échoue** → envoyer `CallWebRTC.getRuntimeState()` + `iceState` pour diagnostic
-
----
-
-## DOCUMENTS DE RÉFÉRENCE
-
-| Document | Rôle | Type |
+| Correctif | Fichier | Détail |
 |---|---|---|
-| `docs/CALL_PENDING_EXPIRY_DIAGNOSTIC.md` | Diagnostic INC-001 consolidé | Annexe |
-| `docs/CALL_PENDING_EXPIRY_STATIC_ANALYSIS.md` | Analyse statique `calls.js` | Annexe |
-| `docs/CALL_PENDING_EXPIRY_CRITICAL_REVIEW.md` | Revue externe | Annexe |
-| `docs/CALL_SOURCE_OF_TRUTH.md` | États appel documentés | Référence permanente |
-| `docs/INTERACTION_LEDGER_REGISTRY.md` | Forme événements IE | Référence permanente |
-| `docs/INTERACTION_ORGANISM_MAP.md` | Qui possède quoi | Référence permanente |
+| Coupure appel après ~20s | `calls.js` | Timer `_onMissed` (basé sur expires_at) stocké dans `_missedTimers`, annulé dans `acceptCall()`/`refuseCall()` — plus de CALL_MISSED sur appel accepté |
+| Raccrochage non synchronisé | `core/agora-call-engine.js` | Handler `user-left` Agora → émet `CALL_ENDED` sur ImmatBus → `CallScreen.hide()` des deux côtés |
+| Micro iOS bloqué | `calls.js` + `core/call-screen.js` | `getUserMedia({audio:true})` déclenché dans le geste utilisateur (tap Accepter / tap Contact), avant la chaîne async |
+| Boutons trop gros | `index.html` + `core/call-screen.js` | CSS `.cs-btn` + grille 2×2 `.cs-actions-grid` en mode accepté |
+| Diagnostic moteur vocal | `core/agora-call-engine.js` | `getRuntimeState()` → joined/channel/published/remoteUsersCount/lastError |
 
 ---
 
-## INVARIANTS — NE JAMAIS VIOLER
+## SONNERIE TÉLÉPHONE RÉELLE — audio-manager v3 (2026-06-10, après retour terrain)
 
+**Retour terrain :** bip entendu côté appelant mais AUCUNE sonnerie côté destinataire.
+
+**Cause :** le fallback Web Audio nécessite un AudioContext débloqué par un geste
+utilisateur récent. L'appel entrant arrive via Realtime (sans geste) → contexte
+suspendu → silence. De plus le son ne ressemblait pas à un téléphone.
+
+**Fix (audio-manager.js v3) :**
+1. Génération au démarrage d'une vraie sonnerie téléphone : WAV en mémoire
+   (Blob URL), bitonalité 440+480 Hz, cadence 1.5s ON / 3.5s OFF, loopée.
+   Assignée à `callAudioIncoming.src`. + tonalité retour (440 Hz) pour
+   `callAudioOutgoing` + double bip pour `messageAudioBeep`.
+2. `unlockFromUserGesture()` joue maintenant TOUS les éléments en muet au
+   premier tap — iOS les autorise ensuite à être rejoués à tout moment,
+   y compris à l'arrivée d'un appel sans geste. C'est LE mécanisme fiable iOS.
+3. Le fallback Web Audio reste en dernier recours.
+
+```text
+Mécanisme iOS critique :
+tap quelconque dans l'app → éléments <audio> joués en muet → "débloqués"
+appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqué
 ```
-ANTHROPIC_API_KEY  → jamais dans le code
-owner_plate        → immutable (INV-006)
-INV-COM-009        → pas de DELETE sans consentement
-INV-COM-010/015    → payload anonymisé, pas de contenu message dans Edge Functions
-InteractionEngine  → tous appels dans try/catch, non-bloquants
-Corrections        → ciblées uniquement, pas de réécriture globale
-CI                 → vérifier green avant chaque merge
-SESSION_CONTINUATION.md → toujours mis à jour dans le même commit que le code
+
+---
+
+## CORRECTIFS VOIX + RACCROCHAGE — 2026-06-10 (session suivante)
+
+**Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
+
+### Cause voix absente
+
+`_accept()` appelait `getUserMedia` et **stoppait immédiatement** les tracks — Agora ne pouvait pas les réutiliser.
+De plus, le SDK Agora (CDN async) pouvait ne pas être chargé au moment de l'appel.
+
+**Fix :**
+- `call-screen.js` v3 `_accept()` : si `AgoraRTC` disponible → `createMicrophoneAudioTrack()` → `w.__preMicTrack`
+  sinon → `getUserMedia` → `w.__preMicStream` (stream conservé, pas stoppé)
+- `calls.js` v7 `contactByCall()` : idem côté appelant (stream conservé dans `w.__preMicStream`)
+- `agora-call-engine.js` v3 `_getMicTrack()` : réutilise `__preMicTrack` ou wrap `__preMicStream` en custom track Agora
+- `agora-call-engine.js` v3 `joinCall()` : attend le SDK jusqu'à 8s via `_waitForSDK()`
+
+### Cause raccrochage non synchronisé
+
+`user-left` Agora ne tire que si les deux téléphones ont rejoint le canal Agora.
+Si la voix échoue sur un côté, ce téléphone ne sait jamais que l'autre a raccroché.
+
+**Fix :** canal de signalisation Supabase Realtime broadcast `ic_call_signal_{requestId}`
+- `calls.js` : `_joinCallSignal(requestId)` → rejoint le canal à `CALL_ACCEPTED` (les deux côtés)
+- `calls.js` : `broadcastHangup(requestId)` → diffuse `HANGUP` sur le canal
+- `call-screen.js` `_hangup()` → appelle `CallManager.broadcastHangup(requestId)` + `CALL_ENDED` local
+- Récepteur du broadcast → `CALL_ENDED` → `CallScreen.hide()` automatique
+
+| Fichier | Version | Changement |
+|---|---|---|
+| `core/agora-call-engine.js` | v3 | `_waitForSDK()` + `_getMicTrack()` avec réutilisation preMicTrack/preMicStream |
+| `core/call-screen.js` | v3 | `_accept()` pré-crée track Agora ; `_hangup()` appelle `broadcastHangup` |
+| `calls.js` | v7 | `_joinCallSignal` / `_leaveCallSignal` / `broadcastHangup` ; `contactByCall` conserve stream |
+| `service-worker.js` | v16 | Cache version bump |
+
+---
+
+## PROCHAINE ACTION — TEST TERRAIN
+
+URL de test (cache v16) :
+```
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora4
+```
+
+Checklist :
+```text
+□ Recharger les deux téléphones avec ?v=agora4
+□ IMPORTANT : taper une fois n'importe où dans l'app sur chaque téléphone
+  (débloque l'audio iOS/Android — mécanisme pré-play muted)
+□ A appelle B → B doit SONNER (vraie sonnerie téléphone bitonale)
+□ A entend la tonalité de retour (tut… tut…)
+□ B accepte → popup micro autorisé → audio bidirectionnel (VOIX)
+□ Appel ne coupe PLUS après 20s
+□ A raccroche → B ferme IMMÉDIATEMENT (broadcast Supabase ic_call_signal)
+□ B raccroche → A ferme IMMÉDIATEMENT (idem)
+□ Boutons compacts en grille 2×2
+```
+
+### En cas de problème voix
+
+Console Safari (Menu → Avancé → Web Inspector) — chercher :
+- `[CallScreen] preMicTrack Agora prêt` → track créé dans le geste ✅
+- `[AgoraCall] Réutilise le track mic pré-créé` → track réutilisé par Agora ✅
+- `[AgoraCall] Canal rejoint` → connexion réussie ✅
+- `[AgoraCall] joinCall échoué` → voir erreur
+
+### En cas de problème raccrochage
+
+- `[CallManager] Signal canal rejoint` → canal broadcast opérationnel ✅
+- `[CallManager] HANGUP diffusé` → signal envoyé ✅
+- `[CallManager] HANGUP broadcast reçu → CALL_ENDED` → signal reçu ✅
+
+### En cas de problème audio sonner
+
+1. Ouvrir Guardian Dashboard → Diagnostic → vérifier voyant **Agora** (🟢 OK ?)
+2. Vérifier que le popup micro a bien été accepté (iOS Réglages → Safari → Micro)
+3. Confirmer qu'un tap a bien été fait sur l'app avant le test
+
+---
+
+## HISTORIQUE COMPLET DES PR MERGÉES
+
+| PR | Branche | Objet | Date |
+|---|---|---|---|
+| #288 | global-verification-center | Global Verification Center + fix réception | 2026-06-10 (en attente) |
+| #285 | feature/agora-voice-calls | Appels vocaux Agora RTC | 2026-06-10 |
+| #286 | feature/agora-voice-calls | Diagnostics Agora | 2026-06-10 |
+| #283 | guardian/actions-only | Guardian : boutons Diagnostic/Copier dans header | 2026-06-10 |
+| #279 | guardian/refine-overlay | Guardian summary engine v1.1 overlay detection | 2026-06-10 |
+| — | — | call-screen.js : Message/Fermer au lieu de "conversation ouverte" | antérieur |
+| — | — | calls.js : supprime ouverture automatique conversation sur accepted | antérieur |
+| — | — | Nettoie pending avant nouvel appel + retry 23505 | antérieur |
+
+---
+
+## SUPABASE
+
+```text
+URL        : https://vemgdkkbldgyvaisudkd.supabase.co
+Anon key   : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ
+Edge Functions déployées :
+  - get-turn-credentials  (ancienne, pour WebRTC natif — obsolète)
+  - get-agora-token       (nouvelle, pour tokens Agora RTC)
+  - immat-brain-dialog    (IA dialogue)
+  - create-call-request   (créer demande d'appel)
+  - respond-call-request  (répondre à une demande)
+```
+
+---
+
+## INVARIANTS DE SÉCURITÉ
+
+```text
+AGORA_APP_CERTIFICATE → jamais dans le code, toujours secrets Supabase
+App ID Agora 4771f029e9c6446e872a598870bb74f3 → public par conception Agora, OK dans le client
+ANTHROPIC_API_KEY → jamais dans le code
+owner_plate → immutable (INV-006)
+pas de DELETE sans consentement (INV-COM-009)
+payload anonymisé, pas de contenu message dans Edge Functions (INV-COM-010/015)
+main = production GitHub Pages
+pas d'ouverture automatique de messages sur accepted
 ```

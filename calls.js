@@ -1,19 +1,6 @@
 /* calls.js — CallManager : appels internes ImmatConnect Phase 1
  *
- * Flux :
- *   openContactOptions(plate) → modal Message/Appel
- *   contactByCall(plate)      → vérifie call_preferences → requestCall()
- *   requestCall()             → INSERT call_requests → bannière envoyée
- *   subscribeIncomingCalls()  → postgres_changes → popup appel entrant
- *   acceptCall(id)            → UPDATE accepted → affiche Contact accepté
- *   refuseCall(id)            → UPDATE refused
- *
- * Anti-abus :
- *   - Vérifie allow_calls via RPC can_receive_calls() (SECURITY DEFINER)
- *   - Anti-spam + unicité pending garantis par triggers DB (backend)
- *   - Gestion erreurs 23505 / spam_limit / cooldown_active
- *   - Recovery bannière après refresh + visibilitychange
- *   - Expiration auto 30 s côté UI
+ * Flux : demande de contact temps réel, sans voix WebRTC.
  */
 const CallManager = (function () {
   'use strict';
@@ -24,10 +11,13 @@ const CallManager = (function () {
   let _chCalls = null;
   let _lastSubscribeStatus = null;
   let _pendingCallId = null;
-  const _recentOutgoingIds = new Set(); // secondary tracker — survives 31s timer, TTL 90s
+  const _recentOutgoingIds = new Set();
   let _visibilityBound = false;
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
+  const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
+  let _signalChannel = null;   // canal Supabase broadcast pour signaler raccroché
+  let _signalRequestId = null; // requestId de l'appel en cours
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -35,7 +25,6 @@ const CallManager = (function () {
     try { window.ImmatOrganism?.observe?.(eventName, p); } catch(e) {}
   }
 
-  // ── Init ────────────────────────────────────────────────────────
   function init(sb, uid, myPlate) {
     _sb = sb;
     _uid = uid;
@@ -44,6 +33,14 @@ const CallManager = (function () {
     _recoverPendingRequest();
     _recoverIncomingPendingCalls();
     _startIncomingRecoveryPolling();
+    // Nettoyer le canal signal si l'appel se termine hors raccrochage local
+    try {
+      const _bus = window.ImmatBus;
+      if (_bus && typeof _bus.on === 'function') {
+        _bus.on('CALL_ENDED',    function() { _leaveCallSignal(); });
+        _bus.on('CALL_MISSED',   function() { _leaveCallSignal(); });
+      }
+    } catch(e) {}
     if (!_visibilityBound) {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {
@@ -55,7 +52,6 @@ const CallManager = (function () {
     }
   }
 
-  // ── Recovery : restaure la bannière après refresh ────────────────
   async function _recoverPendingRequest() {
     if (!_sb || !_uid) return;
     const { data } = await _sb
@@ -90,7 +86,6 @@ const CallManager = (function () {
     _showSentBanner(receiverPlate, data.id);
   }
 
-  // ── Polling recovery entrant : toutes les 5s pendant 60s après init ────
   function _startIncomingRecoveryPolling() {
     let n = 0;
     const id = setInterval(async () => {
@@ -100,7 +95,6 @@ const CallManager = (function () {
     }, 5000);
   }
 
-  // ── Recovery : affiche la popup si un appel entrant pending est manqué ──
   async function _recoverIncomingPendingCalls() {
     if (!_sb || !_uid) return;
     const { data } = await _sb
@@ -118,7 +112,6 @@ const CallManager = (function () {
     _showIncomingPopup(data);
   }
 
-  // ── Ouvrir modal "Contacter" ─────────────────────────────────────
   function openContactOptions(plate, uid) {
     const modal = document.getElementById('callContactModal');
     if (!modal) return;
@@ -134,23 +127,35 @@ const CallManager = (function () {
     document.getElementById('callContactModal')?.classList.remove('show');
   }
 
-  // ── Contacter → Message ──────────────────────────────────────────
   function contactByMessage(plate) {
     closeContactModal();
     try { window.App?.actOpenConv?.(plate); } catch (e) {}
   }
 
-  // ── Contacter → Appel ────────────────────────────────────────────
   async function contactByCall(plate, uid) {
     closeContactModal();
+    // iOS : pré-créer le track micro dans le geste utilisateur (avant tout await)
+    var _AgoraRTC = window.AgoraRTC;
+    if (_AgoraRTC && typeof _AgoraRTC.createMicrophoneAudioTrack === 'function') {
+      _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+        .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); })
+        .catch(function() {
+          if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(function(s) { window.__preMicStream = s; })
+              .catch(function() {});
+          }
+        });
+    } else if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(s) { window.__preMicStream = s; })
+        .catch(function() {});
+    }
     if (!_sb || !_uid) return;
-
-    // Résoudre receiver_id si absent
     let receiverId = uid || '';
     if (!receiverId && plate) {
       let { data } = await _sb.from('profiles').select('id').eq('owner_plate', plate).maybeSingle();
       if (!data) {
-        // Essai avec tirets si la plaque n'en a pas (BE521MM → BE-521-MM)
         const withDashes = plate.replace(/[\s-]/g, '').replace(/^([A-Z]{2})(\d{3})([A-Z]{2})$/i, '$1-$2-$3');
         if (withDashes !== plate) {
           ({ data } = await _sb.from('profiles').select('id').eq('owner_plate', withDashes).maybeSingle());
@@ -165,7 +170,6 @@ const CallManager = (function () {
     await requestCall(plate, receiverId);
   }
 
-  // ── Envoyer une demande d'appel ──────────────────────────────────
   function _isCallBlocked(plate) {
     const p = String(plate || '').replace(/[\s-]/g,'').toUpperCase();
     if(!p) return false;
@@ -181,6 +185,34 @@ const CallManager = (function () {
     return false;
   }
 
+  async function _expireMyPendingCalls(receiverId) {
+    if (!_sb || !_uid || !receiverId) return;
+    try {
+      await _sb.from('call_requests')
+        .update({ status: 'expired' })
+        .eq('requester_id', _uid)
+        .eq('receiver_id', receiverId)
+        .eq('status', 'pending');
+    } catch (e) {
+      console.warn('expire pending before call failed', e);
+    }
+    _pendingCallId = null;
+  }
+
+  async function _insertCallRequest(receiverPlate, receiverId) {
+    return _sb
+      .from('call_requests')
+      .insert({
+        requester_id: _uid,
+        receiver_id: receiverId,
+        requester_plate: _myPlate || null,
+        receiver_plate: receiverPlate || null,
+        source: 'vehicle_contact',
+      })
+      .select()
+      .maybeSingle();
+  }
+
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
 
@@ -189,7 +221,8 @@ const CallManager = (function () {
       return;
     }
 
-    // Vérifier call_preferences via RPC sécurisée (évite d'exposer la table)
+    await _expireMyPendingCalls(receiverId);
+
     const { data: canCall, error: rpcErr } = await _sb
       .rpc('can_receive_calls', { target_uid: receiverId });
     if (rpcErr) {
@@ -202,18 +235,11 @@ const CallManager = (function () {
       return;
     }
 
-    // Créer la demande (anti-spam et unicité garantis par triggers DB)
-    const { data, error } = await _sb
-      .from('call_requests')
-      .insert({
-        requester_id: _uid,
-        receiver_id: receiverId,
-        requester_plate: _myPlate || null,
-        receiver_plate: receiverPlate || null,
-        source: 'vehicle_contact',
-      })
-      .select()
-      .maybeSingle();
+    let { data, error } = await _insertCallRequest(receiverPlate, receiverId);
+    if (error && error.code === '23505') {
+      await _expireMyPendingCalls(receiverId);
+      ({ data, error } = await _insertCallRequest(receiverPlate, receiverId));
+    }
 
     if (error) {
       if (error.code === '23505') {
@@ -241,8 +267,11 @@ const CallManager = (function () {
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
-  // ── Accepter ─────────────────────────────────────────────────────
   async function acceptCall(requestId) {
+    // Annuler le timer d'expiration entrant — empêche CALL_MISSED sur un appel accepté
+    const tid = _missedTimers.get(requestId);
+    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+
     const wasCallScreenIncoming = window.CallScreen?.getState?.().mode === 'incoming';
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
@@ -256,16 +285,21 @@ const CallManager = (function () {
       .maybeSingle();
     if (data?.requester_plate) {
       _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
+      _joinCallSignal(requestId);
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     } else if (wasCallScreenIncoming) {
-      // Échec silencieux / RLS / ligne déjà modifiée : ne pas laisser B bloqué en incoming.
       try { window.CallScreen?.hide?.(); } catch(e) {}
+      _showError('Demande expirée ou déjà traitée.');
     }
     if (error) console.warn('acceptCall UPDATE error', error);
   }
 
-  // ── Refuser ──────────────────────────────────────────────────────
   async function refuseCall(requestId) {
+    // Annuler aussi le timer sur refus
+    const tid = _missedTimers.get(requestId);
+    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+
+    _leaveCallSignal();
     _hideIncomingPopup();
     if (!_sb || !requestId) return;
     await _sb
@@ -278,8 +312,8 @@ const CallManager = (function () {
     try{ window.InteractionEngine?.create?.({type:'CALL_REFUSED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'resolved'}); }catch(e){}
   }
 
-  // ── Annuler une demande envoyée ───────────────────────────────────
   async function cancelCallRequest(requestId) {
+    _leaveCallSignal();
     _hideSentBanner();
     if (!_sb || !requestId) return;
     await _sb
@@ -293,44 +327,33 @@ const CallManager = (function () {
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
 
-  // ── Réabonnement realtime ────────────────────────────────────────
   function subscribeIncomingCalls(uid) {
     if (!_sb || !uid) return;
     try { if (_chCalls) _sb.removeChannel(_chCalls); } catch (e) {}
 
     _chCalls = _sb.channel('ic_calls_' + uid)
-      // Appels entrants (je suis le receiver)
       .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'call_requests',
-        filter: 'receiver_id=eq.' + uid,
+        event: 'INSERT', schema: 'public', table: 'call_requests', filter: 'receiver_id=eq.' + uid,
       }, p => {
         const r = p.new;
         if (!r || r.status !== 'pending') return;
-        if (r.expires_at && new Date(r.expires_at) <= new Date()) return;
+        if (r.expires_at && new Date(r.expires_at) <= new Date()) {
+          try { _sb.from('call_requests').update({status:'expired'}).eq('id', r.id).eq('status','pending'); } catch(e) {}
+          return;
+        }
         _showIncomingPopup(r);
       })
-      // Réponses à mes demandes (je suis le requester)
       .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'call_requests',
-        filter: 'requester_id=eq.' + uid,
+        event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'requester_id=eq.' + uid,
       }, p => {
         const r = p.new;
         if (!r || (r.id !== _pendingCallId && !_recentOutgoingIds.has(r.id))) return;
         _pendingCallId = null;
         _recentOutgoingIds.delete(r.id);
         if (r.status === 'accepted') {
-          // Masquer la bannière legacy sans toucher CallScreen
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
-          // Émettre CALL_ACCEPTED → CallScreen affiche "Contact accepté".
-          // Ne jamais ouvrir automatiquement la conversation : l'utilisateur doit appuyer sur Message.
-          _emitCallEvent('CALL_ACCEPTED', {
-            'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id,
-            _src: 'ImmatConnect/calls/outgoingUpdateHandler',
-          });
+          _emitCallEvent('CALL_ACCEPTED', {'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
+          _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
           _hideSentBanner();
           try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
@@ -347,27 +370,24 @@ const CallManager = (function () {
       });
   }
 
-  // ── UI interne ───────────────────────────────────────────────────
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
-    // Émet l'événement bus (CallScreen l'écoute si disponible)
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
-
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
       _missedCallIds.add(req.id);
+      _missedTimers.delete(req.id);
       _emitCallEvent('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'});
       try{ window.InteractionEngine?.create?.({type:'CALL_MISSED', initiator:plate||'', target:_myPlate||null, payload:{requestId:req.id}, status:'received'}); }catch(e){}
     };
-
-    // Délègue à CallScreen si chargé — pas de double UI
     if (window.CallScreen && typeof window.CallScreen.showIncoming === 'function') {
       const ms = Math.max(0, new Date(req.expires_at) - new Date());
-      if (ms > 0) setTimeout(_onMissed, ms);
+      if (ms > 0) {
+        const tid = setTimeout(_onMissed, ms);
+        _missedTimers.set(req.id, tid);
+      }
       return;
     }
-
-    // Fallback : popup legacy + audio (CallScreen absent)
     try { if (window.AudioManager && window.AudioManager.playIncomingRingtone) window.AudioManager.playIncomingRingtone({from: plate, source: 'legacy-popup'}); } catch(e) {}
     const popup = document.getElementById('callIncomingPopup');
     if (!popup) return;
@@ -389,7 +409,6 @@ const CallManager = (function () {
   }
 
   function _showSentBanner(plate, requestId) {
-    // Dans tous les cas : nettoyer _pendingCallId à l'expiration (30s DB) + libérer l'index UNIQUE
     setTimeout(async () => {
       if (_pendingCallId !== requestId) return;
       _pendingCallId = null;
@@ -401,13 +420,7 @@ const CallManager = (function () {
           .eq('status', 'pending');
       } catch (_) {}
     }, 31000);
-
-    // Délègue à CallScreen si chargé (CallScreen gère son propre auto-hide)
-    if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
-      return;
-    }
-
-    // Fallback : bannière legacy avec auto-hide 8s
+    if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') return;
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
@@ -442,31 +455,51 @@ const CallManager = (function () {
     if (plate) try { window.App?.actOpenConv?.(plate); } catch (e) {}
   }
 
-  function _showError(msg) {
-    try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (e) {}
+  function _joinCallSignal(requestId) {
+    if (!_sb || !requestId) return;
+    _leaveCallSignal();
+    _signalRequestId = requestId;
+    _signalChannel = _sb.channel('ic_call_signal_' + requestId)
+      .on('broadcast', { event: 'HANGUP' }, function() {
+        console.log('[CallManager] HANGUP broadcast reçu → CALL_ENDED');
+        _leaveCallSignal();
+        _emitCallEvent('CALL_ENDED', { reason: 'remote-hangup', requestId: requestId });
+      })
+      .subscribe();
+    console.log('[CallManager] Signal canal rejoint :', requestId);
   }
 
-  // ── Préférences d'appel ──────────────────────────────────────────
+  function _leaveCallSignal() {
+    if (_signalChannel && _sb) {
+      try { _sb.removeChannel(_signalChannel); } catch(e) {}
+    }
+    _signalChannel = null;
+    _signalRequestId = null;
+  }
+
+  async function broadcastHangup(requestId) {
+    const rid = requestId || _signalRequestId;
+    const ch = _signalChannel;
+    _leaveCallSignal();
+    if (ch && rid) {
+      try { await ch.send({ type: 'broadcast', event: 'HANGUP', payload: { requestId: rid } }); } catch(e) {}
+      console.log('[CallManager] HANGUP diffusé :', rid);
+    }
+  }
+
+  function _showError(msg) { try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (e) {} }
+
   async function loadCallPreferences() {
     if (!_sb || !_uid) return false;
-    const { data } = await _sb
-      .from('call_preferences')
-      .select('allow_calls')
-      .eq('user_id', _uid)
-      .maybeSingle();
+    const { data } = await _sb.from('call_preferences').select('allow_calls').eq('user_id', _uid).maybeSingle();
     return data?.allow_calls === true;
   }
 
   async function setCallPreferences(allow) {
     if (!_sb || !_uid) return;
-    await _sb.from('call_preferences').upsert({
-      user_id: _uid,
-      allow_calls: allow,
-      updated_at: new Date().toISOString(),
-    });
+    await _sb.from('call_preferences').upsert({ user_id: _uid, allow_calls: allow, updated_at: new Date().toISOString() });
   }
 
-  // ── Journal d'appels ─────────────────────────────────────────────
   async function loadCallLog(limit) {
     if (!_sb || !_uid) return [];
     const { data } = await _sb
@@ -476,32 +509,26 @@ const CallManager = (function () {
       .order('created_at', { ascending: false })
       .limit(limit || 50);
     return (data || []).map(r => ({
-      id: r.id,
-      outgoing: r.requester_id === _uid,
+      id: r.id, outgoing: r.requester_id === _uid,
       plate: r.requester_id === _uid ? (r.receiver_plate || '?') : (r.requester_plate || '?'),
-      status: r.status,
-      at: r.created_at,
+      status: r.status, at: r.created_at,
     }));
   }
 
-  // ── Diagnostic lecture seule ─────────────────────────────────────
   function getRuntimeState() {
     try {
       const callOverlay = document.getElementById('callOverlay');
       const callScreenState = window.CallScreen?.getState?.() || null;
       const busJournal = window.ImmatBus?.getJournal?.() || [];
       return {
-        initialized: !!_sb && !!_uid,
-        uidKnown: !!_uid,
-        myPlate: _myPlate || null,
+        initialized: !!_sb && !!_uid, uidKnown: !!_uid, myPlate: _myPlate || null,
         pendingCallId: _pendingCallId || null,
         recentOutgoingCount: _recentOutgoingIds.size,
         recentOutgoingIds: Array.from(_recentOutgoingIds).slice(-5),
         hasPendingOutgoing: !!_pendingCallId,
-        realtimeSubscribed: !!_chCalls,
-        realtimeStatus: _lastSubscribeStatus || null,
-        missedCallsCount: _missedCallIds.size,
-        seenIncomingCount: _seenIncomingCallIds.size,
+        realtimeSubscribed: !!_chCalls, realtimeStatus: _lastSubscribeStatus || null,
+        missedCallsCount: _missedCallIds.size, seenIncomingCount: _seenIncomingCallIds.size,
+        pendingMissedTimers: _missedTimers.size,
         callOverlayVisible: !!(callOverlay && callOverlay.style.display !== 'none'),
         callScreenMode: callScreenState?.mode || null,
         callScreenPlate: callScreenState?.plate || null,
@@ -513,29 +540,14 @@ const CallManager = (function () {
         lastCallEvents: busJournal.filter(e => String(e.event || '').startsWith('CALL_')).slice(-8),
         visibilityState: document.visibilityState || 'unknown',
       };
-    } catch (e) {
-      return { initialized: false, error: String(e?.message || e) };
-    }
+    } catch (e) { return { initialized: false, error: String(e?.message || e) }; }
   }
 
-  // ── API publique ─────────────────────────────────────────────────
   return {
-    init,
-    openContactOptions,
-    closeContactModal,
-    contactByMessage,
-    contactByCall,
-    requestCall,
-    acceptCall,
-    refuseCall,
-    cancelCallRequest,
-    subscribeIncomingCalls,
-    closeNotAllowedModal,
-    loadCallPreferences,
-    setCallPreferences,
-    loadCallLog,
-    isCallBlocked: _isCallBlocked,
-    getRuntimeState,
+    init, openContactOptions, closeContactModal, contactByMessage, contactByCall,
+    requestCall, acceptCall, refuseCall, cancelCallRequest, subscribeIncomingCalls,
+    closeNotAllowedModal, loadCallPreferences, setCallPreferences, loadCallLog,
+    isCallBlocked: _isCallBlocked, getRuntimeState, broadcastHangup,
   };
 })();
 
