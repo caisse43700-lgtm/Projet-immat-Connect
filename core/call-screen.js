@@ -43,20 +43,13 @@
   // ── Speaker / Mute ───────────────────────────────────────────────
   function toggleSpeaker() {
     _speaker = !_speaker;
-    try { if (w.AudioManager && w.AudioManager.setVolume) w.AudioManager.setVolume(_speaker ? 0.8 : 0.25); } catch(e) {}
+    try { if (w.CallWebRTC && w.CallWebRTC.setSpeaker) w.CallWebRTC.setSpeaker(_speaker); } catch(e) {}
     _refreshControls();
   }
 
   function toggleMute() {
     _muted = !_muted;
-    try {
-      if (_muted) {
-        if (w.AudioManager) w.AudioManager.stopCallAudio('muted');
-      } else {
-        if (_state.mode === 'incoming' && w.AudioManager) w.AudioManager.playIncomingRingtone();
-        else if (_state.mode === 'outgoing' && w.AudioManager) w.AudioManager.playOutgoingTone();
-      }
-    } catch(e) {}
+    try { if (w.CallWebRTC && w.CallWebRTC.setMuted) w.CallWebRTC.setMuted(_muted); } catch(e) {}
     _refreshControls();
   }
 
@@ -209,6 +202,7 @@
   function hide() {
     clearTimeout(_autoHideTimer); _stopTimer();
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
+    try { if (w.CallWebRTC && w.CallWebRTC.hangup) w.CallWebRTC.hangup('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay'); if (ov) ov.style.display = 'none';
     var mini = _$('callOvMini'); if (mini) mini.style.display = 'none';
     var full = _$('callOvFull'); if (full) full.style.display = 'flex';

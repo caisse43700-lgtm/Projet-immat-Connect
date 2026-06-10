@@ -14,7 +14,7 @@ PENDANT le travail   → les diagnostics détaillés sont dans leurs annexes (vo
 AVANT de quitter     → mettre à jour ce fichier (état, preuves, prochain test, prochaine action)
 ```
 
-**Dernière mise à jour** : 2026-06-10 — SQL Supabase anti-spam exécuté avec succès (`Success. No rows returned.`) — prochaine étape : re-test terrain complet BZ-652-LL ↔ BE-521-MM
+**Dernière mise à jour** : 2026-06-10 — SQL spam validé + Phase B WebRTC activée (core/call-webrtc.js) — cache v14
 
 ---
 
@@ -31,9 +31,10 @@ C1             : CORRECTIF DÉPLOYÉ — en attente de test terrain
 C2             : CORRECTIF DÉPLOYÉ — Web Audio API (oscillateurs synthétisés, pas de fichier audio)
 T2             : RÉSOLU — 9a239ed + e7058b4 (overlay caller conservé à l'acceptation)
 T3             : RÉSOLU — b64f204 (messages non auto-ouverts)
-SPAM           : RÉSOLU — SQL Supabase exécuté avec succès le 2026-06-10 (`Success. No rows returned.`)
-CACHE          : v13 — service-worker.js + ?v= bumps (calls.js v6, call-screen.js v2...)
+SPAM           : RÉSOLU — SQL exécuté Supabase 2026-06-10 (`Success. No rows returned.`)
+CACHE          : v14 — service-worker.js + call-webrtc.js ajouté
 _pendingCallId : MITIGÉ — _recentOutgoingIds TTL 90s (race condition timer 31s)
+PHASE B WebRTC : ACTIVÉE — core/call-webrtc.js — Metered TURN — Supabase Broadcast signaling
 ```
 
 ---
@@ -159,11 +160,15 @@ Console : `AudioManager.getRuntimeState()` → `webAudioContextState` doit être
 
 ## PROCHAINE ACTION
 
-1. **Recharger la page** sur les deux appareils (cache v13 force le rechargement des JS)
-2. **Autotest OBD** dans la console : `ImmatMobileAutotest.run().callFlowBehaviorAutotest` → vérifier `pass: true`
-3. **Re-tester le flux complet** : BZ-652-LL appelle BE-521-MM → BE-521-MM voit l'overlay entrant → accepte → les deux voient "Contact accepté" avec boutons Message/Fermer → taper Message pour ouvrir la conversation
-4. **Vérifier sonnerie iOS** après rechargement : `AudioManager.getRuntimeState().webAudioContextState` → `"running"` après un tap
-5. Si tout passe : préparer PR / merge vers `main`
+1. **Recharger la page** sur les deux appareils (cache v14)
+2. **Déployer l'Edge Function** `get-turn-credentials` dans Supabase + ajouter les secrets METERED_TURN_USERNAME / METERED_TURN_CREDENTIAL
+3. **Test terrain Phase B** :
+   - BZ-652-LL appelle BE-521-MM
+   - BE-521-MM accepte → les deux autorisent le micro (popup Safari)
+   - Vérifier audio bidirectionnel
+   - Console : `CallWebRTC.getRuntimeState()` → `state: "connected"`
+4. **Si audio fonctionne** → tester Mute et Speaker
+5. **Si audio échoue** → envoyer `CallWebRTC.getRuntimeState()` + `iceState` pour diagnostic
 
 ---
 
