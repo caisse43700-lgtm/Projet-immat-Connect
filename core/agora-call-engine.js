@@ -20,6 +20,7 @@
   var _client = null;
   var _localTrack = null;
   var _joined = false;
+  var _joining = false; // guard anti double-join
   var _muted = false;
   var _currentChannel = null;
   var _remoteUsersCount = 0;
@@ -48,10 +49,22 @@
         },
         body: JSON.stringify({ channelName: channelName, uid: uid })
       });
-      if(!resp.ok) return null;
-      var data = await resp.json();
+      var data = await resp.json().catch(function(){ return {}; });
+      if(!resp.ok) {
+        var detail = data.error || ('HTTP ' + resp.status);
+        if(data.detail) detail += ' — ' + data.detail;
+        _lastError = 'Token Edge Function: ' + detail;
+        console.error('[AgoraCall] _fetchToken error:', _lastError);
+        return null;
+      }
+      if(!data.token) {
+        _lastError = 'Token null — vérifier secret AGORA_APP_CERTIFICATE dans Supabase';
+        console.warn('[AgoraCall]', _lastError);
+      }
       return data.token || null;
     }catch(e){
+      _lastError = 'Token fetch: ' + String(e && (e.message || e));
+      console.error('[AgoraCall]', _lastError);
       return null;
     }
   }
@@ -82,55 +95,69 @@
   }
 
   async function joinCall(channelName){
-    var AgoraRTC = await _waitForSDK();
-    if(!AgoraRTC){
-      _lastError = 'SDK Agora non chargé après 8s';
-      console.error('[AgoraCall]', _lastError);
-      try { if(typeof w.toast === 'function') w.toast('Appel vocal indisponible — SDK Agora absent', 'bad'); } catch(e) {}
+    if(_joining) {
+      console.warn('[AgoraCall] joinCall ignoré — déjà en cours');
       return;
     }
-    if(_joined) await leaveCall();
-
-    _client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-    _currentChannel = channelName;
-    _remoteUsersCount = 0;
-
-    // L'autre participant a raccroché → terminer localement
-    _client.on('user-left', function(user) {
-      _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
-      if(_remoteUsersCount === 0) {
-        leaveCall().catch(function(){});
-        try { if(w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'remote-left', requestId: _currentChannel }); } catch(e) {}
-        console.log('[AgoraCall] Partenaire parti — appel terminé');
+    _joining = true;
+    try {
+      var AgoraRTC = await _waitForSDK();
+      if(!AgoraRTC){
+        _lastError = 'SDK Agora non chargé après 8s';
+        console.error('[AgoraCall]', _lastError);
+        try { if(typeof w.toast === 'function') w.toast('Appel vocal indisponible — SDK Agora absent', 'bad'); } catch(e) {}
+        return;
       }
-    });
+      if(_joined) await leaveCall();
 
-    var uid = Math.floor(Math.random() * 999998) + 1;
-    var token = await _fetchToken(channelName, uid);
+      var uid = Math.floor(Math.random() * 999998) + 1;
+      var token = await _fetchToken(channelName, uid);
+      if(!token) {
+        console.error('[AgoraCall] joinCall annulé — token null :', _lastError);
+        try { if(typeof w.toast === 'function') w.toast('Appel vocal : ' + (_lastError || 'token absent'), 'bad'); } catch(e) {}
+        return;
+      }
 
-    try{
-      await _client.join(APP_ID, channelName, token, uid);
-      _joined = true;
+      _client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+      _currentChannel = channelName;
+      _remoteUsersCount = 0;
 
-      _localTrack = await _getMicTrack(AgoraRTC);
-      await _client.publish([_localTrack]);
-
-      _client.on('user-published', async function(user, mediaType){
-        _remoteUsersCount++;
-        await _client.subscribe(user, mediaType);
-        if(mediaType === 'audio' && user.audioTrack) user.audioTrack.play();
+      // L'autre participant a raccroché → terminer localement
+      _client.on('user-left', function(user) {
+        _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
+        if(_remoteUsersCount === 0) {
+          leaveCall().catch(function(){});
+          try { if(w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'remote-left', requestId: _currentChannel }); } catch(e) {}
+          console.log('[AgoraCall] Partenaire parti — appel terminé');
+        }
       });
 
-      _lastError = null;
-      console.log('[AgoraCall] Canal rejoint :', channelName, 'uid :', uid);
-      return uid;
-    }catch(e){
-      _lastError = String(e && (e.message || e));
-      console.error('[AgoraCall] joinCall échoué :', _lastError);
-      try { if(typeof w.toast === 'function') w.toast('Appel vocal : ' + _lastError, 'bad'); } catch(err) {}
-      _joined = false;
-      if(_localTrack){ try { _localTrack.stop(); _localTrack.close(); } catch(e2) {} _localTrack = null; }
-      throw e;
+      try{
+        await _client.join(APP_ID, channelName, token, uid);
+        _joined = true;
+
+        _localTrack = await _getMicTrack(AgoraRTC);
+        await _client.publish([_localTrack]);
+
+        _client.on('user-published', async function(user, mediaType){
+          _remoteUsersCount++;
+          await _client.subscribe(user, mediaType);
+          if(mediaType === 'audio' && user.audioTrack) user.audioTrack.play();
+        });
+
+        _lastError = null;
+        console.log('[AgoraCall] Canal rejoint :', channelName, 'uid :', uid);
+        return uid;
+      }catch(e){
+        _lastError = String(e && (e.message || e));
+        console.error('[AgoraCall] joinCall échoué :', _lastError);
+        try { if(typeof w.toast === 'function') w.toast('Appel vocal : ' + _lastError, 'bad'); } catch(err) {}
+        _joined = false;
+        _client = null;
+        if(_localTrack){ try { _localTrack.stop(); _localTrack.close(); } catch(e2) {} _localTrack = null; }
+      }
+    } finally {
+      _joining = false;
     }
   }
 
