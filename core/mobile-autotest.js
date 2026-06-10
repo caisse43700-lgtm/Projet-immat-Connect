@@ -112,6 +112,9 @@
       InteractionEngineGetRuntimeState: typeof w.InteractionEngine?.getRuntimeState === 'function',
       GuardianLoop: !!w.GuardianLoop,
       GuardianLoopGetRuntimeState: typeof w.GuardianLoop?.getRuntimeState === 'function',
+      AgoraCallEngine: !!w.AgoraCallEngine,
+      AgoraRTC: !!w.AgoraRTC,
+      AgoraRTCVersion: (w.AgoraRTC && w.AgoraRTC.VERSION) || null,
       AngeDialog: !!w.AngeDialog,
       journalCount: (typeof w.ImmatBus?.getJournal === 'function') ? w.ImmatBus.getJournal().length : null,
       appFns: {
@@ -232,6 +235,21 @@
       noParallelThreads: orphans.length===0,
       parallelThreadCount: orphans.length,
       ledgerMessages: (byType.MESSAGE||0)+(byType.THANKS||0),
+    };
+  }
+
+  function agoraAutotest(){
+    var ace = w.AgoraCallEngine;
+    return {
+      engineLoaded: !!ace,
+      sdkLoaded: !!w.AgoraRTC,
+      sdkVersion: (w.AgoraRTC && w.AgoraRTC.VERSION) || null,
+      hasJoinCall: typeof (ace && ace.joinCall) === 'function',
+      hasLeaveCall: typeof (ace && ace.leaveCall) === 'function',
+      hasToggleMute: typeof (ace && ace.toggleMute) === 'function',
+      isJoined: ace && typeof ace.isJoined === 'function' ? ace.isJoined() : false,
+      isMuted: ace && typeof ace.isMuted === 'function' ? ace.isMuted() : false,
+      currentChannel: ace && typeof ace.currentChannel === 'function' ? ace.currentChannel() : null
     };
   }
 
@@ -400,6 +418,7 @@
       sheetState: sheetState(),
       activePanels: activePanels(),
       messagesAutotest: messagesAutotest(),
+      agoraAutotest: agoraAutotest(),
       callsAutotest: callsAutotest(),
       helpAutotest: helpAutotest(),
       reportsAutotest: reportsAutotest(),
