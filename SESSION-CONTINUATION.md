@@ -127,36 +127,64 @@ Fin d'appel (refus/annulation/manqué) :
 
 ---
 
-## BUG ACTIF — Plus de réception (RÉSOLU dans PR #288, pas encore mergé)
+### Mergé sur main 2026-06-10 (PR #289 + merge direct)
+
+Tout ce qui précède est en production. En plus, 5 correctifs appels mergés :
+
+| Correctif | Fichier | Détail |
+|---|---|---|
+| Coupure appel après ~20s | `calls.js` | Timer `_onMissed` (basé sur expires_at) stocké dans `_missedTimers`, annulé dans `acceptCall()`/`refuseCall()` — plus de CALL_MISSED sur appel accepté |
+| Raccrochage non synchronisé | `core/agora-call-engine.js` | Handler `user-left` Agora → émet `CALL_ENDED` sur ImmatBus → `CallScreen.hide()` des deux côtés |
+| Micro iOS bloqué | `calls.js` + `core/call-screen.js` | `getUserMedia({audio:true})` déclenché dans le geste utilisateur (tap Accepter / tap Contact), avant la chaîne async |
+| Boutons trop gros | `index.html` + `core/call-screen.js` | CSS `.cs-btn` + grille 2×2 `.cs-actions-grid` en mode accepté |
+| Diagnostic moteur vocal | `core/agora-call-engine.js` | `getRuntimeState()` → joined/channel/published/remoteUsersCount/lastError |
+
+---
+
+## SONNERIE TÉLÉPHONE RÉELLE — audio-manager v3 (2026-06-10, après retour terrain)
+
+**Retour terrain :** bip entendu côté appelant mais AUCUNE sonnerie côté destinataire.
+
+**Cause :** le fallback Web Audio nécessite un AudioContext débloqué par un geste
+utilisateur récent. L'appel entrant arrive via Realtime (sans geste) → contexte
+suspendu → silence. De plus le son ne ressemblait pas à un téléphone.
+
+**Fix (audio-manager.js v3) :**
+1. Génération au démarrage d'une vraie sonnerie téléphone : WAV en mémoire
+   (Blob URL), bitonalité 440+480 Hz, cadence 1.5s ON / 3.5s OFF, loopée.
+   Assignée à `callAudioIncoming.src`. + tonalité retour (440 Hz) pour
+   `callAudioOutgoing` + double bip pour `messageAudioBeep`.
+2. `unlockFromUserGesture()` joue maintenant TOUS les éléments en muet au
+   premier tap — iOS les autorise ensuite à être rejoués à tout moment,
+   y compris à l'arrivée d'un appel sans geste. C'est LE mécanisme fiable iOS.
+3. Le fallback Web Audio reste en dernier recours.
 
 ```text
-Symptôme    : Téléphone B ne reçoit plus la sonnerie d'appel entrant
-Cause       : script Agora CDN synchrone bloquait call-notification-runtime.js
-Fix         : call-notification-runtime.js déplacé avant CDN Agora + async
-Branche     : global-verification-center (non mergée)
-Action      : Merger PR #288 pour restaurer la réception
+Mécanisme iOS critique :
+tap quelconque dans l'app → éléments <audio> joués en muet → "débloqués"
+appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqué
 ```
 
 ---
 
-## PROCHAINE ACTION
+## PROCHAINE ACTION — TEST TERRAIN
 
-**Merger la branche `global-verification-center` → main** pour déployer :
-1. Le correctif réception (hotfix critique)
-2. Le Global Verification Center
-
-URL de test après merge :
+URL de test (cache v15) :
 ```
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora2
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora3
 ```
 
-Checklist réception :
+Checklist :
 ```text
-□ Recharger les deux téléphones (?v=agora2 pour vider le cache)
-□ B (BE-521-MM) en veille, A (BZ-652-LL) appelle
-□ B doit sonner — si oui, correctif OK
-□ B accepte → audio bidirectionnel (A entend B, B entend A)
-□ Bouton Global dans Guardian Dashboard → rapport 8 sections
+□ Recharger les deux téléphones avec ?v=agora3
+□ IMPORTANT : taper une fois n'importe où dans l'app sur chaque téléphone
+  (débloque l'audio iOS/Android)
+□ A appelle B → B doit SONNER (vraie sonnerie téléphone bitonale)
+□ A entend la tonalité de retour (tut… tut…)
+□ B accepte → popup micro → audio bidirectionnel
+□ Appel ne coupe PLUS après 20s
+□ A raccroche → B ferme immédiatement (CALL_ENDED via user-left)
+□ Boutons compacts en grille 2×2
 ```
 
 ### En cas de problème audio
