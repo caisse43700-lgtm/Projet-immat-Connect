@@ -6,7 +6,7 @@
 (function(w){
   'use strict';
 
-  var BUILD = 'guardian-summary-engine-v1';
+  var BUILD = 'guardian-summary-engine-v1.1';
 
   function nowIso(){
     try { return new Date().toISOString(); } catch(e) { return String(Date.now()); }
@@ -114,16 +114,26 @@
     return ok('messages','Messages OK');
   }
 
+  function isRealOverlayBlocker(b){
+    if(!b || !b.visible) return false;
+    var id = b.id || '';
+    if(id === 'sheet' || id === 'gardienDashboard' || id === 'guardianDashboard') return false;
+    var css = b.css || {};
+    var rect = b.rect || {};
+    if(css.pointerEvents === 'none') return false;
+    if(!rect.w || !rect.h) return false;
+    var vw = Math.max(1, window.innerWidth || 390);
+    var vh = Math.max(1, window.innerHeight || 800);
+    if(rect.x >= vw || rect.y >= vh || (rect.x + rect.w) <= 0 || (rect.y + rect.h) <= 0) return false;
+    if(b.topElement && id && b.topElement !== '-' && b.topElement !== 'no-rect' && b.topElement.indexOf('#' + id) === -1) return false;
+    return true;
+  }
+
   function computeOverlays(n){
-    var blockers = (n.blockers || []).filter(function(b){
-      if(!b || !b.visible) return false;
-      var id = b.id || '';
-      if(id === 'sheet') return false;
-      return b.css && b.css.pointerEvents !== 'none' && b.rect && b.rect.w > 0 && b.rect.h > 0;
-    });
+    var blockers = (n.blockers || []).filter(isRealOverlayBlocker);
     if(blockers.length){
       var names = blockers.slice(0,3).map(function(b){ return '#' + b.id; }).join(', ');
-      return light('overlays','warning','Overlay potentiellement bloquant','Un panneau visible peut intercepter les taps.','Fermer les panneaux puis retester le clic.', names, 'OVERLAY_BLOCKING_TAP');
+      return light('overlays','warning','Overlay potentiellement bloquant','Un panneau visible peut réellement intercepter les taps.','Fermer les panneaux puis retester le clic.', names, 'OVERLAY_BLOCKING_TAP');
     }
     return ok('overlays','UI/Overlays OK');
   }
