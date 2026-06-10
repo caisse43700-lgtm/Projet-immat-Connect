@@ -312,20 +312,294 @@
   transform: translateX(20px);
 }
 
-/* ── CallScreen boutons (générés par core/call-screen.js) ────────── */
-.cs-btn {
-  padding: 11px 20px;
-  border-radius: 12px;
-  font-size: 14px;
+/* ── Sous-onglets Contact (Appels | Messages) ────────────────────── */
+.ic-contact-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.ic-contact-tab {
+  flex: 1;
+  padding: 10px 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #555;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity .15s;
-  border: none;
-  min-width: 100px;
+  transition: color .15s, border-color .15s;
+  letter-spacing: .2px;
 }
-.cs-btn:active { opacity: .75; }
-.cs-btn-accept { background: #2979ff; color: #fff; }
-.cs-btn-refuse { background: rgba(255,45,85,.14); color: #ff2d55; border: 1.5px solid rgba(255,45,85,.3) !important; }
-.cs-btn-cancel { background: rgba(255,255,255,.08); color: #888; border: 1px solid rgba(255,255,255,.12) !important; }
-.cs-btn-msg    { background: #2979ff; color: #fff; }
-.cs-btn-close  { background: rgba(255,255,255,.08); color: #888; border: 1px solid rgba(255,255,255,.12) !important; }
+.ic-contact-tab--active {
+  color: var(--green, #00ffb3);
+  border-bottom-color: var(--green, #00ffb3);
+}
+
+/* ── Journal d'appels ────────────────────────────────────────────── */
+.cj-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+.cj-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #444;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.cj-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background .1s;
+}
+.cj-entry:active { background: rgba(255,255,255,.04); }
+.cj-direction {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.cj-info { flex: 1; min-width: 0; }
+.cj-plate {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg, #e8eaf0);
+  letter-spacing: .5px;
+}
+.cj-meta {
+  font-size: 11px;
+  margin-top: 2px;
+}
+.cj-call-btn {
+  background: rgba(41,121,255,.12);
+  border: 1px solid rgba(41,121,255,.28);
+  color: var(--primary, #2979ff);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity .12s;
+}
+.cj-call-btn:active { opacity: .7; }
+
+/* ── CallScreen plein écran Phase 2 ──────────────────────────────── */
+.cs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+.cs-full {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, #1a1a2e 0%, #12122a 50%, #0d0d1a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(env(safe-area-inset-top, 44px) + 12px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 20px);
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.cs-minimize-btn {
+  align-self: center;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.55);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 36px;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-avatar-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 28px;
+}
+.cs-avatar-wrap--pulse::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: rgba(41,121,255,.14);
+  animation: csPulse 2s ease-in-out infinite;
+}
+.cs-avatar-wrap--pulse::after {
+  content: '';
+  position: absolute;
+  inset: -28px;
+  border-radius: 50%;
+  background: rgba(41,121,255,.06);
+  animation: csPulse 2s ease-in-out infinite .6s;
+}
+@keyframes csPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.07); opacity: .55; }
+}
+.cs-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2979ff 0%, #1a237e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.88);
+}
+.cs-plate {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.cs-status {
+  font-size: 14px;
+  color: rgba(255,255,255,.5);
+  margin-bottom: 6px;
+  text-align: center;
+}
+.cs-timer {
+  font-size: 20px;
+  font-weight: 300;
+  color: rgba(255,255,255,.75);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  text-align: center;
+}
+.cs-actions {
+  margin-top: auto;
+  width: 100%;
+  max-width: 340px;
+}
+.cs-actions-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+.cs-actions-row--single { justify-content: center; gap: 0; }
+.cs-actions-row--controls { gap: 48px; margin-bottom: 16px; }
+
+/* Boutons ronds */
+.cs-round-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-round-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .15s, transform .1s;
+}
+.cs-round-btn:active .cs-round-circle { opacity: .72; transform: scale(.93); }
+.cs-round-label {
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  text-align: center;
+}
+.cs-round-refuse .cs-round-circle { background: #ff3b30; }
+.cs-round-accept .cs-round-circle { background: #34c759; }
+.cs-round-ctrl   .cs-round-circle { background: rgba(255,255,255,.18); }
+.cs-round-ctrl.cs-round-ctrl--active .cs-round-circle { background: #fff; }
+.cs-round-refuse .cs-round-circle svg,
+.cs-round-accept .cs-round-circle svg { stroke: #fff; }
+.cs-round-ctrl   .cs-round-circle svg { stroke: rgba(255,255,255,.82); }
+.cs-round-ctrl.cs-round-ctrl--active .cs-round-circle svg { stroke: #1a1a2e; }
+
+/* ── Barre mini ──────────────────────────────────────────────────── */
+.cs-mini {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(env(safe-area-inset-top, 44px) + 52px);
+  padding-top: env(safe-area-inset-top, 44px);
+  background: #143214;
+  align-items: center;
+  gap: 10px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.cs-mini-expand {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.6);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-mini-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+.cs-mini-plate {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.cs-mini-time {
+  font-size: 13px;
+  color: rgba(255,255,255,.5);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cs-mini-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cs-mini-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.14);
+  border: none;
+  color: rgba(255,255,255,.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-mini-ico svg { stroke: currentColor; }
+.cs-mini-ico--active { background: #fff !important; color: #143214 !important; }
+.cs-mini-ico--active svg { stroke: #143214; }
+.cs-mini-end { background: #ff3b30 !important; }
+.cs-mini-end svg { stroke: #fff; }

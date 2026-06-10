@@ -1,14 +1,8 @@
-/* core/audio-manager.js — AudioManager squelette Phase 7
+/* core/audio-manager.js — AudioManager Phase 7+
  *
- * Gère les sons : message beep, sonnerie entrante, tonalité sortante, alerte système.
- * Ne joue rien si aucun src n'est défini — phase asset manquante intentionnelle.
- * getRuntimeState() est lecture seule. Aucun son depuis les diagnostics.
- *
- * Familles audio :
- *   messageAudioBeep       — court, non-loopé, message reçu uniquement
- *   callAudioIncoming      — loopé, appel entrant
- *   callAudioOutgoing      — loopé optionnel, appel sortant
- *   callAudio              — alias rétrocompatible
+ * Sonneries synthétisées via Web Audio API — aucun fichier requis.
+ * Fallback sur éléments <audio> si src configuré.
+ * Déverrouillage iOS : AudioContext.resume() sur premier geste utilisateur.
  *
  * API publique :
  *   AudioManager.init()
@@ -26,8 +20,11 @@
   var _unlocked = false;
   var _lastError = null;
   var _lastBlocked = false;
-  var _currentlyPlaying = null; // 'incoming' | 'outgoing' | 'message' | null
+  var _currentlyPlaying = null;
   var _lastStopReason = null;
+  var _ctx = null;
+  var _ringingInterval = null;
+  var _volume = 0.25;
 
   function _$(id) { return document.getElementById(id); }
 
@@ -35,42 +32,97 @@
     try { return w.S ? w.S.sounds !== false : true; } catch (e) { return true; }
   }
 
-  // ── Unlock ──────────────────────────────────────────────────────
+  // ── Web Audio API ────────────────────────────────────────────────
 
-  function _onUserGesture() {
-    unlockFromUserGesture();
-    document.removeEventListener('click', _onUserGesture);
-    document.removeEventListener('touchstart', _onUserGesture);
+  function _getCtx() {
+    if (_ctx) return _ctx;
+    try {
+      _ctx = new (w.AudioContext || w.webkitAudioContext)();
+    } catch (e) {
+      _lastError = String(e && (e.message || e));
+      _ctx = null;
+    }
+    return _ctx;
   }
 
-  function unlockFromUserGesture() {
-    if (_unlocked) return;
-    var audio = _$('callAudioIncoming') || _$('callAudio');
-    if (!audio) { _unlocked = true; return; }
+  function _synth(freq, durationSec, startSec) {
+    var ctx = _getCtx();
+    if (!ctx) return;
     try {
-      var p = audio.play();
-      if (p && typeof p.then === 'function') {
-        p.then(function () {
-          try { audio.pause(); audio.currentTime = 0; } catch (e) {}
-          _unlocked = true;
-        }).catch(function (e) {
-          _lastBlocked = true;
-          _lastError = String(e && (e.message || e));
-        });
-      } else {
-        try { audio.pause(); audio.currentTime = 0; } catch (e) {}
-        _unlocked = true;
-      }
+      var osc  = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, startSec);
+      gain.gain.exponentialRampToValueAtTime(_volume, startSec + 0.02);
+      gain.gain.setValueAtTime(_volume, startSec + durationSec - 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startSec + durationSec);
+      osc.start(startSec);
+      osc.stop(startSec + durationSec);
     } catch (e) {
       _lastError = String(e && (e.message || e));
     }
   }
 
-  // ── Lecture ──────────────────────────────────────────────────────
+  // Sonnerie entrante : deux doubles bips espacés (ring-ring)
+  function _ringOnce() {
+    var ctx = _getCtx();
+    if (!ctx || ctx.state === 'suspended') return;
+    var t = ctx.currentTime;
+    _synth(880, 0.35, t);
+    _synth(1100, 0.35, t);       // harmonique légère
+    _synth(880, 0.35, t + 0.5);
+    _synth(1100, 0.35, t + 0.5);
+  }
+
+  // Tonalité sortante : bip unique doux
+  function _outgoingBeep() {
+    var ctx = _getCtx();
+    if (!ctx || ctx.state === 'suspended') return;
+    var t = ctx.currentTime;
+    _synth(660, 0.4, t);
+  }
+
+  // ── Unlock iOS ───────────────────────────────────────────────────
+
+  function _onUserGesture() {
+    unlockFromUserGesture();
+    document.removeEventListener('click',      _onUserGesture);
+    document.removeEventListener('touchstart', _onUserGesture);
+  }
+
+  function unlockFromUserGesture() {
+    var ctx = _getCtx();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(function () {
+        _unlocked = true;
+      }).catch(function (e) {
+        _lastError   = String(e && (e.message || e));
+        _lastBlocked = true;
+      });
+    } else {
+      _unlocked = true;
+    }
+    // Déverrouillage fallback élément <audio> si src présent
+    var audio = _$('callAudioIncoming') || _$('callAudio');
+    if (audio && audio.src) {
+      try {
+        var p = audio.play();
+        if (p && typeof p.then === 'function') {
+          p.then(function () {
+            try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+          }).catch(function () {});
+        }
+      } catch (e) {}
+    }
+  }
+
+  // ── Lecture <audio> (fallback si src configuré) ──────────────────
 
   function _play(el, loop) {
-    if (!el) return false;
-    if (!el.src) { _lastBlocked = true; return false; }
+    if (!el || !el.src) return false;
     try {
       el.loop = !!loop;
       el.currentTime = 0;
@@ -78,7 +130,7 @@
       if (p && typeof p.then === 'function') {
         p.catch(function (e) {
           _lastBlocked = true;
-          _lastError = String(e && (e.message || e));
+          _lastError   = String(e && (e.message || e));
           _currentlyPlaying = null;
         });
       }
@@ -89,31 +141,78 @@
     }
   }
 
-  function playMessageBeep(context) {
-    if (!_soundsEnabled()) return;
-    var el = _$('messageAudioBeep') || _$('callAudio');
-    if (_play(el, false)) _currentlyPlaying = 'message';
-  }
+  // ── API audio ────────────────────────────────────────────────────
 
   function playIncomingRingtone(context) {
     if (!_soundsEnabled()) return;
+    stopCallAudio('new_incoming');
+    // Préférer fichier <audio> si configuré
     var el = _$('callAudioIncoming') || _$('callAudio');
-    if (_play(el, true)) _currentlyPlaying = 'incoming';
+    if (el && el.src && _play(el, true)) { _currentlyPlaying = 'incoming'; return; }
+    // Synthèse Web Audio API
+    var ctx = _getCtx();
+    if (!ctx) { _lastBlocked = true; return; }
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function () {
+        if (_currentlyPlaying !== null) return; // annulé pendant le resume
+        _ringOnce();
+        _ringingInterval = setInterval(_ringOnce, 2600);
+        _currentlyPlaying = 'incoming';
+      }).catch(function (e) {
+        _lastBlocked = true;
+        _lastError   = String(e && (e.message || e));
+      });
+      return;
+    }
+    _ringOnce();
+    _ringingInterval = setInterval(_ringOnce, 2600);
+    _currentlyPlaying = 'incoming';
   }
 
   function playOutgoingTone(context) {
     if (!_soundsEnabled()) return;
+    stopCallAudio('new_outgoing');
     var el = _$('callAudioOutgoing') || _$('callAudio');
-    if (el && el.src) {
-      if (_play(el, true)) _currentlyPlaying = 'outgoing';
+    if (el && el.src && _play(el, true)) { _currentlyPlaying = 'outgoing'; return; }
+    var ctx = _getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function () {
+        if (_currentlyPlaying !== null) return; // annulé pendant le resume
+        _outgoingBeep();
+        _ringingInterval = setInterval(_outgoingBeep, 3000);
+        _currentlyPlaying = 'outgoing';
+      }).catch(function (e) {
+        _lastBlocked = true;
+        _lastError   = String(e && (e.message || e));
+      });
+      return;
     }
-    // outgoing tone is optional — no _lastBlocked if no src
+    _outgoingBeep();
+    _ringingInterval = setInterval(_outgoingBeep, 3000);
+    _currentlyPlaying = 'outgoing';
+  }
+
+  function playMessageBeep(context) {
+    if (!_soundsEnabled()) return;
+    var el = _$('messageAudioBeep') || _$('callAudio');
+    if (el && el.src && _play(el, false)) return;
+    var ctx = _getCtx();
+    if (!ctx || ctx.state === 'suspended') return;
+    var t = ctx.currentTime;
+    _synth(880,  0.12, t);
+    _synth(1320, 0.12, t + 0.13);
+  }
+
+  function setVolume(v) {
+    _volume = Math.max(0.0001, Math.min(1, v || 0.25));
   }
 
   // ── Arrêt ────────────────────────────────────────────────────────
 
   function stopCallAudio(reason) {
     _lastStopReason = reason || null;
+    if (_ringingInterval) { clearInterval(_ringingInterval); _ringingInterval = null; }
     ['callAudioIncoming', 'callAudioOutgoing', 'callAudio'].forEach(function (id) {
       var el = _$(id);
       if (!el) return;
@@ -135,25 +234,27 @@
 
   function getRuntimeState() {
     try {
-      var inc = _$('callAudioIncoming') || _$('callAudio');
-      var out = _$('callAudioOutgoing') || _$('callAudio');
-      var beep = _$('messageAudioBeep') || _$('callAudio');
+      var ctx = _getCtx();
+      var inc  = _$('callAudioIncoming') || _$('callAudio');
+      var out  = _$('callAudioOutgoing') || _$('callAudio');
+      var beep = _$('messageAudioBeep')  || _$('callAudio');
       return {
-        supported: !!(w.Audio || (typeof HTMLAudioElement !== 'undefined') ||
-          (document.createElement && document.createElement('audio').canPlayType)),
-        unlockedByUserGesture: _unlocked,
-        incomingRingtoneReady: !!(inc && inc.src && !inc.error),
-        outgoingToneReady: !!(out && out.src && !out.error),
-        messageBeepReady: !!(beep && beep.src && !beep.error),
-        currentlyPlaying: _currentlyPlaying,
-        lastAudioError: _lastError,
-        lastAudioBlocked: _lastBlocked,
-        lastStopReason: _lastStopReason,
-        soundsEnabled: _soundsEnabled(),
-        hasCallAudioIncoming: !!_$('callAudioIncoming'),
-        hasCallAudioOutgoing: !!_$('callAudioOutgoing'),
-        hasMessageAudioBeep: !!_$('messageAudioBeep'),
-        hasCallAudioLegacy: !!_$('callAudio')
+        supported:               !!(w.AudioContext || w.webkitAudioContext),
+        webAudioContextState:    ctx ? ctx.state : 'unavailable',
+        unlockedByUserGesture:   _unlocked,
+        incomingRingtoneReady:   !!(inc  && inc.src  && !inc.error),
+        outgoingToneReady:       !!(out  && out.src  && !out.error),
+        messageBeepReady:        !!(beep && beep.src && !beep.error),
+        synthAvailable:          !!ctx,
+        currentlyPlaying:        _currentlyPlaying,
+        lastAudioError:          _lastError,
+        lastAudioBlocked:        _lastBlocked,
+        lastStopReason:          _lastStopReason,
+        soundsEnabled:           _soundsEnabled(),
+        hasCallAudioIncoming:    !!_$('callAudioIncoming'),
+        hasCallAudioOutgoing:    !!_$('callAudioOutgoing'),
+        hasMessageAudioBeep:     !!_$('messageAudioBeep'),
+        hasCallAudioLegacy:      !!_$('callAudio'),
       };
     } catch (e) {
       return { supported: false, error: String(e && (e.message || e)) };
@@ -164,20 +265,21 @@
 
   function init() {
     try {
-      document.addEventListener('click', _onUserGesture, { once: true, passive: true });
+      document.addEventListener('click',      _onUserGesture, { once: true, passive: true });
       document.addEventListener('touchstart', _onUserGesture, { once: true, passive: true });
     } catch (e) {}
   }
 
   w.AudioManager = {
-    init: init,
+    init:                  init,
     unlockFromUserGesture: unlockFromUserGesture,
-    playMessageBeep: playMessageBeep,
-    playIncomingRingtone: playIncomingRingtone,
-    playOutgoingTone: playOutgoingTone,
-    stopCallAudio: stopCallAudio,
-    stopAll: stopAll,
-    getRuntimeState: getRuntimeState
+    playMessageBeep:       playMessageBeep,
+    playIncomingRingtone:  playIncomingRingtone,
+    playOutgoingTone:      playOutgoingTone,
+    stopCallAudio:         stopCallAudio,
+    stopAll:               stopAll,
+    setVolume:             setVolume,
+    getRuntimeState:       getRuntimeState,
   };
 
   if (document.readyState === 'loading') {

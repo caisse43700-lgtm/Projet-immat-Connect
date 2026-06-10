@@ -1650,6 +1650,33 @@ test('IO-28 — listPhases retourne 5 phases', () => {
   eq(phases[4].phase, 5);
 });
 
+// ─── 21. Audit structurel appels ─────────────────────────────────────────────
+suite('21. Audit structurel appels');
+
+const _audioSrc  = fs.readFileSync('./core/audio-manager.js', 'utf8');
+const _screenSrc = fs.readFileSync('./core/call-screen.js',   'utf8');
+const _swSrc     = fs.readFileSync('./service-worker.js',     'utf8');
+const _callsSrc  = fs.readFileSync('./calls.js',              'utf8');
+
+test('AU-01 — AudioManager expose playIncomingRingtone', () => ok(_audioSrc.includes('playIncomingRingtone')));
+test('AU-02 — AudioManager expose playOutgoingTone',     () => ok(_audioSrc.includes('playOutgoingTone')));
+test('AU-03 — AudioManager expose stopCallAudio',        () => ok(_audioSrc.includes('stopCallAudio')));
+test('AU-04 — AudioManager expose setVolume',            () => ok(_audioSrc.includes('setVolume')));
+
+test('AU-05 — CallScreen appelle playIncomingRingtone',  () => ok(_screenSrc.includes('playIncomingRingtone')));
+test('AU-06 — CallScreen appelle playOutgoingTone',      () => ok(_screenSrc.includes('playOutgoingTone')));
+test('AU-07 — CallScreen appelle stopCallAudio dans hide', () => ok(_screenSrc.includes('stopCallAudio')));
+
+test('AU-08 — SW cache audio-manager.js',  () => ok(_swSrc.includes('./core/audio-manager.js')));
+test('AU-09 — SW cache call-screen.js',    () => ok(_swSrc.includes('./core/call-screen.js')));
+test('AU-10 — SW version >= v12',          () => ok(_swSrc.includes('v12') || /v1[2-9]|v[2-9]\d/.test(_swSrc)));
+
+test('AU-11 — calls.js : _recoverIncomingPendingCalls',  () => ok(_callsSrc.includes('_recoverIncomingPendingCalls')));
+test('AU-12 — calls.js : _startIncomingRecoveryPolling', () => ok(_callsSrc.includes('_startIncomingRecoveryPolling')));
+test('AU-13 — calls.js : visibilitychange',              () => ok(_callsSrc.includes('visibilitychange')));
+test('AU-14 — calls.js : CALL_RECEIVED',                 () => ok(_callsSrc.includes('CALL_RECEIVED')));
+test('AU-15 — calls.js fallback legacy joue audio',      () => ok(_callsSrc.includes('playIncomingRingtone')));
+
 console.log('\n' + '═'.repeat(50));
 console.log('  RÉSULTAT : ' + _pass + ' ✅ pass  |  ' + _fail + ' ❌ fail');
 console.log('═'.repeat(50));
