@@ -26,8 +26,15 @@
 
   // ── Actions déclenchées par les boutons ──────────────────────────
   function _accept() {
-    var rid = _state.requestId;
+    // iOS Safari : déclencher getUserMedia dans le contexte du geste utilisateur (avant tout await)
+    // pour que Agora puisse ensuite accéder au micro sans blocage.
+    if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
+      w.navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+        .catch(function() {});
+    }
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.accept'); } catch(e) {}
+    var rid = _state.requestId;
     if (rid && w.CallManager && typeof w.CallManager.acceptCall === 'function') {
       w.CallManager.acceptCall(rid);
     }
@@ -58,6 +65,8 @@
     if (w.AgoraCallEngine && typeof w.AgoraCallEngine.leaveCall === 'function') {
       w.AgoraCallEngine.leaveCall();
     }
+    // Propager CALL_ENDED pour que l'autre téléphone se mette à jour
+    try { if (w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'local-hangup' }); } catch(e) {}
   }
   function _toggleMute() {
     if (!w.AgoraCallEngine || typeof w.AgoraCallEngine.toggleMute !== 'function') return;
@@ -72,10 +81,10 @@
     accept:  '<button type="button" id="csAccept"  class="cs-btn cs-btn-accept">Accepter</button>',
     refuse:  '<button type="button" id="csRefuse"  class="cs-btn cs-btn-refuse">Refuser</button>',
     cancel:  '<button type="button" id="csCancel"  class="cs-btn cs-btn-cancel">Annuler</button>',
-    message: '<button type="button" id="csMessage" class="cs-btn cs-btn-msg">💬 Message</button>',
-    close:   '<button type="button" id="csClose"   class="cs-btn cs-btn-close">Fermer</button>',
+    message: '<button type="button" id="csMessage" class="cs-btn cs-btn-msg">💬</button>',
+    close:   '<button type="button" id="csClose"   class="cs-btn cs-btn-close">Masquer</button>',
     hangup:  '<button type="button" id="csHangup"  class="cs-btn cs-btn-refuse">📵 Raccrocher</button>',
-    mute:    '<button type="button" id="csMute"    class="cs-btn">🎤 Muet</button>',
+    mute:    '<button type="button" id="csMute"    class="cs-btn cs-btn-mute">🎤 Muet</button>',
   };
 
   function _bindButtons() {
@@ -141,7 +150,10 @@
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'accepted', plate: plate, requestId: rid };
     _render('accepted', plate, '📞 Appel en cours',
-      _BTN.mute + _BTN.hangup + _BTN.message + _BTN.close,
+      '<div class="cs-actions-grid">' +
+        _BTN.mute + _BTN.hangup +
+        _BTN.message + _BTN.close +
+      '</div>',
       0);
   }
 
@@ -167,6 +179,7 @@
     bus.on('CALL_REFUSED',   function ()  { hide(); });
     bus.on('CALL_CANCELLED', function ()  { hide(); });
     bus.on('CALL_MISSED',    function (e) { showMissed(e.payload); });
+    bus.on('CALL_ENDED',     function ()  { hide(); });
   }
 
   var CallScreen = {

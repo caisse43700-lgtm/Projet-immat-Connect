@@ -1,7 +1,7 @@
 /* core/audio-manager.js — AudioManager squelette Phase 7
  *
  * Gère les sons : message beep, sonnerie entrante, tonalité sortante, alerte système.
- * Ne joue rien si aucun src n'est défini — phase asset manquante intentionnelle.
+ * Fallback synthétique via Web Audio API quand aucun src n'est défini sur l'élément audio.
  * getRuntimeState() est lecture seule. Aucun son depuis les diagnostics.
  *
  * Familles audio :
@@ -29,6 +29,62 @@
   var _currentlyPlaying = null; // 'incoming' | 'outgoing' | 'message' | null
   var _lastStopReason = null;
 
+  // ── Web Audio API (fallback synthétique) ─────────────────────────
+  var _ctx = null;
+  var _toneActive = false;
+  var _syntheticLoop = null;
+
+  function _getOrCreateCtx() {
+    if (!_ctx) {
+      try { _ctx = new (w.AudioContext || w.webkitAudioContext)(); } catch(e) { return null; }
+    }
+    return _ctx;
+  }
+
+  function _resumeCtx() {
+    var ctx = _getOrCreateCtx();
+    if (ctx && ctx.state === 'suspended') { try { ctx.resume().catch(function(){}); } catch(e) {} }
+    return ctx;
+  }
+
+  // Joue un bip pur via Web Audio
+  function _syntheticBeep(freqHz, durationMs, volume) {
+    var ctx = _resumeCtx();
+    if (!ctx) return;
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      gain.gain.value = typeof volume === 'number' ? volume : 0.12;
+      osc.type = 'sine';
+      osc.frequency.value = freqHz || 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      var t = ctx.currentTime;
+      osc.start(t);
+      osc.stop(t + (durationMs || 400) / 1000);
+    } catch(e) { _lastError = String(e && (e.message || e)); }
+  }
+
+  // Sonnerie européenne : 440Hz + 480Hz, 400ms / 200ms silence / 400ms / 2.4s silence, cycle
+  function _scheduleRingCycle() {
+    if (!_toneActive) return;
+    _syntheticBeep(440, 400, 0.10);
+    _syntheticBeep(480, 400, 0.10);
+    _syntheticLoop = setTimeout(function() {
+      if (!_toneActive) return;
+      _syntheticBeep(440, 400, 0.10);
+      _syntheticBeep(480, 400, 0.10);
+      _syntheticLoop = setTimeout(_scheduleRingCycle, 2800);
+    }, 600);
+  }
+
+  function _stopSynthetic() {
+    _toneActive = false;
+    clearTimeout(_syntheticLoop);
+    _syntheticLoop = null;
+  }
+
+  // ── Éléments HTML audio ──────────────────────────────────────────
   function _$(id) { return document.getElementById(id); }
 
   function _soundsEnabled() {
@@ -45,6 +101,8 @@
 
   function unlockFromUserGesture() {
     if (_unlocked) return;
+    // Débloquer aussi le contexte Web Audio
+    _resumeCtx();
     var audio = _$('callAudioIncoming') || _$('callAudio');
     if (!audio) { _unlocked = true; return; }
     try {
@@ -56,6 +114,8 @@
         }).catch(function (e) {
           _lastBlocked = true;
           _lastError = String(e && (e.message || e));
+          // Pas de src — considéré comme débloqué quand même
+          _unlocked = true;
         });
       } else {
         try { audio.pause(); audio.currentTime = 0; } catch (e) {}
@@ -63,14 +123,15 @@
       }
     } catch (e) {
       _lastError = String(e && (e.message || e));
+      _unlocked = true;
     }
   }
 
-  // ── Lecture ──────────────────────────────────────────────────────
+  // ── Lecture HTML audio ───────────────────────────────────────────
 
   function _play(el, loop) {
     if (!el) return false;
-    if (!el.src) { _lastBlocked = true; return false; }
+    if (!el.src) { return false; } // pas de src → fallback synthétique
     try {
       el.loop = !!loop;
       el.currentTime = 0;
@@ -89,16 +150,32 @@
     }
   }
 
+  // ── API sons ─────────────────────────────────────────────────────
+
   function playMessageBeep(context) {
     if (!_soundsEnabled()) return;
     var el = _$('messageAudioBeep') || _$('callAudio');
-    if (_play(el, false)) _currentlyPlaying = 'message';
+    if (_play(el, false)) {
+      _currentlyPlaying = 'message';
+      return;
+    }
+    // Fallback : bip court 880 Hz + 1100 Hz
+    _syntheticBeep(880, 120, 0.08);
+    setTimeout(function() { _syntheticBeep(1100, 80, 0.06); }, 130);
   }
 
   function playIncomingRingtone(context) {
     if (!_soundsEnabled()) return;
     var el = _$('callAudioIncoming') || _$('callAudio');
-    if (_play(el, true)) _currentlyPlaying = 'incoming';
+    if (_play(el, true)) {
+      _currentlyPlaying = 'incoming';
+      return;
+    }
+    // Fallback : sonnerie synthétique en boucle via Web Audio
+    _currentlyPlaying = 'incoming';
+    _stopSynthetic();
+    _toneActive = true;
+    _scheduleRingCycle();
   }
 
   function playOutgoingTone(context) {
@@ -107,12 +184,13 @@
     if (el && el.src) {
       if (_play(el, true)) _currentlyPlaying = 'outgoing';
     }
-    // outgoing tone is optional — no _lastBlocked if no src
+    // tonalité sortante optionnelle — pas de fallback synthétique obligatoire
   }
 
   // ── Arrêt ────────────────────────────────────────────────────────
 
   function stopCallAudio(reason) {
+    _stopSynthetic();
     _lastStopReason = reason || null;
     ['callAudioIncoming', 'callAudioOutgoing', 'callAudio'].forEach(function (id) {
       var el = _$(id);
@@ -138,6 +216,7 @@
       var inc = _$('callAudioIncoming') || _$('callAudio');
       var out = _$('callAudioOutgoing') || _$('callAudio');
       var beep = _$('messageAudioBeep') || _$('callAudio');
+      var ctx = _ctx;
       return {
         supported: !!(w.Audio || (typeof HTMLAudioElement !== 'undefined') ||
           (document.createElement && document.createElement('audio').canPlayType)),
@@ -145,6 +224,9 @@
         incomingRingtoneReady: !!(inc && inc.src && !inc.error),
         outgoingToneReady: !!(out && out.src && !out.error),
         messageBeepReady: !!(beep && beep.src && !beep.error),
+        syntheticToneAvailable: !!_getOrCreateCtx(),
+        syntheticToneActive: _toneActive,
+        webAudioContextState: ctx ? ctx.state : 'not-created',
         currentlyPlaying: _currentlyPlaying,
         lastAudioError: _lastError,
         lastAudioBlocked: _lastBlocked,

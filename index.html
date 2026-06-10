@@ -300,7 +300,7 @@
 </nav>
 
 <div id="nearbyPanel" class="overlay"><button type="button" class="close-x" onclick="App.closeOverlay('nearbyPanel')">×</button><h2>Conducteurs proches</h2><small>Véhicules connectés dans ton rayon.</small><div id="nearbyList" class="list"><div class="empty-msg">Recherche…</div></div></div>
-<div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:28px 20px;text-align:center;min-width:260px;max-width:320px;width:90%"><div style="font-size:40px;margin-bottom:8px">📞</div><div id="callOvPlate" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:13px;color:#aaa;margin-bottom:22px">Appel…</div><div id="callOvActions" style="display:flex;gap:12px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
+<div id="callOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.80);align-items:center;justify-content:center"><div style="background:#1c1c2e;border-radius:20px;padding:20px 16px;text-align:center;min-width:240px;max-width:300px;width:88%"><div style="font-size:36px;margin-bottom:6px">📞</div><div id="callOvPlate" style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">--</div><div id="callOvStatus" style="font-size:12px;color:#aaa;margin-bottom:16px">Appel…</div><div id="callOvActions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div></div></div><audio id="callAudio" autoplay playsinline style="display:none"></audio>
 <audio id="callAudioIncoming" loop preload="none" style="display:none"></audio>
 <audio id="callAudioOutgoing" preload="none" style="display:none"></audio>
 <audio id="messageAudioBeep" preload="none" style="display:none"></audio>
@@ -2027,12 +2027,12 @@ function showReputationToast(){
 
 <script src="core/interaction-engine.js?v=1"></script>
 <script src="core/guardian-loop.js?v=2"></script>
-<script src="calls.js?v=5"></script>
-<script src="core/call-screen.js?v=1"></script>
-<script src="core/audio-manager.js?v=1"></script>
+<script src="calls.js?v=6"></script>
+<script src="core/call-screen.js?v=2"></script>
+<script src="core/audio-manager.js?v=2"></script>
 <script src="core/call-notification-runtime.js?v=1"></script>
 <script async src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
-<script src="core/agora-call-engine.js?v=1"></script>
+<script src="core/agora-call-engine.js?v=2"></script>
 <script src="core/calls-runtime-diagnostics.js?v=2"></script>
 <script src="core/guardian-summary-engine.js?v=1"></script>
 <script src="core/global-verification-center.js?v=1"></script>
@@ -2071,6 +2071,15 @@ function showReputationToast(){
 
 <!-- ── Ange du Gardien ────────────────────────────────────────────────── -->
 <style>
+/* Boutons overlay appel */
+.cs-btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;line-height:1;min-width:64px;-webkit-tap-highlight-color:transparent}
+.cs-btn-accept{background:#22c55e;color:#fff}
+.cs-btn-refuse{background:#ef4444;color:#fff}
+.cs-btn-cancel{background:#64748b;color:#fff}
+.cs-btn-msg{background:#3b82f6;color:#fff;min-width:40px;padding:9px 10px}
+.cs-btn-close{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+.cs-btn-mute{background:#1e293b;color:#e2e8f0;border:1px solid #334155}
+.cs-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .gardien-debug-tool{display:inline-flex}#angeFab{display:none;position:fixed;bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);left:calc(50% - 26px);z-index:3000;width:52px;height:52px;border-radius:50%;background:#1a1a2e;border:2px solid #7c6af7;color:#c4b5fd;font-size:22px;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(124,106,247,.4)}
 #angeOverlay{display:none;position:fixed;inset:0;z-index:3001;background:rgba(0,0,0,.55)}
 #angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;max-height:80vh;overflow-y:auto;flex-direction:column;gap:12px}
