@@ -70,9 +70,23 @@
   }
 
   // Obtenir le track micro : réutilise le track pré-créé dans le geste utilisateur
-  // (w.__preMicTrack depuis AgoraRTC, ou w.__preMicStream depuis getUserMedia)
+  // (w.__preMicTrackPromise → Promise en attente si création pas encore résolue,
+  //  w.__preMicTrack → valeur déjà résolue, w.__preMicStream → fallback getUserMedia)
   async function _getMicTrack(AgoraRTC) {
-    // 1. Track Agora pré-créé dans le geste (optimal)
+    // 0. Promise en attente (création lancée dans le geste mais pas encore résolue)
+    if (w.__preMicTrackPromise) {
+      var p = w.__preMicTrackPromise;
+      w.__preMicTrackPromise = null;
+      w.__preMicTrack = null;
+      try {
+        var resolved = await p;
+        if (resolved) {
+          console.log('[AgoraCall] Réutilise le track mic pré-créé (via Promise)');
+          return resolved;
+        }
+      } catch(e) {}
+    }
+    // 1. Track Agora pré-créé dans le geste (déjà résolu)
     if (w.__preMicTrack) {
       var t = w.__preMicTrack;
       w.__preMicTrack = null;
@@ -91,6 +105,7 @@
       }
     }
     // 3. Création normale (non-iOS ou permission déjà accordée)
+    console.log('[AgoraCall] Création track mic (pas de pre-track disponible)');
     return await AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' });
   }
 

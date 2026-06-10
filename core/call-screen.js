@@ -29,17 +29,21 @@
     // iOS : pré-créer le track micro Agora dans le geste utilisateur (avant tout await)
     var AgoraRTC = w.AgoraRTC;
     if (AgoraRTC && typeof AgoraRTC.createMicrophoneAudioTrack === 'function') {
-      AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+      // Stocker la Promise pour éviter la race condition si joinCall() tourne avant résolution
+      w.__preMicTrackPromise = AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
         .then(function(track) {
           w.__preMicTrack = track;
           console.log('[CallScreen] preMicTrack Agora prêt');
+          return track;
         })
         .catch(function() {
+          w.__preMicTrackPromise = null;
           if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
             w.navigator.mediaDevices.getUserMedia({ audio: true })
               .then(function(s) { w.__preMicStream = s; console.log('[CallScreen] preMicStream prêt (fallback)'); })
               .catch(function() {});
           }
+          return null;
         });
     } else if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
       w.navigator.mediaDevices.getUserMedia({ audio: true })
