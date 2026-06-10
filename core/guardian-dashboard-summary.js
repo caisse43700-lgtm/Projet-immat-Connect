@@ -6,7 +6,7 @@
 (function(w){
   'use strict';
 
-  var BUILD = 'guardian-dashboard-summary-v1.2';
+  var BUILD = 'guardian-dashboard-summary-v1.3';
   var installed = false;
 
   function $(id){ return document.getElementById(id); }
@@ -30,8 +30,8 @@
       }).join('')+
     '</div>';
     return ''+
-      '<div id="guardianSummaryCard" style="margin:0 0 10px;padding:10px 12px;border-left:3px solid '+borderColor(global)+';border-radius:8px;background:#101022">'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
+      '<div id="guardianSummaryCard" data-build="guardian-dashboard-summary-v1.3" style="margin:0 0 10px 0;padding:8px 10px;border-left:4px solid '+borderColor(global)+';border-radius:10px;background:#101022;box-sizing:border-box;width:100%;max-width:100%;position:relative;z-index:0;clear:both;overflow:hidden">'+
+        '<div style="display:flex;align-items:center;gap:8px;min-height:42px">'+
           '<div style="font-size:18px;flex-shrink:0">'+statusIcon(global)+'</div>'+
           '<div style="flex:1;min-width:0">'+
             '<div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2">Santé : '+esc(statusLabel(global))+'</div>'+
