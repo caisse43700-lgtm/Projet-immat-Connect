@@ -28,6 +28,8 @@ const STATIC_CACHE = [
   './core/aiController.js',
   './core/agora-call-engine.js',
   './core/global-verification-center.js',
+  './core/audio-manager.js',
+  './core/call-screen.js',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant
