@@ -6,7 +6,7 @@
 (function(w){
   'use strict';
 
-  var BUILD = 'guardian-dashboard-summary-v1.2';
+  var BUILD = 'guardian-dashboard-summary-v1.3';
   var installed = false;
 
   function $(id){ return document.getElementById(id); }
@@ -29,15 +29,12 @@
         '</div>';
       }).join('')+
     '</div>';
+    var statusTxt = statusIcon(global)+' '+esc(statusLabel(global))+' · '+esc(top.title || 'Diagnostic');
     return ''+
-      '<div id="guardianSummaryCard" style="margin:0 0 10px;padding:10px 12px;border-left:3px solid '+borderColor(global)+';border-radius:8px;background:#101022">'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
-          '<div style="font-size:18px;flex-shrink:0">'+statusIcon(global)+'</div>'+
-          '<div style="flex:1;min-width:0">'+
-            '<div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2">Santé : '+esc(statusLabel(global))+'</div>'+
-            '<div style="color:#94a3b8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(top.title || 'Diagnostic')+'</div>'+
-          '</div>'+
-          '<button id="guardianCopyReportBtn" type="button" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:5px 9px;font-weight:700;font-size:11px;flex-shrink:0">Copier</button>'+
+      '<div id="guardianSummaryCard" data-build="guardian-dashboard-summary-v1.3" style="margin:0 0 8px 0;padding:7px 10px;border-left:4px solid '+borderColor(global)+';border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);border-radius:8px;background:rgba(16,16,34,.72);box-sizing:border-box;width:100%;max-width:100%;position:relative;z-index:0;clear:both;overflow:hidden">'+
+        '<div style="display:flex;align-items:center;gap:8px;min-height:34px">'+
+          '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+statusTxt+'</div>'+
+          '<button id="guardianCopyReportBtn" type="button" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:4px 9px;font-weight:700;font-size:11px;flex-shrink:0">Copier</button>'+
         '</div>'+
         '<details style="margin-top:6px">'+
           '<summary style="cursor:pointer;color:#7c6af7;font-size:12px;font-weight:600;list-style:none;padding:2px 0">▸ Voir diagnostic</summary>'+
