@@ -18,6 +18,7 @@ const CallManager = (function () {
   const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
   let _signalChannel = null;   // canal Supabase broadcast pour signaler raccroché
   let _signalRequestId = null; // requestId de l'appel en cours
+  let _busSignalBound = false; // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -34,13 +35,16 @@ const CallManager = (function () {
     _recoverIncomingPendingCalls();
     _startIncomingRecoveryPolling();
     // Nettoyer le canal signal si l'appel se termine hors raccrochage local
-    try {
-      const _bus = window.ImmatBus;
-      if (_bus && typeof _bus.on === 'function') {
-        _bus.on('CALL_ENDED',    function() { _leaveCallSignal(); });
-        _bus.on('CALL_MISSED',   function() { _leaveCallSignal(); });
-      }
-    } catch(e) {}
+    if (!_busSignalBound) {
+      try {
+        const _bus = window.ImmatBus;
+        if (_bus && typeof _bus.on === 'function') {
+          _bus.on('CALL_ENDED',    function() { _leaveCallSignal(); });
+          _bus.on('CALL_MISSED',   function() { _leaveCallSignal(); });
+          _busSignalBound = true;
+        }
+      } catch(e) {}
+    }
     if (!_visibilityBound) {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {

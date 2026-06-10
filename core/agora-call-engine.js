@@ -100,7 +100,7 @@
       _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
       if(_remoteUsersCount === 0) {
         leaveCall().catch(function(){});
-        try { if(w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'remote-left' }); } catch(e) {}
+        try { if(w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'remote-left', requestId: _currentChannel }); } catch(e) {}
         console.log('[AgoraCall] Partenaire parti — appel terminé');
       }
     });

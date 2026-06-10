@@ -291,7 +291,7 @@
       var inc = _$('callAudioIncoming') || _$('callAudio');
       var out = _$('callAudioOutgoing') || _$('callAudio');
       var beep = _$('messageAudioBeep') || _$('callAudio');
-      var ctx = _getOrCreateCtx();
+      var ctx = _ctx;
       return {
         supported: !!(w.Audio || (typeof HTMLAudioElement !== 'undefined') ||
           (document.createElement && document.createElement('audio').canPlayType)),
