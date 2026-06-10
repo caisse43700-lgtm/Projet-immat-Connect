@@ -137,6 +137,22 @@
       _currentChannel = channelName;
       _remoteUsersCount = 0;
 
+      // Enregistrer les handlers AVANT join — Agora fire user-published pour les
+      // utilisateurs déjà présents dès que join() résout, avant la ligne suivante.
+      _client.on('user-published', async function(user, mediaType){
+        console.log('[AgoraCall] user-published :', user.uid, mediaType);
+        _remoteUsersCount++;
+        try {
+          await _client.subscribe(user, mediaType);
+          if(mediaType === 'audio' && user.audioTrack) {
+            user.audioTrack.play();
+            console.log('[AgoraCall] audioTrack.play() appelé pour uid', user.uid);
+          }
+        } catch(subErr) {
+          console.error('[AgoraCall] subscribe/play échoué :', subErr);
+        }
+      });
+
       // L'autre participant a raccroché → terminer localement
       _client.on('user-left', function(user) {
         _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
@@ -153,15 +169,9 @@
 
         _localTrack = await _getMicTrack(AgoraRTC);
         await _client.publish([_localTrack]);
-
-        _client.on('user-published', async function(user, mediaType){
-          _remoteUsersCount++;
-          await _client.subscribe(user, mediaType);
-          if(mediaType === 'audio' && user.audioTrack) user.audioTrack.play();
-        });
+        console.log('[AgoraCall] Track mic publié, canal :', channelName, 'uid :', uid);
 
         _lastError = null;
-        console.log('[AgoraCall] Canal rejoint :', channelName, 'uid :', uid);
         return uid;
       }catch(e){
         _lastError = String(e && (e.message || e));
