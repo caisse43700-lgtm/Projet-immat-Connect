@@ -1,13 +1,16 @@
 /* core/guardian-dashboard-summary.js — intégration UI légère du Guardian Summary Engine
  *
- * Ajoute une synthèse lisible au Dashboard Gardien existant.
+ * Ajoute des boutons Diagnostic/Copier dans le header du Dashboard Gardien.
  * Lecture seule : ne modifie pas les appels/messages/DB.
+ * Aucun bloc affiché automatiquement — tout à la demande.
  */
 (function(w){
   'use strict';
 
-  var BUILD = 'guardian-dashboard-summary-v1.4';
+  var BUILD = 'guardian-dashboard-summary-v1.5';
   var installed = false;
+  var _lastResult = null;
+  var _panelVisible = false;
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g,function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
@@ -15,13 +18,12 @@
   function statusLabel(s){ return s === 'critical' ? 'Critique' : s === 'warning' ? 'Attention' : 'OK'; }
   function borderColor(s){ return s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#22c55e'; }
 
-  function stripInnerHtml(result){
+  function _panelHtml(result){
     var summary = result && result.summary || {};
     var top = summary.topDiagnosis || {};
     var lights = summary.lights || [];
     var report = result && result.report || '';
     var global = summary.globalStatus || 'warning';
-    var statusTxt = statusIcon(global)+' '+esc(statusLabel(global))+' · '+esc(top.title || 'Diagnostic');
     var lightsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">'+
       lights.map(function(l){ return ''+
         '<div style="border:1px solid #252542;border-radius:10px;padding:8px;background:#0b0b18">'+
@@ -31,67 +33,124 @@
       }).join('')+
     '</div>';
     return ''+
-      '<div style="border-left:3px solid '+borderColor(global)+';padding:6px 10px 6px 10px;display:flex;align-items:center;gap:6px;min-height:30px">'+
-        '<div style="flex:1;min-width:0;font-size:11px;line-height:1.2;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+statusTxt+'</div>'+
-        '<button id="guardianCopyReportBtn" type="button" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:2px 6px;font-weight:700;font-size:10px;flex-shrink:0">Copier</button>'+
-      '</div>'+
-      '<details style="padding:0 10px 0 13px">'+
-        '<summary style="cursor:pointer;color:#7c6af7;font-size:10px;font-weight:600;list-style:none;padding:3px 0">▸ Voir diagnostic</summary>'+
-        '<div style="padding:8px 0 8px 0;border-top:1px solid #252542;margin-top:4px">'+
-          (top.cause ? '<div style="color:#94a3b8;font-size:11px;margin-bottom:3px"><b>Cause :</b> '+esc(top.cause)+'</div>' : '')+
-          (top.action ? '<div style="color:#a5b4fc;font-size:11px;margin-bottom:3px"><b>Action :</b> '+esc(top.action)+'</div>' : '')+
-          (top.evidence ? '<div style="color:#64748b;font-size:10px;margin-bottom:6px"><b>Preuve :</b> '+esc(top.evidence)+'</div>' : '')+
-          lightsHtml+
-          '<details style="margin-top:8px"><summary style="cursor:pointer;color:#888;font-size:10px;padding:2px 0">Voir détails ingénieur</summary><pre style="white-space:pre-wrap;background:#050510;border:1px solid #222;border-radius:10px;padding:10px;color:#94a3b8;font-size:10px;max-height:260px;overflow:auto">'+esc(report)+'</pre></details>'+
-        '</div>'+
-      '</details>';
+      '<div style="border-left:3px solid '+borderColor(global)+';padding:8px 12px">'+
+        '<div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:4px">'+statusIcon(global)+' Santé : '+esc(statusLabel(global))+'</div>'+
+        (top.title ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">'+esc(top.title)+'</div>' : '')+
+        (top.cause ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:2px"><b>Cause :</b> '+esc(top.cause)+'</div>' : '')+
+        (top.action ? '<div style="font-size:11px;color:#a5b4fc;margin-bottom:4px"><b>Action :</b> '+esc(top.action)+'</div>' : '')+
+        '<details style="margin-top:6px"><summary style="cursor:pointer;color:#7c6af7;font-size:11px;font-weight:600;list-style:none;padding:2px 0">▸ Voyants</summary>'+lightsHtml+'</details>'+
+        '<details style="margin-top:6px"><summary style="cursor:pointer;color:#888;font-size:10px;padding:2px 0">Voir détails ingénieur</summary><pre style="white-space:pre-wrap;background:#050510;border:1px solid #222;border-radius:10px;padding:10px;color:#94a3b8;font-size:10px;max-height:220px;overflow:auto">'+esc(report)+'</pre></details>'+
+      '</div>';
   }
 
-  function _findOrCreateStrip(){
+  function _findDashboardHeader(){
     var dashboard = $('gardienDashboard');
-    if(!dashboard){
-      console.warn('[GuardianSummary] dashboard header not found');
-      return null;
-    }
-    var existing = $('guardianSummaryHeaderStrip');
-    if(existing) return existing;
-    var body = $('gardienDashboardBody');
-    if(!body){
-      console.warn('[GuardianSummary] dashboard header not found');
-      return null;
-    }
-    var strip = document.createElement('div');
-    strip.id = 'guardianSummaryHeaderStrip';
-    strip.style.cssText = 'border-bottom:1px solid rgba(255,255,255,.07);background:rgba(10,10,24,.95);overflow:hidden';
-    dashboard.insertBefore(strip, body);
-    return strip;
+    if(!dashboard) return null;
+    return dashboard.firstElementChild || null;
   }
 
-  async function render(){
-    if(!w.GuardianSummaryEngine || typeof w.GuardianSummaryEngine.run !== 'function'){
-      console.warn('[GuardianSummary] GuardianSummaryEngine indisponible');
-      return false;
-    }
-    var old = $('guardianSummaryCard');
-    if(old) old.remove();
-    var strip = _findOrCreateStrip();
-    if(!strip) return false;
-    var result = await w.GuardianSummaryEngine.run();
-    strip.innerHTML = stripInnerHtml(result);
-    var btn = $('guardianCopyReportBtn');
-    if(btn){
-      btn.onclick = async function(){
+  function _findOrCreatePanel(){
+    var existing = $('guardianSummaryInlinePanel');
+    if(existing) return existing;
+    var dashboard = $('gardienDashboard');
+    if(!dashboard) return null;
+    var body = $('gardienDashboardBody');
+    if(!body) return null;
+    var panel = document.createElement('div');
+    panel.id = 'guardianSummaryInlinePanel';
+    panel.style.cssText = 'display:none;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(10,10,24,.97);overflow:hidden';
+    dashboard.insertBefore(panel, body);
+    return panel;
+  }
+
+  function _installHeaderActions(){
+    var header = _findDashboardHeader();
+    if(!header) return false;
+    if($('guardianSummaryHeaderActions')) return true;
+    var actions = document.createElement('div');
+    actions.id = 'guardianSummaryHeaderActions';
+    actions.style.cssText = 'display:flex;gap:6px;align-items:center;margin-left:auto;padding-left:8px';
+    var btnStyle = 'background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
+    actions.innerHTML = '<button id="guardianDiagToggleBtn" type="button" style="'+btnStyle+'">Diagnostic</button>'+
+                        '<button id="guardianCopyReportBtn" type="button" style="'+btnStyle+'">Copier</button>';
+    header.appendChild(actions);
+    return true;
+  }
+
+  function _bindButtons(){
+    var diagBtn = $('guardianDiagToggleBtn');
+    var copyBtn = $('guardianCopyReportBtn');
+    if(!diagBtn || !copyBtn) return;
+
+    diagBtn.onclick = async function(){
+      var panel = _findOrCreatePanel();
+      if(!panel) return;
+      if(_panelVisible){
+        panel.style.display = 'none';
+        _panelVisible = false;
+        diagBtn.textContent = 'Diagnostic';
+        return;
+      }
+      diagBtn.textContent = '…';
+      if(!w.GuardianSummaryEngine || typeof w.GuardianSummaryEngine.run !== 'function'){
+        console.warn('[GuardianSummary] GuardianSummaryEngine indisponible');
+        diagBtn.textContent = 'Diagnostic';
+        return;
+      }
+      try{
+        var result = await w.GuardianSummaryEngine.run();
+        _lastResult = result;
+        w.__lastGuardianSummary = result;
+        panel.innerHTML = _panelHtml(result);
+        panel.style.display = 'block';
+        _panelVisible = true;
+        diagBtn.textContent = 'Fermer';
+      }catch(e){
+        diagBtn.textContent = 'Diagnostic';
+      }
+    };
+
+    copyBtn.onclick = async function(){
+      copyBtn.textContent = '…';
+      if(!w.GuardianSummaryEngine || typeof w.GuardianSummaryEngine.run !== 'function'){
+        console.warn('[GuardianSummary] GuardianSummaryEngine indisponible');
+        copyBtn.textContent = 'Copier';
+        return;
+      }
+      try{
+        var result = await w.GuardianSummaryEngine.run();
+        _lastResult = result;
+        w.__lastGuardianSummary = result;
         var txt = result.report || '';
         try{
           await navigator.clipboard.writeText(txt);
-          btn.textContent = 'Copié ✓';
-          setTimeout(function(){ btn.textContent = 'Copier'; }, 1500);
+          copyBtn.textContent = 'Copié ✓';
+          setTimeout(function(){ copyBtn.textContent = 'Copier'; }, 1500);
         }catch(e){
           window.prompt && window.prompt('Copie le rapport :', txt);
+          copyBtn.textContent = 'Copier';
         }
-      };
+      }catch(e){
+        copyBtn.textContent = 'Copier';
+      }
+    };
+  }
+
+  async function render(){
+    var old = $('guardianSummaryCard');
+    if(old) old.remove();
+    var oldStrip = $('guardianSummaryHeaderStrip');
+    if(oldStrip) oldStrip.style.display = 'none';
+
+    if(!$('guardienDashboard') && !$('gardienDashboard')){
+      return false;
     }
-    w.__lastGuardianSummary = result;
+    _panelVisible = false;
+    var panel = $('guardianSummaryInlinePanel');
+    if(panel) panel.style.display = 'none';
+
+    _installHeaderActions();
+    _bindButtons();
     return true;
   }
 
