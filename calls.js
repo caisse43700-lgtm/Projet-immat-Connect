@@ -16,6 +16,8 @@ const CallManager = (function () {
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
   const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
+  let _signalChannel = null;   // canal Supabase broadcast pour signaler raccroché
+  let _signalRequestId = null; // requestId de l'appel en cours
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -31,6 +33,14 @@ const CallManager = (function () {
     _recoverPendingRequest();
     _recoverIncomingPendingCalls();
     _startIncomingRecoveryPolling();
+    // Nettoyer le canal signal si l'appel se termine hors raccrochage local
+    try {
+      const _bus = window.ImmatBus;
+      if (_bus && typeof _bus.on === 'function') {
+        _bus.on('CALL_ENDED',    function() { _leaveCallSignal(); });
+        _bus.on('CALL_MISSED',   function() { _leaveCallSignal(); });
+      }
+    } catch(e) {}
     if (!_visibilityBound) {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {
@@ -124,11 +134,21 @@ const CallManager = (function () {
 
   async function contactByCall(plate, uid) {
     closeContactModal();
-    // iOS Safari : déclencher getUserMedia dans le contexte du geste utilisateur,
-    // avant le premier await, pour que l'appel Agora puisse accéder au micro.
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+    // iOS : pré-créer le track micro dans le geste utilisateur (avant tout await)
+    var _AgoraRTC = window.AgoraRTC;
+    if (_AgoraRTC && typeof _AgoraRTC.createMicrophoneAudioTrack === 'function') {
+      _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+        .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); })
+        .catch(function() {
+          if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(function(s) { window.__preMicStream = s; })
+              .catch(function() {});
+          }
+        });
+    } else if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
       navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+        .then(function(s) { window.__preMicStream = s; })
         .catch(function() {});
     }
     if (!_sb || !_uid) return;
@@ -265,6 +285,7 @@ const CallManager = (function () {
       .maybeSingle();
     if (data?.requester_plate) {
       _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
+      _joinCallSignal(requestId);
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     } else if (wasCallScreenIncoming) {
       try { window.CallScreen?.hide?.(); } catch(e) {}
@@ -278,6 +299,7 @@ const CallManager = (function () {
     const tid = _missedTimers.get(requestId);
     if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
 
+    _leaveCallSignal();
     _hideIncomingPopup();
     if (!_sb || !requestId) return;
     await _sb
@@ -291,6 +313,7 @@ const CallManager = (function () {
   }
 
   async function cancelCallRequest(requestId) {
+    _leaveCallSignal();
     _hideSentBanner();
     if (!_sb || !requestId) return;
     await _sb
@@ -330,6 +353,7 @@ const CallManager = (function () {
         if (r.status === 'accepted') {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
           _emitCallEvent('CALL_ACCEPTED', {'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
+          _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
           _hideSentBanner();
           try { if (typeof toast === 'function') toast('Demande de contact refusée.', 'bad'); } catch (e) {}
@@ -431,6 +455,38 @@ const CallManager = (function () {
     if (plate) try { window.App?.actOpenConv?.(plate); } catch (e) {}
   }
 
+  function _joinCallSignal(requestId) {
+    if (!_sb || !requestId) return;
+    _leaveCallSignal();
+    _signalRequestId = requestId;
+    _signalChannel = _sb.channel('ic_call_signal_' + requestId)
+      .on('broadcast', { event: 'HANGUP' }, function() {
+        console.log('[CallManager] HANGUP broadcast reçu → CALL_ENDED');
+        _leaveCallSignal();
+        _emitCallEvent('CALL_ENDED', { reason: 'remote-hangup', requestId: requestId });
+      })
+      .subscribe();
+    console.log('[CallManager] Signal canal rejoint :', requestId);
+  }
+
+  function _leaveCallSignal() {
+    if (_signalChannel && _sb) {
+      try { _sb.removeChannel(_signalChannel); } catch(e) {}
+    }
+    _signalChannel = null;
+    _signalRequestId = null;
+  }
+
+  async function broadcastHangup(requestId) {
+    const rid = requestId || _signalRequestId;
+    const ch = _signalChannel;
+    _leaveCallSignal();
+    if (ch && rid) {
+      try { await ch.send({ type: 'broadcast', event: 'HANGUP', payload: { requestId: rid } }); } catch(e) {}
+      console.log('[CallManager] HANGUP diffusé :', rid);
+    }
+  }
+
   function _showError(msg) { try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (e) {} }
 
   async function loadCallPreferences() {
@@ -491,7 +547,7 @@ const CallManager = (function () {
     init, openContactOptions, closeContactModal, contactByMessage, contactByCall,
     requestCall, acceptCall, refuseCall, cancelCallRequest, subscribeIncomingCalls,
     closeNotAllowedModal, loadCallPreferences, setCallPreferences, loadCallLog,
-    isCallBlocked: _isCallBlocked, getRuntimeState,
+    isCallBlocked: _isCallBlocked, getRuntimeState, broadcastHangup,
   };
 })();
 

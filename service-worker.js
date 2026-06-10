@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §19 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v15';
+const CACHE_NAME  = 'immatconnect-pro-v16';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien

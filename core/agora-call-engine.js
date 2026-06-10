@@ -4,6 +4,11 @@
  * App ID public par conception Agora — App Certificate jamais ici.
  * Token généré server-side par Edge Function get-agora-token.
  * Si pas de certificate configuré → testing mode (token null).
+ *
+ * Micro iOS : _accept() / contactByCall() pré-créent le track Agora dans
+ * le geste utilisateur (w.__preMicTrack) ou conservent le stream natif
+ * (w.__preMicStream). joinCall() les réutilise pour contourner la
+ * restriction iOS "getUserMedia doit être dans un geste".
  */
 (function(w){
   'use strict';
@@ -19,6 +24,19 @@
   var _currentChannel = null;
   var _remoteUsersCount = 0;
   var _lastError = null;
+
+  // Attend que window.AgoraRTC soit défini (max 8 s — SDK async CDN)
+  function _waitForSDK() {
+    if (w.AgoraRTC) return Promise.resolve(w.AgoraRTC);
+    return new Promise(function(resolve) {
+      var checks = 0;
+      var id = setInterval(function() {
+        checks++;
+        if (w.AgoraRTC) { clearInterval(id); resolve(w.AgoraRTC); return; }
+        if (checks > 80) { clearInterval(id); resolve(null); }
+      }, 100);
+    });
+  }
 
   async function _fetchToken(channelName, uid){
     try{
@@ -38,21 +56,46 @@
     }
   }
 
+  // Obtenir le track micro : réutilise le track pré-créé dans le geste utilisateur
+  // (w.__preMicTrack depuis AgoraRTC, ou w.__preMicStream depuis getUserMedia)
+  async function _getMicTrack(AgoraRTC) {
+    // 1. Track Agora pré-créé dans le geste (optimal)
+    if (w.__preMicTrack) {
+      var t = w.__preMicTrack;
+      w.__preMicTrack = null;
+      console.log('[AgoraCall] Réutilise le track mic pré-créé (geste)');
+      return t;
+    }
+    // 2. Stream getUserMedia pré-capturé — wrappé en custom track Agora
+    if (w.__preMicStream) {
+      var tracks = w.__preMicStream.getAudioTracks();
+      w.__preMicStream = null;
+      if (tracks.length > 0 && typeof AgoraRTC.createCustomAudioTrack === 'function') {
+        try {
+          console.log('[AgoraCall] Réutilise stream getUserMedia pré-capturé');
+          return await AgoraRTC.createCustomAudioTrack({ mediaStreamTrack: tracks[0] });
+        } catch(e) {}
+      }
+    }
+    // 3. Création normale (non-iOS ou permission déjà accordée)
+    return await AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' });
+  }
+
   async function joinCall(channelName){
-    if(!w.AgoraRTC){
-      _lastError = 'Agora SDK non chargé';
-      console.error('[AgoraCall] Agora SDK non chargé');
+    var AgoraRTC = await _waitForSDK();
+    if(!AgoraRTC){
+      _lastError = 'SDK Agora non chargé après 8s';
+      console.error('[AgoraCall]', _lastError);
+      try { if(typeof w.toast === 'function') w.toast('Appel vocal indisponible — SDK Agora absent', 'bad'); } catch(e) {}
       return;
     }
     if(_joined) await leaveCall();
 
-    _client = w.AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    _client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     _currentChannel = channelName;
     _remoteUsersCount = 0;
 
-    var uid = Math.floor(Math.random() * 999998) + 1;
-
-    // user-left : l'autre participant a raccroché → terminer l'appel local
+    // L'autre participant a raccroché → terminer localement
     _client.on('user-left', function(user) {
       _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
       if(_remoteUsersCount === 0) {
@@ -62,13 +105,14 @@
       }
     });
 
+    var uid = Math.floor(Math.random() * 999998) + 1;
     var token = await _fetchToken(channelName, uid);
 
     try{
       await _client.join(APP_ID, channelName, token, uid);
       _joined = true;
 
-      _localTrack = await w.AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' });
+      _localTrack = await _getMicTrack(AgoraRTC);
       await _client.publish([_localTrack]);
 
       _client.on('user-published', async function(user, mediaType){
@@ -78,12 +122,14 @@
       });
 
       _lastError = null;
-      console.log('[AgoraCall] Canal rejoint :', channelName, '— uid :', uid);
+      console.log('[AgoraCall] Canal rejoint :', channelName, 'uid :', uid);
       return uid;
     }catch(e){
       _lastError = String(e && (e.message || e));
       console.error('[AgoraCall] joinCall échoué :', _lastError);
+      try { if(typeof w.toast === 'function') w.toast('Appel vocal : ' + _lastError, 'bad'); } catch(err) {}
       _joined = false;
+      if(_localTrack){ try { _localTrack.stop(); _localTrack.close(); } catch(e2) {} _localTrack = null; }
       throw e;
     }
   }
@@ -126,6 +172,8 @@
       remoteUsersCount: _remoteUsersCount,
       hasAgoraRTC: !!w.AgoraRTC,
       agoraRTCVersion: w.AgoraRTC ? (w.AgoraRTC.VERSION || 'unknown') : null,
+      preMicTrackReady: !!w.__preMicTrack,
+      preMicStreamReady: !!(w.__preMicStream && w.__preMicStream.getAudioTracks().length),
       lastError: _lastError || null,
     };
   }
@@ -159,7 +207,7 @@
   };
 
   w.AgoraCallEngine = AgoraCallEngine;
-  w.CallWebRTC = AgoraCallEngine; // alias rétrocompatibilité
+  w.CallWebRTC = AgoraCallEngine;
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _subscribe);
   else _subscribe();

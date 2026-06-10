@@ -26,11 +26,24 @@
 
   // ── Actions déclenchées par les boutons ──────────────────────────
   function _accept() {
-    // iOS Safari : déclencher getUserMedia dans le contexte du geste utilisateur (avant tout await)
-    // pour que Agora puisse ensuite accéder au micro sans blocage.
-    if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
+    // iOS : pré-créer le track micro Agora dans le geste utilisateur (avant tout await)
+    var AgoraRTC = w.AgoraRTC;
+    if (AgoraRTC && typeof AgoraRTC.createMicrophoneAudioTrack === 'function') {
+      AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+        .then(function(track) {
+          w.__preMicTrack = track;
+          console.log('[CallScreen] preMicTrack Agora prêt');
+        })
+        .catch(function() {
+          if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
+            w.navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(function(s) { w.__preMicStream = s; console.log('[CallScreen] preMicStream prêt (fallback)'); })
+              .catch(function() {});
+          }
+        });
+    } else if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
       w.navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+        .then(function(s) { w.__preMicStream = s; console.log('[CallScreen] preMicStream prêt (no Agora)'); })
         .catch(function() {});
     }
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.accept'); } catch(e) {}
@@ -61,11 +74,15 @@
     }
   }
   function _hangup() {
+    var rid = _state.requestId;
     hide();
     if (w.AgoraCallEngine && typeof w.AgoraCallEngine.leaveCall === 'function') {
       w.AgoraCallEngine.leaveCall();
     }
-    // Propager CALL_ENDED pour que l'autre téléphone se mette à jour
+    // Signaler le raccrochage à l'autre téléphone via Supabase broadcast
+    if (rid && w.CallManager && typeof w.CallManager.broadcastHangup === 'function') {
+      w.CallManager.broadcastHangup(rid);
+    }
     try { if (w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'local-hangup' }); } catch(e) {}
   }
   function _toggleMute() {
