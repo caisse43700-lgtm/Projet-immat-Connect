@@ -141,14 +141,18 @@ const CallManager = (function () {
     // iOS : pré-créer le track micro dans le geste utilisateur (avant tout await)
     var _AgoraRTC = window.AgoraRTC;
     if (_AgoraRTC && typeof _AgoraRTC.createMicrophoneAudioTrack === 'function') {
-      _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
-        .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); })
+      // Stocker la Promise (pas la valeur) pour éviter la race condition si CALL_ACCEPTED arrive
+      // avant que la création du track soit terminée
+      window.__preMicTrackPromise = _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+        .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); return track; })
         .catch(function() {
+          window.__preMicTrackPromise = null;
           if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
             navigator.mediaDevices.getUserMedia({ audio: true })
               .then(function(s) { window.__preMicStream = s; })
               .catch(function() {});
           }
+          return null;
         });
     } else if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
       navigator.mediaDevices.getUserMedia({ audio: true })
