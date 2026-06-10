@@ -295,14 +295,15 @@
       return {
         supported: !!(w.Audio || (typeof HTMLAudioElement !== 'undefined') ||
           (document.createElement && document.createElement('audio').canPlayType)),
+        synthAvailable: !!(w.AudioContext || w.webkitAudioContext),
         unlockedByUserGesture: _unlocked,
         assetsGenerated: _assetsGenerated,
         incomingRingtoneReady: !!(inc && inc.src && !inc.error),
         outgoingToneReady: !!(out && out.src && !out.error),
         messageBeepReady: !!(beep && beep.src && !beep.error),
-        syntheticToneAvailable: !!_getOrCreateCtx(),
+        syntheticToneAvailable: !!ctx,
         syntheticToneActive: _toneActive,
-        webAudioContextState: ctx ? ctx.state : 'not-created',
+        webAudioContextState: ctx ? ctx.state : 'unavailable',
         currentlyPlaying: _currentlyPlaying,
         lastAudioError: _lastError,
         lastAudioBlocked: _lastBlocked,
@@ -328,6 +329,13 @@
     } catch (e) {}
   }
 
+  function setVolume(vol) {
+    var v = Math.max(0, Math.min(1, isFinite(Number(vol)) ? Number(vol) : 0));
+    ['callAudioIncoming', 'callAudioOutgoing', 'messageAudioBeep'].forEach(function(id) {
+      try { var el = _$( id); if (el) el.volume = v; } catch(e) {}
+    });
+  }
+
   w.AudioManager = {
     init: init,
     unlockFromUserGesture: unlockFromUserGesture,
@@ -336,6 +344,7 @@
     playOutgoingTone: playOutgoingTone,
     stopCallAudio: stopCallAudio,
     stopAll: stopAll,
+    setVolume: setVolume,
     getRuntimeState: getRuntimeState
   };
 

@@ -167,31 +167,94 @@ appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqu
 
 ---
 
+## CORRECTIFS VOIX + RACCROCHAGE — 2026-06-10 (session suivante)
+
+**Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
+
+### Cause voix absente
+
+`_accept()` appelait `getUserMedia` et **stoppait immédiatement** les tracks — Agora ne pouvait pas les réutiliser.
+De plus, le SDK Agora (CDN async) pouvait ne pas être chargé au moment de l'appel.
+
+**Fix :**
+- `call-screen.js` v3 `_accept()` : si `AgoraRTC` disponible → `createMicrophoneAudioTrack()` → `w.__preMicTrack`
+  sinon → `getUserMedia` → `w.__preMicStream` (stream conservé, pas stoppé)
+- `calls.js` v7 `contactByCall()` : idem côté appelant (stream conservé dans `w.__preMicStream`)
+- `agora-call-engine.js` v3 `_getMicTrack()` : réutilise `__preMicTrack` ou wrap `__preMicStream` en custom track Agora
+- `agora-call-engine.js` v3 `joinCall()` : attend le SDK jusqu'à 8s via `_waitForSDK()`
+
+### Cause raccrochage non synchronisé
+
+`user-left` Agora ne tire que si les deux téléphones ont rejoint le canal Agora.
+Si la voix échoue sur un côté, ce téléphone ne sait jamais que l'autre a raccroché.
+
+**Fix :** canal de signalisation Supabase Realtime broadcast `ic_call_signal_{requestId}`
+- `calls.js` : `_joinCallSignal(requestId)` → rejoint le canal à `CALL_ACCEPTED` (les deux côtés)
+- `calls.js` : `broadcastHangup(requestId)` → diffuse `HANGUP` sur le canal
+- `call-screen.js` `_hangup()` → appelle `CallManager.broadcastHangup(requestId)` + `CALL_ENDED` local
+- Récepteur du broadcast → `CALL_ENDED` → `CallScreen.hide()` automatique
+
+| Fichier | Version | Changement |
+|---|---|---|
+| `core/agora-call-engine.js` | v3 | `_waitForSDK()` + `_getMicTrack()` avec réutilisation preMicTrack/preMicStream |
+| `core/call-screen.js` | v3 | `_accept()` pré-crée track Agora ; `_hangup()` appelle `broadcastHangup` |
+| `calls.js` | v7 | `_joinCallSignal` / `_leaveCallSignal` / `broadcastHangup` ; `contactByCall` conserve stream |
+| `service-worker.js` | v16 | Cache version bump |
+
+---
+
+## CORRECTIFS POST-AUDIT — 2026-06-10
+
+3 bugs réels identifiés lors de l'audit de session, corrigés et poussés sur `claude/immatconnect-pro-app-dEKGR` (commit c59f76a) :
+
+| Fichier | Bug | Correction |
+|---|---|---|
+| `calls.js` | `init()` empilait les subscriptions bus sur reconnexion | Guard `_busSignalBound` — `_bus.on('CALL_ENDED/MISSED')` exécuté une seule fois |
+| `core/audio-manager.js` | `getRuntimeState()` appelait `_getOrCreateCtx()` — effet de bord création AudioContext | Utilise `_ctx` directement (read-only) |
+| `core/agora-call-engine.js` | `CALL_ENDED` émis par `user-left` sans `requestId` | Ajout de `requestId: _currentChannel` dans le payload |
+
+---
+
 ## PROCHAINE ACTION — TEST TERRAIN
 
-URL de test (cache v15) :
+URL de test (cache v16) :
 ```
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora3
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora4
 ```
 
 Checklist :
 ```text
-□ Recharger les deux téléphones avec ?v=agora3
+□ Recharger les deux téléphones avec ?v=agora4
 □ IMPORTANT : taper une fois n'importe où dans l'app sur chaque téléphone
-  (débloque l'audio iOS/Android)
+  (débloque l'audio iOS/Android — mécanisme pré-play muted)
 □ A appelle B → B doit SONNER (vraie sonnerie téléphone bitonale)
 □ A entend la tonalité de retour (tut… tut…)
-□ B accepte → popup micro → audio bidirectionnel
+□ B accepte → popup micro autorisé → audio bidirectionnel (VOIX)
 □ Appel ne coupe PLUS après 20s
-□ A raccroche → B ferme immédiatement (CALL_ENDED via user-left)
+□ A raccroche → B ferme IMMÉDIATEMENT (broadcast Supabase ic_call_signal)
+□ B raccroche → A ferme IMMÉDIATEMENT (idem)
 □ Boutons compacts en grille 2×2
 ```
 
-### En cas de problème audio
+### En cas de problème voix
+
+Console Safari (Menu → Avancé → Web Inspector) — chercher :
+- `[CallScreen] preMicTrack Agora prêt` → track créé dans le geste ✅
+- `[AgoraCall] Réutilise le track mic pré-créé` → track réutilisé par Agora ✅
+- `[AgoraCall] Canal rejoint` → connexion réussie ✅
+- `[AgoraCall] joinCall échoué` → voir erreur
+
+### En cas de problème raccrochage
+
+- `[CallManager] Signal canal rejoint` → canal broadcast opérationnel ✅
+- `[CallManager] HANGUP diffusé` → signal envoyé ✅
+- `[CallManager] HANGUP broadcast reçu → CALL_ENDED` → signal reçu ✅
+
+### En cas de problème audio sonner
 
 1. Ouvrir Guardian Dashboard → Diagnostic → vérifier voyant **Agora** (🟢 OK ?)
 2. Vérifier que le popup micro a bien été accepté (iOS Réglages → Safari → Micro)
-3. Console Safari : Menu → Avancé → Web Inspector → chercher `[AgoraCall]`
+3. Confirmer qu'un tap a bien été fait sur l'app avant le test
 
 ---
 

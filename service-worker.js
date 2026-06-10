@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §19 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v15';
+const CACHE_NAME  = 'immatconnect-pro-v16';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — addAll() atomique : tout ou rien
@@ -28,6 +28,8 @@ const STATIC_CACHE = [
   './core/aiController.js',
   './core/agora-call-engine.js',
   './core/global-verification-center.js',
+  './core/audio-manager.js',
+  './core/call-screen.js',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant

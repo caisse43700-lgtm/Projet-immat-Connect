@@ -26,11 +26,24 @@
 
   // ── Actions déclenchées par les boutons ──────────────────────────
   function _accept() {
-    // iOS Safari : déclencher getUserMedia dans le contexte du geste utilisateur (avant tout await)
-    // pour que Agora puisse ensuite accéder au micro sans blocage.
-    if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
+    // iOS : pré-créer le track micro Agora dans le geste utilisateur (avant tout await)
+    var AgoraRTC = w.AgoraRTC;
+    if (AgoraRTC && typeof AgoraRTC.createMicrophoneAudioTrack === 'function') {
+      AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
+        .then(function(track) {
+          w.__preMicTrack = track;
+          console.log('[CallScreen] preMicTrack Agora prêt');
+        })
+        .catch(function() {
+          if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
+            w.navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(function(s) { w.__preMicStream = s; console.log('[CallScreen] preMicStream prêt (fallback)'); })
+              .catch(function() {});
+          }
+        });
+    } else if (w.navigator && w.navigator.mediaDevices && typeof w.navigator.mediaDevices.getUserMedia === 'function') {
       w.navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+        .then(function(s) { w.__preMicStream = s; console.log('[CallScreen] preMicStream prêt (no Agora)'); })
         .catch(function() {});
     }
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.accept'); } catch(e) {}
@@ -61,11 +74,15 @@
     }
   }
   function _hangup() {
+    var rid = _state.requestId;
     hide();
     if (w.AgoraCallEngine && typeof w.AgoraCallEngine.leaveCall === 'function') {
       w.AgoraCallEngine.leaveCall();
     }
-    // Propager CALL_ENDED pour que l'autre téléphone se mette à jour
+    // Signaler le raccrochage à l'autre téléphone via Supabase broadcast
+    if (rid && w.CallManager && typeof w.CallManager.broadcastHangup === 'function') {
+      w.CallManager.broadcastHangup(rid);
+    }
     try { if (w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'local-hangup' }); } catch(e) {}
   }
   function _toggleMute() {
@@ -110,11 +127,37 @@
     }
   }
 
+  // ── Phase 2 : minimize / expand / speaker ───────────────────────
+  function minimize() {
+    var full = _$('callOvFull'), mini = _$('callOvMini');
+    if (full) full.style.display = 'none';
+    if (mini) {
+      var mp = _$('callOvMiniPlate'); if (mp) mp.textContent = _state.plate || '--';
+      mini.style.display = 'flex';
+    }
+  }
+
+  function expand() {
+    var full = _$('callOvFull'), mini = _$('callOvMini');
+    if (full) full.style.display = '';
+    if (mini) mini.style.display = 'none';
+  }
+
+  function toggleSpeaker() {
+    // Stub — iOS n'expose pas d'API fiable pour forcer le haut-parleur en WebRTC
+  }
+
+  function _hangupFromMini() {
+    expand();
+    _hangup();
+  }
+
   // ── API publique ─────────────────────────────────────────────────
   function showOutgoing(data) {
     var plate = (data && data.to) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
+    try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
     _render('outgoing', plate, 'Demande de contact envoyée…',
       _BTN.cancel,
       30000);
@@ -124,6 +167,7 @@
     var plate = (data && data.from) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'incoming', plate: plate, requestId: rid };
+    try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({ context: 'incoming', plate: plate }); } catch(e) {}
     _render('incoming', plate, 'Demande de contact entrante',
       _BTN.refuse + _BTN.accept,
       0);
@@ -162,6 +206,8 @@
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay');
     if (ov) ov.style.display = 'none';
+    var mini = _$('callOvMini'); if (mini) mini.style.display = 'none';
+    var full = _$('callOvFull'); if (full) full.style.display = '';
     _state = { mode: 'idle', plate: null, requestId: null };
   }
 
@@ -190,6 +236,14 @@
     showAccepted: showAccepted,
     hide:         hide,
     getState:     getState,
+    minimize:        minimize,
+    expand:          expand,
+    toggleSpeaker:   toggleSpeaker,
+    toggleMute:      _toggleMute,
+    _accept:         _accept,
+    _refuse:         _refuse,
+    _cancel:         _cancel,
+    _hangupFromMini: _hangupFromMini,
   };
 
   w.CallScreen = CallScreen;

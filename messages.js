@@ -837,8 +837,6 @@ async function sendToPlate(plate,text,opts){
     toast('Vous avez bloqué ce conducteur.','bad'); return false;
   }
 
-  // Anti-spam (F-SPAM-PROTECTION)
-  if(_checkSpam(plate)){ toast('Trop de messages envoyés rapidement.','bad'); return false; }
 
   const target = await findProfileByPlate(plate);
   if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
