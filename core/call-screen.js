@@ -127,6 +127,31 @@
     }
   }
 
+  // ── Phase 2 : minimize / expand / speaker ───────────────────────
+  function minimize() {
+    var full = _$('callOvFull'), mini = _$('callOvMini');
+    if (full) full.style.display = 'none';
+    if (mini) {
+      var mp = _$('callOvMiniPlate'); if (mp) mp.textContent = _state.plate || '--';
+      mini.style.display = 'flex';
+    }
+  }
+
+  function expand() {
+    var full = _$('callOvFull'), mini = _$('callOvMini');
+    if (full) full.style.display = '';
+    if (mini) mini.style.display = 'none';
+  }
+
+  function toggleSpeaker() {
+    // Stub — iOS n'expose pas d'API fiable pour forcer le haut-parleur en WebRTC
+  }
+
+  function _hangupFromMini() {
+    expand();
+    _hangup();
+  }
+
   // ── API publique ─────────────────────────────────────────────────
   function showOutgoing(data) {
     var plate = (data && data.to) || '--';
@@ -181,6 +206,8 @@
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay');
     if (ov) ov.style.display = 'none';
+    var mini = _$('callOvMini'); if (mini) mini.style.display = 'none';
+    var full = _$('callOvFull'); if (full) full.style.display = '';
     _state = { mode: 'idle', plate: null, requestId: null };
   }
 
@@ -209,6 +236,14 @@
     showAccepted: showAccepted,
     hide:         hide,
     getState:     getState,
+    minimize:        minimize,
+    expand:          expand,
+    toggleSpeaker:   toggleSpeaker,
+    toggleMute:      _toggleMute,
+    _accept:         _accept,
+    _refuse:         _refuse,
+    _cancel:         _cancel,
+    _hangupFromMini: _hangupFromMini,
   };
 
   w.CallScreen = CallScreen;
