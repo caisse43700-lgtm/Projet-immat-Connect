@@ -48,6 +48,7 @@
       visible: raw.visible || {},
       module: raw.module || {},
       audio: raw.audioRuntime || {},
+      agora: raw.agoraRuntime || {},
       notification: raw.notificationRuntime || {},
       guardian: raw.guardianRuntime || {}
     };
@@ -149,6 +150,17 @@
     return ok('audio','Audio OK');
   }
 
+  function computeAgora(n){
+    var a = n.agora || {};
+    if(a.available === false && !a.hasAgoraRTC){
+      return light('agora','critical','Agora SDK manquant','AgoraCallEngine ou AgoraRTC non chargé.','Recharger l\'app — vérifier le CDN download.agora.io.', 'available=false, hasAgoraRTC=false', 'AGORA_SDK_MISSING');
+    }
+    if(a.available === false){
+      return light('agora','warning','Moteur Agora absent','AgoraCallEngine n\'est pas initialisé.','Recharger l\'app.', 'AgoraCallEngine missing', 'AGORA_ENGINE_MISSING');
+    }
+    return ok('agora','Agora OK');
+  }
+
   function compute(raw){
     var n = normalizeRaw(raw);
     var lights = [
@@ -158,7 +170,8 @@
       computeMessages(n),
       computeOverlays(n),
       computeCache(n),
-      computeAudio(n)
+      computeAudio(n),
+      computeAgora(n)
     ];
     var global = 'ok';
     lights.forEach(function(l){ global = worst(global, l.status); });
