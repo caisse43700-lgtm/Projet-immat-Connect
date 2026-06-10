@@ -17,6 +17,8 @@
   var _joined = false;
   var _muted = false;
   var _currentChannel = null;
+  var _remoteUsersCount = 0;
+  var _lastError = null;
 
   async function _fetchToken(channelName, uid){
     try{
@@ -38,6 +40,7 @@
 
   async function joinCall(channelName){
     if(!w.AgoraRTC){
+      _lastError = 'Agora SDK non chargé';
       console.error('[AgoraCall] Agora SDK non chargé');
       return;
     }
@@ -45,29 +48,49 @@
 
     _client = w.AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     _currentChannel = channelName;
+    _remoteUsersCount = 0;
 
     var uid = Math.floor(Math.random() * 999998) + 1;
-    var token = await _fetchToken(channelName, uid);
 
-    await _client.join(APP_ID, channelName, token, uid);
-    _joined = true;
-
-    _localTrack = await w.AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' });
-    await _client.publish([_localTrack]);
-
-    _client.on('user-published', async function(user, mediaType){
-      await _client.subscribe(user, mediaType);
-      if(mediaType === 'audio' && user.audioTrack) user.audioTrack.play();
+    // user-left : l'autre participant a raccroché → terminer l'appel local
+    _client.on('user-left', function(user) {
+      _remoteUsersCount = Math.max(0, _remoteUsersCount - 1);
+      if(_remoteUsersCount === 0) {
+        leaveCall().catch(function(){});
+        try { if(w.ImmatBus && typeof w.ImmatBus.emit === 'function') w.ImmatBus.emit('CALL_ENDED', { reason: 'remote-left' }); } catch(e) {}
+        console.log('[AgoraCall] Partenaire parti — appel terminé');
+      }
     });
 
-    console.log('[AgoraCall] Canal rejoint :', channelName, '— uid :', uid);
-    return uid;
+    var token = await _fetchToken(channelName, uid);
+
+    try{
+      await _client.join(APP_ID, channelName, token, uid);
+      _joined = true;
+
+      _localTrack = await w.AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' });
+      await _client.publish([_localTrack]);
+
+      _client.on('user-published', async function(user, mediaType){
+        _remoteUsersCount++;
+        await _client.subscribe(user, mediaType);
+        if(mediaType === 'audio' && user.audioTrack) user.audioTrack.play();
+      });
+
+      _lastError = null;
+      console.log('[AgoraCall] Canal rejoint :', channelName, '— uid :', uid);
+      return uid;
+    }catch(e){
+      _lastError = String(e && (e.message || e));
+      console.error('[AgoraCall] joinCall échoué :', _lastError);
+      _joined = false;
+      throw e;
+    }
   }
 
   async function leaveCall(){
     if(_localTrack){
-      _localTrack.stop();
-      _localTrack.close();
+      try { _localTrack.stop(); _localTrack.close(); } catch(e) {}
       _localTrack = null;
     }
     if(_client && _joined){
@@ -77,6 +100,7 @@
     _joined = false;
     _muted = false;
     _currentChannel = null;
+    _remoteUsersCount = 0;
     console.log('[AgoraCall] Canal quitté');
   }
 
@@ -90,6 +114,21 @@
   function isMuted(){ return _muted; }
   function isJoined(){ return _joined; }
   function currentChannel(){ return _currentChannel; }
+
+  function getRuntimeState(){
+    return {
+      available: true,
+      joined: _joined,
+      channel: _currentChannel,
+      localAudioTrackReady: !!_localTrack,
+      published: _joined && !!_localTrack,
+      muted: _muted,
+      remoteUsersCount: _remoteUsersCount,
+      hasAgoraRTC: !!w.AgoraRTC,
+      agoraRTCVersion: w.AgoraRTC ? (w.AgoraRTC.VERSION || 'unknown') : null,
+      lastError: _lastError || null,
+    };
+  }
 
   function _subscribe(){
     var bus = w.ImmatBus;
@@ -106,6 +145,7 @@
     bus.on('CALL_REFUSED',   function(){ leaveCall(); });
     bus.on('CALL_CANCELLED', function(){ leaveCall(); });
     bus.on('CALL_MISSED',    function(){ leaveCall(); });
+    bus.on('CALL_ENDED',     function(){ leaveCall(); });
   }
 
   var AgoraCallEngine = {
@@ -114,7 +154,8 @@
     toggleMute: toggleMute,
     isMuted: isMuted,
     isJoined: isJoined,
-    currentChannel: currentChannel
+    currentChannel: currentChannel,
+    getRuntimeState: getRuntimeState,
   };
 
   w.AgoraCallEngine = AgoraCallEngine;

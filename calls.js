@@ -15,6 +15,7 @@ const CallManager = (function () {
   let _visibilityBound = false;
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
+  const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -123,6 +124,13 @@ const CallManager = (function () {
 
   async function contactByCall(plate, uid) {
     closeContactModal();
+    // iOS Safari : déclencher getUserMedia dans le contexte du geste utilisateur,
+    // avant le premier await, pour que l'appel Agora puisse accéder au micro.
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+        .catch(function() {});
+    }
     if (!_sb || !_uid) return;
     let receiverId = uid || '';
     if (!receiverId && plate) {
@@ -240,6 +248,10 @@ const CallManager = (function () {
   }
 
   async function acceptCall(requestId) {
+    // Annuler le timer d'expiration entrant — empêche CALL_MISSED sur un appel accepté
+    const tid = _missedTimers.get(requestId);
+    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+
     const wasCallScreenIncoming = window.CallScreen?.getState?.().mode === 'incoming';
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
@@ -262,6 +274,10 @@ const CallManager = (function () {
   }
 
   async function refuseCall(requestId) {
+    // Annuler aussi le timer sur refus
+    const tid = _missedTimers.get(requestId);
+    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+
     _hideIncomingPopup();
     if (!_sb || !requestId) return;
     await _sb
@@ -336,12 +352,16 @@ const CallManager = (function () {
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
       _missedCallIds.add(req.id);
+      _missedTimers.delete(req.id);
       _emitCallEvent('CALL_MISSED',{requestId:req.id,from:plate,_src:'ImmatConnect/calls/subscribeIncomingCalls'});
       try{ window.InteractionEngine?.create?.({type:'CALL_MISSED', initiator:plate||'', target:_myPlate||null, payload:{requestId:req.id}, status:'received'}); }catch(e){}
     };
     if (window.CallScreen && typeof window.CallScreen.showIncoming === 'function') {
       const ms = Math.max(0, new Date(req.expires_at) - new Date());
-      if (ms > 0) setTimeout(_onMissed, ms);
+      if (ms > 0) {
+        const tid = setTimeout(_onMissed, ms);
+        _missedTimers.set(req.id, tid);
+      }
       return;
     }
     try { if (window.AudioManager && window.AudioManager.playIncomingRingtone) window.AudioManager.playIncomingRingtone({from: plate, source: 'legacy-popup'}); } catch(e) {}
@@ -452,6 +472,7 @@ const CallManager = (function () {
         hasPendingOutgoing: !!_pendingCallId,
         realtimeSubscribed: !!_chCalls, realtimeStatus: _lastSubscribeStatus || null,
         missedCallsCount: _missedCallIds.size, seenIncomingCount: _seenIncomingCallIds.size,
+        pendingMissedTimers: _missedTimers.size,
         callOverlayVisible: !!(callOverlay && callOverlay.style.display !== 'none'),
         callScreenMode: callScreenState?.mode || null,
         callScreenPlate: callScreenState?.plate || null,
