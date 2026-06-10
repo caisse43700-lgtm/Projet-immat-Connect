@@ -10,116 +10,137 @@ Ce fichier est le point d'entrée de reprise pour l'état de production `main`.
 Dépôt                 : caisse43700-lgtm/Projet-immat-Connect
 Branche production     : main — servie par GitHub Pages
 URL terrain            : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche en cours       : feature/agora-voice-calls
+Tests terrain          : deux iPhone/Safari, BZ-652-LL ↔ BE-521-MM
 ```
 
-## CE QUI A ÉTÉ FAIT DANS CETTE SESSION
+## CE QUI A ÉTÉ FAIT — SESSION 2026-06-10
 
-### Intégration Agora.io (appel vocal) — branche feature/agora-voice-calls
+### 1. Intégration Agora RTC (appels vocaux)
 
-**Pourquoi Agora ?**
-WebRTC natif échoue sur iOS Safari (pas de popup micro, coupure après 5-10s).
-Agora RTC est fiable sur iOS/Android/Desktop sans configuration ICE/STUN/TURN.
-Modèle gratuit : 10 000 min/mois (~166h d'appels).
+**Pourquoi :** WebRTC natif échoue sur iOS Safari — pas de popup micro, coupure après 5-10s.
+Agora RTC est fiable sur iOS/Android/Desktop. 10 000 min/mois gratuites (~166h).
 
-**App ID Agora** : `4771f029e9c6446e872a598870bb74f3` (public par conception)
-**App Certificate** : À configurer dans secrets Supabase (`AGORA_APP_CERTIFICATE`) — JAMAIS dans le code.
+**Branche :** `feature/agora-voice-calls` → mergée dans `main` via PR #285.
 
-### Fichiers créés / modifiés
+#### Fichiers créés
 
-| Fichier | Action |
+| Fichier | Rôle |
 |---|---|
-| `core/agora-call-engine.js` | Nouveau — moteur Agora, remplace call-webrtc.js |
-| `supabase/functions/get-agora-token/index.ts` | Nouveau — génère le token RTC côté serveur |
-| `core/call-screen.js` | Modifié — boutons Muet/Raccrocher en mode accepté |
-| `index.html` | Modifié — charge Agora SDK + agora-call-engine.js |
-| `service-worker.js` | Modifié — v12, cache Agora SDK |
+| `core/agora-call-engine.js` | Moteur Agora — rejoint le canal sur CALL_ACCEPTED, gère mute/raccrocher |
+| `supabase/functions/get-agora-token/index.ts` | Edge Function — génère le token RTC signé avec App Certificate |
 
-### Comment ça fonctionne
+#### Fichiers modifiés
+
+| Fichier | Changement |
+|---|---|
+| `core/call-screen.js` | Mode accepted : boutons Muet + Raccrocher + requestId conservé, auto-hide désactivé |
+| `index.html` | Charge AgoraRTC_N-4.20.0.js (CDN) + agora-call-engine.js |
+| `service-worker.js` | v12 — SDK Agora en cache CDN, download.agora.io dans CDN_HOSTS |
+
+#### Déployé côté Supabase
+
+| Élément | Statut |
+|---|---|
+| Edge Function `get-agora-token` | ✅ Déployée via Supabase Editor |
+| Secret `AGORA_APP_CERTIFICATE` | ✅ Configuré (Primary Certificate copié depuis Agora console) |
+| Secret `AGORA_APP_ID` | Non nécessaire — valeur publique déjà dans le code client |
+
+### 2. Agora — App ID et Certificate
 
 ```text
-A appelle B →
-B accepte →
-calls.js émet CALL_ACCEPTED { requestId, plate, _src }
-ImmatBus distribue l'événement aux deux téléphones
+App ID (public)     : 4771f029e9c6446e872a598870bb74f3
+App Certificate     : dans secrets Supabase → AGORA_APP_CERTIFICATE (jamais dans le code)
+Projet Agora        : Default Project — console.agora.io
+Compte Agora        : connecté via GitHub OAuth
+Quota gratuit       : 10 000 min/mois RTC — 0% utilisé au 2026-06-10
+```
 
-AgoraCallEngine (abonné à ImmatBus) :
+### 3. Guardian Dashboard Summary (sessions précédentes)
+
+| PR | Objet | Statut |
+|---|---|---|
+| #277 | Guardian Summary carte compacte | mergée main |
+| #278 | Compact card affinée | mergée main |
+| #281 | Strip header | mergée main |
+| #282 | Header strip visuel | mergée main |
+| #283 | Actions-only (boutons Diagnostic/Copier) | mergée main |
+| #279 | guardian-summary-engine v1.1 overlay detection | mergée main |
+
+### 4. Correctifs appels (sessions précédentes)
+
+| Commit | Objet | Statut |
+|---|---|---|
+| `de35c060` | Supprime ouverture automatique conversation sur accepted | déployé main |
+| `a7f6d5f7` | call-screen.js : Message/Fermer au lieu de "conversation ouverte" | déployé main |
+| `f9088541` | Nettoie pending avant nouvel appel + retry 23505 | déployé main |
+
+## COMMENT ÇA FONCTIONNE — AGORA CALL
+
+```text
+A appelle B
+  → calls.js émet CALL_INITIATED
+  → CallScreen.showOutgoing()
+
+B accepte
+  → calls.js émet CALL_ACCEPTED { requestId, plate, _src }
+  → ImmatBus distribue aux deux téléphones
+
+AgoraCallEngine (abonné ImmatBus sur les deux téléphones) :
   → reçoit CALL_ACCEPTED
-  → fetchToken(channelName=requestId, uid=random) depuis Edge Function
-  → si AGORA_APP_CERTIFICATE configuré → token signé
-  → sinon → token null (App ID only mode, OK par défaut Agora)
+  → POST get-agora-token { channelName: requestId, uid: random }
+  → Edge Function vérifie JWT, génère token signé (AGORA_APP_CERTIFICATE)
   → client.join(APP_ID, channelName, token, uid)
-  → createMicrophoneAudioTrack + publish
-  → subscribe to remote user → play()
+  → createMicrophoneAudioTrack() → publish()
+  → subscribe remote user → audioTrack.play()
 
 CallScreen :
   → affiche "📞 Appel en cours"
   → boutons : Muet | Raccrocher | 💬 Message | Fermer
   → Raccrocher → AgoraCallEngine.leaveCall() + hide()
   → Muet → AgoraCallEngine.toggleMute()
+
+Fin d'appel (refus/annulation/manqué) :
+  → ImmatBus émet CALL_REFUSED / CALL_CANCELLED / CALL_MISSED
+  → AgoraCallEngine.leaveCall() automatique
 ```
 
-### Testing mode (défaut, pas de certificate requis)
+## PROCHAINE ACTION
 
-Par défaut, un projet Agora est en mode "App ID only" (pas de certificate).
-Le token est `null` → `client.join(APP_ID, channel, null, uid)` fonctionne.
-Activer App Certificate = sécurité renforcée, nécessite le déploiement de l'Edge Function.
+### Tester les appels vocaux
 
-## PROCHAINES ACTIONS
-
-### 1. Déployer l'Edge Function `get-agora-token` (optionnel pour test)
-
-Dans Supabase Dashboard → Edge Functions → New Function → copier le contenu de :
-`supabase/functions/get-agora-token/index.ts`
-
-Pas obligatoire pour les premiers tests (le client tombe en mode null si l'endpoint échoue).
-
-### 2. Créer la PR feature/agora-voice-calls → main
-
-La branche `feature/agora-voice-calls` est prête.
-Merger dans `main` déploie sur GitHub Pages.
-
-### 3. Test terrain
-
-URL de test après merge :
+URL (après merge PR #285) :
 ```
 https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora1
 ```
 
-Vérifier :
-- A appelle B
-- B accepte
-- Les deux voient "📞 Appel en cours"
-- Le popup micro apparaît sur iOS (Agora demande le micro au bon moment)
-- L'audio est bidirectionnel
-- Bouton Muet fonctionne
-- Bouton Raccrocher coupe le canal Agora
+Checklist terrain :
+```text
+□ Recharger les deux téléphones
+□ A (BZ-652-LL) appelle B (BE-521-MM)
+□ B accepte
+□ Les deux voient "📞 Appel en cours"
+□ Popup micro apparaît sur iOS → accepter
+□ Audio bidirectionnel (A entend B, B entend A)
+□ Bouton Muet fonctionne
+□ Bouton Raccrocher coupe le canal
+□ Rappel immédiat fonctionne (pas de pending fantôme)
+```
 
-### 4. Si App Certificate voulu (sécurité)
+### Si l'audio ne fonctionne pas
 
-1. Agora console → Default Project → Configure → Security → activer App Certificate
-2. Copier le certificate
-3. Supabase Dashboard → Settings → Edge Functions → Secrets → ajouter `AGORA_APP_CERTIFICATE`
-4. Déployer l'Edge Function `get-agora-token`
-5. Les tokens seront automatiquement générés
+1. Ouvrir Guardian Dashboard → Diagnostic → vérifier `realtime = SUBSCRIBED`
+2. Vérifier dans la console Safari (iPhone → Réglages → Safari → Avancé → Web Inspector) les erreurs `[AgoraCall]`
+3. Vérifier que le popup micro a bien été accepté
 
-## Correctifs production récents sur `main`
-
-| Commit | Objet | Statut |
-|---|---|---|
-| `de35c060` | Supprime l'ouverture automatique conversation dans `calls.js` sur accepted | déployé |
-| `a7f6d5f7` | `core/call-screen.js` : accepted doit afficher Message/Fermer | déployé |
-| `f9088541` | Nettoie les anciens `pending` avant nouvel appel + retry 23505 | déployé |
-| PR Guardian | Boutons Diagnostic/Copier dans header Dashboard Gardien | déployé |
-
-## Invariants
+## INVARIANTS
 
 ```text
-ANTHROPIC_API_KEY → jamais dans le code
-AGORA_APP_CERTIFICATE → jamais dans le code, toujours secrets Supabase
-owner_plate → immutable (INV-006)
-pas de DELETE sans consentement (INV-COM-009)
-payload anonymisé, pas de contenu message dans Edge Functions (INV-COM-010/015)
-main = production GitHub Pages
-pas d'ouverture automatique de messages sur accepted
+AGORA_APP_CERTIFICATE → jamais dans le code, toujours secrets Supabase ✅
+App ID Agora 4771f029e9c6446e872a598870bb74f3 → public par conception, OK dans le client ✅
+ANTHROPIC_API_KEY → jamais dans le code ✅
+owner_plate → immutable (INV-006) ✅
+pas de DELETE sans consentement (INV-COM-009) ✅
+payload anonymisé, pas de contenu message dans Edge Functions (INV-COM-010/015) ✅
+main = production GitHub Pages ✅
+pas d'ouverture automatique de messages sur accepted ✅
 ```
