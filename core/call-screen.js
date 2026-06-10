@@ -132,6 +132,7 @@
     var plate = (data && data.to) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
+    try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
     _render('outgoing', plate, 'Demande de contact envoyée…',
       _BTN.cancel,
       30000);
@@ -141,6 +142,7 @@
     var plate = (data && data.from) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'incoming', plate: plate, requestId: rid };
+    try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({ context: 'incoming', plate: plate }); } catch(e) {}
     _render('incoming', plate, 'Demande de contact entrante',
       _BTN.refuse + _BTN.accept,
       0);

@@ -328,6 +328,13 @@
     } catch (e) {}
   }
 
+  function setVolume(vol) {
+    var v = Math.max(0, Math.min(1, isFinite(Number(vol)) ? Number(vol) : 0));
+    ['callAudioIncoming', 'callAudioOutgoing', 'messageAudioBeep'].forEach(function(id) {
+      try { var el = _$( id); if (el) el.volume = v; } catch(e) {}
+    });
+  }
+
   w.AudioManager = {
     init: init,
     unlockFromUserGesture: unlockFromUserGesture,
@@ -336,6 +343,7 @@
     playOutgoingTone: playOutgoingTone,
     stopCallAudio: stopCallAudio,
     stopAll: stopAll,
+    setVolume: setVolume,
     getRuntimeState: getRuntimeState
   };
 
