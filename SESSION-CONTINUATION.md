@@ -10,151 +10,116 @@ Ce fichier est le point d'entrée de reprise pour l'état de production `main`.
 Dépôt                 : caisse43700-lgtm/Projet-immat-Connect
 Branche production     : main — servie par GitHub Pages
 URL terrain            : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Produit actuel         : demande de contact temps réel, pas encore appel vocal WebRTC
-Tests terrain          : deux iPhone/Safari, BZ-652-LL ↔ BE-521-MM
+Branche en cours       : feature/agora-voice-calls
 ```
 
-## Clarification produit
+## CE QUI A ÉTÉ FAIT DANS CETTE SESSION
 
-Le système actuel n'est pas encore un appel vocal type téléphone.
+### Intégration Agora.io (appel vocal) — branche feature/agora-voice-calls
 
-Il implémente :
+**Pourquoi Agora ?**
+WebRTC natif échoue sur iOS Safari (pas de popup micro, coupure après 5-10s).
+Agora RTC est fiable sur iOS/Android/Desktop sans configuration ICE/STUN/TURN.
+Modèle gratuit : 10 000 min/mois (~166h d'appels).
+
+**App ID Agora** : `4771f029e9c6446e872a598870bb74f3` (public par conception)
+**App Certificate** : À configurer dans secrets Supabase (`AGORA_APP_CERTIFICATE`) — JAMAIS dans le code.
+
+### Fichiers créés / modifiés
+
+| Fichier | Action |
+|---|---|
+| `core/agora-call-engine.js` | Nouveau — moteur Agora, remplace call-webrtc.js |
+| `supabase/functions/get-agora-token/index.ts` | Nouveau — génère le token RTC côté serveur |
+| `core/call-screen.js` | Modifié — boutons Muet/Raccrocher en mode accepté |
+| `index.html` | Modifié — charge Agora SDK + agora-call-engine.js |
+| `service-worker.js` | Modifié — v12, cache Agora SDK |
+
+### Comment ça fonctionne
 
 ```text
-A demande un contact avec B
-B reçoit une sonnerie / UI entrante
-B accepte ou refuse
-A et B voient l'état accepté
-L'ouverture des messages doit être explicite via bouton Message
+A appelle B →
+B accepte →
+calls.js émet CALL_ACCEPTED { requestId, plate, _src }
+ImmatBus distribue l'événement aux deux téléphones
+
+AgoraCallEngine (abonné à ImmatBus) :
+  → reçoit CALL_ACCEPTED
+  → fetchToken(channelName=requestId, uid=random) depuis Edge Function
+  → si AGORA_APP_CERTIFICATE configuré → token signé
+  → sinon → token null (App ID only mode, OK par défaut Agora)
+  → client.join(APP_ID, channelName, token, uid)
+  → createMicrophoneAudioTrack + publish
+  → subscribe to remote user → play()
+
+CallScreen :
+  → affiche "📞 Appel en cours"
+  → boutons : Muet | Raccrocher | 💬 Message | Fermer
+  → Raccrocher → AgoraCallEngine.leaveCall() + hide()
+  → Muet → AgoraCallEngine.toggleMute()
 ```
 
-Le vrai appel vocal nécessitera une phase séparée WebRTC : micro, remote audio, mute, haut-parleur, raccrocher, signaling offer/answer/ICE.
+### Testing mode (défaut, pas de certificate requis)
+
+Par défaut, un projet Agora est en mode "App ID only" (pas de certificate).
+Le token est `null` → `client.join(APP_ID, channel, null, uid)` fonctionne.
+Activer App Certificate = sécurité renforcée, nécessite le déploiement de l'Edge Function.
+
+## PROCHAINES ACTIONS
+
+### 1. Déployer l'Edge Function `get-agora-token` (optionnel pour test)
+
+Dans Supabase Dashboard → Edge Functions → New Function → copier le contenu de :
+`supabase/functions/get-agora-token/index.ts`
+
+Pas obligatoire pour les premiers tests (le client tombe en mode null si l'endpoint échoue).
+
+### 2. Créer la PR feature/agora-voice-calls → main
+
+La branche `feature/agora-voice-calls` est prête.
+Merger dans `main` déploie sur GitHub Pages.
+
+### 3. Test terrain
+
+URL de test après merge :
+```
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora1
+```
+
+Vérifier :
+- A appelle B
+- B accepte
+- Les deux voient "📞 Appel en cours"
+- Le popup micro apparaît sur iOS (Agora demande le micro au bon moment)
+- L'audio est bidirectionnel
+- Bouton Muet fonctionne
+- Bouton Raccrocher coupe le canal Agora
+
+### 4. Si App Certificate voulu (sécurité)
+
+1. Agora console → Default Project → Configure → Security → activer App Certificate
+2. Copier le certificate
+3. Supabase Dashboard → Settings → Edge Functions → Secrets → ajouter `AGORA_APP_CERTIFICATE`
+4. Déployer l'Edge Function `get-agora-token`
+5. Les tokens seront automatiquement générés
 
 ## Correctifs production récents sur `main`
 
 | Commit | Objet | Statut |
 |---|---|---|
 | `de35c060` | Supprime l'ouverture automatique conversation dans `calls.js` sur accepted | déployé |
-| `a7f6d5f7` | `core/call-screen.js` : accepted doit afficher Message/Fermer au lieu de “conversation ouverte” | déployé |
+| `a7f6d5f7` | `core/call-screen.js` : accepted doit afficher Message/Fermer | déployé |
 | `f9088541` | Nettoie les anciens `pending` avant nouvel appel + retry 23505 | déployé |
-| `ac53d3c` | Ajoute `docs/PROFESSIONAL_STABILIZATION_ROADMAP.md` | déployé |
-
-## Constats terrain récents
-
-### 1. Synchronisation acceptée fonctionne partiellement
-
-Les deux téléphones ont atteint un état accepté, ce qui valide :
-
-```text
-Supabase Realtime actif
-CALL_ACCEPTED circule
-A et B reçoivent l'état accepté
-```
-
-### 2. Ancien wording / ancien comportement détecté
-
-Avant `a7f6d5f7`, `main/core/call-screen.js` affichait :
-
-```text
-Contact accepté — conversation ouverte
-```
-
-et fermait l'overlay après 2 secondes. Ce comportement est contraire au périmètre actuel et a été corrigé.
-
-### 3. Pending fantôme détecté
-
-Guardian OBD a montré côté appelant :
-
-```text
-initialized = true
-uidKnown = true
-myPlate = BZ-652-LL
-realtimeStatus = SUBSCRIBED
-pendingCallId = null
-hasPendingOutgoing = false
-```
-
-mais l'app affichait :
-
-```text
-Une demande est déjà en attente de réponse.
-```
-
-Interprétation : runtime local propre, mais ligne `call_requests.status='pending'` encore présente en DB. Mitigation appliquée : expirer les pending du même caller/receiver avant nouvel insert et retry après 23505.
-
-### 4. Messages présents mais ouverture thread à vérifier
-
-Guardian OBD a montré :
-
-```text
-conversationRowsCount = 1
-threadBubblesCount = 201
-```
-
-Donc les données messages existent. Si l'ouverture par plaque échoue, auditer l'UI/panels/pointer-events plutôt que la donnée.
-
-## Prochaine procédure terrain
-
-Après propagation GitHub Pages, ouvrir sur les deux téléphones :
-
-```text
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?stabilize=f9088541
-```
-
-Puis :
-
-1. Recharger une fois sur les deux téléphones.
-2. Vérifier dans Guardian Dashboard :
-   - `CallManager.loaded = true`
-   - `initialized = true`
-   - `uidKnown = true`
-   - `myPlate` correct
-   - `realtimeStatus = SUBSCRIBED`
-   - `pendingCallId = null` avant appel
-   - `callScreenMode = idle` avant appel
-3. A appelle B.
-4. B accepte.
-5. Attendu :
-   - A et B voient `Contact accepté`
-   - pas de texte `conversation ouverte`
-   - boutons `Message` / `Fermer` visibles
-   - aucune ouverture automatique du thread
-6. Tester ensuite :
-   - rappel immédiat après accepted
-   - refus
-   - expiration
-   - ouverture manuelle du thread via Message
-   - ouverture manuelle du thread depuis liste Messages
-
-## Définition de fini — phase demande de contact
-
-```text
-fresh reload
-A appelle B
-B accepte
-A voit Contact accepté
-B voit Contact accepté
-Message thread ne s'ouvre pas automatiquement
-Message ouvre le thread manuellement
-Fermer ferme l'overlay
-rappel immédiat fonctionne sans pending fantôme
-refus fonctionne
-expiration fonctionne
-liste Messages ouvre encore le thread par plaque
-Guardian Dashboard ne révèle aucun overlay bloquant
-```
-
-## Documents de référence
-
-- `docs/PROFESSIONAL_STABILIZATION_ROADMAP.md` — roadmap professionnelle de stabilisation.
-- `AGENTS.md` — panneau d'entrée IA.
+| PR Guardian | Boutons Diagnostic/Copier dans header Dashboard Gardien | déployé |
 
 ## Invariants
 
 ```text
+ANTHROPIC_API_KEY → jamais dans le code
+AGORA_APP_CERTIFICATE → jamais dans le code, toujours secrets Supabase
+owner_plate → immutable (INV-006)
+pas de DELETE sans consentement (INV-COM-009)
+payload anonymisé, pas de contenu message dans Edge Functions (INV-COM-010/015)
 main = production GitHub Pages
-ne pas confondre branche feature et environnement testé
 pas d'ouverture automatique de messages sur accepted
-pas de suppression DB destructive sans consentement
-call_requests.pending doit toujours sortir vers accepted/refused/cancelled/expired
 ```

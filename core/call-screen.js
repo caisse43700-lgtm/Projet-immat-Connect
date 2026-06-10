@@ -53,6 +53,19 @@
       w.App.actOpenConv(plate);
     }
   }
+  function _hangup() {
+    hide();
+    if (w.AgoraCallEngine && typeof w.AgoraCallEngine.leaveCall === 'function') {
+      w.AgoraCallEngine.leaveCall();
+    }
+  }
+  function _toggleMute() {
+    if (!w.AgoraCallEngine || typeof w.AgoraCallEngine.toggleMute !== 'function') return;
+    w.AgoraCallEngine.toggleMute().then(function(nowMuted) {
+      var btn = _$('csMute');
+      if (btn) btn.textContent = nowMuted ? '🔊 Unmute' : '🎤 Muet';
+    });
+  }
 
   // ── Rendu ────────────────────────────────────────────────────────
   var _BTN = {
@@ -61,11 +74,13 @@
     cancel:  '<button type="button" id="csCancel"  class="cs-btn cs-btn-cancel">Annuler</button>',
     message: '<button type="button" id="csMessage" class="cs-btn cs-btn-msg">💬 Message</button>',
     close:   '<button type="button" id="csClose"   class="cs-btn cs-btn-close">Fermer</button>',
+    hangup:  '<button type="button" id="csHangup"  class="cs-btn cs-btn-refuse">📵 Raccrocher</button>',
+    mute:    '<button type="button" id="csMute"    class="cs-btn">🎤 Muet</button>',
   };
 
   function _bindButtons() {
     var m = { csAccept: _accept, csRefuse: _refuse, csCancel: _cancel,
-              csMessage: _message, csClose: hide };
+              csMessage: _message, csClose: hide, csHangup: _hangup, csMute: _toggleMute };
     Object.keys(m).forEach(function (id) {
       var el = _$(id);
       if (el) el.onclick = m[id];
@@ -123,10 +138,11 @@
 
   function showAccepted(data) {
     var plate = (data && (data['with'] || data.plate)) || '--';
-    _state = { mode: 'accepted', plate: plate, requestId: null };
-    _render('accepted', plate, 'Contact accepté',
-      _BTN.message + _BTN.close,
-      10000);
+    var rid   = (data && data.requestId) || null;
+    _state = { mode: 'accepted', plate: plate, requestId: rid };
+    _render('accepted', plate, '📞 Appel en cours',
+      _BTN.mute + _BTN.hangup + _BTN.message + _BTN.close,
+      0);
   }
 
   function hide() {
