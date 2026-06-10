@@ -203,6 +203,18 @@ Si la voix échoue sur un côté, ce téléphone ne sait jamais que l'autre a ra
 
 ---
 
+## CORRECTIFS POST-AUDIT — 2026-06-10
+
+3 bugs réels identifiés lors de l'audit de session, corrigés et poussés sur `claude/immatconnect-pro-app-dEKGR` (commit c59f76a) :
+
+| Fichier | Bug | Correction |
+|---|---|---|
+| `calls.js` | `init()` empilait les subscriptions bus sur reconnexion | Guard `_busSignalBound` — `_bus.on('CALL_ENDED/MISSED')` exécuté une seule fois |
+| `core/audio-manager.js` | `getRuntimeState()` appelait `_getOrCreateCtx()` — effet de bord création AudioContext | Utilise `_ctx` directement (read-only) |
+| `core/agora-call-engine.js` | `CALL_ENDED` émis par `user-left` sans `requestId` | Ajout de `requestId: _currentChannel` dans le payload |
+
+---
+
 ## PROCHAINE ACTION — TEST TERRAIN
 
 URL de test (cache v16) :
