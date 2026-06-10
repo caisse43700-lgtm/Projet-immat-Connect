@@ -291,18 +291,19 @@
       var inc = _$('callAudioIncoming') || _$('callAudio');
       var out = _$('callAudioOutgoing') || _$('callAudio');
       var beep = _$('messageAudioBeep') || _$('callAudio');
-      var ctx = _ctx;
+      var ctx = _getOrCreateCtx();
       return {
         supported: !!(w.Audio || (typeof HTMLAudioElement !== 'undefined') ||
           (document.createElement && document.createElement('audio').canPlayType)),
+        synthAvailable: !!(w.AudioContext || w.webkitAudioContext),
         unlockedByUserGesture: _unlocked,
         assetsGenerated: _assetsGenerated,
         incomingRingtoneReady: !!(inc && inc.src && !inc.error),
         outgoingToneReady: !!(out && out.src && !out.error),
         messageBeepReady: !!(beep && beep.src && !beep.error),
-        syntheticToneAvailable: !!_getOrCreateCtx(),
+        syntheticToneAvailable: !!ctx,
         syntheticToneActive: _toneActive,
-        webAudioContextState: ctx ? ctx.state : 'not-created',
+        webAudioContextState: ctx ? ctx.state : 'unavailable',
         currentlyPlaying: _currentlyPlaying,
         lastAudioError: _lastError,
         lastAudioBlocked: _lastBlocked,
