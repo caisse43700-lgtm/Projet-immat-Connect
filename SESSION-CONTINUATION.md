@@ -104,26 +104,59 @@ Fin d'appel (refus/annulation/manqué) :
 
 ---
 
-## PROCHAINE ACTION — TEST TERRAIN
+### PR #288 — feat: Global Verification Center + correctif réception (en attente merge)
 
-GitHub Pages à jour après PR #285 + #286 mergées.
+**Branche :** `global-verification-center`
 
-URL de test :
-```
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora1
-```
+**Pourquoi :** Deux changements critiques groupés :
 
-Checklist :
+1. **CORRECTIF RÉCEPTION (hotfix)** — Plus de réception signalée après PR #285.
+   Cause : `AgoraRTC_N-4.20.0.js` (~600 KB CDN) chargé en synchrone AVANT
+   `call-notification-runtime.js` — bloquait le chargement de ce script sur iOS mobile lent.
+   Fix : `call-notification-runtime.js` déplacé avant le CDN Agora + `async` ajouté au CDN.
+
+2. **Global Verification Center** — Audit 8 sections en lecture seule depuis Dashboard Gardien.
+   Bouton "Global" (vert) dans le header → `window.GlobalVerificationCenter.run()`.
+
+| Fichier | Changement |
+|---|---|
+| `index.html` | `call-notification-runtime.js` avant Agora CDN, CDN Agora `async` |
+| `core/global-verification-center.js` | Nouveau — 8 sections read-only (app/dashboard/messages/calls/audio/webrtc/cache/supabase) |
+| `core/guardian-dashboard-summary.js` | v1.6 — bouton Global + panel _globalCheckInlinePanel |
+| `service-worker.js` | v13 — global-verification-center.js en cache statique |
+
+---
+
+## BUG ACTIF — Plus de réception (RÉSOLU dans PR #288, pas encore mergé)
+
 ```text
-□ Recharger les deux téléphones (vider le cache si besoin)
-□ A (BZ-652-LL) appelle B (BE-521-MM)
-□ B accepte
-□ Les deux voient "📞 Appel en cours"
-□ Popup micro apparaît sur iOS → Autoriser
-□ Audio bidirectionnel (A entend B, B entend A)
-□ Bouton Muet fonctionne
-□ Bouton Raccrocher coupe le canal
-□ Rappel immédiat possible (pas de pending fantôme)
+Symptôme    : Téléphone B ne reçoit plus la sonnerie d'appel entrant
+Cause       : script Agora CDN synchrone bloquait call-notification-runtime.js
+Fix         : call-notification-runtime.js déplacé avant CDN Agora + async
+Branche     : global-verification-center (non mergée)
+Action      : Merger PR #288 pour restaurer la réception
+```
+
+---
+
+## PROCHAINE ACTION
+
+**Merger la branche `global-verification-center` → main** pour déployer :
+1. Le correctif réception (hotfix critique)
+2. Le Global Verification Center
+
+URL de test après merge :
+```
+https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora2
+```
+
+Checklist réception :
+```text
+□ Recharger les deux téléphones (?v=agora2 pour vider le cache)
+□ B (BE-521-MM) en veille, A (BZ-652-LL) appelle
+□ B doit sonner — si oui, correctif OK
+□ B accepte → audio bidirectionnel (A entend B, B entend A)
+□ Bouton Global dans Guardian Dashboard → rapport 8 sections
 ```
 
 ### En cas de problème audio
@@ -138,6 +171,7 @@ Checklist :
 
 | PR | Branche | Objet | Date |
 |---|---|---|---|
+| #288 | global-verification-center | Global Verification Center + fix réception | 2026-06-10 (en attente) |
 | #285 | feature/agora-voice-calls | Appels vocaux Agora RTC | 2026-06-10 |
 | #286 | feature/agora-voice-calls | Diagnostics Agora | 2026-06-10 |
 | #283 | guardian/actions-only | Guardian : boutons Diagnostic/Copier dans header | 2026-06-10 |
