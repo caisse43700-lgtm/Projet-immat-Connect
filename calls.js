@@ -276,6 +276,8 @@ const CallManager = (function () {
     _recentOutgoingIds.add(data.id);
     setTimeout(function() { _recentOutgoingIds.delete(data.id); }, 90000);
     console.log('[CallManager] requestCall → plaque:', receiverPlate, 'id:', data.id);
+    // Toast de diagnostic visible — montre exactement quelle plaque est transmise
+    try { if (typeof toast === 'function') toast('Appel → ' + (receiverPlate || '(vide)'), receiverPlate ? 'ok' : 'bad'); } catch(e) {}
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
     _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
@@ -417,9 +419,36 @@ const CallManager = (function () {
       });
   }
 
+  // Poll DB toutes les 2s tant que l'appel entrant est affiché
+  // Filet de sécurité si broadcast CANCEL / postgres_changes n'arrivent pas
+  function _startCancelPoll(requestId) {
+    if (!_sb || !requestId) return;
+    var checks = 0;
+    var pollId = setInterval(async function() {
+      checks++;
+      if (checks > 20 || !_missedTimers.has(requestId)) { clearInterval(pollId); return; }
+      try {
+        var res = await _sb.from('call_requests').select('status').eq('id', requestId).maybeSingle();
+        var st = res && res.data && res.data.status;
+        if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
+          clearInterval(pollId);
+          var tid = _missedTimers.get(requestId);
+          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('poll-cancel'); } catch(e) {}
+          _seenIncomingCallIds.add(requestId);
+          _hideIncomingPopup();
+          _leaveCallSignal();
+          console.log('[CallManager] Poll : appel terminal :', st, requestId);
+          if (st === 'cancelled') _emitCallEvent('CALL_CANCELLED', { requestId: requestId, reason: 'poll' });
+        }
+      } catch(e) {}
+    }, 2000);
+  }
+
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
+    _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
