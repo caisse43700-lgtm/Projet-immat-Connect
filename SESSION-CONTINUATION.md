@@ -194,80 +194,81 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
-## ÉTAT — 2026-06-11 — CORRECTIFS calls.js v14 EN PRODUCTION
+## ÉTAT — 2026-06-11 — RÉPARATION COMPLÈTE calls.js v16 EN PRODUCTION
 
 ### Versions en production
 
 ```text
-calls.js v14 poussé sur main (commit 15121fb via MCP GitHub API)
-index.html : calls.js?v=12 — non critique, SW réseau-first sert toujours le contenu v14
-SW : immatconnect-pro-v21 actif chez l'utilisateur
-Utilisateur confirmé : "C'est la bonne version" (IMG_5568)
+calls.js v16 — poussé sur main via MCP GitHub API
+Commit local : sur branche claude/immatconnect-pro-app-dEKGR + main
+SW : immatconnect-pro-v21 actif — réseau-first, sert toujours le dernier calls.js
 ```
 
-### Bug P0 — CANCEL ne ferme pas B — CAUSE RACINE CORRIGÉE en v13, en production depuis v14
+### Audit complet 2026-06-11 — 4 bugs confirmés, 4 fixes appliqués
 
-**Cause confirmée par screenshot utilisateur :** toast `⚠️ Poll arrêté tôt` visible sur B.
+#### FIX #1 — `cancelCallRequest` : `_missedTimers.delete(requestId)` manquant
 
-**Pourquoi le poll s'arrêtait :** dans `_showIncomingPopup`, quand `ms <= 0` (appel déjà
-expiré à réception), `_missedTimers.set(req.id, tid)` n'était jamais appelé.
-Le poll guard `!_missedTimers.has(requestId)` retournait `true` dès le premier tick → arrêt immédiat.
+**Cause :** `cancelCallRequest()` n'appelait pas `_missedTimers.delete(requestId)`. Toutes les
+autres fonctions (acceptCall, refuseCall, postgres_changes UPDATE, poll detect, broadcast CANCEL)
+le font. Nettoyage défensif ajouté.
 
-**Fix v13 (en production depuis v14) :**
 ```js
-if (ms > 0) {
-  const tid = setTimeout(_onMissed, ms);
-  _missedTimers.set(req.id, tid);
-} else {
-  _missedTimers.set(req.id, null); // sentinel — poll tourne quand même
-}
+// après _pendingCallPlate = null :
+_missedTimers.delete(requestId); // ← ajouté
 ```
 
-Tous les cleanups `_missedTimers` mis à jour : `if (tid) clearTimeout(tid); _missedTimers.delete(id);`
-— `delete()` toujours appelé même si la valeur est `null`.
+#### FIX #2 — Double `showOutgoing()` → double tonalité + double render
 
-### Bug NEW — "Une demande est déjà en attente" (re-appel impossible) — CORRIGÉ en v13
+**Cause :** `requestCall()` appelait `_showSentBanner()` (→ `showOutgoing` direct) PUIS émettait
+`CALL_INITIATED` (→ `showOutgoing` via bus call-screen.js). Résultat : overlay rendu deux fois,
+timer 30s remis à zéro, double tonalité audio.
 
-**Cause :** `_expireMyPendingCalls()` et le timer 31s de `_showSentBanner` faisaient
-`update({ status: 'expired' })`. La RLS `call_req_cancel` n'autorise que `'cancelled'`
-pour le requester → update bloquée silencieusement → ancienne ligne `pending` bloquait le `INSERT`.
+**Fix :** ordre inversé dans `requestCall` (CALL_INITIATED en premier), déduplication dans
+`_showSentBanner` via `getState()`.
 
-**Fix v13 :** les deux utilisent maintenant `update({ status: 'cancelled' })`.
-
-### Bug PLAQUE '--' en mode "Appel en cours" — CORRIGÉ en v14
-
-**Cause :** `acceptCall()` testait `if (data?.requester_plate)` — si `requester_plate` est
-null en DB, condition fausse même quand l'accept a réussi (`data` non-null). La branche `else`
-se déclenchait : popup cachée, CALL_ACCEPTED non émis → plaque `--` affichée.
-
-**Fix v14 :**
 ```js
-let _incomingCallPlate = null; // nouvelle variable — plaque mémorisée à la réception
+// requestCall — nouvel ordre :
+_emitCallEvent('CALL_INITIATED', {...});   // bus → showOutgoing + audio (1er)
+_showSentBanner(receiverPlate, data.id);  // 31s timer + dedup check (2ème)
 
-// Dans _showIncomingPopup :
-_incomingCallPlate = req.requester_plate || null;
-
-// Dans acceptCall :
-if (data) { // condition corrigée — succès = data non-null
-  const callerPlate = data.requester_plate || _incomingCallPlate || null;
-  _incomingCallPlate = null;
-  _emitCallEvent('CALL_ACCEPTED', {with: callerPlate, plate: callerPlate, ...});
-}
+// _showSentBanner — déduplication :
+const csState = window.CallScreen.getState();
+if (csState.mode === 'outgoing' && csState.requestId === requestId) return; // déjà affiché
 ```
 
-### Faux positif `⚠️ Poll arrêté tôt` — SUPPRIMÉ en v14
+Path de recovery (`_recoverPendingRequest` → `_showSentBanner`) non affecté : mode ≠ 'outgoing'
+au retour arrière-plan → direct `showOutgoing` appelé normalement.
 
-Le toast était déclenché à chaque accept/refuse (comportement normal : poll s'arrête).
-Fix v14 : toast supprimé, `console.warn` conservé pour diagnostic.
+#### FIX #3 — Overlay "Appel en cours" côté A affiche `--` après accept de B
 
-### PROCHAINE ACTION — TEST TERRAIN v14
+**Cause :** `outgoingUpdateHandler` émettait `CALL_ACCEPTED` avec `r.receiver_plate` brut,
+qui peut être `null` en DB → `showAccepted` affichait `--`.
+
+**Fix :** fallback sur `_pendingCallPlate` (mémorisé au moment de l'appel) :
+
+```js
+const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+_emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, ...});
+```
+
+#### FIX #4 — Overlay sortant affiche `--` en recovery (race condition)
+
+**Cause :** `_recoverPendingRequest()` appelée sur visibilitychange avant que `_pendingCallPlate`
+soit défini. Partiellement corrigé en v15 — guards maintenus en v16.
+
+```js
+// _recoverPendingRequest : fallback _pendingCallPlate + guard if (!receiverPlate) return
+// _showSentBanner : effectivePlate = plate || _pendingCallPlate || null
+```
+
+### PROCHAINE ACTION — TEST TERRAIN v16
 
 Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
-1. A appelle B → plaque de A apparaît dans le cercle côté B ✅
-2. B accepte → "Appel en cours" avec plaque de A visible (plus de `--`) — **À CONFIRMER**
-3. A annule → B doit fermer dans les 1.5s (poll) — **À CONFIRMER**
-4. Plus de `⚠️ Poll arrêté tôt` — **À CONFIRMER**
-5. A peut rappeler B immédiatement après annulation (plus de "déjà en attente") — **À CONFIRMER**
+1. A appelle B → overlay sortant affiche BE-521-MM (plus de `--`) ← **BUG SIGNALÉ, À CONFIRMER**
+2. B accepte → "Appel en cours" côté A affiche BE-521-MM (plus de `--`) ← **À CONFIRMER**
+3. A annule → B ferme dans les 1.5s (poll ou broadcast) ← **À CONFIRMER**
+4. Une seule tonalité d'appel côté A (plus de double bip) ← **À CONFIRMER**
+5. A peut rappeler immédiatement après annulation ← **DÉJÀ OK**
 
 ---
 
