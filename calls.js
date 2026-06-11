@@ -270,6 +270,7 @@ const CallManager = (function () {
     _pendingCallId = data.id;
     _recentOutgoingIds.add(data.id);
     setTimeout(function() { _recentOutgoingIds.delete(data.id); }, 90000);
+    _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
     _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
@@ -322,6 +323,13 @@ const CallManager = (function () {
   }
 
   async function cancelCallRequest(requestId) {
+    // Diffuser CANCEL avant de quitter le canal (comme HANGUP)
+    const ch = _signalChannel;
+    const rid = requestId || _signalRequestId;
+    if (ch && rid) {
+      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
+      console.log('[CallManager] CANCEL diffusé :', rid);
+    }
     _leaveCallSignal();
     _hideSentBanner();
     if (!_sb || !requestId) return;
@@ -400,6 +408,7 @@ const CallManager = (function () {
 
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
+    _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
@@ -488,6 +497,8 @@ const CallManager = (function () {
 
   function _joinCallSignal(requestId) {
     if (!_sb || !requestId) return;
+    // Déjà abonné à ce canal — ne pas recréer
+    if (_signalRequestId === requestId && _signalChannel) return;
     _leaveCallSignal();
     _signalRequestId = requestId;
     _signalChannel = _sb.channel('ic_call_signal_' + requestId)
@@ -495,6 +506,16 @@ const CallManager = (function () {
         console.log('[CallManager] HANGUP broadcast reçu → CALL_ENDED');
         _leaveCallSignal();
         _emitCallEvent('CALL_ENDED', { reason: 'remote-hangup', requestId: requestId });
+      })
+      .on('broadcast', { event: 'CANCEL' }, function() {
+        console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
+        const tid = _missedTimers.get(requestId);
+        if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+        try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
+        _seenIncomingCallIds.add(requestId);
+        _hideIncomingPopup();
+        _leaveCallSignal();
+        _emitCallEvent('CALL_CANCELLED', { reason: 'remote-cancel', requestId: requestId });
       })
       .subscribe();
     console.log('[CallManager] Signal canal rejoint :', requestId);
