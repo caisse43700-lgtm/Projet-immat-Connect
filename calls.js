@@ -280,7 +280,6 @@ const CallManager = (function () {
     const tid = _missedTimers.get(requestId);
     if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
 
-    const wasCallScreenIncoming = window.CallScreen?.getState?.().mode === 'incoming';
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
     const { data, error } = await _sb
@@ -297,6 +296,7 @@ const CallManager = (function () {
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     } else {
       // Aucune ligne mise à jour — appel annulé ou expiré par A entre-temps
+      try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('accept-no-row'); } catch(e) {}
       _hideIncomingPopup();
       _showError('Appel annulé ou expiré.');
     }

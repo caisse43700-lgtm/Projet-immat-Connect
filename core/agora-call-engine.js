@@ -25,6 +25,8 @@
   var _currentChannel = null;
   var _remoteUsersCount = 0;
   var _lastError = null;
+  // IDs d'appels terminés — bloque tout joinCall() retardé (stale events Supabase)
+  var _terminalRequestIds = new Set();
 
   // Attend que window.AgoraRTC soit défini (max 8 s — SDK async CDN)
   function _waitForSDK() {
@@ -237,15 +239,24 @@
     bus.on('CALL_ACCEPTED', function(e){
       var rid = e.payload && e.payload.requestId;
       if(!rid) return;
+      if(_terminalRequestIds.has(rid)){
+        console.warn('[AgoraCall] CALL_ACCEPTED ignoré — requestId terminal :', rid);
+        return;
+      }
       joinCall(rid).catch(function(err){
         console.error('[AgoraCall] joinCall échoué :', err);
       });
     });
 
-    bus.on('CALL_REFUSED',   function(){ leaveCall(); });
-    bus.on('CALL_CANCELLED', function(){ leaveCall(); });
-    bus.on('CALL_MISSED',    function(){ leaveCall(); });
-    bus.on('CALL_ENDED',     function(){ leaveCall(); });
+    bus.on('CALL_REFUSED',   function(e){ _markTerminal(e); leaveCall(); });
+    bus.on('CALL_CANCELLED', function(e){ _markTerminal(e); leaveCall(); });
+    bus.on('CALL_MISSED',    function(e){ _markTerminal(e); leaveCall(); });
+    bus.on('CALL_ENDED',     function(e){ _markTerminal(e); leaveCall(); });
+  }
+
+  function _markTerminal(e){
+    var rid = e && e.payload && e.payload.requestId;
+    if(rid) _terminalRequestIds.add(rid);
   }
 
   var AgoraCallEngine = {
