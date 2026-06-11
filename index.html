@@ -668,7 +668,7 @@ openGardienDashboard(){
           </div>
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">CACHE_NAME</div>
-            <div style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v8</div>
+            <div id="dashCacheName" style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v21</div>
           </div>
         </div>
         <div style="margin-top:8px;font-size:10px;color:#555">Recalcul complet : <code>node scripts/health-scores.js</code></div>
@@ -2458,13 +2458,17 @@ window._forceSwUpdate = async function() {
   } catch(e) {}
   window.location.reload();
 };
-// Affiche le bouton Force MAJ si le SW actif n'est pas à jour
+// Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
   var CURRENT = 'immatconnect-pro-v21';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
-    var hasCurrentCache = keys.some(function(k){ return k === CURRENT; });
+    var active = keys.filter(function(k){ return k.indexOf('immatconnect-pro-') === 0; });
+    var hasCurrentCache = active.indexOf(CURRENT) !== -1;
+    // Mettre à jour l'affichage CACHE_NAME avec la vraie valeur live
+    var el = document.getElementById('dashCacheName');
+    if (el && active.length) el.textContent = active[active.length - 1];
     if (!hasCurrentCache) {
       var b = document.getElementById('forceSwFixBanner');
       if (b) b.style.display = 'block';
