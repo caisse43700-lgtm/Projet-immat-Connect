@@ -186,6 +186,11 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 | `[object Object]` dans diagnostic | `lastCallEvents` converti via `String(array)` → noms d'événements maintenant affichés | #297 |
 | 3 bugs post-audit | guard `_busSignalBound`, `getRuntimeState` read-only, `requestId` dans `CALL_ENDED` | #292 |
 | Faux positif « vieille version en cache » | `checkCache()` flaguait Critique dès que l'URL n'avait pas de `?v=x` (heuristique). Remplacé par vraie vérification : `CACHE_NAME` du service-worker.js réseau comparé à `caches.keys()`. Marqueur URL devenu informatif. SW v18, GVC v1.1 | branche feature |
+| Stale CALL_ACCEPTED dans Agora | `bus.on('CALL_ACCEPTED')` pouvait joindre un canal Agora même après annulation (event Supabase en retard). `_terminalRequestIds` Set — tout event terminal marque le requestId, `CALL_ACCEPTED` ignoré si marqué | branche feature |
+| Action locks double-tap | `_withLock()` wrapper sur Accepter/Refuser/Annuler/Raccrocher — verrou 1.5s, double-tap ignoré | branche feature |
+| "Fermer" pendant appel actif | Bouton "Fermer" remplacé par "Réduire" en mode `accepted` — l'appel reste actif (passe en mini), impossible de rater le raccrocher | branche feature |
+| `acceptCall()` else : audio non stoppé explicitement | Ajout `AudioManager.stopCallAudio('accept-no-row')` dans la branche échec de acceptCall() | branche feature |
+| Variable `wasCallScreenIncoming` inutilisée | Supprimée dans acceptCall() | branche feature |
 
 ---
 
@@ -216,26 +221,17 @@ L'app est en production et fonctionnelle. Prochaines améliorations possibles :
 - Ne pas prétendre contrôler haut-parleur/écouteur si le SDK ne le supporte pas.
 ```
 
-### P0 — Propagation annulation (critique)
+### P0 — Propagation annulation (critique) ✅ CORRIGÉ
 
-**Problèmes terrain :**
-- A annule → B continue de sonner ou garde l'UI entrante ouverte
-- B peut accepter après que A a annulé → l'appel se réouvre côté A
+**Corrections appliquées dans `calls.js` (branche feature) :**
+- Nouveau listener `UPDATE receiver_id=eq.{uid}` : statut terminal → vide timer, stoppe audio, ferme UI, émet CALL_CANCELLED ou CALL_MISSED
+- `acceptCall()` : si DB retourne 0 lignes (appel déjà annulé) → `_hideIncomingPopup()` + toast "Appel annulé ou expiré" — plus jamais de join signal/voix
+- `_showSentBanner()` : appelle maintenant `CallScreen.showOutgoing({to,plate,requestId})` au lieu de sortir sans passer la plaque (→ fix P1 intégré)
+- `broadcastHangup()` : envoie le broadcast HANGUP **avant** `_leaveCallSignal()` — évite que removeChannel coupe la connexion avant l'envoi
 
-**Fix attendu dans `calls.js` :**
-- Écouter les `UPDATE` sur `call_requests` côté récepteur (`receiver_id = current user`)
-- Si statut devient `cancelled` / `expired` / `refused` / `ended` → fermer UI + stopper sonnerie + vider timers + désactiver Accepter + émettre l'événement local + ne jamais rejoindre le signal ni la voix
-- Durcir `acceptCall(requestId)` : si l'UPDATE ne retourne aucune ligne → fermer UI + toast "Appel annulé ou expiré" + ne pas émettre ACCEPTED + ne pas rejoindre signal/voix
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (inclus dans P0)
 
-**P0 aussi : raccrochage bidirectionnel**
-- Vérifier que HANGUP est envoyé **avant** de quitter/supprimer le canal signal
-- Les deux téléphones doivent fermer immédiatement
-
-### P1 — Plaque visible des deux côtés
-
-- A doit voir la plaque de B dès l'envoi de la demande
-- `_showSentBanner(plate, requestId)` → passer `to: plate, plate: plate, requestId` à `CallScreen.showOutgoing()`
-- `CallScreen.showOutgoing(data)` lire la plaque depuis `data.to || data.plate || data.receiver_plate || data.receiverPlate`
+- `_showSentBanner()` passe maintenant `{to, plate, requestId}` à `CallScreen.showOutgoing()`
 
 ### P2 — Haut-parleur / écouteur
 

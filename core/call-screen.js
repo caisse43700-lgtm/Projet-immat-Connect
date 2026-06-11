@@ -21,8 +21,20 @@
 
   var _state = { mode: 'idle', plate: null, requestId: null };
   var _autoHideTimer = null;
+  var _actionLock = false; // empêche double-tap Accepter/Refuser/Annuler/Raccrocher
 
   function _$(id) { return document.getElementById(id); }
+
+  function _withLock(fn) {
+    return function() {
+      if (_actionLock) { console.warn('[CallScreen] action ignorée — verrou actif'); return; }
+      _actionLock = true;
+      try { fn(); } finally {
+        // Déverrouille après 1.5s pour absorber les doubles-taps iOS
+        setTimeout(function() { _actionLock = false; }, 1500);
+      }
+    };
+  }
 
   // ── Actions déclenchées par les boutons ──────────────────────────
   function _accept() {
@@ -103,14 +115,17 @@
     refuse:  '<button type="button" id="csRefuse"  class="cs-btn cs-btn-refuse">Refuser</button>',
     cancel:  '<button type="button" id="csCancel"  class="cs-btn cs-btn-cancel">Annuler</button>',
     message: '<button type="button" id="csMessage" class="cs-btn cs-btn-msg">💬</button>',
+    reduce:  '<button type="button" id="csReduce"  class="cs-btn cs-btn-close">Réduire</button>',
     close:   '<button type="button" id="csClose"   class="cs-btn cs-btn-close">Masquer</button>',
     hangup:  '<button type="button" id="csHangup"  class="cs-btn cs-btn-refuse">📵 Raccrocher</button>',
     mute:    '<button type="button" id="csMute"    class="cs-btn cs-btn-mute">🎤 Muet</button>',
   };
 
   function _bindButtons() {
-    var m = { csAccept: _accept, csRefuse: _refuse, csCancel: _cancel,
-              csMessage: _message, csClose: hide, csHangup: _hangup, csMute: _toggleMute };
+    var m = { csAccept: _withLock(_accept), csRefuse: _withLock(_refuse),
+              csCancel: _withLock(_cancel), csMessage: _message,
+              csClose: hide, csReduce: minimize, csHangup: _withLock(_hangup),
+              csMute: _toggleMute };
     Object.keys(m).forEach(function (id) {
       var el = _$(id);
       if (el) el.onclick = m[id];
@@ -200,7 +215,7 @@
     _render('accepted', plate, '📞 Appel en cours',
       '<div class="cs-actions-grid">' +
         _BTN.mute + _BTN.hangup +
-        _BTN.message + _BTN.close +
+        _BTN.message + _BTN.reduce +
       '</div>',
       0);
   }

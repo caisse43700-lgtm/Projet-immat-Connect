@@ -280,7 +280,6 @@ const CallManager = (function () {
     const tid = _missedTimers.get(requestId);
     if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
 
-    const wasCallScreenIncoming = window.CallScreen?.getState?.().mode === 'incoming';
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
     const { data, error } = await _sb
@@ -295,9 +294,11 @@ const CallManager = (function () {
       _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
       _joinCallSignal(requestId);
       try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
-    } else if (wasCallScreenIncoming) {
-      try { window.CallScreen?.hide?.(); } catch(e) {}
-      _showError('Demande expirée ou déjà traitée.');
+    } else {
+      // Aucune ligne mise à jour — appel annulé ou expiré par A entre-temps
+      try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('accept-no-row'); } catch(e) {}
+      _hideIncomingPopup();
+      _showError('Appel annulé ou expiré.');
     }
     if (error) console.warn('acceptCall UPDATE error', error);
   }
@@ -369,6 +370,25 @@ const CallManager = (function () {
           _hideSentBanner();
         }
       })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'receiver_id=eq.' + uid,
+      }, p => {
+        // Statut terminal côté récepteur — A a annulé/expiré avant que B accepte
+        const r = p.new;
+        if (!r) return;
+        if (['cancelled', 'expired', 'refused', 'ended'].indexOf(r.status) === -1) return;
+        const tid = _missedTimers.get(r.id);
+        if (tid != null) { clearTimeout(tid); _missedTimers.delete(r.id); }
+        try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-terminal'); } catch(e) {}
+        _hideIncomingPopup();
+        _seenIncomingCallIds.add(r.id);
+        if (r.status === 'cancelled') {
+          _emitCallEvent('CALL_CANCELLED', { requestId: r.id, _src: 'ImmatConnect/calls/incomingUpdateHandler' });
+        } else if (r.status === 'expired' && !_missedCallIds.has(r.id)) {
+          _missedCallIds.add(r.id);
+          _emitCallEvent('CALL_MISSED', { requestId: r.id, from: r.requester_plate || '', _src: 'ImmatConnect/calls/incomingUpdateHandler' });
+        }
+      })
       .subscribe((status, err) => {
         _lastSubscribeStatus = status;
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -428,7 +448,10 @@ const CallManager = (function () {
           .eq('status', 'pending');
       } catch (_) {}
     }, 31000);
-    if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') return;
+    if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
+      window.CallScreen.showOutgoing({ to: plate, plate: plate, requestId: requestId });
+      return;
+    }
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
     const el = document.getElementById('callSentPlate');
@@ -488,11 +511,12 @@ const CallManager = (function () {
   async function broadcastHangup(requestId) {
     const rid = requestId || _signalRequestId;
     const ch = _signalChannel;
-    _leaveCallSignal();
+    // Envoyer AVANT de quitter le canal — removeChannel coupe la connexion
     if (ch && rid) {
       try { await ch.send({ type: 'broadcast', event: 'HANGUP', payload: { requestId: rid } }); } catch(e) {}
       console.log('[CallManager] HANGUP diffusé :', rid);
     }
+    _leaveCallSignal();
   }
 
   function _showError(msg) { try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (e) {} }
