@@ -8,7 +8,7 @@
 (function(w){
   'use strict';
 
-  var BUILD = 'global-verification-center-v1';
+  var BUILD = 'global-verification-center-v1.1';
 
   function safe(fn, fb){ try{ return fn(); }catch(e){ return fb; } }
   function hasFn(obj, n){ return !!(obj && typeof obj[n] === 'function'); }
@@ -127,16 +127,46 @@
   }
 
   // ── 7. Cache / Service Worker ────────────────────────────────────
-  function checkCache(){
+  async function checkCache(){
     var swOk = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
     var swSupport = !!navigator.serviceWorker;
     var https = location.protocol === 'https:';
     var marker = location.search;
+    // Vérification réelle de version : CACHE_NAME du service-worker.js réseau
+    // comparé aux caches actifs du navigateur. Pas d'heuristique URL.
+    var versionOk = true, versionVal = 'inconnu', versionIssue = '', versionAction = '';
+    if(swSupport && w.caches && typeof w.caches.keys === 'function'){
+      var expected = null, active = null;
+      try{
+        var resp = await fetch('./service-worker.js', { cache: 'no-store' });
+        if(resp && resp.ok){
+          var m = (await resp.text()).match(/CACHE_NAME\s*=\s*'([^']+)'/);
+          expected = m ? m[1] : null;
+        }
+      }catch(e){}
+      try{
+        var keys = await w.caches.keys();
+        active = keys.filter(function(k){ return k.indexOf('immatconnect-pro-') === 0; });
+      }catch(e){}
+      if(expected && active && active.length){
+        versionOk = active.indexOf(expected) !== -1;
+        versionVal = versionOk ? expected : active.join(', ') + ' ≠ attendu ' + expected;
+        if(!versionOk){
+          versionIssue = 'Vieille version en cache (SW pas encore activé)';
+          versionAction = 'Recharger l\'app deux fois';
+        }
+      } else if(expected){
+        versionVal = expected + ' (cache pas encore créé)';
+      } else if(active && active.length){
+        versionVal = active.join(', ') + ' (réseau indisponible — comparaison impossible)';
+      }
+    }
     return makeSection('cache', [
       item('HTTPS', https, https ? 'oui' : location.protocol, !https ? 'Non-HTTPS : SW et getUserMedia limités' : '', ''),
       item('Service Worker supporté', swSupport, swSupport ? 'oui' : 'non', !swSupport ? 'SW non supporté' : '', ''),
       item('Service Worker actif', swOk, swOk ? 'actif' : 'inactif', !swOk ? 'SW inactif — cache absent ou première visite' : '', !swOk ? 'Recharger une fois' : ''),
-      item('Marqueur URL', !!marker, marker || 'aucun', !marker ? 'Risque vieille version en cache' : '', !marker ? 'Ajouter ?v=x à l\'URL' : ''),
+      item('Version cache', versionOk, versionVal, versionIssue, versionAction),
+      item('Marqueur URL', true, marker || 'aucun (info)', '', ''),
       item('Visibilité', document.visibilityState === 'visible', document.visibilityState, '', '')
     ]);
   }
@@ -228,7 +258,7 @@
       calls:     checkCalls(),
       audio:     checkAudio(),
       webrtc:    checkWebRTC(),
-      cache:     checkCache(),
+      cache:     await checkCache(),
       supabase:  await checkSupabase()
     };
     var globalStatus = worstOf(sections);
