@@ -173,7 +173,7 @@
 
   // ── API publique ─────────────────────────────────────────────────
   function showOutgoing(data) {
-    var plate = (data && data.to) || '--';
+    var plate = (data && (data.to || data.plate)) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
     try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
