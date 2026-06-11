@@ -398,6 +398,8 @@ const CallManager = (function () {
         const r = p.new;
         if (!r) return;
         if (['cancelled', 'expired', 'refused', 'ended'].indexOf(r.status) === -1) return;
+        console.log('[CallManager] postgres_changes UPDATE entrant terminal:', r.status, r.id);
+        try { if (typeof toast === 'function') toast('📡 PG-UPDATE: ' + r.status, 'ok'); } catch(e) {}
         const tid = _missedTimers.get(r.id);
         if (tid != null) { clearTimeout(tid); _missedTimers.delete(r.id); }
         try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-terminal'); } catch(e) {}
@@ -419,17 +421,31 @@ const CallManager = (function () {
       });
   }
 
-  // Poll DB toutes les 2s tant que l'appel entrant est affiché
+  // Poll DB toutes les 1.5s tant que l'appel entrant est affiché
   // Filet de sécurité si broadcast CANCEL / postgres_changes n'arrivent pas
   function _startCancelPoll(requestId) {
     if (!_sb || !requestId) return;
     var checks = 0;
+    try { if (typeof toast === 'function') toast('📡 Poll lancé #' + requestId.slice(-4), 'ok'); } catch(e) {}
     var pollId = setInterval(async function() {
       checks++;
-      if (checks > 20 || !_missedTimers.has(requestId)) { clearInterval(pollId); return; }
+      if (checks > 25 || !_missedTimers.has(requestId)) {
+        clearInterval(pollId);
+        if (checks <= 25) {
+          console.warn('[CallManager] Poll stoppé — _missedTimers absent', requestId);
+          try { if (typeof toast === 'function') toast('⚠️ Poll arrêté tôt', 'bad'); } catch(e) {}
+        }
+        return;
+      }
       try {
         var res = await _sb.from('call_requests').select('status').eq('id', requestId).maybeSingle();
         var st = res && res.data && res.data.status;
+        var err = res && res.error;
+        if (err) {
+          console.warn('[CallManager] Poll DB error:', err);
+          try { if (typeof toast === 'function') toast('⚠️ Poll err: ' + (err.message||err.code||'?'), 'bad'); } catch(e2) {}
+        }
+        console.log('[CallManager] Poll #' + checks + ' status:', st, 'err:', err?.code);
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
@@ -439,10 +455,14 @@ const CallManager = (function () {
           _hideIncomingPopup();
           _leaveCallSignal();
           console.log('[CallManager] Poll : appel terminal :', st, requestId);
+          try { if (typeof toast === 'function') toast('📵 Poll: annulé détecté! (' + st + ')', 'ok'); } catch(e) {}
           if (st === 'cancelled') _emitCallEvent('CALL_CANCELLED', { requestId: requestId, reason: 'poll' });
         }
-      } catch(e) {}
-    }, 2000);
+      } catch(e) {
+        console.warn('[CallManager] Poll exception:', e);
+        try { if (typeof toast === 'function') toast('⚠️ Poll exc: ' + (e?.message||e), 'bad'); } catch(e2) {}
+      }
+    }, 1500);
   }
 
   function _showIncomingPopup(req) {
@@ -481,6 +501,8 @@ const CallManager = (function () {
   }
 
   function _hideIncomingPopup() {
+    console.log('[CallManager] _hideIncomingPopup appelé, mode=', window.CallScreen?.getState?.().mode);
+    try { if (typeof toast === 'function') toast('🔇 hideIncomingPopup', 'ok'); } catch(e) {}
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     try{ if (window.CallScreen?.getState?.().mode === 'incoming') window.CallScreen.hide(); }catch(e){}
   }
@@ -551,6 +573,7 @@ const CallManager = (function () {
         })
         .on('broadcast', { event: 'CANCEL' }, function() {
           console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
+          try { if (typeof toast === 'function') toast('📡 CANCEL broadcast reçu!', 'ok'); } catch(e) {}
           const tid = _missedTimers.get(requestId);
           if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
           try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
