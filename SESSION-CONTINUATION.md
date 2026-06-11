@@ -167,7 +167,40 @@ appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqu
 
 ---
 
-## CORRECTIFS VOIX + RACCROCHAGE — 2026-06-10 (session suivante)
+## ÉTAT PRODUCTION — 2026-06-11 ✅ APPELS VOCAUX FONCTIONNELS
+
+```text
+Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
+```
+
+### Correctifs session 2026-06-11 (PR #292 → #297, tous mergés sur main)
+
+| Fix | Cause | PR |
+|---|---|---|
+| Token Agora null | Edge Function `get-agora-token` jamais déployée en CI (seulement `immat-brain-dialog`) | #294 |
+| HTTP 401 | JWT verification Supabase activée par défaut au redéploiement CI — désactivée via Dashboard | manuel |
+| Token null → fallback natif | `npm:agora-token@2.0.4` potentiellement CJS incompatible Deno — implémentation Web Crypto native | #293 |
+| Guard double-join | `joinCall()` appelée deux fois en parallèle → `INVALID_OPERATION` | #293 |
+| Audio unidirectionnel (A entend B, B n'entend pas A) | `user-published` enregistré APRÈS `join()` → événement raté si A déjà présent | #296 |
+| Race condition preMicTrack | `__preMicTrack` pas encore résolu quand `joinCall()` tourne → `null` → fallback iOS échoue | #295 |
+| `[object Object]` dans diagnostic | `lastCallEvents` converti via `String(array)` → noms d'événements maintenant affichés | #297 |
+| 3 bugs post-audit | guard `_busSignalBound`, `getRuntimeState` read-only, `requestId` dans `CALL_ENDED` | #292 |
+
+---
+
+## PROCHAINE ACTION — AUCUNE URGENCE
+
+L'app est en production et fonctionnelle. Prochaines améliorations possibles :
+
+```text
+□ Health Lab Phase 1 (outil de diagnostic audio pré-appel)
+□ Indicateur niveau audio en temps réel pendant l'appel
+□ Fermer les PR ouvertes #279 #280 #284 (anciennes branches Guardian)
+```
+
+---
+
+
 
 **Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
 
