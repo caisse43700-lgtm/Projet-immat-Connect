@@ -19,8 +19,9 @@ const CallManager = (function () {
   let _signalChannel = null;    // canal Supabase broadcast pour signaler raccroché
   let _signalRequestId = null;  // requestId de l'appel en cours
   let _signalReady = null;      // Promise qui résout quand le canal signal est SUBSCRIBED
-  let _pendingCallPlate = null; // plaque mémorisée côté appelant (fallback si DB null)
-  let _busSignalBound = false;  // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
+  let _pendingCallPlate = null;  // plaque mémorisée côté appelant (fallback si DB null)
+  let _incomingCallPlate = null; // plaque de l'appelant mémorisée à la réception (fallback acceptCall)
+  let _busSignalBound = false;   // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -145,7 +146,7 @@ const CallManager = (function () {
     // iOS : pré-créer le track micro dans le geste utilisateur (avant tout await)
     var _AgoraRTC = window.AgoraRTC;
     if (_AgoraRTC && typeof _AgoraRTC.createMicrophoneAudioTrack === 'function') {
-      // Stocker la Promise (pas la valeur) pour éviter la race condition si CALL_ACCEPTED arrive
+      // Stocker la Promise pour éviter la race condition si CALL_ACCEPTED arrive
       // avant que la création du track soit terminée
       window.__preMicTrackPromise = _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
         .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); return track; })
@@ -301,12 +302,16 @@ const CallManager = (function () {
       .eq('status', 'pending')
       .select()
       .maybeSingle();
-    if (data?.requester_plate) {
-      _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
+    if (data) {
+      // Appel bien accepté — plaque depuis DB ou fallback mémorisé à la réception
+      const callerPlate = data.requester_plate || _incomingCallPlate || null;
+      _incomingCallPlate = null;
+      _emitCallEvent('CALL_ACCEPTED', {with: callerPlate, plate: callerPlate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
       _joinCallSignal(requestId);
-      try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
+      try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:callerPlate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     } else {
       // Aucune ligne mise à jour — appel annulé ou expiré par A entre-temps
+      _incomingCallPlate = null;
       try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('accept-no-row'); } catch(e) {}
       _hideIncomingPopup();
       _showError('Appel annulé ou expiré.');
@@ -436,8 +441,7 @@ const CallManager = (function () {
       if (checks > 25 || !_missedTimers.has(requestId)) {
         clearInterval(pollId);
         if (checks <= 25) {
-          console.warn('[CallManager] Poll stoppé — _missedTimers absent', requestId);
-          try { if (typeof toast === 'function') toast('⚠️ Poll arrêté tôt', 'bad'); } catch(e) {}
+          console.warn('[CallManager] Poll stoppé — _missedTimers absent (accept/refuse/cancel)', requestId);
         }
         return;
       }
@@ -472,6 +476,7 @@ const CallManager = (function () {
 
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
+    _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
