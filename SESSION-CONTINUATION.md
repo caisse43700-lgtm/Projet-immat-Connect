@@ -194,6 +194,36 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
+## ÉTAT — 2026-06-11 — DIAGNOSTIC CANCEL B (calls.js v12 en production)
+
+### Situation actuelle
+
+```text
+calls.js v12 poussé sur main (commit 024937158)
+index.html toujours sur calls.js?v=11 — non bloquant : SW réseau-first sert le contenu le plus récent
+SW : immatconnect-pro-v21 confirmé actif chez l'utilisateur
+```
+
+### Bug P0 — CANCEL ne ferme pas B — diagnostic en cours
+
+Toasts ajoutés sur B dans calls.js v12 :
+- `📡 Poll lancé #XXXX` — confirme que le poll démarre
+- `⚠️ Poll arrêté tôt` — si _missedTimers n'a pas le requestId
+- `⚠️ Poll err: [msg]` — si erreur DB dans le poll
+- `📵 Poll: annulé détecté! (cancelled)` — si le poll détecte l'annulation
+- `📡 CANCEL broadcast reçu!` — si le broadcast signal arrive
+- `📡 PG-UPDATE: cancelled` — si postgres_changes UPDATE arrive
+- `🔇 hideIncomingPopup` — confirme que l'UI a bien été fermée
+
+**Prochaine action :** l'utilisateur doit tester (A appelle, A annule) et rapporter
+les toasts visibles sur le téléphone B. Ces toasts diront quel mécanisme fonctionne
+ou lequel échoue.
+
+**RLS vérifiée :** `call_req_read` sans filtre status → B peut lire les lignes cancelled.
+**3 mécanismes en place :** broadcast CANCEL, postgres_changes UPDATE receiver_id, poll 1.5s.
+
+---
+
 ## ÉTAT — 2026-06-11 — DIAGNOSTIC SW BLOQUÉ + CORRECTIFS TIMING
 
 ### Diagnostic : pourquoi l'utilisateur était sur v8 alors que la production est v20
@@ -221,23 +251,13 @@ Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient serv
 ### Versions en production après commit
 
 ```
-calls.js?v=10, call-screen.js?v=5, SW v21
+calls.js?v=12, call-screen.js?v=5, SW v21
 ```
 
-## PROCHAINE ACTION — SI BUGS PERSISTENT
+## PROCHAINE ACTION — DIAGNOSTIC TERRAIN
 
-Si après mise à jour (SW v21) les bugs persistent toujours :
-1. Ouvrir Safari DevTools (Mac → Safari → Develop → [iPhone]) — chercher `[CallManager] requestCall → plaque:` dans la console pour voir si la plaque est transmise.
-2. Si plaque = null/empty dans le log → le problème est en amont de `requestCall` (UI modal, openContactOptions).
-3. Si plaque est correcte mais affichage '--' → problème DOM ou race condition non couverte.
-
-L'utilisateur doit faire une mise à jour forcée pour obtenir SW v21 :
-- **iOS Safari** : Réglages → Safari → Avancé → Données de sites web → Supprimer caisse43700-lgtm.github.io
-
-```text
-□ Health Lab Phase 1 (outil de diagnostic audio pré-appel)
-□ Indicateur niveau audio en temps réel pendant l'appel
-```
+Faire tester le scénario (A appelle, A annule) sur les deux téléphones.
+Observer les toasts sur le téléphone B et rapporter ce qui apparaît.
 
 ---
 
@@ -256,13 +276,14 @@ L'utilisateur doit faire une mise à jour forcée pour obtenir SW v21 :
 - Ne pas prétendre contrôler haut-parleur/écouteur si le SDK ne le supporte pas.
 ```
 
-### P0 — Propagation annulation (critique) ✅ CORRIGÉ
+### P0 — Propagation annulation (critique) — EN COURS DE DIAGNOSTIC
 
-**Corrections appliquées dans `calls.js` (branche feature) :**
+**Corrections appliquées dans `calls.js` (branche feature puis main) :**
 - Nouveau listener `UPDATE receiver_id=eq.{uid}` : statut terminal → vide timer, stoppe audio, ferme UI, émet CALL_CANCELLED ou CALL_MISSED
 - `acceptCall()` : si DB retourne 0 lignes (appel déjà annulé) → `_hideIncomingPopup()` + toast "Appel annulé ou expiré" — plus jamais de join signal/voix
 - `_showSentBanner()` : appelle maintenant `CallScreen.showOutgoing({to,plate,requestId})` au lieu de sortir sans passer la plaque (→ fix P1 intégré)
 - `broadcastHangup()` : envoie le broadcast HANGUP **avant** `_leaveCallSignal()` — évite que removeChannel coupe la connexion avant l'envoi
+- Poll DB 1.5s `_startCancelPoll` + toasts diagnostics
 
 ### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (inclus dans P0)
 
@@ -298,112 +319,6 @@ Ajouter bloc "Audio Route" : speaker support/enabled/route/lastError, muteState.
 5. A et B en appel, A raccroche → B ferme immédiatement
 6. A et B en appel, B raccroche → A ferme immédiatement
 7. Bouton Haut-parleur : fonctionnel ou clairement reporté non supporté ; Muet reste indépendant
-
----
-
-
-
-**Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
-
-### Cause voix absente
-
-`_accept()` appelait `getUserMedia` et **stoppait immédiatement** les tracks — Agora ne pouvait pas les réutiliser.
-De plus, le SDK Agora (CDN async) pouvait ne pas être chargé au moment de l'appel.
-
-**Fix :**
-- `call-screen.js` v3 `_accept()` : si `AgoraRTC` disponible → `createMicrophoneAudioTrack()` → `w.__preMicTrack`
-  sinon → `getUserMedia` → `w.__preMicStream` (stream conservé, pas stoppé)
-- `calls.js` v7 `contactByCall()` : idem côté appelant (stream conservé dans `w.__preMicStream`)
-- `agora-call-engine.js` v3 `_getMicTrack()` : réutilise `__preMicTrack` ou wrap `__preMicStream` en custom track Agora
-- `agora-call-engine.js` v3 `joinCall()` : attend le SDK jusqu'à 8s via `_waitForSDK()`
-
-### Cause raccrochage non synchronisé
-
-`user-left` Agora ne tire que si les deux téléphones ont rejoint le canal Agora.
-Si la voix échoue sur un côté, ce téléphone ne sait jamais que l'autre a raccroché.
-
-**Fix :** canal de signalisation Supabase Realtime broadcast `ic_call_signal_{requestId}`
-- `calls.js` : `_joinCallSignal(requestId)` → rejoint le canal à `CALL_ACCEPTED` (les deux côtés)
-- `calls.js` : `broadcastHangup(requestId)` → diffuse `HANGUP` sur le canal
-- `call-screen.js` `_hangup()` → appelle `CallManager.broadcastHangup(requestId)` + `CALL_ENDED` local
-- Récepteur du broadcast → `CALL_ENDED` → `CallScreen.hide()` automatique
-
-| Fichier | Version | Changement |
-|---|---|---|
-| `core/agora-call-engine.js` | v3 | `_waitForSDK()` + `_getMicTrack()` avec réutilisation preMicTrack/preMicStream |
-| `core/call-screen.js` | v3 | `_accept()` pré-crée track Agora ; `_hangup()` appelle `broadcastHangup` |
-| `calls.js` | v7 | `_joinCallSignal` / `_leaveCallSignal` / `broadcastHangup` ; `contactByCall` conserve stream |
-| `service-worker.js` | v16 | Cache version bump |
-
----
-
-## CORRECTIFS POST-AUDIT — 2026-06-10
-
-3 bugs réels identifiés lors de l'audit de session, corrigés et poussés sur `claude/immatconnect-pro-app-dEKGR` (commit c59f76a) :
-
-| Fichier | Bug | Correction |
-|---|---|---|
-| `calls.js` | `init()` empilait les subscriptions bus sur reconnexion | Guard `_busSignalBound` — `_bus.on('CALL_ENDED/MISSED')` exécuté une seule fois |
-| `core/audio-manager.js` | `getRuntimeState()` appelait `_getOrCreateCtx()` — effet de bord création AudioContext | Utilise `_ctx` directement (read-only) |
-| `core/agora-call-engine.js` | `CALL_ENDED` émis par `user-left` sans `requestId` | Ajout de `requestId: _currentChannel` dans le payload |
-
----
-
-## PROCHAINE ACTION — TEST TERRAIN
-
-URL de test (cache v16) :
-```
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora4
-```
-
-Checklist :
-```text
-□ Recharger les deux téléphones avec ?v=agora4
-□ IMPORTANT : taper une fois n'importe où dans l'app sur chaque téléphone
-  (débloque l'audio iOS/Android — mécanisme pré-play muted)
-□ A appelle B → B doit SONNER (vraie sonnerie téléphone bitonale)
-□ A entend la tonalité de retour (tut… tut…)
-□ B accepte → popup micro autorisé → audio bidirectionnel (VOIX)
-□ Appel ne coupe PLUS après 20s
-□ A raccroche → B ferme IMMÉDIATEMENT (broadcast Supabase ic_call_signal)
-□ B raccroche → A ferme IMMÉDIATEMENT (idem)
-□ Boutons compacts en grille 2×2
-```
-
-### En cas de problème voix
-
-Console Safari (Menu → Avancé → Web Inspector) — chercher :
-- `[CallScreen] preMicTrack Agora prêt` → track créé dans le geste ✅
-- `[AgoraCall] Réutilise le track mic pré-créé` → track réutilisé par Agora ✅
-- `[AgoraCall] Canal rejoint` → connexion réussie ✅
-- `[AgoraCall] joinCall échoué` → voir erreur
-
-### En cas de problème raccrochage
-
-- `[CallManager] Signal canal rejoint` → canal broadcast opérationnel ✅
-- `[CallManager] HANGUP diffusé` → signal envoyé ✅
-- `[CallManager] HANGUP broadcast reçu → CALL_ENDED` → signal reçu ✅
-
-### En cas de problème audio sonner
-
-1. Ouvrir Guardian Dashboard → Diagnostic → vérifier voyant **Agora** (🟢 OK ?)
-2. Vérifier que le popup micro a bien été accepté (iOS Réglages → Safari → Micro)
-3. Confirmer qu'un tap a bien été fait sur l'app avant le test
-
----
-
-## HISTORIQUE COMPLET DES PR MERGÉES
-
-| PR | Branche | Objet | Date |
-|---|---|---|---|
-| #288 | global-verification-center | Global Verification Center + fix réception | 2026-06-10 (en attente) |
-| #285 | feature/agora-voice-calls | Appels vocaux Agora RTC | 2026-06-10 |
-| #286 | feature/agora-voice-calls | Diagnostics Agora | 2026-06-10 |
-| #283 | guardian/actions-only | Guardian : boutons Diagnostic/Copier dans header | 2026-06-10 |
-| #279 | guardian/refine-overlay | Guardian summary engine v1.1 overlay detection | 2026-06-10 |
-| — | — | call-screen.js : Message/Fermer au lieu de "conversation ouverte" | antérieur |
-| — | — | calls.js : supprime ouverture automatique conversation sur accepted | antérieur |
-| — | — | Nettoie pending avant nouvel appel + retry 23505 | antérieur |
 
 ---
 
