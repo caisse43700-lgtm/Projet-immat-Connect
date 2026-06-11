@@ -7,7 +7,22 @@
 (function(w){
   'use strict';
 
-  var BUILD = 'guardian-dashboard-summary-v1.6';
+  var BUILD = 'guardian-dashboard-summary-v1.7';
+
+  // Force SW update : désinstalle le SW + vide tous les caches + recharge
+  w._forceSwUpdate = async function() {
+    try {
+      var keys = (w.caches && typeof w.caches.keys === 'function') ? await w.caches.keys() : [];
+      await Promise.all(keys.map(function(k){ return w.caches.delete(k); }));
+    } catch(e) {}
+    try {
+      if (navigator.serviceWorker) {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(function(r){ return r.unregister(); }));
+      }
+    } catch(e) {}
+    w.location.reload();
+  };
   var installed = false;
   var _lastResult = null;
   var _panelVisible = false;
@@ -71,6 +86,13 @@
 
     var actionsHtml = actions.length ? actions.map(function(a){ return '<div style="font-size:10px;color:#a5b4fc;padding:2px 0">→ '+esc(a)+'</div>'; }).join('') : '';
 
+    var forceBtn = '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3a5f">'+
+      '<button type="button" onclick="window._forceSwUpdate&&window._forceSwUpdate()" '+
+        'style="width:100%;background:#1e40af;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+
+        '🔄 Force Mise à Jour (désinstalle SW + vide cache)'+
+      '</button>'+
+    '</div>';
+
     return '<div style="border-left:3px solid '+borderColor(global)+';padding:8px 12px">'+
       '<div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+statusIcon(global)+' Vérification globale — '+esc(statusLabel(global))+'</div>'+
       '<div style="font-size:10px;color:#475569;margin-bottom:4px">'+esc(result.at || '')+'</div>'+
@@ -80,6 +102,7 @@
       '</details>'+
       (actions.length ? '<details style="margin-top:6px"><summary style="cursor:pointer;color:#a5b4fc;font-size:11px;font-weight:600;list-style:none;padding:2px 0">▸ Actions</summary><div style="margin-top:4px">'+actionsHtml+'</div></details>' : '')+
       '<details style="margin-top:6px"><summary style="cursor:pointer;color:#888;font-size:10px;padding:2px 0">Rapport ingénieur complet</summary><pre style="white-space:pre-wrap;background:#050510;border:1px solid #222;border-radius:10px;padding:10px;color:#94a3b8;font-size:10px;max-height:260px;overflow:auto">'+esc(report)+'</pre></details>'+
+      forceBtn+
     '</div>';
   }
 
@@ -128,9 +151,11 @@
     actions.style.cssText = 'display:flex;gap:6px;align-items:center;margin-left:auto;padding-left:8px';
     var btnStyle = 'background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
     var globalBtnStyle = 'background:#0f2b1f;color:#4ade80;border:1px solid #22c55e;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
+    var majBtnStyle = 'background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f6;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
     actions.innerHTML = '<button id="guardianDiagToggleBtn" type="button" style="'+btnStyle+'">Diagnostic</button>'+
                         '<button id="guardianCopyReportBtn" type="button" style="'+btnStyle+'">Copier</button>'+
-                        '<button id="guardianGlobalCheckBtn" type="button" style="'+globalBtnStyle+'">Global</button>';
+                        '<button id="guardianGlobalCheckBtn" type="button" style="'+globalBtnStyle+'">Global</button>'+
+                        '<button type="button" onclick="window._forceSwUpdate&&window._forceSwUpdate()" style="'+majBtnStyle+'">🔄 MAJ</button>';
     header.appendChild(actions);
     return true;
   }
