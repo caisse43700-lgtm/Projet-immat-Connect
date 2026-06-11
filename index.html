@@ -2425,8 +2425,18 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
+      var CURRENT = 'immatconnect-pro-v21';
+      var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
-      if (b) b.style.display = 'flex';
+      var fb = document.getElementById('forceSwFixBanner');
+      if (version === CURRENT) {
+        // Déjà à jour — masquer les deux bannières
+        if (b) b.style.display = 'none';
+        if (fb) fb.style.display = 'none';
+      } else {
+        // Ancienne version — afficher la bannière de mise à jour
+        if (b) b.style.display = 'flex';
+      }
     }
   });
 }
