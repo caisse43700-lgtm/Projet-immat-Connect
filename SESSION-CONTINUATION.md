@@ -167,7 +167,110 @@ appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqu
 
 ---
 
-## CORRECTIFS VOIX + RACCROCHAGE — 2026-06-10 (session suivante)
+## ÉTAT PRODUCTION — 2026-06-11 ✅ APPELS VOCAUX FONCTIONNELS
+
+```text
+Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
+```
+
+### Correctifs session 2026-06-11 (PR #292 → #297, tous mergés sur main)
+
+| Fix | Cause | PR |
+|---|---|---|
+| Token Agora null | Edge Function `get-agora-token` jamais déployée en CI (seulement `immat-brain-dialog`) | #294 |
+| HTTP 401 | JWT verification Supabase activée par défaut au redéploiement CI — désactivée via Dashboard | manuel |
+| Token null → fallback natif | `npm:agora-token@2.0.4` potentiellement CJS incompatible Deno — implémentation Web Crypto native | #293 |
+| Guard double-join | `joinCall()` appelée deux fois en parallèle → `INVALID_OPERATION` | #293 |
+| Audio unidirectionnel (A entend B, B n'entend pas A) | `user-published` enregistré APRÈS `join()` → événement raté si A déjà présent | #296 |
+| Race condition preMicTrack | `__preMicTrack` pas encore résolu quand `joinCall()` tourne → `null` → fallback iOS échoue | #295 |
+| `[object Object]` dans diagnostic | `lastCallEvents` converti via `String(array)` → noms d'événements maintenant affichés | #297 |
+| 3 bugs post-audit | guard `_busSignalBound`, `getRuntimeState` read-only, `requestId` dans `CALL_ENDED` | #292 |
+| Faux positif « vieille version en cache » | `checkCache()` flaguait Critique dès que l'URL n'avait pas de `?v=x` (heuristique). Remplacé par vraie vérification : `CACHE_NAME` du service-worker.js réseau comparé à `caches.keys()`. Marqueur URL devenu informatif. SW v18, GVC v1.1 | branche feature |
+
+---
+
+## PROCHAINE ACTION — AUCUNE URGENCE
+
+L'app est en production et fonctionnelle. Prochaines améliorations possibles :
+
+```text
+□ Health Lab Phase 1 (outil de diagnostic audio pré-appel)
+□ Indicateur niveau audio en temps réel pendant l'appel
+□ Fermer les PR ouvertes #279 #280 #284 (anciennes branches Guardian)
+```
+
+---
+
+## TÂCHES SUIVANTES — Source : CALL_STATE_CONTINUATION.md (ChatGPT, 2026-06-11)
+
+> La voix fonctionne. Ne pas retoucher le moteur vocal. Corriger uniquement les incohérences d'état d'appel.
+
+### Règles non négociables
+
+```
+- Un appel annulé ne peut jamais être accepté.
+- Un statut terminal doit fermer l'UI des deux côtés.
+- A doit toujours voir la plaque de B (et inversement).
+- Le raccrochage doit se propager immédiatement des deux côtés.
+- Muet = micro uniquement. Haut-parleur = sortie audio uniquement.
+- Ne pas prétendre contrôler haut-parleur/écouteur si le SDK ne le supporte pas.
+```
+
+### P0 — Propagation annulation (critique)
+
+**Problèmes terrain :**
+- A annule → B continue de sonner ou garde l'UI entrante ouverte
+- B peut accepter après que A a annulé → l'appel se réouvre côté A
+
+**Fix attendu dans `calls.js` :**
+- Écouter les `UPDATE` sur `call_requests` côté récepteur (`receiver_id = current user`)
+- Si statut devient `cancelled` / `expired` / `refused` / `ended` → fermer UI + stopper sonnerie + vider timers + désactiver Accepter + émettre l'événement local + ne jamais rejoindre le signal ni la voix
+- Durcir `acceptCall(requestId)` : si l'UPDATE ne retourne aucune ligne → fermer UI + toast "Appel annulé ou expiré" + ne pas émettre ACCEPTED + ne pas rejoindre signal/voix
+
+**P0 aussi : raccrochage bidirectionnel**
+- Vérifier que HANGUP est envoyé **avant** de quitter/supprimer le canal signal
+- Les deux téléphones doivent fermer immédiatement
+
+### P1 — Plaque visible des deux côtés
+
+- A doit voir la plaque de B dès l'envoi de la demande
+- `_showSentBanner(plate, requestId)` → passer `to: plate, plate: plate, requestId` à `CallScreen.showOutgoing()`
+- `CallScreen.showOutgoing(data)` lire la plaque depuis `data.to || data.plate || data.receiver_plate || data.receiverPlate`
+
+### P2 — Haut-parleur / écouteur
+
+- Par défaut : route écouteur (privé)
+- Bouton Haut-parleur ON/OFF séparé du Muet
+- Si la route audio n'est pas contrôlable → afficher "Sortie audio contrôlée par le téléphone"
+- Exposer dans diagnostics : `speakerSupported`, `speakerEnabled`, `audioRouteKnown`, `audioRoute`, `lastSpeakerError`, `muteState`
+
+### P3 — Dashboard / Diagnostics
+
+Ajouter un bloc "Call State Integrity" :
+```
+requestId actif, CallScreen mode/plate/requestId, pendingCallId,
+signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
+missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
+derniers événements CALL_*
+```
+
+Ajouter bloc "Call Identity" : plaque cible sortante, plaque appelant entrant, plaque affichée, requestId.
+
+Ajouter bloc "Audio Route" : speaker support/enabled/route/lastError, muteState.
+
+### Autotests à couvrir
+
+1. A appelle B puis annule avant que B accepte → B ferme immédiatement, ne peut plus accepter
+2. A annule, B tape Accepter très vite → pas d'accept, UI ferme, pas de join signal/voix
+3. A appelle B → A voit la plaque de B, mode outgoing, requestId présent
+4. B reçoit → B voit la plaque de A, mode incoming, requestId présent
+5. A et B en appel, A raccroche → B ferme immédiatement
+6. A et B en appel, B raccroche → A ferme immédiatement
+7. Bouton Haut-parleur : fonctionnel ou clairement reporté non supporté ; Muet reste indépendant
+
+---
+
+
 
 **Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
 
