@@ -194,17 +194,18 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
-## ÉTAT — 2026-06-11 — CORRECTIFS calls.js v13 EN PRODUCTION
+## ÉTAT — 2026-06-11 — CORRECTIFS calls.js v14 EN PRODUCTION
 
 ### Versions en production
 
 ```text
-calls.js v13 poussé sur main (commit b81bc7b via MCP GitHub API)
-index.html : calls.js?v=12 — non critique, SW réseau-first sert toujours le contenu v13
+calls.js v14 poussé sur main (commit 15121fb via MCP GitHub API)
+index.html : calls.js?v=12 — non critique, SW réseau-first sert toujours le contenu v14
 SW : immatconnect-pro-v21 actif chez l'utilisateur
+Utilisateur confirmé : "C'est la bonne version" (IMG_5568)
 ```
 
-### Bug P0 — CANCEL ne ferme pas B — CAUSE RACINE CORRIGÉE en v13
+### Bug P0 — CANCEL ne ferme pas B — CAUSE RACINE CORRIGÉE en v13, en production depuis v14
 
 **Cause confirmée par screenshot utilisateur :** toast `⚠️ Poll arrêté tôt` visible sur B.
 
@@ -212,7 +213,7 @@ SW : immatconnect-pro-v21 actif chez l'utilisateur
 expiré à réception), `_missedTimers.set(req.id, tid)` n'était jamais appelé.
 Le poll guard `!_missedTimers.has(requestId)` retournait `true` dès le premier tick → arrêt immédiat.
 
-**Fix v13 :**
+**Fix v13 (en production depuis v14) :**
 ```js
 if (ms > 0) {
   const tid = setTimeout(_onMissed, ms);
@@ -233,14 +234,40 @@ pour le requester → update bloquée silencieusement → ancienne ligne `pendin
 
 **Fix v13 :** les deux utilisent maintenant `update({ status: 'cancelled' })`.
 
-### PROCHAINE ACTION — TEST TERRAIN
+### Bug PLAQUE '--' en mode "Appel en cours" — CORRIGÉ en v14
+
+**Cause :** `acceptCall()` testait `if (data?.requester_plate)` — si `requester_plate` est
+null en DB, condition fausse même quand l'accept a réussi (`data` non-null). La branche `else`
+se déclenchait : popup cachée, CALL_ACCEPTED non émis → plaque `--` affichée.
+
+**Fix v14 :**
+```js
+let _incomingCallPlate = null; // nouvelle variable — plaque mémorisée à la réception
+
+// Dans _showIncomingPopup :
+_incomingCallPlate = req.requester_plate || null;
+
+// Dans acceptCall :
+if (data) { // condition corrigée — succès = data non-null
+  const callerPlate = data.requester_plate || _incomingCallPlate || null;
+  _incomingCallPlate = null;
+  _emitCallEvent('CALL_ACCEPTED', {with: callerPlate, plate: callerPlate, ...});
+}
+```
+
+### Faux positif `⚠️ Poll arrêté tôt` — SUPPRIMÉ en v14
+
+Le toast était déclenché à chaque accept/refuse (comportement normal : poll s'arrête).
+Fix v14 : toast supprimé, `console.warn` conservé pour diagnostic.
+
+### PROCHAINE ACTION — TEST TERRAIN v14
 
 Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
-1. A appelle B → B voit l'appel entrant
-2. A annule → B doit fermer dans les 1.5s (poll)
-3. Toasts attendus sur B : `📡 Poll lancé`, puis `📵 Poll: annulé détecté!` + `🔇 hideIncomingPopup`
-4. Plus de `⚠️ Poll arrêté tôt`
-5. A peut rappeler B immédiatement après annulation (plus de "déjà en attente")
+1. A appelle B → plaque de A apparaît dans le cercle côté B ✅
+2. B accepte → "Appel en cours" avec plaque de A visible (plus de `--`) — **À CONFIRMER**
+3. A annule → B doit fermer dans les 1.5s (poll) — **À CONFIRMER**
+4. Plus de `⚠️ Poll arrêté tôt` — **À CONFIRMER**
+5. A peut rappeler B immédiatement après annulation (plus de "déjà en attente") — **À CONFIRMER**
 
 ---
 
