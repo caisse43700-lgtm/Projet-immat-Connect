@@ -200,8 +200,9 @@ const CallManager = (function () {
   async function _expireMyPendingCalls(receiverId) {
     if (!_sb || !_uid || !receiverId) return;
     try {
+      // RLS call_req_cancel n'autorise que 'cancelled' pour le requester (pas 'expired')
       await _sb.from('call_requests')
-        .update({ status: 'expired' })
+        .update({ status: 'cancelled' })
         .eq('requester_id', _uid)
         .eq('receiver_id', receiverId)
         .eq('status', 'pending');
@@ -287,7 +288,8 @@ const CallManager = (function () {
   async function acceptCall(requestId) {
     // Annuler le timer d'expiration entrant — empêche CALL_MISSED sur un appel accepté
     const tid = _missedTimers.get(requestId);
-    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+    if (tid) clearTimeout(tid);
+    _missedTimers.delete(requestId);
 
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
@@ -315,7 +317,8 @@ const CallManager = (function () {
   async function refuseCall(requestId) {
     // Annuler aussi le timer sur refus
     const tid = _missedTimers.get(requestId);
-    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+    if (tid) clearTimeout(tid);
+    _missedTimers.delete(requestId);
 
     _leaveCallSignal();
     _hideIncomingPopup();
@@ -401,7 +404,8 @@ const CallManager = (function () {
         console.log('[CallManager] postgres_changes UPDATE entrant terminal:', r.status, r.id);
         try { if (typeof toast === 'function') toast('📡 PG-UPDATE: ' + r.status, 'ok'); } catch(e) {}
         const tid = _missedTimers.get(r.id);
-        if (tid != null) { clearTimeout(tid); _missedTimers.delete(r.id); }
+        if (tid) clearTimeout(tid);
+        _missedTimers.delete(r.id);
         try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-terminal'); } catch(e) {}
         _hideIncomingPopup();
         _seenIncomingCallIds.add(r.id);
@@ -449,7 +453,8 @@ const CallManager = (function () {
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
-          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          if (tid) clearTimeout(tid);
+          _missedTimers.delete(requestId);
           try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('poll-cancel'); } catch(e) {}
           _seenIncomingCallIds.add(requestId);
           _hideIncomingPopup();
@@ -482,6 +487,8 @@ const CallManager = (function () {
       if (ms > 0) {
         const tid = setTimeout(_onMissed, ms);
         _missedTimers.set(req.id, tid);
+      } else {
+        _missedTimers.set(req.id, null); // sentinel — appel expiré à réception, poll tourne quand même
       }
       return;
     }
@@ -512,8 +519,9 @@ const CallManager = (function () {
       if (_pendingCallId !== requestId) return;
       _pendingCallId = null;
       try {
+        // RLS n'autorise que 'cancelled' pour le requester — pg_cron gère 'expired' côté serveur
         await _sb.from('call_requests')
-          .update({ status: 'expired' })
+          .update({ status: 'cancelled' })
           .eq('id', requestId)
           .eq('requester_id', _uid)
           .eq('status', 'pending');
@@ -575,7 +583,8 @@ const CallManager = (function () {
           console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
           try { if (typeof toast === 'function') toast('📡 CANCEL broadcast reçu!', 'ok'); } catch(e) {}
           const tid = _missedTimers.get(requestId);
-          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          if (tid) clearTimeout(tid);
+          _missedTimers.delete(requestId);
           try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
           _seenIncomingCallIds.add(requestId);
           _hideIncomingPopup();
@@ -593,7 +602,8 @@ const CallManager = (function () {
                   if (st && ['cancelled','expired','refused','ended'].includes(st)) {
                     console.log('[CallManager] Post-subscribe : appel déjà terminal :', st);
                     const tid = _missedTimers.get(requestId);
-                    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+                    if (tid) clearTimeout(tid);
+                    _missedTimers.delete(requestId);
                     try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('post-subscribe'); } catch(e) {}
                     _seenIncomingCallIds.add(requestId);
                     _hideIncomingPopup();
