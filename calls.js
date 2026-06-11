@@ -16,9 +16,11 @@ const CallManager = (function () {
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
   const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
-  let _signalChannel = null;   // canal Supabase broadcast pour signaler raccroché
-  let _signalRequestId = null; // requestId de l'appel en cours
-  let _busSignalBound = false; // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
+  let _signalChannel = null;    // canal Supabase broadcast pour signaler raccroché
+  let _signalRequestId = null;  // requestId de l'appel en cours
+  let _signalReady = null;      // Promise qui résout quand le canal signal est SUBSCRIBED
+  let _pendingCallPlate = null; // plaque mémorisée côté appelant (fallback si DB null)
+  let _busSignalBound = false;  // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -87,6 +89,8 @@ const CallManager = (function () {
       receiverPlate = prof?.owner_plate || null;
     }
     _pendingCallId = data.id;
+    // Fallback : plaque mémorisée côté appelant si DB null
+    if (!receiverPlate && _pendingCallPlate) receiverPlate = _pendingCallPlate;
     _showSentBanner(receiverPlate, data.id);
   }
 
@@ -268,8 +272,10 @@ const CallManager = (function () {
     }
 
     _pendingCallId = data.id;
+    _pendingCallPlate = receiverPlate || null; // mémoriser pour le fallback recovery
     _recentOutgoingIds.add(data.id);
     setTimeout(function() { _recentOutgoingIds.delete(data.id); }, 90000);
+    console.log('[CallManager] requestCall → plaque:', receiverPlate, 'id:', data.id);
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
     _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
@@ -323,12 +329,16 @@ const CallManager = (function () {
   }
 
   async function cancelCallRequest(requestId) {
-    // Diffuser CANCEL avant de quitter le canal (comme HANGUP)
+    // Diffuser CANCEL — attendre que le canal soit SUBSCRIBED avant d'envoyer
     const ch = _signalChannel;
     const rid = requestId || _signalRequestId;
     if (ch && rid) {
-      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
-      console.log('[CallManager] CANCEL diffusé :', rid);
+      try {
+        // Attendre SUBSCRIBED max 3s pour éviter un send avant la connexion Supabase
+        if (_signalReady) await Promise.race([_signalReady, new Promise(r => setTimeout(r, 3000))]);
+        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+        console.log('[CallManager] CANCEL diffusé :', rid);
+      } catch(e) { console.warn('[CallManager] CANCEL send échoué :', e); }
     }
     _leaveCallSignal();
     _hideSentBanner();
@@ -340,6 +350,7 @@ const CallManager = (function () {
       .eq('requester_id', _uid)
       .eq('status', 'pending');
     _pendingCallId = null;
+    _pendingCallPlate = null;
     _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
@@ -501,23 +512,48 @@ const CallManager = (function () {
     if (_signalRequestId === requestId && _signalChannel) return;
     _leaveCallSignal();
     _signalRequestId = requestId;
-    _signalChannel = _sb.channel('ic_call_signal_' + requestId)
-      .on('broadcast', { event: 'HANGUP' }, function() {
-        console.log('[CallManager] HANGUP broadcast reçu → CALL_ENDED');
-        _leaveCallSignal();
-        _emitCallEvent('CALL_ENDED', { reason: 'remote-hangup', requestId: requestId });
-      })
-      .on('broadcast', { event: 'CANCEL' }, function() {
-        console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
-        const tid = _missedTimers.get(requestId);
-        if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
-        try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
-        _seenIncomingCallIds.add(requestId);
-        _hideIncomingPopup();
-        _leaveCallSignal();
-        _emitCallEvent('CALL_CANCELLED', { reason: 'remote-cancel', requestId: requestId });
-      })
-      .subscribe();
+    // Promise qui résout dès que le canal est SUBSCRIBED (max ~3s)
+    _signalReady = new Promise(function(resolve) {
+      _signalChannel = _sb.channel('ic_call_signal_' + requestId)
+        .on('broadcast', { event: 'HANGUP' }, function() {
+          console.log('[CallManager] HANGUP broadcast reçu → CALL_ENDED');
+          _leaveCallSignal();
+          _emitCallEvent('CALL_ENDED', { reason: 'remote-hangup', requestId: requestId });
+        })
+        .on('broadcast', { event: 'CANCEL' }, function() {
+          console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
+          const tid = _missedTimers.get(requestId);
+          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
+          _seenIncomingCallIds.add(requestId);
+          _hideIncomingPopup();
+          _leaveCallSignal();
+          _emitCallEvent('CALL_CANCELLED', { reason: 'remote-cancel', requestId: requestId });
+        })
+        .subscribe(function(status) {
+          if (status === 'SUBSCRIBED') {
+            resolve();
+            // Vérifier si l'appel a déjà été annulé pendant la fenêtre d'abonnement
+            if (_sb && requestId && _missedTimers.has(requestId)) {
+              _sb.from('call_requests').select('status').eq('id', requestId).maybeSingle()
+                .then(function(res) {
+                  const st = res && res.data && res.data.status;
+                  if (st && ['cancelled','expired','refused','ended'].includes(st)) {
+                    console.log('[CallManager] Post-subscribe : appel déjà terminal :', st);
+                    const tid = _missedTimers.get(requestId);
+                    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+                    try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('post-subscribe'); } catch(e) {}
+                    _seenIncomingCallIds.add(requestId);
+                    _hideIncomingPopup();
+                    _leaveCallSignal();
+                    if (st === 'cancelled') _emitCallEvent('CALL_CANCELLED', { reason: 'post-subscribe', requestId: requestId });
+                  }
+                })
+                .catch(function(){});
+            }
+          }
+        });
+    });
     console.log('[CallManager] Signal canal rejoint :', requestId);
   }
 
@@ -527,6 +563,7 @@ const CallManager = (function () {
     }
     _signalChannel = null;
     _signalRequestId = null;
+    _signalReady = null;
   }
 
   async function broadcastHangup(requestId) {

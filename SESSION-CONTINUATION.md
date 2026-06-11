@@ -194,14 +194,49 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
-## PROCHAINE ACTION — AUCUNE URGENCE
+## ÉTAT — 2026-06-11 — DIAGNOSTIC SW BLOQUÉ + CORRECTIFS TIMING
 
-L'app est en production et fonctionnelle. Prochaines améliorations possibles :
+### Diagnostic : pourquoi l'utilisateur était sur v8 alors que la production est v20
+
+La capture d'écran du Dashboard montrait `CACHE_NAME: immatconnect-pro-v8`. La version en production est v20/v21. Cause identifiée : `cache.addAll()` est **atomique** — si un seul fichier STATIC_CACHE renvoie une erreur réseau (timeout, 503 GitHub Pages CDN), l'install entier échoue silencieusement. Le browser reste sur la dernière version installée avec succès (v8).
+
+**Fix appliqué (SW v21) :** `Promise.allSettled([...STATIC_CACHE, ...CDN_CACHE].map(url => cache.add(url)))` — non-atomique. Un fichier en échec ne bloque plus l'install.
+
+### Bugs persistants après v8 : état exact
+
+Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient servis depuis le réseau (cache-first → network-first). Les correctifs P0/P1 ÉTAIENT déployés mais les bugs persistaient quand même. Deux causes racines :
+
+**Bug 1 — Plaque '--' côté appelant :**
+- `_recoverPendingRequest()` appelée sur `visibilitychange` refetchait la DB. Si `receiver_plate` était null en DB, écrasait l'affichage correct avec '--'.
+- Fix : `_pendingCallPlate` mémorisé en mémoire dans `requestCall()`. `_recoverPendingRequest` l'utilise en fallback.
+- Fix : `showOutgoing()` accepte maintenant `data.to || data.plate` (défensif).
+- Log ajouté : `console.log('[CallManager] requestCall → plaque:', ...)` pour diagnostic.
+
+**Bug 2 — CANCEL ne ferme pas B immédiatement :**
+- La subscription Supabase Realtime du canal signal prend ~300ms à s'établir (SUBSCRIBED). Si A annule dans cette fenêtre, `ch.send()` est ignoré silencieusement.
+- Fix A : `cancelCallRequest()` attend maintenant `_signalReady` (Promise qui résout sur SUBSCRIBED) avec timeout 3s avant d'envoyer CANCEL.
+- Fix B : dans le callback `.subscribe()`, quand SUBSCRIBED, B vérifie la DB pour détecter un CANCEL émis pendant la fenêtre d'abonnement.
+- `_signalReady` effacé dans `_leaveCallSignal()`.
+
+### Versions en production après commit
+
+```
+calls.js?v=10, call-screen.js?v=5, SW v21
+```
+
+## PROCHAINE ACTION — SI BUGS PERSISTENT
+
+Si après mise à jour (SW v21) les bugs persistent toujours :
+1. Ouvrir Safari DevTools (Mac → Safari → Develop → [iPhone]) — chercher `[CallManager] requestCall → plaque:` dans la console pour voir si la plaque est transmise.
+2. Si plaque = null/empty dans le log → le problème est en amont de `requestCall` (UI modal, openContactOptions).
+3. Si plaque est correcte mais affichage '--' → problème DOM ou race condition non couverte.
+
+L'utilisateur doit faire une mise à jour forcée pour obtenir SW v21 :
+- **iOS Safari** : Réglages → Safari → Avancé → Données de sites web → Supprimer caisse43700-lgtm.github.io
 
 ```text
 □ Health Lab Phase 1 (outil de diagnostic audio pré-appel)
 □ Indicateur niveau audio en temps réel pendant l'appel
-□ Fermer les PR ouvertes #279 #280 #284 (anciennes branches Guardian)
 ```
 
 ---

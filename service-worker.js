@@ -1,10 +1,10 @@
-/* service-worker.js — ImmatConnect — SESSION OBD-003d §19 */
+/* service-worker.js — ImmatConnect — SESSION OBD-003d §20 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v20';
+const CACHE_NAME  = 'immatconnect-pro-v21';
 const OFFLINE_URL = './offline.html';
 
-// Fichiers critiques — addAll() atomique : tout ou rien
+// Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
 // index.html intentionnellement absent : toujours servi depuis le réseau
 const STATIC_CACHE = [
   './offline.html',
@@ -45,9 +45,10 @@ const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com', 'download.agora.io'];
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => Promise.all([
-        cache.addAll(STATIC_CACHE),
-        Promise.allSettled(CDN_CACHE.map(url => cache.add(url))),
+      .then(cache => Promise.allSettled([
+        // allSettled pour STATIC et CDN : une panne réseau ne bloque plus l'install
+        ...STATIC_CACHE.map(url => cache.add(url)),
+        ...CDN_CACHE.map(url => cache.add(url)),
       ]))
       .then(() => self.skipWaiting())
   );
