@@ -194,33 +194,53 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
-## ÉTAT — 2026-06-11 — DIAGNOSTIC CANCEL B (calls.js v12 en production)
+## ÉTAT — 2026-06-11 — CORRECTIFS calls.js v13 EN PRODUCTION
 
-### Situation actuelle
+### Versions en production
 
 ```text
-calls.js v12 poussé sur main (commit 024937158)
-index.html toujours sur calls.js?v=11 — non bloquant : SW réseau-first sert le contenu le plus récent
-SW : immatconnect-pro-v21 confirmé actif chez l'utilisateur
+calls.js v13 poussé sur main (commit b81bc7b via MCP GitHub API)
+index.html : calls.js?v=12 — non critique, SW réseau-first sert toujours le contenu v13
+SW : immatconnect-pro-v21 actif chez l'utilisateur
 ```
 
-### Bug P0 — CANCEL ne ferme pas B — diagnostic en cours
+### Bug P0 — CANCEL ne ferme pas B — CAUSE RACINE CORRIGÉE en v13
 
-Toasts ajoutés sur B dans calls.js v12 :
-- `📡 Poll lancé #XXXX` — confirme que le poll démarre
-- `⚠️ Poll arrêté tôt` — si _missedTimers n'a pas le requestId
-- `⚠️ Poll err: [msg]` — si erreur DB dans le poll
-- `📵 Poll: annulé détecté! (cancelled)` — si le poll détecte l'annulation
-- `📡 CANCEL broadcast reçu!` — si le broadcast signal arrive
-- `📡 PG-UPDATE: cancelled` — si postgres_changes UPDATE arrive
-- `🔇 hideIncomingPopup` — confirme que l'UI a bien été fermée
+**Cause confirmée par screenshot utilisateur :** toast `⚠️ Poll arrêté tôt` visible sur B.
 
-**Prochaine action :** l'utilisateur doit tester (A appelle, A annule) et rapporter
-les toasts visibles sur le téléphone B. Ces toasts diront quel mécanisme fonctionne
-ou lequel échoue.
+**Pourquoi le poll s'arrêtait :** dans `_showIncomingPopup`, quand `ms <= 0` (appel déjà
+expiré à réception), `_missedTimers.set(req.id, tid)` n'était jamais appelé.
+Le poll guard `!_missedTimers.has(requestId)` retournait `true` dès le premier tick → arrêt immédiat.
 
-**RLS vérifiée :** `call_req_read` sans filtre status → B peut lire les lignes cancelled.
-**3 mécanismes en place :** broadcast CANCEL, postgres_changes UPDATE receiver_id, poll 1.5s.
+**Fix v13 :**
+```js
+if (ms > 0) {
+  const tid = setTimeout(_onMissed, ms);
+  _missedTimers.set(req.id, tid);
+} else {
+  _missedTimers.set(req.id, null); // sentinel — poll tourne quand même
+}
+```
+
+Tous les cleanups `_missedTimers` mis à jour : `if (tid) clearTimeout(tid); _missedTimers.delete(id);`
+— `delete()` toujours appelé même si la valeur est `null`.
+
+### Bug NEW — "Une demande est déjà en attente" (re-appel impossible) — CORRIGÉ en v13
+
+**Cause :** `_expireMyPendingCalls()` et le timer 31s de `_showSentBanner` faisaient
+`update({ status: 'expired' })`. La RLS `call_req_cancel` n'autorise que `'cancelled'`
+pour le requester → update bloquée silencieusement → ancienne ligne `pending` bloquait le `INSERT`.
+
+**Fix v13 :** les deux utilisent maintenant `update({ status: 'cancelled' })`.
+
+### PROCHAINE ACTION — TEST TERRAIN
+
+Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
+1. A appelle B → B voit l'appel entrant
+2. A annule → B doit fermer dans les 1.5s (poll)
+3. Toasts attendus sur B : `📡 Poll lancé`, puis `📵 Poll: annulé détecté!` + `🔇 hideIncomingPopup`
+4. Plus de `⚠️ Poll arrêté tôt`
+5. A peut rappeler B immédiatement après annulation (plus de "déjà en attente")
 
 ---
 
@@ -248,46 +268,13 @@ Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient serv
 - Fix B : dans le callback `.subscribe()`, quand SUBSCRIBED, B vérifie la DB pour détecter un CANCEL émis pendant la fenêtre d'abonnement.
 - `_signalReady` effacé dans `_leaveCallSignal()`.
 
-### Versions en production après commit
-
-```
-calls.js?v=12, call-screen.js?v=5, SW v21
-```
-
-## PROCHAINE ACTION — DIAGNOSTIC TERRAIN
-
-Faire tester le scénario (A appelle, A annule) sur les deux téléphones.
-Observer les toasts sur le téléphone B et rapporter ce qui apparaît.
-
 ---
 
-## TÂCHES SUIVANTES — Source : CALL_STATE_CONTINUATION.md (ChatGPT, 2026-06-11)
+## TÂCHES SUIVANTES
 
-> La voix fonctionne. Ne pas retoucher le moteur vocal. Corriger uniquement les incohérences d'état d'appel.
+### P0 — Propagation annulation ✅ CORRIGÉ (calls.js v13)
 
-### Règles non négociables
-
-```
-- Un appel annulé ne peut jamais être accepté.
-- Un statut terminal doit fermer l'UI des deux côtés.
-- A doit toujours voir la plaque de B (et inversement).
-- Le raccrochage doit se propager immédiatement des deux côtés.
-- Muet = micro uniquement. Haut-parleur = sortie audio uniquement.
-- Ne pas prétendre contrôler haut-parleur/écouteur si le SDK ne le supporte pas.
-```
-
-### P0 — Propagation annulation (critique) — EN COURS DE DIAGNOSTIC
-
-**Corrections appliquées dans `calls.js` (branche feature puis main) :**
-- Nouveau listener `UPDATE receiver_id=eq.{uid}` : statut terminal → vide timer, stoppe audio, ferme UI, émet CALL_CANCELLED ou CALL_MISSED
-- `acceptCall()` : si DB retourne 0 lignes (appel déjà annulé) → `_hideIncomingPopup()` + toast "Appel annulé ou expiré" — plus jamais de join signal/voix
-- `_showSentBanner()` : appelle maintenant `CallScreen.showOutgoing({to,plate,requestId})` au lieu de sortir sans passer la plaque (→ fix P1 intégré)
-- `broadcastHangup()` : envoie le broadcast HANGUP **avant** `_leaveCallSignal()` — évite que removeChannel coupe la connexion avant l'envoi
-- Poll DB 1.5s `_startCancelPoll` + toasts diagnostics
-
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (inclus dans P0)
-
-- `_showSentBanner()` passe maintenant `{to, plate, requestId}` à `CallScreen.showOutgoing()`
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ
 
 ### P2 — Haut-parleur / écouteur
 
@@ -305,20 +292,6 @@ signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
 missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
 derniers événements CALL_*
 ```
-
-Ajouter bloc "Call Identity" : plaque cible sortante, plaque appelant entrant, plaque affichée, requestId.
-
-Ajouter bloc "Audio Route" : speaker support/enabled/route/lastError, muteState.
-
-### Autotests à couvrir
-
-1. A appelle B puis annule avant que B accepte → B ferme immédiatement, ne peut plus accepter
-2. A annule, B tape Accepter très vite → pas d'accept, UI ferme, pas de join signal/voix
-3. A appelle B → A voit la plaque de B, mode outgoing, requestId présent
-4. B reçoit → B voit la plaque de A, mode incoming, requestId présent
-5. A et B en appel, A raccroche → B ferme immédiatement
-6. A et B en appel, B raccroche → A ferme immédiatement
-7. Bouton Haut-parleur : fonctionnel ou clairement reporté non supporté ; Muet reste indépendant
 
 ---
 
