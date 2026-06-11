@@ -92,6 +92,8 @@ const CallManager = (function () {
     _pendingCallId = data.id;
     // Fallback : plaque mémorisée côté appelant si DB null
     if (!receiverPlate && _pendingCallPlate) receiverPlate = _pendingCallPlate;
+    // Ne pas afficher l'overlay si la plaque est inconnue — évite '--' en recovery
+    if (!receiverPlate) return;
     _showSentBanner(receiverPlate, data.id);
   }
 
@@ -532,9 +534,14 @@ const CallManager = (function () {
           .eq('status', 'pending');
       } catch (_) {}
     }, 31000);
+    // Guard : ne jamais afficher '--' dans l'overlay — plate toujours requise
+    const effectivePlate = plate || _pendingCallPlate || null;
     if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
-      window.CallScreen.showOutgoing({ to: plate, plate: plate, requestId: requestId });
-      return;
+      if (effectivePlate) {
+        window.CallScreen.showOutgoing({ to: effectivePlate, plate: effectivePlate, requestId: requestId });
+        return;
+      }
+      // Plaque inconnue : ne pas ouvrir l'overlay avec '--', passer au banner legacy
     }
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
