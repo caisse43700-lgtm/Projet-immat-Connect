@@ -22,6 +22,7 @@ const CallManager = (function () {
   let _pendingCallPlate = null;  // plaque mémorisée côté appelant (fallback si DB null)
   let _incomingCallPlate = null; // plaque de l'appelant mémorisée à la réception (fallback acceptCall)
   let _busSignalBound = false;   // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
+  let _reconnectTimer = null;    // debounce reconnexion Realtime — évite double abonnement
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -451,7 +452,9 @@ const CallManager = (function () {
         _lastSubscribeStatus = status;
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[CallManager] realtime KO, reconnexion dans 5s', err);
-          setTimeout(() => subscribeIncomingCalls(uid), 5000);
+          // Debounce — un seul timer même si le callback CHANNEL_ERROR fire deux fois
+          if (_reconnectTimer) clearTimeout(_reconnectTimer);
+          _reconnectTimer = setTimeout(() => { _reconnectTimer = null; subscribeIncomingCalls(uid); }, 5000);
         }
       });
   }
@@ -533,6 +536,13 @@ const CallManager = (function () {
   }
 
   function _showIncomingPopup(req) {
+    // Dedup : postgres_changes INSERT peut se répéter après reconnexion Realtime,
+    // et _recoverIncomingPendingCalls peut tirer en parallèle → un seul affichage par requestId
+    if (_seenIncomingCallIds.has(req.id)) {
+      console.log('[CallManager] showIncomingPopup ignoré (doublon)', req.id);
+      return;
+    }
+    _seenIncomingCallIds.add(req.id);
     const plate = req.requester_plate || 'Conducteur';
     console.log('[CallManager] showIncomingPopup → id:', req.id, 'plate:', plate, 'status:', req.status, 'expires_at:', req.expires_at);
     _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null

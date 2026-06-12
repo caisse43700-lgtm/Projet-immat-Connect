@@ -181,12 +181,12 @@
     if (document.body) {
       _buildPanel();
       _watchBus();
-      _add('DBG', 'CallDebugPanel v1 prêt — calls.js v15', 'state');
+      _add('DBG', 'CallDebugPanel v1 prêt — calls.js v17', 'state');
     } else {
       document.addEventListener('DOMContentLoaded', function () {
         _buildPanel();
         _watchBus();
-        _add('DBG', 'CallDebugPanel v1 prêt — calls.js v15', 'state');
+        _add('DBG', 'CallDebugPanel v1 prêt — calls.js v17', 'state');
       });
     }
   }
