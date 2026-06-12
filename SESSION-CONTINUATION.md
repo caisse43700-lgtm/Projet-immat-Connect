@@ -300,7 +300,7 @@ Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient serv
 
 ---
 
-## ÉTAT — 2026-06-12 — FIX OVERLAY '--' (call-screen.js v6, calls.js +Fix B)
+## ÉTAT — 2026-06-12 — FIX OVERLAY '--' (call-screen.js v6, calls.js v17)
 
 ### Bug confirmé par diagnostic terrain (5 captures IMG_5584–IMG_5589)
 
@@ -349,29 +349,79 @@ if (receiverPlate) _pendingCallPlate = receiverPlate; // ← ajouté
 
 Toasts `🔍` et MutationObserver supprimés de call-screen.js (cause identifiée).
 
-### Versions en production après fix
+### Versions après fix
 
 ```text
-calls.js       : +1 ligne _recoverPendingRequest (Fix B)
-call-screen.js : _terminalRequestIds (Fix A), diagnostic retiré
-SW             : immatconnect-pro-v21, réseau-first — sert toujours le dernier JS
+calls.js       : v=13 (index.html) — même logique v16, +1 ligne _recoverPendingRequest
+call-screen.js : v=6 (index.html)  — _terminalRequestIds, diagnostic retiré
+```
+
+### ✅ VALIDÉ TERRAIN 2026-06-12
+
+Overlay "📞 Appel en cours" affiche BE-521-MM. Plus de '--'.
+
+### Cause racine confirmée
+
+Supabase postgres_changes UPDATE n'inclut que les colonnes modifiées (status,
+responded_at). `receiver_plate` absent du payload → `showAccepted({with: null})` → '--'.
+
+Fix final (call-screen.js v7) : fallback sur `_state.plate` (déjà renseigné par
+`showOutgoing`) si le payload ne contient pas de plaque.
+
+---
+
+## ÉTAT — 2026-06-12 — FIX PROPAGATION ANNULATION (calls.js v14 index.html)
+
+### Audit complet 4 bugs identifiés
+
+| # | Sévérité | Cause | Fix |
+|---|---|---|---|
+| 1 | CERTAIN | `visibilitychange` appelle `_recoverIncomingPendingCalls` (query status=pending). Si A a annulé → status='cancelled' → null → overlay B reste ouvert | `_checkOngoingIncomingCall()` ajouté au handler visibilitychange |
+| 2 | PROBABLE | iOS Safari throttle `setInterval` en background → poll 1.5s ne tourne pas | Intervalle réduit à 1s + vérification immédiate avant premier tick |
+| 3 | POSSIBLE | Poll query `.eq('id', requestId)` sans `.eq('receiver_id', _uid)` → RLS peut retourner null silencieusement | `.eq('receiver_id', _uid)` ajouté à toutes les queries poll |
+| 4 | CERTAIN | CANCEL broadcast envoyé une seule fois. B peut s'abonner ~300-500ms après → broadcast perdu | Retry broadcast après 900ms dans `cancelCallRequest` |
+
+### Fixes appliqués dans calls.js
+
+#### Bug #4 — Retry CANCEL broadcast
+```js
+await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+await new Promise(r => setTimeout(r, 900));
+try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
+```
+
+#### Bug #1 — `_checkOngoingIncomingCall()` au retour en foreground
+Nouvelle fonction : vérifie chaque requestId actif dans `_missedTimers` en DB.
+Si status terminal → ferme overlay + émet CALL_CANCELLED/CALL_MISSED.
+Appelée dans visibilitychange en plus de `_recoverIncomingPendingCalls`.
+
+#### Bug #2+3 — `_startCancelPoll` amélioré
+- Intervalle 1500ms → 1000ms
+- Vérification immédiate avant premier tick (`_doPollCheck()` appelée 1x avant `setInterval`)
+- `.eq('receiver_id', _uid)` ajouté — RLS safe
+- Max checks 25 → 40 (couvre 40s de sonnerie max)
+
+### Versions après fix
+
+```text
+calls.js       : v=14 (index.html) — cancellation robuste
+call-screen.js : v=6  (index.html) — inchangé (v7 chargé)
 ```
 
 ### PROCHAINE ACTION — TEST TERRAIN
 
-Tester sur BZ-652-LL ↔ BE-521-MM :
-1. A appelle B → overlay sortant affiche BE-521-MM dès le premier essai
-2. B accepte → "📞 Appel en cours" côté A affiche BE-521-MM (plus de '--' transitoire)
-3. A annule → B ferme dans 1.5s
-4. Une seule tonalité d'appel
+Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
+1. A appelle B → overlay entrant s'affiche chez B ← déjà OK
+2. A annule → overlay chez B se ferme dans les 2s ← **À CONFIRMER**
+3. A annule alors que B est en background → au retour foreground overlay ferme ← **À CONFIRMER (bug #1)**
 
 ---
 
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation ✅ CORRIGÉ
+### P0 — Propagation annulation — FIX COMPLET DÉPLOYÉ (calls.js v14, 2026-06-12)
 
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js Fix A + calls.js Fix B)
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
 
 ### P2 — Haut-parleur / écouteur
 
