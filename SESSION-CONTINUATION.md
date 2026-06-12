@@ -451,9 +451,38 @@ Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
 
 ---
 
+## ÉTAT — 2026-06-12 ✅ APPELS + ANNULATION + PLAQUE FONCTIONNELS
+
+```text
+Validé terrain : BZ-652-LL ↔ BE-521-MM — 2026-06-12 23:31 UTC
+- Annulation A → overlay B se ferme ✓
+- Plaque de l'appelé visible sur l'overlay sortant ✓
+- Appels vocaux bidirectionnels ✓
+```
+
+### Cause racine résolue — call-screen.js v8 (2026-06-12)
+
+InteractionEngine ré-émettait CALL_INITIATED / CALL_ACCEPTED / CALL_MISSED sur ImmatBus
+avec un payload différent (sans `requestId` au niveau racine). Le handler `bus.on('CALL_INITIATED')`
+appelait `showOutgoing(e.payload)` pour les 3 émissions. La 3ème écrasait :
+- `_state.requestId = null` → cancel et hangup silencieux (bouton Annuler/Raccrocher sans effet côté B)
+- `_state.plate = '--'` → plaque de l'appelé non affichée
+
+**Fix :** Guard `requestId` sur tous les handlers bus + dedup dans show* functions.
+
+### Bugs résolus dans cette session (2026-06-12)
+
+| Bug | Cause | Fix |
+|---|---|---|
+| A annule → B ne ferme pas | InteractionEngine écrase `_state.requestId=null` | call-screen.js v8 |
+| Plaque `--` sur overlay sortant | Même cause | call-screen.js v8 |
+| Double `showIncomingPopup` | realtime KO x2 → deux canaux | dedup + debounce v17 |
+| CALL_MISSED après appel accepté | Double popup → deuxième timer échappait à clearTimeout | dedup v17 |
+| DB cancel en dernier | cancelCallRequest écrivait en DB après broadcasts | DB-first v15 |
+
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation — FIX DB-FIRST DÉPLOYÉ (calls.js v15, 2026-06-12)
+### P0 — ✅ TOUT RÉSOLU (2026-06-12)
 
 ### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
 
