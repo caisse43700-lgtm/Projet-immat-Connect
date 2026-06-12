@@ -283,8 +283,8 @@ const CallManager = (function () {
     // Toast de diagnostic visible — montre exactement quelle plaque est transmise
     try { if (typeof toast === 'function') toast('Appel → ' + (receiverPlate || '(vide)'), receiverPlate ? 'ok' : 'bad'); } catch(e) {}
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
-    _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
+    _showSentBanner(receiverPlate, data.id); // après CALL_INITIATED — dedup si CallScreen déjà ouvert
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
@@ -363,6 +363,7 @@ const CallManager = (function () {
       .eq('status', 'pending');
     _pendingCallId = null;
     _pendingCallPlate = null;
+    _missedTimers.delete(requestId); // nettoyage défensif — évite poll fantôme si appelant avait une entrée
     _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
@@ -392,7 +393,9 @@ const CallManager = (function () {
         _recentOutgoingIds.delete(r.id);
         if (r.status === 'accepted') {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
-          _emitCallEvent('CALL_ACCEPTED', {'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
+          // receiver_plate peut être null en DB — fallback sur la plaque mémorisée à l'envoi
+          const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+          _emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
           _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
           _hideSentBanner();
@@ -537,6 +540,9 @@ const CallManager = (function () {
     // Guard : ne jamais afficher '--' dans l'overlay — plate toujours requise
     const effectivePlate = plate || _pendingCallPlate || null;
     if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
+      // Déduplication : CALL_INITIATED (émis avant) a déjà ouvert l'overlay pour ce requestId
+      const csState = typeof window.CallScreen.getState === 'function' ? window.CallScreen.getState() : null;
+      if (csState && csState.mode === 'outgoing' && csState.requestId === requestId) return;
       if (effectivePlate) {
         window.CallScreen.showOutgoing({ to: effectivePlate, plate: effectivePlate, requestId: requestId });
         return;
