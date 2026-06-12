@@ -356,21 +356,25 @@ calls.js       : v=13 (index.html) — même logique v16, +1 ligne _recoverPendi
 call-screen.js : v=6 (index.html)  — _terminalRequestIds, diagnostic retiré
 ```
 
-### PROCHAINE ACTION — TEST TERRAIN
+### ✅ VALIDÉ TERRAIN 2026-06-12
 
-Tester sur BZ-652-LL ↔ BE-521-MM :
-1. A appelle B → overlay sortant affiche BE-521-MM dès le premier essai
-2. B accepte → "📞 Appel en cours" côté A affiche BE-521-MM (plus de '--' transitoire)
-3. A annule → B ferme dans 1.5s
-4. Une seule tonalité d'appel
+Overlay "📞 Appel en cours" affiche BE-521-MM. Plus de '--'.
+
+### Cause racine confirmée
+
+Supabase postgres_changes UPDATE n'inclut que les colonnes modifiées (status,
+responded_at). `receiver_plate` absent du payload → `showAccepted({with: null})` → '--'.
+
+Fix final (call-screen.js v7) : fallback sur `_state.plate` (déjà renseigné par
+`showOutgoing`) si le payload ne contient pas de plaque.
 
 ---
 
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation ✅ CORRIGÉ (calls.js v13)
+### P0 — Propagation annulation ✅ CORRIGÉ
 
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v6, calls.js +Fix B)
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
 
 ### P2 — Haut-parleur / écouteur
 
