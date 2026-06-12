@@ -104,66 +104,24 @@ Fin d'appel (refus/annulation/manqué) :
 
 ---
 
-### PR #288 — feat: Global Verification Center + correctif réception (en attente merge)
-
-**Branche :** `global-verification-center`
-
-**Pourquoi :** Deux changements critiques groupés :
-
-1. **CORRECTIF RÉCEPTION (hotfix)** — Plus de réception signalée après PR #285.
-   Cause : `AgoraRTC_N-4.20.0.js` (~600 KB CDN) chargé en synchrone AVANT
-   `call-notification-runtime.js` — bloquait le chargement de ce script sur iOS mobile lent.
-   Fix : `call-notification-runtime.js` déplacé avant le CDN Agora + `async` ajouté au CDN.
-
-2. **Global Verification Center** — Audit 8 sections en lecture seule depuis Dashboard Gardien.
-   Bouton "Global" (vert) dans le header → `window.GlobalVerificationCenter.run()`.
-
-| Fichier | Changement |
-|---|---|
-| `index.html` | `call-notification-runtime.js` avant Agora CDN, CDN Agora `async` |
-| `core/global-verification-center.js` | Nouveau — 8 sections read-only (app/dashboard/messages/calls/audio/webrtc/cache/supabase) |
-| `core/guardian-dashboard-summary.js` | v1.6 — bouton Global + panel _globalCheckInlinePanel |
-| `service-worker.js` | v13 — global-verification-center.js en cache statique |
-
----
-
 ### Mergé sur main 2026-06-10 (PR #289 + merge direct)
 
-Tout ce qui précède est en production. En plus, 5 correctifs appels mergés :
+5 correctifs appels mergés sur main :
 
 | Correctif | Fichier | Détail |
 |---|---|---|
-| Coupure appel après ~20s | `calls.js` | Timer `_onMissed` (basé sur expires_at) stocké dans `_missedTimers`, annulé dans `acceptCall()`/`refuseCall()` — plus de CALL_MISSED sur appel accepté |
-| Raccrochage non synchronisé | `core/agora-call-engine.js` | Handler `user-left` Agora → émet `CALL_ENDED` sur ImmatBus → `CallScreen.hide()` des deux côtés |
-| Micro iOS bloqué | `calls.js` + `core/call-screen.js` | `getUserMedia({audio:true})` déclenché dans le geste utilisateur (tap Accepter / tap Contact), avant la chaîne async |
-| Boutons trop gros | `index.html` + `core/call-screen.js` | CSS `.cs-btn` + grille 2×2 `.cs-actions-grid` en mode accepté |
-| Diagnostic moteur vocal | `core/agora-call-engine.js` | `getRuntimeState()` → joined/channel/published/remoteUsersCount/lastError |
+| Coupure appel après ~20s | `calls.js` | Timer `_onMissed` stocké dans `_missedTimers`, annulé dans `acceptCall()`/`refuseCall()` |
+| Raccrochage non synchronisé | `core/agora-call-engine.js` | Handler `user-left` Agora → émet `CALL_ENDED` |
+| Micro iOS bloqué | `calls.js` + `core/call-screen.js` | `getUserMedia({audio:true})` dans le geste utilisateur |
+| Boutons trop gros | `index.html` + `core/call-screen.js` | CSS `.cs-btn` + grille 2×2 `.cs-actions-grid` |
+| Diagnostic moteur vocal | `core/agora-call-engine.js` | `getRuntimeState()` |
 
 ---
 
-## SONNERIE TÉLÉPHONE RÉELLE — audio-manager v3 (2026-06-10, après retour terrain)
+## SONNERIE TÉLÉPHONE RÉELLE — audio-manager v3 (2026-06-10)
 
-**Retour terrain :** bip entendu côté appelant mais AUCUNE sonnerie côté destinataire.
-
-**Cause :** le fallback Web Audio nécessite un AudioContext débloqué par un geste
-utilisateur récent. L'appel entrant arrive via Realtime (sans geste) → contexte
-suspendu → silence. De plus le son ne ressemblait pas à un téléphone.
-
-**Fix (audio-manager.js v3) :**
-1. Génération au démarrage d'une vraie sonnerie téléphone : WAV en mémoire
-   (Blob URL), bitonalité 440+480 Hz, cadence 1.5s ON / 3.5s OFF, loopée.
-   Assignée à `callAudioIncoming.src`. + tonalité retour (440 Hz) pour
-   `callAudioOutgoing` + double bip pour `messageAudioBeep`.
-2. `unlockFromUserGesture()` joue maintenant TOUS les éléments en muet au
-   premier tap — iOS les autorise ensuite à être rejoués à tout moment,
-   y compris à l'arrivée d'un appel sans geste. C'est LE mécanisme fiable iOS.
-3. Le fallback Web Audio reste en dernier recours.
-
-```text
-Mécanisme iOS critique :
-tap quelconque dans l'app → éléments <audio> joués en muet → "débloqués"
-appel entrant (sans geste) → el.play() AUTORISÉ car élément déjà débloqué
-```
+Fix : WAV en mémoire (Blob URL), bitonalité 440+480 Hz, cadence 1.5s ON / 3.5s OFF, loopée.
+`unlockFromUserGesture()` joue tous les éléments en muet au premier tap — déblocage iOS.
 
 ---
 
@@ -177,146 +135,95 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 | Fix | Cause | PR |
 |---|---|---|
-| Token Agora null | Edge Function `get-agora-token` jamais déployée en CI (seulement `immat-brain-dialog`) | #294 |
-| HTTP 401 | JWT verification Supabase activée par défaut au redéploiement CI — désactivée via Dashboard | manuel |
-| Token null → fallback natif | `npm:agora-token@2.0.4` potentiellement CJS incompatible Deno — implémentation Web Crypto native | #293 |
-| Guard double-join | `joinCall()` appelée deux fois en parallèle → `INVALID_OPERATION` | #293 |
-| Audio unidirectionnel (A entend B, B n'entend pas A) | `user-published` enregistré APRÈS `join()` → événement raté si A déjà présent | #296 |
-| Race condition preMicTrack | `__preMicTrack` pas encore résolu quand `joinCall()` tourne → `null` → fallback iOS échoue | #295 |
-| `[object Object]` dans diagnostic | `lastCallEvents` converti via `String(array)` → noms d'événements maintenant affichés | #297 |
-| 3 bugs post-audit | guard `_busSignalBound`, `getRuntimeState` read-only, `requestId` dans `CALL_ENDED` | #292 |
-| Faux positif « vieille version en cache » | `checkCache()` flaguait Critique dès que l'URL n'avait pas de `?v=x` (heuristique). Remplacé par vraie vérification : `CACHE_NAME` du service-worker.js réseau comparé à `caches.keys()`. Marqueur URL devenu informatif. SW v18, GVC v1.1 | branche feature |
-| Stale CALL_ACCEPTED dans Agora | `bus.on('CALL_ACCEPTED')` pouvait joindre un canal Agora même après annulation (event Supabase en retard). `_terminalRequestIds` Set — tout event terminal marque le requestId, `CALL_ACCEPTED` ignoré si marqué | branche feature |
-| Action locks double-tap | `_withLock()` wrapper sur Accepter/Refuser/Annuler/Raccrocher — verrou 1.5s, double-tap ignoré | branche feature |
-| "Fermer" pendant appel actif | Bouton "Fermer" remplacé par "Réduire" en mode `accepted` — l'appel reste actif (passe en mini), impossible de rater le raccrocher | branche feature |
-| `acceptCall()` else : audio non stoppé explicitement | Ajout `AudioManager.stopCallAudio('accept-no-row')` dans la branche échec de acceptCall() | branche feature |
-| Variable `wasCallScreenIncoming` inutilisée | Supprimée dans acceptCall() | branche feature |
+| Token Agora null | Edge Function jamais déployée en CI | #294 |
+| HTTP 401 | JWT verification activée par défaut — désactivée Dashboard | manuel |
+| Token null → fallback natif | Web Crypto native | #293 |
+| Guard double-join | `joinCall()` deux fois → `INVALID_OPERATION` | #293 |
+| Audio unidirectionnel | `user-published` enregistré APRÈS `join()` | #296 |
+| Race condition preMicTrack | `__preMicTrack` pas résolu → fallback iOS échoue | #295 |
+| `[object Object]` diagnostic | `lastCallEvents` via `String(array)` | #297 |
 
 ---
 
-## ÉTAT — 2026-06-11 — CORRECTIFS calls.js v14 EN PRODUCTION
+## ÉTAT — 2026-06-12 — RÉPARATION COMPLÈTE calls.js v16 EN PRODUCTION
 
 ### Versions en production
 
 ```text
-calls.js v14 poussé sur main (commit 15121fb via MCP GitHub API)
-index.html : calls.js?v=12 — non critique, SW réseau-first sert toujours le contenu v14
-SW : immatconnect-pro-v21 actif chez l'utilisateur
-Utilisateur confirmé : "C'est la bonne version" (IMG_5568)
+calls.js v16 — commit 7581e90 sur main (via MCP GitHub API)
+SW : immatconnect-pro-v21 actif — réseau-first, sert toujours le dernier calls.js
 ```
 
-### Bug P0 — CANCEL ne ferme pas B — CAUSE RACINE CORRIGÉE en v13, en production depuis v14
+### Audit complet 2026-06-12 — 4 bugs confirmés, 4 fixes appliqués
 
-**Cause confirmée par screenshot utilisateur :** toast `⚠️ Poll arrêté tôt` visible sur B.
+#### FIX #1 — `cancelCallRequest` : `_missedTimers.delete(requestId)` manquant
 
-**Pourquoi le poll s'arrêtait :** dans `_showIncomingPopup`, quand `ms <= 0` (appel déjà
-expiré à réception), `_missedTimers.set(req.id, tid)` n'était jamais appelé.
-Le poll guard `!_missedTimers.has(requestId)` retournait `true` dès le premier tick → arrêt immédiat.
+Toutes les autres fonctions (acceptCall, refuseCall, postgres_changes UPDATE, poll detect,
+broadcast CANCEL) appelaient `_missedTimers.delete()`. `cancelCallRequest` ne le faisait pas.
+Nettoyage défensif ajouté après `_pendingCallPlate = null`.
 
-**Fix v13 (en production depuis v14) :**
+#### FIX #2 — Double `showOutgoing()` → double tonalité + double render
+
+**Cause :** `requestCall()` appelait `_showSentBanner()` (→ `showOutgoing` direct) PUIS émettait
+`CALL_INITIATED` (→ `showOutgoing` via bus). Résultat : overlay rendu deux fois, timer 30s remis à zéro.
+
+**Fix :** ordre inversé dans `requestCall` (CALL_INITIATED en premier), déduplication dans
+`_showSentBanner` via `CallScreen.getState().requestId`.
+
 ```js
-if (ms > 0) {
-  const tid = setTimeout(_onMissed, ms);
-  _missedTimers.set(req.id, tid);
-} else {
-  _missedTimers.set(req.id, null); // sentinel — poll tourne quand même
-}
+// requestCall — nouvel ordre :
+_emitCallEvent('CALL_INITIATED', {...});   // bus → showOutgoing + audio (1er)
+_showSentBanner(receiverPlate, data.id);  // 31s timer + dedup check (2ème)
+
+// _showSentBanner — déduplication :
+const csState = window.CallScreen.getState();
+if (csState.mode === 'outgoing' && csState.requestId === requestId) return;
 ```
 
-Tous les cleanups `_missedTimers` mis à jour : `if (tid) clearTimeout(tid); _missedTimers.delete(id);`
-— `delete()` toujours appelé même si la valeur est `null`.
+Recovery (`_recoverPendingRequest` → `_showSentBanner`) non affecté : mode ≠ 'outgoing' → direct `showOutgoing`.
 
-### Bug NEW — "Une demande est déjà en attente" (re-appel impossible) — CORRIGÉ en v13
+#### FIX #3 — Overlay "Appel en cours" côté A affiche `--` après accept de B
 
-**Cause :** `_expireMyPendingCalls()` et le timer 31s de `_showSentBanner` faisaient
-`update({ status: 'expired' })`. La RLS `call_req_cancel` n'autorise que `'cancelled'`
-pour le requester → update bloquée silencieusement → ancienne ligne `pending` bloquait le `INSERT`.
+**Cause :** `outgoingUpdateHandler` émettait `CALL_ACCEPTED` avec `r.receiver_plate` brut,
+qui peut être `null` en DB.
 
-**Fix v13 :** les deux utilisent maintenant `update({ status: 'cancelled' })`.
-
-### Bug PLAQUE '--' en mode "Appel en cours" — CORRIGÉ en v14
-
-**Cause :** `acceptCall()` testait `if (data?.requester_plate)` — si `requester_plate` est
-null en DB, condition fausse même quand l'accept a réussi (`data` non-null). La branche `else`
-se déclenchait : popup cachée, CALL_ACCEPTED non émis → plaque `--` affichée.
-
-**Fix v14 :**
+**Fix :**
 ```js
-let _incomingCallPlate = null; // nouvelle variable — plaque mémorisée à la réception
-
-// Dans _showIncomingPopup :
-_incomingCallPlate = req.requester_plate || null;
-
-// Dans acceptCall :
-if (data) { // condition corrigée — succès = data non-null
-  const callerPlate = data.requester_plate || _incomingCallPlate || null;
-  _incomingCallPlate = null;
-  _emitCallEvent('CALL_ACCEPTED', {with: callerPlate, plate: callerPlate, ...});
-}
+const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+_emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, ...});
 ```
 
-### Faux positif `⚠️ Poll arrêté tôt` — SUPPRIMÉ en v14
+#### FIX #4 — Guards v15 maintenus (overlay sortant affiche `--` en recovery)
 
-Le toast était déclenché à chaque accept/refuse (comportement normal : poll s'arrête).
-Fix v14 : toast supprimé, `console.warn` conservé pour diagnostic.
+`_recoverPendingRequest` : `if (!receiverPlate) return` avant d'appeler `_showSentBanner`.
+`_showSentBanner` : `effectivePlate = plate || _pendingCallPlate || null`.
 
-### PROCHAINE ACTION — TEST TERRAIN v14
+### PROCHAINE ACTION — TEST TERRAIN v16
 
 Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
-1. A appelle B → plaque de A apparaît dans le cercle côté B ✅
-2. B accepte → "Appel en cours" avec plaque de A visible (plus de `--`) — **À CONFIRMER**
-3. A annule → B doit fermer dans les 1.5s (poll) — **À CONFIRMER**
-4. Plus de `⚠️ Poll arrêté tôt` — **À CONFIRMER**
-5. A peut rappeler B immédiatement après annulation (plus de "déjà en attente") — **À CONFIRMER**
-
----
-
-## ÉTAT — 2026-06-11 — DIAGNOSTIC SW BLOQUÉ + CORRECTIFS TIMING
-
-### Diagnostic : pourquoi l'utilisateur était sur v8 alors que la production est v20
-
-La capture d'écran du Dashboard montrait `CACHE_NAME: immatconnect-pro-v8`. La version en production est v20/v21. Cause identifiée : `cache.addAll()` est **atomique** — si un seul fichier STATIC_CACHE renvoie une erreur réseau (timeout, 503 GitHub Pages CDN), l'install entier échoue silencieusement. Le browser reste sur la dernière version installée avec succès (v8).
-
-**Fix appliqué (SW v21) :** `Promise.allSettled([...STATIC_CACHE, ...CDN_CACHE].map(url => cache.add(url)))` — non-atomique. Un fichier en échec ne bloque plus l'install.
-
-### Bugs persistants après v8 : état exact
-
-Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient servis depuis le réseau (cache-first → network-first). Les correctifs P0/P1 ÉTAIENT déployés mais les bugs persistaient quand même. Deux causes racines :
-
-**Bug 1 — Plaque '--' côté appelant :**
-- `_recoverPendingRequest()` appelée sur `visibilitychange` refetchait la DB. Si `receiver_plate` était null en DB, écrasait l'affichage correct avec '--'.
-- Fix : `_pendingCallPlate` mémorisé en mémoire dans `requestCall()`. `_recoverPendingRequest` l'utilise en fallback.
-- Fix : `showOutgoing()` accepte maintenant `data.to || data.plate` (défensif).
-- Log ajouté : `console.log('[CallManager] requestCall → plaque:', ...)` pour diagnostic.
-
-**Bug 2 — CANCEL ne ferme pas B immédiatement :**
-- La subscription Supabase Realtime du canal signal prend ~300ms à s'établir (SUBSCRIBED). Si A annule dans cette fenêtre, `ch.send()` est ignoré silencieusement.
-- Fix A : `cancelCallRequest()` attend maintenant `_signalReady` (Promise qui résout sur SUBSCRIBED) avec timeout 3s avant d'envoyer CANCEL.
-- Fix B : dans le callback `.subscribe()`, quand SUBSCRIBED, B vérifie la DB pour détecter un CANCEL émis pendant la fenêtre d'abonnement.
-- `_signalReady` effacé dans `_leaveCallSignal()`.
+1. A appelle B → overlay sortant affiche BE-521-MM (plus de `--`) ← **BUG SIGNALÉ, À CONFIRMER**
+2. B accepte → "Appel en cours" côté A affiche BE-521-MM (plus de `--`) ← **À CONFIRMER**
+3. A annule → B ferme dans les 1.5s (poll ou broadcast) ← **À CONFIRMER**
+4. Une seule tonalité d'appel côté A (plus de double bip) ← **À CONFIRMER**
 
 ---
 
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation ✅ CORRIGÉ (calls.js v13)
-
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ v16
 
 ### P2 — Haut-parleur / écouteur
 
 - Par défaut : route écouteur (privé)
 - Bouton Haut-parleur ON/OFF séparé du Muet
-- Si la route audio n'est pas contrôlable → afficher "Sortie audio contrôlée par le téléphone"
-- Exposer dans diagnostics : `speakerSupported`, `speakerEnabled`, `audioRouteKnown`, `audioRoute`, `lastSpeakerError`, `muteState`
+- Exposer dans diagnostics : `speakerSupported`, `speakerEnabled`, `audioRoute`, `muteState`
 
 ### P3 — Dashboard / Diagnostics
 
 Ajouter un bloc "Call State Integrity" :
 ```
 requestId actif, CallScreen mode/plate/requestId, pendingCallId,
-signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
-missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
+signalRequestId, signalChannel présent, missedTimers, UI entrante/sortante visible,
 derniers événements CALL_*
 ```
 
@@ -328,8 +235,8 @@ derniers événements CALL_*
 URL        : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key   : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ
 Edge Functions déployées :
-  - get-turn-credentials  (ancienne, pour WebRTC natif — obsolète)
-  - get-agora-token       (nouvelle, pour tokens Agora RTC)
+  - get-turn-credentials  (obsolète)
+  - get-agora-token       (tokens Agora RTC)
   - immat-brain-dialog    (IA dialogue)
   - create-call-request   (créer demande d'appel)
   - respond-call-request  (répondre à une demande)
