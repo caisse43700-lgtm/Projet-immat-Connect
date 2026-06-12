@@ -90,6 +90,7 @@ const CallManager = (function () {
       receiverPlate = prof?.owner_plate || null;
     }
     _pendingCallId = data.id;
+    if (receiverPlate) _pendingCallPlate = receiverPlate; // restaure le fallback après recovery
     // Fallback : plaque mémorisée côté appelant si DB null
     if (!receiverPlate && _pendingCallPlate) receiverPlate = _pendingCallPlate;
     // Ne pas afficher l'overlay si la plaque est inconnue — évite '--' en recovery

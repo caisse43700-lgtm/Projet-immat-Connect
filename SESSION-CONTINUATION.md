@@ -298,11 +298,79 @@ Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient serv
 
 ---
 
+---
+
+## ÉTAT — 2026-06-12 — FIX OVERLAY '--' (call-screen.js v6, calls.js v17)
+
+### Bug confirmé par diagnostic terrain (5 captures IMG_5584–IMG_5589)
+
+Séquence observée dans les toasts :
+1. `🔍 plate→--` (rouge) — `showAccepted` appelé avec plate null
+2. `🔍 plate→BE-521-MM` (vert) — vrai CALL_ACCEPTED avec bonne plaque
+
+### Cause racine — double CALL_ACCEPTED
+
+`call-screen.js` n'avait aucun guard contre les événements Supabase Realtime périmés
+(stale events d'un appel précédent). `agora-call-engine.js` avait déjà ce guard via
+`_terminalRequestIds`. Bug symétrique, même fix.
+
+### Fixes appliqués
+
+#### Fix A — call-screen.js : _terminalRequestIds (stale event guard)
+
+Toute terminaison d'appel (REFUSED / CANCELLED / MISSED / ENDED) ajoute le requestId
+dans `_terminalRequestIds`. `showAccepted` ignore silencieusement les événements dont
+le requestId est déjà terminal.
+
+```js
+var _terminalRequestIds = new Set();
+
+function _addTerminal(e) {
+  var rid = e && e.payload && e.payload.requestId;
+  if (rid) _terminalRequestIds.add(rid);
+}
+
+// bus.on('CALL_ACCEPTED') :
+if (rid && _terminalRequestIds.has(rid)) return; // stale event ignoré
+```
+
+#### Fix B — calls.js : _pendingCallPlate restauré en recovery
+
+`_recoverPendingRequest` définissait `_pendingCallId` mais pas `_pendingCallPlate`.
+Si l'app reprenait d'arrière-plan et que `receiver_plate` était null en DB, FIX #3
+(`r.receiver_plate || _pendingCallPlate`) ne pouvait pas fonctionner.
+
+```js
+_pendingCallId = data.id;
+if (receiverPlate) _pendingCallPlate = receiverPlate; // ← ajouté
+```
+
+#### Diagnostic retiré
+
+Toasts `🔍` et MutationObserver supprimés de call-screen.js (cause identifiée).
+
+### Versions après fix
+
+```text
+calls.js       : v=13 (index.html) — même logique v16, +1 ligne _recoverPendingRequest
+call-screen.js : v=6 (index.html)  — _terminalRequestIds, diagnostic retiré
+```
+
+### PROCHAINE ACTION — TEST TERRAIN
+
+Tester sur BZ-652-LL ↔ BE-521-MM :
+1. A appelle B → overlay sortant affiche BE-521-MM dès le premier essai
+2. B accepte → "📞 Appel en cours" côté A affiche BE-521-MM (plus de '--' transitoire)
+3. A annule → B ferme dans 1.5s
+4. Une seule tonalité d'appel
+
+---
+
 ## TÂCHES SUIVANTES
 
 ### P0 — Propagation annulation ✅ CORRIGÉ (calls.js v13)
 
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v6, calls.js +Fix B)
 
 ### P2 — Haut-parleur / écouteur
 
