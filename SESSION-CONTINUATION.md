@@ -370,9 +370,56 @@ Fix final (call-screen.js v7) : fallback sur `_state.plate` (déjà renseigné p
 
 ---
 
+## ÉTAT — 2026-06-12 — FIX PROPAGATION ANNULATION (calls.js v14 index.html)
+
+### Audit complet 4 bugs identifiés
+
+| # | Sévérité | Cause | Fix |
+|---|---|---|---|
+| 1 | CERTAIN | `visibilitychange` appelle `_recoverIncomingPendingCalls` (query status=pending). Si A a annulé → status='cancelled' → null → overlay B reste ouvert | `_checkOngoingIncomingCall()` ajouté au handler visibilitychange |
+| 2 | PROBABLE | iOS Safari throttle `setInterval` en background → poll 1.5s ne tourne pas | Intervalle réduit à 1s + vérification immédiate avant premier tick |
+| 3 | POSSIBLE | Poll query `.eq('id', requestId)` sans `.eq('receiver_id', _uid)` → RLS peut retourner null silencieusement | `.eq('receiver_id', _uid)` ajouté à toutes les queries poll |
+| 4 | CERTAIN | CANCEL broadcast envoyé une seule fois. B peut s'abonner ~300-500ms après → broadcast perdu | Retry broadcast après 900ms dans `cancelCallRequest` |
+
+### Fixes appliqués dans calls.js
+
+#### Bug #4 — Retry CANCEL broadcast
+```js
+await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+await new Promise(r => setTimeout(r, 900));
+try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
+```
+
+#### Bug #1 — `_checkOngoingIncomingCall()` au retour en foreground
+Nouvelle fonction : vérifie chaque requestId actif dans `_missedTimers` en DB.
+Si status terminal → ferme overlay + émet CALL_CANCELLED/CALL_MISSED.
+Appelée dans visibilitychange en plus de `_recoverIncomingPendingCalls`.
+
+#### Bug #2+3 — `_startCancelPoll` amélioré
+- Intervalle 1500ms → 1000ms
+- Vérification immédiate avant premier tick (`_doPollCheck()` appelée 1x avant `setInterval`)
+- `.eq('receiver_id', _uid)` ajouté — RLS safe
+- Max checks 25 → 40 (couvre 40s de sonnerie max)
+
+### Versions après fix
+
+```text
+calls.js       : v=14 (index.html) — cancellation robuste
+call-screen.js : v=6  (index.html) — inchangé (v7 chargé)
+```
+
+### PROCHAINE ACTION — TEST TERRAIN
+
+Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
+1. A appelle B → overlay entrant s'affiche chez B ← déjà OK
+2. A annule → overlay chez B se ferme dans les 2s ← **À CONFIRMER**
+3. A annule alors que B est en background → au retour foreground overlay ferme ← **À CONFIRMER (bug #1)**
+
+---
+
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation ✅ CORRIGÉ
+### P0 — Propagation annulation — FIX COMPLET DÉPLOYÉ (calls.js v14, 2026-06-12)
 
 ### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
 
