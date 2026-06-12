@@ -343,35 +343,36 @@ const CallManager = (function () {
   }
 
   async function cancelCallRequest(requestId) {
-    // Diffuser CANCEL — attendre que le canal soit SUBSCRIBED avant d'envoyer
+    _hideSentBanner();
+
+    // 1. DB EN PREMIER — source de vérité, déclenche postgres_changes pour B immédiatement
+    if (_sb && requestId) {
+      try {
+        await _sb.from('call_requests')
+          .update({ status: 'cancelled' })
+          .eq('id', requestId)
+          .eq('requester_id', _uid)
+          .eq('status', 'pending');
+      } catch(e) { console.warn('[CallManager] cancel DB error:', e); }
+    }
+
+    _pendingCallId = null;
+    _pendingCallPlate = null;
+    _missedTimers.delete(requestId);
+    _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
+    try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
+
+    // 2. Broadcast CANCEL (best-effort, après DB — postgres_changes déjà déclenché)
     const ch = _signalChannel;
     const rid = requestId || _signalRequestId;
     if (ch && rid) {
-      try {
-        // Attendre SUBSCRIBED max 3s pour éviter un send avant la connexion Supabase
-        if (_signalReady) await Promise.race([_signalReady, new Promise(r => setTimeout(r, 3000))]);
-        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
-        console.log('[CallManager] CANCEL diffusé :', rid);
-        // Retry après 900ms — B peut s'abonner après le premier envoi (race condition)
-        await new Promise(r => setTimeout(r, 900));
-        try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
-        console.log('[CallManager] CANCEL retry diffusé :', rid);
-      } catch(e) { console.warn('[CallManager] CANCEL send échoué :', e); }
+      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
+      // Retry 300ms après — couvre B qui vient juste de s'abonner au canal signal
+      await new Promise(r => setTimeout(r, 300));
+      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
     }
+
     _leaveCallSignal();
-    _hideSentBanner();
-    if (!_sb || !requestId) return;
-    await _sb
-      .from('call_requests')
-      .update({ status: 'cancelled' })
-      .eq('id', requestId)
-      .eq('requester_id', _uid)
-      .eq('status', 'pending');
-    _pendingCallId = null;
-    _pendingCallPlate = null;
-    _missedTimers.delete(requestId); // nettoyage défensif — évite poll fantôme si appelant avait une entrée
-    _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
-    try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
 
   function subscribeIncomingCalls(uid) {
