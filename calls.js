@@ -344,16 +344,20 @@ const CallManager = (function () {
 
   async function cancelCallRequest(requestId) {
     _hideSentBanner();
+    console.log('[CallManager] cancelCallRequest → rid:', requestId, 'hasCh:', !!_signalChannel, 'signalRid:', _signalRequestId);
 
     // 1. DB EN PREMIER — source de vérité, déclenche postgres_changes pour B immédiatement
     if (_sb && requestId) {
       try {
-        await _sb.from('call_requests')
+        var dbResult = await _sb.from('call_requests')
           .update({ status: 'cancelled' })
           .eq('id', requestId)
           .eq('requester_id', _uid)
           .eq('status', 'pending');
+        console.log('[CallManager] cancelCallRequest DB → err:', dbResult.error ? dbResult.error.message : 'none');
       } catch(e) { console.warn('[CallManager] cancel DB error:', e); }
+    } else {
+      console.log('[CallManager] cancelCallRequest DB ignorée → sb:', !!_sb, 'rid:', requestId);
     }
 
     _pendingCallId = null;
@@ -365,11 +369,20 @@ const CallManager = (function () {
     // 2. Broadcast CANCEL (best-effort, après DB — postgres_changes déjà déclenché)
     const ch = _signalChannel;
     const rid = requestId || _signalRequestId;
+    console.log('[CallManager] cancelCallRequest broadcast → ch:', !!ch, 'rid:', rid);
     if (ch && rid) {
-      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
+      try {
+        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+        console.log('[CallManager] cancelCallRequest broadcast#1 envoyé');
+      } catch(e) { console.warn('[CallManager] broadcast#1 error:', e); }
       // Retry 300ms après — couvre B qui vient juste de s'abonner au canal signal
       await new Promise(r => setTimeout(r, 300));
-      try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e) {}
+      try {
+        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+        console.log('[CallManager] cancelCallRequest broadcast#2 envoyé (retry 300ms)');
+      } catch(e) {}
+    } else {
+      console.log('[CallManager] cancelCallRequest : pas de canal signal — broadcast sauté');
     }
 
     _leaveCallSignal();
@@ -402,6 +415,7 @@ const CallManager = (function () {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
           // receiver_plate peut être null en DB — fallback sur la plaque mémorisée à l'envoi
           const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+          console.log('[CallManager] postgres_changes ACCEPTED → r.receiver_plate:', r.receiver_plate, '_pendingCallPlate:', _pendingCallPlate, '→ final:', acceptedPlate);
           _emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
           _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
@@ -489,6 +503,7 @@ const CallManager = (function () {
         var st = res && res.data && res.data.status;
         var err = res && res.error;
         if (err) console.warn('[CallManager] Poll DB error:', err);
+        console.log('[CallManager] poll tick #' + checks + ' → st:', st || 'null', '…' + String(requestId).slice(-8));
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
@@ -519,6 +534,7 @@ const CallManager = (function () {
 
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
+    console.log('[CallManager] showIncomingPopup → id:', req.id, 'plate:', plate, 'status:', req.status, 'expires_at:', req.expires_at);
     _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté

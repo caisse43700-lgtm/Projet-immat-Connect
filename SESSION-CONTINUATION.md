@@ -430,12 +430,24 @@ calls.js       : v=15 (index.html) — DB-first cancel, robustesse maximale
 call-screen.js : v=5  (index.html) — serveur v7 en cache (réseau-first)
 ```
 
-### PROCHAINE ACTION — TEST TERRAIN
+### PROCHAINE ACTION — TEST TERRAIN avec panneau diagnostic
+
+**Panneau 🔬 flottant en bas à droite de l'app** :
+- Tap 🔬 → panel sliding bas avec tous les événements CALL_* horodatés
+- Bouton "État" → snapshot CallManager.getRuntimeState()
+- Bouton "Copy" → copie tout dans le presse-papier pour partager
+- Lit console.log [CallManager] + bus CALL_* events
 
 Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
-1. A appelle B → B reçoit l'overlay d'appel entrant ← déjà OK
-2. A annule → overlay de B se ferme dans les 2s ← **À CONFIRMER**
-3. A annule alors que B est en background → au retour foreground l'overlay ferme ← **À CONFIRMER**
+1. A appelle B → ouvrir 🔬 sur chaque téléphone, voir logs showIncomingPopup + requestCall
+2. A annule → voir sur B : poll tick → st cancelled OU CANCEL broadcast reçu OU postgres_changes
+3. Si B ne ferme pas → copier les logs 🔬 de B et partager pour diagnostic
+
+**Logs clés à observer :**
+- Sur A (annulation) : `cancelCallRequest → hasCh: true/false` + `DB → err: none` + `broadcast#1 envoyé`
+- Sur B (réception annulation) : `poll tick #N → st: cancelled` OU `CANCEL broadcast reçu`
+- Si `hasCh: false` sur A → le canal signal n'est pas ouvert → le broadcast ne peut pas partir
+- Si `poll tick → st: null` → RLS bloque la requête ou le requestId est mauvais
 
 ---
 
