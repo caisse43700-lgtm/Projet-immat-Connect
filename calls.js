@@ -54,6 +54,7 @@ const CallManager = (function () {
         if (document.visibilityState === 'visible') {
           _recoverPendingRequest();
           _recoverIncomingPendingCalls();
+          _checkOngoingIncomingCall(); // Bug #1: si A a annulé pendant que B était en background
         }
       });
     }
@@ -351,6 +352,10 @@ const CallManager = (function () {
         if (_signalReady) await Promise.race([_signalReady, new Promise(r => setTimeout(r, 3000))]);
         await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
         console.log('[CallManager] CANCEL diffusé :', rid);
+        // Retry après 900ms — B peut s'abonner après le premier envoi (race condition)
+        await new Promise(r => setTimeout(r, 900));
+        try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
+        console.log('[CallManager] CANCEL retry diffusé :', rid);
       } catch(e) { console.warn('[CallManager] CANCEL send échoué :', e); }
     }
     _leaveCallSignal();
@@ -436,30 +441,53 @@ const CallManager = (function () {
       });
   }
 
-  // Poll DB toutes les 1.5s tant que l'appel entrant est affiché
+  // Vérifie immédiatement si les appels entrants affichés sont toujours en attente en DB.
+  // Appelé au retour en foreground (visibilitychange) — corrige le cas où A a annulé
+  // pendant que B était en background et que ni le broadcast ni postgres_changes n'ont été reçus.
+  async function _checkOngoingIncomingCall() {
+    if (!_sb || !_uid || _missedTimers.size === 0) return;
+    for (const requestId of Array.from(_missedTimers.keys())) {
+      try {
+        var res = await _sb.from('call_requests').select('status')
+          .eq('id', requestId).eq('receiver_id', _uid).maybeSingle();
+        var st = res && res.data && res.data.status;
+        if (!st) continue;
+        if (['cancelled', 'expired', 'refused', 'ended'].indexOf(st) !== -1) {
+          var tid = _missedTimers.get(requestId);
+          if (tid) clearTimeout(tid);
+          _missedTimers.delete(requestId);
+          try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('visibility-check'); } catch(e) {}
+          _seenIncomingCallIds.add(requestId);
+          _hideIncomingPopup();
+          _leaveCallSignal();
+          console.log('[CallManager] _checkOngoingIncomingCall: terminal', st, requestId);
+          if (st === 'cancelled') {
+            _emitCallEvent('CALL_CANCELLED', { requestId: requestId, reason: 'visibility-check' });
+          } else if (st === 'expired' && !_missedCallIds.has(requestId)) {
+            _missedCallIds.add(requestId);
+            _emitCallEvent('CALL_MISSED', { requestId: requestId, from: '', reason: 'visibility-check' });
+          }
+        }
+      } catch(e) {
+        console.warn('[CallManager] _checkOngoingIncomingCall error:', e);
+      }
+    }
+  }
+
+  // Poll DB toutes les 1s tant que l'appel entrant est affiché
   // Filet de sécurité si broadcast CANCEL / postgres_changes n'arrivent pas
   function _startCancelPoll(requestId) {
     if (!_sb || !requestId) return;
     var checks = 0;
-    try { if (typeof toast === 'function') toast('📡 Poll lancé #' + requestId.slice(-4), 'ok'); } catch(e) {}
-    var pollId = setInterval(async function() {
-      checks++;
-      if (checks > 25 || !_missedTimers.has(requestId)) {
-        clearInterval(pollId);
-        if (checks <= 25) {
-          console.warn('[CallManager] Poll stoppé — _missedTimers absent (accept/refuse/cancel)', requestId);
-        }
-        return;
-      }
+    async function _doPollCheck() {
+      if (!_missedTimers.has(requestId)) return; // appel déjà terminé localement
       try {
-        var res = await _sb.from('call_requests').select('status').eq('id', requestId).maybeSingle();
+        // receiver_id filter requis pour RLS — sans lui la requête peut retourner null silencieusement
+        var res = await _sb.from('call_requests').select('status')
+          .eq('id', requestId).eq('receiver_id', _uid).maybeSingle();
         var st = res && res.data && res.data.status;
         var err = res && res.error;
-        if (err) {
-          console.warn('[CallManager] Poll DB error:', err);
-          try { if (typeof toast === 'function') toast('⚠️ Poll err: ' + (err.message||err.code||'?'), 'bad'); } catch(e2) {}
-        }
-        console.log('[CallManager] Poll #' + checks + ' status:', st, 'err:', err?.code);
+        if (err) console.warn('[CallManager] Poll DB error:', err);
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
@@ -470,14 +498,22 @@ const CallManager = (function () {
           _hideIncomingPopup();
           _leaveCallSignal();
           console.log('[CallManager] Poll : appel terminal :', st, requestId);
-          try { if (typeof toast === 'function') toast('📵 Poll: annulé détecté! (' + st + ')', 'ok'); } catch(e) {}
           if (st === 'cancelled') _emitCallEvent('CALL_CANCELLED', { requestId: requestId, reason: 'poll' });
         }
       } catch(e) {
         console.warn('[CallManager] Poll exception:', e);
-        try { if (typeof toast === 'function') toast('⚠️ Poll exc: ' + (e?.message||e), 'bad'); } catch(e2) {}
       }
-    }, 1500);
+    }
+    // Vérification immédiate — n'attend pas le premier tick (important si B revient du background)
+    _doPollCheck();
+    var pollId = setInterval(function() {
+      checks++;
+      if (checks > 40 || !_missedTimers.has(requestId)) {
+        clearInterval(pollId);
+        return;
+      }
+      _doPollCheck();
+    }, 1000);
   }
 
   function _showIncomingPopup(req) {
@@ -721,5 +757,3 @@ const CallManager = (function () {
     isCallBlocked: _isCallBlocked, getRuntimeState, broadcastHangup,
   };
 })();
-
-window.CallManager = CallManager;
