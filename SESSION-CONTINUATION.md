@@ -194,6 +194,84 @@ Validé terrain : BZ-652-LL ↔ BE-521-MM — audio bidirectionnel confirmé
 
 ---
 
+## ÉTAT — 2026-06-11 — RÉPARATION COMPLÈTE calls.js v16 EN PRODUCTION
+
+### Versions en production
+
+```text
+calls.js v16 — poussé sur main via MCP GitHub API
+Commit local : sur branche claude/immatconnect-pro-app-dEKGR + main
+SW : immatconnect-pro-v21 actif — réseau-first, sert toujours le dernier calls.js
+```
+
+### Audit complet 2026-06-11 — 4 bugs confirmés, 4 fixes appliqués
+
+#### FIX #1 — `cancelCallRequest` : `_missedTimers.delete(requestId)` manquant
+
+**Cause :** `cancelCallRequest()` n'appelait pas `_missedTimers.delete(requestId)`. Toutes les
+autres fonctions (acceptCall, refuseCall, postgres_changes UPDATE, poll detect, broadcast CANCEL)
+le font. Nettoyage défensif ajouté.
+
+```js
+// après _pendingCallPlate = null :
+_missedTimers.delete(requestId); // ← ajouté
+```
+
+#### FIX #2 — Double `showOutgoing()` → double tonalité + double render
+
+**Cause :** `requestCall()` appelait `_showSentBanner()` (→ `showOutgoing` direct) PUIS émettait
+`CALL_INITIATED` (→ `showOutgoing` via bus call-screen.js). Résultat : overlay rendu deux fois,
+timer 30s remis à zéro, double tonalité audio.
+
+**Fix :** ordre inversé dans `requestCall` (CALL_INITIATED en premier), déduplication dans
+`_showSentBanner` via `getState()`.
+
+```js
+// requestCall — nouvel ordre :
+_emitCallEvent('CALL_INITIATED', {...});   // bus → showOutgoing + audio (1er)
+_showSentBanner(receiverPlate, data.id);  // 31s timer + dedup check (2ème)
+
+// _showSentBanner — déduplication :
+const csState = window.CallScreen.getState();
+if (csState.mode === 'outgoing' && csState.requestId === requestId) return; // déjà affiché
+```
+
+Path de recovery (`_recoverPendingRequest` → `_showSentBanner`) non affecté : mode ≠ 'outgoing'
+au retour arrière-plan → direct `showOutgoing` appelé normalement.
+
+#### FIX #3 — Overlay "Appel en cours" côté A affiche `--` après accept de B
+
+**Cause :** `outgoingUpdateHandler` émettait `CALL_ACCEPTED` avec `r.receiver_plate` brut,
+qui peut être `null` en DB → `showAccepted` affichait `--`.
+
+**Fix :** fallback sur `_pendingCallPlate` (mémorisé au moment de l'appel) :
+
+```js
+const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+_emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, ...});
+```
+
+#### FIX #4 — Overlay sortant affiche `--` en recovery (race condition)
+
+**Cause :** `_recoverPendingRequest()` appelée sur visibilitychange avant que `_pendingCallPlate`
+soit défini. Partiellement corrigé en v15 — guards maintenus en v16.
+
+```js
+// _recoverPendingRequest : fallback _pendingCallPlate + guard if (!receiverPlate) return
+// _showSentBanner : effectivePlate = plate || _pendingCallPlate || null
+```
+
+### PROCHAINE ACTION — TEST TERRAIN v16
+
+Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
+1. A appelle B → overlay sortant affiche BE-521-MM (plus de `--`) ← **BUG SIGNALÉ, À CONFIRMER**
+2. B accepte → "Appel en cours" côté A affiche BE-521-MM (plus de `--`) ← **À CONFIRMER**
+3. A annule → B ferme dans les 1.5s (poll ou broadcast) ← **À CONFIRMER**
+4. Une seule tonalité d'appel côté A (plus de double bip) ← **À CONFIRMER**
+5. A peut rappeler immédiatement après annulation ← **DÉJÀ OK**
+
+---
+
 ## ÉTAT — 2026-06-11 — DIAGNOSTIC SW BLOQUÉ + CORRECTIFS TIMING
 
 ### Diagnostic : pourquoi l'utilisateur était sur v8 alors que la production est v20
@@ -218,55 +296,13 @@ Malgré le SW v8, les scripts `calls.js?v=9`, `call-screen.js?v=4` étaient serv
 - Fix B : dans le callback `.subscribe()`, quand SUBSCRIBED, B vérifie la DB pour détecter un CANCEL émis pendant la fenêtre d'abonnement.
 - `_signalReady` effacé dans `_leaveCallSignal()`.
 
-### Versions en production après commit
-
-```
-calls.js?v=10, call-screen.js?v=5, SW v21
-```
-
-## PROCHAINE ACTION — SI BUGS PERSISTENT
-
-Si après mise à jour (SW v21) les bugs persistent toujours :
-1. Ouvrir Safari DevTools (Mac → Safari → Develop → [iPhone]) — chercher `[CallManager] requestCall → plaque:` dans la console pour voir si la plaque est transmise.
-2. Si plaque = null/empty dans le log → le problème est en amont de `requestCall` (UI modal, openContactOptions).
-3. Si plaque est correcte mais affichage '--' → problème DOM ou race condition non couverte.
-
-L'utilisateur doit faire une mise à jour forcée pour obtenir SW v21 :
-- **iOS Safari** : Réglages → Safari → Avancé → Données de sites web → Supprimer caisse43700-lgtm.github.io
-
-```text
-□ Health Lab Phase 1 (outil de diagnostic audio pré-appel)
-□ Indicateur niveau audio en temps réel pendant l'appel
-```
-
 ---
 
-## TÂCHES SUIVANTES — Source : CALL_STATE_CONTINUATION.md (ChatGPT, 2026-06-11)
+## TÂCHES SUIVANTES
 
-> La voix fonctionne. Ne pas retoucher le moteur vocal. Corriger uniquement les incohérences d'état d'appel.
+### P0 — Propagation annulation ✅ CORRIGÉ (calls.js v13)
 
-### Règles non négociables
-
-```
-- Un appel annulé ne peut jamais être accepté.
-- Un statut terminal doit fermer l'UI des deux côtés.
-- A doit toujours voir la plaque de B (et inversement).
-- Le raccrochage doit se propager immédiatement des deux côtés.
-- Muet = micro uniquement. Haut-parleur = sortie audio uniquement.
-- Ne pas prétendre contrôler haut-parleur/écouteur si le SDK ne le supporte pas.
-```
-
-### P0 — Propagation annulation (critique) ✅ CORRIGÉ
-
-**Corrections appliquées dans `calls.js` (branche feature) :**
-- Nouveau listener `UPDATE receiver_id=eq.{uid}` : statut terminal → vide timer, stoppe audio, ferme UI, émet CALL_CANCELLED ou CALL_MISSED
-- `acceptCall()` : si DB retourne 0 lignes (appel déjà annulé) → `_hideIncomingPopup()` + toast "Appel annulé ou expiré" — plus jamais de join signal/voix
-- `_showSentBanner()` : appelle maintenant `CallScreen.showOutgoing({to,plate,requestId})` au lieu de sortir sans passer la plaque (→ fix P1 intégré)
-- `broadcastHangup()` : envoie le broadcast HANGUP **avant** `_leaveCallSignal()` — évite que removeChannel coupe la connexion avant l'envoi
-
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (inclus dans P0)
-
-- `_showSentBanner()` passe maintenant `{to, plate, requestId}` à `CallScreen.showOutgoing()`
+### P1 — Plaque visible des deux côtés ✅ CORRIGÉ
 
 ### P2 — Haut-parleur / écouteur
 
@@ -284,126 +320,6 @@ signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
 missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
 derniers événements CALL_*
 ```
-
-Ajouter bloc "Call Identity" : plaque cible sortante, plaque appelant entrant, plaque affichée, requestId.
-
-Ajouter bloc "Audio Route" : speaker support/enabled/route/lastError, muteState.
-
-### Autotests à couvrir
-
-1. A appelle B puis annule avant que B accepte → B ferme immédiatement, ne peut plus accepter
-2. A annule, B tape Accepter très vite → pas d'accept, UI ferme, pas de join signal/voix
-3. A appelle B → A voit la plaque de B, mode outgoing, requestId présent
-4. B reçoit → B voit la plaque de A, mode incoming, requestId présent
-5. A et B en appel, A raccroche → B ferme immédiatement
-6. A et B en appel, B raccroche → A ferme immédiatement
-7. Bouton Haut-parleur : fonctionnel ou clairement reporté non supporté ; Muet reste indépendant
-
----
-
-
-
-**Problèmes signalés :** voix absente + raccrochage non synchronisé entre téléphones.
-
-### Cause voix absente
-
-`_accept()` appelait `getUserMedia` et **stoppait immédiatement** les tracks — Agora ne pouvait pas les réutiliser.
-De plus, le SDK Agora (CDN async) pouvait ne pas être chargé au moment de l'appel.
-
-**Fix :**
-- `call-screen.js` v3 `_accept()` : si `AgoraRTC` disponible → `createMicrophoneAudioTrack()` → `w.__preMicTrack`
-  sinon → `getUserMedia` → `w.__preMicStream` (stream conservé, pas stoppé)
-- `calls.js` v7 `contactByCall()` : idem côté appelant (stream conservé dans `w.__preMicStream`)
-- `agora-call-engine.js` v3 `_getMicTrack()` : réutilise `__preMicTrack` ou wrap `__preMicStream` en custom track Agora
-- `agora-call-engine.js` v3 `joinCall()` : attend le SDK jusqu'à 8s via `_waitForSDK()`
-
-### Cause raccrochage non synchronisé
-
-`user-left` Agora ne tire que si les deux téléphones ont rejoint le canal Agora.
-Si la voix échoue sur un côté, ce téléphone ne sait jamais que l'autre a raccroché.
-
-**Fix :** canal de signalisation Supabase Realtime broadcast `ic_call_signal_{requestId}`
-- `calls.js` : `_joinCallSignal(requestId)` → rejoint le canal à `CALL_ACCEPTED` (les deux côtés)
-- `calls.js` : `broadcastHangup(requestId)` → diffuse `HANGUP` sur le canal
-- `call-screen.js` `_hangup()` → appelle `CallManager.broadcastHangup(requestId)` + `CALL_ENDED` local
-- Récepteur du broadcast → `CALL_ENDED` → `CallScreen.hide()` automatique
-
-| Fichier | Version | Changement |
-|---|---|---|
-| `core/agora-call-engine.js` | v3 | `_waitForSDK()` + `_getMicTrack()` avec réutilisation preMicTrack/preMicStream |
-| `core/call-screen.js` | v3 | `_accept()` pré-crée track Agora ; `_hangup()` appelle `broadcastHangup` |
-| `calls.js` | v7 | `_joinCallSignal` / `_leaveCallSignal` / `broadcastHangup` ; `contactByCall` conserve stream |
-| `service-worker.js` | v16 | Cache version bump |
-
----
-
-## CORRECTIFS POST-AUDIT — 2026-06-10
-
-3 bugs réels identifiés lors de l'audit de session, corrigés et poussés sur `claude/immatconnect-pro-app-dEKGR` (commit c59f76a) :
-
-| Fichier | Bug | Correction |
-|---|---|---|
-| `calls.js` | `init()` empilait les subscriptions bus sur reconnexion | Guard `_busSignalBound` — `_bus.on('CALL_ENDED/MISSED')` exécuté une seule fois |
-| `core/audio-manager.js` | `getRuntimeState()` appelait `_getOrCreateCtx()` — effet de bord création AudioContext | Utilise `_ctx` directement (read-only) |
-| `core/agora-call-engine.js` | `CALL_ENDED` émis par `user-left` sans `requestId` | Ajout de `requestId: _currentChannel` dans le payload |
-
----
-
-## PROCHAINE ACTION — TEST TERRAIN
-
-URL de test (cache v16) :
-```
-https://caisse43700-lgtm.github.io/Projet-immat-Connect/?v=agora4
-```
-
-Checklist :
-```text
-□ Recharger les deux téléphones avec ?v=agora4
-□ IMPORTANT : taper une fois n'importe où dans l'app sur chaque téléphone
-  (débloque l'audio iOS/Android — mécanisme pré-play muted)
-□ A appelle B → B doit SONNER (vraie sonnerie téléphone bitonale)
-□ A entend la tonalité de retour (tut… tut…)
-□ B accepte → popup micro autorisé → audio bidirectionnel (VOIX)
-□ Appel ne coupe PLUS après 20s
-□ A raccroche → B ferme IMMÉDIATEMENT (broadcast Supabase ic_call_signal)
-□ B raccroche → A ferme IMMÉDIATEMENT (idem)
-□ Boutons compacts en grille 2×2
-```
-
-### En cas de problème voix
-
-Console Safari (Menu → Avancé → Web Inspector) — chercher :
-- `[CallScreen] preMicTrack Agora prêt` → track créé dans le geste ✅
-- `[AgoraCall] Réutilise le track mic pré-créé` → track réutilisé par Agora ✅
-- `[AgoraCall] Canal rejoint` → connexion réussie ✅
-- `[AgoraCall] joinCall échoué` → voir erreur
-
-### En cas de problème raccrochage
-
-- `[CallManager] Signal canal rejoint` → canal broadcast opérationnel ✅
-- `[CallManager] HANGUP diffusé` → signal envoyé ✅
-- `[CallManager] HANGUP broadcast reçu → CALL_ENDED` → signal reçu ✅
-
-### En cas de problème audio sonner
-
-1. Ouvrir Guardian Dashboard → Diagnostic → vérifier voyant **Agora** (🟢 OK ?)
-2. Vérifier que le popup micro a bien été accepté (iOS Réglages → Safari → Micro)
-3. Confirmer qu'un tap a bien été fait sur l'app avant le test
-
----
-
-## HISTORIQUE COMPLET DES PR MERGÉES
-
-| PR | Branche | Objet | Date |
-|---|---|---|---|
-| #288 | global-verification-center | Global Verification Center + fix réception | 2026-06-10 (en attente) |
-| #285 | feature/agora-voice-calls | Appels vocaux Agora RTC | 2026-06-10 |
-| #286 | feature/agora-voice-calls | Diagnostics Agora | 2026-06-10 |
-| #283 | guardian/actions-only | Guardian : boutons Diagnostic/Copier dans header | 2026-06-10 |
-| #279 | guardian/refine-overlay | Guardian summary engine v1.1 overlay detection | 2026-06-10 |
-| — | — | call-screen.js : Message/Fermer au lieu de "conversation ouverte" | antérieur |
-| — | — | calls.js : supprime ouverture automatique conversation sur accepted | antérieur |
-| — | — | Nettoie pending avant nouvel appel + retry 23505 | antérieur |
 
 ---
 

@@ -19,8 +19,9 @@ const CallManager = (function () {
   let _signalChannel = null;    // canal Supabase broadcast pour signaler raccroché
   let _signalRequestId = null;  // requestId de l'appel en cours
   let _signalReady = null;      // Promise qui résout quand le canal signal est SUBSCRIBED
-  let _pendingCallPlate = null; // plaque mémorisée côté appelant (fallback si DB null)
-  let _busSignalBound = false;  // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
+  let _pendingCallPlate = null;  // plaque mémorisée côté appelant (fallback si DB null)
+  let _incomingCallPlate = null; // plaque de l'appelant mémorisée à la réception (fallback acceptCall)
+  let _busSignalBound = false;   // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -91,6 +92,8 @@ const CallManager = (function () {
     _pendingCallId = data.id;
     // Fallback : plaque mémorisée côté appelant si DB null
     if (!receiverPlate && _pendingCallPlate) receiverPlate = _pendingCallPlate;
+    // Ne pas afficher l'overlay si la plaque est inconnue — évite '--' en recovery
+    if (!receiverPlate) return;
     _showSentBanner(receiverPlate, data.id);
   }
 
@@ -145,7 +148,7 @@ const CallManager = (function () {
     // iOS : pré-créer le track micro dans le geste utilisateur (avant tout await)
     var _AgoraRTC = window.AgoraRTC;
     if (_AgoraRTC && typeof _AgoraRTC.createMicrophoneAudioTrack === 'function') {
-      // Stocker la Promise (pas la valeur) pour éviter la race condition si CALL_ACCEPTED arrive
+      // Stocker la Promise pour éviter la race condition si CALL_ACCEPTED arrive
       // avant que la création du track soit terminée
       window.__preMicTrackPromise = _AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'speech_standard' })
         .then(function(track) { window.__preMicTrack = track; console.log('[calls] preMicTrack prêt (contactByCall)'); return track; })
@@ -200,8 +203,9 @@ const CallManager = (function () {
   async function _expireMyPendingCalls(receiverId) {
     if (!_sb || !_uid || !receiverId) return;
     try {
+      // RLS call_req_cancel n'autorise que 'cancelled' pour le requester (pas 'expired')
       await _sb.from('call_requests')
-        .update({ status: 'expired' })
+        .update({ status: 'cancelled' })
         .eq('requester_id', _uid)
         .eq('receiver_id', receiverId)
         .eq('status', 'pending');
@@ -279,15 +283,16 @@ const CallManager = (function () {
     // Toast de diagnostic visible — montre exactement quelle plaque est transmise
     try { if (typeof toast === 'function') toast('Appel → ' + (receiverPlate || '(vide)'), receiverPlate ? 'ok' : 'bad'); } catch(e) {}
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
-    _showSentBanner(receiverPlate, data.id);
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
+    _showSentBanner(receiverPlate, data.id); // après CALL_INITIATED — dedup si CallScreen déjà ouvert
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
   async function acceptCall(requestId) {
     // Annuler le timer d'expiration entrant — empêche CALL_MISSED sur un appel accepté
     const tid = _missedTimers.get(requestId);
-    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+    if (tid) clearTimeout(tid);
+    _missedTimers.delete(requestId);
 
     document.getElementById('callIncomingPopup')?.classList.remove('show');
     if (!_sb || !requestId) return;
@@ -299,12 +304,16 @@ const CallManager = (function () {
       .eq('status', 'pending')
       .select()
       .maybeSingle();
-    if (data?.requester_plate) {
-      _emitCallEvent('CALL_ACCEPTED', {with: data.requester_plate, plate: data.requester_plate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
+    if (data) {
+      // Appel bien accepté — plaque depuis DB ou fallback mémorisé à la réception
+      const callerPlate = data.requester_plate || _incomingCallPlate || null;
+      _incomingCallPlate = null;
+      _emitCallEvent('CALL_ACCEPTED', {with: callerPlate, plate: callerPlate, requestId: requestId, _src:'ImmatConnect/calls/acceptCall'});
       _joinCallSignal(requestId);
-      try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:data.requester_plate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
+      try{ window.InteractionEngine?.create?.({type:'CALL_ACCEPTED', initiator:_myPlate||'', target:callerPlate||null, payload:{requestId}, status:'resolved'}); }catch(e){}
     } else {
       // Aucune ligne mise à jour — appel annulé ou expiré par A entre-temps
+      _incomingCallPlate = null;
       try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('accept-no-row'); } catch(e) {}
       _hideIncomingPopup();
       _showError('Appel annulé ou expiré.');
@@ -315,7 +324,8 @@ const CallManager = (function () {
   async function refuseCall(requestId) {
     // Annuler aussi le timer sur refus
     const tid = _missedTimers.get(requestId);
-    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+    if (tid) clearTimeout(tid);
+    _missedTimers.delete(requestId);
 
     _leaveCallSignal();
     _hideIncomingPopup();
@@ -353,6 +363,7 @@ const CallManager = (function () {
       .eq('status', 'pending');
     _pendingCallId = null;
     _pendingCallPlate = null;
+    _missedTimers.delete(requestId); // nettoyage défensif — évite poll fantôme si appelant avait une entrée
     _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
   }
@@ -382,7 +393,9 @@ const CallManager = (function () {
         _recentOutgoingIds.delete(r.id);
         if (r.status === 'accepted') {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
-          _emitCallEvent('CALL_ACCEPTED', {'with': r.receiver_plate, plate: r.receiver_plate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
+          // receiver_plate peut être null en DB — fallback sur la plaque mémorisée à l'envoi
+          const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+          _emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
           _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
           _hideSentBanner();
@@ -401,7 +414,8 @@ const CallManager = (function () {
         console.log('[CallManager] postgres_changes UPDATE entrant terminal:', r.status, r.id);
         try { if (typeof toast === 'function') toast('📡 PG-UPDATE: ' + r.status, 'ok'); } catch(e) {}
         const tid = _missedTimers.get(r.id);
-        if (tid != null) { clearTimeout(tid); _missedTimers.delete(r.id); }
+        if (tid) clearTimeout(tid);
+        _missedTimers.delete(r.id);
         try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-terminal'); } catch(e) {}
         _hideIncomingPopup();
         _seenIncomingCallIds.add(r.id);
@@ -432,8 +446,7 @@ const CallManager = (function () {
       if (checks > 25 || !_missedTimers.has(requestId)) {
         clearInterval(pollId);
         if (checks <= 25) {
-          console.warn('[CallManager] Poll stoppé — _missedTimers absent', requestId);
-          try { if (typeof toast === 'function') toast('⚠️ Poll arrêté tôt', 'bad'); } catch(e) {}
+          console.warn('[CallManager] Poll stoppé — _missedTimers absent (accept/refuse/cancel)', requestId);
         }
         return;
       }
@@ -449,7 +462,8 @@ const CallManager = (function () {
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
-          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          if (tid) clearTimeout(tid);
+          _missedTimers.delete(requestId);
           try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('poll-cancel'); } catch(e) {}
           _seenIncomingCallIds.add(requestId);
           _hideIncomingPopup();
@@ -467,6 +481,7 @@ const CallManager = (function () {
 
   function _showIncomingPopup(req) {
     const plate = req.requester_plate || 'Conducteur';
+    _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
@@ -482,6 +497,8 @@ const CallManager = (function () {
       if (ms > 0) {
         const tid = setTimeout(_onMissed, ms);
         _missedTimers.set(req.id, tid);
+      } else {
+        _missedTimers.set(req.id, null); // sentinel — appel expiré à réception, poll tourne quand même
       }
       return;
     }
@@ -512,16 +529,25 @@ const CallManager = (function () {
       if (_pendingCallId !== requestId) return;
       _pendingCallId = null;
       try {
+        // RLS n'autorise que 'cancelled' pour le requester — pg_cron gère 'expired' côté serveur
         await _sb.from('call_requests')
-          .update({ status: 'expired' })
+          .update({ status: 'cancelled' })
           .eq('id', requestId)
           .eq('requester_id', _uid)
           .eq('status', 'pending');
       } catch (_) {}
     }, 31000);
+    // Guard : ne jamais afficher '--' dans l'overlay — plate toujours requise
+    const effectivePlate = plate || _pendingCallPlate || null;
     if (window.CallScreen && typeof window.CallScreen.showOutgoing === 'function') {
-      window.CallScreen.showOutgoing({ to: plate, plate: plate, requestId: requestId });
-      return;
+      // Déduplication : CALL_INITIATED (émis avant) a déjà ouvert l'overlay pour ce requestId
+      const csState = typeof window.CallScreen.getState === 'function' ? window.CallScreen.getState() : null;
+      if (csState && csState.mode === 'outgoing' && csState.requestId === requestId) return;
+      if (effectivePlate) {
+        window.CallScreen.showOutgoing({ to: effectivePlate, plate: effectivePlate, requestId: requestId });
+        return;
+      }
+      // Plaque inconnue : ne pas ouvrir l'overlay avec '--', passer au banner legacy
     }
     const banner = document.getElementById('callSentBanner');
     if (!banner) return;
@@ -575,7 +601,8 @@ const CallManager = (function () {
           console.log('[CallManager] CANCEL broadcast reçu → fermeture UI entrante');
           try { if (typeof toast === 'function') toast('📡 CANCEL broadcast reçu!', 'ok'); } catch(e) {}
           const tid = _missedTimers.get(requestId);
-          if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+          if (tid) clearTimeout(tid);
+          _missedTimers.delete(requestId);
           try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('remote-cancel'); } catch(e) {}
           _seenIncomingCallIds.add(requestId);
           _hideIncomingPopup();
@@ -593,7 +620,8 @@ const CallManager = (function () {
                   if (st && ['cancelled','expired','refused','ended'].includes(st)) {
                     console.log('[CallManager] Post-subscribe : appel déjà terminal :', st);
                     const tid = _missedTimers.get(requestId);
-                    if (tid != null) { clearTimeout(tid); _missedTimers.delete(requestId); }
+                    if (tid) clearTimeout(tid);
+                    _missedTimers.delete(requestId);
                     try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('post-subscribe'); } catch(e) {}
                     _seenIncomingCallIds.add(requestId);
                     _hideIncomingPopup();
