@@ -176,6 +176,7 @@
     var plate = (data && (data.to || data.plate)) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
+    try { if (typeof toast === 'function') toast('🔍 CS.out=' + plate, plate !== '--' ? 'ok' : 'bad'); } catch(e) {}
     try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
     _render('outgoing', plate, 'Demande de contact envoyée…',
       _BTN.cancel,
@@ -234,6 +235,19 @@
     return { mode: _state.mode, plate: _state.plate, requestId: _state.requestId };
   }
 
+  // ── MutationObserver diagnostic #callOvPlate ────────────────────
+  function _observePlate() {
+    var pl = _$('callOvPlate');
+    if (!pl || !w.MutationObserver) return;
+    var obs = new w.MutationObserver(function(muts) {
+      muts.forEach(function() {
+        var txt = pl.textContent;
+        try { if (typeof toast === 'function') toast('🔍 plate→' + txt, txt && txt !== '--' ? 'ok' : 'bad'); } catch(e) {}
+      });
+    });
+    obs.observe(pl, { childList: true, characterData: true, subtree: true });
+  }
+
   // ── Abonnement ImmatBus ──────────────────────────────────────────
   function _subscribe() {
     var bus = w.ImmatBus;
@@ -245,6 +259,7 @@
     bus.on('CALL_CANCELLED', function ()  { hide(); });
     bus.on('CALL_MISSED',    function (e) { showMissed(e.payload); });
     bus.on('CALL_ENDED',     function ()  { hide(); });
+    _observePlate();
   }
 
   var CallScreen = {
