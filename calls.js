@@ -757,3 +757,5 @@ const CallManager = (function () {
     isCallBlocked: _isCallBlocked, getRuntimeState, broadcastHangup,
   };
 })();
+
+window.CallManager = CallManager;
