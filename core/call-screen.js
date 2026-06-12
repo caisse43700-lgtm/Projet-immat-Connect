@@ -22,6 +22,7 @@
   var _state = { mode: 'idle', plate: null, requestId: null };
   var _autoHideTimer = null;
   var _actionLock = false; // empêche double-tap Accepter/Refuser/Annuler/Raccrocher
+  var _terminalRequestIds = new Set(); // ignore les CALL_ACCEPTED périmés
 
   function _$(id) { return document.getElementById(id); }
 
@@ -176,7 +177,6 @@
     var plate = (data && (data.to || data.plate)) || '--';
     var rid   = (data && data.requestId) || null;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
-    try { if (typeof toast === 'function') toast('🔍 CS.out=' + plate, plate !== '--' ? 'ok' : 'bad'); } catch(e) {}
     try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
     _render('outgoing', plate, 'Demande de contact envoyée…',
       _BTN.cancel,
@@ -210,8 +210,9 @@
   }
 
   function showAccepted(data) {
-    var plate = (data && (data['with'] || data.plate)) || '--';
     var rid   = (data && data.requestId) || null;
+    if (rid && _terminalRequestIds.has(rid)) return;
+    var plate = (data && (data['with'] || data.plate)) || '--';
     _state = { mode: 'accepted', plate: plate, requestId: rid };
     _render('accepted', plate, '📞 Appel en cours',
       '<div class="cs-actions-grid">' +
@@ -235,17 +236,9 @@
     return { mode: _state.mode, plate: _state.plate, requestId: _state.requestId };
   }
 
-  // ── MutationObserver diagnostic #callOvPlate ────────────────────
-  function _observePlate() {
-    var pl = _$('callOvPlate');
-    if (!pl || !w.MutationObserver) return;
-    var obs = new w.MutationObserver(function(muts) {
-      muts.forEach(function() {
-        var txt = pl.textContent;
-        try { if (typeof toast === 'function') toast('🔍 plate→' + txt, txt && txt !== '--' ? 'ok' : 'bad'); } catch(e) {}
-      });
-    });
-    obs.observe(pl, { childList: true, characterData: true, subtree: true });
+  function _addTerminal(e) {
+    var rid = e && e.payload && e.payload.requestId;
+    if (rid) _terminalRequestIds.add(rid);
   }
 
   // ── Abonnement ImmatBus ──────────────────────────────────────────
@@ -255,11 +248,10 @@
     bus.on('CALL_INITIATED', function (e) { showOutgoing(e.payload); });
     bus.on('CALL_RECEIVED',  function (e) { showIncoming(e.payload); });
     bus.on('CALL_ACCEPTED',  function (e) { showAccepted(e.payload); });
-    bus.on('CALL_REFUSED',   function ()  { hide(); });
-    bus.on('CALL_CANCELLED', function ()  { hide(); });
-    bus.on('CALL_MISSED',    function (e) { showMissed(e.payload); });
-    bus.on('CALL_ENDED',     function ()  { hide(); });
-    _observePlate();
+    bus.on('CALL_REFUSED',   function (e) { _addTerminal(e); hide(); });
+    bus.on('CALL_CANCELLED', function (e) { _addTerminal(e); hide(); });
+    bus.on('CALL_MISSED',    function (e) { _addTerminal(e); showMissed(e.payload); });
+    bus.on('CALL_ENDED',     function (e) { _addTerminal(e); hide(); });
   }
 
   var CallScreen = {
