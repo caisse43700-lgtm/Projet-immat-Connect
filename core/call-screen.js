@@ -212,7 +212,10 @@
   function showAccepted(data) {
     var rid   = (data && data.requestId) || null;
     if (rid && _terminalRequestIds.has(rid)) return;
-    var plate = (data && (data['with'] || data.plate)) || '--';
+    // Fallback sur la plaque déjà connue (_state.plate de showOutgoing/showIncoming)
+    // car Supabase postgres_changes UPDATE n'inclut pas les colonnes non modifiées
+    // si REPLICA IDENTITY FULL n'est pas activé (receiver_plate absent du payload)
+    var plate = (data && (data['with'] || data.plate)) || (_state.plate !== '--' && _state.plate) || '--';
     _state = { mode: 'accepted', plate: plate, requestId: rid };
     _render('accepted', plate, '📞 Appel en cours',
       '<div class="cs-actions-grid">' +
@@ -272,7 +275,9 @@
     _hangupFromMini: _hangupFromMini,
   };
 
+  CallScreen.version = 'v7';
   w.CallScreen = CallScreen;
+  console.log('[CallScreen] v7 chargé — _terminalRequestIds + fallback plate');
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _subscribe);
