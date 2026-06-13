@@ -119,7 +119,7 @@
   <!-- Étape 2 : sous-types Véhicule -->
   <div id="sigStep2Vehicle" class="sig-step">
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span>Étape 2 / 3</span></div>
     <div class="sig-step-title">Quel problème sur le véhicule ?</div>
     <div style="margin-bottom:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);border-radius:12px;padding:10px 12px">
       <div style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;letter-spacing:.5px">🚨 URGENCE VITALE — APPELEZ D'ABORD LES SECOURS</div>
@@ -134,14 +134,25 @@
       <input id="sigVehiclePlate" class="plate-input" placeholder="Plaque : AB-123-CD" maxlength="9">
     </div>
     <div class="alert-grid">
-      <button class="alert-card urgent" onclick="App.vehicleAlertQuick('Pneu crevé ou à plat')"><span class="icon">🔴</span><span>Pneu</span></button>
-      <button class="alert-card urgent" onclick="App.vehicleAlertQuick('Feu arrière ou avant défaillant')"><span class="icon">💡</span><span>Feu</span></button>
-      <button class="alert-card medium" onclick="App.vehicleAlertQuick('Portière ou coffre mal fermé')"><span class="icon">🚪</span><span>Portière</span></button>
-      <button class="alert-card fire" onclick="App.vehicleAlertQuick('Fumée ou odeur de brûlé')"><span class="icon">🔥</span><span>Fumée</span></button>
-      <button class="alert-card medium" onclick="App.vehicleAlertQuick('Objet traînant sous le véhicule')"><span class="icon">⛓️</span><span>Objet</span></button>
-      <button class="alert-card info" onclick="App.vehicleAlertQuick('Autre problème visible')"><span class="icon">⚠️</span><span>Autre</span></button>
+      <button class="alert-card urgent" onclick="App.vehicleSelectType('pneu')"><span class="icon">🔴</span><span>Pneu</span></button>
+      <button class="alert-card urgent" onclick="App.vehicleSelectType('feu')"><span class="icon">💡</span><span>Feu</span></button>
+      <button class="alert-card medium" onclick="App.vehicleSelectType('portiere')"><span class="icon">🚪</span><span>Portière</span></button>
+      <button class="alert-card fire" onclick="App.vehicleSelectType('fumee')"><span class="icon">🔥</span><span>Fumée</span></button>
+      <button class="alert-card medium" onclick="App.vehicleSelectType('objet')"><span class="icon">⛓️</span><span>Objet</span></button>
+      <button class="alert-card info" onclick="App.vehicleSelectType('autre')"><span class="icon">⚠️</span><span>Autre</span></button>
     </div>
     <div id="myAlertsList" class="altet-list" style="margin-top:8px"><div class="my-alert-empty">Aucune alerte active.</div></div>
+  </div>
+
+  <!-- Étape 3 : messages pré-rédigés véhicule -->
+  <div id="sigStep3VehicleMsg" class="sig-step">
+    <button class="sig-back-btn" onclick="App.vehicleStep3Back()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 3 / 3</span></div>
+    <div id="sigStep3TypeLabel" class="sig-step-title" style="font-size:15px"></div>
+    <div id="sigStep3PlateChip" style="display:inline-flex;align-items:center;gap:6px;background:rgba(41,121,255,.15);border:1px solid rgba(41,121,255,.4);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;color:#90caf9;margin-bottom:12px;letter-spacing:.5px"></div>
+    <div style="font-size:12px;color:var(--muted,#888);margin-bottom:8px">Choisissez le message à envoyer :</div>
+    <div id="sigStep3MsgList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button onclick="App.vehicleStep3Custom()" style="margin-top:12px;width:100%;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:var(--muted,#888);font-size:13px;padding:10px;cursor:pointer;text-align:center">✏️ Message personnalisé</button>
   </div>
 
   <!-- Étape 2 : sous-types Aide -->
@@ -259,7 +270,7 @@
       </div>
     </div>
   </div>
-</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">📞 Paramètres appels</div><div class="settings-row"><div><div class="settings-row-label">Niveau d'accès</div><div class="settings-row-sub">Qui peut vous envoyer une demande de contact audio</div></div></div><div class="settings-call-levels" id="callLevelSelector"><button type="button" class="call-level-btn" data-level="1" onclick="ImmatMessages.setCallLevel(1)">🔇 Personne</button><button type="button" class="call-level-btn" data-level="2" onclick="ImmatMessages.setCallLevel(2)">🤝 Confiance</button><button type="button" class="call-level-btn" data-level="3" onclick="ImmatMessages.setCallLevel(3)">📍 Contexte</button><button type="button" class="call-level-btn" data-level="4" onclick="ImmatMessages.setCallLevel(4)">🌐 Tous</button></div><div class="settings-row" style="margin-top:8px"><div><div class="settings-row-label">Ne pas déranger</div><div class="settings-row-sub" id="dndSub">Désactivé</div></div><label class="settings-toggle"><input type="checkbox" id="dndToggle" onchange="ImmatMessages.setDnd(this.checked)"><span class="settings-toggle-track"></span></label></div><div id="dndHours" class="settings-dnd-hours" style="display:none"><div class="settings-row"><div class="settings-row-label">De</div><input type="time" id="dndFrom" value="22:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div><div class="settings-row"><div class="settings-row-label">À</div><input type="time" id="dndTo" value="07:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div></div></div><div class="settings-section"><div class="settings-section-title">👤 Présence</div><div class="settings-row"><div><div class="settings-row-label">Votre statut</div><div class="settings-row-sub">Aucune géolocalisation partagée — INV-COM-010</div></div></div><div class="settings-presence-grid" id="presenceSelector"><button type="button" class="presence-btn" data-status="disponible" onclick="ImmatMessages.setPresence('disponible')">🟢 Disponible</button><button type="button" class="presence-btn" data-status="conduite" onclick="ImmatMessages.setPresence('conduite')">🚗 Conduite</button><button type="button" class="presence-btn" data-status="occupé" onclick="ImmatMessages.setPresence('occupé')">🟡 Occupé</button><button type="button" class="presence-btn" data-status="invisible" onclick="ImmatMessages.setPresence('invisible')">⚫ Invisible</button><button type="button" class="presence-btn" data-status="hors-ligne" onclick="ImmatMessages.setPresence('hors-ligne')">⭕ Hors ligne</button></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div></div>
+</div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">📞 Paramètres appels</div><div class="settings-row"><div><div class="settings-row-label">Niveau d'accès</div><div class="settings-row-sub">Qui peut vous envoyer une demande de contact audio</div></div></div><div class="settings-call-levels" id="callLevelSelector"><button type="button" class="call-level-btn" data-level="1" onclick="ImmatMessages.setCallLevel(1)">🔇 Personne</button><button type="button" class="call-level-btn" data-level="2" onclick="ImmatMessages.setCallLevel(2)">🤝 Confiance</button><button type="button" class="call-level-btn" data-level="3" onclick="ImmatMessages.setCallLevel(3)">📍 Contexte</button><button type="button" class="call-level-btn" data-level="4" onclick="ImmatMessages.setCallLevel(4)">🌐 Tous</button></div><div class="settings-row" style="margin-top:8px"><div><div class="settings-row-label">Ne pas déranger</div><div class="settings-row-sub" id="dndSub">Désactivé</div></div><label class="settings-toggle"><input type="checkbox" id="dndToggle" onchange="ImmatMessages.setDnd(this.checked)"><span class="settings-toggle-track"></span></label></div><div id="dndHours" class="settings-dnd-hours" style="display:none"><div class="settings-row"><div class="settings-row-label">De</div><input type="time" id="dndFrom" value="22:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div><div class="settings-row"><div class="settings-row-label">À</div><input type="time" id="dndTo" value="07:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div></div></div><div class="settings-section"><div class="settings-section-title">👤 Présence</div><div class="settings-row"><div><div class="settings-row-label">Votre statut</div><div class="settings-row-sub">Aucune géolocalisation partagée — INV-COM-010</div></div></div><div class="settings-presence-grid" id="presenceSelector"><button type="button" class="presence-btn" data-status="disponible" onclick="ImmatMessages.setPresence('disponible')">🟢 Disponible</button><button type="button" class="presence-btn" data-status="conduite" onclick="ImmatMessages.setPresence('conduite')">🚗 Conduite</button><button type="button" class="presence-btn" data-status="occupé" onclick="ImmatMessages.setPresence('occupé')">🟡 Occupé</button><button type="button" class="presence-btn" data-status="invisible" onclick="ImmatMessages.setPresence('invisible')">⚫ Invisible</button><button type="button" class="presence-btn" data-status="hors-ligne" onclick="ImmatMessages.setPresence('hors-ligne')">⭕ Hors ligne</button></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div><div class="settings-section"><div class="settings-section-title">🔒 Mes données (RGPD)</div><div class="settings-row"><div><div class="settings-row-label">Exporter mes données</div><div class="settings-row-sub">Télécharge un fichier JSON avec toutes vos données.</div></div><button type="button" class="settings-btn" onclick="App.exportUserData()" style="align-self:center;min-width:84px">Exporter</button></div><div class="settings-row" style="margin-top:8px"><div><div class="settings-row-label">Supprimer mon compte</div><div class="settings-row-sub">Suppression définitive et immédiate. Irréversible.</div></div><button type="button" class="settings-btn danger" onclick="App.deleteAccount()" style="align-self:center;min-width:84px">Supprimer</button></div></div></div>
 <div id="panelActivite" class="panel">
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
@@ -340,15 +351,18 @@
 <audio id="callAudioOutgoing" preload="none" style="display:none"></audio>
 <audio id="messageAudioBeep" preload="none" style="display:none"></audio>
 <div id="floatingCard" class="floating-card" style="display:none">
-  <div class="fc-icon" id="fcIcon">🚘</div>
-  <div class="fc-body">
-    <div class="fc-title" id="fcTitle">Alerte</div>
-    <div class="fc-sub" id="fcSub"></div>
+  <div class="fc-main-row">
+    <div class="fc-icon" id="fcIcon">🚘</div>
+    <div class="fc-body">
+      <div class="fc-title" id="fcTitle">Alerte</div>
+      <div class="fc-sub" id="fcSub"></div>
+    </div>
+    <div class="fc-actions">
+      <button class="fc-btn fc-ok" id="fcBtn1" onclick="App.fcAction(1)">Vu</button>
+      <button class="fc-btn fc-go" id="fcBtn2" onclick="App.fcAction(2)">→</button>
+    </div>
   </div>
-  <div class="fc-actions">
-    <button class="fc-btn fc-ok" id="fcBtn1" onclick="App.fcAction(1)">Vu</button>
-    <button class="fc-btn fc-go" id="fcBtn2" onclick="App.fcAction(2)">→</button>
-  </div>
+  <div id="fcExtraActions" class="fc-extra-actions" style="display:none"></div>
 </div>
 <!-- ── Modaux système d'appels Phase 1 ──────────────────────────── -->
 <!-- Modal : Comment souhaitez-vous contacter ce conducteur ? -->
@@ -1059,7 +1073,7 @@ markAlertPending(id){
 },
 confirmAlert(id,present){return present?this.markAlertSeen(id):this.markAlertPending(id)},dismissAlert(id,opts={}){const rid=String(id||'').trim();if(!rid)return;const removed=[];S.alerts=(S.alerts||[]).filter(a=>{const keys=[a.key,a.id,a.remoteId,a.rid].filter(Boolean).map(String);const match=keys.includes(rid);if(match)removed.push(a);return!match;});removed.forEach(a=>{if(a.remoteId&&!opts?.silent&&(a._mine||isRouteAlert(a)))try{S.chCommunityReports?.send({type:'broadcast',event:'resolve_report',payload:{remoteId:a.remoteId}})}catch(e){};if(a.remoteId&&(a._mine||isRouteAlert(a)))try{sb?.from('reports').update({status:'resolved',resolved_at:new Date().toISOString()}).eq('id',a.remoteId).then(({error})=>{if(error)console.warn('dismissAlert UPDATE DB',error);})}catch(e){};if(a.remoteId)S.resolvedRemoteIds=[...(S.resolvedRemoteIds||[]).filter(x=>x!==a.remoteId),a.remoteId].slice(0,200);[a.key,a.id,a.remoteId,a.rid].filter(Boolean).forEach(k=>{const m=S.alertMarkersById?.[k];if(m){try{S.map?.removeLayer(m)}catch(e){}delete S.alertMarkersById[k];}});});syncDerivedAlertUI();if(!opts?.silent)toast('Alerte retirée.','ok')},
 async syncCommunityAlerts(){if(!sb)return;try{const since=new Date(Date.now()-3*60*60*1000).toISOString();const{data,error}=await sb.from('reports').select('*').gte('created_at',since).or('status.eq.active,status.is.null').order('created_at',{ascending:false}).limit(150);if(error)throw error;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));const myUid=ud?.user?.id;(data||[]).forEach(r=>{if(myUid&&r.reporter_id&&r.reporter_id===myUid)return;const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:false})});this.syncAlertMarkers?.()}catch(e){console.warn('sync alerts',e)}},
-subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id){if(r.id){const mine=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(r.plate||'')&&Date.now()-(a.at||0)<60000);if(mine){mine.remoteId=String(r.id);saveAlerts();console.info('remoteId assigné via postgres_changes:',mine.remoteId);}}return;}const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});schedFeed();schedBadge();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('postgres_changes',{event:'UPDATE',schema:'public',table:'reports'},p=>{const r=p.new||{};if(r.status!=='resolved')return;const rid=String(r.id||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';this.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:d.label||'Problème signalé',plate:d.sender_plate||'',lat:null,lng:null,level:d.urgent?'urgent':'important',group:'vehicle'},{notify:false});notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+'\nSignalé par : '+(d.sender_plate||'Conducteur proche'),'Vu','Répondre',()=>{this.updateActBadge?.()},()=>{S.selPlate=nPlate(d.sender_plate||'');S.conv=S.selPlate;this.panel('messages');try{ImmatMessages?.setMode?.('inbox');ImmatMessages?.refresh?.();}catch(e){}},'urgent');}catch(e){}schedFeed();schedBadge();try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_RECEIVED',{from:nPlate(d.sender_plate||''),urgent:!!d.urgent,_src:'ImmatConnect/subscribeCommunityReports/vehicle_alert'})}catch(e){}try{window.ImmatMessages?.refresh?.();}catch(e){}}).on('broadcast',{event:'vehicle_seen'},p=>{const d=p.payload||{};const myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPl||nPlate(d.target_plate||'')!==myPl)return;notifyAlert('✓ Signalement vérifié',(nPlate(d.sender_plate)||'Un conducteur')+' a vérifié votre signalement.','ok');}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
+subscribeCommunityReports(){if(!sb)return;try{if(S.chCommunityReports)sb.removeChannel(S.chCommunityReports)}catch(e){}const _handleReport=async r=>{if(!r)return;const{data:ud}=await sb.auth.getUser().catch(()=>({data:null}));if(r.reporter_id&&ud?.user?.id===r.reporter_id){if(r.id){const mine=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(r.plate||'')&&Date.now()-(a.at||0)<60000);if(mine){mine.remoteId=String(r.id);saveAlerts();console.info('remoteId assigné via postgres_changes:',mine.remoteId);}}return;}const type=inferType((r.reason||'')+' '+(r.plate||''));this.addCommunityAlert({remoteId:r.id,id:String(r.id||Date.now()),type,plate:r.plate,reason:r.reason,lat:r.latitude??r.lat??null,lng:r.longitude??r.lng??null,created_at:r.created_at},{notify:true});schedFeed();schedBadge();};try{S.chCommunityReports=sb.channel('ic_community_live').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},async p=>_handleReport(p.new||{})).on('postgres_changes',{event:'UPDATE',schema:'public',table:'reports'},p=>{const r=p.new||{};if(r.status!=='resolved')return;const rid=String(r.id||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'new_report'},async p=>_handleReport(p.payload||{})).on('broadcast',{event:'resolve_report'},p=>{const d=p.payload||{};const rid=String(d.remoteId||'');if(!rid)return;const found=(S.alerts||[]).find(a=>String(a.remoteId||'')===rid||String(a.id||'')===rid);if(found)this.dismissAlert?.(found.id,{silent:true});if(!(S.resolvedRemoteIds||[]).includes(rid)){(S.resolvedRemoteIds=S.resolvedRemoteIds||[]).push(rid);S.resolvedRemoteIds=S.resolvedRemoteIds.slice(0,200);saveAlerts();}schedFeed();schedBadge();}).on('broadcast',{event:'vehicle_alert'},p=>{const d=p.payload||{};const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPlate||nPlate(d.target_plate||'')!==myPlate)return;const icon=d.urgent?'🚨':'⚠️';this.addCommunityAlert({type:'vehicule',label:'Alerte véhicule',reason:d.label||'Problème signalé',plate:d.sender_plate||'',lat:null,lng:null,level:d.urgent?'urgent':'important',group:'vehicle'},{notify:false});notifyAlert(icon+' Alerte véhicule',d.label||'Problème signalé sur votre véhicule',d.urgent?'urgent':'important');try{const _senderPl=nPlate(d.sender_plate||'');const _sendReply=(msg)=>{if(_senderPl&&window.ImmatMessages?.sendToPlate)window.ImmatMessages.sendToPlate(_senderPl,msg,{context_type:'vehicle_response'}).catch(()=>{});};this.showFloatingCard(icon,'Alerte sur votre véhicule',d.label+' · '+(_senderPl||'Conducteur proche'),'Vu',null,()=>{this.updateActBadge?.();},null,'urgent',[{label:"J'arrive ✓",bg:'#1e3a5f',color:'#93c5fd',cb:()=>{_sendReply("Je prends en compte, merci pour le signalement ! 🚗");}},{label:'✅ Résolu',bg:'#063a2b',color:'#6ee7b7',cb:()=>{_sendReply("C'est réglé, merci ! ✅");}},{label:'💬 Précisez',bg:'rgba(255,255,255,.08)',color:'#e2e8f0',cb:()=>{S.selPlate=_senderPl;S.conv=_senderPl;this.panel('messages');try{ImmatMessages?.setMode?.('compose');if($('icComposePlate'))$('icComposePlate').value=_senderPl;}catch(e){}}}]);}catch(e){}schedFeed();schedBadge();try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_RECEIVED',{from:nPlate(d.sender_plate||''),urgent:!!d.urgent,_src:'ImmatConnect/subscribeCommunityReports/vehicle_alert'})}catch(e){}try{window.ImmatMessages?.refresh?.();}catch(e){}}).on('broadcast',{event:'vehicle_seen'},p=>{const d=p.payload||{};const myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');if(!myPl||nPlate(d.target_plate||'')!==myPl)return;notifyAlert('✓ Signalement vérifié',(nPlate(d.sender_plate)||'Un conducteur')+' a vérifié votre signalement.','ok');}).subscribe((status,err)=>{if(status==='SUBSCRIBED')console.info('✅ Realtime alertes actif');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime alertes KO',err);setTimeout(()=>this.subscribeCommunityReports?.(),5000)}});S._realtimeOk=true}catch(e){console.warn('sub reports',e)}},
 updateCommunityStatus(){let el=$('communityStatus');if(!el)return;if(!S.networkOnline){el.textContent='Hors ligne · GPS actif · alertes en cache';return;}const active=(S.alerts||[]).filter(a=>isNearby(a)).length;const myId=String(S.uid||'');const myPlate=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');const near=(S.nearby||[]).filter(v=>{if(!v)return false;if(myId&&String(v.uid||'')===myId)return false;if(myPlate&&nPlate(v.plate)===myPlate)return false;return true}).length;el.innerHTML='<span class="online-dot-mini"></span><span title="Position">📍</span><span title="Conducteurs proches">👥 <b class="count">'+near+'</b></span><span title="Alertes">⚠️ <b class="count">'+active+'</b></span>'},
 openInboxBadge(){this.panel('altet');setUnreadMsgCount(0);this.renderAlerts();},
 async saveReportRemote(payload){if(!sb)return;const _bcast=p=>{try{if(S.chCommunityReports){const bp={id:String(p.id||Date.now()),type:p.type||inferType((p.reason||'')+' '+(p.plate||'')),plate:p.plate||null,reason:p.reason||null,latitude:p.latitude??p.lat??null,longitude:p.longitude??p.lng??null,lat:p.lat??p.latitude??null,lng:p.lng??p.longitude??null,created_at:p.created_at||new Date().toISOString(),reporter_id:p.reporter_id||null};S.chCommunityReports.send({type:'broadcast',event:'new_report',payload:bp})}}catch(e){console.warn('bcast',e)}};try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&!payload.reporter_id)payload.reporter_id=ud.user.id;
@@ -1075,7 +1089,9 @@ openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini','full');S.
 openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><button type="button" onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty-msg">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p,level='BLOCK_ALL'){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!['BLOCK_MESSAGES','BLOCK_CALLS','BLOCK_ALL'].includes(level))level='BLOCK_ALL';if(!S.blocked.includes(p))S.blocked.push(p);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');lvls[p]=level;localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}try{window.ImmatOrganism?.observe?.('BLOCK_APPLIED',{plate:p,level,_src:'ImmatConnect/blockPlate'})}catch(e){}try{window.InteractionEngine?.create?.({type:'BLOCK',initiator:fPlate(S.profile?.owner_plate||''),target:fPlate(p),payload:{plate:p,level},status:'resolved'})}catch(e){}this.loadMsgs();this.loadOthers()},unblockPlate(p){p=nPlate(p);S.blocked=S.blocked.filter(x=>x!==p);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');delete lvls[p];localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}this.openBlocked()},openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="list-item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b><br><small>'+(r.dist?Math.round(r.dist*1000)+' m':'dist. inconnue')+'</small></span><button type="button" onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()">Contacter</button></div>').join(''):'<div class="empty-msg">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},clearRecent(){if(!S.recent.length)return toast('Aucun véhicule récent.','bad');S.recent=[];safeSet('ic_recent_vehicles',S.recent);this.openRecent();},openLegal(){$('legal').classList.add('show')},closeLegal(){$('legal').classList.remove('show')},openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},closeOverlay(id){$(id)?.classList.remove('show');if(id==='reportPanel')this.clearSignalHereContext?.();},closeAllOverlays(){['reportPanel','nearbyPanel'].forEach(id=>this.closeOverlay(id))},
 voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible.','bad');$(target)?.focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast(mode==='plate'?'Dicte la plaque…':'Dicte ton message…','ok');rec.onresult=e=>{let txt=e.results?.[0]?.[0]?.transcript||'';$(target).value=mode==='plate'?this.normalizeSpokenPlate(txt):txt};rec.onerror=()=>toast('Vocal indisponible.','bad');rec.start()}catch(e){toast('Vocal indisponible.','bad')}},normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},voicePlate(){this.voiceInput('icComposePlate','plate')},voiceMsg(){this.voiceInput('icComposeText','message')},
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){try{window.ImmatOrganism?.observe?.('SOS_TRIGGERED',{lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/sos'})}catch(e){}if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
-restoreMessages(){try{localStorage.removeItem('ic_deleted_msgs')}catch(e){}this.loadMsgs();this.renderActivityFeed?.();this.updateActBadge?.();toast('Messages restaurés ✓','ok')},forceSyncAlerts(){this.syncCommunityAlerts?.().then?.(()=>{toast('Alertes synchronisées ✓','ok')}).catch?.(()=>toast('Sync échouée','bad'));this.subscribeCommunityReports?.()},toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];S.resolvedRemoteIds=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}['ic_deleted_msgs','ic_alerts','ic_alert_history','ic_offline_reports','ic_unread_msg_count','ic_trust_scores','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{window.ImmatMessages?.unsubscribe?.()}catch(e){}await sb.auth.signOut();location.href=CFG.site}
+restoreMessages(){try{localStorage.removeItem('ic_deleted_msgs')}catch(e){}this.loadMsgs();this.renderActivityFeed?.();this.updateActBadge?.();toast('Messages restaurés ✓','ok')},forceSyncAlerts(){this.syncCommunityAlerts?.().then?.(()=>{toast('Alertes synchronisées ✓','ok')}).catch?.(()=>toast('Sync échouée','bad'));this.subscribeCommunityReports?.()},toggleReduceEffects(){document.body.classList.toggle('reduce-effects');set('ic_reduce_effects',document.body.classList.contains('reduce-effects')?'1':'0');toast(document.body.classList.contains('reduce-effects')?'Effets réduits.':'Effets normaux.','ok')},clearOfflineCache(){S.favorites=[];S.gpsHistory=[];S.alerts=[];S.alertHistory=[];S.offlineReports=[];S.recent=[];S.resolvedRemoteIds=[];['ic_favorites','ic_gps_history','ic_alerts','ic_alert_history','ic_offline_reports','ic_recent_vehicles','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});this.renderFavs();this.renderHistory();this.renderAlerts();this.renderMyAlertsBlock();toast('Cache local nettoyé.','ok')},
+async exportUserData(){try{toast('Export en cours…','ok');const{data:ud}=await sb.auth.getSession();const token=ud?.session?.access_token;if(!token)return toast('Non connecté.','bad');const r=await sb.functions.invoke('export-user-data',{body:{}});if(r.error)return toast('Export échoué : '+r.error.message,'bad');const blob=new Blob([JSON.stringify(r.data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mes-donnees-immatconnect.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);toast('Export téléchargé ✓','ok');}catch(e){toast('Erreur export.','bad');}},
+async deleteAccount(){if(!confirm('Supprimer définitivement votre compte ImmatConnect ?\nToutes vos données seront effacées (messages, signalements, historique).'))return;if(!confirm('CONFIRMATION FINALE — Cette action est irréversible.\nAppuyez sur OK pour supprimer votre compte.'))return;try{toast('Suppression en cours…','ok');const r=await sb.functions.invoke('delete-account',{body:{}});if(r.error)return toast('Erreur suppression : '+r.error.message,'bad');['ic_interactions','ic_notifications','ic_alerts','ic_blocked','ic_block_levels','ic_current_user_id','ic_current_profile_plate'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});toast('Compte supprimé. Au revoir.','ok');setTimeout(()=>location.href=CFG.site,2000);}catch(e){toast('Erreur suppression compte.','bad');}},cacheState(){try{localStorage.setItem('ic_last_state',JSON.stringify({lat:S.myLat,lng:S.myLng,view:S.mapView,radius:S.radiusKm,at:Date.now()}))}catch(e){}},async reconnectSafe(){try{if(!sb)return;const{data}=await sb.auth.getSession();if(data?.session&&!$('appScreen').classList.contains('active'))await this.afterAuth()}catch(e){}},async logout(){if(!confirm('Déconnexion ? Ta position sera retirée.'))return;if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);await this.deleteMyLocation();for(const ch of[S.chMsg,S.chLoc,S.chReports,S.chCommunityReports])if(ch)try{await sb.removeChannel(ch)}catch(e){}['ic_deleted_msgs','ic_alerts','ic_alert_history','ic_offline_reports','ic_unread_msg_count','ic_trust_scores','ic_resolved_remote_ids'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{window.ImmatMessages?.unsubscribe?.()}catch(e){}await sb.auth.signOut();location.href=CFG.site}
 };
 function bind(){authResetButton();setTimeout(authResetButton,500);setTimeout(authResetButton,2500);document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.hasAttribute('type'))b.setAttribute('type','button')});document.querySelectorAll('.plate-input').forEach(e=>e.addEventListener('input',()=>e.value=fPlate(e.value)));$('welcomeLoginBtn')?.addEventListener('click',()=>App.goAuth('login'));$('welcomeSignupBtn')?.addEventListener('click',()=>App.goAuth('signup'));$('authBtn')?.addEventListener('click',ev=>{ev.preventDefault();App.handleAuth()});$('gpsSearch')?.addEventListener('input',()=>{clearTimeout(gpsTimer);gpsTimer=setTimeout(()=>App.searchGps(),450)});document.addEventListener('focusin',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)){document.body.classList.add('keyboard-open');setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),300);}});document.addEventListener('focusout',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))setTimeout(()=>document.body.classList.remove('keyboard-open'),220)});$('iPwd')?.addEventListener('input',()=>{if(S.mode!=='signup')return;const v=$('iPwd').value;if(!v){hint('hPwd','','Min. 8 car., 1 majuscule, 1 spécial.');return;}const score=[v.length>=8,/[A-Z]/.test(v),/[^A-Za-z0-9]/.test(v),v.length>=12].filter(Boolean).length;const labels=['Trop court','Faible','Moyen','Fort','Très fort'];const types=['error','error','','success','success'];hint('hPwd',types[score],labels[score]);});window.addEventListener('orientationchange',()=>setTimeout(()=>S.map?.invalidateSize(),400));window.addEventListener('online',()=>{S.networkOnline=true;App.updateCommunityStatus?.();App.syncOfflineReports?.();App.syncCommunityAlerts?.();toast('Connexion retrouvée.','ok')});window.addEventListener('offline',()=>{S.networkOnline=false;App.updateCommunityStatus?.();toast('Mode hors ligne.','bad')});setInterval(()=>App.autoNight(),60000);setInterval(()=>App.cleanupAlerts(),60000);setInterval(()=>App.syncOfflineReports?.(),90000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.syncCommunityAlerts?.()},15000);setInterval(()=>App.cacheState(),30000);setInterval(()=>App.reconnectSafe(),30000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.updateNavPremium()},5000);setInterval(()=>{if($('appScreen')?.classList.contains('active'))App.loadOthers?.()},20000);
 // Sync alertes et badge quand l'app revient au premier plan
@@ -1160,7 +1176,7 @@ App.sigStepAide=function(){
   App.renderAideCallSection?.();
 };
 App._sigReset=function(){
-  ['sigStep2Route','sigStep2Vehicle','sigStep2Aide'].forEach(id=>$(id)?.classList.remove('active'));
+  ['sigStep2Route','sigStep2Vehicle','sigStep2Aide','sigStep3VehicleMsg'].forEach(id=>$(id)?.classList.remove('active'));
   $('sigStep1')?.classList.add('active');
 };
 App.sigBack=function(){
@@ -1211,6 +1227,113 @@ App.vehicleAlertQuick=async function(label){
     btns.forEach(b=>{b.disabled=false;b.style.opacity='';});
   }
   if(sent)this.sigDone();
+};
+
+// ── Flux 3 clics — messages pré-rédigés par type de problème véhicule
+App._vehiclePreset={
+  pneu:{icon:'🔴',label:'Pneu crevé / à plat',urgent:true,msgs:[
+    'Votre pneu avant gauche semble crevé ou à plat.',
+    'Votre pneu avant droit est à plat.',
+    'Votre pneu arrière gauche perd de l\'air — vérifiez vite.',
+    'Votre pneu arrière droit est dangereusement dégonflé.'
+  ]},
+  feu:{icon:'💡',label:'Feu défaillant',urgent:true,msgs:[
+    'Votre feu arrière gauche ne fonctionne plus.',
+    'Votre feu arrière droit est éteint.',
+    'Un feu de stop est défaillant.',
+    'Votre feu avant ne fonctionne plus.'
+  ]},
+  portiere:{icon:'🚪',label:'Portière / coffre ouvert',urgent:false,msgs:[
+    'Votre coffre est ouvert.',
+    'Votre portière arrière gauche est mal fermée.',
+    'Votre portière arrière droite est entrouverte.',
+    'Votre portière avant est mal fermée.'
+  ]},
+  fumee:{icon:'🔥',label:'Fumée / odeur de brûlé',urgent:true,msgs:[
+    'Fumée visible sous votre capot — arrêtez-vous immédiatement.',
+    'Odeur de brûlé depuis votre véhicule — vérifiez dès que possible.',
+    'Un liquide s\'écoule sous votre moteur.'
+  ]},
+  objet:{icon:'⛓️',label:'Objet traînant',urgent:false,msgs:[
+    'Une sangle ou un câble traîne sous votre véhicule.',
+    'Un objet est accroché sous votre châssis.',
+    'Votre pare-choc arrière est partiellement décroché.'
+  ]},
+  autre:{icon:'⚠️',label:'Autre problème visible',urgent:false,msgs:[
+    'Votre plaque d\'immatriculation est mal fixée.',
+    'Un problème visible sur votre véhicule — pouvez-vous vérifier ?',
+    'Votre essuie-glace est décroché.'
+  ]}
+};
+App._vehicleStep3Plate='';
+App._vehicleStep3Type='';
+App.vehicleSelectType=function(type){
+  const plate=fPlate($('sigVehiclePlate')?.value||this.selectedVehiclePlate()||'');
+  if(!plate) return toast('Indique la plaque du véhicule dans le champ ci-dessus.','bad');
+  if(plate===this.ownPlate()) return toast('Impossible de te signaler toi-même.','bad');
+  const preset=this._vehiclePreset[type];
+  if(!preset) return;
+  this._vehicleStep3Plate=plate;
+  this._vehicleStep3Type=type;
+  const typeEl=$('sigStep3TypeLabel');
+  if(typeEl)typeEl.textContent=preset.icon+' '+preset.label;
+  const chipEl=$('sigStep3PlateChip');
+  if(chipEl)chipEl.textContent='→ '+plate;
+  const listEl=$('sigStep3MsgList');
+  if(listEl){
+    listEl.innerHTML='';
+    preset.msgs.forEach(msg=>{
+      const btn=document.createElement('button');
+      btn.style.cssText='width:100%;text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#e2e8f0;font-size:13px;padding:12px 14px;cursor:pointer;line-height:1.4';
+      btn.textContent=msg;
+      const urgentPrefix=preset.urgent?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ';
+      const fullMsg=urgentPrefix+msg+' (signalé par un conducteur ImmatConnect)';
+      btn.onclick=()=>App.vehicleSendMsg(plate,fullMsg,preset.urgent);
+      listEl.appendChild(btn);
+    });
+  }
+  $('sigStep2Vehicle')?.classList.remove('active');
+  $('sigStep3VehicleMsg')?.classList.add('active');
+};
+App.vehicleStep3Back=function(){
+  $('sigStep3VehicleMsg')?.classList.remove('active');
+  $('sigStep2Vehicle')?.classList.add('active');
+};
+App.vehicleSendMsg=async function(plate,msg,urgent){
+  const btns=document.querySelectorAll('#sigStep3MsgList button');
+  btns.forEach(b=>{b.disabled=true;b.style.opacity='.5';});
+  try{
+    let sent=false;
+    if(window.ImmatMessages?.sendToPlate){
+      const ok=await ImmatMessages.sendToPlate(plate,msg,{context_type:'vehicle_report'});
+      if(ok===false){btns.forEach(b=>{b.disabled=false;b.style.opacity='';});return;}
+      sent=true;
+    } else {
+      if($('icComposePlate'))$('icComposePlate').value=plate;
+      if($('icComposeText'))$('icComposeText').value=msg;
+      this.panel('messages');
+      setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose')}catch(e){}},120);
+      sent=true;
+    }
+    try{
+      if(S.chCommunityReports){
+        S.chCommunityReports.send({type:'broadcast',event:'vehicle_alert',payload:{
+          target_plate:plate,sender_plate:this.ownPlate(),
+          label:this._vehicleStep3Type,msg,urgent,at:Date.now()
+        }});
+      }
+    }catch(e){}
+    if(sent){toast('✅ Message envoyé au conducteur '+plate,'ok');this.sigDone();}
+  }catch(e){toast('Erreur envoi message.','bad');}finally{
+    btns.forEach(b=>{b.disabled=false;b.style.opacity='';});
+  }
+};
+App.vehicleStep3Custom=function(){
+  const plate=this._vehicleStep3Plate;
+  if($('icComposePlate'))$('icComposePlate').value=plate;
+  this._sigReset();
+  this.panel('messages');
+  setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose')}catch(e){}},120);
 };
 
 // ── Activité
@@ -1609,7 +1732,7 @@ App.updateActBadge=function(){
 // ── Carte flottante
 App._fcTimer=null;
 App._fcCallbacks=[null,null];
-App.showFloatingCard=function(icon,title,sub,btn1Label,btn2Label,cb1,cb2,level){
+App.showFloatingCard=function(icon,title,sub,btn1Label,btn2Label,cb1,cb2,level,extraActions){
   if($('floatingCard')){
     $('fcIcon').textContent=icon||'🔔';
     $('fcTitle').textContent=title||'';
@@ -1618,9 +1741,28 @@ App.showFloatingCard=function(icon,title,sub,btn1Label,btn2Label,cb1,cb2,level){
     if($('fcBtn2')){$('fcBtn2').textContent=btn2Label||'→';$('fcBtn2').style.display=btn2Label?'':'none';}
     this._fcCallbacks=[cb1||null,cb2||null];
     $('floatingCard').classList.toggle('alert-urgent',level==='urgent');
+    // Extra actions (optionnel — tableau [{label, cb, style}])
+    const xEl=$('fcExtraActions');
+    if(xEl){
+      if(extraActions?.length){
+        xEl.innerHTML='';
+        extraActions.forEach(a=>{
+          const btn=document.createElement('button');
+          btn.className='fc-extra-btn';
+          btn.textContent=a.label||'';
+          Object.assign(btn.style,{background:a.bg||'rgba(255,255,255,.1)',color:a.color||'#eef6ff',...(a.style||{})});
+          btn.onclick=()=>{if(typeof a.cb==='function')a.cb();App.hideFloatingCard();};
+          xEl.appendChild(btn);
+        });
+        xEl.style.display='flex';
+      } else {
+        xEl.style.display='none';
+        xEl.innerHTML='';
+      }
+    }
     $('floatingCard').style.display='flex';
     clearTimeout(this._fcTimer);
-    this._fcTimer=setTimeout(()=>this.hideFloatingCard(),8000);
+    this._fcTimer=setTimeout(()=>this.hideFloatingCard(),12000);
   }
 };
 App.hideFloatingCard=function(){
