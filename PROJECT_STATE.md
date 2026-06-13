@@ -42,8 +42,21 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 1 — Actions #01 à #04**  
+**Mission : Sprint 1 — Actions #01 à #05**  
 **Date :** 2026-06-13
+
+**#05** — Push notifications VAPID (commit `ab477d7`)
+- `service-worker.js` v22 : listeners `push` + `notificationclick`
+- Edge Function `send-push-notification` : VAPID signing via `npm:web-push`, lookup DB service_role, nettoyage 410 automatique
+- `supabase/migrations/20260613_push_subscriptions.sql` : table `push_subscriptions` + RLS
+- `index.html` : `VAPID_PUBLIC_KEY`, `_vapidKey()`, `App.subscribePush()`, `requestPermissions()` amélioré
+- `calls.js` : trigger fire-and-forget push après `requestCall` réussi
+
+**⚠️ 3 actions manuelles Supabase requises avant activation :**
+1. Exécuter `supabase/migrations/20260613_push_subscriptions.sql` dans SQL Editor
+2. Ajouter secrets : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` dans Settings → Secrets
+3. Déployer : `supabase functions deploy send-push-notification`
+
 
 **#04** — Onglet Appels dans la nav principale + badge manqués (commit `cb8865e`)
 - Bouton `navAppels` avec icône téléphone SVG et badge `callNavBadge`
@@ -97,7 +110,7 @@ Exécuter dans cet ordre exact :
 | ~~02~~ | ~~Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials`~~ | ~~repo~~ | ~~✅ FAIT~~ |
 | ~~03~~ | ~~Effacer `ic_pending_profile` après signup réussi~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | ~~04~~ | ~~Onglet Appels dans la nav principale + badge manqués~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| 05 | Push notifications SW Level 2 (VAPID) | `service-worker.js`, Edge Function à créer | 2j |
+| ~~05~~ | ~~Push notifications VAPID (SW v22 + Edge Function + DB)~~ | ~~5 fichiers~~ | ~~✅ FAIT~~ |
 | 06 | Demande permission push à l'onboarding | `index.html`, `ui.js` | 4h |
 | 07 | RGPD — suppression de compte (Edge Function `delete-account`) | `supabase/functions/` | 2j |
 | 08 | RGPD — export de données (Edge Function `export-user-data`) | `supabase/functions/` | 1j |
@@ -362,6 +375,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
 | 2026-06-13 | IA session | Sprint 1 #03 terminé — ic_pending_profile effacé dans openMap() |
 | 2026-06-13 | IA session | Sprint 1 #04 terminé — onglet Appels dans nav principale + badge CALL_MISSED |
+| 2026-06-13 | IA session | Sprint 1 #05 terminé — push notifications VAPID (SW v22, Edge Function, DB, subscribePush) |
 
 ---
 
