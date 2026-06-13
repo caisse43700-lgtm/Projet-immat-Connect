@@ -159,7 +159,7 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-Aucune. Sprint 7 P1-P3 terminé le 2026-06-13. Prochaine : S7-NEARBY ou S7-PROFILE (nécessite audit RLS profiles).
+Aucune. Pré-déploiement S6 sécurisé le 2026-06-13. Prochaine : S7-NEARBY.
 
 ---
 
@@ -427,7 +427,7 @@ core/agora-call-engine.js : v5
 core/audio-manager.js : v7
 core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17+ (relTime, aria-label ic-delete-msg)
-service-worker.js     : immatconnect-pro-v24
+service-worker.js     : immatconnect-pro-v25
 app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
 APP_BUILD             : 2026-06-13-S5
 manifest.json         : shortcuts (Signaler/Carte/Appels), categories, apple-touch-icon
@@ -524,6 +524,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 7 — RGPD GAP : delete-account + export-user-data étendus (device_sessions, user_blocks, driver_ratings) avec helper optionalDelete + isMissingRelationError |
 | 2026-06-13 | IA session | Sprint 7 — S7-OBD : _isCallLikeType() + _rememberObd() dans interaction-engine.js — dédup FIFO 100 entrées, guard CALL sans underscore |
 | 2026-06-13 | IA session | Sprint 7 — S7-SEARCH : barre recherche plaque dans feed activité — debounce 300ms, nPlate normalisation, zéro requête Supabase |
+| 2026-06-13 | IA session | Pré-déploiement S6 — sécurisation RLS profiles/reports + public_profiles + index manquants + SW v25 (commits 53e5348, 5746ad9, 75a066b) |
 
 ---
 
