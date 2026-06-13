@@ -42,8 +42,40 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 1 — Actions #01 à #05**  
+**Mission : Sprint 2 — Expérience signalements complète**  
 **Date :** 2026-06-13
+
+**S2-7** — device_id + appel pris sur autre appareil (commit `c6281a6`)
+- `calls.js` v18 : `_deviceId` IIFE (localStorage `ic_device_id`)
+- `acceptCall()` inclut `accepted_device_id: _deviceId` dans le UPDATE DB
+- Handler `receiver_id` UPDATE : si `r.status === 'accepted' && r.accepted_device_id !== _deviceId` → popup fermée + toast "Appel pris sur votre autre appareil"
+- Migration `supabase/migrations/20260613_call_requests_device_id.sql`
+
+**S2-6** — Blocages persistés DB (commit `acec331`)
+- `supabase/migrations/20260613_user_blocks.sql` : table `user_blocks` + RLS
+- `blockPlate()` : upsert DB fire-and-forget + localStorage
+- `unblockPlate()` : delete DB fire-and-forget + localStorage
+- `App.loadBlocksFromDB()` : fusion DB + localStorage, appelé 2s après openMap()
+
+**S2-4** — Migration DB reports (commit `3a3b7fc`)
+- `supabase/migrations/20260613_reports_enhancements.sql` : seen_at, actioned_at, urgency_level, target_plate, resolved_at
+- `actConfirmAlert` ajoute `actioned_at` dans le UPDATE DB
+- `roadReport`, `assist`, `driverInfo` incluent `urgency_level` dans saveReportRemote
+
+**S2-3** — ResolutionCenter modal (commit `f67b0f6`)
+- `resolutionCenterModal` : modal overlay avec statut, plaque cible, actions (Résolu / Messages / Retirer)
+- `openResolutionCenter(alertId)`, `closeResolutionCenter()`, `rcConfirm(status)`, `rcOpenMessages()`
+- Bouton "📋 Résolution" dans les cartes isOwn du feed d'activité
+
+**S2-1+S2-2** — Flux 3 clics + FloatingCard étendue (commit `aeadef3`)
+- `vehicleSelectType(type)` → Step 3 avec 21 messages pré-rédigés (6 types × 3-4 messages)
+- `vehicleSendMsg()`, `vehicleStep3Back()`, `vehicleStep3Custom()`
+- FloatingCard restructurée (flex-column + fc-main-row) + `fcExtraActions`
+- Vehicle alert : 3 boutons réponse (J'arrive ✓ / Résolu / Précisez)
+
+**S2-5+S2-0** — _emitObd corrigé + RGPD UI (session précédente)
+
+**Avant cela (Sprint 1, 2026-06-13) :**
 
 **#05** — Push notifications VAPID (commit `ab477d7`)
 - `service-worker.js` v22 : listeners `push` + `notificationclick`
@@ -93,28 +125,62 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-**Aucune mission de code en cours.**  
-La prochaine mission est documentée en section 4.
+**Sprint 3 — Stabilité, polish et features manquantes**  
+À démarrer (Sprint 2 terminé le 2026-06-13).
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
-**Sprint 1 — Rendre le lancement public possible (2 semaines)**
+**Sprint 1 — ✅ TERMINÉ (2026-06-13)**
 
-Exécuter dans cet ordre exact :
+| # | Action | Commit |
+|---|---|---|
+| ~~01~~ | Bouton urgence 15/17/18 | `9313c43` |
+| ~~02~~ | Code mort supprimé | `601b3f5` |
+| ~~03~~ | `ic_pending_profile` effacé | `9801c31` |
+| ~~04~~ | Onglet Appels + badge | `cb8865e` |
+| ~~05~~ | Push notifications VAPID (SW v22) | `ab477d7` |
+| ~~06~~ | Permission push à l'onboarding | `3b68e96` |
+| ~~07~~ | RGPD `delete-account` Edge Function | `15ad2a9` |
+| ~~08~~ | RGPD `export-user-data` Edge Function | `15ad2a9` |
 
-| # | Action | Fichiers à modifier | Effort |
-|---|---|---|---|
-| ~~01~~ | ~~Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| ~~02~~ | ~~Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials`~~ | ~~repo~~ | ~~✅ FAIT~~ |
-| ~~03~~ | ~~Effacer `ic_pending_profile` après signup réussi~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| ~~04~~ | ~~Onglet Appels dans la nav principale + badge manqués~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| ~~05~~ | ~~Push notifications VAPID (SW v22 + Edge Function + DB)~~ | ~~5 fichiers~~ | ~~✅ FAIT~~ |
-| ~~06~~ | ~~Demande permission push à l'onboarding~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| 06 | Demande permission push à l'onboarding | `index.html`, `ui.js` | 4h |
-| 07 | RGPD — suppression de compte (Edge Function `delete-account`) | `supabase/functions/` | 2j |
-| 08 | RGPD — export de données (Edge Function `export-user-data`) | `supabase/functions/` | 1j |
+**⚠️ Actions manuelles Supabase requises avant activation push + RGPD + Sprint 2 :**
+1. SQL Editor → exécuter dans l'ordre :
+   - `supabase/migrations/20260613_push_subscriptions.sql`
+   - `supabase/migrations/20260613_reports_enhancements.sql`
+   - `supabase/migrations/20260613_user_blocks.sql`
+   - `supabase/migrations/20260613_call_requests_device_id.sql`
+2. Secrets → `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+3. Deploy → `supabase functions deploy delete-account export-user-data send-push-notification`
+
+---
+
+**Sprint 2 — ✅ TERMINÉ (2026-06-13)**
+
+| # | Action | Commit |
+|---|---|---|
+| ~~S2-0~~ | Boutons RGPD dans Paramètres (UI delete + export) | session précédente |
+| ~~S2-1~~ | Flux 3 clics véhicule + 21 messages pré-rédigés | `aeadef3` |
+| ~~S2-2~~ | FloatingCard étendue (J'arrive / Résolu / Précisez) | `aeadef3` |
+| ~~S2-3~~ | ResolutionCenter modal (cycle de vie signalements) | `f67b0f6` |
+| ~~S2-4~~ | Migration DB reports (seen_at, actioned_at, urgency_level) | `3a3b7fc` |
+| ~~S2-5~~ | Corriger `_emitObd()` double-émission | session précédente |
+| ~~S2-6~~ | Blocages persistés DB (table `user_blocks`) | `acec331` |
+| ~~S2-7~~ | device_id + "appel pris sur autre appareil" | `c6281a6` |
+
+---
+
+**Sprint 3 — Stabilité, polish et features manquantes**
+
+| # | Action | Priorité |
+|---|---|---|
+| S3-1 | Historique d'appels complet dans l'onglet Appels | P0 |
+| S3-2 | Statut de lecture des messages (vu/non-vu) | P1 |
+| S3-3 | Filtres dans le feed d'activité (par type, par statut) | P1 |
+| S3-4 | Mode Gardien amélioré (tableau de bord temps réel) | P2 |
+| S3-5 | Onboarding amélioré (tutoriel interactif) | P2 |
+| S3-6 | Déploiement Edge Function `get-turn-credentials` (supprimer) | P0 |
 
 **Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
 → Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
@@ -292,14 +358,14 @@ _terminalRequestIds   (dans AgoraCallEngine + CallScreen — en mémoire, pas lo
 ### Versions actuelles des fichiers principaux
 
 ```
-calls.js              : v17
+calls.js              : v18  (device_id + accepted_device_id, blockPlate DB)
 core/call-screen.js   : v8
 core/agora-call-engine.js : v5
 core/audio-manager.js : v7
-core/interaction-engine.js : v1
+core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17
-service-worker.js     : immatconnect-pro-v21
-app.css               : v6
+service-worker.js     : immatconnect-pro-v22
+app.css               : v7  (FloatingCard flex-column + fc-extra-actions)
 ```
 
 ---
@@ -378,6 +444,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 1 #04 terminé — onglet Appels dans nav principale + badge CALL_MISSED |
 | 2026-06-13 | IA session | Sprint 1 #05 terminé — push notifications VAPID (SW v22, Edge Function, DB, subscribePush) |
 | 2026-06-13 | IA session | Sprint 1 #06 terminé — bloc push dans l'onboarding, requestPushPermission(), geste utilisateur |
+| 2026-06-13 | IA session | Sprint 1 #07+#08 terminés — Edge Functions delete-account + export-user-data (correction caller_id→requester_id) |
+| 2026-06-13 | IA session | Sprint 2 démarré — _emitObd corrigé, push messages ajouté, PROJECT_STATE mis à jour |
+| 2026-06-13 | IA session | Sprint 2 TERMINÉ — S2-1 flux 3 clics, S2-2 FloatingCard étendue, S2-3 ResolutionCenter, S2-4 migration DB, S2-6 user_blocks, S2-7 device_id |
 
 ---
 
