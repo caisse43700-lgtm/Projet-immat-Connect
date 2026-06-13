@@ -42,8 +42,31 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 2 — Expérience signalements complète**  
+**Mission : Sprint 3 terminé + Sprint 4 démarré**  
 **Date :** 2026-06-13
+
+**S4-MAP** — Filtre type d'alerte sur la carte (commit `817ae11`)
+- Barre de filtres flottante (Tous / Route / Aide / Véhicule)
+- `S.mapAlertFilter`, `setMapAlertFilter(f)` avec show/hide Leaflet layers
+- `addCommunityAlertMarker()` stocke `marker._alertGroup` pour le filtre
+
+**S3-8** — Accessibilité P1 (commit `baf7914`)
+- `role="dialog" aria-modal="true"` sur 8 modaux (resolutionCenter, callContact, callIncoming, onboarding, gardienDashboard, legal, blocked, recent)
+- Toast : `role="alert" aria-live="assertive" aria-atomic="true"`
+- `aria-label="Supprimer ce message"` sur ic-delete-msg
+
+**S3-10** — Préférences notifications (commit `0a47c8a`)
+- `_notifPref(group)` : lit `ic_notif_prefs` JSON, filtre les toasts/FloatingCard selon les préférences
+- 3 toggles dans Paramètres → section Notifications (route, véhicule, aide)
+- `notifyAlert()` accepte un 4e arg `group`, respecte les prefs (sauf urgent)
+- `addCommunityAlert()` gate sur `_notifPref(saved.group)`
+
+**S3-4+S3-7+S3-9** — Timestamps relatifs, anti-abus, position approximée (commit `b89e81d`)
+- `relTime(ts)` : "à l'instant", "il y a Xmin", "HHhMM", "hier HH:MM", "jj. HH:MM"
+- SOS cooldown 15 min (`ic_sos_last`) + call rate limit 3/10min (`ic_call_times`)
+- `_fuzzyPos(lat,lng)` : offset ±200m sur broadcast Supabase si `ic_approx_geo=1`
+- Toggle "Position approximée (±200m)" dans Paramètres → section Vie privée
+- SW v22 → v23
 
 **S2-7** — device_id + appel pris sur autre appareil (commit `c6281a6`)
 - `calls.js` v18 : `_deviceId` IIFE (localStorage `ic_device_id`)
@@ -171,16 +194,25 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ---
 
-**Sprint 3 — Stabilité, polish et features manquantes**
+**Sprint 3 — ✅ TERMINÉ (2026-06-13)**
 
-| # | Action | Priorité |
-|---|---|---|
-| S3-1 | Historique d'appels complet dans l'onglet Appels | P0 |
-| S3-2 | Statut de lecture des messages (vu/non-vu) | P1 |
-| S3-3 | Filtres dans le feed d'activité (par type, par statut) | P1 |
-| S3-4 | Mode Gardien amélioré (tableau de bord temps réel) | P2 |
-| S3-5 | Onboarding amélioré (tutoriel interactif) | P2 |
-| S3-6 | Déploiement Edge Function `get-turn-credentials` (supprimer) | P0 |
+| # | Action | Commit | Priorité |
+|---|---|---|---|
+| ~~S3-1~~ | Historique d'appels complet (regroupement par jour, icônes, labels corrects) | `4099411` | ~~P0~~ |
+| ~~S3-2~~ | Statut lecture messages (✓ Envoyé / ✓✓ Vu en bleu) | `f36840f` | ~~P1~~ |
+| ~~S3-3~~ | Filtre "Non-lus" dans le feed d'activité | `f723f48` | ~~P1~~ |
+| ~~S3-4~~ | Horodatage relatif (relTime) + cooldown SOS + géoloc approx + prefs notifs | `b89e81d` `0a47c8a` | ~~P2~~ |
+| ~~S3-8~~ | Accessibilité P1 (role=dialog, aria-live, aria-label) | `baf7914` | ~~P2~~ |
+| S3-6 | Supprimer Edge Function `get-turn-credentials` du dashboard Supabase | — | P0 (manuel) |
+
+**Sprint 4 — En cours (2026-06-13)**
+
+| # | Action | Commit | Priorité |
+|---|---|---|---|
+| ~~S4-MAP~~ | Filtre type d'alerte sur la carte (Route/Aide/Véhicule) | `817ae11` | ~~P2~~ |
+| S4-CLUSTER | Clustering marqueurs Leaflet (zones denses) | — | P2 |
+| S4-SPEAKER | Haut-parleur Agora (toggleSpeaker) | — | P2 |
+| S4-LEGAL | Pages légales complètes (CGU, Politique confidentialité) | — | P2 |
 
 **Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
 → Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
@@ -358,14 +390,14 @@ _terminalRequestIds   (dans AgoraCallEngine + CallScreen — en mémoire, pas lo
 ### Versions actuelles des fichiers principaux
 
 ```
-calls.js              : v18  (device_id + accepted_device_id, blockPlate DB)
+calls.js              : v18+ (device_id + call rate limit ic_call_times)
 core/call-screen.js   : v8
 core/agora-call-engine.js : v5
 core/audio-manager.js : v7
 core/interaction-engine.js : v2  (_emitObd guard CALL_*)
-messages.js           : v17
-service-worker.js     : immatconnect-pro-v22
-app.css               : v7  (FloatingCard flex-column + fc-extra-actions)
+messages.js           : v17+ (relTime, aria-label ic-delete-msg)
+service-worker.js     : immatconnect-pro-v23
+app.css               : v8  (map-alert-filter-bar + map-filter-pill)
 ```
 
 ---
@@ -447,6 +479,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 1 #07+#08 terminés — Edge Functions delete-account + export-user-data (correction caller_id→requester_id) |
 | 2026-06-13 | IA session | Sprint 2 démarré — _emitObd corrigé, push messages ajouté, PROJECT_STATE mis à jour |
 | 2026-06-13 | IA session | Sprint 2 TERMINÉ — S2-1 flux 3 clics, S2-2 FloatingCard étendue, S2-3 ResolutionCenter, S2-4 migration DB, S2-6 user_blocks, S2-7 device_id |
+| 2026-06-13 | IA session | Sprint 3 TERMINÉ — S3-1/2/3 (précédent), S3-4+S3-7+S3-9 (relTime+cooldown+fuzzyPos), S3-8 (a11y), S3-10 (notif prefs) |
+| 2026-06-13 | IA session | Sprint 4 démarré — S4-MAP filtre alertes carte (Tous/Route/Aide/Véhicule) |
 
 ---
 
