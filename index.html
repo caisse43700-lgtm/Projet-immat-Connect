@@ -121,6 +121,15 @@
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Quel problème sur le véhicule ?</div>
+    <div style="margin-bottom:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);border-radius:12px;padding:10px 12px">
+      <div style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;letter-spacing:.5px">🚨 URGENCE VITALE — APPELEZ D'ABORD LES SECOURS</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <a href="tel:15" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">15</span><span style="font-size:10px;margin-top:3px">SAMU</span></a>
+        <a href="tel:17" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">17</span><span style="font-size:10px;margin-top:3px">Police</span></a>
+        <a href="tel:18" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">18</span><span style="font-size:10px;margin-top:3px">Pompiers</span></a>
+      </div>
+      <div style="font-size:10px;color:rgba(239,68,68,.8);margin-top:6px;text-align:center">Enfant ou animal dans le véhicule · fumée · accident grave</div>
+    </div>
     <div class="sig-vehicle-input">
       <input id="sigVehiclePlate" class="plate-input" placeholder="Plaque : AB-123-CD" maxlength="9">
     </div>
@@ -140,6 +149,15 @@
     <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">De quoi avez-vous besoin ?</div>
+    <div style="margin-bottom:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);border-radius:12px;padding:10px 12px">
+      <div style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;letter-spacing:.5px">🚨 URGENCE VITALE — APPELEZ D'ABORD LES SECOURS</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <a href="tel:15" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">15</span><span style="font-size:10px;margin-top:3px">SAMU</span></a>
+        <a href="tel:17" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">17</span><span style="font-size:10px;margin-top:3px">Police</span></a>
+        <a href="tel:18" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">18</span><span style="font-size:10px;margin-top:3px">Pompiers</span></a>
+      </div>
+      <div style="font-size:10px;color:rgba(239,68,68,.8);margin-top:6px;text-align:center">Accident grave · incendie · problème médical urgent</div>
+    </div>
     <div class="alert-grid">
       <button class="alert-card urgent" onclick="App.assist('panne');App.sigDone()"><span class="icon">🚗</span><span>Panne</span></button>
       <button class="alert-card medium" onclick="App.assist('carburant');App.sigDone()"><span class="icon">⛽</span><span>Carburant</span></button>

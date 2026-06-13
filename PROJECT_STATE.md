@@ -42,20 +42,21 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Audit d'exécution + plan de développement concret**  
+**Mission : Sprint 1 — Action #01 — Bouton urgence 15/17/18**  
 **Date :** 2026-06-13  
-**Commit :** `e799ac8`
+**Commit :** voir SHA ci-dessous
 
-Fichier créé : `docs/IMPLEMENTATION_GAP_ANALYSIS.md`
-- Matrice 80+ fonctionnalités (Existe / Partielle / Absente)
-- Audit 10 écrans (conforme ou non conforme au MASTER_PLAN)
-- Audit DB (tables, colonnes, index, RLS manquants)
-- Audit production (5 blockers App Store / Play Store)
-- Incohérences code vs MASTER_PLAN vs AUDIT_V2
-- Roadmap Sprint 1 → 4 avec efforts et risques
-- Top 20 actions dans l'ordre exact
+Modification dans `index.html` uniquement :
+- Bloc urgence rouge ajouté dans `sigStep2Vehicle` (Quel problème sur le véhicule ?)
+- Bloc urgence rouge ajouté dans `sigStep2Aide` (De quoi avez-vous besoin ?)
+- Chaque bloc contient 3 liens `tel:15`, `tel:17`, `tel:18` (boutons rouges 44px min)
+- Texte contextuel : "Enfant ou animal dans le véhicule · fumée · accident grave"
+- Affiché AVANT les types d'incidents standards
+- Aucun code JS modifié, aucune logique changée
 
 **Avant cela (2026-06-13) :**
+- `PROJECT_STATE.md` créé (commit `d231024`) — point de reprise unique
+- `docs/IMPLEMENTATION_GAP_ANALYSIS.md` créé (commit `e799ac8`) — matrice + roadmap + top 20
 - `docs/AUDIT_IMMATCONNECT_GLOBAL_V2.md` créé (commit `99e19e1`) — 1889 lignes, 25 sections
 - `docs/AUDIT_IMMATCONNECT_GLOBAL_V1.md` créé (commit `12df767`) — 1173 lignes, 25 sections
 
@@ -80,7 +81,7 @@ Exécuter dans cet ordre exact :
 
 | # | Action | Fichiers à modifier | Effort |
 |---|---|---|---|
-| 01 | Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide | `index.html` | 4h |
+| ~~01~~ | ~~Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | 02 | Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials` | repo | 30 min |
 | 03 | Effacer `ic_pending_profile` après signup réussi | `index.html` ou `ui.js` | 30 min |
 | 04 | Onglet Appels dans la nav principale + badge manqués | `index.html`, `calls.js`, `messages.js` | 1j |
@@ -345,6 +346,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | Date | Auteur | Résumé |
 |---|---|---|
 | 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
+| 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
 
 ---
 
