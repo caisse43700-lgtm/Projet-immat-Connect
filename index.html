@@ -322,6 +322,11 @@
     <span>Messages</span>
     <span id="msgNavBadge" class="nav-badge" style="display:none">0</span>
   </button>
+  <button class="nav-btn" id="navAppels" onclick="App.navAppels()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6.29 6.29l1.14-.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    <span>Appels</span>
+    <span id="callNavBadge" class="nav-badge" style="display:none">0</span>
+  </button>
   <button class="nav-btn" id="navActivite" onclick="App.navActivite()">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     <span>Activité</span>
@@ -1077,13 +1082,26 @@ App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.cla
 App.navMessages=function(){
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
+  document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.add('on');
   this.panel('messages');
+  this.switchContactTab('messages');
   try{window.ImmatMessages?.refresh?.();}catch(e){}
+};
+App.navAppels=function(){
+  document.getElementById('navSignaler')?.classList.remove('on');
+  document.getElementById('navMessages')?.classList.remove('on');
+  document.getElementById('navActivite')?.classList.remove('on');
+  document.getElementById('navAppels')?.classList.add('on');
+  if(typeof window.S!=='undefined') window.S._unseenMissedCalls=0;
+  this.panel('messages');
+  this.switchContactTab('appels');
+  try{this.updateActBadge?.()}catch(e){}
 };
 App.navSignaler=function(){
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
+  document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navSignaler')?.classList.add('on');
   this.panel('altet');
   this.sigBack();
@@ -1091,6 +1109,7 @@ App.navSignaler=function(){
 App.navActivite=function(){
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
+  document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.add('on');
   this.panel('activite');
   this.renderActivityMain?.();
@@ -1112,6 +1131,7 @@ App.navMap=function(){
   this.closeSheet();
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
+  document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
   this.initMap?.();
   this.syncAlertMarkers?.();
@@ -1574,6 +1594,9 @@ App.updateActBadge=function(){
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     const msgBadge=$('msgNavBadge');
     if(msgBadge){msgBadge.textContent=unreadMsgs>99?'99+':String(unreadMsgs);msgBadge.style.display=unreadMsgs>0?'flex':'none';}
+    const callBadge=$('callNavBadge');
+    const missedCount=(typeof S!=='undefined'&&S._unseenMissedCalls)||0;
+    if(callBadge){callBadge.textContent=missedCount>99?'99+':String(missedCount);callBadge.style.display=missedCount>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
   }catch(e){}
 };
@@ -2477,6 +2500,15 @@ window._forceSwUpdate = async function() {
   } catch(e) {}
   window.location.reload();
 };
+// Abonnement CALL_MISSED → badge onglet Appels
+(function _subCallMissed(){
+  if(window.ImmatBus&&typeof window.ImmatBus.on==='function'){
+    window.ImmatBus.on('CALL_MISSED',function(){
+      if(typeof window.S!=='undefined') window.S._unseenMissedCalls=(window.S._unseenMissedCalls||0)+1;
+      try{window.App?.updateActBadge?.()}catch(e){}
+    });
+  }else{setTimeout(_subCallMissed,400);}
+})();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
   var CURRENT = 'immatconnect-pro-v21';
