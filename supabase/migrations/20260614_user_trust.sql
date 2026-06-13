@@ -70,13 +70,19 @@ BEGIN
   WHERE reporter_id = v_user_id AND status = 'resolved';
 
   -- Signalements contestés — colonne is_disputed facultative (peut ne pas exister encore)
-  BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'reports'
+      AND column_name  = 'is_disputed'
+  ) THEN
     SELECT COUNT(*)::integer INTO v_disputed
     FROM reports
     WHERE reporter_id = v_user_id AND is_disputed = true;
-  EXCEPTION WHEN undefined_column THEN
+  ELSE
     v_disputed := 0;
-  END;
+    RAISE WARNING '[trust] colonne is_disputed absente sur reports — v_disputed forcé à 0';
+  END IF;
 
   -- Notes conducteur (driver_ratings_summary)
   SELECT avg_score, total
