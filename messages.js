@@ -685,6 +685,7 @@ function _renderTimeline(body, messages, callEvents){
       <div class="ic-bubble-text">${esc(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
+        ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}
         <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
       </div>
     </div>`;
