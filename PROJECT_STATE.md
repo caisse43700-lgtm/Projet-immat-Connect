@@ -216,7 +216,18 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 | ~~S3-8~~ | Accessibilité P1 (role=dialog, aria-live, aria-label) | `baf7914` | ~~P2~~ |
 | S3-6 | Supprimer Edge Function `get-turn-credentials` du dashboard Supabase | — | P0 (manuel) |
 
-**Sprint 4 — En cours (2026-06-13)**
+**Sprint 5 — En cours (2026-06-13)**
+
+| # | Action | Commit | Priorité |
+|---|---|---|---|
+| ~~S5-PWA~~ | manifest.json shortcuts + apple-touch-icon + description | — | ~~P2~~ |
+| ~~S5-BADGE~~ | navigator.setAppBadge() dans updateActBadge (badge icône PWA) | — | ~~P2~~ |
+| ~~S5-SHORTCUTS~~ | Gestion URL `?action=signal\|map\|calls` au démarrage | — | ~~P2~~ |
+| ~~S5-COPY~~ | Copier plaque presse-papier (bouton 📋 dans vehicle context menu) | — | ~~P2~~ |
+| ~~S5-RATELIMIT-MSG~~ | Rate limit messages 5/min (ic_msg_times localStorage) | — | ~~P2~~ |
+| ~~S5-BUILD~~ | APP_BUILD const + affichage footer paramètres | — | ~~P2~~ |
+
+**Sprint 4 — ✅ TERMINÉ (2026-06-13)**
 
 | # | Action | Commit | Priorité |
 |---|---|---|---|
@@ -409,6 +420,8 @@ core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17+ (relTime, aria-label ic-delete-msg)
 service-worker.js     : immatconnect-pro-v24
 app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
+APP_BUILD             : 2026-06-13-S5
+manifest.json         : shortcuts (Signaler/Carte/Appels), categories, apple-touch-icon
 ```
 
 ---
@@ -494,6 +507,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 4 démarré — S4-MAP filtre alertes carte (Tous/Route/Aide/Véhicule) |
 | 2026-06-13 | IA session | S4-LEGAL terminé — pages légales tabulées (CGU + confidentialité RGPD) |
 | 2026-06-13 | IA session | S4-CLUSTER terminé — Leaflet.markercluster 1.5.3, cluster bleu cyan, SW v24 |
+| 2026-06-13 | IA session | Sprint 5 démarré — S5-PWA manifest shortcuts, S5-BADGE navigator.setAppBadge, S5-COPY clipboard, S5-RATELIMIT-MSG, S5-BUILD |
 
 ---
 

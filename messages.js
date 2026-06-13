@@ -832,6 +832,19 @@ async function sendToPlate(plate,text,opts){
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
 
+  // Rate limit : max 5 messages par minute (client-side guard)
+  try {
+    const _now = Date.now(), _win = 60000, _max = 5;
+    let _times = JSON.parse(localStorage.getItem('ic_msg_times') || '[]');
+    _times = _times.filter(t => _now - t < _win);
+    if (_times.length >= _max) {
+      toast('⏳ Trop de messages. Patientez une minute avant d\'en envoyer d\'autres.', 'bad');
+      return false;
+    }
+    _times.push(_now);
+    localStorage.setItem('ic_msg_times', JSON.stringify(_times));
+  } catch(e) {}
+
   // Bloc bidirectionnel : A ne peut pas contacter une plaque qu'il a bloquée (INV-COM-024)
   const outgoingBlock = getBlockLevel(plate);
   if(outgoingBlock === BLOCK_LEVELS.MESSAGES || outgoingBlock === BLOCK_LEVELS.ALL){
