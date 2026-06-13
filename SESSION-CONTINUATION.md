@@ -480,27 +480,39 @@ appelait `showOutgoing(e.payload)` pour les 3 émissions. La 3ème écrasait :
 | CALL_MISSED après appel accepté | Double popup → deuxième timer échappait à clearTimeout | dedup v17 |
 | DB cancel en dernier | cancelCallRequest écrivait en DB après broadcasts | DB-first v15 |
 
-## TÂCHES SUIVANTES
+## ÉTAT — 2026-06-13 — AUDIT D'EXÉCUTION COMPLET
 
-### P0 — ✅ TOUT RÉSOLU (2026-06-12)
+### Fichier créé : docs/IMPLEMENTATION_GAP_ANALYSIS.md
 
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
+Audit d'exécution complet — confronte le code réel au MASTER_PLAN et à l'AUDIT_V2.
 
-### P2 — Haut-parleur / écouteur
+Contenu :
+- Matrice 80+ fonctionnalités (Existe / Partielle / Absente / Priorité / Effort / Dépendances)
+- Audit écran par écran (10 écrans)
+- Audit base de données (tables, colonnes, index, RLS manquants)
+- Audit production (blockers App Store / Play Store)
+- Incohérences code vs MASTER_PLAN vs AUDIT_V2
+- Éléments à supprimer (call-webrtc.js, get-turn-credentials, Inbox/Outbox séparés…)
+- Roadmap Sprint 1→4
+- Top 20 actions dans l'ordre exact
 
-- Par défaut : route écouteur (privé)
-- Bouton Haut-parleur ON/OFF séparé du Muet
-- Si la route audio n'est pas contrôlable → afficher "Sortie audio contrôlée par le téléphone"
-- Exposer dans diagnostics : `speakerSupported`, `speakerEnabled`, `audioRouteKnown`, `audioRoute`, `lastSpeakerError`, `muteState`
+### PROCHAINE ACTION — SPRINT 1
 
-### P3 — Dashboard / Diagnostics
+**Action #01 (4h) :** Ajouter bouton urgence 15/17/18 dans sigStep2Vehicle et sigStep2Aide  
+**Action #02 (30 min) :** Supprimer call-webrtc.js + get-turn-credentials  
+**Action #03 (30 min) :** Effacer ic_pending_profile après signup réussi  
+**Action #04 (1j) :** Onglet Appels dans nav principale + badge manqués  
+**Action #05 (2j) :** Push notifications SW Level 2 (VAPID)  
 
-Ajouter un bloc "Call State Integrity" :
+### RÉSUMÉ ÉTAT DU PROJET (2026-06-13)
+
 ```
-requestId actif, CallScreen mode/plate/requestId, pendingCallId,
-signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
-missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
-derniers événements CALL_*
+Fonctionnel : ~35% du plan
+Bugs P0 appels : ✅ tous résolus (2026-06-12)
+Blockers lancement : 5 (push, urgence, RGPD suppression, ic_pending_profile, onglet appels)
+Sprint 1 cible : 2 semaines
+Sprint 2 cible : +2 semaines
+Sprint 3 cible : +3 semaines
 ```
 
 ---
