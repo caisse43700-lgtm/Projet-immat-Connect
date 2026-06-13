@@ -42,7 +42,7 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 3 terminé + Sprint 4 avancé**  
+**Mission : S6-TRUST — Trust Engine terminé**  
 **Date :** 2026-06-13
 
 **S4-CLUSTER** — Clustering Leaflet.markercluster pour les véhicules en zone dense
@@ -159,8 +159,7 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-**Sprint 3 — Stabilité, polish et features manquantes**  
-À démarrer (Sprint 2 terminé le 2026-06-13).
+Aucune. Sprint 6 (S6-RATINGS + S6-RATINGS-TRIGGERS + S6-TRUST) terminé le 2026-06-13.
 
 ---
 
@@ -243,6 +242,8 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 | # | Action | Commit | Priorité |
 |---|---|---|---|
 | ~~S6-RATINGS~~ | Driver ratings — migration SQL + Edge Function submit-rating + modal UI | — | ~~P2~~ |
+| ~~S6-RATINGS-TRIGGERS~~ | Points d'entrée notation (menu contextuel véhicule + journal appels) | `4661879` | ~~P2~~ |
+| ~~S6-TRUST~~ | Trust Engine — vehicle_trust_scores SQL + refresh_vehicle_trust() + UI menu contextuel | — | ~~P2~~ |
 
 **Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
 → Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
@@ -518,6 +519,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 5 démarré — S5-PWA manifest shortcuts, S5-BADGE navigator.setAppBadge, S5-COPY clipboard, S5-RATELIMIT-MSG, S5-BUILD |
 | 2026-06-13 | IA session | Sprint 5 suite — S5-SHARE Web Share API alertes, S5-HEARTBEAT device_sessions 30s |
 | 2026-06-13 | IA session | S6-RATINGS — driver_ratings SQL + Edge Function submit-rating + modal UI 4 méthodes |
+| 2026-06-13 | IA session | S6-RATINGS-TRIGGERS — vehicleContextScore + rateBtn appels + _loadVehicleRating |
+| 2026-06-13 | IA session | S6-TRUST — vehicle_trust_scores table + refresh_vehicle_trust() SECURITY DEFINER + vehicleContextTrust UI + submit-rating déclenche refresh |
 
 ---
 

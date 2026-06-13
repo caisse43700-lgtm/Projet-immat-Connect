@@ -58,6 +58,7 @@ serve(async (req) => {
   }
 
   await supabase.rpc('refresh_ratings_summary').catch(() => {})
+  await supabase.rpc('refresh_vehicle_trust', { p_plate: rawPlate }).catch(() => {})
 
   return ok({ ok: true, id: inserted.id })
 })
