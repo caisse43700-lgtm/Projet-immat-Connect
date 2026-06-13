@@ -364,6 +364,32 @@
   </div>
   <div id="fcExtraActions" class="fc-extra-actions" style="display:none"></div>
 </div>
+<!-- ── ResolutionCenter — cycle de vie d'un signalement ──────────── -->
+<div id="resolutionCenterModal" class="call-modal-overlay" style="display:none" onclick="if(event.target===this)App.closeResolutionCenter()">
+  <div class="call-modal-sheet" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#a5b4fc;letter-spacing:.5px">📋 MON SIGNALEMENT</div>
+      <button onclick="App.closeResolutionCenter()" style="background:rgba(255,255,255,.08);border:none;color:#888;border-radius:8px;width:28px;height:28px;font-size:16px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="rcAlertIcon" style="font-size:32px;text-align:center;margin-bottom:6px">⚠️</div>
+    <div id="rcAlertTitle" style="font-size:15px;font-weight:700;color:#eef6ff;text-align:center;margin-bottom:4px"></div>
+    <div id="rcAlertDesc" style="font-size:12px;color:#888;text-align:center;margin-bottom:12px"></div>
+    <div id="rcStatus" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;margin-bottom:14px">
+      <div style="font-size:11px;color:#a5b4fc;margin-bottom:6px;font-weight:700">STATUT</div>
+      <div id="rcStatusRows" style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#e2e8f0"></div>
+    </div>
+    <div id="rcTargetRow" style="display:none;margin-bottom:12px;text-align:center">
+      <span style="font-size:11px;color:#888">Signalé au conducteur : </span>
+      <b id="rcTargetPlate" style="color:#90caf9;font-size:13px;letter-spacing:.5px"></b>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button id="rcBtnResolved" onclick="App.rcConfirm('resolved')" style="width:100%;background:#063a2b;border:1.5px solid #6ee7b7;color:#6ee7b7;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">✅ Marquer résolu</button>
+      <button id="rcBtnMsg" onclick="App.rcOpenMessages()" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:#e2e8f0;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:none">💬 Voir les échanges</button>
+      <button id="rcBtnRetire" onclick="App.rcConfirm('gone')" style="width:100%;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">🗑 Retirer l'alerte</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Modaux système d'appels Phase 1 ──────────────────────────── -->
 <!-- Modal : Comment souhaitez-vous contacter ce conducteur ? -->
 <div id="callContactModal" class="call-modal-overlay" onclick="if(event.target===this)CallManager.closeContactModal()">
@@ -1529,7 +1555,7 @@ App._actModCard=function(item,cat){
   const avCls=a.group==='route'?'act-av-route':a.group==='assist'?'act-av-aide':'act-av-vehicle';
   let actions='';
   if(isOwn&&a.group==='assist')actions=`${a.status==='helper_coming'&&a._helperPlate?`<button class="act-mod-btn-ok" onclick="App.actQuickReply('${e(a._helperPlate||'')}','🙏 Merci pour votre aide !','help_request','${e(a.id)}')">🙏 Merci</button>`:''}<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','resolved')">✓ Résolu</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
-  else if(isOwn)actions=`<button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
+  else if(isOwn)actions=`<button class="act-mod-btn-ok" onclick="App.openResolutionCenter('${e(a.id)}')">📋 Résolution</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Retirer</button>`;
   else if(a.group==='vehicle'||a.type==='vehicule'){const _vp=e(a.plate||'');actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je m\\'arrête.','vehicle_report','${e(a.id)}')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Je vérifie.','vehicle_report','${e(a.id)}')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${_vp}','Merci.','vehicle_report','${e(a.id)}')">Merci</button>${_vp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_vp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_vp}','')">📞 Appel</button>`:''}`; }
   else if(a.group==='route'){const _rp=e(a.from_plate||a.sender_plate||a.plate||'');actions=(_rp?`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${_rp}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${_rp}','')">📞 Appel</button>`:'') + `<button class="act-mod-btn-ok" onclick="App.actConfirmAlert('${e(a.id)}','present')">Toujours là</button><button class="act-mod-btn-del" onclick="App.actConfirmAlert('${e(a.id)}','gone')">Disparu</button>`;}
   else if(a.group==='assist')actions=`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(plate)}','J\\'arrive, je viens vous aider.','help_request','${e(a.id)}')">✋ J'arrive</button><button class="act-mod-btn-del" onclick="App.actQuickReply('${e(plate)}','Je ne peux pas aider cette fois.','help_request','${e(a.id)}')">Je ne peux pas</button><button class="act-mod-btn-reply" onclick="App.actHelpReply('${e(plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(plate)}','')">📞 Appel</button>`;
@@ -1574,6 +1600,59 @@ App.openEditProfile=function(){
   hint('hProPlate','','Immatriculation définitive — non modifiable (INV-006).');
   this.show('sp');
 };
+// ── ResolutionCenter
+App._rcAlertId='';
+App.openResolutionCenter=function(alertId){
+  const a=(S.alerts||[]).find(x=>x.id===alertId);
+  if(!a)return;
+  this._rcAlertId=alertId;
+  const meta=(typeof cat==='function')?cat(a.type):{icon:'⚠️',label:a.type||'Signalement'};
+  const icon=a.group==='vehicle'?'🚗':a.group==='assist'?'🆘':meta.icon||'⚠️';
+  if($('rcAlertIcon'))$('rcAlertIcon').textContent=icon;
+  if($('rcAlertTitle'))$('rcAlertTitle').textContent=meta.label||a.type||'Signalement';
+  if($('rcAlertDesc'))$('rcAlertDesc').textContent=a.reason||a.label||'';
+  // Statut
+  const rows=[];
+  const sent=a.at?new Date(a.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'?';
+  rows.push('<div>📤 Envoyé à <b>'+sent+'</b></div>');
+  if(a.status==='seen'||a.status==='present')rows.push('<div>👁 Vu par le destinataire</div>');
+  if(a.status==='helper_coming'&&a._helperPlate)rows.push('<div>✋ <b>'+esc(a._helperPlate)+'</b> vient aider</div>');
+  if(a.status==='resolved')rows.push('<div style="color:#6ee7b7">✅ Résolu</div>');
+  if($('rcStatusRows'))$('rcStatusRows').innerHTML=rows.join('');
+  // Plaque cible (véhicule)
+  const targetPlate=a.target_plate||a.plate||'';
+  const isVehicleReport=a.group==='vehicle'&&targetPlate&&targetPlate!=='CONDUCTEURS'&&targetPlate!=='ROUTE';
+  if($('rcTargetRow'))$('rcTargetRow').style.display=isVehicleReport?'block':'none';
+  if($('rcTargetPlate'))$('rcTargetPlate').textContent=fPlate(targetPlate)||targetPlate;
+  // Bouton messages — visible si on a une plaque cible ou sender
+  const msgPlate=targetPlate||a.sender_plate||a.from_plate||'';
+  if($('rcBtnMsg'))$('rcBtnMsg').style.display=(msgPlate&&msgPlate!=='CONDUCTEURS'&&msgPlate!=='ROUTE'&&msgPlate!=='ASSISTANCE')?'block':'none';
+  // Bouton Résolu — masqué si déjà résolu
+  if($('rcBtnResolved'))$('rcBtnResolved').style.display=a.status==='resolved'?'none':'block';
+  const modal=$('resolutionCenterModal');
+  if(modal){modal.style.display='flex';modal.style.alignItems='center';modal.style.justifyContent='center';}
+};
+App.closeResolutionCenter=function(){
+  const modal=$('resolutionCenterModal');
+  if(modal)modal.style.display='none';
+  this._rcAlertId='';
+};
+App.rcConfirm=function(status){
+  if(this._rcAlertId)this.actConfirmAlert(this._rcAlertId,status);
+  this.closeResolutionCenter();
+  this.renderCategoryFeed?.(S._actCat||'all',S._actCatTab||'recus');
+};
+App.rcOpenMessages=function(){
+  const a=(S.alerts||[]).find(x=>x.id===this._rcAlertId);
+  const plate=a?.target_plate||a?.plate||a?.sender_plate||a?.from_plate||'';
+  if(plate&&plate!=='CONDUCTEURS'&&plate!=='ROUTE'&&plate!=='ASSISTANCE'){
+    S.selPlate=nPlate(plate);S.conv=S.selPlate;
+    this.closeResolutionCenter();
+    this.panel('messages');
+    try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.refresh?.();}catch(e){}
+  }
+};
+
 App.actConfirmAlert=function(id,status){
   const a=S.alerts.find(x=>x.id===id);
   if(a){
