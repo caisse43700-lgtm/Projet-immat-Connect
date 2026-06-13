@@ -11,8 +11,11 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=6">
+  <link rel="stylesheet" href="app.css?v=9">
   <link rel="stylesheet" href="messages.css?v=4">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -836,7 +839,7 @@ runImmunityCheck(){
     <div style="font-size:11px">${rows}</div>`;
 },
 closeGardienDashboard(){const el=$('gardienDashboard');if(el)el.style.display='none';},
-initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',e=>{this.hideVehicleContextMenu();if($('fabSignalHere'))$('fabSignalHere').style.display='none';});S.map.on('contextmenu',e=>{e.originalEvent?.preventDefault?.();this.showSignalHere(e);});this.initSheetDrag()},
+initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);if(window.L.markerClusterGroup){S.clusterGroup=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:60,spiderfyOnMaxZoom:true,iconCreateFunction:c=>{const n=c.getChildCount();return L.divIcon({html:'<div class="cluster-icon"><span>'+n+'</span></div>',className:'',iconSize:[40,40]});}});S.clusterGroup.on('clusterclick',e=>{e.layer.zoomToBounds({padding:[20,20]});});S.clusterGroup.addTo(S.map);}S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',e=>{this.hideVehicleContextMenu();if($('fabSignalHere'))$('fabSignalHere').style.display='none';});S.map.on('contextmenu',e=>{e.originalEvent?.preventDefault?.();this.showSignalHere(e);});this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
 toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleVoiceGender(){const g=get('ic_voice_gender','female')==='female'?'male':'female';set('ic_voice_gender',g);const btn=$('voiceGenderBtn');if(btn)btn.textContent=g==='male'?'Homme ♂':'Femme ♀';speak(g==='male'?'Voix masculine activée.':'Voix féminine activée.',true);},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},toggleApproxGeo(on){set('ic_approx_geo',on?'1':'0');toast(on?'Position approximée activée (±200m).':'Position exacte rétablie.','ok');},saveNotifPref(key,val){try{const p=JSON.parse(localStorage.getItem('ic_notif_prefs')||'{}');p[key]=!!val;localStorage.setItem('ic_notif_prefs',JSON.stringify(p));}catch(e){}},requestPermissions(){try{if('Notification'in window&&Notification.permission==='granted')this.subscribePush?.();}catch(e){}this.registerServiceWorker()},
 async requestPushPermission(){try{if(!('Notification'in window)||!('PushManager'in window))return false;let p=Notification.permission;if(p==='default')p=await Notification.requestPermission();if(p==='granted'){await this.subscribePush?.();return true;}return false;}catch(e){console.warn('[push] requestPushPermission',e);return false;}},
@@ -882,7 +885,8 @@ async loadOthers(){
   // Nettoyage propre des marqueurs distants avant rechargement.
   try{S.map.closePopup?.()}catch(e){}
   this.hideVehicleContextMenu?.();
-  (S.otherMkrs||[]).forEach(m=>{try{S.map.removeLayer(m)}catch(e){}});
+  if(S.clusterGroup){try{S.clusterGroup.clearLayers()}catch(e){}}
+  else{(S.otherMkrs||[]).forEach(m=>{try{S.map.removeLayer(m)}catch(e){}});}
   S.otherMkrs=[];
   S.nearby=[];
 
@@ -950,7 +954,7 @@ async loadOthers(){
       icon:icon(p.vehicle_color||'other',false),
       zIndexOffset:2400,
       riseOnHover:true
-    }).addTo(S.map);
+    }).addTo(S.clusterGroup||S.map);
 
     mk.on('click',()=>{S.contextVehicle={plate:pl,lat,lng,marker:mk};S.selPlate=pl;this.showVehicleContextMenu(S.contextVehicle)});
     S.otherMkrs.push(mk);

@@ -42,8 +42,19 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 3 terminé + Sprint 4 démarré**  
+**Mission : Sprint 3 terminé + Sprint 4 avancé**  
 **Date :** 2026-06-13
+
+**S4-CLUSTER** — Clustering Leaflet.markercluster pour les véhicules en zone dense
+- CDN leaflet.markercluster 1.5.3 (CSS + JS) ajouté dans index.html
+- `S.clusterGroup = L.markerClusterGroup({maxClusterRadius:60, showCoverageOnHover:false})`
+- Icône cluster custom : disque bleu cyan avec count
+- `loadOthers()` : nettoyage via `clusterGroup.clearLayers()` (fallback removeLayer si pas de plugin)
+- Marqueurs véhicules ajoutés dans `clusterGroup` au lieu de directement dans map
+- app.css v9 : `.cluster-icon` + `span` — style cohérent avec la charte graphique
+- SW v24 : markercluster CDN ajouté dans CDN_CACHE
+
+**S4-LEGAL** — Pages légales tabulées (commit `9b181ad`)
 
 **S4-MAP** — Filtre type d'alerte sur la carte (commit `817ae11`)
 - Barre de filtres flottante (Tous / Route / Aide / Véhicule)
@@ -210,9 +221,9 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 | # | Action | Commit | Priorité |
 |---|---|---|---|
 | ~~S4-MAP~~ | Filtre type d'alerte sur la carte (Route/Aide/Véhicule) | `817ae11` | ~~P2~~ |
-| S4-CLUSTER | Clustering marqueurs Leaflet (zones denses) | — | P2 |
-| S4-SPEAKER | Haut-parleur Agora (toggleSpeaker) | — | P2 |
-| S4-LEGAL | Pages légales complètes (CGU, Politique confidentialité) | — | P2 |
+| ~~S4-LEGAL~~ | Pages légales tabulées (CGU + Politique confidentialité RGPD) | `9b181ad` | ~~P2~~ |
+| ~~S4-CLUSTER~~ | Clustering marqueurs Leaflet (zones denses, Leaflet.markercluster 1.5.3) | — | ~~P2~~ |
+| S4-SPEAKER | Haut-parleur Agora (toggleSpeaker) — déprioritisé iOS limitation | — | P3 |
 
 **Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
 → Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
@@ -396,8 +407,8 @@ core/agora-call-engine.js : v5
 core/audio-manager.js : v7
 core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17+ (relTime, aria-label ic-delete-msg)
-service-worker.js     : immatconnect-pro-v23
-app.css               : v8  (map-alert-filter-bar + map-filter-pill)
+service-worker.js     : immatconnect-pro-v24
+app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
 ```
 
 ---
@@ -481,6 +492,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 2 TERMINÉ — S2-1 flux 3 clics, S2-2 FloatingCard étendue, S2-3 ResolutionCenter, S2-4 migration DB, S2-6 user_blocks, S2-7 device_id |
 | 2026-06-13 | IA session | Sprint 3 TERMINÉ — S3-1/2/3 (précédent), S3-4+S3-7+S3-9 (relTime+cooldown+fuzzyPos), S3-8 (a11y), S3-10 (notif prefs) |
 | 2026-06-13 | IA session | Sprint 4 démarré — S4-MAP filtre alertes carte (Tous/Route/Aide/Véhicule) |
+| 2026-06-13 | IA session | S4-LEGAL terminé — pages légales tabulées (CGU + confidentialité RGPD) |
+| 2026-06-13 | IA session | S4-CLUSTER terminé — Leaflet.markercluster 1.5.3, cluster bleu cyan, SW v24 |
 
 ---
 

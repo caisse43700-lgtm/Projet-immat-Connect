@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §20 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v23';
+const CACHE_NAME  = 'immatconnect-pro-v24';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -38,6 +38,9 @@ const CDN_CACHE = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
 ];
 
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com', 'download.agora.io'];
