@@ -176,6 +176,8 @@
   function showOutgoing(data) {
     var plate = (data && (data.to || data.plate)) || '--';
     var rid   = (data && data.requestId) || null;
+    // Dedup — CALL_INITIATED peut être émis 2x (ImmatBus + ImmatOrganism)
+    if (_state.mode === 'outgoing' && rid && _state.requestId === rid) return;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
     try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
     _render('outgoing', plate, 'Demande de contact envoyée…',
@@ -186,6 +188,8 @@
   function showIncoming(data) {
     var plate = (data && data.from) || '--';
     var rid   = (data && data.requestId) || null;
+    // Dedup — CALL_RECEIVED peut être émis 2x (ImmatBus + ImmatOrganism)
+    if (_state.mode === 'incoming' && rid && _state.requestId === rid) return;
     _state = { mode: 'incoming', plate: plate, requestId: rid };
     try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({ context: 'incoming', plate: plate }); } catch(e) {}
     _render('incoming', plate, 'Demande de contact entrante',
@@ -212,6 +216,11 @@
   function showAccepted(data) {
     var rid   = (data && data.requestId) || null;
     if (rid && _terminalRequestIds.has(rid)) return;
+    // Dedup — CALL_ACCEPTED peut être émis 2x (ImmatBus + ImmatOrganism)
+    if (_state.mode === 'accepted' && rid && _state.requestId === rid) return;
+    // Fallback sur la plaque déjà connue (_state.plate de showOutgoing/showIncoming)
+    // car Supabase postgres_changes UPDATE n'inclut pas les colonnes non modifiées
+    // si REPLICA IDENTITY FULL n'est pas activé (receiver_plate absent du payload)
     var plate = (data && (data['with'] || data.plate)) || (_state.plate !== '--' && _state.plate) || '--';
     _state = { mode: 'accepted', plate: plate, requestId: rid };
     _render('accepted', plate, '📞 Appel en cours',
@@ -245,12 +254,15 @@
   function _subscribe() {
     var bus = w.ImmatBus;
     if (!bus || typeof bus.on !== 'function') return;
-    bus.on('CALL_INITIATED', function (e) { showOutgoing(e.payload); });
-    bus.on('CALL_RECEIVED',  function (e) { showIncoming(e.payload); });
-    bus.on('CALL_ACCEPTED',  function (e) { showAccepted(e.payload); });
+    // Guard requestId : InteractionEngine ré-émet CALL_INITIATED/RECEIVED/ACCEPTED/MISSED
+    // avec un payload différent sans requestId au niveau racine — ignorer ces re-émissions
+    // pour ne pas écraser _state.requestId avec null (causerait cancel/hangup silencieux)
+    bus.on('CALL_INITIATED', function (e) { if (e && e.payload && e.payload.requestId) showOutgoing(e.payload); });
+    bus.on('CALL_RECEIVED',  function (e) { if (e && e.payload && e.payload.requestId) showIncoming(e.payload); });
+    bus.on('CALL_ACCEPTED',  function (e) { if (e && e.payload && e.payload.requestId) showAccepted(e.payload); });
     bus.on('CALL_REFUSED',   function (e) { _addTerminal(e); hide(); });
     bus.on('CALL_CANCELLED', function (e) { _addTerminal(e); hide(); });
-    bus.on('CALL_MISSED',    function (e) { _addTerminal(e); showMissed(e.payload); });
+    bus.on('CALL_MISSED',    function (e) { _addTerminal(e); if (e && e.payload && e.payload.requestId) showMissed(e.payload); });
     bus.on('CALL_ENDED',     function (e) { _addTerminal(e); hide(); });
   }
 
@@ -272,9 +284,9 @@
     _hangupFromMini: _hangupFromMini,
   };
 
-  CallScreen.version = 'v7';
+  CallScreen.version = 'v8';
   w.CallScreen = CallScreen;
-  console.log('[CallScreen] v7 chargé — _terminalRequestIds + fallback plate');
+  console.log('[CallScreen] v8 chargé — guard requestId InteractionEngine + dedup show*');
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _subscribe);

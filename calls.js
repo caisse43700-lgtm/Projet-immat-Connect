@@ -22,6 +22,7 @@ const CallManager = (function () {
   let _pendingCallPlate = null;  // plaque mémorisée côté appelant (fallback si DB null)
   let _incomingCallPlate = null; // plaque de l'appelant mémorisée à la réception (fallback acceptCall)
   let _busSignalBound = false;   // guard — subscriptions CALL_ENDED/CALL_MISSED une seule fois
+  let _reconnectTimer = null;    // debounce reconnexion Realtime — évite double abonnement
 
   function _emitCallEvent(eventName, payload) {
     const p = payload || {};
@@ -343,35 +344,49 @@ const CallManager = (function () {
   }
 
   async function cancelCallRequest(requestId) {
-    // Diffuser CANCEL — attendre que le canal soit SUBSCRIBED avant d'envoyer
-    const ch = _signalChannel;
-    const rid = requestId || _signalRequestId;
-    if (ch && rid) {
-      try {
-        // Attendre SUBSCRIBED max 3s pour éviter un send avant la connexion Supabase
-        if (_signalReady) await Promise.race([_signalReady, new Promise(r => setTimeout(r, 3000))]);
-        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
-        console.log('[CallManager] CANCEL diffusé :', rid);
-        // Retry après 900ms — B peut s'abonner après le premier envoi (race condition)
-        await new Promise(r => setTimeout(r, 900));
-        try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
-        console.log('[CallManager] CANCEL retry diffusé :', rid);
-      } catch(e) { console.warn('[CallManager] CANCEL send échoué :', e); }
-    }
-    _leaveCallSignal();
     _hideSentBanner();
-    if (!_sb || !requestId) return;
-    await _sb
-      .from('call_requests')
-      .update({ status: 'cancelled' })
-      .eq('id', requestId)
-      .eq('requester_id', _uid)
-      .eq('status', 'pending');
+    console.log('[CallManager] cancelCallRequest → rid:', requestId, 'hasCh:', !!_signalChannel, 'signalRid:', _signalRequestId);
+
+    // 1. DB EN PREMIER — source de vérité, déclenche postgres_changes pour B immédiatement
+    if (_sb && requestId) {
+      try {
+        var dbResult = await _sb.from('call_requests')
+          .update({ status: 'cancelled' })
+          .eq('id', requestId)
+          .eq('requester_id', _uid)
+          .eq('status', 'pending');
+        console.log('[CallManager] cancelCallRequest DB → err:', dbResult.error ? dbResult.error.message : 'none');
+      } catch(e) { console.warn('[CallManager] cancel DB error:', e); }
+    } else {
+      console.log('[CallManager] cancelCallRequest DB ignorée → sb:', !!_sb, 'rid:', requestId);
+    }
+
     _pendingCallId = null;
     _pendingCallPlate = null;
-    _missedTimers.delete(requestId); // nettoyage défensif — évite poll fantôme si appelant avait une entrée
+    _missedTimers.delete(requestId);
     _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
+
+    // 2. Broadcast CANCEL (best-effort, après DB — postgres_changes déjà déclenché)
+    const ch = _signalChannel;
+    const rid = requestId || _signalRequestId;
+    console.log('[CallManager] cancelCallRequest broadcast → ch:', !!ch, 'rid:', rid);
+    if (ch && rid) {
+      try {
+        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+        console.log('[CallManager] cancelCallRequest broadcast#1 envoyé');
+      } catch(e) { console.warn('[CallManager] broadcast#1 error:', e); }
+      // Retry 300ms après — couvre B qui vient juste de s'abonner au canal signal
+      await new Promise(r => setTimeout(r, 300));
+      try {
+        await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
+        console.log('[CallManager] cancelCallRequest broadcast#2 envoyé (retry 300ms)');
+      } catch(e) {}
+    } else {
+      console.log('[CallManager] cancelCallRequest : pas de canal signal — broadcast sauté');
+    }
+
+    _leaveCallSignal();
   }
 
   function subscribeIncomingCalls(uid) {
@@ -401,6 +416,7 @@ const CallManager = (function () {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
           // receiver_plate peut être null en DB — fallback sur la plaque mémorisée à l'envoi
           const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
+          console.log('[CallManager] postgres_changes ACCEPTED → r.receiver_plate:', r.receiver_plate, '_pendingCallPlate:', _pendingCallPlate, '→ final:', acceptedPlate);
           _emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
           _joinCallSignal(r.id);
         } else if (r.status === 'refused') {
@@ -436,7 +452,9 @@ const CallManager = (function () {
         _lastSubscribeStatus = status;
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[CallManager] realtime KO, reconnexion dans 5s', err);
-          setTimeout(() => subscribeIncomingCalls(uid), 5000);
+          // Debounce — un seul timer même si le callback CHANNEL_ERROR fire deux fois
+          if (_reconnectTimer) clearTimeout(_reconnectTimer);
+          _reconnectTimer = setTimeout(() => { _reconnectTimer = null; subscribeIncomingCalls(uid); }, 5000);
         }
       });
   }
@@ -488,6 +506,7 @@ const CallManager = (function () {
         var st = res && res.data && res.data.status;
         var err = res && res.error;
         if (err) console.warn('[CallManager] Poll DB error:', err);
+        console.log('[CallManager] poll tick #' + checks + ' → st:', st || 'null', '…' + String(requestId).slice(-8));
         if (st && ['cancelled','expired','refused','ended'].indexOf(st) !== -1) {
           clearInterval(pollId);
           var tid = _missedTimers.get(requestId);
@@ -517,7 +536,15 @@ const CallManager = (function () {
   }
 
   function _showIncomingPopup(req) {
+    // Dedup : postgres_changes INSERT peut se répéter après reconnexion Realtime,
+    // et _recoverIncomingPendingCalls peut tirer en parallèle → un seul affichage par requestId
+    if (_seenIncomingCallIds.has(req.id)) {
+      console.log('[CallManager] showIncomingPopup ignoré (doublon)', req.id);
+      return;
+    }
+    _seenIncomingCallIds.add(req.id);
     const plate = req.requester_plate || 'Conducteur';
+    console.log('[CallManager] showIncomingPopup → id:', req.id, 'plate:', plate, 'status:', req.status, 'expires_at:', req.expires_at);
     _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté

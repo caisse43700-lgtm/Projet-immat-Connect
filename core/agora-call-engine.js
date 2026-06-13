@@ -189,6 +189,22 @@
   }
 
   async function leaveCall(){
+    // Libérer les pré-tracks créés dans le geste utilisateur s'ils n'ont pas été consommés
+    // par joinCall() (cas : A annule avant que B accepte — micro iOS reste allumé sinon)
+    if (w.__preMicTrackPromise) {
+      var p = w.__preMicTrackPromise;
+      w.__preMicTrackPromise = null;
+      w.__preMicTrack = null;
+      p.then(function(t) { if (t) { try { t.stop(); t.close(); } catch(e2) {} } }).catch(function(){});
+    }
+    if (w.__preMicTrack) {
+      try { w.__preMicTrack.stop(); w.__preMicTrack.close(); } catch(e) {}
+      w.__preMicTrack = null;
+    }
+    if (w.__preMicStream) {
+      try { w.__preMicStream.getTracks().forEach(function(t) { t.stop(); }); } catch(e) {}
+      w.__preMicStream = null;
+    }
     if(_localTrack){
       try { _localTrack.stop(); _localTrack.close(); } catch(e) {}
       _localTrack = null;

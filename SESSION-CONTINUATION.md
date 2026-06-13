@@ -370,7 +370,7 @@ Fix final (call-screen.js v7) : fallback sur `_state.plate` (déjà renseigné p
 
 ---
 
-## ÉTAT — 2026-06-12 — FIX PROPAGATION ANNULATION (calls.js v14 index.html)
+## ÉTAT — 2026-06-12 — FIX PROPAGATION ANNULATION v14 (audit initial)
 
 ### Audit complet 4 bugs identifiés
 
@@ -379,47 +379,110 @@ Fix final (call-screen.js v7) : fallback sur `_state.plate` (déjà renseigné p
 | 1 | CERTAIN | `visibilitychange` appelle `_recoverIncomingPendingCalls` (query status=pending). Si A a annulé → status='cancelled' → null → overlay B reste ouvert | `_checkOngoingIncomingCall()` ajouté au handler visibilitychange |
 | 2 | PROBABLE | iOS Safari throttle `setInterval` en background → poll 1.5s ne tourne pas | Intervalle réduit à 1s + vérification immédiate avant premier tick |
 | 3 | POSSIBLE | Poll query `.eq('id', requestId)` sans `.eq('receiver_id', _uid)` → RLS peut retourner null silencieusement | `.eq('receiver_id', _uid)` ajouté à toutes les queries poll |
-| 4 | CERTAIN | CANCEL broadcast envoyé une seule fois. B peut s'abonner ~300-500ms après → broadcast perdu | Retry broadcast après 900ms dans `cancelCallRequest` |
+| 4 | CERTAIN | CANCEL broadcast envoyé une seule fois. B peut s'abonner ~300-500ms après → broadcast perdu | Retry broadcast après 300ms (deux envois) dans `cancelCallRequest` |
 
-### Fixes appliqués dans calls.js
+---
 
-#### Bug #4 — Retry CANCEL broadcast
-```js
-await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } });
-await new Promise(r => setTimeout(r, 900));
-try { await ch.send({ type: 'broadcast', event: 'CANCEL', payload: { requestId: rid } }); } catch(e2) {}
+## ÉTAT — 2026-06-12 — FIX ARCHITECTURAL cancelCallRequest (calls.js v15)
+
+### Cause racine du bug "annulation ne ferme pas B"
+
+L'ancienne implémentation de `cancelCallRequest` écrivait en DB **EN DERNIER** :
+
+```
+1. attend _signalReady (jusqu'à 3s)
+2. envoie broadcast CANCEL
+3. attend 900ms
+4. retry broadcast
+5. _leaveCallSignal()
+6. _hideSentBanner()
+7. DB update cancelled ← TROP TARD
 ```
 
-#### Bug #1 — `_checkOngoingIncomingCall()` au retour en foreground
-Nouvelle fonction : vérifie chaque requestId actif dans `_missedTimers` en DB.
-Si status terminal → ferme overlay + émet CALL_CANCELLED/CALL_MISSED.
-Appelée dans visibilitychange en plus de `_recoverIncomingPendingCalls`.
+Conséquence : `postgres_changes` de B (3ème mécanisme de détection) se déclenchait
+~1.1s après le tap d'annulation. Le poll 1s pouvait rater ce créneau.
 
-#### Bug #2+3 — `_startCancelPoll` amélioré
-- Intervalle 1500ms → 1000ms
-- Vérification immédiate avant premier tick (`_doPollCheck()` appelée 1x avant `setInterval`)
-- `.eq('receiver_id', _uid)` ajouté — RLS safe
-- Max checks 25 → 40 (couvre 40s de sonnerie max)
+### Fix architectural appliqué (v15)
+
+Nouvelle séquence dans `cancelCallRequest` :
+
+```
+1. DB update FIRST → postgres_changes déclenché immédiatement chez B
+2. _emitCallEvent CALL_CANCELLED (UI locale)
+3. broadcast CANCEL (best-effort, B est peut-être déjà notifié par postgres_changes)
+4. attente 300ms → retry broadcast (couvre B qui vient de s'abonner)
+5. _leaveCallSignal()
+```
+
+### Mécanismes de détection côté B (tous fonctionnels après v15)
+
+| Mécanisme | Latence après tap A | Statut |
+|---|---|---|
+| Broadcast CANCEL sur canal signal | 50-200ms | ✅ B abonné avant le cancel |
+| postgres_changes UPDATE receiver_id | 200-500ms | ✅ DB en premier → immédiat |
+| Poll DB 1s (`_startCancelPoll`) | 0-1000ms | ✅ vérif immédiate + 1s ticks |
+| visibilitychange + `_checkOngoingIncomingCall` | au retour foreground | ✅ background safety |
 
 ### Versions après fix
 
 ```text
-calls.js       : v=14 (index.html) — cancellation robuste
-call-screen.js : v=6  (index.html) — inchangé (v7 chargé)
+calls.js       : v=15 (index.html) — DB-first cancel, robustesse maximale
+call-screen.js : v=5  (index.html) — serveur v7 en cache (réseau-first)
 ```
 
-### PROCHAINE ACTION — TEST TERRAIN
+### PROCHAINE ACTION — TEST TERRAIN avec panneau diagnostic
+
+**Panneau 🔬 flottant en bas à droite de l'app** :
+- Tap 🔬 → panel sliding bas avec tous les événements CALL_* horodatés
+- Bouton "État" → snapshot CallManager.getRuntimeState()
+- Bouton "Copy" → copie tout dans le presse-papier pour partager
+- Lit console.log [CallManager] + bus CALL_* events
 
 Tester sur les deux iPhones (BZ-652-LL ↔ BE-521-MM) :
-1. A appelle B → overlay entrant s'affiche chez B ← déjà OK
-2. A annule → overlay chez B se ferme dans les 2s ← **À CONFIRMER**
-3. A annule alors que B est en background → au retour foreground overlay ferme ← **À CONFIRMER (bug #1)**
+1. A appelle B → ouvrir 🔬 sur chaque téléphone, voir logs showIncomingPopup + requestCall
+2. A annule → voir sur B : poll tick → st cancelled OU CANCEL broadcast reçu OU postgres_changes
+3. Si B ne ferme pas → copier les logs 🔬 de B et partager pour diagnostic
+
+**Logs clés à observer :**
+- Sur A (annulation) : `cancelCallRequest → hasCh: true/false` + `DB → err: none` + `broadcast#1 envoyé`
+- Sur B (réception annulation) : `poll tick #N → st: cancelled` OU `CANCEL broadcast reçu`
+- Si `hasCh: false` sur A → le canal signal n'est pas ouvert → le broadcast ne peut pas partir
+- Si `poll tick → st: null` → RLS bloque la requête ou le requestId est mauvais
 
 ---
 
+## ÉTAT — 2026-06-12 ✅ APPELS + ANNULATION + PLAQUE FONCTIONNELS
+
+```text
+Validé terrain : BZ-652-LL ↔ BE-521-MM — 2026-06-12 23:31 UTC
+- Annulation A → overlay B se ferme ✓
+- Plaque de l'appelé visible sur l'overlay sortant ✓
+- Appels vocaux bidirectionnels ✓
+```
+
+### Cause racine résolue — call-screen.js v8 (2026-06-12)
+
+InteractionEngine ré-émettait CALL_INITIATED / CALL_ACCEPTED / CALL_MISSED sur ImmatBus
+avec un payload différent (sans `requestId` au niveau racine). Le handler `bus.on('CALL_INITIATED')`
+appelait `showOutgoing(e.payload)` pour les 3 émissions. La 3ème écrasait :
+- `_state.requestId = null` → cancel et hangup silencieux (bouton Annuler/Raccrocher sans effet côté B)
+- `_state.plate = '--'` → plaque de l'appelé non affichée
+
+**Fix :** Guard `requestId` sur tous les handlers bus + dedup dans show* functions.
+
+### Bugs résolus dans cette session (2026-06-12)
+
+| Bug | Cause | Fix |
+|---|---|---|
+| A annule → B ne ferme pas | InteractionEngine écrase `_state.requestId=null` | call-screen.js v8 |
+| Plaque `--` sur overlay sortant | Même cause | call-screen.js v8 |
+| Double `showIncomingPopup` | realtime KO x2 → deux canaux | dedup + debounce v17 |
+| CALL_MISSED après appel accepté | Double popup → deuxième timer échappait à clearTimeout | dedup v17 |
+| DB cancel en dernier | cancelCallRequest écrivait en DB après broadcasts | DB-first v15 |
+
 ## TÂCHES SUIVANTES
 
-### P0 — Propagation annulation — FIX COMPLET DÉPLOYÉ (calls.js v14, 2026-06-12)
+### P0 — ✅ TOUT RÉSOLU (2026-06-12)
 
 ### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
 
