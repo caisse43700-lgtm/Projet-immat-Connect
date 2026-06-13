@@ -1,0 +1,352 @@
+# PROJECT_STATE — ImmatConnect Pro
+## Tableau de bord de continuité · Point de reprise unique
+
+> **Règle d'usage :** Ce fichier est le premier fichier à lire. Il ne remplace aucun document existant. Il donne le contexte minimal pour reprendre immédiatement sans relire les audits complets.  
+> Mettre ce fichier à jour à chaque fin de session de travail.
+
+---
+
+## 1. ÉTAT ACTUEL DU PROJET
+
+```
+Date de mise à jour    : 2026-06-13
+Avancement             : ~35% du plan fonctionnel implémenté
+Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
+Branche production     : main (GitHub Pages)
+Branche de travail     : claude/immatconnect-pro-app-dEKGR
+Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
+Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
+```
+
+### Ce qui fonctionne en production (validé terrain 2026-06-12)
+
+- Appels vocaux bidirectionnels via Agora RTC ✅
+- Annulation A → overlay B se ferme ✅
+- Plaque de l'appelé affichée sur l'overlay sortant ✅
+- Messages texte en temps réel (Supabase Realtime) ✅
+- Signalements Route / Véhicule / Aide ✅
+- Carte radar Leaflet ✅
+- Sonnerie téléphone (WAV généré en mémoire) ✅
+- Dashboard Gardien (8 voyants + Global Verification Center) ✅
+- Service Worker v21 (network-first, allSettled non-bloquant) ✅
+
+### Ce qui bloque le lancement public (P0)
+
+1. **Pas de push notifications** — app fermée = aucun appel reçu, aucune alerte
+2. **Bouton urgence 15/17/18 absent** — risque éthique (enfant/animal dans véhicule)
+3. **Onglet Appels absent de la nav principale** — valeur produit invisible
+4. **RGPD : pas de suppression de compte** — App Store refusé sans cette option
+5. **`ic_pending_profile` localStorage** — stocke email + téléphone en clair après signup
+
+---
+
+## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Audit d'exécution + plan de développement concret**  
+**Date :** 2026-06-13  
+**Commit :** `e799ac8`
+
+Fichier créé : `docs/IMPLEMENTATION_GAP_ANALYSIS.md`
+- Matrice 80+ fonctionnalités (Existe / Partielle / Absente)
+- Audit 10 écrans (conforme ou non conforme au MASTER_PLAN)
+- Audit DB (tables, colonnes, index, RLS manquants)
+- Audit production (5 blockers App Store / Play Store)
+- Incohérences code vs MASTER_PLAN vs AUDIT_V2
+- Roadmap Sprint 1 → 4 avec efforts et risques
+- Top 20 actions dans l'ordre exact
+
+**Avant cela (2026-06-13) :**
+- `docs/AUDIT_IMMATCONNECT_GLOBAL_V2.md` créé (commit `99e19e1`) — 1889 lignes, 25 sections
+- `docs/AUDIT_IMMATCONNECT_GLOBAL_V1.md` créé (commit `12df767`) — 1173 lignes, 25 sections
+
+**Avant cela (2026-06-12) :**
+- Tous les bugs P0 appels vocaux résolus (calls.js v17, call-screen.js v8)
+- Validation terrain BZ-652-LL ↔ BE-521-MM
+
+---
+
+## 3. MISSION EN COURS
+
+**Aucune mission de code en cours.**  
+La prochaine mission est documentée en section 4.
+
+---
+
+## 4. PROCHAINE MISSION RECOMMANDÉE
+
+**Sprint 1 — Rendre le lancement public possible (2 semaines)**
+
+Exécuter dans cet ordre exact :
+
+| # | Action | Fichiers à modifier | Effort |
+|---|---|---|---|
+| 01 | Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide | `index.html` | 4h |
+| 02 | Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials` | repo | 30 min |
+| 03 | Effacer `ic_pending_profile` après signup réussi | `index.html` ou `ui.js` | 30 min |
+| 04 | Onglet Appels dans la nav principale + badge manqués | `index.html`, `calls.js`, `messages.js` | 1j |
+| 05 | Push notifications SW Level 2 (VAPID) | `service-worker.js`, Edge Function à créer | 2j |
+| 06 | Demande permission push à l'onboarding | `index.html`, `ui.js` | 4h |
+| 07 | RGPD — suppression de compte (Edge Function `delete-account`) | `supabase/functions/` | 2j |
+| 08 | RGPD — export de données (Edge Function `export-user-data`) | `supabase/functions/` | 1j |
+
+**Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
+→ Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
+
+**Top 20 actions numérotées dans l'ordre :**  
+→ Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "8. TOP 20 ACTIONS"
+
+---
+
+## 5. DOCUMENTS DE RÉFÉRENCE
+
+| Document | Rôle | Quand le lire |
+|---|---|---|
+| **`PROJECT_STATE.md`** (ce fichier) | Point de reprise unique | En premier, toujours |
+| **`SESSION-CONTINUATION.md`** | Journal technique détaillé, bugs résolus, état Supabase, invariants | Pour comprendre l'historique des corrections |
+| **`docs/IMPLEMENTATION_GAP_ANALYSIS.md`** | Matrice fonctionnalités + roadmap + top 20 actions | Pour savoir quoi développer ensuite et dans quel ordre |
+| **`docs/AUDIT_IMMATCONNECT_GLOBAL_V2.md`** | Référence fonctionnelle et produit complète (25 sections) | Pour comprendre ce que chaque fonctionnalité doit faire |
+| **`docs/AUDIT_IMMATCONNECT_GLOBAL_V1.md`** | Première analyse forces/faiblesses/risques | Contexte historique |
+| **`docs/IMMATCONNECT_INTERACTION_ARCHITECTURE_MASTER_PLAN.md`** | Architecture conceptuelle (31 lignes) | Structure conceptuelle de référence (remplacé sur le fond par AUDIT_V2) |
+| **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
+
+**Hiérarchie de vérité :**
+```
+PROJECT_STATE.md (état du moment)
+  └── SESSION-CONTINUATION.md (historique technique)
+        └── IMPLEMENTATION_GAP_ANALYSIS.md (plan d'exécution)
+              └── AUDIT_GLOBAL_V2.md (référence fonctionnelle)
+                    └── MASTER_PLAN.md (architecture conceptuelle)
+```
+
+---
+
+## 6. DÉCISIONS VALIDÉES (ne pas remettre en question)
+
+Ces décisions ont été prises, validées et ne doivent pas être rediscutées sans raison explicite.
+
+| # | Décision | Raison | Date |
+|---|---|---|---|
+| D01 | **Agora RTC** pour les appels vocaux (pas WebRTC natif) | WebRTC échoue systématiquement sur iOS Safari | 2026-06-10 |
+| D02 | **Service Worker network-first** (jamais cache-first pour les JS) | Garantit que A et B testent la même version | 2026-06-10 |
+| D03 | **`owner_plate` est immuable** (INV-006) | Sécurité anti-usurpation | invariant |
+| D04 | **Pas d'Inbox / Outbox séparés** | Remplacés avantageusement par Activity + filtres Reçus/Envoyés | 2026-06-13 |
+| D05 | **Pas de contenu de message dans les Edge Functions** (INV-COM-010) | Privacy | invariant |
+| D06 | **Payload anonymisé dans les Edge Functions** (INV-COM-015) | Privacy | invariant |
+| D07 | **`AGORA_APP_CERTIFICATE` jamais dans le code** | Dans les secrets Supabase uniquement | invariant |
+| D08 | **main = production** — jamais pousser du code instable sur main | GitHub Pages sert main directement | invariant |
+| D09 | **Le MASTER_PLAN (31 lignes) est obsolète sur la structure de nav** | AUDIT_V2 est la vraie référence fonctionnelle | 2026-06-13 |
+| D10 | **call-webrtc.js est à supprimer** — code mort remplacé par Agora | — | 2026-06-13 |
+| D11 | **Pas d'ouverture automatique de messages sur `accepted`** | Sécurité + UX | invariant |
+
+---
+
+## 7. DERNIÈRES DÉCISIONS MAJEURES
+
+Décisions prises lors des dernières sessions, non encore implémentées.
+
+| # | Décision | Statut | Impact |
+|---|---|---|---|
+| M01 | **Séparation Appels / Messages dans la nav** | À implémenter (Sprint 1 #04) | Navigation principale |
+| M02 | **Bouton urgence 15/17/18 avant tout formulaire critique** | À implémenter (Sprint 1 #01) | Éthique + légal |
+| M03 | **Blocages persistés en DB** (table `user_blocks`) | À implémenter (Sprint 2) | Sécurité cross-device |
+| M04 | **Règle type/domain/direction/status dans InteractionEngine** | À implémenter (Sprint 2) | Architecture affichage |
+| M05 | **ResolutionCenter pour les signalements** | À implémenter (Sprint 2) | Cycle de vie complet |
+| M06 | **device_id + "appel pris sur autre appareil"** | À implémenter (Sprint 2) | Multi-appareils |
+| M07 | **RGPD obligatoire avant App Store** (suppression + export) | À implémenter (Sprint 1) | Légal |
+
+---
+
+## 8. LECTURE MINIMALE RECOMMANDÉE
+
+Pour reprendre le travail en moins de 10 minutes, lire uniquement dans cet ordre :
+
+1. **Ce fichier** (`PROJECT_STATE.md`) — complet, 10 min
+2. **Section 8 "TOP 20 ACTIONS"** de `docs/IMPLEMENTATION_GAP_ANALYSIS.md` — 5 min
+3. **"PROCHAINE ACTION — SPRINT 1"** dans `SESSION-CONTINUATION.md` — 2 min
+
+Pour comprendre un bug ou une correction passée :
+→ `SESSION-CONTINUATION.md` — journal chronologique complet
+
+Pour comprendre ce qu'une fonctionnalité doit faire :
+→ `docs/AUDIT_IMMATCONNECT_GLOBAL_V2.md` — section concernée
+
+Pour connaître l'état exact d'implémentation d'une feature :
+→ `docs/IMPLEMENTATION_GAP_ANALYSIS.md` — section "1. MATRICE DES FONCTIONNALITÉS"
+
+---
+
+## 9. CONNAISSANCES CRITIQUES À NE JAMAIS PERDRE
+
+### Infrastructure
+
+```
+Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
+Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
+Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
+Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
+SW version actif  : immatconnect-pro-v21
+```
+
+### Edge Functions déployées sur Supabase
+
+| Fonction | Rôle | État |
+|---|---|---|
+| `get-agora-token` | Génère les tokens Agora RTC signés | ✅ Active |
+| `immat-brain-dialog` | IA dialogue conducteur | ✅ Active |
+| `create-call-request` | Créer une demande d'appel | ✅ Active |
+| `respond-call-request` | Répondre à une demande d'appel | ✅ Active |
+| `get-turn-credentials` | Ancienne — pour WebRTC natif obsolète | ❌ À supprimer |
+
+### Architecture des appels vocaux (flux complet)
+
+```
+A appelle B
+  → calls.js émet CALL_INITIATED → CallScreen.showOutgoing()
+
+B accepte (tap dans le geste iOS)
+  → getUserMedia({audio}) déclenché dans le geste → w.__preMicTrack
+  → calls.js émet CALL_ACCEPTED {requestId, plate} sur les deux téléphones
+
+AgoraCallEngine (abonné ImmatBus, sur les deux téléphones) :
+  → reçoit CALL_ACCEPTED
+  → POST get-agora-token {channelName: requestId, uid: random}
+  → client.join(APP_ID, channelName, token, uid)
+  → réutilise w.__preMicTrack → publish()
+  → subscribe remote user → audioTrack.play()
+
+Fin d'appel :
+  → leaveCall() ou user-left Agora → émet CALL_ENDED
+  → CallScreen.hide() des deux côtés
+```
+
+### Mécanismes de détection d'annulation (4 couches)
+
+```
+1. Broadcast CANCEL sur canal signal Supabase  (50-200ms)
+2. postgres_changes UPDATE status='cancelled'  (200-500ms)
+3. Poll DB 1s (_startCancelPoll)               (0-1000ms)
+4. visibilitychange + _checkOngoingIncomingCall (retour background)
+```
+
+### Causes de bugs connues (ne pas reproduire)
+
+```
+BUG RÉSOLU : InteractionEngine _emitObd() ré-émet sur ImmatBus sans requestId
+→ Fix : guard e.payload.requestId sur tous les handlers bus (call-screen.js v8)
+→ La CAUSE RACINE (_emitObd) n'est pas encore corrigée — à faire Sprint 2 #09
+
+BUG RÉSOLU : Double showIncomingPopup → deux timers CALL_MISSED
+→ Fix : _seenIncomingCallIds Set + debounce (calls.js v17)
+
+BUG RÉSOLU : cancelCallRequest écrivait en DB après les broadcasts
+→ Fix : DB en premier, puis broadcast (calls.js v15)
+
+BUG RÉSOLU : SW v8 bloqué — cache.addAll() atomique échouait sur 1 fichier réseau
+→ Fix : Promise.allSettled() non-atomique (SW v21)
+
+BUG RÉSOLU : Micro iOS ne capturait pas dans le geste utilisateur
+→ Fix : getUserMedia() dans le tap Accepter/Appeler → w.__preMicTrack
+```
+
+### localStorage — clés critiques
+
+```
+ic_interactions       (200 entrées max — InteractionEngine)
+ic_notifications      (100 entrées max)
+ic_alerts             (alertes géo communautaires)
+ic_blocked            (plaques bloquées — à migrer DB Sprint 2)
+ic_block_levels       (niveaux de blocage — à migrer DB Sprint 2)
+ic_pending_profile    (⚠️ email + téléphone en clair — à effacer après signup Sprint 1)
+ic_last_state         (lat/lng dernière position — risque vie privée)
+ic_gps_history        (historique GPS)
+_terminalRequestIds   (dans AgoraCallEngine + CallScreen — en mémoire, pas localStorage)
+```
+
+### Versions actuelles des fichiers principaux
+
+```
+calls.js              : v17
+core/call-screen.js   : v8
+core/agora-call-engine.js : v5
+core/audio-manager.js : v7
+core/interaction-engine.js : v1
+messages.js           : v17
+service-worker.js     : immatconnect-pro-v21
+app.css               : v6
+```
+
+---
+
+## 10. POLITIQUE ANTI-RÉGRESSION
+
+### Règles absolues avant tout commit de code
+
+- [ ] Tester un appel complet A → B → accepter → parler → raccrocher
+- [ ] Tester l'annulation A → overlay B se ferme
+- [ ] Vérifier que la plaque s'affiche sur l'overlay sortant (pas `--`)
+- [ ] Vérifier que `_terminalRequestIds` n'est pas vidé accidentellement
+- [ ] Vérifier que `_joining` guard est en place dans `joinCall()`
+- [ ] Ne jamais supprimer le guard `e.payload.requestId` dans les handlers bus (call-screen.js)
+- [ ] Ne jamais remettre `cache.addAll()` atomique dans le SW
+- [ ] Ne jamais mettre `AGORA_APP_CERTIFICATE` dans le code client
+- [ ] Ne jamais pousser directement sur `main` sans test terrain
+
+### Tests obligatoires après toute modification de calls.js ou call-screen.js
+
+```
+Scénario 1 : Appel simple
+  A appelle B → B reçoit la sonnerie → B accepte → les deux entendent l'audio
+  → A raccroche → B voit "appel terminé"
+
+Scénario 2 : Annulation
+  A appelle B → A annule → B voit l'overlay se fermer en < 2s
+
+Scénario 3 : Refus
+  A appelle B → B refuse → A voit "Refusé"
+
+Scénario 4 : Appel manqué
+  A appelle B → 30s s'écoulent → les deux voient "Manqué"
+
+Scénario 5 : Rappel immédiat
+  Après n'importe quel scénario ci-dessus → A peut rappeler B immédiatement
+```
+
+---
+
+## 11. POINT DE REPRISE OBLIGATOIRE
+
+**Si vous reprenez ce projet pour la première fois ou après une longue interruption :**
+
+### Étape 1 — Lire (15 min)
+1. Ce fichier (`PROJECT_STATE.md`) en entier
+2. Section 8 "TOP 20 ACTIONS" de `docs/IMPLEMENTATION_GAP_ANALYSIS.md`
+
+### Étape 2 — Vérifier l'état du code (5 min)
+```bash
+git log --oneline -5                    # Derniers commits
+git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
+```
+
+### Étape 3 — Reprendre au bon endroit
+- Si Sprint 1 non commencé → commencer par l'action #01 (bouton urgence)
+- Si Sprint 1 en cours → lire SESSION-CONTINUATION.md section "PROCHAINE ACTION"
+- Si un bug est apparu → lire SESSION-CONTINUATION.md section correspondante
+
+### Ce qu'il ne faut pas faire
+- Ne pas relire les 40+ fichiers SESSION-XX-LIVRAISON.md (historique d'anciennes sessions)
+- Ne pas relire AUDIT_V1 pour comprendre l'état actuel (V2 + GAP_ANALYSIS suffisent)
+- Ne pas rediscuter les décisions listées en section 6
+- Ne pas tenter de corriger call-webrtc.js (fichier à supprimer, pas à corriger)
+
+---
+
+## MISE À JOUR — Historique des mises à jour de ce fichier
+
+| Date | Auteur | Résumé |
+|---|---|---|
+| 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
+
+---
+
+*`PROJECT_STATE.md` — ImmatConnect Pro*  
+*Ne remplace aucun document existant. Tableau de bord de continuité uniquement.*
