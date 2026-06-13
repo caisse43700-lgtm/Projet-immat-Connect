@@ -7,6 +7,60 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-13 — CONSOLIDATION GOUVERNANCE DOCUMENTAIRE (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md v1.1** — 38 sections, document de référence pré-production officielle
+
+Extensions ajoutées par rapport à la v1.0 (produite en session précédente) :
+
+**Risques RISK-013 à RISK-017 :**
+- RISK-013 : Désynchronisation profiles ↔ public_profiles (trigger KO)
+  → Contrôle : `SELECT COUNT(*) FROM profiles p LEFT JOIN public_profiles pp ON pp.owner_plate = p.owner_plate WHERE pp.owner_plate IS NULL` → attendu **0**
+- RISK-014 : Régression SW (anciens caches) → `caches.keys()` → attendu immatconnect-pro-v25 uniquement
+- RISK-015 : Incohérence Trust Engine (3 sources non synchronisées)
+- RISK-016 : Suppression RGPD incomplète si nouvelle table ajoutée sans mise à jour de delete-account
+- RISK-017 : Utilisateur bloqué toujours joignable côté serveur (user_blocks = barrière client uniquement)
+
+**Hypothèses HYP-011 à HYP-012 :**
+- HYP-011 : get_public_profiles_by_ids() fonctionne après 20260615 (SECURITY DEFINER bypass column grants)
+- HYP-012 : Index 20260614_missing_indexes réellement utilisés (EXPLAIN ANALYZE à valider)
+
+**Invariants INV-021 à INV-022 :**
+- INV-021 : une donnée métier = une seule source de vérité
+- INV-022 : ANGE jamais requis pour une feature critique
+
+**Registres de gouvernance (nouveaux) :**
+- FEATURE_REGISTRY (Section 27) — 18 features, à maintenir à chaque nouvelle feature
+- DATA_OWNERSHIP_REGISTRY (Section 28) — 13 données métier avec source + copies + interdictions
+- IMPACT_REGISTRY (Section 29) — template à remplir avant tout commit de feature
+- FUTURE_FEATURE_GATE (Section 30) — checklist 15 points GO DEV obligatoire
+
+**Dettes DEBT-009 à DEBT-010, Tests C15 à C17**
+
+**Sections additionnelles :**
+- Section 32 : FUTURE_TABLES_RESERVED (13 tables : parking_sessions, vehicle_profiles, ange_decisions, rate_limit_counters, delete_audit_log...)
+- Section 33 : PARTIAL_MIGRATION_FAILURE PLAYBOOK (6 étapes strictes)
+- Section 34 : SUPABASE_DOWN_PLAYBOOK
+- Section 35 : AI_HALLUCINATION_PLAYBOOK (règle fondamentale + actions interdites à ANGE)
+- Section 36 : VÉHICULES ET STATIONNEMENT — template cartographique obligatoire avant tout dev
+- Section 37 : 10 QUESTIONS GO MAIN — si une NON → NO-GO MAIN
+
+### État après cette session
+
+```
+docs/MASTER_COMPATIBILITY_MAP.md  → CRÉÉ (v1.1, 38 sections)
+PROJECT_STATE.md                  → MIS À JOUR (documents de référence + historique)
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucune modification de code. Aucun commit de code. Phase documentation = terminée.
+
+### Décision finale : NO-GO MAIN (code prêt, terrain non exécuté)
+
+---
+
 ## SESSION 2026-06-13 — PHASE DOCUMENTATION STRATÉGIQUE (TERMINÉE)
 
 ### Ce qui a été produit (documents uniquement, aucun code modifié)
