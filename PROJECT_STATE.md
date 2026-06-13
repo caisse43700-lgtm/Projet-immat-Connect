@@ -226,6 +226,8 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 | ~~S5-COPY~~ | Copier plaque presse-papier (bouton 📋 dans vehicle context menu) | — | ~~P2~~ |
 | ~~S5-RATELIMIT-MSG~~ | Rate limit messages 5/min (ic_msg_times localStorage) | — | ~~P2~~ |
 | ~~S5-BUILD~~ | APP_BUILD const + affichage footer paramètres | — | ~~P2~~ |
+| ~~S5-SHARE~~ | Web Share API pour alertes route/aide dans activity feed | — | ~~P2~~ |
+| ~~S5-HEARTBEAT~~ | device_sessions heartbeat 30s + migration SQL | — | ~~P2~~ |
 
 **Sprint 4 — ✅ TERMINÉ (2026-06-13)**
 
@@ -508,6 +510,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | S4-LEGAL terminé — pages légales tabulées (CGU + confidentialité RGPD) |
 | 2026-06-13 | IA session | S4-CLUSTER terminé — Leaflet.markercluster 1.5.3, cluster bleu cyan, SW v24 |
 | 2026-06-13 | IA session | Sprint 5 démarré — S5-PWA manifest shortcuts, S5-BADGE navigator.setAppBadge, S5-COPY clipboard, S5-RATELIMIT-MSG, S5-BUILD |
+| 2026-06-13 | IA session | Sprint 5 suite — S5-SHARE Web Share API alertes, S5-HEARTBEAT device_sessions 30s |
 
 ---
 
