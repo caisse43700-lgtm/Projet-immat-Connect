@@ -238,6 +238,12 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 | ~~S4-CLUSTER~~ | Clustering marqueurs Leaflet (zones denses, Leaflet.markercluster 1.5.3) | — | ~~P2~~ |
 | S4-SPEAKER | Haut-parleur Agora (toggleSpeaker) — déprioritisé iOS limitation | — | P3 |
 
+**Sprint 6 — En cours (2026-06-13)**
+
+| # | Action | Commit | Priorité |
+|---|---|---|---|
+| ~~S6-RATINGS~~ | Driver ratings — migration SQL + Edge Function submit-rating + modal UI | — | ~~P2~~ |
+
 **Détail complet du Sprint 1, Sprint 2, Sprint 3, Sprint 4 :**  
 → Lire `docs/IMPLEMENTATION_GAP_ANALYSIS.md` section "7. ROADMAP PAR SPRINT"
 
@@ -511,6 +517,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | S4-CLUSTER terminé — Leaflet.markercluster 1.5.3, cluster bleu cyan, SW v24 |
 | 2026-06-13 | IA session | Sprint 5 démarré — S5-PWA manifest shortcuts, S5-BADGE navigator.setAppBadge, S5-COPY clipboard, S5-RATELIMIT-MSG, S5-BUILD |
 | 2026-06-13 | IA session | Sprint 5 suite — S5-SHARE Web Share API alertes, S5-HEARTBEAT device_sessions 30s |
+| 2026-06-13 | IA session | S6-RATINGS — driver_ratings SQL + Edge Function submit-rating + modal UI 4 méthodes |
 
 ---
 
