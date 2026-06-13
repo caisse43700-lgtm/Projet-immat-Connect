@@ -1720,20 +1720,61 @@ App.switchContactTab=function(tab){
 };
 App.renderCallJournal=async function(){
   var el=$('icCallLog'); if(!el) return;
+  el.innerHTML='<div style="padding:20px;text-align:center;color:#64748b;font-size:13px">Chargement…</div>';
   try{
-    var log=window.CallManager?.loadCallLog?await window.CallManager.loadCallLog(30):[];
-    if(!log||!log.length){ el.innerHTML='<div style="padding:16px;color:#64748b;text-align:center">Aucun appel récent.</div>'; return; }
-    el.innerHTML=log.map(function(r){
-      var ico=r.outgoing?'📤':'📥';
-      var statusLabel={accepted:'Décroché',refused:'Refusé',missed:'Manqué',cancelled:'Annulé',expired:'Expiré'}[r.status]||r.status;
-      var col={accepted:'#22c55e',missed:'#ef4444',refused:'#f59e0b'}[r.status]||'#64748b';
-      var d=new Date(r.at); var ts=(isNaN(d)?r.at:d.toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'}));
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b">'+
-        '<span style="font-size:18px">'+ico+'</span>'+
-        '<div style="flex:1"><div style="font-weight:700;color:#e2e8f0">'+r.plate+'</div><div style="font-size:11px;color:'+col+'">'+statusLabel+'</div></div>'+
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:11px;color:#64748b">'+ts+'</span>'+
-        '<button type="button" onclick="App.callFromJournal(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:6px;color:#e2e8f0;padding:3px 8px;font-size:11px;cursor:pointer">📞</button></div></div>';
-    }).join('');
+    var log=window.CallManager?.loadCallLog?await window.CallManager.loadCallLog(60):[];
+    if(!log||!log.length){
+      el.innerHTML='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">Aucun appel récent.</div></div>';
+      return;
+    }
+    // Regroupement par jour
+    var today=new Date(); today.setHours(0,0,0,0);
+    var yesterday=new Date(today); yesterday.setDate(today.getDate()-1);
+    function dayLabel(d){
+      var day=new Date(d); day.setHours(0,0,0,0);
+      if(day.getTime()===today.getTime()) return "Aujourd'hui";
+      if(day.getTime()===yesterday.getTime()) return 'Hier';
+      return day.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    }
+    function timeStr(at){
+      var d=new Date(at);
+      return isNaN(d)?at:d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    }
+    var statusCfg={
+      accepted:{label:'Décroché',color:'#22c55e',icon:'✅'},
+      refused:{label:'Refusé',color:'#f59e0b',icon:'🚫'},
+      missed:{label:'Manqué',color:'#ef4444',icon:'📵'},
+      expired:{label:'Manqué',color:'#ef4444',icon:'📵'},
+      cancelled:{label:'Annulé',color:'#64748b',icon:'↩️'},
+      ended:{label:'Terminé',color:'#22c55e',icon:'✅'}
+    };
+    var html='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻ Actualiser</button></div>';
+    var lastDay='';
+    log.forEach(function(r){
+      var cfg=statusCfg[r.status]||{label:r.status,color:'#64748b',icon:'📞'};
+      var day=dayLabel(r.at);
+      if(day!==lastDay){
+        html+='<div style="padding:6px 16px;font-size:11px;font-weight:700;color:#64748b;background:#0f172a;text-transform:uppercase;letter-spacing:.5px">'+day+'</div>';
+        lastDay=day;
+      }
+      var dirIcon=r.outgoing?'<span style="font-size:11px;color:#94a3b8">↗ Sortant</span>':'<span style="font-size:11px;color:#94a3b8">↙ Entrant</span>';
+      var callBtn='<button type="button" onclick="App.callFromJournal(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Rappeler '+r.plate+'">📞</button>';
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b">'+
+        '<span style="font-size:22px;width:32px;text-align:center">'+cfg.icon+'</span>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:700;color:#e2e8f0;font-size:15px">'+esc(r.plate)+'</div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
+            '<span style="font-size:11px;color:'+cfg.color+'">'+cfg.label+'</span>'+
+            '<span style="color:#334155">·</span>'+dirIcon+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
+          '<span style="font-size:11px;color:#64748b">'+timeStr(r.at)+'</span>'+
+          callBtn+
+        '</div>'+
+      '</div>';
+    });
+    el.innerHTML=html;
   }catch(e){if(el)el.innerHTML='<div style="padding:16px;color:#ef4444">Erreur chargement appels.</div>';}
 };
 App.callFromJournal=function(plate){
