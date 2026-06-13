@@ -1,8 +1,8 @@
-<!-- DOCUMENT DE RÉFÉRENCE PRÉ-PRODUCTION — Version 1.1 — 2026-06-13 -->
+<!-- DOCUMENT DE RÉFÉRENCE PRÉ-PRODUCTION — Version 1.2 — 2026-06-13 -->
 <!-- Ne pas modifier sans raison explicite : bug bloquant, faille sécurité, risque RGPD, KO terrain confirmé -->
 
 # IMMATCONNECT PRO — MASTER COMPATIBILITY MAP
-Version 1.1 — 2026-06-13 — Référence pré-production officielle
+Version 1.2 — 2026-06-13 — Référence pré-production officielle (GEL DOCUMENTAIRE)
 
 > **Objectif :** vérifier que la branche de travail, le produit fonctionnel,
 > les migrations S6/S7, ANGE OS et la future production sont parfaitement
@@ -634,6 +634,18 @@ Jamais : écran vide, stack trace, blocage d'autre fonctionnalité
 - Vérif : `EXPLAIN ANALYZE SELECT ...` sur chaque table depuis Supabase SQL Editor
 - Risque si invalide : performances dégradées sous charge (non critique en bêta 10-20 users)
 
+**HYP-013 :** Toutes les Edge Functions déployées sont encore appelées par le code actif
+- Base : 8 EF référencées dans le code (get-agora-token, immat-brain-dialog, create-call-request, respond-call-request, delete-account, export-user-data, submit-rating, send-push-notification)
+- get-turn-credentials est à supprimer du dashboard Supabase (DEBT-007) — code local déjà supprimé
+- Vérif : `supabase functions list` + grep dans le code de chaque nom de fonction
+- Risque si invalide : EF orpheline facturée inutilement ou code appelant une EF inexistante
+
+**HYP-014 :** Toutes les tables possèdent un owner fonctionnel et une RLS cohérente
+- Base : les migrations créent les RLS mais l'état Supabase actuel (sans migrations déployées) est inconnu
+- Tables concernées : profiles, messages, user_locations, reports, call_requests, push_subscriptions, user_blocks, call_requests, device_sessions, driver_ratings, vehicle_trust_scores, public_profiles
+- Vérif : Supabase Dashboard → Authentication → Policies → vérifier chaque table
+- Risque si invalide : table sans RLS = accès non contrôlé à toutes les lignes
+
 ---
 
 ## SECTION 20 — RISK_REGISTER
@@ -759,9 +771,69 @@ Jamais : écran vide, stack trace, blocage d'autre fonctionnalité
 - Contrôle terrain C15 : documenter le comportement actuel (refus côté UI, pas côté serveur)
 - Priorité : P1 (avant ouverture publique)
 
+**RISK-018 : Nouvelle fonctionnalité non reliée au ROLLBACK_REGISTRY**
+- Cause : développement sans documentation préalable du rollback
+- Impact : rollback impossible en cas d'échec de migration — blocage de production non réversible
+- Mitigation : FUTURE_FEATURE_GATE (Section 30) — case ROLLBACK_REGISTRY obligatoire avant GO DEV
+- Règle : INV-023 — toute feature non documentée est considérée comme non existante
+- Priorité : P0 — bloquant pour toute nouvelle feature
+
+**RISK-019 : Nouvelle table oubliée dans delete-account**
+- Cause : ajout d'une table contenant user_id ou owner_plate sans mise à jour de l'EF
+- Impact : non-conformité RGPD art.17 — données résiduelles après suppression de compte
+- Mitigation : Section 30 (FUTURE_FEATURE_GATE) — case RGPD delete obligatoire
+- Contrôle : après chaque nouveau Sprint, vérifier que delete-account liste toutes les tables à nettoyer
+- Priorité : CRITIQUE RGPD
+
+**RISK-020 : Nouvelle table oubliée dans export-user-data**
+- Cause : ajout d'une table contenant des données personnelles sans mise à jour de l'EF
+- Impact : portabilité RGPD incomplète (art.20) — données personnelles non exportées
+- Mitigation : Section 30 (FUTURE_FEATURE_GATE) — case RGPD export obligatoire
+- Priorité : CRITIQUE RGPD
+
+**RISK-021 : Nouvelle fonctionnalité non couverte par les tests terrain**
+- Cause : développement sans définition préalable des contrôles terrain
+- Impact : régression invisible — feature cassée en production sans détection
+- Mitigation : Section 30 — case Tests terrain obligatoire avant GO DEV
+- Règle : toute feature non testée terrain est considérée comme non validée
+- Priorité : P1
+
+**RISK-022 : Nouvelle fonctionnalité contournant un Hard Invariant**
+- Cause : développeur ne connaît pas ou ignore la Section 21 (INV-001 à INV-026)
+- Impact : règles de sécurité ou RGPD contournées
+- Exemples : écrire email dans une table publique, modifier trust_level automatiquement, USING(true) dans une RLS
+- Mitigation : Section 30 — case Hard Invariants obligatoire avant GO DEV
+- Priorité : P0
+
+**RISK-023 : Nouvelle fonctionnalité critique dépendante d'ANGE**
+- Cause : feature conçue pour fonctionner uniquement si immat-brain-dialog répond
+- Impact : panne IA = panne produit critique — inacceptable (INV-022)
+- Exemples à ne pas faire : messagerie nécessitant ANGE pour envoyer, appels dépendant d'une validation ANGE
+- Mitigation : INV-022 — vérification "fonctionne sans ANGE ?" obligatoire (Section 37, question 15)
+- Priorité : P0
+
+**RISK-024 : Future migration utilisant USING(true) dans une policy RLS**
+- Cause : développeur inexperimenté ou rollback d'urgence non réfléchi
+- Impact : réexposition potentielle de données sensibles (email, phone, reporter_id) à tous les utilisateurs authentifiés
+- Exemples : `CREATE POLICY ... FOR SELECT USING (true)` sur profiles ou reports
+- Mitigation : INV-011 — revue obligatoire de toute nouvelle policy RLS avant déploiement
+- Contrôle : grep sur les migrations avant exécution : `grep -i "USING (true)" *.sql`
+- Priorité : CRITIQUE SÉCURITÉ
+
+**RISK-025 : Feature développée directement sur profiles au lieu de public_profiles**
+- Cause : développeur accédant à profiles pour lire pseudo/vehicle_color au lieu de public_profiles
+- Impact : fuite potentielle de PII si la RLS n'est pas parfaite, couplage fort avec la table sensible
+- Exemples à ne pas faire : JOIN direct sur profiles pour afficher des données publiques
+- Mitigation : DATA_OWNERSHIP_REGISTRY (Section 28) — public_profiles = seule source pour les données publiques
+- Règle : pseudo et vehicle_color publics → toujours lire dans public_profiles, jamais dans profiles directement
+- Priorité : P1
+
 ---
 
-## SECTION 21 — HARD_INVARIANTS (INV-001 à INV-022)
+## SECTION 21 — HARD_INVARIANTS (INV-001 à INV-026)
+
+> Ces invariants ne peuvent jamais être violés, même temporairement, même en urgence.
+> Toute violation = incident de sécurité ou non-conformité RGPD.
 
 | # | Invariant |
 |---|-----------|
@@ -787,6 +859,10 @@ Jamais : écran vide, stack trace, blocage d'autre fonctionnalité
 | INV-020 | 20260615 doit s'exécuter EN DERNIER (11/11), après 20260614 obligatoirement |
 | INV-021 | Une donnée métier ne doit avoir qu'une seule source de vérité. Exemples : trust_score → vehicle_trust_scores ; pseudo → profiles ; vehicle_color → profiles ; public_profiles → copie publique en lecture seule uniquement. Toute copie doit être maintenue par trigger ou par EF. Jamais deux tables en écriture directe pour la même donnée. |
 | INV-022 | ANGE ne doit jamais être requis pour une fonctionnalité critique. Même si immat-brain-dialog est OFF, doivent continuer à fonctionner sans dégradation : messages, appels, signalements, trust, ratings, carte, push, RGPD. Voir D20 (dégradation gracieuse). |
+| INV-023 | FUTURE FEATURE GATE — Toute nouvelle fonctionnalité doit être ajoutée AVANT développement dans : FEATURE_REGISTRY, FEATURE_DEPENDENCY_GRAPH, IMPACT_REGISTRY, Test Terrain (Section 25), ROLLBACK_REGISTRY, DATA_OWNERSHIP_REGISTRY. Une fonctionnalité non documentée est considérée comme non existante. Une dépendance non documentée est considérée comme un risque. Une source de vérité non documentée est considérée comme un bug potentiel. → NO GO DEV si checklist incomplète. |
+| INV-024 | Toute nouvelle table doit être auditée AVANT utilisation pour : RLS (qui peut lire/écrire/supprimer ?), RGPD (contient-elle des PII ? → export + delete), Realtime (doit-elle être activée ?), Rollback (que faire si la migration échoue ?). Aucune table sans RLS explicite en production. |
+| INV-025 | Aucune Edge Function ne doit devenir une boîte noire. Chaque EF doit avoir documentés : objectif en 1 phrase, entrées (paramètres attendus + types), sorties (format JSON de la réponse), erreurs possibles (codes + messages), dépendances (tables lues/écrites, secrets utilisés, autres EF appelées). |
+| INV-026 | Aucun secret ne doit exister sans propriétaire identifié et procédure de rotation documentée. Secrets actuels : AGORA_APP_CERTIFICATE (emplacement : Supabase Secrets, responsable : fondateur, rotation : renouvellement certificat Agora), VAPID_PRIVATE_KEY (Supabase Secrets, fondateur, rotation : générer nouveau couple VAPID + mise à jour SW), ANTHROPIC_API_KEY (Supabase Secrets, fondateur, rotation : console.anthropic.com → revoke + nouvelle clé). |
 
 ---
 
@@ -1122,6 +1198,48 @@ Attendu :
 - refresh manuel possible (rechargement de la page)
 Vérif : erreur gracieuse dans la console, aucun localStorage corrompu
 
+### BLOC 15 — DÉGRADATIONS FOURNISSEURS
+
+**C18 — Supabase indisponible**
+Action : simuler une panne Supabase (couper le réseau, ou utiliser une URL Supabase incorrecte temporairement)
+Attendu :
+- pas d'écran blanc indéfini
+- pas de boucle infinie de requêtes
+- message d'erreur lisible ou offline.html si SW actif
+- localStorage non corrompu après retour réseau
+Vérif : DevTools Network → pas de requête en boucle ; Application → localStorage intact
+Référence playbook : Section 34 (SUPABASE_DOWN_PLAYBOOK)
+
+**C19 — Agora indisponible**
+Action : simuler une panne Agora (token invalide ou endpoint injoignable)
+Attendu :
+- tentative d'appel → toast d'erreur clair, interface libérée
+- messages, carte, signalements continuent de fonctionner
+- pas de crash de l'application entière
+Vérif : pas de spinner infini, pas de boucle de reconnexion
+Référence playbook : Section 35b (AGORA_DOWN_PLAYBOOK)
+
+**C20 — Anthropic indisponible (ANGE)**
+Action : simuler une panne Anthropic (ANTHROPIC_API_KEY invalide ou EF immat-brain-dialog suspendue)
+Attendu :
+- ANGE affiche : "Le conseiller est momentanément indisponible. Les autres fonctionnalités restent opérationnelles."
+- messages, appels, carte, signalements continuent de fonctionner
+- pas d'écran vide, pas de stack trace visible
+Vérif : INV-022 respecté — les fonctionnalités critiques sont indépendantes d'ANGE
+Référence playbook : Section 35c (ANTHROPIC_DOWN_PLAYBOOK)
+
+### BLOC 16 — ROLLBACK ET RÉSILIENCE
+
+**C21 — Rollback de migration en environnement de test**
+Action : appliquer la migration 08/11 (20260614_public_profiles_secure.sql) dans un environnement de test,
+         puis exécuter le rollback correspondant (Section 23)
+Attendu :
+- retour à l'état stable pré-migration
+- aucune table résiduelle (public_profiles, trigger, fonctions supprimés)
+- appels vocaux fonctionnels après rollback (test C05a)
+- aucune erreur RLS résiduelle
+Vérif : `SELECT tablename FROM pg_tables WHERE tablename = 'public_profiles'` → 0 résultats après rollback
+
 ---
 
 **BILAN DES CONTRÔLES CRITIQUES (11) :**
@@ -1333,7 +1451,10 @@ Tables pré-réservées pour les développements futurs. Ne pas créer ces table
 | vehicle_profiles | Véhicules | id, owner_plate, brand, model, year, fuel_type | profiles (owner_plate) | Futur |
 | vehicle_documents | Véhicules | id, vehicle_id, doc_type, expires_at, verified | vehicle_profiles | Futur |
 | maintenance_logs | Maintenance | id, vehicle_id, type, date, mileage, notes | vehicle_profiles | Futur |
-| reservations | Réservations | id, requester_id, spot_id, from_at, to_at, status | parking_spots + profiles | Futur |
+| maintenance_events | Maintenance | id, log_id, event_type, description, cost, created_at | maintenance_logs | Futur |
+| vehicle_history | Véhicules | id, vehicle_id, event_type, description, occurred_at | vehicle_profiles | Futur |
+| parking_reservations | Réservations | id, requester_id, spot_id, from_at, to_at, status, confirmed_at | parking_spots + profiles | Futur |
+| reservations | Réservations (alias) | — | Alias de parking_reservations si nécessaire | Futur (à éviter — préférer parking_reservations) |
 | admin_tasks | Admin Dashboard | id, type, status, created_by, assigned_to, payload | profiles (admin) | Futur |
 | admin_notes | Admin Dashboard | id, task_id, author_id, content, created_at | admin_tasks | Futur |
 | ange_decisions | ANGE OS | id, module, action_type, payload, author_id, created_at | profiles | Futur |
@@ -1466,6 +1587,77 @@ Tables pré-réservées pour les développements futurs. Ne pas créer ces table
 
 ---
 
+## SECTION 35b — AGORA_DOWN PLAYBOOK
+
+**Situation :** Agora RTC est indisponible (API Agora KO, quota épuisé, problème réseau entre les serveurs Agora et l'app).
+
+**Comportements attendus de l'application :**
+
+```
+✅ Attendu (si correct) :
+   → Toast d'erreur clair lors de la tentative d'appel : "Les appels sont momentanément indisponibles."
+   → Le reste de l'application fonctionne normalement (messages, carte, signalements, push)
+   → Pas de crash, pas d'écran vide, pas de boucle infinie de tentatives Agora
+   → L'erreur est loguée dans la console (pas dans l'UI)
+
+❌ Inacceptable :
+   → Écran blanc ou spinner infini lors d'une tentative d'appel
+   → Crash de l'application entière (messages, carte KO aussi)
+   → Boucle infinie de reconnexion Agora sans backoff
+   → Message d'erreur exposant des détails techniques (token, channelName)
+```
+
+**Vérifications en cas de panne simulée :**
+
+| Vérification | Attendu |
+|-------------|---------|
+| Tentative d'appel quand Agora est KO | Toast d'erreur clair, bouton disponible à nouveau |
+| Messages pendant panne Agora | Fonctionnels (pas de dépendance) |
+| Carte pendant panne Agora | Fonctionnelle |
+| Signalements pendant panne Agora | Fonctionnels |
+
+**Contrôle terrain : C19**
+
+**Surveillance :** console.agora.io → Usage + Status — s'abonner aux alertes. Seuil d'alerte : >500 appels/mois.
+
+---
+
+## SECTION 35c — ANTHROPIC_DOWN PLAYBOOK
+
+**Situation :** l'API Anthropic est indisponible (maintenance, quota, panne réseau entre Supabase et Anthropic).
+
+**Comportements attendus de l'application :**
+
+```
+✅ Attendu (si correct) :
+   → ANGE affiche le message de dégradation (D20) :
+     "Le conseiller est momentanément indisponible. Les autres fonctionnalités restent opérationnelles."
+   → Messages, appels, signalements, carte, push = tous fonctionnels
+   → Pas d'écran vide, pas de stack trace visible
+   → La demande utilisateur est ignorée gracieusement (pas de retry automatique)
+
+❌ Inacceptable :
+   → Blocage de l'interface (spinner infini sur le bouton ANGE)
+   → Erreur 500 visible par l'utilisateur (corps de réponse EF brut)
+   → Retry automatique sans limite (charges sur l'EF, coûts Supabase)
+   → Tentative de basculer sur un autre modèle IA sans validation humaine
+```
+
+**Vérifications en cas de panne simulée :**
+
+| Vérification | Attendu |
+|-------------|---------|
+| Utilisation ANGE quand Anthropic est KO | Message de dégradation D20, pas de crash |
+| Messages pendant panne Anthropic | Fonctionnels |
+| Appels pendant panne Anthropic | Fonctionnels |
+| Carte pendant panne Anthropic | Fonctionnelle |
+
+**Contrôle terrain : C20**
+
+**Surveillance :** console.anthropic.com → Usage. Seuil d'alerte : >$2/jour → couper immat-brain-dialog.
+
+---
+
 ## SECTION 36 — VÉHICULES ET STATIONNEMENT : RÈGLES DE DÉVELOPPEMENT FUTUR
 
 **Règle absolue : aucune implémentation avant la cartographie complète.**
@@ -1543,21 +1735,26 @@ INVARIANTS :
 
 ## SECTION 37 — QUESTIONS DE VALIDATION AVANT TOUT GO MAIN FUTUR
 
-Avant tout futur merge vers main, répondre aux 10 questions suivantes.
-**Si une seule réponse est NON → NO GO MAIN.**
+Avant tout futur merge vers main, répondre aux 15 questions suivantes.
+**Si une seule réponse est NON → NO GO DEV et NO GO MAIN.**
 
 | # | Question | Réponse | Référence |
 |---|----------|---------|-----------|
 | 1 | Les nouvelles fonctionnalités utilisent-elles la bonne source de vérité ? | OUI/NON | Section 28 (DATA_OWNERSHIP_REGISTRY) |
-| 2 | Les suppressions RGPD nettoient-elles toutes les nouvelles tables ? | OUI/NON | Section 11 (delete-account) |
-| 3 | Les exports RGPD exportent-ils toutes les nouvelles données personnelles ? | OUI/NON | Section 11 (export-user-data) |
-| 4 | Les blocages empêchent-ils les interactions via les nouvelles features ? | OUI/NON | Section 13 (user_blocks) |
-| 5 | Les nouvelles tables figurent-elles dans le ROLLBACK_REGISTRY ? | OUI/NON | Section 23 |
+| 2 | Les suppressions RGPD nettoient-elles toutes les nouvelles tables ? | OUI/NON | Section 11 (delete-account) + RISK-019 |
+| 3 | Les exports RGPD exportent-ils toutes les nouvelles données personnelles ? | OUI/NON | Section 11 (export-user-data) + RISK-020 |
+| 4 | Les blocages empêchent-ils les interactions via les nouvelles features ? | OUI/NON | Section 13 (user_blocks) + RISK-017 |
+| 5 | Les nouvelles tables figurent-elles dans le ROLLBACK_REGISTRY ? | OUI/NON | Section 23 + RISK-018 |
 | 6 | Les nouvelles fonctionnalités figurent-elles dans le FEATURE_DEPENDENCY_GRAPH ? | OUI/NON | Section 24 |
-| 7 | Les nouvelles fonctionnalités respectent-elles tous les invariants ? | OUI/NON | Section 21 (INV-001 à INV-022) |
-| 8 | Les nouvelles fonctionnalités sont-elles couvertes par des tests terrain ? | OUI/NON | Section 25 |
-| 9 | Les nouvelles fonctionnalités fonctionnent-elles sans ANGE ? (INV-022) | OUI/NON | Section 15 + INV-022 |
-| 10 | Les nouvelles fonctionnalités sont-elles documentées dans FEATURE_REGISTRY ? | OUI/NON | Section 27 |
+| 7 | Les nouvelles fonctionnalités respectent-elles tous les invariants ? | OUI/NON | Section 21 (INV-001 à INV-026) + RISK-022 |
+| 8 | Les nouvelles fonctionnalités sont-elles couvertes par des tests terrain ? | OUI/NON | Section 25 + RISK-021 |
+| 9 | Les nouvelles fonctionnalités fonctionnent-elles sans ANGE ? | OUI/NON | INV-022 + RISK-023 |
+| 10 | Les nouvelles fonctionnalités sont-elles documentées dans FEATURE_REGISTRY ? | OUI/NON | Section 27 + INV-023 |
+| 11 | L'IMPACT_REGISTRY a-t-il été rempli pour chaque nouvelle feature ? | OUI/NON | Section 29 |
+| 12 | Le DATA_OWNERSHIP_REGISTRY a-t-il été mis à jour pour les nouvelles données ? | OUI/NON | Section 28 |
+| 13 | Le FEATURE_DEPENDENCY_GRAPH a-t-il été mis à jour ? | OUI/NON | Section 24 |
+| 14 | La documentation onboarding (PROJECT_STATE.md, SESSION-CONTINUATION.md) a-t-elle été mise à jour ? | OUI/NON | CLAUDE.md règle de fin de session |
+| 15 | Les nouvelles RLS évitent-elles USING(true) sur des tables sensibles ? | OUI/NON | INV-011 + RISK-024 |
 
 ---
 
@@ -1678,6 +1875,29 @@ supabase functions deploy send-push-notification
 
 ---
 
-*IMMATCONNECT PRO — MASTER COMPATIBILITY MAP — Version 1.1 — 2026-06-13*
-*Document de référence pré-production officielle. Toute future fonctionnalité doit être reliée à ce document.*
+---
+
+## NOTE DE GEL DOCUMENTAIRE
+
+Version 1.2 — 2026-06-13 — **GEL DOCUMENTAIRE**
+
+Ce document est désormais gelé. La phase documentation est terminée.
+
+**Ne plus agrandir ce document.** Passer uniquement à :
+1. Déploiement contrôlé (migrations → secrets → EF → Realtime)
+2. Tests terrain (0 KO critique requis)
+3. Validation RGPD (export + suppression + colonnes PII)
+4. Validation production (11/15 conditions GO MAIN)
+5. Puis développement des futurs modules (véhicules, stationnement...)
+
+**Objectif de ce document :**
+Qu'un développeur inconnu puisse reprendre le projet dans 6 mois et comprendre
+l'architecture, les dépendances, les risques, les règles, les migrations,
+les tests et les responsabilités **en moins d'une heure**.
+
+---
+
+*IMMATCONNECT PRO — MASTER COMPATIBILITY MAP — Version 1.2 — 2026-06-13*
+*Document de référence pré-production officielle — GEL DOCUMENTAIRE*
+*Toute future fonctionnalité doit être reliée à ce document (INV-023).*
 *Modifier uniquement si : bug bloquant / faille sécurité / risque RGPD / KO terrain confirmé.*

@@ -7,6 +7,59 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-13 — GEL DOCUMENTAIRE MASTER_COMPATIBILITY_MAP v1.2 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md → mis à jour v1.1 → v1.2 (GEL)**
+
+Extensions v1.2 :
+
+**Risques RISK-018 à RISK-025 :**
+- RISK-018 : Feature non reliée au ROLLBACK_REGISTRY → rollback impossible
+- RISK-019 : Nouvelle table oubliée dans delete-account → RGPD art.17 KO
+- RISK-020 : Nouvelle table oubliée dans export-user-data → RGPD art.20 KO
+- RISK-021 : Feature sans tests terrain → régression invisible
+- RISK-022 : Feature contournant un Hard Invariant → sécurité ou RGPD violée
+- RISK-023 : Feature critique dépendante d'ANGE → panne IA = panne produit
+- RISK-024 : Future migration USING(true) → réexposition PII
+- RISK-025 : Feature lisant profiles au lieu de public_profiles → fuite PII potentielle
+
+**Hypothèses HYP-013 à HYP-014 :**
+- HYP-013 : Toutes les EF déployées sont encore appelées par le code actif (détecter orphelines)
+- HYP-014 : Toutes les tables ont une RLS cohérente et un owner fonctionnel
+
+**Invariants INV-023 à INV-026 :**
+- INV-023 : FUTURE FEATURE GATE — feature non documentée = feature non existante
+- INV-024 : Toute nouvelle table auditée (RLS + RGPD + Realtime + Rollback) avant utilisation
+- INV-025 : Aucune EF boîte noire — objectif + entrées + sorties + erreurs + dépendances documentés
+- INV-026 : Aucun secret sans propriétaire + procédure de rotation documentée
+
+**Nouveaux playbooks :**
+- Section 35b AGORA_DOWN : comportements attendus + contrôles + surveillance
+- Section 35c ANTHROPIC_DOWN : comportements attendus + contrôles + surveillance
+
+**Nouveaux tests terrain :**
+- C18 : Supabase indisponible → interface stable
+- C19 : Agora indisponible → appels KO uniquement, reste fonctionnel
+- C20 : Anthropic indisponible → ANGE KO uniquement, reste fonctionnel
+- C21 : Rollback migration en environnement de test → retour état stable
+
+**Section 37 étendue : 10 → 15 questions GO MAIN**
+Questions ajoutées : IMPACT_REGISTRY rempli (11), DATA_OWNERSHIP mis à jour (12),
+FEATURE_DEPENDENCY_GRAPH mis à jour (13), documentation onboarding mise à jour (14),
+RLS sans USING(true) sur tables sensibles (15)
+
+**FUTURE_TABLES_RESERVED enrichie :**
+Ajout : maintenance_events, vehicle_history, parking_reservations
+
+**Note de gel documentaire :**
+Message final ajouté : STOP DOCUMENTATION — passer à l'exécution terrain.
+
+### Décision finale : NO-GO MAIN — GEL DOCUMENTAIRE ACTIF
+
+---
+
 ## SESSION 2026-06-13 — CONSOLIDATION GOUVERNANCE DOCUMENTAIRE (TERMINÉE)
 
 ### Ce qui a été produit

@@ -293,7 +293,7 @@ Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrai
 | **`docs/AUDIT_IMMATCONNECT_GLOBAL_V1.md`** | Première analyse forces/faiblesses/risques | Contexte historique |
 | **`docs/IMMATCONNECT_INTERACTION_ARCHITECTURE_MASTER_PLAN.md`** | Architecture conceptuelle (31 lignes) | Structure conceptuelle de référence (remplacé sur le fond par AUDIT_V2) |
 | **`docs/PLAN_EXECUTION_30J_V1.2.md`** | Plan d'exécution production 30 jours — figé v1.2 | Avant toute action terrain |
-| **`docs/MASTER_COMPATIBILITY_MAP.md`** | Carte de compatibilité complète pré-production (38 sections) — registres risques/invariants/dettes, FEATURE_REGISTRY, DATA_OWNERSHIP, playbooks, gouvernance future | Avant tout GO MAIN ou nouveau développement |
+| **`docs/MASTER_COMPATIBILITY_MAP.md`** | Carte de compatibilité complète pré-production (v1.2 GEL) — 25 risques, 14 hypothèses, 26 invariants, 21 tests terrain, 5 playbooks, 15 questions GO MAIN | Avant tout GO MAIN ou nouveau développement |
 | **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
 
 **Hiérarchie de vérité :**
@@ -570,6 +570,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Décisions D12→D21 documentées — architecture pré-validée, mode mise en production contrôlée activé |
 | 2026-06-13 | IA session | Phase documentation stratégique terminée — 6 docs stratégiques + Plan d'exécution 30J v1.2 validé et figé |
 | 2026-06-13 | IA session | MASTER_COMPATIBILITY_MAP v1.1 créé — 38 sections : RISK-013→017, HYP-011→012, INV-021→022, FEATURE_REGISTRY, DATA_OWNERSHIP_REGISTRY, IMPACT_REGISTRY, FUTURE_FEATURE_GATE, DEBT-009→010, contrôles C15→C17, FUTURE_TABLES_RESERVED, playbooks crise (migration/Supabase down/IA hallucination), règles véhicule/stationnement, 10 questions GO MAIN |
+| 2026-06-13 | IA session | MASTER_COMPATIBILITY_MAP v1.2 — GEL DOCUMENTAIRE — RISK-018→025, HYP-013→014, INV-023→026, playbooks AGORA_DOWN + ANTHROPIC_DOWN, tests C18→C21, 15 questions GO MAIN, note de gel |
 
 ---
 
