@@ -65,6 +65,33 @@ type RedactedPushRow = Omit<PushSubscriptionRow, 'p256dh' | 'auth'> & {
   auth: '[chiffré]';
 };
 
+// Tables S6 — optionnelles (peuvent ne pas encore être déployées)
+type DriverRatingRow = {
+  id: string;
+  rater_id: string | null;
+  rated_plate: string | null;
+  score: number | null;
+  context: string | null;
+  comment: string | null;
+  created_at: string | null;
+};
+
+type UserBlockRow = {
+  blocked_plate: string | null;
+};
+
+type DeviceSessionRow = {
+  device_id: string | null;
+  platform: string | null;
+  last_seen: string | null;
+};
+
+type SupabaseErrorLike = {
+  message: string;
+  code?: string;
+  details?: string;
+};
+
 function jsonResponse(
   body: Record<string, unknown>,
   status: number,
@@ -89,9 +116,19 @@ function errorMessage(error: unknown): string {
   return 'unknown error';
 }
 
+// Détecte les erreurs liées à une table inexistante (migration pas encore déployée).
+function isMissingRelationError(error: unknown): boolean {
+  const e = error as { code?: string; message?: string; details?: string };
+  const msg = `${e?.code || ''} ${e?.message || ''} ${e?.details || ''}`.toLowerCase();
+  return msg.includes('42p01')
+    || msg.includes('pgrst205')
+    || msg.includes('could not find the table')
+    || (msg.includes('relation') && msg.includes('does not exist'));
+}
+
 async function readOne<T>(
   label: string,
-  query: PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  query: PromiseLike<{ data: T[] | null; error: SupabaseErrorLike | null }>,
 ): Promise<T | null> {
   const { data, error } = await query;
   if (error) { console.error(`[export-user-data] ${label}`, error); throw new Error(error.message); }
@@ -100,10 +137,27 @@ async function readOne<T>(
 
 async function readAll<T>(
   label: string,
-  query: PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  query: PromiseLike<{ data: T[] | null; error: SupabaseErrorLike | null }>,
 ): Promise<T[]> {
   const { data, error } = await query;
   if (error) { console.error(`[export-user-data] ${label}`, error); throw new Error(error.message); }
+  return data ?? [];
+}
+
+// Lecture tolérante : retourne [] si la table est absente, lève une erreur sinon.
+async function readAllOptional<T>(
+  label: string,
+  query: PromiseLike<{ data: T[] | null; error: SupabaseErrorLike | null }>,
+): Promise<T[]> {
+  const { data, error } = await query;
+  if (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(`[export-user-data] optional table missing: ${label}`);
+      return [];
+    }
+    console.error(`[export-user-data] ${label}`, error);
+    throw new Error(error.message);
+  }
   return data ?? [];
 }
 
@@ -147,6 +201,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       callRequestsInitiated,
       callRequestsReceived,
       pushSubscriptions,
+      driverRatings,
+      userBlocks,
+      deviceSessions,
     ] = await Promise.all([
       readOne<ProfileRow>('profile',
         adminSb.from('profiles').select('*').eq('id', userId).limit(1)),
@@ -164,6 +221,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         adminSb.from('call_requests').select('*').eq('receiver_id', userId)),
       readAll<PushSubscriptionRow>('push_subscriptions',
         adminSb.from('push_subscriptions').select('*').eq('user_id', userId)),
+      // Tables S6 — optionnelles si migrations pas encore déployées
+      readAllOptional<DriverRatingRow>('driver_ratings',
+        adminSb.from('driver_ratings').select('id,rated_plate,score,context,comment,created_at').eq('rater_id', userId)),
+      readAllOptional<UserBlockRow>('user_blocks',
+        adminSb.from('user_blocks').select('blocked_plate').eq('user_id', userId)),
+      readAllOptional<DeviceSessionRow>('device_sessions',
+        adminSb.from('device_sessions').select('device_id,platform,last_seen').eq('user_id', userId)),
     ]);
 
     const redactedPush: RedactedPushRow[] = pushSubscriptions.map(s => ({
@@ -182,6 +246,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
         call_requests_initiated: callRequestsInitiated,
         call_requests_received: callRequestsReceived,
         push_subscriptions: redactedPush,
+        driver_ratings: driverRatings,
+        user_blocks: userBlocks,
+        device_sessions: deviceSessions,
       },
       200,
       {
