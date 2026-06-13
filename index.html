@@ -365,7 +365,7 @@
   <div id="fcExtraActions" class="fc-extra-actions" style="display:none"></div>
 </div>
 <!-- ── ResolutionCenter — cycle de vie d'un signalement ──────────── -->
-<div id="resolutionCenterModal" class="call-modal-overlay" style="display:none" onclick="if(event.target===this)App.closeResolutionCenter()">
+<div id="resolutionCenterModal" class="call-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Centre de résolution" onclick="if(event.target===this)App.closeResolutionCenter()">
   <div class="call-modal-sheet" style="max-width:360px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:#a5b4fc;letter-spacing:.5px">📋 MON SIGNALEMENT</div>
@@ -392,7 +392,7 @@
 
 <!-- ── Modaux système d'appels Phase 1 ──────────────────────────── -->
 <!-- Modal : Comment souhaitez-vous contacter ce conducteur ? -->
-<div id="callContactModal" class="call-modal-overlay" onclick="if(event.target===this)CallManager.closeContactModal()">
+<div id="callContactModal" class="call-modal-overlay" role="dialog" aria-modal="true" aria-label="Demande de contact" onclick="if(event.target===this)CallManager.closeContactModal()">
   <div class="call-modal-sheet">
     <div class="call-modal-title">Comment souhaitez-vous contacter</div>
     <div class="call-modal-plate" id="callContactPlate">?</div>
@@ -418,7 +418,7 @@
 </div>
 
 <!-- Popup : appel entrant -->
-<div id="callIncomingPopup" class="call-incoming-popup">
+<div id="callIncomingPopup" class="call-incoming-popup" role="dialog" aria-modal="true" aria-label="Appel entrant" aria-live="assertive">
   <div class="call-incoming-header">
     <div class="call-incoming-icon">🤝</div>
     <div class="call-incoming-info">
@@ -483,8 +483,8 @@
     <button type="button" class="menu-btn" onclick="App.closeDrawer();App.panel('settings')"><span>Paramètres</span><span class="menu-icon">⚙️</span></button>
   </div>
 </div></div>
-<div id="legal" class="modal"><div class="modal-back" onclick="App.closeLegal()"></div><div class="modal-card"><h2>Confidentialité</h2><p>Ton téléphone n'est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button type="button" class="btn primary" style="margin-top:14px" onclick="App.closeLegal()">J'ai compris</button></div></div><div id="blocked" class="modal"><div class="modal-back" onclick="App.closeBlocked()"></div><div class="modal-card"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal"><div class="modal-back" onclick="App.closeRecent()"></div><div class="modal-card"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn secondary" style="flex:1;color:#e53935" onclick="App.clearRecent()">Vider</button><button type="button" class="btn secondary" style="flex:1;color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div></div>
-<div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast"></div>
+<div id="legal" class="modal" role="dialog" aria-modal="true" aria-label="Confidentialité"><div class="modal-back" onclick="App.closeLegal()"></div><div class="modal-card"><h2>Confidentialité</h2><p>Ton téléphone n'est jamais affiché. La position est supprimée à la déconnexion ou en mode invisible.</p><button type="button" class="btn primary" style="margin-top:14px" onclick="App.closeLegal()">J'ai compris</button></div></div><div id="blocked" class="modal" role="dialog" aria-modal="true" aria-label="Plaques bloquées"><div class="modal-back" onclick="App.closeBlocked()"></div><div class="modal-card"><h2>Plaques bloquées</h2><div id="blockedList" class="list"></div><button type="button" class="btn secondary" style="margin-top:14px;color:#10161d" onclick="App.closeBlocked()">Fermer</button></div></div><div id="recent" class="modal" role="dialog" aria-modal="true" aria-label="Véhicules récents"><div class="modal-back" onclick="App.closeRecent()"></div><div class="modal-card"><h2>Véhicules récents</h2><div id="recentList" class="list"></div><div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn secondary" style="flex:1;color:#e53935" onclick="App.clearRecent()">Vider</button><button type="button" class="btn secondary" style="flex:1;color:#10161d" onclick="App.closeRecent()">Fermer</button></div></div></div>
+<div id="notif" class="notif" onclick="App.openNotifConversation()"></div><div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 <script>
 window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window.__lastJsError=(msg||'')+(err?'\n'+err.stack.split('\n').slice(0,3).join(' | '):'');};window.addEventListener('unhandledrejection',function(e){window.__lastJsError='Unhandled rejection: '+(e?.reason?.message||String(e?.reason||''));});
 'use strict';
@@ -2438,7 +2438,7 @@ function showReputationToast(){
 <script src="ui.js?v=8"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
-<div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center">
+<div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
   <div style="background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:24px 20px 32px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto">
     <div style="text-align:center;margin-bottom:20px"><div style="font-size:26px;color:#c4b5fd;font-weight:700;margin-bottom:4px">✦ ImmatConnect</div><div style="color:#666;font-size:13px">La communauté des conducteurs</div></div>
     <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
@@ -2465,7 +2465,7 @@ function showReputationToast(){
 <!-- ── /Onboarding ───────────────────────────────────────────────────── -->
 
 <!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
-<div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto">
+<div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto" role="dialog" aria-modal="true" aria-label="Dashboard Gardien">
   <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0">
     <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
     <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer">✕</button>
