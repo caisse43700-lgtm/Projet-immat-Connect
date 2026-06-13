@@ -42,15 +42,27 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 1 — Actions #01 + #02**  
+**Mission : Sprint 1 — Actions #01 à #04**  
 **Date :** 2026-06-13
+
+**#04** — Onglet Appels dans la nav principale + badge manqués (commit `cb8865e`)
+- Bouton `navAppels` avec icône téléphone SVG et badge `callNavBadge`
+- `App.navAppels()` : efface `S._unseenMissedCalls`, ouvre panelMessages onglet appels
+- Toutes les fonctions nav retirent la classe `.on` de `navAppels`
+- `updateActBadge()` met à jour `callNavBadge` depuis `S._unseenMissedCalls`
+- Abonnement `CALL_MISSED` via IIFE avec retry 400ms jusqu'à ImmatBus disponible
+- `navMessages()` appelle désormais `switchContactTab('messages')` explicitement
+
+**#03** — Effacer `ic_pending_profile` après signup réussi (commit `9801c31`)
+- `localStorage.removeItem('ic_pending_profile')` au début de `openMap()`
+- Efface aussi les variantes multi-compte : `ic_pending_profile__email` + `ic_pending_profile_last_email`
 
 **#01** — Bouton urgence 15/17/18 (commit `9313c43`)
 - Bloc urgence rouge ajouté dans `sigStep2Vehicle` et `sigStep2Aide`
 - 3 liens `tel:15`, `tel:17`, `tel:18` (boutons 44px min, rouges)
 - Affiché avant tous les types d'incidents
 
-**#02** — Suppression code mort (commit suivant)
+**#02** — Suppression code mort (commit `601b3f5`)
 - `core/call-webrtc.js` supprimé (remplacé par agora-call-engine.js)
 - `supabase/functions/get-turn-credentials/index.ts` supprimé (WebRTC obsolète)
 
@@ -84,8 +96,7 @@ Exécuter dans cet ordre exact :
 | ~~01~~ | ~~Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | ~~02~~ | ~~Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials`~~ | ~~repo~~ | ~~✅ FAIT~~ |
 | ~~03~~ | ~~Effacer `ic_pending_profile` après signup réussi~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| 03 | Effacer `ic_pending_profile` après signup réussi | `index.html` ou `ui.js` | 30 min |
-| 04 | Onglet Appels dans la nav principale + badge manqués | `index.html`, `calls.js`, `messages.js` | 1j |
+| ~~04~~ | ~~Onglet Appels dans la nav principale + badge manqués~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | 05 | Push notifications SW Level 2 (VAPID) | `service-worker.js`, Edge Function à créer | 2j |
 | 06 | Demande permission push à l'onboarding | `index.html`, `ui.js` | 4h |
 | 07 | RGPD — suppression de compte (Edge Function `delete-account`) | `supabase/functions/` | 2j |
@@ -350,6 +361,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
 | 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
 | 2026-06-13 | IA session | Sprint 1 #03 terminé — ic_pending_profile effacé dans openMap() |
+| 2026-06-13 | IA session | Sprint 1 #04 terminé — onglet Appels dans nav principale + badge CALL_MISSED |
 
 ---
 
