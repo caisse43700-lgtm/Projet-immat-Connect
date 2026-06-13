@@ -42,7 +42,7 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : S6-TRUST — Trust Engine terminé**  
+**Mission : Sprint 7 — RGPD GAP + S7-OBD + S7-SEARCH**  
 **Date :** 2026-06-13
 
 **S4-CLUSTER** — Clustering Leaflet.markercluster pour les véhicules en zone dense
@@ -159,7 +159,7 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-Aucune. Sprint 6 (S6-RATINGS + S6-RATINGS-TRIGGERS + S6-TRUST) terminé le 2026-06-13.
+Aucune. Sprint 7 P1-P3 terminé le 2026-06-13. Prochaine : S7-NEARBY ou S7-PROFILE (nécessite audit RLS profiles).
 
 ---
 
@@ -521,6 +521,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | S6-RATINGS — driver_ratings SQL + Edge Function submit-rating + modal UI 4 méthodes |
 | 2026-06-13 | IA session | S6-RATINGS-TRIGGERS — vehicleContextScore + rateBtn appels + _loadVehicleRating |
 | 2026-06-13 | IA session | S6-TRUST — vehicle_trust_scores table + refresh_vehicle_trust() SECURITY DEFINER + vehicleContextTrust UI + submit-rating déclenche refresh |
+| 2026-06-13 | IA session | Sprint 7 — RGPD GAP : delete-account + export-user-data étendus (device_sessions, user_blocks, driver_ratings) avec helper optionalDelete + isMissingRelationError |
+| 2026-06-13 | IA session | Sprint 7 — S7-OBD : _isCallLikeType() + _rememberObd() dans interaction-engine.js — dédup FIFO 100 entrées, guard CALL sans underscore |
+| 2026-06-13 | IA session | Sprint 7 — S7-SEARCH : barre recherche plaque dans feed activité — debounce 300ms, nPlate normalisation, zéro requête Supabase |
 
 ---
 
