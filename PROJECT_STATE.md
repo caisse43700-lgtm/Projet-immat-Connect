@@ -111,6 +111,7 @@ Exécuter dans cet ordre exact :
 | ~~03~~ | ~~Effacer `ic_pending_profile` après signup réussi~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | ~~04~~ | ~~Onglet Appels dans la nav principale + badge manqués~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | ~~05~~ | ~~Push notifications VAPID (SW v22 + Edge Function + DB)~~ | ~~5 fichiers~~ | ~~✅ FAIT~~ |
+| ~~06~~ | ~~Demande permission push à l'onboarding~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | 06 | Demande permission push à l'onboarding | `index.html`, `ui.js` | 4h |
 | 07 | RGPD — suppression de compte (Edge Function `delete-account`) | `supabase/functions/` | 2j |
 | 08 | RGPD — export de données (Edge Function `export-user-data`) | `supabase/functions/` | 1j |
@@ -376,6 +377,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 1 #03 terminé — ic_pending_profile effacé dans openMap() |
 | 2026-06-13 | IA session | Sprint 1 #04 terminé — onglet Appels dans nav principale + badge CALL_MISSED |
 | 2026-06-13 | IA session | Sprint 1 #05 terminé — push notifications VAPID (SW v22, Edge Function, DB, subscribePush) |
+| 2026-06-13 | IA session | Sprint 1 #06 terminé — bloc push dans l'onboarding, requestPushPermission(), geste utilisateur |
 
 ---
 
