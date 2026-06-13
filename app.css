@@ -930,6 +930,60 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
   .alert-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* ── Modal légal (onglets) ── */
+.legal-modal-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+.legal-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.legal-tab {
+  flex: 1;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #2a3c56;
+  background: #0b1420;
+  color: #9aacc2;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .14s ease;
+}
+.legal-tab.active {
+  background: rgba(0,255,179,.14);
+  border-color: #00ffb3;
+  color: #00ffb3;
+}
+.legal-content {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #c8d6e8;
+  -webkit-overflow-scrolling: touch;
+}
+.legal-content h3 {
+  font-size: 16px;
+  font-weight: 950;
+  color: #eef6ff;
+  margin-bottom: 10px;
+}
+.legal-content b {
+  display: block;
+  color: #eef6ff;
+  margin: 12px 0 4px;
+  font-size: 13px;
+}
+.legal-content p {
+  margin: 0 0 2px;
+  color: #9aacc2;
+}
+
 /* ── Filtre alertes carte ── */
 .map-alert-filter-bar {
   position: fixed;
