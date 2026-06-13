@@ -293,6 +293,16 @@ Ces décisions ont été prises, validées et ne doivent pas être rediscutées 
 | D09 | **Le MASTER_PLAN (31 lignes) est obsolète sur la structure de nav** | AUDIT_V2 est la vraie référence fonctionnelle | 2026-06-13 |
 | D10 | **call-webrtc.js est à supprimer** — code mort remplacé par Agora | — | 2026-06-13 |
 | D11 | **Pas d'ouverture automatique de messages sur `accepted`** | Sécurité + UX | invariant |
+| D12 | **vehicle_trust_scores = source de vérité unique** — S.trust = cache d'affichage temporaire uniquement. Renommage futur : S.trust → S.localTrustCache. Aucun nouveau dev sur S.trust. | Architecture confiance | 2026-06-13 |
+| D13 | **TTL conducteurs proches = 5 min** (CFG.staleMinutes=5). Distance arrondie à 100m. Batch trust SELECT IN. Debounce loadOthers 2000ms. Pas de requête trust individuelle par conducteur. | S7-NEARBY | 2026-06-13 |
+| D14 | **Profil public = owner_plate + pseudo + vehicle_color + trust_score + trust_level + avg_score + total_ratings**. Jamais email/phone/user_id/reporter_id/device_id/commentaires individuels. | S7-PROFILE | 2026-06-13 |
+| D15 | **Photos signalements** : max 5 Mo, JPG/JPEG/WEBP (PNG converti), compression client, max 1600px, qualité 0.8, TTL 90 jours (suppression auto obligatoire), bucket=report-photos, photo_url nullable, échec upload → signalement sans photo (jamais bloquant). | S7-PHOTO | 2026-06-13 |
+| D16 | **delete_audit_log obligatoire** : colonnes id/user_id/requested_at/completed_at/status/error. Traçabilité RGPD art. 17. | Sprint 8 | 2026-06-13 |
+| D17 | **Appels vocaux stables** — calls.js, agora-call-engine.js, call-screen.js ne sont jamais modifiés sans validation terrain explicite. | invariant | 2026-06-13 |
+| D18 | **Realtime** : conserver ic_msg + ic_loc + ic_community_live. Supprimer ic_reports_{user} (handler vide, priorité faible). | Sprint 9 | 2026-06-13 |
+| D19 | **localStorage futur** : MAX_BLOCKED=500, TTL interactions+notifications=90 jours. Pas de travail Sprint 8. | Sprint 9 | 2026-06-13 |
+| D20 | **immat-brain-dialog dégradation gracieuse** : si EF échoue → afficher "Le conseiller est momentanément indisponible. Les autres fonctionnalités restent opérationnelles." Jamais écran vide ni stack trace. | Sprint 8 | 2026-06-13 |
+| D21 | **Ordre Sprint 8** : 1.Déploiement migrations → 2.Validation terrain → 3.S7-NEARBY → 4.delete_audit_log → 5.Promise.allSettled() push → 6.Dégradation Claude → 7.Audit prod. S7-PROFILE et S7-PHOTO bloqués jusqu'à validation terrain complète. | Roadmap | 2026-06-13 |
 
 ---
 
@@ -525,6 +535,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Sprint 7 — S7-OBD : _isCallLikeType() + _rememberObd() dans interaction-engine.js — dédup FIFO 100 entrées, guard CALL sans underscore |
 | 2026-06-13 | IA session | Sprint 7 — S7-SEARCH : barre recherche plaque dans feed activité — debounce 300ms, nPlate normalisation, zéro requête Supabase |
 | 2026-06-13 | IA session | Pré-déploiement S6 — sécurisation RLS profiles/reports + public_profiles + index manquants + SW v25 (commits 53e5348, 5746ad9, 75a066b) |
+| 2026-06-13 | IA session | Validation régressions RLS — 4 régressions corrigées (syncCommunityAlerts, calls.js, messages.js, afterAuth) — column-level grants + get_my_profile RPC (commit 1c0ddeb) |
+| 2026-06-13 | IA session | Décisions D12→D21 documentées — architecture pré-validée, mode mise en production contrôlée activé |
 
 ---
 
