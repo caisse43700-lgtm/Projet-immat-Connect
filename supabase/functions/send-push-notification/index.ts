@@ -5,7 +5,7 @@
 import webPush from 'npm:web-push@3.6.7';
 
 import { corsHeaders } from '../_shared/cors.ts';
-import { createClient }  from 'npm:@supabase/supabase-js@2';
+import { createClient }  from 'jsr:@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
