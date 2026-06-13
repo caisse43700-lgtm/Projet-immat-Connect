@@ -42,17 +42,17 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 1 — Action #01 — Bouton urgence 15/17/18**  
-**Date :** 2026-06-13  
-**Commit :** voir SHA ci-dessous
+**Mission : Sprint 1 — Actions #01 + #02**  
+**Date :** 2026-06-13
 
-Modification dans `index.html` uniquement :
-- Bloc urgence rouge ajouté dans `sigStep2Vehicle` (Quel problème sur le véhicule ?)
-- Bloc urgence rouge ajouté dans `sigStep2Aide` (De quoi avez-vous besoin ?)
-- Chaque bloc contient 3 liens `tel:15`, `tel:17`, `tel:18` (boutons rouges 44px min)
-- Texte contextuel : "Enfant ou animal dans le véhicule · fumée · accident grave"
-- Affiché AVANT les types d'incidents standards
-- Aucun code JS modifié, aucune logique changée
+**#01** — Bouton urgence 15/17/18 (commit `9313c43`)
+- Bloc urgence rouge ajouté dans `sigStep2Vehicle` et `sigStep2Aide`
+- 3 liens `tel:15`, `tel:17`, `tel:18` (boutons 44px min, rouges)
+- Affiché avant tous les types d'incidents
+
+**#02** — Suppression code mort (commit suivant)
+- `core/call-webrtc.js` supprimé (remplacé par agora-call-engine.js)
+- `supabase/functions/get-turn-credentials/index.ts` supprimé (WebRTC obsolète)
 
 **Avant cela (2026-06-13) :**
 - `PROJECT_STATE.md` créé (commit `d231024`) — point de reprise unique
@@ -82,7 +82,7 @@ Exécuter dans cet ordre exact :
 | # | Action | Fichiers à modifier | Effort |
 |---|---|---|---|
 | ~~01~~ | ~~Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
-| 02 | Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials` | repo | 30 min |
+| ~~02~~ | ~~Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials`~~ | ~~repo~~ | ~~✅ FAIT~~ |
 | 03 | Effacer `ic_pending_profile` après signup réussi | `index.html` ou `ui.js` | 30 min |
 | 04 | Onglet Appels dans la nav principale + badge manqués | `index.html`, `calls.js`, `messages.js` | 1j |
 | 05 | Push notifications SW Level 2 (VAPID) | `service-worker.js`, Edge Function à créer | 2j |
@@ -347,6 +347,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 |---|---|---|
 | 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
 | 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
+| 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
 
 ---
 
