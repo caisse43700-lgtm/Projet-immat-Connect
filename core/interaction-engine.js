@@ -57,6 +57,9 @@
   function _emitObd(interaction) {
     const meta = TYPE_META[interaction?.type] || {};
     if (!meta.obd || meta.reserved) return;
+    // Les événements CALL_* sont déjà émis par calls.js avec requestId correct.
+    // Les ré-émettre ici crée des events parasites sans requestId sur ImmatBus.
+    if (interaction?.type && String(interaction.type).startsWith('CALL_')) return;
     const flow = interaction.flow_id || meta.flow || null;
     const inv  = (interaction.invariants || meta.invariants || [])[0] || null;
     try {

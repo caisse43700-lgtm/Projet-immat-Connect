@@ -875,6 +875,8 @@ async function sendToPlate(plate,text,opts){
 
   State.activePlate = receiverPlate;
   toast('Message envoyé à ' + receiverPlate + '.','ok');
+  // Push fire-and-forget vers le destinataire (INV-COM-010 : plaque uniquement, pas le contenu)
+  try{const _c=sb();if(_c&&target?.id){_c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:'💬 ImmatConnect — Nouveau message',body:senderPlate+' vous a envoyé un message',data:{type:'message',plate:senderPlate},tag:'msg-'+senderPlate}}).catch(()=>{});}}catch(e){}
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{
