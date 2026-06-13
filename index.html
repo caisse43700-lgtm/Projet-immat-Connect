@@ -450,6 +450,8 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
+const VAPID_PUBLIC_KEY='BJPMj8nG_ygBOLHHRvZD5SQCSkl1fTa56hkPXLjEeanXJ69OI64PQgMQC5JwmPD6K7-HqzhlTfJozueHlXE5on4';
+function _vapidKey(b64){const pad='='.repeat((4-b64.length%4)%4);const b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
 const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
 const get=(k,f)=>{try{let v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
@@ -691,7 +693,7 @@ openGardienDashboard(){
           </div>
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">CACHE_NAME</div>
-            <div id="dashCacheName" style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v21</div>
+            <div id="dashCacheName" style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v22</div>
           </div>
         </div>
         <div style="margin-top:8px;font-size:10px;color:#555">Recalcul complet : <code>node scripts/health-scores.js</code></div>
@@ -787,7 +789,8 @@ runImmunityCheck(){
 closeGardienDashboard(){const el=$('gardienDashboard');if(el)el.style.display='none';},
 initMap(){if(S.map||!window.L)return;if(!$('map'))return;S.map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([46.6,1.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(S.map);S.map.on('dragstart zoomstart',()=>S.autoFollow=false);S.map.on('click',e=>{this.hideVehicleContextMenu();if($('fabSignalHere'))$('fabSignalHere').style.display='none';});S.map.on('contextmenu',e=>{e.originalEvent?.preventDefault?.();this.showSignalHere(e);});this.initSheetDrag()},
 isNight(){let h=new Date().getHours();return h>=20||h<7},autoNight(){document.body.classList.toggle('night',this.isNight())},refresh(){if($('invisBtn'))$('invisBtn').textContent=S.invisible?'👁️ Visible':'👻 Invisible';if($('viewBtn'))$('viewBtn').textContent=S.mapView==='drive'?'🚘 Vue conduite':'🗺 Vue 2D';this.autoNight()},
-toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleVoiceGender(){const g=get('ic_voice_gender','female')==='female'?'male':'female';set('ic_voice_gender',g);const btn=$('voiceGenderBtn');if(btn)btn.textContent=g==='male'?'Homme ♂':'Femme ♀';speak(g==='male'?'Voix masculine activée.':'Voix féminine activée.',true);},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js')}catch(e){}},
+toggleVoice(){S.voice=!S.voice;set('ic_voice',S.voice?'1':'0');toast(S.voice?'Voix GPS activée.':'Voix GPS désactivée.','ok')},toggleVoiceGender(){const g=get('ic_voice_gender','female')==='female'?'male':'female';set('ic_voice_gender',g);const btn=$('voiceGenderBtn');if(btn)btn.textContent=g==='male'?'Homme ♂':'Femme ♀';speak(g==='male'?'Voix masculine activée.':'Voix féminine activée.',true);},toggleSounds(){S.sounds=!S.sounds;set('ic_sounds',S.sounds?'1':'0');toast(S.sounds?'Sons activés.':'Sons désactivés.','ok')},requestPermissions(){try{if('Notification'in window&&Notification.permission==='default'){Notification.requestPermission().then(p=>{if(p==='granted')this.subscribePush?.();})}else if('Notification'in window&&Notification.permission==='granted'){this.subscribePush?.();}}catch(e){}this.registerServiceWorker()},registerServiceWorker(){try{if('serviceWorker'in navigator){navigator.serviceWorker.register('./service-worker.js').then(reg=>{reg.addEventListener('updatefound',()=>{});navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='PUSH_NOTIFICATION_CLICKED'){try{const d=e.data.data||{};if(d.type==='call')App.navAppels?.();else if(d.type==='message')App.navMessages?.();}catch(x){}}})})}}catch(e){}},
+async subscribePush(){try{if(!('serviceWorker'in navigator)||!('PushManager'in window))return;if(!('Notification'in window)||Notification.permission!=='granted')return;const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription().catch(()=>null);if(!sub){sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_vapidKey(VAPID_PUBLIC_KEY)}).catch(e=>{console.warn('[push] subscribe failed',e);return null;});}if(!sub)return;const j=sub.toJSON();if(!j.keys?.p256dh||!j.keys?.auth)return;const{data:ud}=await sb.auth.getUser();if(!ud?.user?.id)return;await sb.from('push_subscriptions').upsert({user_id:ud.user.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,updated_at:new Date().toISOString()},{onConflict:'user_id,endpoint'});}catch(e){console.warn('[push] subscribePush error',e);}},
 locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap();if(!navigator.geolocation)return toast('GPS indisponible.','bad');if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.firstFix=true}S.watchId=navigator.geolocation.watchPosition(async pos=>{let{latitude:lat,longitude:lng,speed,heading}=pos.coords;S.myLat=lat;S.myLng=lng;S.lastSpeed=Math.max(0,Math.round((Number(speed)||0)*3.6));$('speedVal').textContent=S.lastSpeed;if(S.autoFollow||S.firstFix){S.map?.setView([lat,lng],S.mapView==='drive'?18:16,{animate:false});S.firstFix=false}if(S.myMarker)S.map.removeLayer(S.myMarker);S.myMarker=L.marker([lat,lng],{icon:icon(S.profile?.vehicle_color||'other',true,heading!=null&&!isNaN(heading)?heading:null),zIndexOffset:0,riseOnHover:false}).addTo(S.map);S.myMarker.on('click',()=>{S.contextVehicle={plate:this.ownPlate()||'',lat:S.myLat,lng:S.myLng,marker:S.myMarker,_self:true};this.showVehicleContextMenu(S.contextVehicle);});this.checkRoute();this.updateDrivingMode();this.updateCommunityStatus();let{data:ud}=await sb.auth.getUser();if(ud?.user&&!S.invisible){
         await sb.from('user_locations').upsert({id:ud.user.id,user_name:ud.user.email,latitude:lat,longitude:lng,updated_at:new Date().toISOString()});
         if(!S._lastOthersRefresh || Date.now()-S._lastOthersRefresh>8000){S._lastOthersRefresh=Date.now();this.loadOthers?.();}
@@ -2467,7 +2470,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v21';
+      var CURRENT = 'immatconnect-pro-v22';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -2511,7 +2514,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v21';
+  var CURRENT = 'immatconnect-pro-v22';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();

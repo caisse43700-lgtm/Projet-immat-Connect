@@ -288,6 +288,8 @@ const CallManager = (function () {
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
     _showSentBanner(receiverPlate, data.id); // après CALL_INITIATED — dedup si CallScreen déjà ouvert
+    // Push notification vers B si son app est fermée (fire-and-forget, n'affecte pas le flux d'appel)
+    try{if(_sb&&receiverId){_sb.functions.invoke('send-push-notification',{body:{targetUserId:receiverId,title:'📞 Appel entrant — ImmatConnect',body:(_myPlate||'Un conducteur')+' vous appelle',data:{type:'call',requestId:data.id,plate:_myPlate||''},tag:'call-'+data.id}}).catch(()=>{});}}catch(e){}
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
