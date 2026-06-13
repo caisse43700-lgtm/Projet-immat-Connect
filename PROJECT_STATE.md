@@ -83,6 +83,7 @@ Exécuter dans cet ordre exact :
 |---|---|---|---|
 | ~~01~~ | ~~Bouton urgence 15/17/18 dans sigStep2Vehicle + sigStep2Aide~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | ~~02~~ | ~~Supprimer `core/call-webrtc.js` + Edge Function `get-turn-credentials`~~ | ~~repo~~ | ~~✅ FAIT~~ |
+| ~~03~~ | ~~Effacer `ic_pending_profile` après signup réussi~~ | ~~`index.html`~~ | ~~✅ FAIT~~ |
 | 03 | Effacer `ic_pending_profile` après signup réussi | `index.html` ou `ui.js` | 30 min |
 | 04 | Onglet Appels dans la nav principale + badge manqués | `index.html`, `calls.js`, `messages.js` | 1j |
 | 05 | Push notifications SW Level 2 (VAPID) | `service-worker.js`, Edge Function à créer | 2j |
@@ -348,6 +349,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
 | 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
 | 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
+| 2026-06-13 | IA session | Sprint 1 #03 terminé — ic_pending_profile effacé dans openMap() |
 
 ---
 
