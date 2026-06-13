@@ -5,6 +5,18 @@
 const CallManager = (function () {
   'use strict';
 
+  // Identifiant unique par appareil — persiste dans localStorage pour détecter multi-device
+  const _deviceId = (function() {
+    try {
+      let id = localStorage.getItem('ic_device_id');
+      if (!id) {
+        id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('ic_device_id', id);
+      }
+      return id;
+    } catch(e) { return 'dev-' + Math.random().toString(36).slice(2, 10); }
+  })();
+
   let _sb = null;
   let _uid = null;
   let _myPlate = null;
@@ -303,7 +315,7 @@ const CallManager = (function () {
     if (!_sb || !requestId) return;
     const { data, error } = await _sb
       .from('call_requests')
-      .update({ status: 'accepted', responded_at: new Date().toISOString() })
+      .update({ status: 'accepted', responded_at: new Date().toISOString(), accepted_device_id: _deviceId })
       .eq('id', requestId)
       .eq('receiver_id', _uid)
       .eq('status', 'pending')
@@ -432,8 +444,22 @@ const CallManager = (function () {
         event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'receiver_id=eq.' + uid,
       }, p => {
         // Statut terminal côté récepteur — A a annulé/expiré avant que B accepte
+        // Ou: appel accepté par un autre appareil de B
         const r = p.new;
         if (!r) return;
+        if (r.status === 'accepted') {
+          // Si un autre appareil de B a accepté : masquer la popup sur cet appareil-ci
+          if (r.accepted_device_id && r.accepted_device_id !== _deviceId) {
+            const tid = _missedTimers.get(r.id);
+            if (tid) clearTimeout(tid);
+            _missedTimers.delete(r.id);
+            try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('answered-elsewhere'); } catch(e) {}
+            _hideIncomingPopup();
+            _seenIncomingCallIds.add(r.id);
+            try { if (typeof toast === 'function') toast('📱 Appel pris sur votre autre appareil.', 'ok'); } catch(e) {}
+          }
+          return;
+        }
         if (['cancelled', 'expired', 'refused', 'ended'].indexOf(r.status) === -1) return;
         console.log('[CallManager] postgres_changes UPDATE entrant terminal:', r.status, r.id);
         try { if (typeof toast === 'function') toast('📡 PG-UPDATE: ' + r.status, 'ok'); } catch(e) {}
