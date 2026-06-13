@@ -159,11 +159,40 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-Aucune. Pré-déploiement S6 sécurisé le 2026-06-13. Prochaine : S7-NEARBY.
+Aucune. Phase documentation terminée (2026-06-13). Prochaine : exécution terrain.
 
 ---
 
-## 4. PROCHAINE MISSION RECOMMANDÉE
+## 4. PROCHAINE MISSION RECOMMANDÉE — EXÉCUTION TERRAIN (ordre strict)
+
+```
+1. Déployer les 11 migrations Supabase (ordre chronologique, 20260615 en dernier)
+2. Configurer les Supabase Secrets :
+     AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_PUBLIC_KEY,
+     VAPID_PRIVATE_KEY, VAPID_SUBJECT, ANTHROPIC_API_KEY
+3. Déployer les Edge Functions nouvelles/modifiées :
+     supabase functions deploy delete-account
+     supabase functions deploy export-user-data
+     supabase functions deploy submit-rating
+     supabase functions deploy send-push-notification
+   Vérifier que ces fonctions existent déjà :
+     get-agora-token, create-call-request, respond-call-request, immat-brain-dialog
+4. Activer Realtime uniquement sur les tables réellement abonnées
+   (messages, user_locations, à vérifier : call_requests, reports)
+5. Tester VAPID sur mobile réel (iOS + Android)
+6. Exécuter les 14 contrôles terrain (cf. PLAN_EXECUTION_30J_V1.2 dans docs/)
+7. GO bêta fermée uniquement si 11/11 contrôles critiques sont OK
+```
+
+**Référence :** `docs/PLAN_EXECUTION_30J_V1.2.md` — document figé, ne plus modifier.
+
+**Sujets à ne plus rouvrir :** noms EF, modèle IA, ANGE, rate limit client/serveur,
+public_profiles, public_reports, RLS profiles/reports, CGU, validation terrain.
+Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrain.
+
+---
+
+## SPRINTS HISTORIQUES
 
 **Sprint 1 — ✅ TERMINÉ (2026-06-13)**
 
@@ -350,7 +379,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v21
+SW version actif  : immatconnect-pro-v25
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -537,6 +566,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | Pré-déploiement S6 — sécurisation RLS profiles/reports + public_profiles + index manquants + SW v25 (commits 53e5348, 5746ad9, 75a066b) |
 | 2026-06-13 | IA session | Validation régressions RLS — 4 régressions corrigées (syncCommunityAlerts, calls.js, messages.js, afterAuth) — column-level grants + get_my_profile RPC (commit 1c0ddeb) |
 | 2026-06-13 | IA session | Décisions D12→D21 documentées — architecture pré-validée, mode mise en production contrôlée activé |
+| 2026-06-13 | IA session | Phase documentation stratégique terminée — 6 docs stratégiques + Plan d'exécution 30J v1.2 validé et figé |
 
 ---
 

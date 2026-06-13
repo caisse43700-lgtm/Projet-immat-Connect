@@ -5,6 +5,53 @@
 Ce fichier est le point d'entrée de reprise pour tout assistant IA.
 Lire ce fichier en entier avant toute action.
 
+---
+
+## SESSION 2026-06-13 — PHASE DOCUMENTATION STRATÉGIQUE (TERMINÉE)
+
+### Ce qui a été produit (documents uniquement, aucun code modifié)
+
+- Architecture Review pré-Sprint 8 (8 sections : RLS, indexes, Realtime, localStorage, SW, Edge Functions, Deployment, Risk)
+- GO/NO-GO checklist sécurisation RLS (rollback corrigé — jamais USING(true))
+- Validation terrain régressions RLS (4 régressions identifiées et corrigées en session précédente)
+- Documents stratégiques (6) : Worst Case Scenarios, ANGE Spec, Business Review, CNIL, Cost Review, Roadmap
+- **Plan d'exécution 30 jours v1.2 — VALIDÉ ET FIGÉ** → `docs/PLAN_EXECUTION_30J_V1.2.md`
+
+### Décisions figées dans ce plan (ne plus rouvrir)
+
+- Noms Edge Functions corrects : delete-account, export-user-data, submit-rating, send-push-notification (+ 4 existantes)
+- Secrets : ANTHROPIC_API_KEY (pas OPENAI_API_KEY), VAPID_SUBJECT ajouté
+- Modèle IA : Claude via immat-brain-dialog (pas gpt-4o-mini)
+- ANGE = Assistant Numérique de Guidage et d'Écoute (définition unique)
+- Rate limit client = UX uniquement ; rate limit serveur = sécurité réelle (table rate_limit_counters dédiée)
+- Pas d'impact trust_level automatique sur volume de reports — needs_review flag + notification modération
+- is_deleted ≠ suspension (colonne account_status = migration future)
+- Export RGPD = messages envoyés + reçus avec minimisation
+- Realtime = activer uniquement tables réellement abonnées
+- 14 contrôles terrain (dont 11 critiques) — 0 KO critique = condition GO bêta
+
+### État des fichiers après cette session
+
+```
+docs/PLAN_EXECUTION_30J_V1.2.md  → CRÉÉ (document figé)
+PROJECT_STATE.md                  → MIS À JOUR (section 3, 4, 9, historique)
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucune modification de code. Aucun commit de code. Phase documentation = terminée.
+
+### Prochaine étape : exécution terrain (ordre strict)
+
+1. Déployer 11 migrations Supabase (20260615 en dernier)
+2. Configurer Secrets Supabase (AGORA_APP_CERTIFICATE, VAPID_PRIVATE_KEY, ANTHROPIC_API_KEY)
+3. Déployer 4 Edge Functions nouvelles/modifiées
+4. Activer Realtime sur tables confirmées uniquement
+5. Tester VAPID sur mobile réel
+6. Exécuter 14 contrôles terrain — 0 KO critique requis
+7. GO bêta fermée 10–20 utilisateurs
+
+---
+
 ## ÉTAT PRODUCTION — 2026-06-10
 
 ```text
