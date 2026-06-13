@@ -544,7 +544,7 @@ function render(){
 
   list.innerHTML = threads.map(t=>{
     const last = t.last || {};
-    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = last.created_at ? (typeof relTime==='function'?relTime(new Date(last.created_at).getTime()):new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     const trust = getTrust(t.plate);
     const isFav = favs.includes(nPlate(t.plate));
     const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
@@ -602,7 +602,7 @@ function _renderArchivedSection(list){
   section.style.display = 'none';
   section.innerHTML = archThreads.map(t => {
     const last = t.last || {};
-    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = last.created_at ? (typeof relTime==='function'?relTime(new Date(last.created_at).getTime()):new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     return `
       <div class="ic-mail-row" data-plate="${esc(t.plate)}" style="opacity:.7">
         <div class="ic-avatar">📂</div>
@@ -666,7 +666,7 @@ function _renderTimeline(body, messages, callEvents){
   ].sort((a,b) => a._ts - b._ts);
 
   body.innerHTML = allEvents.map(item => {
-    const timeStr = item._ts ? new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     if(item._type === 'call'){
       const isOut = item.outgoing;
       const statusLabel = {

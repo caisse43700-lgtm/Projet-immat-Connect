@@ -247,6 +247,20 @@ const CallManager = (function () {
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
 
+    // Rate limit: max 3 call requests per 10 minutes (client-side guard)
+    try {
+      const _now = Date.now(), _window = 10 * 60 * 1000, _max = 3;
+      let _times = JSON.parse(localStorage.getItem('ic_call_times') || '[]');
+      _times = _times.filter(t => _now - t < _window);
+      if (_times.length >= _max) {
+        const _wait = Math.ceil((_window - (_now - _times[0])) / 60000);
+        try { if (typeof toast === 'function') toast('⏳ Trop de demandes d\'appel. Réessayez dans ' + _wait + ' min.', 'bad'); } catch(e) {}
+        return;
+      }
+      _times.push(_now);
+      localStorage.setItem('ic_call_times', JSON.stringify(_times));
+    } catch(e) {}
+
     if(_isCallBlocked(receiverPlate)){
       _showCallsNotAllowed(receiverPlate);
       return;
