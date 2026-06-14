@@ -1975,7 +1975,37 @@ App.fcAction=function(n){
 };
 
 window.App=App;
-if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT'){if(S.uid)toast('Session expirée. Reconnecte-toi.','bad');App.show('sw')}});
+if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT'){
+  // Capture avant reset
+  const _was=!!S.uid;
+  // 1. Arrêt GPS
+  try{if(S.watchId!==null){navigator.geolocation.clearWatch(S.watchId);S.watchId=null;}}catch(_){}
+  // 2. Désinscription Realtime
+  try{if(S.chMsg){sb.removeChannel(S.chMsg);S.chMsg=null;}}catch(_){}
+  try{if(S.chLoc){sb.removeChannel(S.chLoc);S.chLoc=null;}}catch(_){}
+  try{if(S.chReports){sb.removeChannel(S.chReports);S.chReports=null;}}catch(_){}
+  try{if(S.chCommunityReports){sb.removeChannel(S.chCommunityReports);S.chCommunityReports=null;}}catch(_){}
+  try{window.ImmatMessages?.unsubscribe?.();}catch(_){}
+  // 3. Reset état auth
+  S.uid=null;S._authRunning=false;S.profile=null;
+  // 4. Reset état utilisateur en mémoire
+  S.nearby=[];S.alerts=[];S.alertHistory=[];S.recent=[];
+  S.conv='all';S.selPlate=null;S.unreadMsgCount=0;
+  S.myLat=null;S.myLng=null;S.frontVehicle=null;
+  try{S._actMessages=[];}catch(_){}
+  try{S._unseenMissedCalls=0;}catch(_){}
+  try{S._authRunning=false;}catch(_){}
+  // 5. Reset affichage chip profil
+  try{$('tbPlate').textContent='--';}catch(_){}
+  try{$('tbPseudo').textContent='';}catch(_){}
+  // 6. Reset badges
+  try{const b=$('msgNavBadge');if(b){b.textContent='0';b.style.display='none';}}catch(_){}
+  try{const b=$('callNavBadge');if(b){b.textContent='0';b.style.display='none';}}catch(_){}
+  try{const b=$('actBadge');if(b){b.textContent='0';b.style.display='none';}}catch(_){}
+  // 7. Toast + écran d'accueil
+  if(_was)toast('Session expirée. Reconnecte-toi.','bad');
+  App.show('sw');
+}});
 async function boot(){try{window.App=App;bind();App.setMode('login');if(!sb){toast('Supabase non chargé.','bad');App.show('sw');return}if(((location.hash||'')+(location.search||'')).toLowerCase().includes('type=recovery'))return App.show('sr');let{data}=await withTimeout(sb.auth.getSession(),10000,'Session Supabase indisponible.');if(data?.session)await App.afterAuth();else App.show('sw')}catch(e){console.error('BOOT_ERROR',e);App.show('sw');toast('Erreur de démarrage.','bad');st('authSt',authMessage(e),'error')}}
 
 // Ferme overlays et mini le sheet quand on touche la carte
