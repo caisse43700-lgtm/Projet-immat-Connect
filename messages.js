@@ -544,7 +544,7 @@ function render(){
 
   list.innerHTML = threads.map(t=>{
     const last = t.last || {};
-    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = last.created_at ? (typeof relTime==='function'?relTime(new Date(last.created_at).getTime()):new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     const trust = getTrust(t.plate);
     const isFav = favs.includes(nPlate(t.plate));
     const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
@@ -602,7 +602,7 @@ function _renderArchivedSection(list){
   section.style.display = 'none';
   section.innerHTML = archThreads.map(t => {
     const last = t.last || {};
-    const timeStr = last.created_at ? new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = last.created_at ? (typeof relTime==='function'?relTime(new Date(last.created_at).getTime()):new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     return `
       <div class="ic-mail-row" data-plate="${esc(t.plate)}" style="opacity:.7">
         <div class="ic-avatar">📂</div>
@@ -666,7 +666,7 @@ function _renderTimeline(body, messages, callEvents){
   ].sort((a,b) => a._ts - b._ts);
 
   body.innerHTML = allEvents.map(item => {
-    const timeStr = item._ts ? new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     if(item._type === 'call'){
       const isOut = item.outgoing;
       const statusLabel = {
@@ -685,7 +685,8 @@ function _renderTimeline(body, messages, callEvents){
       <div class="ic-bubble-text">${esc(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
-        <button class="ic-delete-msg" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
+        ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}
+        <button class="ic-delete-msg" aria-label="Supprimer ce message" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
       </div>
     </div>`;
   }).join('');
@@ -831,6 +832,19 @@ async function sendToPlate(plate,text,opts){
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
 
+  // Rate limit : max 5 messages par minute (client-side guard)
+  try {
+    const _now = Date.now(), _win = 60000, _max = 5;
+    let _times = JSON.parse(localStorage.getItem('ic_msg_times') || '[]');
+    _times = _times.filter(t => _now - t < _win);
+    if (_times.length >= _max) {
+      toast('⏳ Trop de messages. Patientez une minute avant d\'en envoyer d\'autres.', 'bad');
+      return false;
+    }
+    _times.push(_now);
+    localStorage.setItem('ic_msg_times', JSON.stringify(_times));
+  } catch(e) {}
+
   // Bloc bidirectionnel : A ne peut pas contacter une plaque qu'il a bloquée (INV-COM-024)
   const outgoingBlock = getBlockLevel(plate);
   if(outgoingBlock === BLOCK_LEVELS.MESSAGES || outgoingBlock === BLOCK_LEVELS.ALL){
@@ -875,6 +889,8 @@ async function sendToPlate(plate,text,opts){
 
   State.activePlate = receiverPlate;
   toast('Message envoyé à ' + receiverPlate + '.','ok');
+  // Push fire-and-forget vers le destinataire (INV-COM-010 : plaque uniquement, pas le contenu)
+  try{const _c=sb();if(_c&&target?.id){_c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:'💬 ImmatConnect — Nouveau message',body:senderPlate+' vous a envoyé un message',data:{type:'message',plate:senderPlate},tag:'msg-'+senderPlate}}).catch(()=>{});}}catch(e){}
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{

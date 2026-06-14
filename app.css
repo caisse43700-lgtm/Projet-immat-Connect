@@ -706,13 +706,14 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   border-radius: 20px;
   padding: 14px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0;
   box-shadow: 0 20px 60px rgba(0,0,0,.5);
   animation: fcSlideUp .3s cubic-bezier(.22,1,.36,1);
   color: #eef6ff;
 }
 @keyframes fcSlideUp { from { transform: translateY(120px); opacity: 0; } to { transform: none; opacity: 1; } }
+.fc-main-row { display: flex; align-items: center; gap: 12px; }
 .fc-icon { font-size: 28px; flex: 0 0 auto; }
 .fc-body { flex: 1; min-width: 0; }
 .fc-title { font-weight: 950; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -721,6 +722,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .fc-btn { border-radius: 12px; padding: 8px 12px; font-size: 12px; font-weight: 950; }
 .fc-ok { background: rgba(255,255,255,.12); color: #eef6ff; }
 .fc-go { background: var(--green); color: #06140f; }
+.fc-extra-actions { display: flex; gap: 6px; margin-top: 10px; }
+.fc-extra-btn { flex: 1; border-radius: 10px; padding: 9px 4px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; text-align: center; }
 
 /* ── PANNEAU SIGNALER 2 ÉTAPES ── */
 .sig-step { display: none; }
@@ -756,6 +759,10 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-main-hd { margin-bottom: 16px; }
 .act-main-title { font-size: 22px; font-weight: 950; color: var(--text); }
 .act-main-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.act-search-bar { display:flex; gap:8px; margin-bottom:14px; }
+.act-search-bar input { flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:var(--text); font-size:14px; padding:9px 14px; outline:none; font-family:inherit; }
+.act-search-bar input:focus { border-color:rgba(41,121,255,.5); background:rgba(255,255,255,.09); }
+.act-search-bar button { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:var(--muted); font-size:16px; padding:0 14px; cursor:pointer; flex-shrink:0; }
 .act-cats-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
 /* Cartes catégories */
 .act-categories { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
@@ -925,4 +932,123 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
 /* Media query : garder 3 colonnes sur grands écrans */
 @media (min-width: 400px) {
   .alert-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Modal légal (onglets) ── */
+.legal-modal-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+.legal-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.legal-tab {
+  flex: 1;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #2a3c56;
+  background: #0b1420;
+  color: #9aacc2;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .14s ease;
+}
+.legal-tab.active {
+  background: rgba(0,255,179,.14);
+  border-color: #00ffb3;
+  color: #00ffb3;
+}
+.legal-content {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #c8d6e8;
+  -webkit-overflow-scrolling: touch;
+}
+.legal-content h3 {
+  font-size: 16px;
+  font-weight: 950;
+  color: #eef6ff;
+  margin-bottom: 10px;
+}
+.legal-content b {
+  display: block;
+  color: #eef6ff;
+  margin: 12px 0 4px;
+  font-size: 13px;
+}
+.legal-content p {
+  margin: 0 0 2px;
+  color: #9aacc2;
+}
+
+/* ── Filtre alertes carte ── */
+.map-alert-filter-bar {
+  position: fixed;
+  bottom: calc(var(--safe-bottom, 0px) + var(--nav-h, 56px) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(10,16,26,.82);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  pointer-events: all;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.map-alert-filter-bar::-webkit-scrollbar { display: none; }
+
+.map-filter-pill {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: #9aacc2;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: .14s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.map-filter-pill.active {
+  background: rgba(0,255,179,.18);
+  border-color: #00ffb3;
+  color: #00ffb3;
+}
+.map-filter-pill:active { transform: scale(.94); }
+
+/* ── Cluster icons (Leaflet.markercluster) ── */
+.cluster-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0,200,255,.22);
+  border: 2px solid rgba(0,200,255,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.45);
+}
+.cluster-icon span {
+  color: #00c8ff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
 }

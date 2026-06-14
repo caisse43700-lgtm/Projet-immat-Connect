@@ -5,6 +5,18 @@
 const CallManager = (function () {
   'use strict';
 
+  // Identifiant unique par appareil — persiste dans localStorage pour détecter multi-device
+  const _deviceId = (function() {
+    try {
+      let id = localStorage.getItem('ic_device_id');
+      if (!id) {
+        id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('ic_device_id', id);
+      }
+      return id;
+    } catch(e) { return 'dev-' + Math.random().toString(36).slice(2, 10); }
+  })();
+
   let _sb = null;
   let _uid = null;
   let _myPlate = null;
@@ -235,6 +247,20 @@ const CallManager = (function () {
   async function requestCall(receiverPlate, receiverId) {
     if (!_sb || !_uid) return;
 
+    // Rate limit: max 3 call requests per 10 minutes (client-side guard)
+    try {
+      const _now = Date.now(), _window = 10 * 60 * 1000, _max = 3;
+      let _times = JSON.parse(localStorage.getItem('ic_call_times') || '[]');
+      _times = _times.filter(t => _now - t < _window);
+      if (_times.length >= _max) {
+        const _wait = Math.ceil((_window - (_now - _times[0])) / 60000);
+        try { if (typeof toast === 'function') toast('⏳ Trop de demandes d\'appel. Réessayez dans ' + _wait + ' min.', 'bad'); } catch(e) {}
+        return;
+      }
+      _times.push(_now);
+      localStorage.setItem('ic_call_times', JSON.stringify(_times));
+    } catch(e) {}
+
     if(_isCallBlocked(receiverPlate)){
       _showCallsNotAllowed(receiverPlate);
       return;
@@ -288,6 +314,8 @@ const CallManager = (function () {
     _joinCallSignal(data.id); // A rejoint le canal signal dès l'envoi pour pouvoir diffuser CANCEL
     _emitCallEvent('CALL_INITIATED', {to: receiverPlate, requestId: data.id, _src:'ImmatConnect/calls/requestCall'});
     _showSentBanner(receiverPlate, data.id); // après CALL_INITIATED — dedup si CallScreen déjà ouvert
+    // Push notification vers B si son app est fermée (fire-and-forget, n'affecte pas le flux d'appel)
+    try{if(_sb&&receiverId){_sb.functions.invoke('send-push-notification',{body:{targetUserId:receiverId,title:'📞 Appel entrant — ImmatConnect',body:(_myPlate||'Un conducteur')+' vous appelle',data:{type:'call',requestId:data.id,plate:_myPlate||''},tag:'call-'+data.id}}).catch(()=>{});}}catch(e){}
     try{ window.InteractionEngine?.create?.({type:'CALL_REQUEST', initiator:_myPlate||'', target:receiverPlate||null, payload:{requestId:data.id}, status:'pending'}); }catch(e){}
   }
 
@@ -301,7 +329,7 @@ const CallManager = (function () {
     if (!_sb || !requestId) return;
     const { data, error } = await _sb
       .from('call_requests')
-      .update({ status: 'accepted', responded_at: new Date().toISOString() })
+      .update({ status: 'accepted', responded_at: new Date().toISOString(), accepted_device_id: _deviceId })
       .eq('id', requestId)
       .eq('receiver_id', _uid)
       .eq('status', 'pending')
@@ -430,8 +458,22 @@ const CallManager = (function () {
         event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'receiver_id=eq.' + uid,
       }, p => {
         // Statut terminal côté récepteur — A a annulé/expiré avant que B accepte
+        // Ou: appel accepté par un autre appareil de B
         const r = p.new;
         if (!r) return;
+        if (r.status === 'accepted') {
+          // Si un autre appareil de B a accepté : masquer la popup sur cet appareil-ci
+          if (r.accepted_device_id && r.accepted_device_id !== _deviceId) {
+            const tid = _missedTimers.get(r.id);
+            if (tid) clearTimeout(tid);
+            _missedTimers.delete(r.id);
+            try { if (window.AudioManager?.stopCallAudio) window.AudioManager.stopCallAudio('answered-elsewhere'); } catch(e) {}
+            _hideIncomingPopup();
+            _seenIncomingCallIds.add(r.id);
+            try { if (typeof toast === 'function') toast('📱 Appel pris sur votre autre appareil.', 'ok'); } catch(e) {}
+          }
+          return;
+        }
         if (['cancelled', 'expired', 'refused', 'ended'].indexOf(r.status) === -1) return;
         console.log('[CallManager] postgres_changes UPDATE entrant terminal:', r.status, r.id);
         try { if (typeof toast === 'function') toast('📡 PG-UPDATE: ' + r.status, 'ok'); } catch(e) {}
