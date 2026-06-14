@@ -397,19 +397,28 @@ async function renderCallLog(){
     list.innerHTML = '<div class="ic-empty ic-empty-help">📞 Aucun appel pour l\'instant.</div>';
     return;
   }
-  const statusLabel = {pending:'En attente',accepted:'Accepté ✅',refused:'Refusé',cancelled:'Annulé'};
-  list.innerHTML = calls.map(c=>{
-    const dir = c.outgoing ? '📤 Émis' : '📥 Reçu';
+  // Grouper par plaque : 1 entrée par interlocuteur (appel le plus récent en tête)
+  const byPlate = new Map();
+  for(const c of calls){
+    if(!byPlate.has(c.plate)) byPlate.set(c.plate, {latest:c, count:1});
+    else byPlate.get(c.plate).count++;
+  }
+  const statusLabel = {pending:'En attente',accepted:'Accepté ✅',refused:'Refusé',cancelled:'Annulé',missed:'Manqué ☎️',expired:'Expiré'};
+  const statusColor = {accepted:'#4caf50',refused:'#e53935',missed:'#e53935',cancelled:'#64748b',expired:'#64748b',pending:'#f0a500'};
+  list.innerHTML = [...byPlate.values()].map(({latest:c, count})=>{
+    const dir = c.outgoing ? 'Émis' : 'Reçu';
     const sl = statusLabel[c.status] || c.status;
+    const col = statusColor[c.status] || '#888';
     const time = c.at ? new Date(c.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
-      <span style="font-size:18px">${c.outgoing?'📤':'📥'}</span>
+    const countBadge = count > 1 ? `<span style="font-size:10px;background:rgba(255,255,255,.1);color:#aaa;border-radius:10px;padding:1px 6px;margin-left:4px">×${count}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:20px">${c.outgoing?'📤':'📥'}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:14px">${esc(c.plate)}</div>
-        <div style="font-size:11px;color:#888">${dir} · ${sl}</div>
+        <div style="font-weight:700;font-size:14px;color:#e2e8f0">${esc(c.plate)}</div>
+        <div style="font-size:11px;margin-top:2px"><span style="color:${col}">${sl}</span><span style="color:#555"> · ${dir}</span>${countBadge}</div>
       </div>
-      <div style="font-size:11px;color:#555;flex-shrink:0">${time}</div>
-      <button type="button" onclick="CallManager.openContactOptions('${esc(c.plate)}')" style="background:rgba(41,121,255,.15);color:#2979ff;border:1px solid rgba(41,121,255,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">📞 Rappeler</button>
+      <div style="font-size:11px;color:#555;flex-shrink:0;text-align:right">${time}</div>
+      <button type="button" onclick="CallManager.openContactOptions('${esc(c.plate)}')" style="background:rgba(41,121,255,.15);color:#2979ff;border:1px solid rgba(41,121,255,.3);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;flex-shrink:0;font-weight:600">📞</button>
     </div>`;
   }).join('');
 }
