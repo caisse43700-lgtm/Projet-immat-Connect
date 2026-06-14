@@ -45,10 +45,14 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix panneau Activité ne s'ouvrant pas (PR #305)**
+**Mission : Fix panneau Activité ne s'ouvrant pas — CSS min-height (PR #307 à venir)**
 **Date :** 2026-06-14
-**Cause racine :** `openActivityCat()` masquait `actMain` (style.display='none') et montrait `actCatPanel` (display:flex + height:100%). Si l'utilisateur avait précédemment ouvert une catégorie et changé de panneau sans fermer, `actMain` restait caché. Au retour sur Activité, `panelActivite.on` → display:block mais `actMain` display:none → hauteur nulle → le sheet montait de quelques pixels seulement (handle + border-radius).
-**Fix :** Dans `navActivite()`, reset de `S._actCat`, `actMain.style.display=''` et `actCatPanel.style.display='none'` avant `panel('activite')`. Ajout d'un `App.openSheet?.()` explicite pour fiabiliser l'ouverture.
+**Cause racine profonde :** Bug iOS Safari WKWebView — quand un conteneur flex (`display:flex`) est enfant direct d'un parent qui passe de `display:none` → `display:block` dans la même frame de rendu, le navigateur calcule la hauteur du flex à 0. `void el.offsetHeight` (forcé reflow) ne corrige pas ce bug dans WKWebView PWA.
+**Conséquence :** `.act-main` (flex) dans `#panelActivite` (display:block) avait hauteur=0 → sheet height = 37px seulement (handle+padding) → `translateY(100%)` = 37px → le sheet "montait légèrement" de 37px au lieu d'être pleinement visible.
+**Fix CSS :** `min-height: 50vh` ajouté sur `.act-main` dans `app.css`. Garantit une hauteur non-nulle quelle que soit l'état du rendu iOS.
+**Fixes JS précédents (insuffisants seuls) :**
+- PR #305 : reset `actMain.style.display=''` + `actCatPanel.style.display='none'` dans `navActivite()` 
+- PR #306 : `void s.offsetHeight` dans `openSheet()` pour forcer reflow
 
 ---
 
@@ -198,7 +202,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 3. MISSION EN COURS
 
-GO LIVE — Tests terrain B2→B5 à compléter. Panneau Activité fixé (PR #305). REVOKE en attente.
+GO LIVE — Fix CSS `min-height: 50vh` sur `.act-main` poussé sur branche (à merger). Tests terrain B2→B5 à compléter après validation panneau Activité. REVOKE en attente.
 
 ---
 
@@ -620,6 +624,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | GO LIVE session — 6 Secrets Supabase configurés, 5 EF déployées via GH Actions, Realtime OK, B1 PII ✅, messages.js fix, GRANT phone, push button Settings, merge main calls v16 |
 | 2026-06-14 | IA session | GO LIVE session (suite) — PR #300 mergée → main, call log dédupliqué (×N par plaque), fix SW banner loop (CURRENT v22→v25 dans index.html) |
 | 2026-06-14 | IA session | GO LIVE session (suite 2) — PR #301 (SW banner), #302 (locate debug), #303 (SIGNED_OUT reset), #304 (bottom-nav 4 colonnes), #305 (panneau Activité) |
+| 2026-06-14 | IA session | GO LIVE session (suite 3) — PR #306 (void offsetHeight reflow), CSS fix min-height:50vh sur .act-main (bug iOS Safari flex hauteur=0) |
 
 ---
 

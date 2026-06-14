@@ -7,6 +7,34 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — Fix panneau Activité : CSS min-height (EN COURS)
+
+### Bug persistant après PR #305 + PR #306
+
+**PR #305** — fix `navActivite()` reset `actMain.style.display=''` → user : "Non toujours rien"  
+**PR #306** — `void s.offsetHeight` dans `openSheet()` avant `classList.remove('mini')` → user : "Ça ne fonctionne toujours pas"
+
+**Analyse approfondie :**
+
+Physics du bug : sheet sans contenu visible = 8px(pad-top) + 5px(handle) + 12px(handle margin-bottom) + 12px(pad-bottom) = 37px total. `translateY(100%)` = 100% × 37px = 37px. Retirer `.mini` → sheet monte de 37px seulement.
+
+Bug iOS Safari WKWebView (mode PWA) : quand un parent passe de `display:none` → `display:block`, les enfants `display:flex` calculent leur hauteur à 0 dans la même frame de rendu. `void el.offsetHeight` censé forcer un reflow synchrone, mais WKWebView l'ignore dans ce contexte (bug connu iOS Safari).
+
+**Fix CSS (résistant à iOS) :** `min-height: 50vh` sur `.act-main` dans `app.css`.
+- Garantit hauteur ≥ 50vh quelle que soit la phase de rendu iOS
+- Indépendant du JS, s'applique avant toute animation
+- N'affecte pas les autres panels
+
+**Fichier modifié :** `app.css` ligne 758
+```css
+/* AVANT */ .act-main { display: flex; flex-direction: column; gap: 0; }
+/* APRÈS */ .act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; }
+```
+
+**Note :** Le branch diverge de main (branch a moins 1 ligne `App.openSheet?.();` dans navActivite mais panel() l'appelle déjà en interne — non-régressif).
+
+---
+
 ## SESSION 2026-06-14 — GO LIVE fixes #301→#305 (EN COURS)
 
 ### PRs de cette session (toutes mergées sauf #305 en attente)
