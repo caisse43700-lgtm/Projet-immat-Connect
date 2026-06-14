@@ -755,7 +755,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 
 /* ── ACTIVITÉ REFONDÉE ── */
 /* Écran principal */
-.act-main { display: flex; flex-direction: column; gap: 0; }
+.act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; }
 .act-main-hd { margin-bottom: 16px; }
 .act-main-title { font-size: 22px; font-weight: 950; color: var(--text); }
 .act-main-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }

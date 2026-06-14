@@ -7,6 +7,46 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — Fix panneau Activité : force .full + disable transition (PR #307)
+
+### Historique des tentatives
+
+| Tentative | Fix | Résultat |
+|---|---|---|
+| PR #305 | Reset `actMain.style.display=''` dans navActivite | "Non toujours rien" |
+| PR #306 | `void s.offsetHeight` dans openSheet() | "Ça ne fonctionne toujours pas" |
+| PR #307 commit 1 | `min-height: 50vh` sur `.act-main` (CSS) | "Non marche pas" |
+| PR #307 commit 2 | Force `.full` + disable transition (JS) | **à tester** |
+
+### Cause racine définitive
+
+`translateY(100%)` dans `.sheet.mini` est calculé par iOS Safari WKWebView AVANT que le layout flex `.act-main` soit résolu. La valeur de départ de la transition CSS est donc `37px` (height du handle+padding seulement), pas `50vh`. La transition anime de `37px → 0` → le sheet "monte légèrement" de 37px.
+
+Ni `void offsetHeight`, ni `min-height` CSS ne changent ce comportement car WKWebView calcule `translateY(100%)` dans la même microtask que le changement de classe.
+
+### Fix définitif
+
+`.sheet.full` utilise `top: calc(var(--safe-top) + 8px)` ET `bottom: calc(var(--nav-h) + ...)` → hauteur EXPLICITE via CSS anchors, pas dépendante du contenu flex. `translateY(100%)` = hauteur viewport ≈ 660px → animation correcte.
+
+```js
+// Dans navActivite(), après this.panel('activite') :
+try{
+  const _s=document.getElementById('sheet');
+  if(_s){
+    _s.style.transition='none';    // désactive CSS transition pendant l'opération
+    _s.style.transform='';          // clear tout inline transform (drag résidu)
+    _s.classList.remove('mini','full');
+    _s.classList.add('full');       // hauteur explicite → translateY(100%) = ~660px
+    void _s.offsetHeight;           // flush
+    S.sheetSnap='full';
+    requestAnimationFrame(()=>{if(_s)_s.style.transition='';});  // réactive transition
+  }
+}catch(_){}
+```
+
+---
+
+
 ## SESSION 2026-06-14 — GO LIVE fixes #301→#305 (EN COURS)
 
 ### PRs de cette session (toutes mergées sauf #305 en attente)

@@ -45,10 +45,14 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix panneau Activité ne s'ouvrant pas (PR #305)**
+**Mission : Fix panneau Activité ne s'ouvrant pas — PR #307 (force .full + disable transition)**
 **Date :** 2026-06-14
-**Cause racine :** `openActivityCat()` masquait `actMain` (style.display='none') et montrait `actCatPanel` (display:flex + height:100%). Si l'utilisateur avait précédemment ouvert une catégorie et changé de panneau sans fermer, `actMain` restait caché. Au retour sur Activité, `panelActivite.on` → display:block mais `actMain` display:none → hauteur nulle → le sheet montait de quelques pixels seulement (handle + border-radius).
-**Fix :** Dans `navActivite()`, reset de `S._actCat`, `actMain.style.display=''` et `actCatPanel.style.display='none'` avant `panel('activite')`. Ajout d'un `App.openSheet?.()` explicite pour fiabiliser l'ouverture.
+**Cause racine profonde :** iOS Safari WKWebView calcule `translateY(100%)` AVANT que le layout flex soit résolu dans la même frame. La valeur de départ de la transition est donc 37px (hauteur du handle+padding seulement) → le sheet "monte légèrement" de 37px. min-height CSS et void offsetHeight ne suffisent pas car WKWebView ignore le reflow synchrone dans ce contexte.
+**Fix définitif :** Dans `navActivite()`, forcer `.full` (hauteur explicite via `top+bottom` CSS, indépendant du contenu), désactiver la transition CSS (`style.transition='none'`), clear le transform inline, retirer `.mini`, puis réactiver la transition via `requestAnimationFrame`. `.sheet.full` utilise des ancres CSS — pas de calcul flex → animation correcte.
+**Fixes précédents (insuffisants) :**
+- PR #305 : reset `actMain.style.display=''` → "Non toujours rien"
+- PR #306 : `void s.offsetHeight` → "Ça ne fonctionne toujours pas"
+- PR #307 commit 1 : `min-height: 50vh` sur `.act-main` → "Non marche pas"
 
 ---
 
@@ -198,7 +202,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 3. MISSION EN COURS
 
-GO LIVE — Tests terrain B2→B5 à compléter. Panneau Activité fixé (PR #305). REVOKE en attente.
+GO LIVE — Fix définitif panneau Activité en cours (PR #307 — force .full + disable transition). Tests terrain B2→B5 à compléter. REVOKE en attente.
 
 ---
 
@@ -620,6 +624,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | GO LIVE session — 6 Secrets Supabase configurés, 5 EF déployées via GH Actions, Realtime OK, B1 PII ✅, messages.js fix, GRANT phone, push button Settings, merge main calls v16 |
 | 2026-06-14 | IA session | GO LIVE session (suite) — PR #300 mergée → main, call log dédupliqué (×N par plaque), fix SW banner loop (CURRENT v22→v25 dans index.html) |
 | 2026-06-14 | IA session | GO LIVE session (suite 2) — PR #301 (SW banner), #302 (locate debug), #303 (SIGNED_OUT reset), #304 (bottom-nav 4 colonnes), #305 (panneau Activité) |
+| 2026-06-14 | IA session | GO LIVE session (suite 3) — PR #306 (void offsetHeight), PR #307 (force .full + disable transition — fix définitif iOS WKWebView translateY bug) |
 
 ---
 
