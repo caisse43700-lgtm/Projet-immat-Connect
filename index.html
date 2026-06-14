@@ -1188,7 +1188,10 @@ App.navActivite=function(){
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.add('on');
+  S._actCat=null;
+  try{const _m=document.getElementById('actMain'),_cp=document.getElementById('actCatPanel');if(_m)_m.style.display='';if(_cp)_cp.style.display='none';}catch(_){}
   this.panel('activite');
+  App.openSheet?.();
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
   const now=Date.now();let changed=false;
