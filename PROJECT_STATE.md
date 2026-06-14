@@ -294,6 +294,9 @@ Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrai
 | **`docs/IMMATCONNECT_INTERACTION_ARCHITECTURE_MASTER_PLAN.md`** | Architecture conceptuelle (31 lignes) | Structure conceptuelle de référence (remplacé sur le fond par AUDIT_V2) |
 | **`docs/PLAN_EXECUTION_30J_V1.2.md`** | Plan d'exécution production 30 jours — figé v1.2 | Avant toute action terrain |
 | **`docs/MASTER_COMPATIBILITY_MAP.md`** | Carte de compatibilité v1.3 — GEL DOCUMENTAIRE FINAL (2203 lignes) — 25 risques, 14 hypothèses, 27 invariants, 42 tests terrain, 5 playbooks, 15 questions GO MAIN, STORAGE_REGISTRY, EVENT_REGISTRY, NOMENCLATURE_OFFICIELLE, SYSTEM_HEALTH_REGISTRY | Avant tout GO MAIN ou nouveau développement |
+| **`docs/DEPLOYMENT_LOG.md`** | Journal de déploiement opérationnel — checklist Secrets + 11 migrations + EF + Realtime + conditions merge main | Avant et pendant chaque déploiement terrain |
+| **`docs/TEST_RESULTS.md`** | Grille 42 contrôles terrain — résultats (✅/❌/⚠️/⬜) — GO/NO-GO MAIN | Pendant et après les sessions de test terrain |
+| **`docs/INCIDENT_LOG.md`** | Journal des incidents — format P1/P2/P3 — référence aux RISK et playbooks du MASTER_COMPATIBILITY_MAP | Dès qu'un ❌ ou dysfonctionnement est détecté |
 | **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
 
 **Hiérarchie de vérité :**
@@ -572,6 +575,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-13 | IA session | MASTER_COMPATIBILITY_MAP v1.1 créé — 38 sections : RISK-013→017, HYP-011→012, INV-021→022, FEATURE_REGISTRY, DATA_OWNERSHIP_REGISTRY, IMPACT_REGISTRY, FUTURE_FEATURE_GATE, DEBT-009→010, contrôles C15→C17, FUTURE_TABLES_RESERVED, playbooks crise (migration/Supabase down/IA hallucination), règles véhicule/stationnement, 10 questions GO MAIN |
 | 2026-06-13 | IA session | MASTER_COMPATIBILITY_MAP v1.2 — GEL DOCUMENTAIRE — RISK-018→025, HYP-013→014, INV-023→026, playbooks AGORA_DOWN + ANTHROPIC_DOWN, tests C18→C21, 15 questions GO MAIN, note de gel |
 | 2026-06-14 | IA session | MASTER_COMPATIBILITY_MAP v1.3 — GEL FINAL — Section 39 : hiérarchie sources de vérité, nomenclature officielle, STORAGE_REGISTRY, règle RGPD future, SYSTEM_HEALTH_REGISTRY, décision trust→owner_plate, impact parking, INV-027 documents véhicule, EVENT_REGISTRY, test onboarding 50min |
+| 2026-06-14 | IA session | Documents opérationnels créés — DEPLOYMENT_LOG.md + TEST_RESULTS.md + INCIDENT_LOG.md — documentation terrain complète, prêt pour l'exécution |
 
 ---
 

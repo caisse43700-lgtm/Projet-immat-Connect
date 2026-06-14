@@ -7,6 +7,34 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — DOCUMENTS OPÉRATIONNELS TERRAIN (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/INCIDENT_LOG.md — créé**
+- Format standard P1/P2/P3 avec seuils de priorité
+- Tableau de référence des 25 RISK du MASTER_COMPATIBILITY_MAP (Section 20)
+- Règles d'escalade par priorité (P1 : stopper GO + playbook immédiat)
+- Référence aux 5 playbooks (Sections 35/35b/35c/35d/35e)
+- Historique des incidents (vierge — INC-001 template prêt)
+
+**DEPLOYMENT_LOG.md** ✅ (créé session précédente, non encore commité)
+**TEST_RESULTS.md** ✅ (créé session précédente, non encore commité)
+
+**Commit :** à venir — 3 fichiers ensemble
+
+### Prochaine action recommandée
+
+Exécution terrain (fondateur) — dans l'ordre :
+1. Supabase SQL Editor → 11 migrations (ordre chronologique, 20260615 en dernier)
+2. Supabase Secrets → 6 secrets (AGORA_APP_CERTIFICATE, VAPID×3, ANTHROPIC_API_KEY)
+3. Edge Functions → 4 déploiements (delete-account, export-user-data, submit-rating, send-push-notification)
+4. Realtime → activer messages + user_locations
+5. Test terrain 42 contrôles (TEST_RESULTS.md)
+6. GO/NO-GO MAIN (0 ❌ sur contrôles critiques)
+
+---
+
 ## SESSION 2026-06-14 — GEL DOCUMENTAIRE FINAL MASTER_COMPATIBILITY_MAP v1.3 (TERMINÉE)
 
 ### Ce qui a été produit
