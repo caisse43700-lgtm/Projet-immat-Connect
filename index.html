@@ -1191,6 +1191,7 @@ App.navActivite=function(){
   S._actCat=null;
   try{const _m=document.getElementById('actMain'),_cp=document.getElementById('actCatPanel');if(_m)_m.style.display='';if(_cp)_cp.style.display='none';}catch(_){}
   this.panel('activite');
+  try{const _s=document.getElementById('sheet');if(_s){_s.style.transition='none';_s.style.transform='';_s.classList.remove('mini','full');_s.classList.add('full');void _s.offsetHeight;S.sheetSnap='full';try{S.map?.invalidateSize()}catch(_){}requestAnimationFrame(()=>{if(_s)_s.style.transition='';});}}catch(_){}
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
   const now=Date.now();let changed=false;
