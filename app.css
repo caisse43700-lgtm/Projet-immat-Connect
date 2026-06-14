@@ -246,7 +246,7 @@ button { border: 0; cursor: pointer; }
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255,255,255,.1);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   padding-bottom: var(--safe-bottom);
 }
@@ -666,7 +666,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     height: auto;
     width: calc(58px + env(safe-area-inset-left,0px));
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(3,1fr);
+    grid-template-rows: repeat(4,1fr);
     padding-bottom: 0;
     padding-left: env(safe-area-inset-left,0px);
     border-top: none;
