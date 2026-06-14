@@ -49,7 +49,6 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 **Date :** 2026-06-14
 **Cause racine :** `openActivityCat()` masquait `actMain` (style.display='none') et montrait `actCatPanel` (display:flex + height:100%). Si l'utilisateur avait précédemment ouvert une catégorie et changé de panneau sans fermer, `actMain` restait caché. Au retour sur Activité, `panelActivite.on` → display:block mais `actMain` display:none → hauteur nulle → le sheet montait de quelques pixels seulement (handle + border-radius).
 **Fix :** Dans `navActivite()`, reset de `S._actCat`, `actMain.style.display=''` et `actCatPanel.style.display='none'` avant `panel('activite')`. Ajout d'un `App.openSheet?.()` explicite pour fiabiliser l'ouverture.
-**Commits :** À pousser
 
 ---
 
@@ -61,12 +60,12 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 **Autres PR cette session :**
 - PR #302 : locate() upsert debug logging (getUser null + error + OK)
 - PR #303 : SIGNED_OUT reset complet (GPS, Realtime, S.uid, profil, badges, UI)
-- PR #304 : bottom-nav grid 3→4 colonnes (navActivite invisible sur 2ème rangée)  
+- PR #304 : bottom-nav grid 3→4 colonnes (navActivite invisible sur 2ème rangée)
 
 ---
 
-**Mission précédente : GO LIVE — PR #300 merge + corrections terrain**  
-**Date :** 2026-06-14  
+**Mission précédente : GO LIVE — PR #300 merge + corrections terrain**
+**Date :** 2026-06-14
 **Commits :** `c409b38` (VAPID key), `e3559e5` (GitHub Actions EF), `0645a29` (push button Settings), `0a09028` (messages.js fix), `244cbd5` (call log dedup), `2c78ca7` (calls.js merge)
 
 - VAPID public key mise à jour dans index.html (clé de prod, pas de test)
