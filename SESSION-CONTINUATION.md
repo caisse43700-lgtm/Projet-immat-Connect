@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — TECHNICAL_AUDIT_AND_ROADMAP (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/TECHNICAL_AUDIT_AND_ROADMAP.md — audit code réel (8 sections)**
+
+Méthode : lecture directe de index.html, calls.js, messages.js, service-worker.js, core/*.js, supabase/functions/*, supabase/migrations/*
+
+Résultats clés :
+- Le code V1 est à 85-95% complet selon le module
+- La couche de sécurité est à 100% écrite mais 0% active (11 migrations non appliquées)
+- En production actuelle : email + téléphone accessibles par tout utilisateur authentifié via /profiles
+- 17 écarts vision/réalité identifiés (6 critiques bloquant GO MAIN)
+- Roadmap Sprint 8→13 avec durées estimées
+- Sprint 8 détaillé : 4h code (Claude) + 30min déploiement (fondateur) + 2-4h terrain
+
+Conclusion : "Le code est prêt. L'infrastructure ne l'est pas."
+→ L'application est en mode "démo sans sécurité" — déploiement migrations = priorité absolue.
+
+---
+
 ## SESSION 2026-06-14 — BETA_READINESS_AUDIT (TERMINÉE)
 
 ### Ce qui a été produit

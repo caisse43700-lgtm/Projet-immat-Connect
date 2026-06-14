@@ -299,6 +299,7 @@ Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrai
 | **`docs/INCIDENT_LOG.md`** | Journal des incidents — format P1/P2/P3 — référence aux RISK et playbooks du MASTER_COMPATIBILITY_MAP | Dès qu'un ❌ ou dysfonctionnement est détecté |
 | **`docs/PRODUCT_ARCHITECTURE_V2.md`** | Roadmap architecture produit V2 — 17 sections — 8 modules (Véhicule, Stationnement, Maintenance, Assistance, Communauté, Monétisation, Professionnels, IA/ANGE) — matrice compatibilité, angles morts, dettes futures, tables réservées, EF réservées, invariants V2, arbre de décision GO/NO-GO | Avant tout sprint V2 ou décision d'architecture future |
 | **`docs/BETA_READINESS_AUDIT.md`** | Audit d'exploitation bêta — 10 sections — 20 fonctionnalités codées non testées, 10 pires catastrophes + procédures de reprise, métriques 30j, checklist opérationnelle J1→J7, commandes SQL de diagnostic | AVANT toute session de déploiement terrain |
+| **`docs/TECHNICAL_AUDIT_AND_ROADMAP.md`** | Audit du code réel + état d'avancement par module (% code, % actif) + 17 écarts vision/réalité + roadmap Sprint 8→13 + Sprint 8 détaillé (objectifs, tâches, risques, durée) + 8 angles morts thématiques | Avant tout sprint et décision d'architecture |
 | **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
 
 **Hiérarchie de vérité :**
@@ -580,6 +581,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | Documents opérationnels créés — DEPLOYMENT_LOG.md + TEST_RESULTS.md + INCIDENT_LOG.md — documentation terrain complète, prêt pour l'exécution |
 | 2026-06-14 | IA session | PRODUCT_ARCHITECTURE_V2.md créé — 17 sections — 8 modules futurs documentés avec tables réservées, EF réservées, risques, RGPD, matrice compatibilité, invariants V2, arbre de décision — gel documentaire V2 |
 | 2026-06-14 | IA session | BETA_READINESS_AUDIT.md créé — 10 sections — 20 fonctionnalités non testées, 10 catastrophes + reprises, métriques 30j, checklist J1→J7, SQL diagnostic complet |
+| 2026-06-14 | IA session | TECHNICAL_AUDIT_AND_ROADMAP.md créé — audit code réel — 85-95% V1 codé, 0% sécurité active (11 migrations non appliquées) — roadmap Sprint 8→13 — Sprint 8 détaillé 4h code + 8h terrain |
 
 ---
 
