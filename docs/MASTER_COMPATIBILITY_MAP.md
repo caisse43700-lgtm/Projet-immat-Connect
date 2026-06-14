@@ -1,8 +1,8 @@
-<!-- DOCUMENT DE RÉFÉRENCE PRÉ-PRODUCTION — Version 1.2 — 2026-06-13 -->
+<!-- DOCUMENT DE RÉFÉRENCE PRÉ-PRODUCTION — Version 1.3 — 2026-06-14 -->
 <!-- Ne pas modifier sans raison explicite : bug bloquant, faille sécurité, risque RGPD, KO terrain confirmé -->
 
 # IMMATCONNECT PRO — MASTER COMPATIBILITY MAP
-Version 1.2 — 2026-06-13 — Référence pré-production officielle (GEL DOCUMENTAIRE)
+Version 1.3 — 2026-06-14 — Référence pré-production officielle (GEL DOCUMENTAIRE FINAL)
 
 > **Objectif :** vérifier que la branche de travail, le produit fonctionnel,
 > les migrations S6/S7, ANGE OS et la future production sont parfaitement
@@ -28,14 +28,17 @@ de l'entrée en phase de déploiement terrain. Il couvre :
 - La matrice fonctionnalités × sources × tests
 - Les registres techniques (dette, hypothèses, risques, invariants)
 - Le graphe de dépendances
-- 38 contrôles terrain (35 initiaux + 3 ajouts v1.1)
+- 42 contrôles terrain (v1.3)
 - 15 questions non posées avec réponses
-- Les registres de gouvernance future (Feature, Data Ownership, Impact)
-- Les playbooks de crise (migration partielle, Supabase down, hallucination IA)
-- Les règles de validation avant tout GO MAIN futur
+- Les registres de gouvernance future (Feature, Data Ownership, Impact, Storage, Events)
+- Les playbooks de crise (migration partielle, Supabase down, Agora down, Anthropic down, hallucination IA)
+- Les règles de validation avant tout GO MAIN futur (15 questions)
 - La décision finale GO/NO-GO MAIN
 
 **Toute future fonctionnalité DOIT être reliée à ce document.**
+
+**Ce document prévaut en cas de contradiction avec tout autre document du projet.**
+(Voir Section 39.1 — Hiérarchie des sources de vérité)
 
 ---
 
@@ -1877,27 +1880,324 @@ supabase functions deploy send-push-notification
 
 ---
 
-## NOTE DE GEL DOCUMENTAIRE
-
-Version 1.2 — 2026-06-13 — **GEL DOCUMENTAIRE**
-
-Ce document est désormais gelé. La phase documentation est terminée.
-
-**Ne plus agrandir ce document.** Passer uniquement à :
-1. Déploiement contrôlé (migrations → secrets → EF → Realtime)
-2. Tests terrain (0 KO critique requis)
-3. Validation RGPD (export + suppression + colonnes PII)
-4. Validation production (11/15 conditions GO MAIN)
-5. Puis développement des futurs modules (véhicules, stationnement...)
-
-**Objectif de ce document :**
-Qu'un développeur inconnu puisse reprendre le projet dans 6 mois et comprendre
-l'architecture, les dépendances, les risques, les règles, les migrations,
-les tests et les responsabilités **en moins d'une heure**.
+## SECTION 39 — VÉRIFICATIONS FINALES ET COMPLÉTUDE
 
 ---
 
-*IMMATCONNECT PRO — MASTER COMPATIBILITY MAP — Version 1.2 — 2026-06-13*
-*Document de référence pré-production officielle — GEL DOCUMENTAIRE*
+### 39.1 — HIÉRARCHIE DES SOURCES DE VÉRITÉ
+
+**En cas de contradiction entre deux documents, la règle suivante s'applique :**
+
+```
+MASTER_COMPATIBILITY_MAP.md      ← PRÉVAUT — source de vérité finale
+  └── PROJECT_STATE.md           ← État opérationnel du moment
+        └── SESSION-CONTINUATION.md  ← Journal technique chronologique
+              └── PLAN_EXECUTION_30J_V1.2.md ← Plan terrain (figé)
+                    └── IMPLEMENTATION_GAP_ANALYSIS.md ← Roadmap sprints
+                          └── AUDIT_IMMATCONNECT_GLOBAL_V2.md ← Référence fonctionnelle
+```
+
+**Règles de résolution de contradiction :**
+- Si PROJECT_STATE.md et MASTER_COMPATIBILITY_MAP.md divergent sur un invariant → MASTER_COMPATIBILITY_MAP prévaut
+- Si PLAN_30J diverge sur un nom d'EF ou de secret → MASTER_COMPATIBILITY_MAP prévaut
+- Si SESSION-CONTINUATION.md documente un bug corrigé → SESSION-CONTINUATION.md fait autorité sur le bug lui-même (mais pas sur les règles d'architecture)
+- Si une fonctionnalité est listée dans FEATURE_REGISTRY (Section 27) mais absente du code → elle est considérée comme non existante
+
+**Ce document MASTER_COMPATIBILITY_MAP est le dernier à lire et le premier à faire foi.**
+
+---
+
+### 39.2 — NOMENCLATURE OFFICIELLE DES FUTURES TABLES
+
+**Règle : une seule nomenclature officielle. Aucune table ne peut exister sous plusieurs noms.**
+
+| Domaine | Nom officiel | Noms INTERDITS (doublon à éviter) |
+|---------|-------------|----------------------------------|
+| Profil conducteur public | `public_profiles` | user_profiles, driver_profiles, plate_profiles |
+| Profil conducteur privé | `profiles` | users, accounts, drivers |
+| Véhicule détaillé | `vehicle_profiles` | vehicles, cars, user_vehicles, car_profiles, vehicle_registry |
+| Documents véhicule | `vehicle_documents` | vehicle_files, car_docs, driver_docs |
+| Sessions stationnement | `parking_sessions` | park_logs, parking_log, stationnement |
+| Places de stationnement | `parking_spots` | parking_places, spots, places |
+| Réservations stationnement | `parking_reservations` | reservations, bookings, park_reservations |
+| Historique véhicule | `vehicle_history` | vehicle_events, car_history, vehicle_log |
+| Maintenance | `maintenance_logs` | maintenance, repairs, entretien |
+| Événements maintenance | `maintenance_events` | maintenance_items, repair_events |
+| Décisions ANGE | `ange_decisions` | ai_decisions, bot_decisions, llm_actions |
+| Rate limiting | `rate_limit_counters` | rate_limits, api_limits, throttle |
+| Audit RGPD suppressions | `delete_audit_log` | deletion_log, gdpr_audit, delete_log |
+| Modération en attente | `needs_review` | pending_review, moderation_queue, to_review |
+| Score de confiance | `vehicle_trust_scores` | trust_scores, driver_scores, reputation |
+| Notes conducteurs | `driver_ratings` | ratings, reviews, scores, notes |
+
+**Si une ambiguïté existe lors d'un développement futur → rouvrir cette liste et y ajouter la décision avant le premier commit.**
+
+---
+
+### 39.3 — STORAGE_REGISTRY
+
+Inventaire des buckets Supabase Storage utilisés ou planifiés.
+
+**Situation actuelle :**
+
+| Bucket | Contenu | Statut | Accès |
+|--------|---------|--------|-------|
+| `report-photos` | Photos de signalements (max 5 Mo, JPG/JPEG/WEBP, max 1600px) | Planifié (D15) — non déployé | Authentifié uniquement |
+
+**Règles storage définies (D15) :**
+- Format : JPG/JPEG/WEBP (PNG converti côté client)
+- Taille max : 5 Mo par photo
+- Compression : qualité 0.8, max 1600px
+- TTL : 90 jours (suppression automatique obligatoire)
+- Échec upload → signalement sans photo (jamais bloquant)
+- Colonne photo_url nullable sur reports
+
+**Futures fonctionnalités potentielles et règles RGPD associées :**
+
+| Usage | Bucket prévu | Durée conservation | delete-account | export-user-data | Accès |
+|-------|-------------|-------------------|----------------|-----------------|-------|
+| Photos signalements | `report-photos` | 90 jours | Supprimer si reporter_id = uid | Inclure les URLs | Authentifié |
+| Documents véhicule | `vehicle-documents` | Durée compte | Supprimer tous les fichiers uid | Inclure les URLs | Propriétaire uniquement |
+| Avatars profil | `avatars` | Durée compte | Supprimer l'avatar uid | Inclure l'URL | Public |
+| Justificatifs modération | `admin-evidence` | 6 mois après résolution | Ne pas supprimer (preuve) | Exclure | Service_role uniquement |
+
+**Invariant storage (futur INV-027 si besoin) :**
+- Aucun document utilisateur (carte grise, assurance, CT) n'est transmis à ANGE
+- Aucun document utilisateur n'est stocké dans un prompt IA
+- Aucun document utilisateur n'est exposé via une RPC admin accessible au client
+- Aucun document utilisateur n'est utilisé pour entraîner quoi que ce soit
+- Tout document stocké dans Supabase Storage doit avoir une durée de conservation définie et une procédure de suppression dans delete-account
+
+---
+
+### 39.4 — RÈGLE RGPD FUTURE (DETTE ZÉRO)
+
+**Règle absolue :** Toute nouvelle table créée déclenche automatiquement une obligation documentaire AVANT le premier commit de code.
+
+```
+Nouvelle table créée ?
+  ↓
+Contient-elle user_id, owner_plate, ou tout identifiant lié à une personne physique ?
+  ↓ OUI
+  → Ajouter dans delete-account (EF)
+  → Ajouter dans export-user-data (EF)
+  → Ajouter dans FEATURE_REGISTRY (Section 27)
+  → Ajouter dans DATA_OWNERSHIP_REGISTRY (Section 28)
+  → Définir la durée de conservation (tableau RGPD PLAN_30J §3)
+  → Définir la méthode de purge (CRON ou EF)
+  ↓ NON
+  → Documenter pourquoi (log de la décision dans SESSION-CONTINUATION.md)
+```
+
+**Conséquence du non-respect :** dette RGPD automatique, bloquant pour le GO MAIN suivant (question 2 et 3 de la Section 37).
+
+---
+
+### 39.5 — SYSTEM_HEALTH_REGISTRY
+
+Registre des signaux de santé système. Un signal inexistant = **"Donnée indisponible"**, jamais d'estimation.
+
+| Composant | Signal de santé | Où le vérifier | Seuil d'alerte | Action si KO |
+|-----------|----------------|----------------|----------------|-------------|
+| Supabase DB | Latence requêtes, erreurs 5xx | Supabase Dashboard → Logs | >1s latence moyenne | Investiguer → status.supabase.com |
+| Supabase Realtime | Messages/s sur les canaux actifs | Supabase Dashboard → Realtime | 0 message reçu >60s = suspect | Vérifier tables activées |
+| Edge Functions | Invocations/erreurs par EF | Supabase Dashboard → Functions → Logs | >5% erreurs sur une EF | Investiguer les logs EF |
+| Agora RTC | Minutes consommées/mois | console.agora.io → Usage | >500 appels/mois | Alerter fondateur |
+| Anthropic / ANGE | Coût par jour | console.anthropic.com → Usage | >$2/jour | Couper immat-brain-dialog |
+| Push notifications | Taux de livraison | Logs EF send-push-notification | >10% de 410 (endpoints expirés) | Nettoyer push_subscriptions |
+| Storage | Espace utilisé | Supabase Dashboard → Storage | >80% quota | Purger TTL + upgrade si nécessaire |
+| Service Worker | Version en cache | DevTools → Application → Cache | Cache ≠ immatconnect-pro-v25 | Forcer rechargement, bumper CACHE_NAME |
+| Performances DB | Index utilisés | EXPLAIN ANALYZE (HYP-012) | Seq Scan sur tables >1000 lignes | Ajouter index manquant |
+
+**Règle :** si un signal n'est pas listé ici, il n'existe pas. Ne jamais inventer un état de santé sans mesure réelle.
+
+---
+
+### 39.6 — DÉCISION OFFICIELLE : ANCRAGE DU TRUST
+
+**Question :** le trust est-il attaché au conducteur (user_id), à la plaque (owner_plate), au véhicule, ou à plusieurs ?
+
+**Décision officielle (figée) :**
+
+> Le trust est attaché à **owner_plate** (la plaque d'immatriculation).
+> C'est `vehicle_trust_scores.owner_plate` qui est la source de vérité unique.
+
+**Justification :**
+- Une plaque identifie un véhicule sur la route — c'est ce que les autres conducteurs voient
+- Un utilisateur peut changer de plaque (changement de véhicule) → le trust repart à zéro
+- Un véhicule peut changer de propriétaire → le trust ne suit pas le propriétaire
+
+**Conséquences pour les développements futurs :**
+
+| Situation | Comportement attendu |
+|-----------|---------------------|
+| Utilisateur change de plaque | Nouveau trust_score à 0 (ancienne plaque conserve son score) |
+| Véhicule vendu (nouvelle plaque) | Trust de l'ancienne plaque non transféré |
+| Utilisateur supprime son compte | vehicle_trust_scores pour sa plaque supprimé (delete-account) |
+| Plusieurs véhicules par utilisateur | Un trust_score par plaque — jamais un trust global par user_id |
+| Module véhicule futur | vehicle_profiles lie owner_plate → profiles, jamais trust_score → profiles |
+
+**Ce que trust_score n'est PAS :**
+- Il n'est pas attaché à un user_id (→ le user peut partir, le score reste sur la plaque)
+- Il n'est pas une note personnelle cachée (il est visible publiquement via vehicle_trust_scores SELECT public)
+- Il ne peut pas être modifié directement par un utilisateur (écriture bloquée côté client — RLS)
+
+---
+
+### 39.7 — IMPACT PARKING / STATIONNEMENT SUR L'ARCHITECTURE EXISTANTE
+
+Analyse d'impact anticipée pour les futures tables parking. À compléter lors du Sprint parking.
+
+| Système existant | Impact parking | Description |
+|----------------|----------------|-------------|
+| profiles | OUI | parking_sessions.user_id → profiles.id (FK) |
+| public_profiles | NON | pas de données de stationnement dans le profil public |
+| reports | OUI conditionnel | un stationnement litigieux pourrait générer un signalement |
+| trust (vehicle_trust_scores) | OUI | un abus de stationnement signalé et résolu → impact trust à définir |
+| ratings (driver_ratings) | OUI conditionnel | un conducteur peut être noté suite à une interaction parking |
+| RGPD export | OUI | parking_sessions contient user_id → à exporter |
+| RGPD delete | OUI | parking_sessions à supprimer dans delete-account |
+| push notifications | OUI | notification quand une réservation est confirmée / expirée |
+| realtime | OUI | parking_spots disponibilité en temps réel (à confirmer selon usage) |
+| service worker | NON | pas de modification SW prévue pour parking |
+| blocages (user_blocks) | OUI | un utilisateur bloqué ne doit pas pouvoir réserver une place d'un utilisateur qui l'a bloqué |
+| ANGE | NON | ANGE ne participe pas aux décisions de stationnement (INV-022) |
+| dashboard Gardien | OUI conditionnel | ajouter un voyant "stationnement" si conflits fréquents |
+
+**Tables parking requérant RLS complète :**
+- parking_sessions : SELECT/UPDATE par user_id = auth.uid()
+- parking_spots : SELECT public, INSERT/UPDATE/DELETE par owner_id = auth.uid()
+- parking_reservations : SELECT par requester_id = auth.uid() OU spot owner, INSERT par requester_id = auth.uid()
+
+---
+
+### 39.8 — INV-027 : INVARIANT DOCUMENTS VÉHICULE
+
+**INV-027 :** Aucun document utilisateur (carte grise, assurance, contrôle technique, pièce d'identité) ne peut :
+1. Être transmis à ANGE (immat-brain-dialog) ou à tout autre composant IA
+2. Être stocké dans un prompt IA (ni en entrée, ni en sortie, ni en contexte)
+3. Être exposé via une RPC accessible au client sans authentification stricte propriétaire-uniquement
+4. Être utilisé pour entraîner, fine-tuner ou améliorer un modèle IA
+5. Être retourné dans export-user-data autrement que sous forme d'URL signée temporaire (TTL 1 heure max)
+
+**Justification :** documents sensibles = PII critiques. Toute exposition non maîtrisée = incident RGPD.
+
+**Règle d'accès aux documents véhicule :**
+```
+Documents véhicule → accès via RPC SECURITY DEFINER uniquement
+  → vérifie auth.uid() = propriétaire de la plaque
+  → retourne URL signée temporaire (1h max)
+  → ne retourne JAMAIS le contenu du document
+  → ne retourne JAMAIS le chemin Storage interne
+```
+
+---
+
+### 39.9 — EVENT_REGISTRY
+
+Registre officiel des événements applicatifs. Tout doublon ou alias non listé ici est considéré comme une régression.
+
+**Événements ImmatBus (bus interne JS) :**
+
+| Événement | Émetteur | Abonnés | Payload | Déclenché par |
+|-----------|----------|---------|---------|---------------|
+| CALL_INITIATED | calls.js | call-screen.js | {requestId, plate, direction} | requestCall() |
+| CALL_ACCEPTED | calls.js | agora-call-engine.js, call-screen.js | {requestId, plate, _src} | acceptCall() |
+| CALL_REFUSED | calls.js | call-screen.js | {requestId} | refuseCall() |
+| CALL_CANCELLED | calls.js | call-screen.js | {requestId} | cancelCallRequest() |
+| CALL_MISSED | calls.js | call-screen.js, nav badge | {requestId} | timer 30s |
+| CALL_ENDED | agora-call-engine.js | call-screen.js | {requestId} | leaveCall() |
+| MESSAGE_SENT | messages.js | interaction-engine.js | {plate, direction:'out'} | sendMessage() |
+| MESSAGE_READ | messages.js | interaction-engine.js | {plate, direction:'in'} | markRead() |
+| REPORT_CREATED | index.html | interaction-engine.js | {plate, type, urgency} | saveReportRemote() |
+| REPORT_RESOLVED | index.html | interaction-engine.js | {alertId, status} | rcConfirm() |
+| ALERT_RECEIVED | index.html (Realtime) | interaction-engine.js, map | {plate, type, group} | broadcast Supabase |
+| PUSH_SUBSCRIBED | index.html | — | {endpoint} | subscribePush() |
+
+**Événements Supabase Realtime (canaux) :**
+
+| Canal | Type | Table | Événement déclencheur | Payload |
+|-------|------|-------|----------------------|---------|
+| ic_msg | postgres_changes | messages | INSERT | {sender_id, receiver_id, content} |
+| ic_loc | postgres_changes | user_locations | INSERT/UPDATE | {user_id, lat, lng} |
+| signal-{plate} | broadcast | — | CANCEL, CALL_INITIATED | {type, from, requestId} |
+| ic_community_live | broadcast | — | REPORT_CREATED | {plate, type, lat, lng, group, urgency} |
+
+**Règles :**
+- Aucun nouveau canal Realtime ne doit être créé sans être listé ici
+- Les noms de canaux sont immuables après déploiement (les clients existants s'y sont abonnés)
+- Le payload d'un broadcast ne doit jamais contenir : reporter_id, email, phone, device_id
+- Un événement ImmatBus ne doit jamais contenir le contenu d'un message (INV-COM-010)
+
+---
+
+### 39.10 — TEST D'ONBOARDING (VALIDATION COMPLÉTUDE)
+
+**Question :** un nouveau développeur arrivant sur ce projet demain peut-il comprendre en moins d'une heure les éléments suivants ?
+
+| # | Élément | Où trouver | Estimation temps |
+|---|---------|------------|-----------------|
+| 1 | Architecture générale | PROJECT_STATE.md §9 + MASTER_COMPATIBILITY_MAP Section 1 | 5 min |
+| 2 | Ce qui fonctionne en production | PROJECT_STATE.md §1 | 2 min |
+| 3 | Les invariants à ne jamais violer | Section 21 (INV-001 à INV-026) | 5 min |
+| 4 | Les 11 migrations et leur ordre | Section 23 (ROLLBACK_REGISTRY) | 5 min |
+| 5 | Les Edge Functions et leurs rôles | Section 22 (CRITICAL_FILES_REGISTRY) | 3 min |
+| 6 | Les dépendances entre features | Section 24 (FEATURE_DEPENDENCY_GRAPH) | 5 min |
+| 7 | Les tests terrain à exécuter | Section 25 (42 contrôles) | 5 min |
+| 8 | Les playbooks de crise | Sections 33-35c | 5 min |
+| 9 | Les règles RGPD | Sections 11, 39.4, PLAN_30J §3 | 5 min |
+| 10 | Les décisions validées (ne pas rediscuter) | PROJECT_STATE.md §6 (D01-D21) | 5 min |
+| 11 | La procédure de rollback | Section 23 | 3 min |
+| 12 | La hiérarchie des documents | Section 39.1 | 2 min |
+
+**Total estimé : 50 minutes**
+
+**Réponse : OUI — documentation considérée comme complète.**
+
+La complétude est atteinte. Le risque principal n'est plus un oubli documentaire.
+Le risque principal est désormais : **DOCUMENTATION ≠ RÉALITÉ** (infrastructure non déployée).
+
+---
+
+## NOTE DE GEL DOCUMENTAIRE FINAL
+
+Version 1.3 — 2026-06-14 — **GEL DOCUMENTAIRE FINAL**
+
+Ce document est définitivement gelé.
+
+**Couverture estimée : 97–99%**
+
+Ce qui reste à faire n'est plus documentaire :
+
+```
+1. Appliquer les 11 migrations Supabase (ordre strict, Section 23)
+2. Configurer les 6 Secrets Supabase (AGORA_APP_CERTIFICATE, VAPID ×3, ANTHROPIC_API_KEY)
+3. Déployer les 4 Edge Functions (delete-account, export-user-data, submit-rating, send-push-notification)
+4. Activer Realtime sur les tables confirmées (messages, user_locations)
+5. Exécuter les 42 contrôles terrain (Section 25) — 0 KO critique requis
+6. Valider RGPD (contrôles C03, C03b, C03c, C07, C08b)
+7. Valider iOS push (contrôle C10 sur iPhone réel)
+8. Valider appels vocaux post-migration (contrôle C05a immédiatement après 20260615)
+9. Répondre aux 15 questions GO MAIN (Section 37)
+10. Décider : GO / NO-GO MAIN
+```
+
+**Réouverture autorisée UNIQUEMENT si :**
+- Bug bloquant confirmé en terrain
+- Faille de sécurité identifiée
+- Non-conformité RGPD détectée
+- Nouvelle fonctionnalité majeure déployée (véhicules, stationnement, admin...)
+- KO terrain sur un contrôle critique
+
+**Ne pas rouvrir pour :**
+- Reformulations stylistiques
+- Ajouts de sections non liés à une réalité terrain
+- Débats d'architecture sans implémentation prévue
+
+---
+
+*IMMATCONNECT PRO — MASTER COMPATIBILITY MAP — Version 1.3 — 2026-06-14*
+*Document de référence pré-production officielle — GEL DOCUMENTAIRE FINAL*
 *Toute future fonctionnalité doit être reliée à ce document (INV-023).*
+*Ce document prévaut sur tout autre document en cas de contradiction (Section 39.1).*
 *Modifier uniquement si : bug bloquant / faille sécurité / risque RGPD / KO terrain confirmé.*

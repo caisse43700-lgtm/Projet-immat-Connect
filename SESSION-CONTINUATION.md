@@ -7,6 +7,39 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — GEL DOCUMENTAIRE FINAL MASTER_COMPATIBILITY_MAP v1.3 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md → v1.2 → v1.3 (2203 lignes) — GEL DOCUMENTAIRE FINAL**
+
+**Section 39 ajoutée — 10 vérifications finales de complétude :**
+
+- **39.1 Hiérarchie sources de vérité** : MASTER_COMPATIBILITY_MAP prévaut sur tout autre document. Ordre : MASTER_COMPATIBILITY_MAP → PROJECT_STATE → SESSION-CONTINUATION → PLAN_30J → GAP_ANALYSIS → AUDIT_V2
+- **39.2 Nomenclature officielle** : table de correspondance Nom officiel ↔ Noms interdits (doublon) pour 15 domaines — véhicles, stationnement, trust, ratings, modération, RGPD, ANGE...
+- **39.3 STORAGE_REGISTRY** : registre buckets Supabase Storage — report-photos (planifié), vehicle-documents, avatars, admin-evidence (futurs). Durée conservation + delete-account + export-user-data + accès définis pour chaque bucket.
+- **39.4 Règle RGPD future** : procédure obligatoire pour toute nouvelle table (contient PII ? → delete-account + export + FEATURE_REGISTRY + DATA_OWNERSHIP + durée conservation + purge). Non-respect = dette RGPD bloquante pour GO MAIN.
+- **39.5 SYSTEM_HEALTH_REGISTRY** : 9 composants monitorés (Supabase DB, Realtime, EF, Agora, Anthropic, Push, Storage, SW, index DB). Règle : signal inexistant = "Donnée indisponible", jamais d'estimation.
+- **39.6 Décision trust → owner_plate** : trust attaché à la plaque (pas au user_id). Comportement documenté pour : changement de plaque, vente véhicule, suppression compte, multi-véhicules.
+- **39.7 Impact parking** : matrice d'impact des futures tables parking sur 13 systèmes existants. RLS définie pour parking_sessions, parking_spots, parking_reservations.
+- **39.8 INV-027 documents véhicule** : 5 interdictions absolues (transmis à ANGE, prompt IA, RPC non restreinte, entraînement IA, export autre que URL signée 1h). Règle d'accès via RPC SECURITY DEFINER.
+- **39.9 EVENT_REGISTRY** : registre des 12 événements ImmatBus + 4 canaux Realtime avec émetteur, abonnés, payload, déclencheur. Règle : aucun nouveau canal sans être listé ici.
+- **39.10 Test onboarding** : checklist 12 éléments — un nouveau développeur peut comprendre l'architecture en 50 minutes. Réponse : OUI — documentation considérée comme complète.
+
+**Note de gel final** : couverture 97-99%, risque principal désormais = DOCUMENTATION ≠ RÉALITÉ.
+
+### État des fichiers
+
+```
+docs/MASTER_COMPATIBILITY_MAP.md  → v1.3 — GEL DOCUMENTAIRE FINAL (2203 lignes)
+PROJECT_STATE.md                  → MIS À JOUR
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucun code modifié. Phase documentation = **DÉFINITIVEMENT TERMINÉE**.
+
+---
+
 ## SESSION 2026-06-13 — GEL DOCUMENTAIRE MASTER_COMPATIBILITY_MAP v1.2 (TERMINÉE)
 
 ### Ce qui a été produit
