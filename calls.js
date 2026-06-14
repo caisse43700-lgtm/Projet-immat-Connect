@@ -391,7 +391,7 @@ const CallManager = (function () {
 
     _pendingCallId = null;
     _pendingCallPlate = null;
-    _missedTimers.delete(requestId);
+    _missedTimers.delete(requestId); // nettoyage défensif — évite poll fantôme si appelant avait une entrée
     _emitCallEvent('CALL_CANCELLED', {requestId, _src:'ImmatConnect/calls/cancelCallRequest'});
     try{ window.InteractionEngine?.create?.({type:'CALL_CANCELLED', initiator:_myPlate||'', target:null, payload:{requestId}, status:'cancelled'}); }catch(e){}
 
@@ -444,7 +444,6 @@ const CallManager = (function () {
           try { document.getElementById('callSentBanner')?.classList.remove('show'); } catch(e) {}
           // receiver_plate peut être null en DB — fallback sur la plaque mémorisée à l'envoi
           const acceptedPlate = r.receiver_plate || _pendingCallPlate || null;
-          console.log('[CallManager] postgres_changes ACCEPTED → r.receiver_plate:', r.receiver_plate, '_pendingCallPlate:', _pendingCallPlate, '→ final:', acceptedPlate);
           _emitCallEvent('CALL_ACCEPTED', {'with': acceptedPlate, plate: acceptedPlate, requestId: r.id, _src:'ImmatConnect/calls/outgoingUpdateHandler'});
           _joinCallSignal(r.id);
         } else if (r.status === 'refused') {

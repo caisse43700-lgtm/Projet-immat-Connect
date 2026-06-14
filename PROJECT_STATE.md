@@ -9,16 +9,16 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-13
-Avancement             : ~35% du plan fonctionnel implémenté
+Date de mise à jour    : 2026-06-14
+Avancement             : ~40% du plan fonctionnel implémenté — GO LIVE en cours
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
 Branche production     : main (GitHub Pages)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
-Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
+Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 ```
 
-### Ce qui fonctionne en production (validé terrain 2026-06-12)
+### Ce qui fonctionne en production (validé terrain 2026-06-14)
 
 - Appels vocaux bidirectionnels via Agora RTC ✅
 - Annulation A → overlay B se ferme ✅
@@ -28,21 +28,41 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 - Carte radar Leaflet ✅
 - Sonnerie téléphone (WAV généré en mémoire) ✅
 - Dashboard Gardien (8 voyants + Global Verification Center) ✅
-- Service Worker v21 (network-first, allSettled non-bloquant) ✅
+- Service Worker v25 (network-first, allSettled non-bloquant) ✅
+- 6 Secrets Supabase configurés (AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, ANTHROPIC_API_KEY) ✅
+- 5 Edge Functions déployées via GitHub Actions ✅
+- Realtime actif sur messages + call_requests ✅
+- B1 PII test PASSED ✅ (colonnes email/phone non exposées aux autres utilisateurs)
+- messages.js : getProfile() utilise colonnes explicites (fix column-level security) ✅
 
-### Ce qui bloque le lancement public (P0)
+### Ce qui bloque (P0) — à corriger avant GO MAIN
 
-1. **Pas de push notifications** — app fermée = aucun appel reçu, aucune alerte
-2. **Bouton urgence 15/17/18 absent** — risque éthique (enfant/animal dans véhicule)
-3. **Onglet Appels absent de la nav principale** — valeur produit invisible
-4. **RGPD : pas de suppression de compte** — App Store refusé sans cette option
-5. **`ic_pending_profile` localStorage** — stocke email + téléphone en clair après signup
+1. **Plaque absente du chip #tbPlate** — `select('*')` cassé dans `main` après REVOKE column-level
+   - **Fix SQL immédiat** : `GRANT SELECT ON public.profiles TO authenticated;`
+   - Fix permanent : merger notre branche (utilise `get_my_profile()` RPC)
+2. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles
+3. **Push notifications** — pas encore testées (B2) — bouton dans Settings déployé sur notre branche
 
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Sprint 7 — RGPD GAP + S7-OBD + S7-SEARCH**  
+**Mission : GO LIVE — Configuration Supabase + Déploiement Edge Functions + Corrections terrain**  
+**Date :** 2026-06-14  
+**Commits :** `c409b38` (VAPID key), `e3559e5` (GitHub Actions EF), `0645a29` (push button Settings), `0a09028` (messages.js fix)
+
+- VAPID public key mise à jour dans index.html (clé de prod, pas de test)
+- GitHub Actions workflow `deploy-edge-functions.yml` créé — déploie 5 EF en 1 click
+- 6 Secrets Supabase configurés (AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_*, ANTHROPIC_API_KEY)
+- Realtime confirmé actif sur `messages` + `call_requests`
+- B1 PII test passé — autres utilisateurs ne voient pas email/phone
+- messages.js `getProfile()` : `select('*')` → `select('id,owner_plate,pseudo,vehicle_color')`
+- `GRANT SELECT (phone)` ajouté sur profiles pour authenticated (restaure le chargement profil)
+- Merge de main (calls.js v16 fixes) dans notre branche — conflits résolus
+
+---
+
+**Mission précédente : Sprint 7 — RGPD GAP + S7-OBD + S7-SEARCH**  
 **Date :** 2026-06-13
 
 **S4-CLUSTER** — Clustering Leaflet.markercluster pour les véhicules en zone dense
@@ -159,36 +179,37 @@ Tests de validation    : deux iPhones, BZ-652-LL ↔ BE-521-MM
 
 ## 3. MISSION EN COURS
 
-Aucune. Phase documentation terminée (2026-06-13). Prochaine : exécution terrain.
+GO LIVE — Phase tests terrain (B2→B5 non complétés).
 
 ---
 
-## 4. PROCHAINE MISSION RECOMMANDÉE — EXÉCUTION TERRAIN (ordre strict)
+## 4. PROCHAINE MISSION RECOMMANDÉE — ORDRE STRICT
 
 ```
-1. Déployer les 11 migrations Supabase (ordre chronologique, 20260615 en dernier)
-2. Configurer les Supabase Secrets :
-     AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_PUBLIC_KEY,
-     VAPID_PRIVATE_KEY, VAPID_SUBJECT, ANTHROPIC_API_KEY
-3. Déployer les Edge Functions nouvelles/modifiées :
-     supabase functions deploy delete-account
-     supabase functions deploy export-user-data
-     supabase functions deploy submit-rating
-     supabase functions deploy send-push-notification
-   Vérifier que ces fonctions existent déjà :
-     get-agora-token, create-call-request, respond-call-request, immat-brain-dialog
-4. Activer Realtime uniquement sur les tables réellement abonnées
-   (messages, user_locations, à vérifier : call_requests, reports)
-5. Tester VAPID sur mobile réel (iOS + Android)
-6. Exécuter les 14 contrôles terrain (cf. PLAN_EXECUTION_30J_V1.2 dans docs/)
-7. GO bêta fermée uniquement si 11/11 contrôles critiques sont OK
+ÉTAPE 1 — Fix SQL immédiat (1 commande dans Supabase SQL Editor) :
+  GRANT SELECT ON public.profiles TO authenticated;
+  → Restaure le chip #tbPlate avec la plaque en haut à gauche
+  → Répare aussi l'affichage direct à la connexion (plus de profil vide)
+
+ÉTAPE 2 — Merger notre branche → main (fix permanent) :
+  PR : claude/immatconnect-pro-app-dEKGR → main
+  Notre branche contient :
+    - afterAuth() utilise get_my_profile() RPC (contourne le column-level REVOKE proprement)
+    - messages.js getProfile() avec colonnes explicites
+    - Bouton push notifications dans Paramètres
+    - calls.js v16 fixes (merge inclus)
+    - GitHub Actions workflow deploy-edge-functions.yml
+
+ÉTAPE 3 — Tests terrain restants :
+  B2 : Push notification (app fermée → iOS reçoit la notif ?)
+  B3 : RGPD — Export de données (bouton dans Paramètres → téléchargement JSON)
+  B4 : Messages — envoyer BZ-652-LL → BE-521-MM
+  B5 : ANGE — dialogue IA avec immat-brain-dialog
+
+ÉTAPE 4 — Fix CSS panneau Paramètres iOS :
+  Le panneau Settings se coupe — RGPD + Notifications non accessibles sur iOS
+  Fix : ajouter overflow-y:scroll + max-height sur le panneau ou activer -webkit-overflow-scrolling
 ```
-
-**Référence :** `docs/PLAN_EXECUTION_30J_V1.2.md` — document figé, ne plus modifier.
-
-**Sujets à ne plus rouvrir :** noms EF, modèle IA, ANGE, rate limit client/serveur,
-public_profiles, public_reports, RLS profiles/reports, CGU, validation terrain.
-Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrain.
 
 ---
 
@@ -582,6 +603,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | PRODUCT_ARCHITECTURE_V2.md créé — 17 sections — 8 modules futurs documentés avec tables réservées, EF réservées, risques, RGPD, matrice compatibilité, invariants V2, arbre de décision — gel documentaire V2 |
 | 2026-06-14 | IA session | BETA_READINESS_AUDIT.md créé — 10 sections — 20 fonctionnalités non testées, 10 catastrophes + reprises, métriques 30j, checklist J1→J7, SQL diagnostic complet |
 | 2026-06-14 | IA session | TECHNICAL_AUDIT_AND_ROADMAP.md créé — audit code réel — 85-95% V1 codé, 0% sécurité active (11 migrations non appliquées) — roadmap Sprint 8→13 — Sprint 8 détaillé 4h code + 8h terrain |
+| 2026-06-14 | IA session | GO LIVE session — 6 Secrets Supabase configurés, 5 EF déployées via GH Actions, Realtime OK, B1 PII ✅, messages.js fix, GRANT phone, push button Settings, merge main calls v16 |
 
 ---
 
