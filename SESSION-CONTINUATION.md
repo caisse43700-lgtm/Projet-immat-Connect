@@ -7,33 +7,45 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
-## SESSION 2026-06-14 — Fix panneau Activité : CSS min-height (EN COURS)
+## SESSION 2026-06-14 — Fix panneau Activité : force .full + disable transition (PR #307)
 
-### Bug persistant après PR #305 + PR #306
+### Historique des tentatives
 
-**PR #305** — fix `navActivite()` reset `actMain.style.display=''` → user : "Non toujours rien"  
-**PR #306** — `void s.offsetHeight` dans `openSheet()` avant `classList.remove('mini')` → user : "Ça ne fonctionne toujours pas"
+| Tentative | Fix | Résultat |
+|---|---|---|
+| PR #305 | Reset `actMain.style.display=''` dans navActivite | "Non toujours rien" |
+| PR #306 | `void s.offsetHeight` dans openSheet() | "Ça ne fonctionne toujours pas" |
+| PR #307 commit 1 | `min-height: 50vh` sur `.act-main` (CSS) | "Non marche pas" |
+| PR #307 commit 2 | Force `.full` + disable transition (JS) | **à tester** |
 
-**Analyse approfondie :**
+### Cause racine définitive
 
-Physics du bug : sheet sans contenu visible = 8px(pad-top) + 5px(handle) + 12px(handle margin-bottom) + 12px(pad-bottom) = 37px total. `translateY(100%)` = 100% × 37px = 37px. Retirer `.mini` → sheet monte de 37px seulement.
+`translateY(100%)` dans `.sheet.mini` est calculé par iOS Safari WKWebView AVANT que le layout flex `.act-main` soit résolu. La valeur de départ de la transition CSS est donc `37px` (height du handle+padding seulement), pas `50vh`. La transition anime de `37px → 0` → le sheet "monte légèrement" de 37px.
 
-Bug iOS Safari WKWebView (mode PWA) : quand un parent passe de `display:none` → `display:block`, les enfants `display:flex` calculent leur hauteur à 0 dans la même frame de rendu. `void el.offsetHeight` censé forcer un reflow synchrone, mais WKWebView l'ignore dans ce contexte (bug connu iOS Safari).
+Ni `void offsetHeight`, ni `min-height` CSS ne changent ce comportement car WKWebView calcule `translateY(100%)` dans la même microtask que le changement de classe.
 
-**Fix CSS (résistant à iOS) :** `min-height: 50vh` sur `.act-main` dans `app.css`.
-- Garantit hauteur ≥ 50vh quelle que soit la phase de rendu iOS
-- Indépendant du JS, s'applique avant toute animation
-- N'affecte pas les autres panels
+### Fix définitif
 
-**Fichier modifié :** `app.css` ligne 758
-```css
-/* AVANT */ .act-main { display: flex; flex-direction: column; gap: 0; }
-/* APRÈS */ .act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; }
+`.sheet.full` utilise `top: calc(var(--safe-top) + 8px)` ET `bottom: calc(var(--nav-h) + ...)` → hauteur EXPLICITE via CSS anchors, pas dépendante du contenu flex. `translateY(100%)` = hauteur viewport ≈ 660px → animation correcte.
+
+```js
+// Dans navActivite(), après this.panel('activite') :
+try{
+  const _s=document.getElementById('sheet');
+  if(_s){
+    _s.style.transition='none';    // désactive CSS transition pendant l'opération
+    _s.style.transform='';          // clear tout inline transform (drag résidu)
+    _s.classList.remove('mini','full');
+    _s.classList.add('full');       // hauteur explicite → translateY(100%) = ~660px
+    void _s.offsetHeight;           // flush
+    S.sheetSnap='full';
+    requestAnimationFrame(()=>{if(_s)_s.style.transition='';});  // réactive transition
+  }
+}catch(_){}
 ```
 
-**Note :** Le branch diverge de main (branch a moins 1 ligne `App.openSheet?.();` dans navActivite mais panel() l'appelle déjà en interne — non-régressif).
-
 ---
+
 
 ## SESSION 2026-06-14 — GO LIVE fixes #301→#305 (EN COURS)
 
