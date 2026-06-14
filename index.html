@@ -2908,12 +2908,12 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v26';
+  var CURRENT = 'immatconnect-pro-v29';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
     var active = keys.filter(function(k){ return k.indexOf('immatconnect-pro-') === 0; });
-    var hasCurrentCache = active.indexOf(CURRENT) !== -1;
+    var hasCurrentCache = active.some(function(k){ return k>=CURRENT; });
     // Mettre à jour l'affichage CACHE_NAME avec la vraie valeur live
     var el = document.getElementById('dashCacheName');
     if (el && active.length) el.textContent = active[active.length - 1];
