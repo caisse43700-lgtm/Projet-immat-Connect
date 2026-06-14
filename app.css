@@ -301,26 +301,33 @@ button { border: 0; cursor: pointer; }
 
 /* ── SHEET (panneau glissant) ── */
 .sheet {
-  position: absolute;
+  position: fixed;
   z-index: 90;
   left: 0; right: 0;
+  top: auto;
   bottom: calc(var(--nav-h) + var(--safe-bottom));
-  max-height: calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 8px);
+  height: min(78dvh, calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
+  max-height: none;
   background: #0c1624;
   color: var(--text);
   border-radius: 26px 26px 0 0;
   box-shadow: 0 -18px 55px rgba(0,0,0,.4);
   padding: 8px 14px 12px;
-  overflow: auto;
-  transition: .28s cubic-bezier(.22,1,.36,1);
-  will-change: transform;
+  overflow-y: auto;
+  transition: height .28s cubic-bezier(.22,1,.36,1), padding .28s cubic-bezier(.22,1,.36,1);
+  will-change: height;
   overscroll-behavior: contain;
 }
-.sheet.mini { transform: translateY(100%); pointer-events: none; }
+.sheet.mini {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 .sheet.full {
-  max-height: calc(100dvh - var(--safe-top) - 8px);
-  top: calc(var(--safe-top) + 8px);
-  border-radius: 26px 26px 0 0;
+  height: min(78dvh, calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
+  pointer-events: auto;
 }
 .sheet.dragging { transition: none !important; }
 .handle {
