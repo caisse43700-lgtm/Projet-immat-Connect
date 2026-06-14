@@ -37,19 +37,24 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
-1. **Plaque absente du chip #tbPlate** — `select('*')` cassé dans `main` après REVOKE column-level
-   - **Fix SQL immédiat** : `GRANT SELECT ON public.profiles TO authenticated;`
-   - Fix permanent : merger notre branche (utilise `get_my_profile()` RPC)
-2. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles
-3. **Push notifications** — pas encore testées (B2) — bouton dans Settings déployé sur notre branche
+1. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles
+2. **Tests terrain B2→B5** — non complétés (push / RGPD / messages / ANGE)
+3. **REVOKE SELECT sur profiles** — en attente validation B1+B4 (ne pas exécuter avant confirmation)
 
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : GO LIVE — Configuration Supabase + Déploiement Edge Functions + Corrections terrain**  
+**Mission : Fix bannière SW en boucle (SW_UPDATED loop)**  
 **Date :** 2026-06-14  
-**Commits :** `c409b38` (VAPID key), `e3559e5` (GitHub Actions EF), `0645a29` (push button Settings), `0a09028` (messages.js fix)
+**Cause racine :** `CURRENT = 'immatconnect-pro-v22'` dans index.html (2 occurrences) alors que le SW actif est `v25` → bannière toujours visible  
+**Fix :** 2 occurrences mises à jour → `'immatconnect-pro-v25'` (lignes 2827 et 2871 de index.html)  
+
+---
+
+**Mission précédente : GO LIVE — PR #300 merge + corrections terrain**  
+**Date :** 2026-06-14  
+**Commits :** `c409b38` (VAPID key), `e3559e5` (GitHub Actions EF), `0645a29` (push button Settings), `0a09028` (messages.js fix), `244cbd5` (call log dedup), `2c78ca7` (calls.js merge)
 
 - VAPID public key mise à jour dans index.html (clé de prod, pas de test)
 - GitHub Actions workflow `deploy-edge-functions.yml` créé — déploie 5 EF en 1 click
@@ -59,6 +64,8 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - messages.js `getProfile()` : `select('*')` → `select('id,owner_plate,pseudo,vehicle_color')`
 - `GRANT SELECT (phone)` ajouté sur profiles pour authenticated (restaure le chargement profil)
 - Merge de main (calls.js v16 fixes) dans notre branche — conflits résolus
+- PR #300 mergée → main → GitHub Pages déployé
+- Journal d'appels dédupliqué par plaque (1 entrée par interlocuteur, badge ×N)
 
 ---
 
@@ -179,36 +186,31 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 3. MISSION EN COURS
 
-GO LIVE — Phase tests terrain (B2→B5 non complétés).
+GO LIVE — Tests terrain B2→B5 à compléter. Bannière SW fixée. REVOKE en attente.
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE — ORDRE STRICT
 
 ```
-ÉTAPE 1 — Fix SQL immédiat (1 commande dans Supabase SQL Editor) :
-  GRANT SELECT ON public.profiles TO authenticated;
-  → Restaure le chip #tbPlate avec la plaque en haut à gauche
-  → Répare aussi l'affichage direct à la connexion (plus de profil vide)
-
-ÉTAPE 2 — Merger notre branche → main (fix permanent) :
-  PR : claude/immatconnect-pro-app-dEKGR → main
-  Notre branche contient :
-    - afterAuth() utilise get_my_profile() RPC (contourne le column-level REVOKE proprement)
-    - messages.js getProfile() avec colonnes explicites
-    - Bouton push notifications dans Paramètres
-    - calls.js v16 fixes (merge inclus)
-    - GitHub Actions workflow deploy-edge-functions.yml
-
-ÉTAPE 3 — Tests terrain restants :
-  B2 : Push notification (app fermée → iOS reçoit la notif ?)
+ÉTAPE 1 — Tests terrain (PR #300 mergée, SW loop fixé, faire les tests) :
+  B2 : Push notification — Paramètres > Notifications > Activer → accepter la permission iOS
   B3 : RGPD — Export de données (bouton dans Paramètres → téléchargement JSON)
+        ⚠️  Le panneau Settings iOS se coupe — RGPD inaccessible → fix CSS d'abord si nécessaire
   B4 : Messages — envoyer BZ-652-LL → BE-521-MM
-  B5 : ANGE — dialogue IA avec immat-brain-dialog
+  B5 : ANGE — ouvrir dialogue IA ✦ → poser une question → vérifier réponse Claude
 
-ÉTAPE 4 — Fix CSS panneau Paramètres iOS :
+ÉTAPE 2 — Après confirmation B1 + B4 OK :
+  Exécuter dans Supabase SQL Editor :
+    REVOKE SELECT ON public.profiles FROM authenticated;
+  Puis vérifier :
+    SELECT column_name FROM information_schema.column_privileges
+    WHERE grantee='authenticated' AND table_name='profiles' AND privilege_type='SELECT';
+  Doit retourner uniquement : id, owner_plate, pseudo, vehicle_color
+
+ÉTAPE 3 — Fix CSS panneau Paramètres iOS (si B3 bloqué) :
   Le panneau Settings se coupe — RGPD + Notifications non accessibles sur iOS
-  Fix : ajouter overflow-y:scroll + max-height sur le panneau ou activer -webkit-overflow-scrolling
+  Fix : ajouter overflow-y:scroll + max-height sur le panneau ou -webkit-overflow-scrolling:touch
 ```
 
 ---
@@ -604,6 +606,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | BETA_READINESS_AUDIT.md créé — 10 sections — 20 fonctionnalités non testées, 10 catastrophes + reprises, métriques 30j, checklist J1→J7, SQL diagnostic complet |
 | 2026-06-14 | IA session | TECHNICAL_AUDIT_AND_ROADMAP.md créé — audit code réel — 85-95% V1 codé, 0% sécurité active (11 migrations non appliquées) — roadmap Sprint 8→13 — Sprint 8 détaillé 4h code + 8h terrain |
 | 2026-06-14 | IA session | GO LIVE session — 6 Secrets Supabase configurés, 5 EF déployées via GH Actions, Realtime OK, B1 PII ✅, messages.js fix, GRANT phone, push button Settings, merge main calls v16 |
+| 2026-06-14 | IA session | GO LIVE session (suite) — PR #300 mergée → main, call log dédupliqué (×N par plaque), fix SW banner loop (CURRENT v22→v25 dans index.html) |
 
 ---
 
