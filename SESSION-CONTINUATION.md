@@ -7,6 +7,47 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — PRODUCT_ARCHITECTURE_V2 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/PRODUCT_ARCHITECTURE_V2.md — créé (17 sections)**
+
+- Section 0 : Principes directeurs V2 (owner_plate, RGPD by design, sécurité gratuite)
+- Section 1 : Module Véhicule — vehicles table + public_vehicles view + RISK-VEH-01→05
+- Section 2 : Module Stationnement — parking_sessions + parking_spots + EF expiry + RISK-PKG-01→05
+- Section 3 : Module Maintenance — reminders + history + EF cron + RISK-MNT-01→05
+- Section 4 : Module Assistance Routière — assistance_requests + flux matching + décision RGPD anonymisation (3 options) + RISK-ASS-01→06
+- Section 5 : Module Communauté — badges + ambassadeurs + anti-abus + RISK-COM-01→05
+- Section 6 : Module Monétisation — matrice gratuit/premium + user_subscriptions + is_premium RPC + RISK-MON-01→06
+- Section 7 : Module Professionnels — professional_profiles + SIRET + RISK-PRO-01→06
+- Section 8 : Module IA/ANGE — invariants ANGE-01→07 + conversation_history opt-in + évolution contextuelle sans mémoire Sprint 10-11 + RISK-IA-01→05
+- Section 9 : Architecture cible 6/12/24 mois — sprints détaillés + ce qui ne doit PAS être planifié avant 24 mois
+- Section 10 : Matrice compatibilité V2 (8 modules × 10 entités existantes)
+- Section 11 : 12 angles morts futurs (AM-01→12)
+- Section 12 : 12 dettes techniques futures (DEBT-FUT-01→12)
+- Section 13 : 13 tables réservées avec sprint cible et décision pré-requis
+- Section 14 : 10 Edge Functions réservées avec sprint cible
+- Section 15 : 12 invariants V2 (INV-V2-01→12)
+- Section 16 : Arbre de décision go/no-go par module
+- Section 17 : Tableau de décision go/no-go à remplir par le fondateur
+
+**Commit :** à venir
+
+### Décision architecturale critique documentée (Section 4.6)
+
+La décision RGPD anonymisation des assistance_requests (delete-account) a trois options identifiées :
+- Option A : DELETE direct (clean RGPD, perte historique helper)
+- Option B : Anonymisation (résidu de donnée, historique helper conservé)
+- Option C : Table d'audit séparée (équilibre, complexité)
+→ DÉCISION FONDATEUR OBLIGATOIRE avant Sprint 11
+
+### Prochaine action recommandée
+
+Exécution terrain V1 (ordre DEPLOYMENT_LOG.md) → GO MAIN → Sprint 8 (delete_audit_log + bêta fermée)
+
+---
+
 ## SESSION 2026-06-14 — DOCUMENTS OPÉRATIONNELS TERRAIN (TERMINÉE)
 
 ### Ce qui a été produit
