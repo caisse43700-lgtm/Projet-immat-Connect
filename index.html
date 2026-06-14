@@ -503,7 +503,7 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const APP_BUILD='2026-06-14-S7';
+const APP_BUILD='2026-06-14-S8';
 window.APP_BUILD=APP_BUILD;
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
 function _vapidKey(b64){const pad='='.repeat((4-b64.length%4)%4);const b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
@@ -1196,7 +1196,8 @@ App.navActivite=function(){
     const _m=document.getElementById('actMain');const _cp=document.getElementById('actCatPanel');
     if(_m)_m.style.display='';if(_cp)_cp.style.display='none';
     const _pa=document.getElementById('panelActivite');const _ps=document.getElementById('panelSettings');
-    toast('ACT pa='+(_pa?.classList.contains('on')?'ON':'off')+' ps='+(_ps?.classList.contains('on')?'ON':'off')+' m='+(getComputedStyle(_m||document.body).display),'ok');
+    console.log('[ACT]',{actMain:_m,actCatPanel:_cp,panelActivite:_pa,panelSettings:_ps});
+    toast('ACT pa='+(_pa?.classList.contains('on')?'ON':'off')+' ps='+(_ps?.classList.contains('on')?'ON':'off')+' m='+(getComputedStyle(_m||document.body).display)+' len='+(_m?.innerHTML.length||0)+' cp='+(_cp?.style.display||'?'),'ok');
   }catch(_){toast('ACT err:'+_,'bad');}
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
@@ -2863,7 +2864,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v28';
+      var CURRENT = 'immatconnect-pro-v29';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
