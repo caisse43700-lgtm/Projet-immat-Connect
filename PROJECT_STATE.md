@@ -298,6 +298,7 @@ Rouvrir uniquement sur : bug bloquant, faille sécurité, risque RGPD, KO terrai
 | **`docs/TEST_RESULTS.md`** | Grille 42 contrôles terrain — résultats (✅/❌/⚠️/⬜) — GO/NO-GO MAIN | Pendant et après les sessions de test terrain |
 | **`docs/INCIDENT_LOG.md`** | Journal des incidents — format P1/P2/P3 — référence aux RISK et playbooks du MASTER_COMPATIBILITY_MAP | Dès qu'un ❌ ou dysfonctionnement est détecté |
 | **`docs/PRODUCT_ARCHITECTURE_V2.md`** | Roadmap architecture produit V2 — 17 sections — 8 modules (Véhicule, Stationnement, Maintenance, Assistance, Communauté, Monétisation, Professionnels, IA/ANGE) — matrice compatibilité, angles morts, dettes futures, tables réservées, EF réservées, invariants V2, arbre de décision GO/NO-GO | Avant tout sprint V2 ou décision d'architecture future |
+| **`docs/BETA_READINESS_AUDIT.md`** | Audit d'exploitation bêta — 10 sections — 20 fonctionnalités codées non testées, 10 pires catastrophes + procédures de reprise, métriques 30j, checklist opérationnelle J1→J7, commandes SQL de diagnostic | AVANT toute session de déploiement terrain |
 | **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
 
 **Hiérarchie de vérité :**
@@ -578,6 +579,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | MASTER_COMPATIBILITY_MAP v1.3 — GEL FINAL — Section 39 : hiérarchie sources de vérité, nomenclature officielle, STORAGE_REGISTRY, règle RGPD future, SYSTEM_HEALTH_REGISTRY, décision trust→owner_plate, impact parking, INV-027 documents véhicule, EVENT_REGISTRY, test onboarding 50min |
 | 2026-06-14 | IA session | Documents opérationnels créés — DEPLOYMENT_LOG.md + TEST_RESULTS.md + INCIDENT_LOG.md — documentation terrain complète, prêt pour l'exécution |
 | 2026-06-14 | IA session | PRODUCT_ARCHITECTURE_V2.md créé — 17 sections — 8 modules futurs documentés avec tables réservées, EF réservées, risques, RGPD, matrice compatibilité, invariants V2, arbre de décision — gel documentaire V2 |
+| 2026-06-14 | IA session | BETA_READINESS_AUDIT.md créé — 10 sections — 20 fonctionnalités non testées, 10 catastrophes + reprises, métriques 30j, checklist J1→J7, SQL diagnostic complet |
 
 ---
 

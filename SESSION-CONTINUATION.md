@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — BETA_READINESS_AUDIT (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/BETA_READINESS_AUDIT.md — créé (10 sections)**
+
+- Section 1 : 20 fonctionnalités codées jamais testées en conditions réelles (F01→F20)
+- Section 2 : Éléments documentés jamais exécutés (0/11 migrations, 4 EF non déployées, 6 secrets non confirmés, Realtime non validé)
+- Section 3 : Migrations classées par risque décroissant — 20260615 RISQUE MAXIMUM avec procédure rollback 30s
+- Section 4 : Edge Functions classées par risque — delete-account RISQUE MAXIMUM + procédure test step-by-step
+- Section 5 : 18 scénarios utilisateurs réels jamais simulés — SC18 = lifecycle complet (test de référence)
+- Section 6 : Analyse dépendances externes (Supabase, Agora, Anthropic, SW, Push iOS, Push Android) avec contraintes spécifiques iOS 16.4+
+- Section 7 : 10 catastrophes avec procédures de reprise et durée estimée — C6 (suppression compte) = seule irréversible
+- Section 8 : Synthèse reprises (tableau durée + action immédiate + irréversibilité)
+- Section 9 : Métriques 30 premiers jours (quotidien + hebdo + SQL + alertes)
+- Section 10 : Checklist opérationnelle J1→J7 avec cases à cocher
+
+**Commit :** à venir
+
+---
+
 ## SESSION 2026-06-14 — PRODUCT_ARCHITECTURE_V2 (TERMINÉE)
 
 ### Ce qui a été produit
