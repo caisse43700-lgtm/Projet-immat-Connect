@@ -54,9 +54,42 @@
   const _save  = (key, list) => { try { localStorage.setItem(key, JSON.stringify((list||[]).slice(-MAX_INTERACTIONS))); } catch(e) {} };
   const _uuid  = () => (crypto?.randomUUID ? crypto.randomUUID() : 'ie-' + Date.now() + '-' + Math.random().toString(16).slice(2));
 
+  // Anti-double-émission OBD : mémorise les IDs déjà émis (FIFO, max 100 entrées).
+  const MAX_OBD_DEDUPE   = 100;
+  const _emittedObdIds   = new Set();
+  const _emittedObdFifo  = [];
+
+  // Retourne true si le type ou le flow correspond à un événement d'appel.
+  // Les événements d'appel sont déjà émis par calls.js avec requestId correct —
+  // les réémettre ici crée des events parasites sans requestId sur ImmatBus.
+  function _isCallLikeType(type, meta) {
+    const t = String(type || '');
+    return t === 'CALL'
+      || t.startsWith('CALL_')
+      || String(meta?.obd  || '').startsWith('CALL_')
+      || String(meta?.flow || '') === 'FLOW-CALL-REQUEST';
+  }
+
+  // Enregistre l'id dans le Set de dédup. Retourne false si déjà présent.
+  function _rememberObd(id) {
+    if (!id) return false;
+    if (_emittedObdIds.has(id)) return false;
+    _emittedObdIds.add(id);
+    _emittedObdFifo.push(id);
+    while (_emittedObdFifo.length > MAX_OBD_DEDUPE) {
+      const old = _emittedObdFifo.shift();
+      if (old) _emittedObdIds.delete(old);
+    }
+    return true;
+  }
+
   function _emitObd(interaction) {
     const meta = TYPE_META[interaction?.type] || {};
     if (!meta.obd || meta.reserved) return;
+    // Guard appels : déjà émis par calls.js avec requestId correct.
+    if (_isCallLikeType(interaction?.type, meta)) return;
+    // Guard dédup : une même interaction n'émet qu'un seul événement OBD.
+    if (!_rememberObd(interaction?.id)) return;
     const flow = interaction.flow_id || meta.flow || null;
     const inv  = (interaction.invariants || meta.invariants || [])[0] || null;
     try {
@@ -201,6 +234,7 @@
         failedWrites: 0,
         lastLedgerError: null,
         canRebuildConversation: false,
+        obdDedupeSize: _emittedObdIds.size,
       };
     } catch(e) {
       return { hasLedger: false, error: String(e?.message || e) };

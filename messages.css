@@ -610,6 +610,10 @@
 .ic-bubble.sent .ic-time { color:#06140f; }
 .ic-bubble.recv .ic-time { color:#9aacc2; }
 
+/* ---- Read indicator ---- */
+.ic-read-tick { font-size:10px; line-height:1; flex-shrink:0; }
+.ic-bubble.sent .ic-read-tick { color:#06140f; }
+
 /* ---- Delete message button ---- */
 .ic-delete-msg {
   width:20px;

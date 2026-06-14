@@ -5,6 +5,304 @@
 Ce fichier est le point d'entrée de reprise pour tout assistant IA.
 Lire ce fichier en entier avant toute action.
 
+---
+
+## SESSION 2026-06-14 — TECHNICAL_AUDIT_AND_ROADMAP (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/TECHNICAL_AUDIT_AND_ROADMAP.md — audit code réel (8 sections)**
+
+Méthode : lecture directe de index.html, calls.js, messages.js, service-worker.js, core/*.js, supabase/functions/*, supabase/migrations/*
+
+Résultats clés :
+- Le code V1 est à 85-95% complet selon le module
+- La couche de sécurité est à 100% écrite mais 0% active (11 migrations non appliquées)
+- En production actuelle : email + téléphone accessibles par tout utilisateur authentifié via /profiles
+- 17 écarts vision/réalité identifiés (6 critiques bloquant GO MAIN)
+- Roadmap Sprint 8→13 avec durées estimées
+- Sprint 8 détaillé : 4h code (Claude) + 30min déploiement (fondateur) + 2-4h terrain
+
+Conclusion : "Le code est prêt. L'infrastructure ne l'est pas."
+→ L'application est en mode "démo sans sécurité" — déploiement migrations = priorité absolue.
+
+---
+
+## SESSION 2026-06-14 — BETA_READINESS_AUDIT (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/BETA_READINESS_AUDIT.md — créé (10 sections)**
+
+- Section 1 : 20 fonctionnalités codées jamais testées en conditions réelles (F01→F20)
+- Section 2 : Éléments documentés jamais exécutés (0/11 migrations, 4 EF non déployées, 6 secrets non confirmés, Realtime non validé)
+- Section 3 : Migrations classées par risque décroissant — 20260615 RISQUE MAXIMUM avec procédure rollback 30s
+- Section 4 : Edge Functions classées par risque — delete-account RISQUE MAXIMUM + procédure test step-by-step
+- Section 5 : 18 scénarios utilisateurs réels jamais simulés — SC18 = lifecycle complet (test de référence)
+- Section 6 : Analyse dépendances externes (Supabase, Agora, Anthropic, SW, Push iOS, Push Android) avec contraintes spécifiques iOS 16.4+
+- Section 7 : 10 catastrophes avec procédures de reprise et durée estimée — C6 (suppression compte) = seule irréversible
+- Section 8 : Synthèse reprises (tableau durée + action immédiate + irréversibilité)
+- Section 9 : Métriques 30 premiers jours (quotidien + hebdo + SQL + alertes)
+- Section 10 : Checklist opérationnelle J1→J7 avec cases à cocher
+
+**Commit :** à venir
+
+---
+
+## SESSION 2026-06-14 — PRODUCT_ARCHITECTURE_V2 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/PRODUCT_ARCHITECTURE_V2.md — créé (17 sections)**
+
+- Section 0 : Principes directeurs V2 (owner_plate, RGPD by design, sécurité gratuite)
+- Section 1 : Module Véhicule — vehicles table + public_vehicles view + RISK-VEH-01→05
+- Section 2 : Module Stationnement — parking_sessions + parking_spots + EF expiry + RISK-PKG-01→05
+- Section 3 : Module Maintenance — reminders + history + EF cron + RISK-MNT-01→05
+- Section 4 : Module Assistance Routière — assistance_requests + flux matching + décision RGPD anonymisation (3 options) + RISK-ASS-01→06
+- Section 5 : Module Communauté — badges + ambassadeurs + anti-abus + RISK-COM-01→05
+- Section 6 : Module Monétisation — matrice gratuit/premium + user_subscriptions + is_premium RPC + RISK-MON-01→06
+- Section 7 : Module Professionnels — professional_profiles + SIRET + RISK-PRO-01→06
+- Section 8 : Module IA/ANGE — invariants ANGE-01→07 + conversation_history opt-in + évolution contextuelle sans mémoire Sprint 10-11 + RISK-IA-01→05
+- Section 9 : Architecture cible 6/12/24 mois — sprints détaillés + ce qui ne doit PAS être planifié avant 24 mois
+- Section 10 : Matrice compatibilité V2 (8 modules × 10 entités existantes)
+- Section 11 : 12 angles morts futurs (AM-01→12)
+- Section 12 : 12 dettes techniques futures (DEBT-FUT-01→12)
+- Section 13 : 13 tables réservées avec sprint cible et décision pré-requis
+- Section 14 : 10 Edge Functions réservées avec sprint cible
+- Section 15 : 12 invariants V2 (INV-V2-01→12)
+- Section 16 : Arbre de décision go/no-go par module
+- Section 17 : Tableau de décision go/no-go à remplir par le fondateur
+
+**Commit :** à venir
+
+### Décision architecturale critique documentée (Section 4.6)
+
+La décision RGPD anonymisation des assistance_requests (delete-account) a trois options identifiées :
+- Option A : DELETE direct (clean RGPD, perte historique helper)
+- Option B : Anonymisation (résidu de donnée, historique helper conservé)
+- Option C : Table d'audit séparée (équilibre, complexité)
+→ DÉCISION FONDATEUR OBLIGATOIRE avant Sprint 11
+
+### Prochaine action recommandée
+
+Exécution terrain V1 (ordre DEPLOYMENT_LOG.md) → GO MAIN → Sprint 8 (delete_audit_log + bêta fermée)
+
+---
+
+## SESSION 2026-06-14 — DOCUMENTS OPÉRATIONNELS TERRAIN (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/INCIDENT_LOG.md — créé**
+- Format standard P1/P2/P3 avec seuils de priorité
+- Tableau de référence des 25 RISK du MASTER_COMPATIBILITY_MAP (Section 20)
+- Règles d'escalade par priorité (P1 : stopper GO + playbook immédiat)
+- Référence aux 5 playbooks (Sections 35/35b/35c/35d/35e)
+- Historique des incidents (vierge — INC-001 template prêt)
+
+**DEPLOYMENT_LOG.md** ✅ (créé session précédente, non encore commité)
+**TEST_RESULTS.md** ✅ (créé session précédente, non encore commité)
+
+**Commit :** à venir — 3 fichiers ensemble
+
+### Prochaine action recommandée
+
+Exécution terrain (fondateur) — dans l'ordre :
+1. Supabase SQL Editor → 11 migrations (ordre chronologique, 20260615 en dernier)
+2. Supabase Secrets → 6 secrets (AGORA_APP_CERTIFICATE, VAPID×3, ANTHROPIC_API_KEY)
+3. Edge Functions → 4 déploiements (delete-account, export-user-data, submit-rating, send-push-notification)
+4. Realtime → activer messages + user_locations
+5. Test terrain 42 contrôles (TEST_RESULTS.md)
+6. GO/NO-GO MAIN (0 ❌ sur contrôles critiques)
+
+---
+
+## SESSION 2026-06-14 — GEL DOCUMENTAIRE FINAL MASTER_COMPATIBILITY_MAP v1.3 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md → v1.2 → v1.3 (2203 lignes) — GEL DOCUMENTAIRE FINAL**
+
+**Section 39 ajoutée — 10 vérifications finales de complétude :**
+
+- **39.1 Hiérarchie sources de vérité** : MASTER_COMPATIBILITY_MAP prévaut sur tout autre document. Ordre : MASTER_COMPATIBILITY_MAP → PROJECT_STATE → SESSION-CONTINUATION → PLAN_30J → GAP_ANALYSIS → AUDIT_V2
+- **39.2 Nomenclature officielle** : table de correspondance Nom officiel ↔ Noms interdits (doublon) pour 15 domaines — véhicles, stationnement, trust, ratings, modération, RGPD, ANGE...
+- **39.3 STORAGE_REGISTRY** : registre buckets Supabase Storage — report-photos (planifié), vehicle-documents, avatars, admin-evidence (futurs). Durée conservation + delete-account + export-user-data + accès définis pour chaque bucket.
+- **39.4 Règle RGPD future** : procédure obligatoire pour toute nouvelle table (contient PII ? → delete-account + export + FEATURE_REGISTRY + DATA_OWNERSHIP + durée conservation + purge). Non-respect = dette RGPD bloquante pour GO MAIN.
+- **39.5 SYSTEM_HEALTH_REGISTRY** : 9 composants monitorés (Supabase DB, Realtime, EF, Agora, Anthropic, Push, Storage, SW, index DB). Règle : signal inexistant = "Donnée indisponible", jamais d'estimation.
+- **39.6 Décision trust → owner_plate** : trust attaché à la plaque (pas au user_id). Comportement documenté pour : changement de plaque, vente véhicule, suppression compte, multi-véhicules.
+- **39.7 Impact parking** : matrice d'impact des futures tables parking sur 13 systèmes existants. RLS définie pour parking_sessions, parking_spots, parking_reservations.
+- **39.8 INV-027 documents véhicule** : 5 interdictions absolues (transmis à ANGE, prompt IA, RPC non restreinte, entraînement IA, export autre que URL signée 1h). Règle d'accès via RPC SECURITY DEFINER.
+- **39.9 EVENT_REGISTRY** : registre des 12 événements ImmatBus + 4 canaux Realtime avec émetteur, abonnés, payload, déclencheur. Règle : aucun nouveau canal sans être listé ici.
+- **39.10 Test onboarding** : checklist 12 éléments — un nouveau développeur peut comprendre l'architecture en 50 minutes. Réponse : OUI — documentation considérée comme complète.
+
+**Note de gel final** : couverture 97-99%, risque principal désormais = DOCUMENTATION ≠ RÉALITÉ.
+
+### État des fichiers
+
+```
+docs/MASTER_COMPATIBILITY_MAP.md  → v1.3 — GEL DOCUMENTAIRE FINAL (2203 lignes)
+PROJECT_STATE.md                  → MIS À JOUR
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucun code modifié. Phase documentation = **DÉFINITIVEMENT TERMINÉE**.
+
+---
+
+## SESSION 2026-06-13 — GEL DOCUMENTAIRE MASTER_COMPATIBILITY_MAP v1.2 (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md → mis à jour v1.1 → v1.2 (GEL)**
+
+Extensions v1.2 :
+
+**Risques RISK-018 à RISK-025 :**
+- RISK-018 : Feature non reliée au ROLLBACK_REGISTRY → rollback impossible
+- RISK-019 : Nouvelle table oubliée dans delete-account → RGPD art.17 KO
+- RISK-020 : Nouvelle table oubliée dans export-user-data → RGPD art.20 KO
+- RISK-021 : Feature sans tests terrain → régression invisible
+- RISK-022 : Feature contournant un Hard Invariant → sécurité ou RGPD violée
+- RISK-023 : Feature critique dépendante d'ANGE → panne IA = panne produit
+- RISK-024 : Future migration USING(true) → réexposition PII
+- RISK-025 : Feature lisant profiles au lieu de public_profiles → fuite PII potentielle
+
+**Hypothèses HYP-013 à HYP-014 :**
+- HYP-013 : Toutes les EF déployées sont encore appelées par le code actif (détecter orphelines)
+- HYP-014 : Toutes les tables ont une RLS cohérente et un owner fonctionnel
+
+**Invariants INV-023 à INV-026 :**
+- INV-023 : FUTURE FEATURE GATE — feature non documentée = feature non existante
+- INV-024 : Toute nouvelle table auditée (RLS + RGPD + Realtime + Rollback) avant utilisation
+- INV-025 : Aucune EF boîte noire — objectif + entrées + sorties + erreurs + dépendances documentés
+- INV-026 : Aucun secret sans propriétaire + procédure de rotation documentée
+
+**Nouveaux playbooks :**
+- Section 35b AGORA_DOWN : comportements attendus + contrôles + surveillance
+- Section 35c ANTHROPIC_DOWN : comportements attendus + contrôles + surveillance
+
+**Nouveaux tests terrain :**
+- C18 : Supabase indisponible → interface stable
+- C19 : Agora indisponible → appels KO uniquement, reste fonctionnel
+- C20 : Anthropic indisponible → ANGE KO uniquement, reste fonctionnel
+- C21 : Rollback migration en environnement de test → retour état stable
+
+**Section 37 étendue : 10 → 15 questions GO MAIN**
+Questions ajoutées : IMPACT_REGISTRY rempli (11), DATA_OWNERSHIP mis à jour (12),
+FEATURE_DEPENDENCY_GRAPH mis à jour (13), documentation onboarding mise à jour (14),
+RLS sans USING(true) sur tables sensibles (15)
+
+**FUTURE_TABLES_RESERVED enrichie :**
+Ajout : maintenance_events, vehicle_history, parking_reservations
+
+**Note de gel documentaire :**
+Message final ajouté : STOP DOCUMENTATION — passer à l'exécution terrain.
+
+### Décision finale : NO-GO MAIN — GEL DOCUMENTAIRE ACTIF
+
+---
+
+## SESSION 2026-06-13 — CONSOLIDATION GOUVERNANCE DOCUMENTAIRE (TERMINÉE)
+
+### Ce qui a été produit
+
+**docs/MASTER_COMPATIBILITY_MAP.md v1.1** — 38 sections, document de référence pré-production officielle
+
+Extensions ajoutées par rapport à la v1.0 (produite en session précédente) :
+
+**Risques RISK-013 à RISK-017 :**
+- RISK-013 : Désynchronisation profiles ↔ public_profiles (trigger KO)
+  → Contrôle : `SELECT COUNT(*) FROM profiles p LEFT JOIN public_profiles pp ON pp.owner_plate = p.owner_plate WHERE pp.owner_plate IS NULL` → attendu **0**
+- RISK-014 : Régression SW (anciens caches) → `caches.keys()` → attendu immatconnect-pro-v25 uniquement
+- RISK-015 : Incohérence Trust Engine (3 sources non synchronisées)
+- RISK-016 : Suppression RGPD incomplète si nouvelle table ajoutée sans mise à jour de delete-account
+- RISK-017 : Utilisateur bloqué toujours joignable côté serveur (user_blocks = barrière client uniquement)
+
+**Hypothèses HYP-011 à HYP-012 :**
+- HYP-011 : get_public_profiles_by_ids() fonctionne après 20260615 (SECURITY DEFINER bypass column grants)
+- HYP-012 : Index 20260614_missing_indexes réellement utilisés (EXPLAIN ANALYZE à valider)
+
+**Invariants INV-021 à INV-022 :**
+- INV-021 : une donnée métier = une seule source de vérité
+- INV-022 : ANGE jamais requis pour une feature critique
+
+**Registres de gouvernance (nouveaux) :**
+- FEATURE_REGISTRY (Section 27) — 18 features, à maintenir à chaque nouvelle feature
+- DATA_OWNERSHIP_REGISTRY (Section 28) — 13 données métier avec source + copies + interdictions
+- IMPACT_REGISTRY (Section 29) — template à remplir avant tout commit de feature
+- FUTURE_FEATURE_GATE (Section 30) — checklist 15 points GO DEV obligatoire
+
+**Dettes DEBT-009 à DEBT-010, Tests C15 à C17**
+
+**Sections additionnelles :**
+- Section 32 : FUTURE_TABLES_RESERVED (13 tables : parking_sessions, vehicle_profiles, ange_decisions, rate_limit_counters, delete_audit_log...)
+- Section 33 : PARTIAL_MIGRATION_FAILURE PLAYBOOK (6 étapes strictes)
+- Section 34 : SUPABASE_DOWN_PLAYBOOK
+- Section 35 : AI_HALLUCINATION_PLAYBOOK (règle fondamentale + actions interdites à ANGE)
+- Section 36 : VÉHICULES ET STATIONNEMENT — template cartographique obligatoire avant tout dev
+- Section 37 : 10 QUESTIONS GO MAIN — si une NON → NO-GO MAIN
+
+### État après cette session
+
+```
+docs/MASTER_COMPATIBILITY_MAP.md  → CRÉÉ (v1.1, 38 sections)
+PROJECT_STATE.md                  → MIS À JOUR (documents de référence + historique)
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucune modification de code. Aucun commit de code. Phase documentation = terminée.
+
+### Décision finale : NO-GO MAIN (code prêt, terrain non exécuté)
+
+---
+
+## SESSION 2026-06-13 — PHASE DOCUMENTATION STRATÉGIQUE (TERMINÉE)
+
+### Ce qui a été produit (documents uniquement, aucun code modifié)
+
+- Architecture Review pré-Sprint 8 (8 sections : RLS, indexes, Realtime, localStorage, SW, Edge Functions, Deployment, Risk)
+- GO/NO-GO checklist sécurisation RLS (rollback corrigé — jamais USING(true))
+- Validation terrain régressions RLS (4 régressions identifiées et corrigées en session précédente)
+- Documents stratégiques (6) : Worst Case Scenarios, ANGE Spec, Business Review, CNIL, Cost Review, Roadmap
+- **Plan d'exécution 30 jours v1.2 — VALIDÉ ET FIGÉ** → `docs/PLAN_EXECUTION_30J_V1.2.md`
+
+### Décisions figées dans ce plan (ne plus rouvrir)
+
+- Noms Edge Functions corrects : delete-account, export-user-data, submit-rating, send-push-notification (+ 4 existantes)
+- Secrets : ANTHROPIC_API_KEY (pas OPENAI_API_KEY), VAPID_SUBJECT ajouté
+- Modèle IA : Claude via immat-brain-dialog (pas gpt-4o-mini)
+- ANGE = Assistant Numérique de Guidage et d'Écoute (définition unique)
+- Rate limit client = UX uniquement ; rate limit serveur = sécurité réelle (table rate_limit_counters dédiée)
+- Pas d'impact trust_level automatique sur volume de reports — needs_review flag + notification modération
+- is_deleted ≠ suspension (colonne account_status = migration future)
+- Export RGPD = messages envoyés + reçus avec minimisation
+- Realtime = activer uniquement tables réellement abonnées
+- 14 contrôles terrain (dont 11 critiques) — 0 KO critique = condition GO bêta
+
+### État des fichiers après cette session
+
+```
+docs/PLAN_EXECUTION_30J_V1.2.md  → CRÉÉ (document figé)
+PROJECT_STATE.md                  → MIS À JOUR (section 3, 4, 9, historique)
+SESSION-CONTINUATION.md           → MIS À JOUR (cette entrée)
+```
+
+Aucune modification de code. Aucun commit de code. Phase documentation = terminée.
+
+### Prochaine étape : exécution terrain (ordre strict)
+
+1. Déployer 11 migrations Supabase (20260615 en dernier)
+2. Configurer Secrets Supabase (AGORA_APP_CERTIFICATE, VAPID_PRIVATE_KEY, ANTHROPIC_API_KEY)
+3. Déployer 4 Edge Functions nouvelles/modifiées
+4. Activer Realtime sur tables confirmées uniquement
+5. Tester VAPID sur mobile réel
+6. Exécuter 14 contrôles terrain — 0 KO critique requis
+7. GO bêta fermée 10–20 utilisateurs
+
+---
+
 ## ÉTAT PRODUCTION — 2026-06-10
 
 ```text
@@ -480,27 +778,39 @@ appelait `showOutgoing(e.payload)` pour les 3 émissions. La 3ème écrasait :
 | CALL_MISSED après appel accepté | Double popup → deuxième timer échappait à clearTimeout | dedup v17 |
 | DB cancel en dernier | cancelCallRequest écrivait en DB après broadcasts | DB-first v15 |
 
-## TÂCHES SUIVANTES
+## ÉTAT — 2026-06-13 — AUDIT D'EXÉCUTION COMPLET
 
-### P0 — ✅ TOUT RÉSOLU (2026-06-12)
+### Fichier créé : docs/IMPLEMENTATION_GAP_ANALYSIS.md
 
-### P1 — Plaque visible des deux côtés ✅ CORRIGÉ (call-screen.js v7, 2026-06-12)
+Audit d'exécution complet — confronte le code réel au MASTER_PLAN et à l'AUDIT_V2.
 
-### P2 — Haut-parleur / écouteur
+Contenu :
+- Matrice 80+ fonctionnalités (Existe / Partielle / Absente / Priorité / Effort / Dépendances)
+- Audit écran par écran (10 écrans)
+- Audit base de données (tables, colonnes, index, RLS manquants)
+- Audit production (blockers App Store / Play Store)
+- Incohérences code vs MASTER_PLAN vs AUDIT_V2
+- Éléments à supprimer (call-webrtc.js, get-turn-credentials, Inbox/Outbox séparés…)
+- Roadmap Sprint 1→4
+- Top 20 actions dans l'ordre exact
 
-- Par défaut : route écouteur (privé)
-- Bouton Haut-parleur ON/OFF séparé du Muet
-- Si la route audio n'est pas contrôlable → afficher "Sortie audio contrôlée par le téléphone"
-- Exposer dans diagnostics : `speakerSupported`, `speakerEnabled`, `audioRouteKnown`, `audioRoute`, `lastSpeakerError`, `muteState`
+### PROCHAINE ACTION — SPRINT 1
 
-### P3 — Dashboard / Diagnostics
+**Action #01 (4h) :** Ajouter bouton urgence 15/17/18 dans sigStep2Vehicle et sigStep2Aide  
+**Action #02 (30 min) :** Supprimer call-webrtc.js + get-turn-credentials  
+**Action #03 (30 min) :** Effacer ic_pending_profile après signup réussi  
+**Action #04 (1j) :** Onglet Appels dans nav principale + badge manqués  
+**Action #05 (2j) :** Push notifications SW Level 2 (VAPID)  
 
-Ajouter un bloc "Call State Integrity" :
+### RÉSUMÉ ÉTAT DU PROJET (2026-06-13)
+
 ```
-requestId actif, CallScreen mode/plate/requestId, pendingCallId,
-signalRequestId, signalChannel présent, listeners actifs (receiver/requester),
-missedTimers, UI entrante/sortante visible, dernier cancel/hangup reçu,
-derniers événements CALL_*
+Fonctionnel : ~35% du plan
+Bugs P0 appels : ✅ tous résolus (2026-06-12)
+Blockers lancement : 5 (push, urgence, RGPD suppression, ic_pending_profile, onglet appels)
+Sprint 1 cible : 2 semaines
+Sprint 2 cible : +2 semaines
+Sprint 3 cible : +3 semaines
 ```
 
 ---

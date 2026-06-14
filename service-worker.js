@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §20 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v21';
+const CACHE_NAME  = 'immatconnect-pro-v25';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -38,6 +38,9 @@ const CDN_CACHE = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
 ];
 
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'unpkg.com', 'download.agora.io'];
@@ -89,5 +92,45 @@ self.addEventListener('fetch', (e) => {
         return res;
       })
       .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
+  );
+});
+
+// ─── Push notifications ──────────────────────────────────────────────────────
+
+self.addEventListener('push', (e) => {
+  if (!e.data) return;
+  let payload;
+  try { payload = e.data.json(); } catch { payload = { title: 'ImmatConnect', body: e.data.text() }; }
+
+  const title   = payload.title || 'ImmatConnect';
+  const options = {
+    body:      payload.body || '',
+    icon:      './icon-192.png',
+    badge:     './icon-192.png',
+    tag:       payload.tag  || 'immatconnect',
+    renotify:  true,
+    data:      payload.data || {},
+    vibrate:   [200, 100, 200],
+  };
+
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const data = e.notification.data || {};
+
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      // Cherche une fenêtre déjà ouverte sur le site
+      for (const c of list) {
+        if (c.url.startsWith(self.location.origin) && 'focus' in c) {
+          c.postMessage({ type: 'PUSH_NOTIFICATION_CLICKED', data });
+          return c.focus();
+        }
+      }
+      // Aucune fenêtre ouverte — ouvre l'app
+      return clients.openWindow('./');
+    })
   );
 });

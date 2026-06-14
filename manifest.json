@@ -5,17 +5,47 @@
   "display": "standalone",
   "background_color": "#071018",
   "theme_color": "#071018",
-  "description": "GPS communautaire et communication entre conducteurs.",
+  "description": "GPS communautaire et communication entre conducteurs via immatriculation.",
+  "lang": "fr",
+  "categories": ["navigation", "social", "utilities"],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Signaler un incident",
+      "short_name": "Signaler",
+      "description": "Signaler rapidement un incident sur la route",
+      "url": "./index.html?action=signal",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Voir la carte radar",
+      "short_name": "Carte",
+      "description": "Voir les conducteurs proches et les alertes sur la carte",
+      "url": "./index.html?action=map",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes appels",
+      "short_name": "Appels",
+      "description": "Consulter l'historique des appels",
+      "url": "./index.html?action=calls",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
