@@ -45,10 +45,23 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix bannière SW en boucle (SW_UPDATED loop)**  
-**Date :** 2026-06-14  
-**Cause racine :** `CURRENT = 'immatconnect-pro-v22'` dans index.html (2 occurrences) alors que le SW actif est `v25` → bannière toujours visible  
-**Fix :** 2 occurrences mises à jour → `'immatconnect-pro-v25'` (lignes 2827 et 2871 de index.html)  
+**Mission : Fix panneau Activité ne s'ouvrant pas (PR #305)**
+**Date :** 2026-06-14
+**Cause racine :** `openActivityCat()` masquait `actMain` (style.display='none') et montrait `actCatPanel` (display:flex + height:100%). Si l'utilisateur avait précédemment ouvert une catégorie et changé de panneau sans fermer, `actMain` restait caché. Au retour sur Activité, `panelActivite.on` → display:block mais `actMain` display:none → hauteur nulle → le sheet montait de quelques pixels seulement (handle + border-radius).
+**Fix :** Dans `navActivite()`, reset de `S._actCat`, `actMain.style.display=''` et `actCatPanel.style.display='none'` avant `panel('activite')`. Ajout d'un `App.openSheet?.()` explicite pour fiabiliser l'ouverture.
+**Commits :** À pousser
+
+---
+
+**Mission précédente : Fix bannière SW en boucle (SW_UPDATED loop) — PR #301**
+**Date :** 2026-06-14
+**Cause racine :** `CURRENT = 'immatconnect-pro-v22'` dans index.html (2 occurrences) alors que le SW actif est `v25` → bannière toujours visible
+**Fix :** 2 occurrences mises à jour → `'immatconnect-pro-v25'` (lignes 2827 et 2871 de index.html)
+
+**Autres PR cette session :**
+- PR #302 : locate() upsert debug logging (getUser null + error + OK)
+- PR #303 : SIGNED_OUT reset complet (GPS, Realtime, S.uid, profil, badges, UI)
+- PR #304 : bottom-nav grid 3→4 colonnes (navActivite invisible sur 2ème rangée)  
 
 ---
 
@@ -186,7 +199,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 3. MISSION EN COURS
 
-GO LIVE — Tests terrain B2→B5 à compléter. Bannière SW fixée. REVOKE en attente.
+GO LIVE — Tests terrain B2→B5 à compléter. Panneau Activité fixé (PR #305). REVOKE en attente.
 
 ---
 
@@ -607,6 +620,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | TECHNICAL_AUDIT_AND_ROADMAP.md créé — audit code réel — 85-95% V1 codé, 0% sécurité active (11 migrations non appliquées) — roadmap Sprint 8→13 — Sprint 8 détaillé 4h code + 8h terrain |
 | 2026-06-14 | IA session | GO LIVE session — 6 Secrets Supabase configurés, 5 EF déployées via GH Actions, Realtime OK, B1 PII ✅, messages.js fix, GRANT phone, push button Settings, merge main calls v16 |
 | 2026-06-14 | IA session | GO LIVE session (suite) — PR #300 mergée → main, call log dédupliqué (×N par plaque), fix SW banner loop (CURRENT v22→v25 dans index.html) |
+| 2026-06-14 | IA session | GO LIVE session (suite 2) — PR #301 (SW banner), #302 (locate debug), #303 (SIGNED_OUT reset), #304 (bottom-nav 4 colonnes), #305 (panneau Activité) |
 
 ---
 

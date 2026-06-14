@@ -7,6 +7,50 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-14 — GO LIVE fixes #301→#305 (EN COURS)
+
+### PRs de cette session (toutes mergées sauf #305 en attente)
+
+| PR | Fix | Détail |
+|---|---|---|
+| #301 | SW banner loop | CURRENT 'v22'→'v25' dans index.html (2 occurrences) |
+| #302 | locate() debug logging | getUser() null/error + upsert KO code/msg/hint + upsert OK uid prefix |
+| #303 | SIGNED_OUT reset complet | GPS clearWatch, 4 Realtime channels, S.uid/profile/nearby/alerts/etc., UI chips/badges |
+| #304 | bottom-nav grid 3→4 colonnes | navActivite débordait sur rangée invisible (repeat(3,1fr) → repeat(4,1fr)) |
+| #305 | Panneau Activité (PR à créer) | Voir détail ci-dessous |
+
+### Bug PR #305 — Panneau Activité ne s'ouvre pas
+
+**Symptôme :** clic sur navActivite → sheet monte légèrement (~10-15px) → aucun contenu visible.
+
+**Cause racine identifiée :**
+`App.openActivityCat(cat)` (quand l'utilisateur clique sur Route/Véhicule/Aide) fait :
+```js
+if(main)main.style.display='none';if(panel)panel.style.display='flex';
+```
+Si l'utilisateur ouvre une catégorie puis navigue vers Messages/Signaler **sans fermer la catégorie** (`closeActivityCat()` n'est pas appelé), `actMain.style.display='none'` persiste.
+
+Au retour sur navActivite :
+- `panel('activite')` ajoute `.on` → panelActivite visible
+- Mais `actMain.style.display='none'` → aucun contenu
+- `actCatPanel.style.display='flex'` avec `height:100%` mais parent sans hauteur explicite → hauteur 0
+- Résultat : sheet contient `panelActivite` avec hauteur ~0 → monte juste le handle (5px) + padding
+
+**Fix appliqué dans `navActivite()` :**
+```js
+S._actCat=null;
+try{const _m=document.getElementById('actMain'),_cp=document.getElementById('actCatPanel');
+    if(_m)_m.style.display='';if(_cp)_cp.style.display='none';}catch(_){}
+this.panel('activite');
+App.openSheet?.();  // fiabilise l'ouverture
+```
+
+**Fichier modifié :** `index.html` — fonction `App.navActivite` (ligne ~1186)
+
+**État :** Code modifié, non encore committé ni poussé.
+
+---
+
 ## SESSION 2026-06-14 — TECHNICAL_AUDIT_AND_ROADMAP (TERMINÉE)
 
 ### Ce qui a été produit
