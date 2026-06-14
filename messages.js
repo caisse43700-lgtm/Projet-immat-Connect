@@ -81,7 +81,7 @@ async function getProfile(){
 
   const {data} = await client
     .from('profiles')
-    .select('*')
+    .select('id, owner_plate, pseudo, vehicle_color')
     .eq('id', u.id)
     .maybeSingle();
 
