@@ -1282,6 +1282,17 @@ function closeCompose(){
   render();
 }
 
+function sharePosition(){
+  const lat=window.S?.myLat,lng=window.S?.myLng;
+  if(lat==null||lng==null) return toast('Position GPS non disponible.','bad');
+  if(!State.activePlate) return toast('Aucune conversation active.','bad');
+  const _p=typeof window._fuzzyPos==='function'?window._fuzzyPos(lat,lng):{lat,lng};
+  const url='https://www.google.com/maps?q='+_p.lat.toFixed(6)+','+_p.lng.toFixed(6);
+  const text='📍 Ma position : '+url;
+  const _rt=$('icReplyText');
+  if(_rt){_rt.value=text;try{_rt.dispatchEvent(new Event('input'));}catch(e){}_rt.focus();}
+}
+
 function _pickChip(plate){
   const _pe=$('icComposePlate');
   if(_pe){_pe.value=fPlate(plate);_pe.dispatchEvent(new Event('input'));}
@@ -1527,6 +1538,7 @@ window.ImmatMessages = {
   saveCallSettings,
   markAllRead,
   _pickChip,
+  sharePosition,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
