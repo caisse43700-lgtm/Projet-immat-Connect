@@ -63,7 +63,8 @@ const State = {
   activePlate:null,
   channel:null,
   searchQuery:'',
-  callEventsCache:{}
+  callEventsCache:{},
+  pseudoMap:{}
 };
 
 async function getUser(){
@@ -319,6 +320,25 @@ async function refresh(){
   render();
   refreshThread();
   if(!State.channel) subscribe();
+
+  // Batch pseudo lookup pour la liste de conversations (post-render, non-bloquant)
+  (async()=>{
+    try{
+      const plates=[...new Set(State.threads.map(t=>t.plate).filter(Boolean))];
+      if(!plates.length) return;
+      const need=[];
+      plates.forEach(p=>{
+        const nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(p));
+        if(nb?.pseudo&&nb.pseudo!=='Conducteur') State.pseudoMap[nPlate(p)]=nb.pseudo;
+        else need.push(nPlate(p));
+      });
+      if(need.length){
+        const{data}=await sb().from('profiles').select('owner_plate,pseudo').in('owner_plate',need);
+        (data||[]).forEach(p=>{if(p.pseudo)State.pseudoMap[nPlate(p.owner_plate)]=p.pseudo;});
+      }
+      render();
+    }catch(e){}
+  })();
 }
 
 function buildThreads(){
@@ -559,6 +579,7 @@ function render(){
     const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
       trust === 'TRUSTED'  ? '<span class="ic-trust-ok">✓</span>' :
       trust === 'CONTEXT'  ? '<span class="ic-trust-ctx">📍</span>' : '';
+    const pseudo = State.pseudoMap[nPlate(t.plate)] || '';
     return `
       <div class="ic-swipe-wrap">
         <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
@@ -566,7 +587,7 @@ function render(){
           <div class="ic-avatar">🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}${trustBadge}</span>
+              <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">

@@ -2905,7 +2905,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v39';
+      var CURRENT = 'immatconnect-pro-v40';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -2950,7 +2950,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v39';
+  var CURRENT = 'immatconnect-pro-v40';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
