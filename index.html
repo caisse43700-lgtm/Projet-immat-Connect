@@ -1879,6 +1879,7 @@ App.renderCallJournal=async function(){
         lastDay=day;
       }
       var dirIcon=r.outgoing?'<span style="font-size:11px;color:#94a3b8">↗ Sortant</span>':'<span style="font-size:11px;color:#94a3b8">↙ Entrant</span>';
+      var msgBtn='<button type="button" onclick="App.pickPlate(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Message à '+r.plate+'">💬</button>';
       var callBtn='<button type="button" onclick="App.callFromJournal(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Rappeler '+r.plate+'">📞</button>';
       var rateBtn=(r.status==='accepted'||r.status==='ended')?'<button type="button" onclick="App.openRatingModal(\''+r.plate+'\',\'call\')" style="background:#1e293b;border:none;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Évaluer '+r.plate+'">⭐</button>':'';
       html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b">'+
@@ -1893,7 +1894,7 @@ App.renderCallJournal=async function(){
         '</div>'+
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
           '<span style="font-size:11px;color:#64748b">'+timeStr(r.at)+'</span>'+
-          '<div style="display:flex;gap:4px">'+rateBtn+callBtn+'</div>'+
+          '<div style="display:flex;gap:4px">'+rateBtn+msgBtn+callBtn+'</div>'+
         '</div>'+
       '</div>';
     });
