@@ -550,7 +550,8 @@ function render(){
     const q = State.searchQuery;
     threads = threads.filter(t =>
       nPlate(t.plate).includes(q) ||
-      (t.last?.message || '').toUpperCase().includes(q)
+      (t.last?.message || '').toUpperCase().includes(q) ||
+      (State.pseudoMap[nPlate(t.plate)]||'').toUpperCase().includes(q)
     );
   }
 
@@ -827,6 +828,12 @@ async function openThread(plate){
 
   box.classList.add('show');
   body.scrollTop = body.scrollHeight;
+  // Restaurer le brouillon de réponse s'il existe
+  try{
+    const _d=localStorage.getItem('ic_draft_reply_'+nPlate(localPlate));
+    const _rt=$('icReplyText');
+    if(_rt&&_d){_rt.value=_d;try{_rt.dispatchEvent(new Event('input'));}catch(e){}}
+  }catch(e){}
   render();
 }
 
@@ -876,6 +883,7 @@ async function reply(){
   try{
     await sendToPlate(State.activePlate,text);
     if($('icReplyText')) $('icReplyText').value = '';
+    try{localStorage.removeItem('ic_draft_reply_'+nPlate(State.activePlate));}catch(e){}
   }finally{
     if(btn){ btn.disabled=false; btn.textContent='➤'; }
   }
@@ -1096,7 +1104,17 @@ function installInputs(){
     if(_ta&&!_ta.dataset.enterReady){
       _ta.dataset.enterReady='1';
       _ta.style.resize='none';_ta.style.overflowY='hidden';_ta.style.transition='height .1s';
-      _ta.addEventListener('input',()=>_grow(_ta));
+      _ta.addEventListener('input',()=>{
+        _grow(_ta);
+        // Brouillon de réponse (thread uniquement)
+        if(id==='icReplyText'&&State.activePlate){
+          try{
+            const _v=_ta.value;
+            if(_v.trim()) localStorage.setItem('ic_draft_reply_'+nPlate(State.activePlate),_v);
+            else localStorage.removeItem('ic_draft_reply_'+nPlate(State.activePlate));
+          }catch(e){}
+        }
+      });
       _ta.addEventListener('keydown',e=>{
         if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
           e.preventDefault();
