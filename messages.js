@@ -1034,17 +1034,21 @@ function installInputs(){
       el.addEventListener('input',()=>el.value=fPlate(el.value));
     }
   });
-  // Ctrl/Cmd+Enter pour envoyer dans les deux textareas
+  // Auto-grow + Ctrl/Cmd+Enter pour les deux textareas
+  function _grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px';el.style.overflowY=el.scrollHeight>160?'auto':'hidden';}
   [['icComposeText','sendNew'],['icReplyText','reply']].forEach(([id,fn])=>{
     const _ta=$(id);
     if(_ta&&!_ta.dataset.enterReady){
       _ta.dataset.enterReady='1';
+      _ta.style.resize='none';_ta.style.overflowY='hidden';_ta.style.transition='height .1s';
+      _ta.addEventListener('input',()=>_grow(_ta));
       _ta.addEventListener('keydown',e=>{
         if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
           e.preventDefault();
           try{window.ImmatMessages[fn]?.();}catch(ex){}
         }
       });
+      _grow(_ta);
     }
   });
   // Aperçu destinataire sous #icComposePlate
