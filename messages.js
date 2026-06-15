@@ -1034,6 +1034,37 @@ function installInputs(){
       el.addEventListener('input',()=>el.value=fPlate(el.value));
     }
   });
+  // Aperçu destinataire sous #icComposePlate
+  const _pp=$('icComposePlatePreview'),_pe=$('icComposePlate');
+  if(_pe&&_pp&&!_pe.dataset.previewReady){
+    _pe.dataset.previewReady='1';
+    let _pt=null;
+    _pe.addEventListener('input',()=>{
+      clearTimeout(_pt);
+      const _pl=nPlate(_pe.value||'');
+      if(_pl.length<7){_pp.style.display='none';return;}
+      _pt=setTimeout(async()=>{
+        // Cache nearby en premier (zéro requête DB)
+        const _nb=window.S?.nearby?.find(x=>nPlate(x.plate)===_pl);
+        if(_nb){
+          _pp.textContent=fPlate(_pl)+(_nb.pseudo&&_nb.pseudo!=='Conducteur'?' · '+_nb.pseudo:'');
+          _pp.style.color='#4ade80';_pp.style.display='';
+          return;
+        }
+        try{
+          const{data:_pd}=await sb().from('profiles').select('pseudo').eq('owner_plate',_pl).maybeSingle();
+          if(_pd){
+            _pp.textContent=fPlate(_pl)+(_pd.pseudo?' · '+_pd.pseudo:'');
+            _pp.style.color='#94a3b8';
+          }else{
+            _pp.textContent=fPlate(_pl)+' — inconnu';
+            _pp.style.color='#64748b';
+          }
+          _pp.style.display='';
+        }catch(e){_pp.style.display='none';}
+      },450);
+    });
+  }
 }
 
 // ── F-TRUST : Gestion de confiance ──────────────────────────────
