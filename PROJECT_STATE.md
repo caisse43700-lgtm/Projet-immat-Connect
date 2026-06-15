@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 12) — Limite de longueur + compteur de caractères (session 2026-06-15)**
+
+- **Message length limit** : constante `MSG_MAX_LEN=1000`. Guard dans `sendToPlate()` (toast si dépassement). `maxLength` posé sur les textareas `icComposeText` et `icReplyText`. Compteur `.ic-char-count` créé dynamiquement sous chaque textarea, affiché uniquement dans les 100 derniers caractères, passe en rouge `#ff6b81` dans les 20 derniers. Tests : 177 ✅, preflight OK.
+
 **PR #325 (suite 11) — Indicateur de présence dans l'en-tête du thread (session 2026-06-15)**
 
 - **Presence indicator** : `_presenceLabel(plate)` lit `S.nearby` et calcule l'âge depuis `updated_at` : < 3 min → "🟢 Actif à proximité" (vert), < 10 min → "🟡 Vu il y a X min" (orange), sinon vide. Affiché en priorité dans le sous-titre `#icThreadSub` (sinon fallback niveau de confiance). `openThread()` le pose ; `refreshThread()` le rafraîchit à chaque nouveau message. Données 100% locales (S.nearby), zéro requête supplémentaire.
@@ -742,6 +746,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 9) : séparateurs de jour dans le thread — _dayLabel() (Aujourd'hui/Hier/jour semaine/date), suivi _prevDayKey dans _renderTimeline(), ic-day-sep pilule grise centrée. |
 | 2026-06-15 | IA session | PR #325 (suite 10) : copier un message — bouton ⧉ sur chaque bulle, copyMessage(id) avec navigator.clipboard + fallback execCommand, toast confirmation. |
 | 2026-06-15 | IA session | PR #325 (suite 11) : indicateur de présence dans l'en-tête thread — _presenceLabel() lit S.nearby (🟢 <3min / 🟡 <10min), affiché en priorité dans #icThreadSub, rafraîchi par refreshThread(). |
+| 2026-06-15 | IA session | PR #325 (suite 12) : limite longueur message MSG_MAX_LEN=1000 (guard sendToPlate + maxLength textareas) + compteur de caractères dynamique .ic-char-count (visible <100 restants, rouge <20). 177 tests ✅. |
 
 ---
 

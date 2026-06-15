@@ -56,6 +56,8 @@ function timeFR(d){
   }catch(e){return '';}
 }
 
+const MSG_MAX_LEN = 1000;
+
 const State = {
   mode:'inbox',
   user:null,
@@ -1034,6 +1036,7 @@ async function sendToPlate(plate,text,opts){
   if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
+  if(text.length > MSG_MAX_LEN){ toast('Message trop long ('+text.length+'/'+MSG_MAX_LEN+' caractères).','bad'); return false; }
 
   // Rate limit : max 5 messages par minute (client-side guard)
   try {
@@ -1255,8 +1258,30 @@ function installInputs(){
     if(_ta&&!_ta.dataset.enterReady){
       _ta.dataset.enterReady='1';
       _ta.style.resize='none';_ta.style.overflowY='hidden';_ta.style.transition='height .1s';
+      try{ _ta.maxLength = MSG_MAX_LEN; }catch(e){}
+      // Compteur de caractères (créé une fois, sous le textarea)
+      let _counter=document.getElementById(id+'_count');
+      if(!_counter&&_ta.parentNode){
+        _counter=document.createElement('div');
+        _counter.id=id+'_count';
+        _counter.className='ic-char-count';
+        _counter.style.display='none';
+        _ta.parentNode.appendChild(_counter);
+      }
+      const _updCount=()=>{
+        if(!_counter) return;
+        const n=_ta.value.length, rem=MSG_MAX_LEN-n;
+        if(n>=MSG_MAX_LEN-100){
+          _counter.textContent=rem+' caractère'+(Math.abs(rem)>1?'s':'')+' restant'+(Math.abs(rem)>1?'s':'');
+          _counter.style.color=rem<=20?'#ff6b81':'#94a3b8';
+          _counter.style.display='';
+        }else{
+          _counter.style.display='none';
+        }
+      };
       _ta.addEventListener('input',()=>{
         _grow(_ta);
+        _updCount();
         if(id==='icReplyText'&&State.activePlate){
           // Brouillon de réponse
           try{
