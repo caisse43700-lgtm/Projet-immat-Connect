@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 9) — Séparateurs de jour dans le thread (session 2026-06-15)**
+
+- **Day separators** : `_dayLabel(date)` retourne "Aujourd'hui", "Hier", le jour de la semaine (< 7j) ou la date complète (j mois [année si différente]). Dans `_renderTimeline()`, suivi de `_prevDayKey` (année-mois-jour) → insère `<div class="ic-day-sep">` au changement de jour. Combiné proprement avec le séparateur de non-lus (les deux peuvent apparaître au même point). CSS : pilule grise centrée, `text-transform:capitalize`.
+
 **PR #325 (suite 8) — Réponses rapides dans le FloatingCard de message (session 2026-06-15)**
 
 - **Quick reply FloatingCard** : quand un message arrive et affiche le FloatingCard, 3 boutons `fcExtraActions` apparaissent : "✓ Reçu" → `sendToPlate(pl,'Bien reçu 👍')`, "🚗 J'arrive" → `sendToPlate(pl,"J'arrive ! 🚗")`, "En route" → `sendToPlate(pl,'En route 🚘')`. L'utilisateur peut répondre sans quitter la carte. Guard anti-boucle : les quick replies entrants n'affichent pas eux-mêmes des boutons. Preview texte étendu à 60 chars. Bouton "→ Ouvrir" remplace "Répondre →" pour ouvrir le thread complet.
@@ -727,6 +731,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 6) : sourdine conversation — getMuted/isMuted/toggleMute (localStorage ic_muted), bouton #icSheetMute menu ⋯, guard son+vibration subscribe() INSERT, badge 🔕 liste threads. |
 | 2026-06-15 | IA session | PR #325 (suite 7) : séparateur "N non lus" dans le thread — _renderTimeline() détecte !_sent && !read_at, insère ic-unread-sep avec scrollIntoView au premier non lu. CSS ligne violette + texte #818cf8. |
 | 2026-06-15 | IA session | PR #325 (suite 8) : quick reply FloatingCard message — 3 boutons fcExtraActions (✓ Reçu / 🚗 J'arrive / En route) dans le FloatingCard, guard anti-boucle sur messages quick reply reçus, preview 60 chars. |
+| 2026-06-15 | IA session | PR #325 (suite 9) : séparateurs de jour dans le thread — _dayLabel() (Aujourd'hui/Hier/jour semaine/date), suivi _prevDayKey dans _renderTimeline(), ic-day-sep pilule grise centrée. |
 
 ---
 

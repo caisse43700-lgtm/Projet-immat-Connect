@@ -736,6 +736,17 @@ function _formatMsg(text){
   return result;
 }
 
+function _dayLabel(d){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const that  = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = Math.round((today - that) / 86400000);
+  if(diff === 0) return "Aujourd'hui";
+  if(diff === 1) return 'Hier';
+  if(diff > 1 && diff < 7) return d.toLocaleDateString('fr-FR',{weekday:'long'});
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})});
+}
+
 function _renderTimeline(body, messages, callEvents){
   const allEvents = [
     ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
@@ -747,10 +758,21 @@ function _renderTimeline(body, messages, callEvents){
     ? allEvents.filter(e => e._type==='message' && !e._sent && !e.read_at).length
     : 0;
 
+  let _prevDayKey = '';
   body.innerHTML = allEvents.map((item, idx) => {
-    const sep = (idx === firstUnreadIdx && unreadCount > 0)
+    // Séparateur de jour
+    let daySep = '';
+    if(item._ts){
+      const _d = new Date(item._ts);
+      const _dk = _d.getFullYear()+'-'+_d.getMonth()+'-'+_d.getDate();
+      if(_dk !== _prevDayKey){
+        _prevDayKey = _dk;
+        daySep = `<div class="ic-day-sep"><span>${esc(_dayLabel(_d))}</span></div>`;
+      }
+    }
+    const sep = daySep + ((idx === firstUnreadIdx && unreadCount > 0)
       ? `<div class="ic-unread-sep"><span>${unreadCount} non lu${unreadCount>1?'s':''}</span></div>`
-      : '';
+      : '');
     const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     if(item._type === 'call'){
       const isOut = item.outgoing;
