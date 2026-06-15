@@ -1071,12 +1071,14 @@ async subMsgs(){
     if(!mine)return;
     if(p.eventType==='INSERT'&&(m.receiver_id===u.id||nPlate(m.target_plate)===myPlate||nPlate(m.receiver_plate)===myPlate||nPlate(m.to_plate)===myPlate)){
       const profs=await profilesByIds([m.sender_id]);
-      const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
-      this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message','Véhicule '+(pl||'inconnu'),pl||null);
-      const _txt=String(m.message||'');let _ic003=false;
-      if(_txt.startsWith("J'arrive")||_txt.startsWith("J’arrive")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Helper en route',pl+' vient vous aider','OK','💬 Messages',()=>{},()=>{S.conv=pl;this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');window.ImmatMessages?.openThread?.(pl)}catch(e2){}},'urgent')}catch(e){}}}
-      if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(pl||'Le conducteur')+' a vu votre signalement','ok');}
-      if(!_ic003&&!_txt.includes('note confiance actuelle')){try{this.showFloatingCard('💬','Message de '+(pl||'inconnu'),''+(_txt.slice(0,40)),'Vu','Répondre →',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}}
+      const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||’’);
+      const _sndPseudo=profs[m.sender_id]?.pseudo;
+      const _sndName=(pl||’inconnu’)+(_sndPseudo&&_sndPseudo!==’Conducteur’?’ · ‘+_sndPseudo:’’);
+      this.notif(m.status===’pending’?’📩 Nouvelle demande’:’💬 Nouveau message’,_sndName,pl||null);
+      const _txt=String(m.message||’’);let _ic003=false;
+      if(_txt.startsWith("J’arrive")||_txt.startsWith("J’arrive")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group===’assist’&&a.status!==’resolved’&&a.status!==’gone’);if(_myAssist){_myAssist.status=’helper_coming’;_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard(‘✋’,’Helper en route’,_sndName+’ vient vous aider’,’OK’,’💬 Messages’,()=>{},()=>{S.conv=pl;this.panel(‘messages’);try{window.ImmatMessages?.setMode?.(‘inbox’);window.ImmatMessages?.openThread?.(pl)}catch(e2){}},’urgent’)}catch(e){}}}
+      if(_txt.includes(‘note confiance actuelle’)){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group===’vehicle’||a.type===’vehicule’));if(_myVeh){_myVeh.status=’seen_by_driver’;saveAlerts();}toast(‘✓ ‘+(_sndName||’Le conducteur’)+’ a vu votre signalement’,’ok’);}
+      if(!_ic003&&!_txt.includes(‘note confiance actuelle’)){try{this.showFloatingCard(‘💬’,’Message de ‘+_sndName,’’+(_txt.slice(0,40)),’Vu’,’Répondre →’,null,async()=>{this.panel(‘messages’);try{window.ImmatMessages?.setMode?.(‘inbox’);await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}})}catch(e){}}
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
 },notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
