@@ -37,9 +37,11 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
-1. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles
-2. **Tests terrain B2→B5** — non complétés (push / RGPD / messages / ANGE)
-3. **REVOKE SELECT sur profiles** — en attente validation B1+B4 (ne pas exécuter avant confirmation)
+~~1. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles~~ ✅ résolu
+~~2. **Tests terrain B2→B5** — non complétés (push / RGPD / messages / ANGE)~~ ✅ tous passés
+~~3. **REVOKE SELECT sur profiles** — en attente validation B1+B4~~ ✅ exécuté et vérifié
+
+**Aucun blocage P0 restant — GO LIVE phase 1 validé.**
 
 ---
 
@@ -215,9 +217,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 3. MISSION EN COURS
 
-GO LIVE — Tests terrain B2→B5.
-- B1 ✅ confirmé terrain (Activité panel OK)
-- En cours : tests B2 (push), B3 (RGPD), B4 (messages), B5 (ANGE)
+Aucune — GO LIVE phase 1 terminé.
+
+---
+
+## 4. PROCHAINE MISSION RECOMMANDÉE
+
+```
+Phase 2 — Améliorations et stabilisation :
+  - Supprimer l'Edge Function get-turn-credentials du dashboard Supabase (S3-6, manuel)
+  - Tests de non-régression appels vocaux (scénarios 1→5 du checklist anti-régression)
+  - Sprint 8 : S7-NEARBY (conducteurs proches), delete_audit_log, Promise.allSettled() push
+  - B5 ANGE : amélioration des réponses si nécessaire
+```
 
 ---
 
@@ -642,6 +654,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | GO LIVE session (suite 3) — PR #306 (void offsetHeight), PR #307 (force .full + disable transition — fix définitif iOS WKWebView translateY bug) |
 | 2026-06-15 | IA session | GO LIVE session (suite 4) — PR #308-#314 : translateY→height:0, SW v26→v31, IIFE boucle fix, scrollTop reset, force display, auto-reload IIFE, bannière jaune BUILD S10, bouton Forcer MAJ Settings |
 | 2026-06-15 | IA session | GO LIVE session (suite 5) — B1 ✅ CONFIRMÉ. PR #318 (S14/v35) : panelActivite déplacé premier dans sheet DOM — fix définitif scrollTop iOS. PR #319 (v36) : nettoyage debug (bannière + toasts). Tests B2→B5 en cours. |
+| 2026-06-15 | IA session | GO LIVE PHASE 1 TERMINÉ — B1✅ B2✅ B3✅ B4✅ B5✅ tous confirmés terrain. REVOKE SELECT ON profiles FROM authenticated exécuté et vérifié (id/owner_plate/pseudo/vehicle_color uniquement). |
 
 ---
 
