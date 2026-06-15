@@ -200,9 +200,34 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ---
 
+## 2b. MISSIONS DEPUIS PR #307 (2026-06-15)
+
+**PR #308→#314 — Déboggage panneau Activité (iOS Safari cache)**
+
+- **Root cause iOS WKWebView translateY** : corrigé depuis PR #309 (height:0 → height CSS explicite)
+- **Bannière Force MAJ en boucle** : corrigée PR #312 (IIFE CURRENT était bloqué à 'v26')
+- **scrollTop résiduel** : reset `sheet.scrollTop=0` ajouté dans navActivite (PR #313)
+- **style.display forcés** : `panelActivite.style.display='block'`, autres panels `'none'` (PR #313)
+- **PR #314 (S10/v31 — commit `d1925b2`)** :
+  - Auto-reload IIFE : détecte changement build via localStorage → `location.replace(?r=timestamp)`
+  - Bannière jaune `<div id="actDebugBanner">BUILD S10 ✅ ACTIVITÉ OK</div>` dans panelActivite
+  - Toast précoce `'navACT S10'` au tout début de navActivite
+  - Bouton `⬆️ Forcer MAJ` dans Settings → appelle `_forceSwUpdate()`
+  - `_forceSwUpdate` redirige vers `?r=timestamp` (bypass cache SW + HTTP)
+  - SW v31, CURRENT 'v31' dans les deux IIFEs
+  - APP_BUILD 2026-06-14-S10
+
+**En attente : test terrain de PR #314 par l'utilisateur**
+
+---
+
 ## 3. MISSION EN COURS
 
-GO LIVE — Fix définitif panneau Activité en cours (PR #307 — force .full + disable transition). Tests terrain B2→B5 à compléter. REVOKE en attente.
+GO LIVE — panneau Activité : PR #314 déployée (S10/SW v31), en attente validation terrain.
+- L'utilisateur était bloqué sur build S8/S9 (Safari ne chargeait pas le nouveau SW)
+- PR #314 ajoute le bouton "⬆️ Forcer MAJ" dans Settings + auto-reload IIFE pour contourner
+- Tester : Settings > ⬆️ Forcer MAJ → puis cliquer Activité → voir bannière jaune BUILD S10 ✅
+- REVOKE en attente (ne pas exécuter tant que B1+B4 non confirmés)
 
 ---
 
@@ -426,7 +451,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v25
+SW version actif  : immatconnect-pro-v31
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -515,7 +540,7 @@ core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17+ (relTime, aria-label ic-delete-msg)
 service-worker.js     : immatconnect-pro-v25
 app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
-APP_BUILD             : 2026-06-13-S5
+APP_BUILD             : 2026-06-14-S10
 manifest.json         : shortcuts (Signaler/Carte/Appels), categories, apple-touch-icon
 ```
 
@@ -625,6 +650,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | GO LIVE session (suite) — PR #300 mergée → main, call log dédupliqué (×N par plaque), fix SW banner loop (CURRENT v22→v25 dans index.html) |
 | 2026-06-14 | IA session | GO LIVE session (suite 2) — PR #301 (SW banner), #302 (locate debug), #303 (SIGNED_OUT reset), #304 (bottom-nav 4 colonnes), #305 (panneau Activité) |
 | 2026-06-14 | IA session | GO LIVE session (suite 3) — PR #306 (void offsetHeight), PR #307 (force .full + disable transition — fix définitif iOS WKWebView translateY bug) |
+| 2026-06-15 | IA session | GO LIVE session (suite 4) — PR #308-#314 : translateY→height:0, SW v26→v31, IIFE boucle fix, scrollTop reset, force display, auto-reload IIFE, bannière jaune BUILD S10, bouton Forcer MAJ Settings |
 
 ---
 
