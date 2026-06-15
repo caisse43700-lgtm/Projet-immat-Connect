@@ -66,7 +66,8 @@ const State = {
   channel:null,
   searchQuery:'',
   callEventsCache:{},
-  pseudoMap:{}
+  pseudoMap:{},
+  colorMap:{}
 };
 
 async function getUser(){
@@ -332,11 +333,15 @@ async function refresh(){
       plates.forEach(p=>{
         const nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(p));
         if(nb?.pseudo&&nb.pseudo!=='Conducteur') State.pseudoMap[nPlate(p)]=nb.pseudo;
-        else need.push(nPlate(p));
+        if(nb?.color) State.colorMap[nPlate(p)]=nb.color;
+        if(!nb?.pseudo||nb.pseudo==='Conducteur') need.push(nPlate(p));
       });
       if(need.length){
-        const{data}=await sb().from('profiles').select('owner_plate,pseudo').in('owner_plate',need);
-        (data||[]).forEach(p=>{if(p.pseudo)State.pseudoMap[nPlate(p.owner_plate)]=p.pseudo;});
+        const{data}=await sb().from('profiles').select('owner_plate,pseudo,vehicle_color').in('owner_plate',need);
+        (data||[]).forEach(p=>{
+          if(p.pseudo) State.pseudoMap[nPlate(p.owner_plate)]=p.pseudo;
+          if(p.vehicle_color) State.colorMap[nPlate(p.owner_plate)]=p.vehicle_color;
+        });
       }
       render();
     }catch(e){}
@@ -582,11 +587,14 @@ function render(){
       trust === 'TRUSTED'  ? '<span class="ic-trust-ok">✓</span>' :
       trust === 'CONTEXT'  ? '<span class="ic-trust-ctx">📍</span>' : '';
     const pseudo = State.pseudoMap[nPlate(t.plate)] || '';
+    const _vc = State.colorMap[nPlate(t.plate)] || '';
+    const _avBg = (_vc && _vc !== 'other' && window.colorHex) ? window.colorHex(_vc) : '#0b1420';
+    const _avStyle = _vc && _vc !== 'other' ? ` style="background:${_avBg};border-color:transparent"` : '';
     return `
       <div class="ic-swipe-wrap">
         <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
              data-plate="${esc(t.plate)}">
-          <div class="ic-avatar">🚗</div>
+          <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
               <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}</span>
