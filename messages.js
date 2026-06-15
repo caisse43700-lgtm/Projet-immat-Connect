@@ -857,9 +857,27 @@ function refreshThread(){
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
   if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
+  const wasNearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
+  const prevCount = body.querySelectorAll('.ic-bubble').length;
   const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
   _renderTimeline(body, t.list, callEvents);
-  body.scrollTop = body.scrollHeight;
+  const newCount = body.querySelectorAll('.ic-bubble').length;
+  const hint = $('icScrollHint');
+  if(wasNearBottom || newCount <= prevCount){
+    body.scrollTop = body.scrollHeight;
+    if(hint) hint.style.display = 'none';
+  } else if(hint){
+    const n = newCount - prevCount;
+    hint.textContent = '↓ ' + n + ' nouveau' + (n > 1 ? 'x' : '') + ' message' + (n > 1 ? 's' : '');
+    hint.style.display = '';
+  }
+}
+
+function _scrollToBottom(){
+  const body = $('icThreadBody');
+  if(body) body.scrollTop = body.scrollHeight;
+  const hint = $('icScrollHint');
+  if(hint) hint.style.display = 'none';
 }
 
 async function sendNew(){
@@ -1539,6 +1557,7 @@ window.ImmatMessages = {
   markAllRead,
   _pickChip,
   sharePosition,
+  _scrollToBottom,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
