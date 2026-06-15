@@ -1051,6 +1051,11 @@ async function subscribe(){
       );
       if(isForMe){
         try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+        // Bip son si sons activés et pas d'appel en cours
+        try{
+          if(window.S?.sounds!==false&&(window.CallScreen?.getState?.()?.mode||'idle')==='idle')
+            window.AudioManager?.playMessageBeep?.('msg_in_app');
+        }catch(e){}
         try{
           const _sp=fPlate(m.sender_plate||m.from_plate||'');
           window.InteractionEngine?.create?.({
