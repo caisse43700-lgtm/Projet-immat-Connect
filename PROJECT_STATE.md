@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 18) — Horodatage relatif dans les véhicules récents (session 2026-06-15)**
+
+- **Recent vehicles timestamp** : la liste "Récents" (`openRecent()`) affiche désormais l'horodatage relatif de la dernière rencontre via `relTime(r.at)` ("à l'instant", "il y a X min", "hier HH:MM"…), à côté de la distance. La donnée `r.at` était déjà stockée par `addRecent()`. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
 **PR #325 (suite 17) — Partager / inviter à l'app (session 2026-06-15)**
 
 - **Share app** : bouton "📤 Inviter" dans la grille Paramètres → `App.shareApp()`. Utilise `navigator.share` (feuille de partage native iOS/Android) avec texte d'invitation + `CFG.site`. Fallback : `navigator.clipboard.writeText` puis `execCommand('copy')` (textarea hors écran) avec toast "Lien d'invitation copié ✓". `AbortError` (partage annulé) ignoré silencieusement. Croissance communautaire. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
@@ -772,6 +776,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 15) : survitesse — widget .speed orange >110 km/h, rouge pulsé >130 km/h, toggle dans locate(). SW v40 → v41. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 16) : indicateur signalements hors ligne en attente — updateCommunityStatus() affiche S.offlineReports (suffixe texte hors ligne, pastille ⏳ orange en ligne), MAJ dans saveReportRemote catch + fin syncOfflineReports. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 17) : partager/inviter — bouton 📤 Inviter dans Paramètres, App.shareApp() (navigator.share + fallback clipboard/execCommand), texte invitation + CFG.site. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 18) : horodatage relatif dans véhicules récents — openRecent() affiche relTime(r.at) à côté de la distance. 177 tests ✅. |
 
 ---
 
