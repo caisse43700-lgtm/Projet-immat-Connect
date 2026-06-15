@@ -23,8 +23,31 @@
   var _autoHideTimer = null;
   var _actionLock = false; // empêche double-tap Accepter/Refuser/Annuler/Raccrocher
   var _terminalRequestIds = new Set(); // ignore les CALL_ACCEPTED périmés
+  var _callTimerInterval = null;
+  var _callStart = 0;
 
   function _$(id) { return document.getElementById(id); }
+
+  function _startCallTimer() {
+    _stopCallTimer();
+    _callStart = Date.now();
+    var timerEl = _$('callOvTimer'), miniEl = _$('callOvMiniTimer');
+    if (timerEl) { timerEl.textContent = '0:00'; timerEl.style.display = ''; }
+    _callTimerInterval = setInterval(function () {
+      var secs = Math.floor((Date.now() - _callStart) / 1000);
+      var m = Math.floor(secs / 60);
+      var s = secs % 60;
+      var txt = m + ':' + (s < 10 ? '0' : '') + s;
+      var t = _$('callOvTimer'); if (t) t.textContent = txt;
+      var mt = _$('callOvMiniTimer'); if (mt) mt.textContent = txt;
+    }, 1000);
+  }
+
+  function _stopCallTimer() {
+    if (_callTimerInterval) { clearInterval(_callTimerInterval); _callTimerInterval = null; }
+    var timerEl = _$('callOvTimer'); if (timerEl) timerEl.style.display = 'none';
+    var miniEl = _$('callOvMiniTimer'); if (miniEl) miniEl.textContent = '●';
+  }
 
   function _withLock(fn) {
     return function() {
@@ -229,10 +252,12 @@
         _BTN.message + _BTN.reduce +
       '</div>',
       0);
+    _startCallTimer();
   }
 
   function hide() {
     clearTimeout(_autoHideTimer);
+    _stopCallTimer();
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay');
     if (ov) ov.style.display = 'none';
