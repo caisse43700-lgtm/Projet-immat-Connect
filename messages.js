@@ -793,6 +793,7 @@ function _renderTimeline(body, messages, callEvents){
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
         ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}
+        <button class="ic-copy-msg" aria-label="Copier ce message" title="Copier" onclick="ImmatMessages.copyMessage('${esc(item.id)}')">⧉</button>
         <button class="ic-delete-msg" aria-label="Supprimer ce message" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
       </div>
     </div>`;
@@ -1086,6 +1087,30 @@ async function sendToPlate(plate,text,opts){
   setMode('inbox');
   openThread(receiverPlate);
   return true;
+}
+
+function copyMessage(id){
+  const sid = String(id);
+  let txt = '';
+  const t = State.threads.find(x => x.plate === State.activePlate);
+  const m = (t?.list || []).find(x => String(x.id) === sid);
+  txt = m?.message || '';
+  if(!txt) return;
+  const _done = ()=>toast('Message copié ✓','ok');
+  try{
+    if(navigator.clipboard?.writeText){
+      navigator.clipboard.writeText(txt).then(_done).catch(()=>_copyFallback(txt,_done));
+    }else _copyFallback(txt,_done);
+  }catch(e){ _copyFallback(txt,_done); }
+}
+function _copyFallback(txt,done){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    done&&done();
+  }catch(e){ toast('Copie impossible.','bad'); }
 }
 
 async function deleteMessage(id){
@@ -1628,6 +1653,7 @@ window.ImmatMessages = {
   closeThread,
   deleteThread,
   deleteMessage,
+  copyMessage,
   deleteAllMessages,
   renderCallLog,
   sendToPlate,

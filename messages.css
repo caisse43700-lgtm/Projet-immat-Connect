@@ -661,8 +661,29 @@
   line-height:1;
 }
 
+.ic-copy-msg {
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#94a3b8;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  transition:.14s ease;
+  flex-shrink:0;
+  padding:0;
+  line-height:1;
+  cursor:pointer;
+}
+
 .ic-bubble:hover .ic-delete-msg,
-.ic-bubble:focus-within .ic-delete-msg {
+.ic-bubble:focus-within .ic-delete-msg,
+.ic-bubble:hover .ic-copy-msg,
+.ic-bubble:focus-within .ic-copy-msg {
   opacity:1;
 }
 
