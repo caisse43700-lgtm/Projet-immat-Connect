@@ -1034,6 +1034,19 @@ function installInputs(){
       el.addEventListener('input',()=>el.value=fPlate(el.value));
     }
   });
+  // Ctrl/Cmd+Enter pour envoyer dans les deux textareas
+  [['icComposeText','sendNew'],['icReplyText','reply']].forEach(([id,fn])=>{
+    const _ta=$(id);
+    if(_ta&&!_ta.dataset.enterReady){
+      _ta.dataset.enterReady='1';
+      _ta.addEventListener('keydown',e=>{
+        if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+          e.preventDefault();
+          try{window.ImmatMessages[fn]?.();}catch(ex){}
+        }
+      });
+    }
+  });
   // Aperçu destinataire sous #icComposePlate
   const _pp=$('icComposePlatePreview'),_pe=$('icComposePlate');
   if(_pe&&_pp&&!_pe.dataset.previewReady){
