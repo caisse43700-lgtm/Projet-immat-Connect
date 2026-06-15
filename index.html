@@ -1845,7 +1845,14 @@ App.renderCallJournal=async function(){
       cancelled:{label:'Annulé',color:'#64748b',icon:'↩️'},
       ended:{label:'Terminé',color:'#22c55e',icon:'✅'}
     };
-    var html='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻ Actualiser</button></div>';
+    var _f=App._callJournalFilter||'all';
+    if(_f==='missed') log=log.filter(function(r){return r.status==='missed'||r.status==='expired';});
+    else if(_f==='out') log=log.filter(function(r){return r.outgoing===true;});
+    else if(_f==='in') log=log.filter(function(r){return !r.outgoing;});
+    function _fpill(val,label){var on=_f===val;return '<button type="button" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
+    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button></div>'+
+      '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+'</div>';
+    if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">Aucun appel dans cette catégorie.</div></div>';el.innerHTML=html;return;}
     var lastDay='';
     log.forEach(function(r){
       var cfg=statusCfg[r.status]||{label:r.status,color:'#64748b',icon:'📞'};
@@ -1880,6 +1887,8 @@ App.callFromJournal=function(plate){
   if(!plate) return;
   try{ window.CallManager?.openContactOptions?.(plate,''); }catch(e){}
 };
+App._callJournalFilter='all';
+App.setCallJournalFilter=function(f){this._callJournalFilter=f;this.renderCallJournal();};
 App.actOpenConv=async function(plate){
   this.panel('messages');
   try{
