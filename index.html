@@ -88,7 +88,6 @@
 <button type="button" id="tabMessages" style="display:none"></button>
 <button type="button" id="tabSettings" style="display:none"></button>
 <div id="panelActivite" class="panel">
-  <div id="actDebugBanner" style="background:#ffff00;color:#000;padding:10px 14px;font-size:15px;font-weight:900;border-radius:8px;margin-bottom:10px;letter-spacing:.02em">BUILD S14 ✅ ACTIVITÉ OK</div>
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
     <div class="act-main-hd">
@@ -504,7 +503,7 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const APP_BUILD='2026-06-14-S14';
+const APP_BUILD='2026-06-15';
 window.APP_BUILD=APP_BUILD;
 (function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
@@ -1186,7 +1185,6 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
-  try{toast('navACT S14','ok');}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
@@ -1212,8 +1210,6 @@ App.navActivite=function(){
     requestAnimationFrame(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;const p=document.getElementById('panelActivite');if(p&&p.style.display==='block')p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}});
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;}catch(e){}},80);
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){s.scrollTop=0;}const p=document.getElementById('panelActivite');if(p)p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}},250);
-    const _ps=document.getElementById('panelSettings');
-    toast('ACT S14 pa='+(_pa?.classList.contains('on')?'ON':'off')+' ps='+(_ps?.style.display||'css')+' sh='+(_sh?.classList.value||'?'),'ok');
   }catch(_){toast('ACT err:'+_,'bad');}
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
@@ -2880,7 +2876,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v35';
+      var CURRENT = 'immatconnect-pro-v36';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -2925,7 +2921,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v35';
+  var CURRENT = 'immatconnect-pro-v36';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
