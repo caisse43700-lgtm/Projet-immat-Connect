@@ -602,7 +602,7 @@ function render(){
             </div>
             <div class="ic-row-bot">
               <span class="ic-preview">${esc(last.message || '')}</span>
-              <span class="ic-unread-dot"></span>
+              <span class="ic-unread-dot">${t.unread > 1 ? t.unread : ''}</span>
             </div>
           </div>
         </div>
