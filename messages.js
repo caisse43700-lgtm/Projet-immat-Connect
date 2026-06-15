@@ -594,6 +594,7 @@ function render(){
     const _vc = State.colorMap[nPlate(t.plate)] || '';
     const _avBg = (_vc && _vc !== 'other' && window.colorHex) ? window.colorHex(_vc) : '#0b1420';
     const _avStyle = _vc && _vc !== 'other' ? ` style="background:${_avBg};border-color:transparent"` : '';
+    const mutedBadge = isMuted(t.plate) ? '<span title="Sourdine" style="font-size:11px;opacity:.6">🔕</span>' : '';
     return `
       <div class="ic-swipe-wrap">
         <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
@@ -601,7 +602,7 @@ function render(){
           <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}</span>
+              <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}${mutedBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
@@ -1126,9 +1127,10 @@ async function subscribe(){
       );
       if(isForMe){
         try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
-        // Bip son + vibration si sons activés et pas d'appel en cours
+        // Bip son + vibration si sons activés, pas d'appel en cours, et conversation non mise en sourdine
         try{
-          if(window.S?.sounds!==false&&(window.CallScreen?.getState?.()?.mode||'idle')==='idle'){
+          const _senderPlate = m.sender_plate||m.from_plate||'';
+          if(window.S?.sounds!==false&&(window.CallScreen?.getState?.()?.mode||'idle')==='idle'&&!isMuted(_senderPlate)){
             window.AudioManager?.playMessageBeep?.('msg_in_app');
             if(navigator.vibrate) navigator.vibrate(80);
           }
@@ -1316,6 +1318,22 @@ function unarchiveConv(plate){
   render();
 }
 
+// ── F-MUTE : Sourdine par conversation ──────────────────────────
+function getMuted(){
+  try{ return JSON.parse(localStorage.getItem('ic_muted')||'[]'); }catch(e){ return []; }
+}
+function isMuted(plate){
+  return getMuted().includes(nPlate(fPlate(plate)));
+}
+function toggleMute(plate){
+  plate = nPlate(fPlate(plate));
+  const muted = getMuted();
+  const now = muted.includes(plate);
+  localStorage.setItem('ic_muted', JSON.stringify(now ? muted.filter(p=>p!==plate) : [...muted, plate]));
+  toast(now ? '🔔 Notifications réactivées.' : '🔕 Conversation mise en sourdine.', 'ok');
+  render();
+}
+
 // ── F-SEARCH : Recherche dans les conversations ─────────────────
 function toggleSearch(){
   const bar = $('icSearchBar');
@@ -1386,10 +1404,12 @@ function openThreadMenu(){
   const favBtn   = document.getElementById('icSheetFav');
   const archBtn  = document.getElementById('icSheetArch');
   const trustBtn = document.getElementById('icSheetTrust');
+  const muteBtn  = document.getElementById('icSheetMute');
 
   if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
   if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
   if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
+  if(muteBtn)  muteBtn.textContent  = isMuted(plate) ? '🔔 Réactiver les notifications' : '🔕 Mettre en sourdine';
 
   const backdrop = document.getElementById('icSheetBackdrop');
   const sheet    = document.getElementById('icBottomSheet');
@@ -1451,9 +1471,10 @@ function _sheetAction(action){
     return;
   }
   closeSheet();
-  if(action === 'fav')   { isFav  ? unfavoriteConv(plate)                      : favoriteConv(plate); }
-  else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
+  if(action === 'fav')        { isFav  ? unfavoriteConv(plate) : favoriteConv(plate); }
+  else if(action === 'arch')  { isArch ? unarchiveConv(plate)  : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
+  else if(action === 'mute')  { toggleMute(plate); }
   else if(action === 'del')   { deleteThread(plate); }
 }
 
