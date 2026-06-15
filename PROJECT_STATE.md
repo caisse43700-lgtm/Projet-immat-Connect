@@ -230,7 +230,12 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **Bouton 📞 dans le menu contextuel véhicule** : `vehicleContextAction('call')` → `CallManager.contactByCall()`
 - **Boutons 💬/📞 dans la liste Conducteurs proches** : remplace le bouton "Contacter" unique
 - **Boutons 💬/📞 dans la liste Récents** : cohérence avec la liste Conducteurs proches
-- SW v38
+- **Pseudo dans journal d'appels** : batch `_pseudoMap` (SELECT owner_plate,pseudo IN [plaques]) — `fmtDur()` + durée affichée inline
+- **Pseudo dans titre de thread messages** : async IIFE nearby cache-first → DB fallback, guard anti-race `title.textContent===localPlate`
+- **Indicateur fraîcheur position** dans `renderNearby()` : `updated_at` → "Xmin" orange (≥3min) ou gris (1-2min)
+- **Aperçu plaque destinataire** dans compose : `icComposePlatePreview`, debounce 450ms, nearby cache (vert) → DB fallback
+- **Auto-grow textarea + Ctrl/Cmd+Enter** dans `messages.js installInputs()` : `_grow()` max 160px, keydown listener sur `icComposeText` et `icReplyText`
+- SW v39
 
 **PR #320→#324 — Sprint 8 S8-01+S8-04 + CI auto-deploy**
 
@@ -479,7 +484,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v36
+SW version actif  : immatconnect-pro-v39
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -684,6 +689,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | Sprint 8 S8-01+S8-04 terminés (delete_audit_log + A2HS iOS hint). CI auto-deploy activé (PR #320-#324) : push vers main sur supabase/** déclenche automatiquement EF + migrations. |
 | 2026-06-15 | IA session | PR #325 : S7-NEARBY D13 (staleMinutes 5min, distance 100m, debounce 2s, batch trust), heartbeat position 3min, S8-06 ANGE dégradation gracieuse, S9 D18 (subReports supprimé), S9 D19 (TTL 90j localStorage), S7-PROFILE D14 (pseudo + couleur dans context menu). SW v37. |
 | 2026-06-15 | IA session | PR #325 (suite) : pseudo addRecent(), badges trust/rating renderNearby, chronomètre appel (callOvTimer/callOvMiniTimer), durée dans journal (ic_call_durations), bouton 📞 menu contextuel carte, boutons 💬/📞 liste Conducteurs proches et Récents. SW v38. |
+| 2026-06-15 | IA session | PR #325 (suite 2) : pseudo dans journal d'appels (batch query profiles SELECT IN), pseudo dans titre thread messages (nearby cache-first → DB fallback), indicateur fraîcheur position dans renderNearby() (Xmin orange si ≥3min, gris si 1-2min), aperçu plaque destinataire dans compose (icComposePlatePreview, debounce 450ms), auto-grow textarea + Ctrl/Cmd+Enter pour envoyer dans messages.js. SW v39. |
 
 ---
 
