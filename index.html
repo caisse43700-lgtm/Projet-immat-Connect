@@ -1812,6 +1812,15 @@ App.renderCallJournal=async function(){
       el.innerHTML='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">Aucun appel récent.</div></div>';
       return;
     }
+    // Batch pseudos pour toutes les plaques du journal
+    var _pseudoMap={};
+    try{
+      var _plates=[...new Set(log.map(r=>r.plate).filter(Boolean))];
+      if(_plates.length){
+        var{data:_pd}=await sb.from('profiles').select('owner_plate,pseudo').in('owner_plate',_plates);
+        (_pd||[]).forEach(p=>{if(p.pseudo)_pseudoMap[p.owner_plate]=p.pseudo;});
+      }
+    }catch(e){}
     // Regroupement par jour
     var today=new Date(); today.setHours(0,0,0,0);
     var yesterday=new Date(today); yesterday.setDate(today.getDate()-1);
@@ -1850,7 +1859,7 @@ App.renderCallJournal=async function(){
       html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b">'+
         '<span style="font-size:22px;width:32px;text-align:center">'+cfg.icon+'</span>'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-weight:700;color:#e2e8f0;font-size:15px">'+esc(r.plate)+'</div>'+
+          '<div style="font-weight:700;color:#e2e8f0;font-size:15px">'+esc(r.plate)+(_pseudoMap[r.plate]?' <span style="font-size:12px;font-weight:400;color:#94a3b8">'+esc(_pseudoMap[r.plate])+'</span>':'')+'</div>'+
           '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
             '<span style="font-size:11px;color:'+cfg.color+'">'+cfg.label+'</span>'+
             (_durCache[r.id]?'<span style="font-size:11px;color:#64748b">'+fmtDur(_durCache[r.id])+'</span>':'')+
