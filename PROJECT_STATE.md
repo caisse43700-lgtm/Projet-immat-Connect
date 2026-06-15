@@ -213,6 +213,13 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #320→#324 — Sprint 8 S8-01+S8-04 + CI auto-deploy**
+
+- **S8-01** : table `delete_audit_log` créée (SQL exécuté manuellement — Supabase SQL Editor). Edge Function `delete-account` mise à jour : INSERT pending au début, `recordStep()` après chaque étape, UPDATE completed/error à la fin. Dégradation gracieuse si table absente.
+- **S8-04** : Hint A2HS iOS ajouté dans Paramètres → Notifications : "📱 iPhone : pour recevoir les alertes quand l'app est fermée, ajoutez ImmatConnect à l'écran d'accueil…"
+- **CI auto-deploy** : workflow `deploy-edge-functions.yml` modifié — déclenchement automatique sur push vers `main` quand `supabase/functions/**` ou `supabase/migrations/**` changent. Suppression du déclenchement `workflow_dispatch` uniquement. Ajout de `supabase link` + `supabase db push --linked` (avec `continue-on-error: true`).
+- **Résultat** : tout déploiement EF ou migration est désormais automatique dès le merge dans main.
+
 ---
 
 ## 3. MISSION EN COURS
@@ -655,6 +662,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | GO LIVE session (suite 4) — PR #308-#314 : translateY→height:0, SW v26→v31, IIFE boucle fix, scrollTop reset, force display, auto-reload IIFE, bannière jaune BUILD S10, bouton Forcer MAJ Settings |
 | 2026-06-15 | IA session | GO LIVE session (suite 5) — B1 ✅ CONFIRMÉ. PR #318 (S14/v35) : panelActivite déplacé premier dans sheet DOM — fix définitif scrollTop iOS. PR #319 (v36) : nettoyage debug (bannière + toasts). Tests B2→B5 en cours. |
 | 2026-06-15 | IA session | GO LIVE PHASE 1 TERMINÉ — B1✅ B2✅ B3✅ B4✅ B5✅ tous confirmés terrain. REVOKE SELECT ON profiles FROM authenticated exécuté et vérifié (id/owner_plate/pseudo/vehicle_color uniquement). |
+| 2026-06-15 | IA session | Sprint 8 S8-01+S8-04 terminés (delete_audit_log + A2HS iOS hint). CI auto-deploy activé (PR #320-#324) : push vers main sur supabase/** déclenche automatiquement EF + migrations. |
 
 ---
 
