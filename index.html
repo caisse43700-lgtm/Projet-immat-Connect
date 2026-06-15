@@ -2739,6 +2739,7 @@ const AngeDialog={
         }
       });
       if(error)throw error;
+      if(!data)throw new Error('empty_response');
       try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',_src:'ImmatConnect/ange'})}catch(e){}
       this.renderResponse(data);
       try{window.InteractionEngine?.create?.({type:'ANGE_SUGGESTION',initiator:window.S?.profile?.owner_plate||'',payload:{query:msg.slice(0,200),panel:S.panel||'GENERAL',options_count:(data?.options||[]).length},status:'resolved'});}catch(e){}
@@ -2756,7 +2757,7 @@ const AngeDialog={
     }catch(e){
       try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_ERROR',{error:(e?.message||String(e))})}catch(_e){}
       $('angeResponse').style.display='block';
-      $('angeResponse').textContent='Erreur : '+(e?.message||String(e));
+      $('angeResponse').innerHTML='<span style="color:#94a3b8">Le conseiller est momentanément indisponible.<br>Les autres fonctionnalités restent opérationnelles.</span>';
     }finally{
       btn.disabled=false;spin.style.display='none';
     }
