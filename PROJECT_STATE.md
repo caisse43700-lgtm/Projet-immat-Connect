@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 7) — Séparateur "N non lus" dans le thread (session 2026-06-15)**
+
+- **Séparateur messages non lus** : dans `_renderTimeline()`, détection des messages entrants avec `read_at === null` (`!_sent && !read_at`). Séparateur `<div class="ic-unread-sep">` inséré avant le premier non lu, affiche le compte "N non lu(s)". `openThread()` défile jusqu'au séparateur via `scrollIntoView({block:'center'})` si présent, sinon défile en bas. CSS : ligne violette `rgba(99,102,241,.35)` + texte `#818cf8`. Le séparateur disparaît naturellement au prochain re-render après que `markThreadRead()` a mis à jour les `read_at`.
+
 **PR #325 (suite 6) — Sourdine par conversation (session 2026-06-15)**
 
 - **Mute conversation** : `getMuted()` / `isMuted(plate)` / `toggleMute(plate)` — localStorage `ic_muted` (tableau de plaques normalisées). Bouton `#icSheetMute` dans le menu ⋯ (bottom sheet), libellé dynamique (🔕 Mettre en sourdine / 🔔 Réactiver). `_sheetAction('mute')` → `toggleMute()`. Guard dans `subscribe()` INSERT handler : son + vibration bloqués si `isMuted(sender_plate)`. Badge 🔕 discret dans la liste de threads pour les conversations muettes.
@@ -717,6 +721,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 4) : _formatMsg() dans messages.js — détection URLs via regex, rendu en liens <a> cliquables (target=_blank, rel=noopener noreferrer, couleur #60a5fa, truncature 40 chars). Liens position partagée (📍 Ma position : https://…) désormais cliquables dans les bulles. |
 | 2026-06-15 | IA session | PR #325 (suite 5) : typing indicator — canal Supabase broadcast ic_typ_{sorted_plates}, openThread souscrit / closeThread désabonne, broadcast debounced 300ms sur frappe icReplyText, #icTypingLabel avec points animés (ic-typing-blink CSS), auto-hide 3s. |
 | 2026-06-15 | IA session | PR #325 (suite 6) : sourdine conversation — getMuted/isMuted/toggleMute (localStorage ic_muted), bouton #icSheetMute menu ⋯, guard son+vibration subscribe() INSERT, badge 🔕 liste threads. |
+| 2026-06-15 | IA session | PR #325 (suite 7) : séparateur "N non lus" dans le thread — _renderTimeline() détecte !_sent && !read_at, insère ic-unread-sep avec scrollIntoView au premier non lu. CSS ligne violette + texte #818cf8. |
 
 ---
 

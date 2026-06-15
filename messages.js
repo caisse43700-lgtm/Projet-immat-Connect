@@ -742,7 +742,15 @@ function _renderTimeline(body, messages, callEvents){
     ...(callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()}))
   ].sort((a,b) => a._ts - b._ts);
 
-  body.innerHTML = allEvents.map(item => {
+  const firstUnreadIdx = allEvents.findIndex(e => e._type==='message' && !e._sent && !e.read_at);
+  const unreadCount = firstUnreadIdx >= 0
+    ? allEvents.filter(e => e._type==='message' && !e._sent && !e.read_at).length
+    : 0;
+
+  body.innerHTML = allEvents.map((item, idx) => {
+    const sep = (idx === firstUnreadIdx && unreadCount > 0)
+      ? `<div class="ic-unread-sep"><span>${unreadCount} non lu${unreadCount>1?'s':''}</span></div>`
+      : '';
     const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     if(item._type === 'call'){
       const isOut = item.outgoing;
@@ -753,12 +761,12 @@ function _renderTimeline(body, messages, callEvents){
       const cls = item.status==='missed' ? 'call-missed' :
                   item.status==='refused' ? 'call-refused' :
                   isOut ? 'call-sent' : 'call-recv';
-      return `<div class="ic-bubble ${cls}">
+      return sep + `<div class="ic-bubble ${cls}">
         <div class="ic-bubble-text">📞 ${isOut ? 'Appel émis' : 'Appel reçu'} · ${statusLabel}</div>
         <div class="ic-bubble-footer"><span class="ic-time">${esc(timeStr)}</span></div>
       </div>`;
     }
-    return `<div class="ic-bubble ${item._sent?'sent':'recv'}">
+    return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
       <div class="ic-bubble-text">${_formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
@@ -846,7 +854,9 @@ async function openThread(plate){
   _renderTimeline(body, t.list, callEvents);
 
   box.classList.add('show');
-  body.scrollTop = body.scrollHeight;
+  const _sep = body.querySelector('.ic-unread-sep');
+  if(_sep) _sep.scrollIntoView({block:'center'});
+  else body.scrollTop = body.scrollHeight;
   // Restaurer le brouillon de réponse s'il existe
   try{
     const _d=localStorage.getItem('ic_draft_reply_'+nPlate(localPlate));
