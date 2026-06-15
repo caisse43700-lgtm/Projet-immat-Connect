@@ -717,6 +717,21 @@ async function markThreadRead(plate){
 }
 
 // ── Timeline unifiée (messages + appels) ────────────────────────
+function _formatMsg(text){
+  if(!text) return '';
+  const URL_RE = /https?:\/\/[^\s<>"]+/g;
+  let result = '', last = 0, m;
+  while((m = URL_RE.exec(text)) !== null){
+    result += esc(text.slice(last, m.index));
+    const url = m[0];
+    const display = url.length > 40 ? url.slice(0, 37) + '…' : url;
+    result += '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:#60a5fa;text-decoration:underline;word-break:break-all">' + esc(display) + '</a>';
+    last = m.index + url.length;
+  }
+  result += esc(text.slice(last));
+  return result;
+}
+
 function _renderTimeline(body, messages, callEvents){
   const allEvents = [
     ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
@@ -740,7 +755,7 @@ function _renderTimeline(body, messages, callEvents){
       </div>`;
     }
     return `<div class="ic-bubble ${item._sent?'sent':'recv'}">
-      <div class="ic-bubble-text">${esc(item.message||'')}</div>
+      <div class="ic-bubble-text">${_formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
         ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}
