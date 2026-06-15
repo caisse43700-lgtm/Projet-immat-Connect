@@ -43,6 +43,8 @@ function setBadge(n){
   try{
     localStorage.setItem('ic_unread_msg_count', String(n));
     if(window.S) window.S.unreadMsgCount = n;
+    const btn = document.getElementById('icMarkAllReadBtn');
+    if(btn) btn.style.display = n > 0 ? '' : 'none';
   }catch(e){}
 }
 
@@ -666,6 +668,23 @@ function _renderArchivedSection(list){
       openThread(row.dataset.plate);
     });
   });
+}
+
+async function markAllRead(){
+  const client = sb();
+  if(!client || !State.user) return;
+  const unread = State.messages.filter(m=>m._received && !m.read_at);
+  if(!unread.length) return;
+  const now = new Date().toISOString();
+  const ids = unread.map(m=>m.id);
+  try{
+    await client.from('messages').update({read_at:now}).in('id',ids);
+    unread.forEach(m=>{ m.read_at = now; });
+  }catch(e){}
+  buildThreads();
+  setBadge(0);
+  render();
+  try{window.App?.updateActBadge?.()}catch(e){}
 }
 
 async function markThreadRead(plate){
@@ -1446,6 +1465,7 @@ window.ImmatMessages = {
   setDnd,
   saveDndHours,
   saveCallSettings,
+  markAllRead,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
