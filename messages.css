@@ -847,3 +847,10 @@
   transition:background .15s;
 }
 .ic-recent-chip:active { background:rgba(99,102,241,.35); }
+
+/* Typing indicator dots */
+.ic-typing-dots { display:inline-flex; gap:3px; vertical-align:middle; margin-right:4px; }
+.ic-typing-dots span { width:4px; height:4px; border-radius:50%; background:#94a3b8; animation:ic-typing-blink 1.2s infinite both; }
+.ic-typing-dots span:nth-child(2) { animation-delay:.2s; }
+.ic-typing-dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes ic-typing-blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }

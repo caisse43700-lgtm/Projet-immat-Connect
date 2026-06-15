@@ -67,7 +67,10 @@ const State = {
   searchQuery:'',
   callEventsCache:{},
   pseudoMap:{},
-  colorMap:{}
+  colorMap:{},
+  _typingCh:null,
+  _typingBcTimer:null,
+  _typingHideTimer:null
 };
 
 async function getUser(){
@@ -849,6 +852,30 @@ async function openThread(plate){
     const _rt=$('icReplyText');
     if(_rt&&_d){_rt.value=_d;try{_rt.dispatchEvent(new Event('input'));}catch(e){}}
   }catch(e){}
+  // Canal broadcast pour l'indicateur "est en train d'écrire"
+  try{
+    clearTimeout(State._typingHideTimer);
+    if(State._typingCh){try{sb().removeChannel(State._typingCh);}catch(e){}State._typingCh=null;}
+    const _tl=$('icTypingLabel');
+    if(_tl) _tl.style.display='none';
+    const _mp=nPlate(myPlate()),_op=nPlate(localPlate);
+    if(_mp&&_op&&_mp!==_op){
+      const _pair=[_mp,_op].sort().join('_');
+      State._typingCh=sb().channel('ic_typ_'+_pair)
+        .on('broadcast',{event:'typing'},({payload})=>{
+          if((payload?.uid)===State.user?.id) return;
+          if(State.activePlate!==localPlate) return;
+          const _el=$('icTypingLabel');
+          if(_el) _el.style.display='';
+          clearTimeout(State._typingHideTimer);
+          State._typingHideTimer=setTimeout(()=>{
+            const _el2=$('icTypingLabel');
+            if(_el2) _el2.style.display='none';
+          },3000);
+        })
+        .subscribe();
+    }
+  }catch(e){}
   render();
 }
 
@@ -862,6 +889,13 @@ function closeThread(){
   if(hdr)    hdr.style.display    = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
+  try{
+    clearTimeout(State._typingHideTimer);
+    clearTimeout(State._typingBcTimer);
+    if(State._typingCh){try{sb().removeChannel(State._typingCh);}catch(e){}State._typingCh=null;}
+    const _tl=$('icTypingLabel');
+    if(_tl) _tl.style.display='none';
+  }catch(e){}
 }
 
 function refreshThread(){
@@ -1139,13 +1173,20 @@ function installInputs(){
       _ta.style.resize='none';_ta.style.overflowY='hidden';_ta.style.transition='height .1s';
       _ta.addEventListener('input',()=>{
         _grow(_ta);
-        // Brouillon de réponse (thread uniquement)
         if(id==='icReplyText'&&State.activePlate){
+          // Brouillon de réponse
           try{
             const _v=_ta.value;
             if(_v.trim()) localStorage.setItem('ic_draft_reply_'+nPlate(State.activePlate),_v);
             else localStorage.removeItem('ic_draft_reply_'+nPlate(State.activePlate));
           }catch(e){}
+          // Indicateur "est en train d'écrire" — broadcast debounced
+          if(State._typingCh&&State.user?.id&&_ta.value.trim()){
+            clearTimeout(State._typingBcTimer);
+            State._typingBcTimer=setTimeout(()=>{
+              try{State._typingCh.send({type:'broadcast',event:'typing',payload:{uid:State.user.id}});}catch(e){}
+            },300);
+          }
         }
       });
       _ta.addEventListener('keydown',e=>{
