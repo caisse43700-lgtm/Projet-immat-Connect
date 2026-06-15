@@ -1251,6 +1251,17 @@ function installInputs(){
       el.addEventListener('input',()=>el.value=fPlate(el.value));
     }
   });
+  // Touche Échap : ferme le menu (sheet) puis la conversation ouverte
+  if(!document.body.dataset.icEscReady){
+    document.body.dataset.icEscReady = '1';
+    document.addEventListener('keydown', e=>{
+      if(e.key !== 'Escape') return;
+      const sheet = document.getElementById('icBottomSheet');
+      if(sheet && sheet.classList.contains('show')){ closeSheet(); return; }
+      const box = $('icThread');
+      if(box && box.classList.contains('show')){ closeThread(); }
+    });
+  }
   // Auto-grow + Ctrl/Cmd+Enter pour les deux textareas
   function _grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px';el.style.overflowY=el.scrollHeight>160?'auto':'hidden';}
   [['icComposeText','sendNew'],['icReplyText','reply']].forEach(([id,fn])=>{
