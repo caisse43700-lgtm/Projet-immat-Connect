@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 15) — Survitesse : retour visuel sur le compteur (session 2026-06-15)**
+
+- **Over-speed warning** : le widget vitesse `.speed` passe en orange (`.warn`) au-dessus de 110 km/h et en rouge pulsé (`.over`) au-dessus de 130 km/h (vitesse max autoroute FR). Toggle dans le handler `locate()` (`watchPosition`) après mise à jour de `speedVal`. Animation désactivée si `body.reduce-effects`. SW v40 → v41 (CACHE_NAME + CURRENT). 177 tests ✅.
+
 **PR #325 (suite 14) — Touche Échap pour fermer (session 2026-06-15)**
 
 - **Escape key** : handler `keydown` au niveau `document` (installé une fois via `body.dataset.icEscReady`). Priorité : ferme d'abord le bottom sheet `#icBottomSheet` s'il est ouvert (`closeSheet()`), sinon ferme la conversation active `#icThread` (`closeThread()`). Améliore l'accessibilité clavier / desktop. 177 tests ✅.
@@ -539,7 +543,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v40
+SW version actif  : immatconnect-pro-v41
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -757,6 +761,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 12) : limite longueur message MSG_MAX_LEN=1000 (guard sendToPlate + maxLength textareas) + compteur de caractères dynamique .ic-char-count (visible <100 restants, rouge <20). 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 13) : bloquer/débloquer depuis menu thread — bouton #icSheetBlock, libellé dynamique getBlockLevel(), _sheetAction('block') réutilise App.blockPlate/unblockPlate. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 14) : touche Échap ferme le sheet puis la conversation (handler document keydown, guard body.dataset.icEscReady). 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 15) : survitesse — widget .speed orange >110 km/h, rouge pulsé >130 km/h, toggle dans locate(). SW v40 → v41. 177 tests ✅. |
 
 ---
 
