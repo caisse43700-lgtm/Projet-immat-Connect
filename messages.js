@@ -1512,11 +1512,14 @@ function openThreadMenu(){
   const archBtn  = document.getElementById('icSheetArch');
   const trustBtn = document.getElementById('icSheetTrust');
   const muteBtn  = document.getElementById('icSheetMute');
+  const blockBtn = document.getElementById('icSheetBlock');
 
   if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
   if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
   if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
   if(muteBtn)  muteBtn.textContent  = isMuted(plate) ? '🔔 Réactiver les notifications' : '🔕 Mettre en sourdine';
+  const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
+  if(blockBtn) blockBtn.textContent = _blocked ? '✅ Débloquer ce conducteur' : '🚫 Bloquer ce conducteur';
 
   const backdrop = document.getElementById('icSheetBackdrop');
   const sheet    = document.getElementById('icBottomSheet');
@@ -1582,6 +1585,18 @@ function _sheetAction(action){
   else if(action === 'arch')  { isArch ? unarchiveConv(plate)  : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
   else if(action === 'mute')  { toggleMute(plate); }
+  else if(action === 'block') {
+    const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
+    if(_blocked){
+      try{ window.App?.unblockPlate?.(nPlate(plate)); }catch(e){}
+      try{ window.App?.closeBlocked?.(); }catch(e){}
+      toast('Conducteur débloqué.','ok');
+    }else{
+      try{ window.App?.blockPlate?.(nPlate(plate)); }catch(e){}
+      closeThread();
+    }
+    refresh();
+  }
   else if(action === 'del')   { deleteThread(plate); }
 }
 

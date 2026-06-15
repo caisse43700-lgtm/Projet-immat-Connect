@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 13) — Bloquer/Débloquer depuis le menu du thread (session 2026-06-15)**
+
+- **Block from thread menu** : bouton `#icSheetBlock` (danger) dans le bottom sheet ⋯. Libellé dynamique via `getBlockLevel()` : "🚫 Bloquer" si non bloqué, "✅ Débloquer" sinon. `_sheetAction('block')` appelle `App.blockPlate()` (confirmation + persistance DB user_blocks + S.blocked) puis ferme le thread ; débloque via `App.unblockPlate()` + `App.closeBlocked()` pour éviter l'overlay liste. Réutilise l'infra de blocage existante (aucune logique dupliquée). 177 tests ✅.
+
 **PR #325 (suite 12) — Limite de longueur + compteur de caractères (session 2026-06-15)**
 
 - **Message length limit** : constante `MSG_MAX_LEN=1000`. Guard dans `sendToPlate()` (toast si dépassement). `maxLength` posé sur les textareas `icComposeText` et `icReplyText`. Compteur `.ic-char-count` créé dynamiquement sous chaque textarea, affiché uniquement dans les 100 derniers caractères, passe en rouge `#ff6b81` dans les 20 derniers. Tests : 177 ✅, preflight OK.
@@ -747,6 +751,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 10) : copier un message — bouton ⧉ sur chaque bulle, copyMessage(id) avec navigator.clipboard + fallback execCommand, toast confirmation. |
 | 2026-06-15 | IA session | PR #325 (suite 11) : indicateur de présence dans l'en-tête thread — _presenceLabel() lit S.nearby (🟢 <3min / 🟡 <10min), affiché en priorité dans #icThreadSub, rafraîchi par refreshThread(). |
 | 2026-06-15 | IA session | PR #325 (suite 12) : limite longueur message MSG_MAX_LEN=1000 (guard sendToPlate + maxLength textareas) + compteur de caractères dynamique .ic-char-count (visible <100 restants, rouge <20). 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 13) : bloquer/débloquer depuis menu thread — bouton #icSheetBlock, libellé dynamique getBlockLevel(), _sheetAction('block') réutilise App.blockPlate/unblockPlate. 177 tests ✅. |
 
 ---
 
