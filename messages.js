@@ -717,6 +717,18 @@ async function openThread(plate){
   if(!box || !body || !t) return;
 
   if(title) title.textContent = localPlate;
+  // Enrichit le titre avec le pseudo : cache nearby d'abord, sinon DB
+  (async()=>{
+    try{
+      const _nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(localPlate));
+      if(_nb?.pseudo&&_nb.pseudo!=='Conducteur'){
+        if(title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_nb.pseudo;
+        return;
+      }
+      const{data:_pd}=await sb().from('profiles').select('pseudo').eq('owner_plate',nPlate(localPlate)).maybeSingle();
+      if(_pd?.pseudo&&title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_pd.pseudo;
+    }catch(e){}
+  })();
 
   // Sous-titre : niveau confiance (F-TRUST)
   if(sub){
