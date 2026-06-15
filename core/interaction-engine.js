@@ -13,6 +13,7 @@
   const NOTIF_KEY        = 'ic_notifications';
   const MAX_INTERACTIONS = 200;
   const MAX_NOTIFS       = 100;
+  const TTL_MS           = 90 * 24 * 60 * 60 * 1000; // 90 jours — D19
 
   const STATUSES = {
     PENDING:'pending', RECEIVED:'received', VIEWED:'viewed', RESPONDED:'responded',
@@ -51,7 +52,7 @@
 
   const nPlate = p => String(p||'').replace(/[\s-]/g,'').toUpperCase();
   const _load  = key => { try { return JSON.parse(localStorage.getItem(key)||'[]'); } catch(e) { return []; } };
-  const _save  = (key, list) => { try { localStorage.setItem(key, JSON.stringify((list||[]).slice(-MAX_INTERACTIONS))); } catch(e) {} };
+  const _save  = (key, list) => { try { const _cut=Date.now()-TTL_MS; const _f=(list||[]).filter(i=>!i.timestamp||new Date(i.timestamp).getTime()>_cut); localStorage.setItem(key, JSON.stringify(_f.slice(-MAX_INTERACTIONS))); } catch(e) {} };
   const _uuid  = () => (crypto?.randomUUID ? crypto.randomUUID() : 'ie-' + Date.now() + '-' + Math.random().toString(16).slice(2));
 
   // Anti-double-émission OBD : mémorise les IDs déjà émis (FIFO, max 100 entrées).
@@ -166,7 +167,7 @@
     };
     const list = _load(NOTIF_KEY);
     list.push(notif);
-    try { localStorage.setItem(NOTIF_KEY, JSON.stringify((list||[]).slice(-MAX_NOTIFS))); } catch(e) {}
+    try { const _cut=Date.now()-TTL_MS; const _f=(list||[]).filter(n=>!n.created_at||new Date(n.created_at).getTime()>_cut); localStorage.setItem(NOTIF_KEY, JSON.stringify(_f.slice(-MAX_NOTIFS))); } catch(e) {}
     return notif;
   }
 
