@@ -1,7 +1,12 @@
 name: Deploy Edge Functions
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
 
 jobs:
   deploy:
