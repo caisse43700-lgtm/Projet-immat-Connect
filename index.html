@@ -87,6 +87,58 @@
 <button type="button" id="tabDrive" style="display:none"></button>
 <button type="button" id="tabMessages" style="display:none"></button>
 <button type="button" id="tabSettings" style="display:none"></button>
+<div id="panelActivite" class="panel">
+  <div id="actDebugBanner" style="background:#ffff00;color:#000;padding:10px 14px;font-size:15px;font-weight:900;border-radius:8px;margin-bottom:10px;letter-spacing:.02em">BUILD S14 ✅ ACTIVITÉ OK</div>
+  <!-- Écran principal Activité -->
+  <div id="actMain" class="act-main">
+    <div class="act-main-hd">
+      <div class="act-main-title">Activité</div>
+      <div class="act-main-sub">Messages et alertes</div>
+    </div>
+    <div class="act-search-bar"><input id="activitySearchInput" type="search" placeholder="Rechercher une plaque…" inputmode="search" autocomplete="off" oninput="App.setActivitySearch(this.value)"><button type="button" onclick="document.getElementById('activitySearchInput').value='';App.setActivitySearch('')" aria-label="Effacer la recherche">✕</button></div>
+    <div class="act-cats-lbl">Choisissez une catégorie</div>
+    <div class="act-categories">
+      <button type="button" class="act-cat-card cat-route" onclick="App.openActivityCat('route')">
+        <div class="act-cat-icon-wrap">🚦</div>
+        <span class="act-cat-badge" id="catBadgeRoute" style="display:none">0</span>
+        <div class="act-cat-name">Route</div>
+        <div class="act-cat-subdesc">Incidents</div>
+      </button>
+      <button type="button" class="act-cat-card cat-vehicle" onclick="App.openActivityCat('vehicle')">
+        <div class="act-cat-icon-wrap">🚘</div>
+        <span class="act-cat-badge" id="catBadgeVehicle" style="display:none">0</span>
+        <div class="act-cat-name">Véhicule</div>
+        <div class="act-cat-subdesc">Conducteurs</div>
+      </button>
+      <button type="button" class="act-cat-card cat-aide" onclick="App.openActivityCat('aide')">
+        <div class="act-cat-icon-wrap">🆘</div>
+        <span class="act-cat-badge" id="catBadgeAide" style="display:none">0</span>
+        <div class="act-cat-name">Aide</div>
+        <div class="act-cat-subdesc">Assistance</div>
+      </button>
+    </div>
+    <div class="act-resume-hd"><span>Résumé rapide</span><button type="button" class="act-voir-tout" onclick="App.openActivityCat('all')">Voir tout ›</button></div>
+    <div class="act-resume-list">
+      <div class="act-resume-item"><div class="act-resume-ico neu">✉️</div><div class="act-resume-info"><div class="act-resume-name">Nouveaux</div><div class="act-resume-detail" id="resumeNewSub">Aucune alerte non lue</div></div><span class="act-resume-badge" id="resumeNewBadge" style="display:none">0</span></div>
+      <div class="act-resume-item"><div class="act-resume-ico enc">⏳</div><div class="act-resume-info"><div class="act-resume-name">En cours</div><div class="act-resume-detail" id="resumeEncSub">Aucune action en attente</div></div><span class="act-resume-badge orange" id="resumeEncBadge" style="display:none">0</span></div>
+      <div class="act-resume-item"><div class="act-resume-ico ok">✅</div><div class="act-resume-info"><div class="act-resume-name">Traités</div><div class="act-resume-detail">Historique consulté</div></div><span class="act-resume-badge green">✓</span></div>
+    </div>
+  </div>
+  <!-- Sous-panneau catégorie -->
+  <div id="actCatPanel" class="act-cat-panel" style="display:none">
+    <div class="act-cat-hd">
+      <button type="button" class="act-cat-back" onclick="App.closeActivityCat()">‹</button>
+      <div class="act-cat-hd-mid"><span id="actCatIcon" class="act-cat-hd-icon">🚘</span><div><div id="actCatTitle" class="act-cat-hd-title">Véhicule</div><div id="actCatSub" class="act-cat-hd-sub">Prévenir un conducteur</div></div></div>
+    </div>
+    <div class="act-cat-tabs">
+      <button type="button" class="act-cat-tab on" data-tab="recus" onclick="App.actCatTab('recus')">Reçus <span class="act-tab-badge" id="actTabBadge" style="display:none">0</span></button>
+      <button type="button" class="act-cat-tab" data-tab="envoyes" onclick="App.actCatTab('envoyes')">Envoyés</button>
+    </div>
+    <div id="actTypeFilterBar" style="display:none;gap:6px;overflow:auto;padding:6px 0 2px;margin-bottom:4px"></div>
+    <div id="actCatFeed" class="act-cat-feed"></div>
+    <div class="act-status-bar" id="actStatusBar" style="display:none"><span id="actStatusText"></span><button type="button" onclick="App.markAllCatRead()">Tout marquer lu</button></div>
+  </div>
+</div>
 <div id="panelAltet" class="panel on">
   <!-- Étape 1 : choix catégorie -->
   <div id="sigStep1" class="sig-step active">
@@ -283,58 +335,6 @@
     </div>
   </div>
 </div><div id="panelSettings" class="panel"><div class="panel-inner-hd"><span>Options</span></div><div class="panel-settings-grid"><button type="button" class="settings-btn" onclick="App.openEditProfile()">✏️ Mon profil</button><button type="button" class="settings-btn" onclick="App.openBlocked()">🚫 Bloqués</button><button type="button" class="settings-btn" onclick="App.openRecent()">🕘 Récents</button><button type="button" class="settings-btn" onclick="App.openLegal()">⚖️ Confidentialité</button><button type="button" class="settings-btn" onclick="App.toggleSounds()">🔔 Sons</button><button type="button" class="settings-btn" onclick="App.toggleReduceEffects()">⚡ Performance</button><button type="button" class="settings-btn" onclick="App.clearOfflineCache()">🧹 Cache</button><button type="button" class="settings-btn" onclick="window._forceSwUpdate&&_forceSwUpdate()" style="color:#facc15">⬆️ Forcer MAJ</button><button type="button" class="settings-btn" onclick="App.toggleVoice()">🔊 Voix GPS</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.openGardienDashboard()">🔍 Dashboard</button><button type="button" class="settings-btn gardien-debug-tool" onclick="App.forceSyncAlerts()">🔄 Sync alertes</button><button type="button" class="settings-btn danger" onclick="App.logout()">⏻ Déconnexion</button></div><div class="settings-section"><div class="settings-section-title">Communication</div><div class="settings-row"><div><div class="settings-row-label">Autoriser les demandes de contact</div><div class="settings-row-sub">Aucune demande n'aboutit sans votre accord. Votre numéro n'est jamais partagé.</div></div><label class="settings-toggle"><input type="checkbox" id="allowCallsToggle" onchange="CallManager.setCallPreferences(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">📞 Paramètres appels</div><div class="settings-row"><div><div class="settings-row-label">Niveau d'accès</div><div class="settings-row-sub">Qui peut vous envoyer une demande de contact audio</div></div></div><div class="settings-call-levels" id="callLevelSelector"><button type="button" class="call-level-btn" data-level="1" onclick="ImmatMessages.setCallLevel(1)">🔇 Personne</button><button type="button" class="call-level-btn" data-level="2" onclick="ImmatMessages.setCallLevel(2)">🤝 Confiance</button><button type="button" class="call-level-btn" data-level="3" onclick="ImmatMessages.setCallLevel(3)">📍 Contexte</button><button type="button" class="call-level-btn" data-level="4" onclick="ImmatMessages.setCallLevel(4)">🌐 Tous</button></div><div class="settings-row" style="margin-top:8px"><div><div class="settings-row-label">Ne pas déranger</div><div class="settings-row-sub" id="dndSub">Désactivé</div></div><label class="settings-toggle"><input type="checkbox" id="dndToggle" onchange="ImmatMessages.setDnd(this.checked)"><span class="settings-toggle-track"></span></label></div><div id="dndHours" class="settings-dnd-hours" style="display:none"><div class="settings-row"><div class="settings-row-label">De</div><input type="time" id="dndFrom" value="22:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div><div class="settings-row"><div class="settings-row-label">À</div><input type="time" id="dndTo" value="07:00" onchange="ImmatMessages.saveDndHours()" class="settings-time-input"></div></div></div><div class="settings-section"><div class="settings-section-title">👤 Présence</div><div class="settings-row"><div><div class="settings-row-label">Votre statut</div><div class="settings-row-sub">Aucune géolocalisation partagée — INV-COM-010</div></div></div><div class="settings-presence-grid" id="presenceSelector"><button type="button" class="presence-btn" data-status="disponible" onclick="ImmatMessages.setPresence('disponible')">🟢 Disponible</button><button type="button" class="presence-btn" data-status="conduite" onclick="ImmatMessages.setPresence('conduite')">🚗 Conduite</button><button type="button" class="presence-btn" data-status="occupé" onclick="ImmatMessages.setPresence('occupé')">🟡 Occupé</button><button type="button" class="presence-btn" data-status="invisible" onclick="ImmatMessages.setPresence('invisible')">⚫ Invisible</button><button type="button" class="presence-btn" data-status="hors-ligne" onclick="ImmatMessages.setPresence('hors-ligne')">⭕ Hors ligne</button></div></div><div class="settings-section"><div class="settings-section-title">Voix GPS</div><div class="settings-row"><div><div class="settings-row-label">Genre de la voix</div><div class="settings-row-sub">Voix féminine ou masculine pour la navigation GPS.</div></div><button type="button" id="voiceGenderBtn" onclick="App.toggleVoiceGender()" class="settings-btn" style="min-width:84px;align-self:center">Femme ♀</button></div></div><div class="settings-section"><div class="settings-section-title">🔒 Vie privée &amp; position</div><div class="settings-row"><div><div class="settings-row-label">Position approximée (±200m)</div><div class="settings-row-sub">Floute votre position GPS partagée avec les autres conducteurs. Votre vraie position reste sur votre appareil.</div></div><label class="settings-toggle"><input type="checkbox" id="approxGeoToggle" onchange="App.toggleApproxGeo(this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">🔔 Notifications</div><div class="settings-row"><div><div class="settings-row-label">Notifications push</div><div class="settings-row-sub">Recevoir des alertes même quand l'app est fermée</div></div><button type="button" class="settings-btn" id="pushPermBtn" onclick="App.requestPushPermission().then(ok=>{toast(ok?'Notifications activées ✅':'Permission refusée','ok');document.getElementById('pushPermBtn').textContent=ok?'Activé ✅':'Activer'})" style="align-self:center;min-width:84px">Activer</button></div><div class="settings-row"><div><div class="settings-row-label">Alertes route</div><div class="settings-row-sub">Accidents, bouchons, obstacles signalés par les conducteurs proches</div></div><label class="settings-toggle"><input type="checkbox" id="notifRouteToggle" onchange="App.saveNotifPref('route',this.checked)"><span class="settings-toggle-track"></span></label></div><div class="settings-row"><div><div class="settings-row-label">Alertes véhicule</div><div class="settings-row-sub">Quand un conducteur vous signale un problème sur votre véhicule</div></div><label class="settings-toggle"><input type="checkbox" id="notifVehicleToggle" onchange="App.saveNotifPref('vehicle',this.checked)"><span class="settings-toggle-track"></span></label></div><div class="settings-row"><div><div class="settings-row-label">Demandes d'aide</div><div class="settings-row-sub">Conducteurs en panne ou nécessitant de l'assistance</div></div><label class="settings-toggle"><input type="checkbox" id="notifHelpToggle" onchange="App.saveNotifPref('help',this.checked)"><span class="settings-toggle-track"></span></label></div></div><div class="settings-section"><div class="settings-section-title">🔒 Mes données (RGPD)</div><div class="settings-row"><div><div class="settings-row-label">Exporter mes données</div><div class="settings-row-sub">Télécharge un fichier JSON avec toutes vos données.</div></div><button type="button" class="settings-btn" onclick="App.exportUserData()" style="align-self:center;min-width:84px">Exporter</button></div><div class="settings-row" style="margin-top:8px"><div><div class="settings-row-label">Supprimer mon compte</div><div class="settings-row-sub">Suppression définitive et immédiate. Irréversible.</div></div><button type="button" class="settings-btn danger" onclick="App.deleteAccount()" style="align-self:center;min-width:84px">Supprimer</button></div></div></div><div style="padding:16px 0 8px;text-align:center;color:#334155;font-size:10.5px;letter-spacing:.04em">ImmatConnect Pro · build <span id="buildVerSpan"></span></div></div>
-<div id="panelActivite" class="panel">
-  <div id="actDebugBanner" style="background:#ffff00;color:#000;padding:10px 14px;font-size:15px;font-weight:900;border-radius:8px;margin-bottom:10px;letter-spacing:.02em">BUILD S13 ✅ ACTIVITÉ OK</div>
-  <!-- Écran principal Activité -->
-  <div id="actMain" class="act-main">
-    <div class="act-main-hd">
-      <div class="act-main-title">Activité</div>
-      <div class="act-main-sub">Messages et alertes</div>
-    </div>
-    <div class="act-search-bar"><input id="activitySearchInput" type="search" placeholder="Rechercher une plaque…" inputmode="search" autocomplete="off" oninput="App.setActivitySearch(this.value)"><button type="button" onclick="document.getElementById('activitySearchInput').value='';App.setActivitySearch('')" aria-label="Effacer la recherche">✕</button></div>
-    <div class="act-cats-lbl">Choisissez une catégorie</div>
-    <div class="act-categories">
-      <button type="button" class="act-cat-card cat-route" onclick="App.openActivityCat('route')">
-        <div class="act-cat-icon-wrap">🚦</div>
-        <span class="act-cat-badge" id="catBadgeRoute" style="display:none">0</span>
-        <div class="act-cat-name">Route</div>
-        <div class="act-cat-subdesc">Incidents</div>
-      </button>
-      <button type="button" class="act-cat-card cat-vehicle" onclick="App.openActivityCat('vehicle')">
-        <div class="act-cat-icon-wrap">🚘</div>
-        <span class="act-cat-badge" id="catBadgeVehicle" style="display:none">0</span>
-        <div class="act-cat-name">Véhicule</div>
-        <div class="act-cat-subdesc">Conducteurs</div>
-      </button>
-      <button type="button" class="act-cat-card cat-aide" onclick="App.openActivityCat('aide')">
-        <div class="act-cat-icon-wrap">🆘</div>
-        <span class="act-cat-badge" id="catBadgeAide" style="display:none">0</span>
-        <div class="act-cat-name">Aide</div>
-        <div class="act-cat-subdesc">Assistance</div>
-      </button>
-    </div>
-    <div class="act-resume-hd"><span>Résumé rapide</span><button type="button" class="act-voir-tout" onclick="App.openActivityCat('all')">Voir tout ›</button></div>
-    <div class="act-resume-list">
-      <div class="act-resume-item"><div class="act-resume-ico neu">✉️</div><div class="act-resume-info"><div class="act-resume-name">Nouveaux</div><div class="act-resume-detail" id="resumeNewSub">Aucune alerte non lue</div></div><span class="act-resume-badge" id="resumeNewBadge" style="display:none">0</span></div>
-      <div class="act-resume-item"><div class="act-resume-ico enc">⏳</div><div class="act-resume-info"><div class="act-resume-name">En cours</div><div class="act-resume-detail" id="resumeEncSub">Aucune action en attente</div></div><span class="act-resume-badge orange" id="resumeEncBadge" style="display:none">0</span></div>
-      <div class="act-resume-item"><div class="act-resume-ico ok">✅</div><div class="act-resume-info"><div class="act-resume-name">Traités</div><div class="act-resume-detail">Historique consulté</div></div><span class="act-resume-badge green">✓</span></div>
-    </div>
-  </div>
-  <!-- Sous-panneau catégorie -->
-  <div id="actCatPanel" class="act-cat-panel" style="display:none">
-    <div class="act-cat-hd">
-      <button type="button" class="act-cat-back" onclick="App.closeActivityCat()">‹</button>
-      <div class="act-cat-hd-mid"><span id="actCatIcon" class="act-cat-hd-icon">🚘</span><div><div id="actCatTitle" class="act-cat-hd-title">Véhicule</div><div id="actCatSub" class="act-cat-hd-sub">Prévenir un conducteur</div></div></div>
-    </div>
-    <div class="act-cat-tabs">
-      <button type="button" class="act-cat-tab on" data-tab="recus" onclick="App.actCatTab('recus')">Reçus <span class="act-tab-badge" id="actTabBadge" style="display:none">0</span></button>
-      <button type="button" class="act-cat-tab" data-tab="envoyes" onclick="App.actCatTab('envoyes')">Envoyés</button>
-    </div>
-    <div id="actTypeFilterBar" style="display:none;gap:6px;overflow:auto;padding:6px 0 2px;margin-bottom:4px"></div>
-    <div id="actCatFeed" class="act-cat-feed"></div>
-    <div class="act-status-bar" id="actStatusBar" style="display:none"><span id="actStatusText"></span><button type="button" onclick="App.markAllCatRead()">Tout marquer lu</button></div>
-  </div>
-</div>
 </div>
 
 <nav class="bottom-nav">
@@ -504,7 +504,7 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:10,maxMsgPerMinute:5};
-const APP_BUILD='2026-06-14-S13';
+const APP_BUILD='2026-06-14-S14';
 window.APP_BUILD=APP_BUILD;
 (function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
@@ -1186,7 +1186,7 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
-  try{toast('navACT S13','ok');}catch(e){}
+  try{toast('navACT S14','ok');}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
@@ -1213,7 +1213,7 @@ App.navActivite=function(){
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;}catch(e){}},80);
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){s.scrollTop=0;}const p=document.getElementById('panelActivite');if(p)p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}},250);
     const _ps=document.getElementById('panelSettings');
-    toast('ACT S13 pa='+(_pa?.classList.contains('on')?'ON':'off')+' ps='+(_ps?.style.display||'css')+' sh='+(_sh?.classList.value||'?'),'ok');
+    toast('ACT S14 pa='+(_pa?.classList.contains('on')?'ON':'off')+' ps='+(_ps?.style.display||'css')+' sh='+(_sh?.classList.value||'?'),'ok');
   }catch(_){toast('ACT err:'+_,'bad');}
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
@@ -2880,7 +2880,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v34';
+      var CURRENT = 'immatconnect-pro-v35';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -2925,7 +2925,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v34';
+  var CURRENT = 'immatconnect-pro-v35';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
