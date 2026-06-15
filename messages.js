@@ -1106,6 +1106,25 @@ function installInputs(){
       _grow(_ta);
     }
   });
+  // Chips conversations récentes sous #icComposePlate (sélection rapide)
+  const _rc=$('icRecentChips'),_pi=$('icComposePlate');
+  if(_pi&&_rc&&!_pi.dataset.recentReady){
+    _pi.dataset.recentReady='1';
+    function _showChips(){
+      if(_pi.value.trim()){_rc.style.display='none';return;}
+      const threads=(State.threads||[]).slice(0,5);
+      if(!threads.length){_rc.style.display='none';return;}
+      _rc.innerHTML=threads.map(t=>{
+        const pseudo=State.pseudoMap[nPlate(t.plate)]||'';
+        const label=esc(t.plate)+(pseudo?' · '+esc(pseudo):'');
+        return'<button type="button" class="ic-recent-chip" onclick="ImmatMessages._pickChip(\''+js(t.plate)+'\')">'+label+'</button>';
+      }).join('');
+      _rc.style.display='flex';
+    }
+    _pi.addEventListener('focus',_showChips);
+    _pi.addEventListener('input',()=>{if(_pi.value.trim())_rc.style.display='none';else _showChips();});
+    _pi.addEventListener('blur',()=>setTimeout(()=>{_rc.style.display='none';},200));
+  }
   // Aperçu destinataire sous #icComposePlate
   const _pp=$('icComposePlatePreview'),_pe=$('icComposePlate');
   if(_pe&&_pp&&!_pe.dataset.previewReady){
@@ -1243,6 +1262,14 @@ function closeCompose(){
   if(list)    list.style.display = '';
   State.mode = 'inbox';
   render();
+}
+
+function _pickChip(plate){
+  const _pe=$('icComposePlate');
+  if(_pe){_pe.value=fPlate(plate);_pe.dispatchEvent(new Event('input'));}
+  const _rc=$('icRecentChips');
+  if(_rc) _rc.style.display='none';
+  setTimeout(()=>{try{$('icComposeText')?.focus();}catch(e){}},80);
 }
 
 // ── Menu thread — bottom sheet ────────────────────────────────────
@@ -1481,6 +1508,7 @@ window.ImmatMessages = {
   saveDndHours,
   saveCallSettings,
   markAllRead,
+  _pickChip,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

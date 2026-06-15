@@ -298,6 +298,7 @@
         <button type="button" class="ic-send-btn" aria-label="Envoyer" onclick="ImmatMessages.sendNew()">➤</button>
       </div>
       <div id="icComposePlatePreview" style="display:none;font-size:11px;color:#94a3b8;padding:2px 4px 4px;min-height:16px"></div>
+      <div id="icRecentChips" style="display:none;flex-wrap:nowrap;gap:6px;padding:4px 4px 6px;overflow-x:auto;scrollbar-width:none"></div>
       <textarea id="icComposeText" placeholder="Écrire un message…"></textarea>
     </div>
 
@@ -1985,7 +1986,7 @@ App.updateActBadge=function(){
     if(callBadge){callBadge.textContent=missedCount>99?'99+':String(missedCount);callBadge.style.display=missedCount>0?'flex':'none';}
     try{this.renderActivityMain?.()}catch(e){}
     // App badge sur l'icône PWA (Android Chrome / desktop)
-    try{const _tot=total+missedCount;if('setAppBadge'in navigator){if(_tot>0)navigator.setAppBadge(_tot).catch(()=>{});else navigator.clearAppBadge().catch(()=>{});}}catch(e){}
+    try{const _tot=total+missedCount;if('setAppBadge'in navigator){if(_tot>0)navigator.setAppBadge(_tot).catch(()=>{});else navigator.clearAppBadge().catch(()=>{});}document.title=_tot>0?'('+_tot+') ImmatConnect Pro':'ImmatConnect Pro';}catch(e){}
   }catch(e){}
 };
 
