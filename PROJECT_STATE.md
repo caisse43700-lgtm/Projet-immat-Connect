@@ -37,9 +37,11 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
-1. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles
-2. **Tests terrain B2→B5** — non complétés (push / RGPD / messages / ANGE)
-3. **REVOKE SELECT sur profiles** — en attente validation B1+B4 (ne pas exécuter avant confirmation)
+~~1. **Panneau Paramètres iOS** — scrollable coupé, RGPD (Export/Supprimer) + Notifications inaccessibles~~ ✅ résolu
+~~2. **Tests terrain B2→B5** — non complétés (push / RGPD / messages / ANGE)~~ ✅ tous passés
+~~3. **REVOKE SELECT sur profiles** — en attente validation B1+B4~~ ✅ exécuté et vérifié
+
+**Aucun blocage P0 restant — GO LIVE phase 1 validé.**
 
 ---
 
@@ -202,32 +204,32 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2b. MISSIONS DEPUIS PR #307 (2026-06-15)
 
-**PR #308→#314 — Déboggage panneau Activité (iOS Safari cache)**
+**PR #308→#319 — Déboggage panneau Activité + nettoyage**
 
-- **Root cause iOS WKWebView translateY** : corrigé depuis PR #309 (height:0 → height CSS explicite)
-- **Bannière Force MAJ en boucle** : corrigée PR #312 (IIFE CURRENT était bloqué à 'v26')
-- **scrollTop résiduel** : reset `sheet.scrollTop=0` ajouté dans navActivite (PR #313)
-- **style.display forcés** : `panelActivite.style.display='block'`, autres panels `'none'` (PR #313)
-- **PR #314 (S10/v31 — commit `d1925b2`)** :
-  - Auto-reload IIFE : détecte changement build via localStorage → `location.replace(?r=timestamp)`
-  - Bannière jaune `<div id="actDebugBanner">BUILD S10 ✅ ACTIVITÉ OK</div>` dans panelActivite
-  - Toast précoce `'navACT S10'` au tout début de navActivite
-  - Bouton `⬆️ Forcer MAJ` dans Settings → appelle `_forceSwUpdate()`
-  - `_forceSwUpdate` redirige vers `?r=timestamp` (bypass cache SW + HTTP)
-  - SW v31, CURRENT 'v31' dans les deux IIFEs
-  - APP_BUILD 2026-06-14-S10
-
-**En attente : test terrain de PR #314 par l'utilisateur**
+- **Root cause iOS WKWebView translateY** : corrigé (height:0 → height CSS explicite)
+- **Bannière Force MAJ en boucle** : corrigée (IIFE CURRENT était bloqué à 'v26')
+- **Root cause finale scrollTop** : `panelActivite` était le DERNIER panel dans `#sheet`. iOS Safari restaure scrollTop après reflow, montrant le bas de panelSettings. Fix : `panelActivite` déplacé en PREMIER dans le DOM (#sheet) → scrollTop=0 affiche toujours Activité (PR #318/S14/v35).
+- **Nettoyage debug** : bannière jaune `actDebugBanner` + toasts debug supprimés (PR #319/v36).
+- **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
+- SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
 ---
 
 ## 3. MISSION EN COURS
 
-GO LIVE — panneau Activité : PR #314 déployée (S10/SW v31), en attente validation terrain.
-- L'utilisateur était bloqué sur build S8/S9 (Safari ne chargeait pas le nouveau SW)
-- PR #314 ajoute le bouton "⬆️ Forcer MAJ" dans Settings + auto-reload IIFE pour contourner
-- Tester : Settings > ⬆️ Forcer MAJ → puis cliquer Activité → voir bannière jaune BUILD S10 ✅
-- REVOKE en attente (ne pas exécuter tant que B1+B4 non confirmés)
+Aucune — GO LIVE phase 1 terminé.
+
+---
+
+## 4. PROCHAINE MISSION RECOMMANDÉE
+
+```
+Phase 2 — Améliorations et stabilisation :
+  - Supprimer l'Edge Function get-turn-credentials du dashboard Supabase (S3-6, manuel)
+  - Tests de non-régression appels vocaux (scénarios 1→5 du checklist anti-régression)
+  - Sprint 8 : S7-NEARBY (conducteurs proches), delete_audit_log, Promise.allSettled() push
+  - B5 ANGE : amélioration des réponses si nécessaire
+```
 
 ---
 
@@ -451,7 +453,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v31
+SW version actif  : immatconnect-pro-v36
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -540,7 +542,7 @@ core/interaction-engine.js : v2  (_emitObd guard CALL_*)
 messages.js           : v17+ (relTime, aria-label ic-delete-msg)
 service-worker.js     : immatconnect-pro-v25
 app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
-APP_BUILD             : 2026-06-14-S10
+APP_BUILD             : 2026-06-15
 manifest.json         : shortcuts (Signaler/Carte/Appels), categories, apple-touch-icon
 ```
 
@@ -651,6 +653,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-14 | IA session | GO LIVE session (suite 2) — PR #301 (SW banner), #302 (locate debug), #303 (SIGNED_OUT reset), #304 (bottom-nav 4 colonnes), #305 (panneau Activité) |
 | 2026-06-14 | IA session | GO LIVE session (suite 3) — PR #306 (void offsetHeight), PR #307 (force .full + disable transition — fix définitif iOS WKWebView translateY bug) |
 | 2026-06-15 | IA session | GO LIVE session (suite 4) — PR #308-#314 : translateY→height:0, SW v26→v31, IIFE boucle fix, scrollTop reset, force display, auto-reload IIFE, bannière jaune BUILD S10, bouton Forcer MAJ Settings |
+| 2026-06-15 | IA session | GO LIVE session (suite 5) — B1 ✅ CONFIRMÉ. PR #318 (S14/v35) : panelActivite déplacé premier dans sheet DOM — fix définitif scrollTop iOS. PR #319 (v36) : nettoyage debug (bannière + toasts). Tests B2→B5 en cours. |
+| 2026-06-15 | IA session | GO LIVE PHASE 1 TERMINÉ — B1✅ B2✅ B3✅ B4✅ B5✅ tous confirmés terrain. REVOKE SELECT ON profiles FROM authenticated exécuté et vérifié (id/owner_plate/pseudo/vehicle_color uniquement). |
 
 ---
 
