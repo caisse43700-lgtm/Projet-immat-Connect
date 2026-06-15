@@ -213,6 +213,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 3) — Messages UX + fix CI (session 2026-06-15 soir)**
+
+- **Pseudo + couleur véhicule dans liste conversations** : `State.pseudoMap` + `State.colorMap` (Maps) peuplés post-render via async IIFE (nearby cache-first → DB SELECT IN fallback). Avatar coloré selon `vehicle_color`, pseudo affiché en gris sous la plaque.
+- **Badge unread count pill** : `.ic-unread-dot` redesigné en badge pill (min-width 18px, border-radius 999px) affichant le compte si >1.
+- **Bouton "Tout lu"** : `#icMarkAllReadBtn` dans le header messages — affiché si `setBadge(n>0)`, caché sinon. `markAllRead()` UPDATE en masse `read_at` via `IN (ids)`.
+- **Filtres journal d'appels** : 4 pills (Tous / Manqués / Émis / Reçus) — filtre client-side sur `log` avant render. `App._callJournalFilter` + `App.setCallJournalFilter(f)` persistants entre renders.
+- **Son + vibration sur nouveau message** : `AudioManager.playMessageBeep('msg_in_app')` + `navigator.vibrate(80)` dans le handler INSERT de `subscribe()` (guard idle + sons activés).
+- **Pseudo dans FloatingCard et notif** : `profilesByIds([m.sender_id])` puis `_sndPseudo` — titre FloatingCard = `plaque · pseudo`.
+- **Fix CI critique** : 7 guillemets typographiques U+2019/U+2018 dans `subMsgs()` de index.html → apostrophes droites. Preflight et smoke tests Playwright débloqués. Commit `e7850ea`.
+- SW v40.
+
 **PR #325 — Sprint 8 suite + Sprint 9 + UX améliorations (branche de travail, à merger)**
 
 - **S7-NEARBY D13** (4 fixes) : staleMinutes 10→5, distance arrondie 100m, debounce Realtime 2s, batch trust SELECT IN (`S._trustCache`/`S._ratingCache`), cache-first dans `showVehicleContextMenu`
@@ -484,7 +495,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v39
+SW version actif  : immatconnect-pro-v40
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -690,6 +701,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 : S7-NEARBY D13 (staleMinutes 5min, distance 100m, debounce 2s, batch trust), heartbeat position 3min, S8-06 ANGE dégradation gracieuse, S9 D18 (subReports supprimé), S9 D19 (TTL 90j localStorage), S7-PROFILE D14 (pseudo + couleur dans context menu). SW v37. |
 | 2026-06-15 | IA session | PR #325 (suite) : pseudo addRecent(), badges trust/rating renderNearby, chronomètre appel (callOvTimer/callOvMiniTimer), durée dans journal (ic_call_durations), bouton 📞 menu contextuel carte, boutons 💬/📞 liste Conducteurs proches et Récents. SW v38. |
 | 2026-06-15 | IA session | PR #325 (suite 2) : pseudo dans journal d'appels (batch query profiles SELECT IN), pseudo dans titre thread messages (nearby cache-first → DB fallback), indicateur fraîcheur position dans renderNearby() (Xmin orange si ≥3min, gris si 1-2min), aperçu plaque destinataire dans compose (icComposePlatePreview, debounce 450ms), auto-grow textarea + Ctrl/Cmd+Enter pour envoyer dans messages.js. SW v39. |
+| 2026-06-15 | IA session | PR #325 (suite 3) : pseudo+couleur véhicule dans liste conversations (State.pseudoMap/colorMap, batch async IIFE), badge unread count pill, bouton "Tout lu" (#icMarkAllReadBtn + markAllRead()), filtres journal d'appels (4 pills client-side), son+vibration sur nouveau message, pseudo dans FloatingCard+notif. Fix CI : 7 guillemets typographiques U+2019 → apostrophes droites dans subMsgs() (commit e7850ea). SW v40. |
 
 ---
 
