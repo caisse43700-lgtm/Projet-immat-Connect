@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 16) — Signalements hors ligne en attente : indicateur visible (session 2026-06-15)**
+
+- **Offline reports indicator** : `updateCommunityStatus()` affiche désormais le nombre de signalements en file d'attente (`S.offlineReports`). Hors ligne : suffixe "· N signalement(s) en attente d'envoi". En ligne : pastille orange "⏳ N" à côté des compteurs proches/alertes. Mis à jour quand un signalement est mis en file (catch de `saveReportRemote`) et quand la file est vidée (fin de `syncOfflineReports`). Donne un retour clair que rien n'est perdu en mode dégradé. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
 **PR #325 (suite 15) — Survitesse : retour visuel sur le compteur (session 2026-06-15)**
 
 - **Over-speed warning** : le widget vitesse `.speed` passe en orange (`.warn`) au-dessus de 110 km/h et en rouge pulsé (`.over`) au-dessus de 130 km/h (vitesse max autoroute FR). Toggle dans le handler `locate()` (`watchPosition`) après mise à jour de `speedVal`. Animation désactivée si `body.reduce-effects`. SW v40 → v41 (CACHE_NAME + CURRENT). 177 tests ✅.
@@ -762,6 +766,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 13) : bloquer/débloquer depuis menu thread — bouton #icSheetBlock, libellé dynamique getBlockLevel(), _sheetAction('block') réutilise App.blockPlate/unblockPlate. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 14) : touche Échap ferme le sheet puis la conversation (handler document keydown, guard body.dataset.icEscReady). 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 15) : survitesse — widget .speed orange >110 km/h, rouge pulsé >130 km/h, toggle dans locate(). SW v40 → v41. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 16) : indicateur signalements hors ligne en attente — updateCommunityStatus() affiche S.offlineReports (suffixe texte hors ligne, pastille ⏳ orange en ligne), MAJ dans saveReportRemote catch + fin syncOfflineReports. 177 tests ✅. |
 
 ---
 
