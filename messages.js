@@ -800,6 +800,18 @@ function _renderTimeline(body, messages, callEvents){
   }).join('');
 }
 
+function _presenceLabel(plate){
+  try{
+    const nb = (window.S?.nearby||[]).find(x => nPlate(x.plate) === nPlate(plate));
+    if(!nb || !nb.updated_at) return '';
+    const ageMin = Math.floor((Date.now() - new Date(nb.updated_at).getTime()) / 60000);
+    if(ageMin < 0) return '';
+    if(ageMin < 3)  return '<span style="color:#34d399">🟢 Actif à proximité</span>';
+    if(ageMin < 10) return '<span style="color:#fb923c">🟡 Vu il y a '+ageMin+' min</span>';
+    return '';
+  }catch(e){ return ''; }
+}
+
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
@@ -829,16 +841,21 @@ async function openThread(plate){
     }catch(e){}
   })();
 
-  // Sous-titre : niveau confiance (F-TRUST)
+  // Sous-titre : présence (proximité) prioritaire, sinon niveau confiance (F-TRUST)
   if(sub){
-    const trust = getTrust(localPlate);
-    const subLabels = {
-      NONE:     'Appuie sur 📞 pour demander un contact',
-      CONTEXT:  '📍 Contexte actif',
-      TRUSTED:  '✓ Conducteur de confiance',
-      FAVORITE: '⭐ Favori prioritaire'
-    };
-    sub.textContent = subLabels[trust] || subLabels.NONE;
+    const presence = _presenceLabel(localPlate);
+    if(presence){
+      sub.innerHTML = presence;
+    }else{
+      const trust = getTrust(localPlate);
+      const subLabels = {
+        NONE:     'Appuie sur 📞 pour demander un contact',
+        CONTEXT:  '📍 Contexte actif',
+        TRUSTED:  '✓ Conducteur de confiance',
+        FAVORITE: '⭐ Favori prioritaire'
+      };
+      sub.textContent = subLabels[trust] || subLabels.NONE;
+    }
   }
 
   // Carte contexte alerte active (F-CALL-CONTEXT)
@@ -940,6 +957,14 @@ function refreshThread(){
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
   if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
+  // Rafraîchit l'indicateur de présence dans le sous-titre
+  try{
+    const sub = $('icThreadSub');
+    if(sub){
+      const presence = _presenceLabel(State.activePlate);
+      if(presence) sub.innerHTML = presence;
+    }
+  }catch(e){}
   const wasNearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
   const prevCount = body.querySelectorAll('.ic-bubble').length;
   const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];

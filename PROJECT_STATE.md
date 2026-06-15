@@ -213,6 +213,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 11) — Indicateur de présence dans l'en-tête du thread (session 2026-06-15)**
+
+- **Presence indicator** : `_presenceLabel(plate)` lit `S.nearby` et calcule l'âge depuis `updated_at` : < 3 min → "🟢 Actif à proximité" (vert), < 10 min → "🟡 Vu il y a X min" (orange), sinon vide. Affiché en priorité dans le sous-titre `#icThreadSub` (sinon fallback niveau de confiance). `openThread()` le pose ; `refreshThread()` le rafraîchit à chaque nouveau message. Données 100% locales (S.nearby), zéro requête supplémentaire.
+
 **PR #325 (suite 10) — Copier un message (session 2026-06-15)**
 
 - **Copy message** : bouton ⧉ sur chaque bulle (apparait au hover/focus comme le bouton supprimer). `copyMessage(id)` retrouve le texte dans `State.threads[].list` par id, copie via `navigator.clipboard.writeText` avec fallback `execCommand('copy')` (textarea hors écran) pour les WebView sans Clipboard API. Toast "Message copié ✓". CSS `.ic-copy-msg` (gris neutre, opacity 0 → 1 au survol).
@@ -737,6 +741,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 8) : quick reply FloatingCard message — 3 boutons fcExtraActions (✓ Reçu / 🚗 J'arrive / En route) dans le FloatingCard, guard anti-boucle sur messages quick reply reçus, preview 60 chars. |
 | 2026-06-15 | IA session | PR #325 (suite 9) : séparateurs de jour dans le thread — _dayLabel() (Aujourd'hui/Hier/jour semaine/date), suivi _prevDayKey dans _renderTimeline(), ic-day-sep pilule grise centrée. |
 | 2026-06-15 | IA session | PR #325 (suite 10) : copier un message — bouton ⧉ sur chaque bulle, copyMessage(id) avec navigator.clipboard + fallback execCommand, toast confirmation. |
+| 2026-06-15 | IA session | PR #325 (suite 11) : indicateur de présence dans l'en-tête thread — _presenceLabel() lit S.nearby (🟢 <3min / 🟡 <10min), affiché en priorité dans #icThreadSub, rafraîchi par refreshThread(). |
 
 ---
 
