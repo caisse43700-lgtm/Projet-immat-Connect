@@ -257,6 +257,18 @@
 
   function hide() {
     clearTimeout(_autoHideTimer);
+    // Persiste la durée si l'appel était accepté
+    if (_state.mode === 'accepted' && _callStart > 0 && _state.requestId) {
+      try {
+        var dur = Math.floor((Date.now() - _callStart) / 1000);
+        var cache = JSON.parse(localStorage.getItem('ic_call_durations') || '{}');
+        cache[_state.requestId] = dur;
+        // Garde les 100 dernières entrées
+        var keys = Object.keys(cache);
+        if (keys.length > 100) { delete cache[keys[0]]; }
+        localStorage.setItem('ic_call_durations', JSON.stringify(cache));
+      } catch(e) {}
+    }
     _stopCallTimer();
     try { if (w.AudioManager && w.AudioManager.stopCallAudio) w.AudioManager.stopCallAudio('CallScreen.hide'); } catch(e) {}
     var ov = _$('callOverlay');
