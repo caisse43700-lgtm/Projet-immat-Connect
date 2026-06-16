@@ -639,7 +639,7 @@ function render(){
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
-              <span class="ic-preview">${esc(last.message || '')}</span>
+              <span class="ic-preview">${State.searchQuery ? _highlightHtml(esc(last.message || ''), State.searchQuery) : esc(last.message || '')}</span>
               <span class="ic-unread-dot">${t.unread > 1 ? t.unread : ''}</span>
             </div>
           </div>

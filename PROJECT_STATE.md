@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-28 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-29 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -924,7 +924,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 27) : surlignage du terme recherché (`<mark>`) dans les résultats de recherche en thread — `_highlightHtml()` opère sur le HTML déjà échappé/linkifié en évitant les balises (split sur `<[^>]+>`). Commit `eeed497` sur la branche de dev. Front-only (messages.js). 177 tests ✅. |
 | 2026-06-16 | IA session | MERGE dev → main : fusion de la suite27 (surlignage recherche) vers `main` (commit `87657ea`). |
 | 2026-06-16 | IA session | PR #325 (suite 28) : bouton × pour effacer la recherche en thread + compteur "N résultat(s)" affiché pendant une recherche active, réinitialisés à l'ouverture/fermeture du thread. Commit `001f3cf` sur la branche de dev. Front-only (index.html + messages.js). 177 tests ✅, preflight OK. |
-| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite28 (clear + compteur recherche) vers `main`. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite28 (clear + compteur recherche) vers `main` (commit `4def429`). |
+| 2026-06-16 | IA session | PR #325 (suite 29) : surlignage du terme recherché dans l'aperçu de la liste de conversations (réutilise `_highlightHtml()` de la suite27). Commit `82fd2ba` sur la branche de dev. Front-only (messages.js). 177 tests ✅, preflight OK. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite29 (surlignage liste conversations) vers `main`. |
 
 ---
 
