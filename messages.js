@@ -1496,11 +1496,23 @@ function setTrust(plate,level){
 }
 
 // ── F-FAVORITES : Conversations favorites ───────────────────────
+// Clé dédiée ic_conv_favorites : ic_favorites est déjà utilisé par les favoris GPS
+// (tableau d'objets {name,label,lat,lon}), ne pas réutiliser cette clé ici.
+(function _migrateConvFavorites(){
+  try{
+    if(localStorage.getItem('ic_conv_favorites') !== null) return;
+    const raw = JSON.parse(localStorage.getItem('ic_favorites')||'[]');
+    const plates = Array.isArray(raw) ? raw.filter(v => typeof v === 'string') : [];
+    const others = Array.isArray(raw) ? raw.filter(v => typeof v !== 'string') : [];
+    localStorage.setItem('ic_conv_favorites', JSON.stringify(plates));
+    if(plates.length) localStorage.setItem('ic_favorites', JSON.stringify(others));
+  }catch(e){}
+})();
 function getFavorites(){
-  try{ return JSON.parse(localStorage.getItem('ic_favorites')||'[]'); }catch(e){ return []; }
+  try{ return JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]'); }catch(e){ return []; }
 }
 function saveFavorites(arr){
-  try{ localStorage.setItem('ic_favorites',JSON.stringify(arr)); }catch(e){}
+  try{ localStorage.setItem('ic_conv_favorites',JSON.stringify(arr)); }catch(e){}
 }
 function favoriteConv(plate){
   plate = nPlate(fPlate(plate));
