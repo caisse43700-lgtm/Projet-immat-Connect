@@ -1931,8 +1931,8 @@ App.callFromJournal=function(plate){
   if(!plate) return;
   try{ window.CallManager?.openContactOptions?.(plate,''); }catch(e){}
 };
-App._callJournalFilter='all';
-App.setCallJournalFilter=function(f){this._callJournalFilter=f;this.renderCallJournal();};
+App._callJournalFilter=(function(){try{return localStorage.getItem('ic_call_journal_filter')||'all';}catch(e){return'all';}})();
+App.setCallJournalFilter=function(f){this._callJournalFilter=f;try{localStorage.setItem('ic_call_journal_filter',f);}catch(e){}this.renderCallJournal();};
 App._callJournalSearch='';
 App.setCallJournalSearch=function(v){this._callJournalSearch=v;this.renderCallJournal();};
 App._callJournalLastLog=[];
