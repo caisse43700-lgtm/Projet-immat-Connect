@@ -1047,3 +1047,31 @@ actioned_at (timestamptz), urgency_level (text), target_plate (text)
 
 Le code client (`saveReportRemote` dans `index.html`, lignes ~1170-1175) construit systématiquement un payload d'insertion contenant `latitude`/`longitude` (tiers T1/T2) ou les renomme en `lat`/`lng` (tier T3) — mais **aucune de ces colonnes n'existe sur `reports`**. Conséquence très probable : tous les inserts réels passent par le tier T4 ("minimal", sans position), ou échouent silencieusement à transmettre des coordonnées. Les signalements communautaires n'ont donc historiquement jamais de position GPS persistée en base (la position visible en direct vient uniquement du broadcast Realtime, pas de la table). À investiguer/corriger dans une prochaine mission : soit ajouter une migration `ALTER TABLE reports ADD COLUMN lat double precision, ADD COLUMN lng double precision`, soit confirmer que c'est un choix de design volontaire (position éphémère via Realtime uniquement, jamais persistée).
 
+---
+
+## SESSION 2026-06-16 (suite) — Fix du bug résiduel : ajout des colonnes position sur `reports`
+
+Suite à l'instruction explicite de l'utilisateur ("Oui attaque le bug"), le bug ci-dessus a été corrigé directement (pas seulement documenté).
+
+**Décision de nommage :** `latitude`/`longitude` (et non `lat`/`lng`), par cohérence avec la table `user_locations` qui utilise déjà ces noms de colonnes exacts. Ce choix permet aussi au tier T1 (payload complet, non modifié) de `saveReportRemote()` de réussir directement dès le prochain insert — aucun changement côté client n'est nécessaire, puisque ce tier envoyait déjà `latitude`/`longitude`.
+
+**Migration créée :** `supabase/migrations/20260616150925_reports_position_columns.sql`
+```sql
+ALTER TABLE public.reports
+  ADD COLUMN IF NOT EXISTS latitude  double precision,
+  ADD COLUMN IF NOT EXISTS longitude double precision;
+```
++ `COMMENT ON COLUMN` pour les deux colonnes, + re-création de la vue `public_reports` avec `latitude`/`longitude` ajoutées au SELECT (toujours sans `reporter_id`, conforme à INV-COM-015 de la migration `20260613203627_public_reports_secure.sql`).
+
+**Lecture côté client déjà compatible :** `_handleReport`/`syncCommunityAlerts` lisaient déjà `r.latitude??r.lat??null` — lecture défensive existante, donc aucune modification requise une fois les colonnes ajoutées.
+
+**Déploiement :**
+1. Commit `dc952d4` sur `main` (branche de travail de cette session dans le sandbox).
+2. Cherry-pick vers `claude/immatconnect-pro-app-dEKGR` (branche de dev désignée), push.
+3. Confirmation explicite demandée à l'utilisateur via `AskUserQuestion` avant le push sur `main` (CI prod) — confirmé "Oui, pousse sur main".
+4. Push sur `main` → déclenche le workflow `deploy-edge-functions.yml` → run CI `27627683881`.
+
+**Résultat :** run `27627683881` — `status: completed`, `conclusion: success`. Les 12 migrations rejouées sans erreur (la nouvelle s'applique pour la première fois, les 11 autres en no-op), les 5 Edge Functions redéployées sans erreur.
+
+**Reste à faire (non bloquant) :** validation terrain — créer un signalement, recharger l'app (ou se reconnecter), confirmer que sa position est toujours affichée sur la carte (alors qu'avant ce fix, elle disparaissait dès que le signalement n'était plus reçu via le broadcast Realtime en direct).
+
