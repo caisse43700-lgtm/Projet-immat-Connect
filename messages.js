@@ -597,7 +597,10 @@ function render(){
 
   // Favoris en tête (F-FAVORITES)
   const favBtn = $('icFavOnlyBtn');
-  if(favBtn) favBtn.classList.toggle('active', State.favOnly);
+  if(favBtn){
+    favBtn.classList.toggle('active', State.favOnly);
+    favBtn.setAttribute('aria-pressed', State.favOnly ? 'true' : 'false');
+  }
   const favs = getFavorites();
   if(State.favOnly){
     threads = threads.filter(t => favs.includes(nPlate(t.plate)));
