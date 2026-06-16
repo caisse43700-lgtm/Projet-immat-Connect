@@ -47,6 +47,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix échec intermittent d'envoi/signalement depuis un véhicule proche (placeholder VEH-xxxx) — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Symptôme terrain :** depuis le compte BE-521-MM, signaler/contacter un véhicule proche échouait de façon intermittente ("parfois ça marche, parfois pas") — confirmé non lié au cache (force-quit/reopen de l'app testé, n'a pas résolu seul).
+**Root cause découverte :** `loadOthers()` (index.html) appelle `profilesByIds(ids)` pour récupérer pseudo/plaque/couleur des véhicules proches via le RPC `get_public_profiles_by_ids`. En cas d'erreur RPC transitoire (réseau, latence, cold start), `profilesByIds` retournait silencieusement `{}` (aucun retry). Un fallback défensif existant (`if(!pl) pl='VEH-'+id.slice(0,4)`, ajouté lors d'un bug RLS précédent) affiche alors le véhicule avec une fausse plaque `VEH-xxxx` au lieu de sa vraie plaque. Le marqueur reste cliquable et visible normalement, mais toute tentative de message/signalement vers lui échoue silencieusement : `findProfileByPlate('VEH-xxxx')` ne trouve aucun profil avec ce libellé. Le marqueur se corrige seul au cycle de refresh suivant (d'où le caractère intermittent — dépend du timing exact du tap par rapport au cycle de refresh `loadOthers`).
+**Fix appliqué (`index.html`, fonction `profilesByIds`) :** ajout d'un retry unique (attente 500ms) avant d'abandonner et de retourner `{}`, pour absorber les erreurs RPC transitoires les plus courantes et réduire la fréquence d'apparition du placeholder `VEH-xxxx`.
+**Tests :** 177 ✅ + 3 diagnostics OBD ✅, preflight inline JS 7/7 OK.
+**Commit :** `0427606` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`).
+**À valider en terrain :** réessayer plusieurs fois de signaler/contacter un véhicule proche depuis BE-521-MM ; si le problème persiste encore parfois, il faudra remonter le contenu exact affiché sur la plaque du véhicule au moment de l'échec (vraie plaque ou "VEH-xxxx" visible dans la bulle/le champ) pour confirmer si ce fix suffit ou s'il faut aussi gérer l'envoi par uid en complément du fallback plaque.
+
+---
+
 **Mission : Fix bug critique — Activité (Reçus/Envoyés) toujours vide malgré messages fonctionnels — TERMINÉE**
 **Date :** 2026-06-16
 **Symptôme terrain :** sur 2 comptes (BZ-652-LL et BE-521-MM), les messages envoyés/reçus (y compris les signalements véhicule urgents) apparaissaient correctement dans l'onglet **Messages**, mais jamais dans **Activité → Tout/Véhicule → Reçus/Envoyés**, quel que soit le compte ou le sens du message.
@@ -458,7 +469,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Fusion en cours du fix `window.S=S` (Activité Reçus/Envoyés vide, commit `d0fcc2d`) de `claude/immatconnect-pro-app-dEKGR` vers `main`, demandée explicitement par l'utilisateur. À valider en terrain après déploiement : envoyer un message entre les 2 comptes test et confirmer son apparition dans Activité. Reste en attente : diagnostiquer l'échec d'envoi de message depuis le compte BE-521-MM (message d'erreur exact non communiqué).
+Fix Activité (`window.S=S`, commit `d0fcc2d`) déjà fusionné et validé en terrain par l'utilisateur. Fix complémentaire du jour — retry RPC `profilesByIds` pour réduire le placeholder `VEH-xxxx` (échec intermittent de message/signalement vers un véhicule proche, commit `0427606`) — pushé sur `claude/immatconnect-pro-app-dEKGR`, **pas encore mergé sur `main`**, en attente de validation terrain (re-tester plusieurs fois le signalement/message vers un véhicule proche depuis BE-521-MM).
 
 ---
 
