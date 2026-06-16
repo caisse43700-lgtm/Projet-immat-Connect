@@ -282,6 +282,12 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 25) — Exporter/partager une conversation (messages.js + index.html, session 2026-06-16)**
+
+- **Export thread** : bouton "📤 Exporter la conversation" dans le menu ⋯ du thread (`#icSheetExport`). `exportThread(plate)` construit un transcript texte horodaté (`[jj/mm HH:MM] Vous/PLAQUE : message`) à partir de `t.list` (tous les messages, indépendamment du filtre de recherche en cours).
+- **Partage** : `navigator.share` (feuille native iOS/Android, comme `shareApp()`) avec fallback `navigator.clipboard.writeText` puis `execCommand('copy')` (textarea hors écran, comme `copyMessage()`). `AbortError` (partage annulé) ignoré silencieusement.
+- Aucune écriture DB, aucun changement de schéma. 177 tests ✅, preflight OK.
+
 **PR #325 (suite 24) — Recherche dans la conversation (messages.js + index.html, session 2026-06-16)**
 
 - **Recherche en thread** : bouton 🔍 dans l'en-tête de la conversation ouvre `#icThreadSearchBar` (sibling fixe hors de `#icThreadBody` régénéré, même pattern que `callJournalSearch`/`nearbySearch`). `_renderTimeline()` accepte désormais un 4ᵉ paramètre `searchQuery` : filtre les messages par texte (insensible à la casse), masque les événements d'appel pendant la recherche (non pertinents pour une recherche textuelle), affiche un état vide dédié si aucun résultat.
@@ -432,7 +438,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — pipeline CI migrations réparé et vert, et bug de position GPS manquante sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain (créer un signalement, recharger l'app, confirmer que la position survit).
+Boucle "suite N" reprise sur la branche de dev (suite24 recherche en thread, suite25 export conversation) — non fusionnées vers `main`, en attente de confirmation explicite pour la fusion. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
 
 ---
 
@@ -904,6 +910,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | Pipeline CI migrations VERT pour la 1ʳᵉ fois : run `27626558202` (commit `c24749e`) — 12 migrations appliquées (no-op pour la plupart, déjà en base manuellement) + 5 Edge Functions redéployées avec succès. |
 | 2026-06-16 | IA session | FIX bug fonctionnel résiduel : ajout colonnes `latitude`/`longitude` (double precision) sur `reports` (migration `20260616150925_reports_position_columns.sql`, commit `dc952d4`) + mise à jour vue `public_reports`. Corrige la perte de position des signalements au reload/reconnexion. Run CI `27627683881` : succès. |
 | 2026-06-16 | IA session | PR #325 (suite 24) : recherche dans la conversation — bouton 🔍 + `#icThreadSearchBar`, `_renderTimeline(searchQuery)` filtre les messages et masque les appels pendant la recherche. Front-only (messages.js + index.html). 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 25) : exporter/partager une conversation — bouton `#icSheetExport` dans le menu ⋯, `exportThread()` transcript texte horodaté + navigator.share/clipboard fallback. Front-only. 177 tests ✅. |
 
 ---
 
