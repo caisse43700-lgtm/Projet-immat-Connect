@@ -769,6 +769,16 @@ function _formatMsg(text){
   return result;
 }
 
+function _highlightHtml(html, query){
+  const q = (query||'').trim();
+  if(!q) return html;
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig');
+  return html.split(/(<[^>]+>)/g).map(seg => {
+    if(seg.indexOf('<') === 0) return seg;
+    return seg.replace(re, m => '<mark style="background:#fbbf24;color:#1e1b06;border-radius:3px;padding:0 1px">'+m+'</mark>');
+  }).join('');
+}
+
 function _dayLabel(d){
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -829,7 +839,7 @@ function _renderTimeline(body, messages, callEvents, searchQuery){
       </div>`;
     }
     return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
-      <div class="ic-bubble-text">${_formatMsg(item.message||'')}</div>
+      <div class="ic-bubble-text">${q ? _highlightHtml(_formatMsg(item.message||''), searchQuery) : _formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
         ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}

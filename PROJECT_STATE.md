@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-26 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-27 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -920,7 +920,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 26) : exporter/partager le journal d'appels — bouton 📤 dans `#icAppelsPane`, `App.exportCallJournal()` exporte la liste filtrée courante, même pattern navigator.share/clipboard. Front-only. 177 tests ✅. |
 | 2026-06-16 | IA session | MERGE dev → main : fusion des suites 24-26 (11 commits) vers `main` (commit `cc0a21e`). |
 | 2026-06-16 | IA session | FIX UX (signalement copié d'une capture utilisateur) : champ `sigVehiclePlate` (étape "Signaler → Véhicule") — placeholder "Plaque : AB-123-CD" visuellement identique à une vraie valeur saisie, l'utilisateur croyait le champ rempli. Ajout d'un `<label>` explicite + placeholder simplifié + style `::placeholder` dédié (couleur muted). Front-only (index.html + app.css). 177 tests ✅, preflight OK. |
-| 2026-06-16 | IA session | MERGE dev → main : fusion du fix UX placeholder plaque véhicule vers `main`. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion du fix UX placeholder plaque véhicule vers `main` (commit `09263ae`). |
+| 2026-06-16 | IA session | PR #325 (suite 27) : surlignage du terme recherché (`<mark>`) dans les résultats de recherche en thread — `_highlightHtml()` opère sur le HTML déjà échappé/linkifié en évitant les balises (split sur `<[^>]+>`). Commit `eeed497` sur la branche de dev. Front-only (messages.js). 177 tests ✅. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite27 (surlignage recherche) vers `main`. |
 
 ---
 
