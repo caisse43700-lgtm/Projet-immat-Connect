@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-35 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite36 (filtre « Favoris » dans le journal d'appels) ajoutée sur la branche de dev (commit `9559234`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-36 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -940,6 +940,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | BUG CORRIGÉ (suite 35) : collision de clé `localStorage` `ic_favorites` partagée entre les favoris GPS (index.html, tableau d'objets) et les conversations favorites (messages.js, tableau de plaques) — chaque écriture écrasait silencieusement les données de l'autre fonctionnalité. Nouvelle clé dédiée `ic_conv_favorites` + migration automatique au premier chargement. Commit `5e0043e` sur la branche de dev. Front-only (index.html + messages.js). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite35 (fix collision clé localStorage favoris) dans `main` (commit `aeb675a`). |
 | 2026-06-16 | IA session | PR #325 (suite 36) : ajout d'un filtre « ⭐ Favoris » dans le journal d'appels, filtrant sur les plaques favorites (`ic_conv_favorites`, fiable depuis le fix de la suite35). Commit `9559234` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
+| 2026-06-16 | IA session | FUSION dev → main : intégration de la suite36 (filtre favoris journal d'appels) dans `main` (commit `e5d21b0`). |
 
 ---
 
