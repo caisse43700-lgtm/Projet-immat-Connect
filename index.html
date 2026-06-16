@@ -313,8 +313,15 @@
         </div>
         <div class="ic-thread-actions">
           <button type="button" id="icCallBtn" class="ic-call-btn" aria-label="Demander un contact" onclick="ImmatMessages.callActive()">📞</button>
+          <button type="button" class="ic-icon-btn" aria-label="Rechercher dans la conversation" onclick="ImmatMessages.toggleThreadSearch()">🔍</button>
           <button type="button" class="ic-icon-btn" aria-label="Menu conversation" onclick="ImmatMessages.openThreadMenu()">⋯</button>
         </div>
+      </div>
+
+      <div id="icThreadSearchBar" style="display:none;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <input id="icThreadSearchInput" type="text" placeholder="Rechercher dans la conversation…"
+               oninput="ImmatMessages.setThreadSearch(this.value)"
+               style="width:100%;box-sizing:border-box;background:#0b1420;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:13px">
       </div>
 
       <!-- Carte contexte alerte active -->
