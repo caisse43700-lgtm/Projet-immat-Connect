@@ -1701,6 +1701,48 @@ function _sheetAction(action){
     refresh();
   }
   else if(action === 'del')   { deleteThread(plate); }
+  else if(action === 'export'){ exportThread(plate); }
+}
+
+async function exportThread(plate){
+  const t = State.threads.find(x => x.plate === plate);
+  const list = (t?.list || []).slice().sort((a,b) => new Date(a.created_at||0) - new Date(b.created_at||0));
+  if(!list.length) return toast('Aucun message à exporter.','bad');
+
+  const lines = list.map(m => {
+    const d = m.created_at ? new Date(m.created_at) : null;
+    const ts = d ? d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const who = m._sent ? 'Vous' : fPlate(plate);
+    return `[${ts}] ${who} : ${m.message || ''}`;
+  });
+  const text = `Conversation avec ${fPlate(plate)} — ImmatConnect\n\n` + lines.join('\n');
+
+  try{
+    if(navigator.share){
+      await navigator.share({ title: 'Conversation ImmatConnect', text });
+      return;
+    }
+  }catch(e){
+    if(e?.name === 'AbortError') return;
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Conversation copiée ✓','ok');
+  }catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Conversation copiée ✓','ok');
+    }catch(e2){
+      toast('Impossible d\'exporter la conversation.','bad');
+    }
+  }
 }
 
 function _reportAbuse(category){
@@ -1863,6 +1905,7 @@ window.ImmatMessages = {
   _scrollToBottom,
   toggleThreadSearch,
   setThreadSearch,
+  exportThread,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
