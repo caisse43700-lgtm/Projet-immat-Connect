@@ -1870,7 +1870,7 @@ App.renderCallJournal=async function(){
       return isNaN(d)?at:d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     }
     var _durCache={};try{_durCache=JSON.parse(localStorage.getItem('ic_call_durations')||'{}')}catch(e){}
-    var _favs=[];try{_favs=JSON.parse(localStorage.getItem('ic_favorites')||'[]')}catch(e){}
+    var _favs=[];try{_favs=JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]')}catch(e){}
     function fmtDur(secs){var m=Math.floor(secs/60),s=secs%60;return m+':'+(s<10?'0':'')+s}
     var statusCfg={
       accepted:{label:'Décroché',color:'#22c55e',icon:'✅'},
