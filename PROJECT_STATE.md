@@ -213,6 +213,13 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 21) — Marquer une conversation comme non lue (messages.js, session 2026-06-16)**
+
+- **Marquer non lu** : nouveau bouton `#icSheetUnread` dans le menu ⋯ du thread, libellé dynamique ("👁️ Marquer comme non lu" / "✓ Marquer comme lu"). `getManualUnread()/isManualUnread()/setManualUnread()` — localStorage `ic_manual_unread` (tableau de plaques normalisées), même pattern que favoris/archives/sourdine.
+- **Effet visuel uniquement** : la conversation apparaît avec le pastille verte "non lu" dans la liste (classe `.unread` + `.ic-unread-dot`) même si tous les messages ont déjà été lus côté DB — sert de pense-bête, n'altère jamais `read_at` ni le badge global (qui reste basé sur les vrais messages non lus).
+- **Auto-clear** : le flag manuel est effacé automatiquement dans `openThread()` dès que la conversation est rouverte.
+- Aucune écriture DB ajoutée, aucune table touchée. 177 tests ✅.
+
 **PR #325 (suite 20) — Fix recherche profil par plaque (messages.js, session 2026-06-16)**
 
 - **Bug rapporté** : envoyer un message à une plaque visible sur la carte affichait "Aucun conducteur ImmatConnect trouvé avec cette plaque" alors que le profil existait.
@@ -794,6 +801,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 18) : horodatage relatif dans véhicules récents — openRecent() affiche relTime(r.at) à côté de la distance. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 19) : bouton 💬 message dans le journal d'appels (renderCallJournal) → App.pickPlate, cohérence avec listes Proches/Récents. 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 20) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 21) : marquer une conversation comme non lue — bouton #icSheetUnread, ic_manual_unread (localStorage), effet visuel uniquement (pastille verte), auto-clear à la réouverture du thread. 177 tests ✅. |
 
 ---
 

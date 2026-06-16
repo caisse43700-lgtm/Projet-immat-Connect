@@ -626,9 +626,10 @@ function render(){
     const _avBg = (_vc && _vc !== 'other' && window.colorHex) ? window.colorHex(_vc) : '#0b1420';
     const _avStyle = _vc && _vc !== 'other' ? ` style="background:${_avBg};border-color:transparent"` : '';
     const mutedBadge = isMuted(t.plate) ? '<span title="Sourdine" style="font-size:11px;opacity:.6">🔕</span>' : '';
+    const manualUnread = !t.unread && isManualUnread(t.plate);
     return `
       <div class="ic-swipe-wrap">
-        <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
+        <div class="ic-mail-row ${(t.unread||manualUnread)?'unread':''} ${State.activePlate===t.plate?'active':''}"
              data-plate="${esc(t.plate)}">
           <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
@@ -846,6 +847,7 @@ function _presenceLabel(plate){
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
+  setManualUnread(localPlate, false);
   await markThreadRead(localPlate);
 
   if(State.activePlate !== localPlate) return;
@@ -1488,6 +1490,20 @@ function toggleMute(plate){
   render();
 }
 
+// ── F-MANUAL-UNREAD : Marquer une conversation comme non lue (pense-bête) ──
+function getManualUnread(){
+  try{ return JSON.parse(localStorage.getItem('ic_manual_unread')||'[]'); }catch(e){ return []; }
+}
+function isManualUnread(plate){
+  return getManualUnread().includes(nPlate(fPlate(plate)));
+}
+function setManualUnread(plate, val){
+  plate = nPlate(fPlate(plate));
+  const list = getManualUnread().filter(p=>p!==plate);
+  if(val) list.push(plate);
+  try{ localStorage.setItem('ic_manual_unread', JSON.stringify(list)); }catch(e){}
+}
+
 // ── F-SEARCH : Recherche dans les conversations ─────────────────
 function toggleSearch(){
   const bar = $('icSearchBar');
@@ -1558,13 +1574,15 @@ function openThreadMenu(){
   const favBtn   = document.getElementById('icSheetFav');
   const archBtn  = document.getElementById('icSheetArch');
   const trustBtn = document.getElementById('icSheetTrust');
-  const muteBtn  = document.getElementById('icSheetMute');
-  const blockBtn = document.getElementById('icSheetBlock');
+  const muteBtn   = document.getElementById('icSheetMute');
+  const blockBtn  = document.getElementById('icSheetBlock');
+  const unreadBtn = document.getElementById('icSheetUnread');
 
   if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
   if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
   if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
   if(muteBtn)  muteBtn.textContent  = isMuted(plate) ? '🔔 Réactiver les notifications' : '🔕 Mettre en sourdine';
+  if(unreadBtn) unreadBtn.textContent = isManualUnread(plate) ? '✓ Marquer comme lu' : '👁️ Marquer comme non lu';
   const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
   if(blockBtn) blockBtn.textContent = _blocked ? '✅ Débloquer ce conducteur' : '🚫 Bloquer ce conducteur';
 
@@ -1632,6 +1650,12 @@ function _sheetAction(action){
   else if(action === 'arch')  { isArch ? unarchiveConv(plate)  : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
   else if(action === 'mute')  { toggleMute(plate); }
+  else if(action === 'unread'){
+    const now = isManualUnread(plate);
+    setManualUnread(plate, !now);
+    toast(now ? 'Conversation marquée comme lue.' : 'Conversation marquée comme non lue.', 'ok');
+    render();
+  }
   else if(action === 'block') {
     const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
     if(_blocked){
