@@ -61,8 +61,26 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 GRANT SELECT (id, owner_plate, pseudo, vehicle_color) ON public.profiles TO authenticated;
 ```
 Revérifié après exécution : la requête de vérification retourne maintenant les 4 colonnes attendues (4 rows).
-**Reste à faire (non bloquant, planifié) :** corriger les noms de fichiers de migration en collision (préfixes `20260613`/`20260614`/`20260615` dupliqués) dans `supabase/migrations/` pour que `supabase db push` cesse d'avorter silencieusement, puis laisser CI rejouer proprement les migrations restantes (`device_sessions`, `driver_ratings`, `missing_indexes`, `public_profiles_secure`, `public_reports_secure`, `user_trust`, `delete_audit_log`) qui sont elles aussi potentiellement jamais appliquées.
 **Validation terrain :** ✅ confirmée par l'utilisateur (2026-06-16) — l'envoi de message à BZ-652-LL fonctionne après le GRANT, plus d'erreur "Erreur recherche conducteur".
+
+---
+
+**Mission : Réparation pipeline CI migrations (collision de versions + masquage d'erreur)**
+**Date :** 2026-06-16
+**Root cause du bug ci-dessus, corrigée à la source :**
+- 12 fichiers dans `supabase/migrations/` portaient des préfixes de version sur 8 chiffres seulement (`AAAAMMJJ`, sans heure). 4 fichiers partageaient `20260613`, 6 fichiers partageaient `20260614` → collision de clé primaire dans `supabase_migrations.schema_migrations` dès la 2ᵉ migration d'un même jour.
+- `continue-on-error: true` sur l'étape "Apply pending migrations" du workflow `deploy-edge-functions.yml` masquait cet échec : le job restait "✅ success" dans GitHub Actions malgré l'erreur réelle de `supabase db push`. Ce flag a été retiré — un futur échec de migration fera désormais échouer le job visiblement.
+**Fix appliqué (code uniquement, aucune action DB) :**
+1. Tous les 12 fichiers renommés avec un préfixe complet `AAAAMMJJHHMMSS` (basé sur leur date de création réelle, ordre chronologique préservé) → versions désormais uniques, plus aucune collision possible.
+2. 3 fichiers contenaient des `CREATE POLICY` sans garde `DROP POLICY IF EXISTS` préalable (`push_subscriptions.sql`, `user_blocks.sql`, `device_sessions.sql`) → non rejouables si la policy existe déjà. Garde ajoutée sur chacun. Les 9 autres fichiers étaient déjà idempotents (`IF NOT EXISTS`, `CREATE OR REPLACE`, ou `DROP POLICY IF EXISTS` déjà présent).
+3. `continue-on-error: true` retiré de l'étape "Apply pending migrations".
+**Conséquence du renommage :** la base de données a un enregistrement `supabase_migrations.schema_migrations` avec l'ancienne version `20260613` (pour `call_requests_device_id`, seule migration ayant réellement été appliquée par CI). Comme tous les fichiers ont maintenant une nouvelle version, le **prochain** `supabase db push` rejouera les 12 migrations dans l'ordre (versions jamais vues). C'est sans risque : tout le contenu SQL est idempotent (vérifié ligne par ligne), donc rejouer une migration déjà appliquée manuellement (table déjà existante, policy déjà en place) ne produit aucune erreur ni duplication.
+**Ce que ça casse réellement (réponse à "qu'est-ce que ça casse en fait ?") :**
+- **Confirmé cassé puis réparé aujourd'hui :** envoi de message à une plaque tierce (`findProfileByPlate()` dans `messages.js`) — bloquant, visible par l'utilisateur.
+- **Probablement degradé silencieusement (même cause, même fix) :** tous les autres appels directs `.from('profiles').select(...)` dans `messages.js` et `index.html` (affichage pseudo dans le journal d'appels, titre de conversation, aperçu de composition, liste des véhicules récents) — ces lectures sont entourées de try/catch, donc l'échec ne produisait pas d'erreur visible, juste un pseudo manquant. Devrait être réparé par le même GRANT.
+- **Non cassé malgré l'absence d'application CI :** `device_sessions`, `driver_ratings`, `vehicle_trust_scores` (migration `user_trust`), `delete_audit_log` — toutes créées manuellement via SQL Editor avant l'introduction du mécanisme CI (`a577b9e`, 2026-06-15), donc déjà présentes en base indépendamment du bug.
+- **Non vérifié empiriquement (à confirmer) :** `public_profiles` (table + trigger de sync) et la vue `public_reports` (RLS reports sans `reporter_id`) — le signup fonctionne (qui dépend de `public_profiles` via `plateAvailable()`), ce qui suggère que `public_profiles` existe déjà, mais ce n'est pas une preuve formelle que le trigger de sync est actif. Les index de performance (`missing_indexes`) sont par nature inoffensifs s'ils manquent (juste plus lent, jamais d'erreur).
+**Reste à faire :** soit (a) laisser le prochain push sur `main` déclencher `supabase db push` qui rejouera proprement les 12 migrations (recommandé — confirmera/réparera tout en une fois, idempotent donc sans risque), soit (b) vérifier d'abord via SQL Editor (`SELECT version FROM supabase_migrations.schema_migrations ORDER BY version;`) ce qui est réellement enregistré comme appliqué.
 
 ---
 
@@ -855,6 +873,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 23) : badge ⭐ favori dans le journal d'appels (lecture localStorage ic_favorites, parité visuelle avec messages.js, pas de nouveau bouton de bascule). 177 tests ✅. |
 | 2026-06-16 | IA session | MERGE COMPLET dev → main : fusion des 65 commits (suites 1-23) après vérification (177 tests ✅, scan secrets négatif, revue manuelle core/call-screen.js + core/interaction-engine.js). |
 | 2026-06-16 | IA session | FIX CRITIQUE PROD (SQL manuel) : `GRANT SELECT (id,owner_plate,pseudo,vehicle_color) ON public.profiles TO authenticated` — table-level grant jamais appliqué depuis le GO LIVE (REVOKE sans GRANT de compensation). Root cause CI : collision de version `20260613` dans 4 fichiers de migration → `supabase db push` avorte silencieusement (continue-on-error masque l'échec) depuis le premier essai. Vérifié avant/après via information_schema.column_privileges (0 ligne → 4 lignes). |
+| 2026-06-16 | IA session | RÉPARATION pipeline migrations : 12 fichiers `supabase/migrations/*.sql` renommés en versions uniques `AAAAMMJJHHMMSS` (fin des collisions de version) ; 3 fichiers rendus idempotents (`DROP POLICY IF EXISTS` ajouté avant `CREATE POLICY` dans push_subscriptions/user_blocks/device_sessions) ; `continue-on-error: true` retiré de l'étape "Apply pending migrations" du workflow `deploy-edge-functions.yml` pour que tout futur échec soit visible. Code uniquement, aucune action DB. |
 
 ---
 

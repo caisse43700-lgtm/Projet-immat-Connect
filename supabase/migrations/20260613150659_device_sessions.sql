@@ -14,15 +14,19 @@ CREATE TABLE IF NOT EXISTS device_sessions (
 
 ALTER TABLE device_sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "device_sessions_select_own" ON device_sessions;
 CREATE POLICY "device_sessions_select_own" ON device_sessions
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "device_sessions_insert_own" ON device_sessions;
 CREATE POLICY "device_sessions_insert_own" ON device_sessions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "device_sessions_update_own" ON device_sessions;
 CREATE POLICY "device_sessions_update_own" ON device_sessions
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "device_sessions_delete_own" ON device_sessions;
 CREATE POLICY "device_sessions_delete_own" ON device_sessions
   FOR DELETE USING (auth.uid() = user_id);
 

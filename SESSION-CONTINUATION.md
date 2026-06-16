@@ -926,3 +926,75 @@ payload anonymisé, pas de contenu message dans Edge Functions (INV-COM-010/015)
 main = production GitHub Pages
 pas d'ouverture automatique de messages sur accepted
 ```
+
+---
+
+## SESSION 2026-06-16 — BUG PROD "Erreur recherche conducteur" + RÉPARATION PIPELINE MIGRATIONS
+
+### Symptôme terrain
+
+Envoi de message à `BZ-652-LL` → toast "Aucun conducteur ImmatConnect trouvé avec cette plaque." (avant hotfix `findProfileByPlate`), puis après force-update du SW → "Erreur recherche conducteur. Réessaie dans quelques secondes." (le hotfix a remplacé l'échec silencieux par une erreur visible, révélant un vrai problème serveur).
+
+### Root cause n°1 — GRANT manquant sur `profiles`
+
+`information_schema.column_privileges` interrogé via SQL Editor : 0 ligne pour `grantee='authenticated', table_name='profiles', privilege_type='SELECT'`. La policy RLS `profiles_select_authenticated` était bien en place, mais le `GRANT SELECT (id, owner_plate, pseudo, vehicle_color) ON public.profiles TO authenticated` qui devait suivre le `REVOKE SELECT` global n'avait **jamais été exécuté en base**, ni manuellement ni par CI.
+
+Fix appliqué manuellement par l'utilisateur en SQL Editor :
+```sql
+GRANT SELECT (id, owner_plate, pseudo, vehicle_color) ON public.profiles TO authenticated;
+```
+Revérifié : 4 lignes retournées (les 4 colonnes attendues). Confirmé en terrain par l'utilisateur : "Le problème est corrigé."
+
+### Root cause n°2 — pourquoi le GRANT n'a jamais été appliqué par CI
+
+Logs CI (workflow `deploy-edge-functions.yml`, étape "Apply pending migrations", run `27543373052`) :
+```
+ERROR: duplicate key value violates unique constraint "schema_migrations_pkey" — Key (version)=(20260613) already exists.
+```
+12 fichiers dans `supabase/migrations/` avaient des préfixes de version sur 8 chiffres seulement (date sans heure) : 4 fichiers partageaient le préfixe `20260613`, 6 fichiers partageaient `20260614`. `supabase db push` applique par ordre alphabétique de nom de fichier et insère une ligne par version appliquée dans `supabase_migrations.schema_migrations` (clé primaire = version). Le premier fichier `20260613_call_requests_device_id.sql` s'est appliqué avec succès (version `20260613` insérée) ; le fichier suivant partageant le même préfixe (`20260613_push_subscriptions.sql`) a fait échouer l'insertion → `supabase db push` avorte et aucune migration suivante n'est appliquée, donc tout ce qui vient après dans l'ordre alphabétique (y compris `20260615_profiles_column_security.sql`, qui contient le GRANT) n'a jamais atteint la base.
+
+`continue-on-error: true` sur cette étape masquait totalement l'échec : le job GitHub Actions restait vert ("✅ success") malgré l'erreur réelle, ce qui a permis au bug de rester invisible plusieurs jours.
+
+### Réparation appliquée (code uniquement, aucune action DB)
+
+1. **Renommage des 12 fichiers** avec un préfixe complet `AAAAMMJJHHMMSS` basé sur le timestamp de création réel (`ls -la --time-style=full-iso`), ordre chronologique strictement préservé :
+   ```
+   20260613102534_push_subscriptions.sql
+   20260613111026_reports_enhancements.sql
+   20260613111247_user_blocks.sql
+   20260613111416_call_requests_device_id.sql
+   20260613150659_device_sessions.sql
+   20260613161030_driver_ratings.sql
+   20260613183151_user_trust.sql
+   20260613203614_public_profiles_secure.sql
+   20260613203627_public_reports_secure.sql
+   20260613203636_missing_indexes.sql
+   20260613211313_profiles_column_security.sql
+   20260615111905_delete_audit_log.sql
+   ```
+   Chaque version est désormais unique → plus aucune collision de clé primaire possible.
+
+2. **Idempotence renforcée.** Audit ligne par ligne des 12 fichiers : 9 étaient déjà sûrs à rejouer (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, ou `DROP POLICY IF EXISTS` déjà présent avant chaque `CREATE POLICY`). 3 fichiers créaient une policy sans garde préalable, ce qui aurait fait échouer un rejouage si la policy existait déjà : `push_subscriptions.sql` (policy `push_subs_self`), `user_blocks.sql` (`user_blocks_self`), `device_sessions.sql` (4 policies `device_sessions_*`). `DROP POLICY IF EXISTS` ajouté avant chaque `CREATE POLICY` dans ces 3 fichiers.
+
+3. **`continue-on-error: true` retiré** de l'étape "Apply pending migrations" dans `.github/workflows/deploy-edge-functions.yml` — un futur échec de `supabase db push` fera désormais échouer le job visiblement au lieu d'être masqué.
+
+### Conséquence du renommage à anticiper
+
+La base contient déjà un enregistrement `supabase_migrations.schema_migrations` avec l'ancienne version `20260613` (pour `call_requests_device_id`, seule migration ayant atteint la base via CI). Comme les 12 fichiers ont maintenant des versions différentes, le **prochain** `supabase db push` (déclenché par un push sur `main` touchant `supabase/migrations/**`) traitera les 12 fichiers comme nouveaux et les appliquera dans l'ordre. C'est sans risque car tout le SQL est idempotent — rejouer une migration déjà appliquée manuellement (table/policy déjà existante) ne produit ni erreur ni duplication, juste un no-op.
+
+### Inventaire d'impact réel ("qu'est-ce que ça casse en fait ?")
+
+| Catégorie | Éléments | Statut |
+|---|---|---|
+| Confirmé cassé puis réparé | Envoi de message à une plaque tierce (`findProfileByPlate` dans `messages.js`) | ✅ réparé par le GRANT |
+| Probablement dégradé silencieusement (même cause) | Pseudo dans journal d'appels, titre de conversation, aperçu de composition, liste véhicules récents — tous des `.from('profiles').select(...)` directs entourés de try/catch (échec silencieux, pseudo juste absent) | ✅ devrait être réparé par le même GRANT — non re-testé individuellement |
+| Non cassé (créé manuellement avant le bug CI) | `device_sessions`, `driver_ratings` (+ `driver_ratings_summary`), `vehicle_trust_scores`, `delete_audit_log` | OK — confirmé par l'historique PROJECT_STATE (S5-HEARTBEAT, S6-RATINGS, S6-TRUST, S8-01 tous marqués faits le 2026-06-13/15, avant l'introduction du mécanisme CI le 2026-06-15 commit `a577b9e`) |
+| Non vérifié empiriquement | Table `public_profiles` + trigger `sync_public_profile`, vue `public_reports` (RLS reports sans `reporter_id`), 8 index de `missing_indexes.sql` | `public_profiles` semble exister (signup via `plateAvailable()` fonctionne) mais le trigger de sync n'est pas formellement vérifié ; les index sont inoffensifs en cas d'absence (perf uniquement, jamais d'erreur) |
+
+### Requête de vérification recommandée (à faire exécuter par l'utilisateur si doute)
+
+```sql
+SELECT version FROM supabase_migrations.schema_migrations ORDER BY version;
+```
+Donne la liste authoritative des migrations que Supabase considère comme appliquées — la seule source de vérité fiable, plus fiable que toute déduction depuis l'historique PROJECT_STATE.
+
