@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Suites 24-29 + fix UX placeholder plaque véhicule fusionnés vers `main` (commits `cc0a21e`, `09263ae`, `87657ea`, `4def429`, `d21f524`). Suite30 (surlignage plaque/pseudo dans la liste de conversations) ajoutée sur la branche de dev (commit `146767f`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
+Suites 24-30 + fix UX placeholder plaque véhicule fusionnés vers `main` (commits `cc0a21e`, `09263ae`, `87657ea`, `4def429`, `d21f524`, `3b358c4`). Suite31 (surlignage plaque/pseudo dans le journal d'appels filtré, nouveau helper global `highlightHtml()` dans utils.js) ajoutée sur la branche de dev (commit `9b63d95`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
 
 ---
 
@@ -928,6 +928,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 29) : surlignage du terme recherché dans l'aperçu de la liste de conversations (réutilise `_highlightHtml()` de la suite27). Commit `82fd2ba` sur la branche de dev. Front-only (messages.js). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | MERGE dev → main : fusion de la suite29 (surlignage liste conversations) vers `main` (commit `d21f524`). |
 | 2026-06-16 | IA session | PR #325 (suite 30) : surlignage de la plaque et du pseudo (en plus de l'aperçu du message) dans la liste de conversations quand ils correspondent à la recherche active. Commit `146767f` sur la branche de dev. Front-only (messages.js). 177 tests ✅, preflight OK. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite30 (surlignage plaque/pseudo liste) vers `main` (commit `3b358c4`). |
+| 2026-06-16 | IA session | PR #325 (suite 31) : surlignage plaque/pseudo dans le journal d'appels filtré — nouveau helper global `highlightHtml()` ajouté à `utils.js` (même logique split-sur-balises que `_highlightHtml()` de messages.js), appliqué à `App.renderCallJournal()`. Commit `9b63d95` sur la branche de dev. Front-only (index.html + utils.js). 177 tests ✅, preflight OK. |
 
 ---
 
