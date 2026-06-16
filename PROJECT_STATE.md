@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-39 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-39 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite40 (aria-pressed sur les pastilles de filtre journal d'appels) sur la branche de dev, pas encore fusionnée. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -947,6 +947,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite38 (mémorisation favoris uniquement conversations) dans `main` (commit `2049f58`). |
 | 2026-06-16 | IA session | PR #325 (suite 39) : `aria-pressed` ajouté sur le bouton ⭐ « Favoris uniquement » (liste des conversations), synchronisé à chaque rendu avec `State.favOnly`. Commit `f371d83` sur la branche de dev. Front-only (index.html + messages.js). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite39 (aria-pressed bouton Favoris) dans `main` (commit `a28fb50`). |
+| 2026-06-16 | IA session | PR #325 (suite 40) : `aria-pressed` ajouté sur les pastilles de filtre du journal d'appels (Tous/Manqués/Émis/Reçus/Favoris). Commit `5ea962c` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 
 ---
 
