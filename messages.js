@@ -43,6 +43,8 @@ function setBadge(n){
   try{
     localStorage.setItem('ic_unread_msg_count', String(n));
     if(window.S) window.S.unreadMsgCount = n;
+    const btn = document.getElementById('icMarkAllReadBtn');
+    if(btn) btn.style.display = n > 0 ? '' : 'none';
   }catch(e){}
 }
 
@@ -54,6 +56,8 @@ function timeFR(d){
   }catch(e){return '';}
 }
 
+const MSG_MAX_LEN = 1000;
+
 const State = {
   mode:'inbox',
   user:null,
@@ -63,7 +67,12 @@ const State = {
   activePlate:null,
   channel:null,
   searchQuery:'',
-  callEventsCache:{}
+  callEventsCache:{},
+  pseudoMap:{},
+  colorMap:{},
+  _typingCh:null,
+  _typingBcTimer:null,
+  _typingHideTimer:null
 };
 
 async function getUser(){
@@ -348,6 +357,29 @@ async function refresh(){
   render();
   refreshThread();
   if(!State.channel) subscribe();
+
+  // Batch pseudo lookup pour la liste de conversations (post-render, non-bloquant)
+  (async()=>{
+    try{
+      const plates=[...new Set(State.threads.map(t=>t.plate).filter(Boolean))];
+      if(!plates.length) return;
+      const need=[];
+      plates.forEach(p=>{
+        const nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(p));
+        if(nb?.pseudo&&nb.pseudo!=='Conducteur') State.pseudoMap[nPlate(p)]=nb.pseudo;
+        if(nb?.color) State.colorMap[nPlate(p)]=nb.color;
+        if(!nb?.pseudo||nb.pseudo==='Conducteur') need.push(nPlate(p));
+      });
+      if(need.length){
+        const{data}=await sb().from('profiles').select('owner_plate,pseudo,vehicle_color').in('owner_plate',need);
+        (data||[]).forEach(p=>{
+          if(p.pseudo) State.pseudoMap[nPlate(p.owner_plate)]=p.pseudo;
+          if(p.vehicle_color) State.colorMap[nPlate(p.owner_plate)]=p.vehicle_color;
+        });
+      }
+      render();
+    }catch(e){}
+  })();
 }
 
 function buildThreads(){
@@ -552,7 +584,8 @@ function render(){
     const q = State.searchQuery;
     threads = threads.filter(t =>
       nPlate(t.plate).includes(q) ||
-      (t.last?.message || '').toUpperCase().includes(q)
+      (t.last?.message || '').toUpperCase().includes(q) ||
+      (State.pseudoMap[nPlate(t.plate)]||'').toUpperCase().includes(q)
     );
   }
 
@@ -588,19 +621,25 @@ function render(){
     const trustBadge = isFav ? '<span class="ic-trust-fav">⭐</span>' :
       trust === 'TRUSTED'  ? '<span class="ic-trust-ok">✓</span>' :
       trust === 'CONTEXT'  ? '<span class="ic-trust-ctx">📍</span>' : '';
+    const pseudo = State.pseudoMap[nPlate(t.plate)] || '';
+    const _vc = State.colorMap[nPlate(t.plate)] || '';
+    const _avBg = (_vc && _vc !== 'other' && window.colorHex) ? window.colorHex(_vc) : '#0b1420';
+    const _avStyle = _vc && _vc !== 'other' ? ` style="background:${_avBg};border-color:transparent"` : '';
+    const mutedBadge = isMuted(t.plate) ? '<span title="Sourdine" style="font-size:11px;opacity:.6">🔕</span>' : '';
+    const manualUnread = !t.unread && isManualUnread(t.plate);
     return `
       <div class="ic-swipe-wrap">
-        <div class="ic-mail-row ${t.unread?'unread':''} ${State.activePlate===t.plate?'active':''}"
+        <div class="ic-mail-row ${(t.unread||manualUnread)?'unread':''} ${State.activePlate===t.plate?'active':''}"
              data-plate="${esc(t.plate)}">
-          <div class="ic-avatar">🚗</div>
+          <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}${trustBadge}</span>
+              <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}${mutedBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
               <span class="ic-preview">${esc(last.message || '')}</span>
-              <span class="ic-unread-dot"></span>
+              <span class="ic-unread-dot">${t.unread > 1 ? t.unread : ''}</span>
             </div>
           </div>
         </div>
@@ -676,6 +715,23 @@ function _renderArchivedSection(list){
   });
 }
 
+async function markAllRead(){
+  const client = sb();
+  if(!client || !State.user) return;
+  const unread = State.messages.filter(m=>m._received && !m.read_at);
+  if(!unread.length) return;
+  const now = new Date().toISOString();
+  const ids = unread.map(m=>m.id);
+  try{
+    await client.from('messages').update({read_at:now}).in('id',ids);
+    unread.forEach(m=>{ m.read_at = now; });
+  }catch(e){}
+  buildThreads();
+  setBadge(0);
+  render();
+  try{window.App?.updateActBadge?.()}catch(e){}
+}
+
 async function markThreadRead(plate){
   const client = sb();
   if(!client || !State.user) return;
@@ -697,13 +753,58 @@ async function markThreadRead(plate){
 }
 
 // ── Timeline unifiée (messages + appels) ────────────────────────
+function _formatMsg(text){
+  if(!text) return '';
+  const URL_RE = /https?:\/\/[^\s<>"]+/g;
+  let result = '', last = 0, m;
+  while((m = URL_RE.exec(text)) !== null){
+    result += esc(text.slice(last, m.index));
+    const url = m[0];
+    const display = url.length > 40 ? url.slice(0, 37) + '…' : url;
+    result += '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:#60a5fa;text-decoration:underline;word-break:break-all">' + esc(display) + '</a>';
+    last = m.index + url.length;
+  }
+  result += esc(text.slice(last));
+  return result;
+}
+
+function _dayLabel(d){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const that  = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = Math.round((today - that) / 86400000);
+  if(diff === 0) return "Aujourd'hui";
+  if(diff === 1) return 'Hier';
+  if(diff > 1 && diff < 7) return d.toLocaleDateString('fr-FR',{weekday:'long'});
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})});
+}
+
 function _renderTimeline(body, messages, callEvents){
   const allEvents = [
     ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
     ...(callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()}))
   ].sort((a,b) => a._ts - b._ts);
 
-  body.innerHTML = allEvents.map(item => {
+  const firstUnreadIdx = allEvents.findIndex(e => e._type==='message' && !e._sent && !e.read_at);
+  const unreadCount = firstUnreadIdx >= 0
+    ? allEvents.filter(e => e._type==='message' && !e._sent && !e.read_at).length
+    : 0;
+
+  let _prevDayKey = '';
+  body.innerHTML = allEvents.map((item, idx) => {
+    // Séparateur de jour
+    let daySep = '';
+    if(item._ts){
+      const _d = new Date(item._ts);
+      const _dk = _d.getFullYear()+'-'+_d.getMonth()+'-'+_d.getDate();
+      if(_dk !== _prevDayKey){
+        _prevDayKey = _dk;
+        daySep = `<div class="ic-day-sep"><span>${esc(_dayLabel(_d))}</span></div>`;
+      }
+    }
+    const sep = daySep + ((idx === firstUnreadIdx && unreadCount > 0)
+      ? `<div class="ic-unread-sep"><span>${unreadCount} non lu${unreadCount>1?'s':''}</span></div>`
+      : '');
     const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     if(item._type === 'call'){
       const isOut = item.outgoing;
@@ -714,25 +815,39 @@ function _renderTimeline(body, messages, callEvents){
       const cls = item.status==='missed' ? 'call-missed' :
                   item.status==='refused' ? 'call-refused' :
                   isOut ? 'call-sent' : 'call-recv';
-      return `<div class="ic-bubble ${cls}">
+      return sep + `<div class="ic-bubble ${cls}">
         <div class="ic-bubble-text">📞 ${isOut ? 'Appel émis' : 'Appel reçu'} · ${statusLabel}</div>
         <div class="ic-bubble-footer"><span class="ic-time">${esc(timeStr)}</span></div>
       </div>`;
     }
-    return `<div class="ic-bubble ${item._sent?'sent':'recv'}">
-      <div class="ic-bubble-text">${esc(item.message||'')}</div>
+    return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
+      <div class="ic-bubble-text">${_formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
         ${item._sent ? `<span class="ic-read-tick" title="${item.read_at?'Vu le '+new Date(item.read_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'Envoyé'}">${item.read_at?'<span style="color:#60a5fa">✓✓</span>':'<span style="color:#64748b">✓</span>'}</span>` : ''}
+        <button class="ic-copy-msg" aria-label="Copier ce message" title="Copier" onclick="ImmatMessages.copyMessage('${esc(item.id)}')">⧉</button>
         <button class="ic-delete-msg" aria-label="Supprimer ce message" onclick="ImmatMessages.deleteMessage('${esc(item.id)}')">×</button>
       </div>
     </div>`;
   }).join('');
 }
 
+function _presenceLabel(plate){
+  try{
+    const nb = (window.S?.nearby||[]).find(x => nPlate(x.plate) === nPlate(plate));
+    if(!nb || !nb.updated_at) return '';
+    const ageMin = Math.floor((Date.now() - new Date(nb.updated_at).getTime()) / 60000);
+    if(ageMin < 0) return '';
+    if(ageMin < 3)  return '<span style="color:#34d399">🟢 Actif à proximité</span>';
+    if(ageMin < 10) return '<span style="color:#fb923c">🟡 Vu il y a '+ageMin+' min</span>';
+    return '';
+  }catch(e){ return ''; }
+}
+
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
+  setManualUnread(localPlate, false);
   await markThreadRead(localPlate);
 
   if(State.activePlate !== localPlate) return;
@@ -746,17 +861,34 @@ async function openThread(plate){
   if(!box || !body || !t) return;
 
   if(title) title.textContent = localPlate;
+  // Enrichit le titre avec le pseudo : cache nearby d'abord, sinon DB
+  (async()=>{
+    try{
+      const _nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(localPlate));
+      if(_nb?.pseudo&&_nb.pseudo!=='Conducteur'){
+        if(title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_nb.pseudo;
+        return;
+      }
+      const{data:_pd}=await sb().from('profiles').select('pseudo').eq('owner_plate',nPlate(localPlate)).maybeSingle();
+      if(_pd?.pseudo&&title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_pd.pseudo;
+    }catch(e){}
+  })();
 
-  // Sous-titre : niveau confiance (F-TRUST)
+  // Sous-titre : présence (proximité) prioritaire, sinon niveau confiance (F-TRUST)
   if(sub){
-    const trust = getTrust(localPlate);
-    const subLabels = {
-      NONE:     'Appuie sur 📞 pour demander un contact',
-      CONTEXT:  '📍 Contexte actif',
-      TRUSTED:  '✓ Conducteur de confiance',
-      FAVORITE: '⭐ Favori prioritaire'
-    };
-    sub.textContent = subLabels[trust] || subLabels.NONE;
+    const presence = _presenceLabel(localPlate);
+    if(presence){
+      sub.innerHTML = presence;
+    }else{
+      const trust = getTrust(localPlate);
+      const subLabels = {
+        NONE:     'Appuie sur 📞 pour demander un contact',
+        CONTEXT:  '📍 Contexte actif',
+        TRUSTED:  '✓ Conducteur de confiance',
+        FAVORITE: '⭐ Favori prioritaire'
+      };
+      sub.textContent = subLabels[trust] || subLabels.NONE;
+    }
   }
 
   // Carte contexte alerte active (F-CALL-CONTEXT)
@@ -795,7 +927,39 @@ async function openThread(plate){
   _renderTimeline(body, t.list, callEvents);
 
   box.classList.add('show');
-  body.scrollTop = body.scrollHeight;
+  const _sep = body.querySelector('.ic-unread-sep');
+  if(_sep) _sep.scrollIntoView({block:'center'});
+  else body.scrollTop = body.scrollHeight;
+  // Restaurer le brouillon de réponse s'il existe
+  try{
+    const _d=localStorage.getItem('ic_draft_reply_'+nPlate(localPlate));
+    const _rt=$('icReplyText');
+    if(_rt&&_d){_rt.value=_d;try{_rt.dispatchEvent(new Event('input'));}catch(e){}}
+  }catch(e){}
+  // Canal broadcast pour l'indicateur "est en train d'écrire"
+  try{
+    clearTimeout(State._typingHideTimer);
+    if(State._typingCh){try{sb().removeChannel(State._typingCh);}catch(e){}State._typingCh=null;}
+    const _tl=$('icTypingLabel');
+    if(_tl) _tl.style.display='none';
+    const _mp=nPlate(myPlate()),_op=nPlate(localPlate);
+    if(_mp&&_op&&_mp!==_op){
+      const _pair=[_mp,_op].sort().join('_');
+      State._typingCh=sb().channel('ic_typ_'+_pair)
+        .on('broadcast',{event:'typing'},({payload})=>{
+          if((payload?.uid)===State.user?.id) return;
+          if(State.activePlate!==localPlate) return;
+          const _el=$('icTypingLabel');
+          if(_el) _el.style.display='';
+          clearTimeout(State._typingHideTimer);
+          State._typingHideTimer=setTimeout(()=>{
+            const _el2=$('icTypingLabel');
+            if(_el2) _el2.style.display='none';
+          },3000);
+        })
+        .subscribe();
+    }
+  }catch(e){}
   render();
 }
 
@@ -809,6 +973,13 @@ function closeThread(){
   if(hdr)    hdr.style.display    = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
+  try{
+    clearTimeout(State._typingHideTimer);
+    clearTimeout(State._typingBcTimer);
+    if(State._typingCh){try{sb().removeChannel(State._typingCh);}catch(e){}State._typingCh=null;}
+    const _tl=$('icTypingLabel');
+    if(_tl) _tl.style.display='none';
+  }catch(e){}
 }
 
 function refreshThread(){
@@ -819,9 +990,35 @@ function refreshThread(){
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
   if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
+  // Rafraîchit l'indicateur de présence dans le sous-titre
+  try{
+    const sub = $('icThreadSub');
+    if(sub){
+      const presence = _presenceLabel(State.activePlate);
+      if(presence) sub.innerHTML = presence;
+    }
+  }catch(e){}
+  const wasNearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
+  const prevCount = body.querySelectorAll('.ic-bubble').length;
   const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
   _renderTimeline(body, t.list, callEvents);
-  body.scrollTop = body.scrollHeight;
+  const newCount = body.querySelectorAll('.ic-bubble').length;
+  const hint = $('icScrollHint');
+  if(wasNearBottom || newCount <= prevCount){
+    body.scrollTop = body.scrollHeight;
+    if(hint) hint.style.display = 'none';
+  } else if(hint){
+    const n = newCount - prevCount;
+    hint.textContent = '↓ ' + n + ' nouveau' + (n > 1 ? 'x' : '') + ' message' + (n > 1 ? 's' : '');
+    hint.style.display = '';
+  }
+}
+
+function _scrollToBottom(){
+  const body = $('icThreadBody');
+  if(body) body.scrollTop = body.scrollHeight;
+  const hint = $('icScrollHint');
+  if(hint) hint.style.display = 'none';
 }
 
 async function sendNew(){
@@ -845,6 +1042,7 @@ async function reply(){
   try{
     await sendToPlate(State.activePlate,text);
     if($('icReplyText')) $('icReplyText').value = '';
+    try{localStorage.removeItem('ic_draft_reply_'+nPlate(State.activePlate));}catch(e){}
   }finally{
     if(btn){ btn.disabled=false; btn.textContent='➤'; }
   }
@@ -869,6 +1067,7 @@ async function sendToPlate(plate,text,opts){
   if(!plate){ toast('Plaque destinataire manquante.','bad'); return false; }
   if(plate === senderPlate){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
   if(!text){ toast('Message vide.','bad'); return false; }
+  if(text.length > MSG_MAX_LEN){ toast('Message trop long ('+text.length+'/'+MSG_MAX_LEN+' caractères).','bad'); return false; }
 
   // Rate limit : max 5 messages par minute (client-side guard)
   try {
@@ -956,6 +1155,30 @@ async function sendToPlate(plate,text,opts){
   return true;
 }
 
+function copyMessage(id){
+  const sid = String(id);
+  let txt = '';
+  const t = State.threads.find(x => x.plate === State.activePlate);
+  const m = (t?.list || []).find(x => String(x.id) === sid);
+  txt = m?.message || '';
+  if(!txt) return;
+  const _done = ()=>toast('Message copié ✓','ok');
+  try{
+    if(navigator.clipboard?.writeText){
+      navigator.clipboard.writeText(txt).then(_done).catch(()=>_copyFallback(txt,_done));
+    }else _copyFallback(txt,_done);
+  }catch(e){ _copyFallback(txt,_done); }
+}
+function _copyFallback(txt,done){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    done&&done();
+  }catch(e){ toast('Copie impossible.','bad'); }
+}
+
 async function deleteMessage(id){
   if(!confirm('Supprimer ce message ?')) return;
   // INV-COM-009 : soft-delete local uniquement — pas de DELETE DB
@@ -1027,6 +1250,14 @@ async function subscribe(){
       );
       if(isForMe){
         try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+        // Bip son + vibration si sons activés, pas d'appel en cours, et conversation non mise en sourdine
+        try{
+          const _senderPlate = m.sender_plate||m.from_plate||'';
+          if(window.S?.sounds!==false&&(window.CallScreen?.getState?.()?.mode||'idle')==='idle'&&!isMuted(_senderPlate)){
+            window.AudioManager?.playMessageBeep?.('msg_in_app');
+            if(navigator.vibrate) navigator.vibrate(80);
+          }
+        }catch(e){}
         try{
           const _sp=fPlate(m.sender_plate||m.from_plate||'');
           window.InteractionEngine?.create?.({
@@ -1058,6 +1289,123 @@ function installInputs(){
       el.addEventListener('input',()=>el.value=fPlate(el.value));
     }
   });
+  // Touche Échap : ferme le menu (sheet) puis la conversation ouverte
+  if(!document.body.dataset.icEscReady){
+    document.body.dataset.icEscReady = '1';
+    document.addEventListener('keydown', e=>{
+      if(e.key !== 'Escape') return;
+      const sheet = document.getElementById('icBottomSheet');
+      if(sheet && sheet.classList.contains('show')){ closeSheet(); return; }
+      const box = $('icThread');
+      if(box && box.classList.contains('show')){ closeThread(); }
+    });
+  }
+  // Auto-grow + Ctrl/Cmd+Enter pour les deux textareas
+  function _grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px';el.style.overflowY=el.scrollHeight>160?'auto':'hidden';}
+  [['icComposeText','sendNew'],['icReplyText','reply']].forEach(([id,fn])=>{
+    const _ta=$(id);
+    if(_ta&&!_ta.dataset.enterReady){
+      _ta.dataset.enterReady='1';
+      _ta.style.resize='none';_ta.style.overflowY='hidden';_ta.style.transition='height .1s';
+      try{ _ta.maxLength = MSG_MAX_LEN; }catch(e){}
+      // Compteur de caractères (créé une fois, sous le textarea)
+      let _counter=document.getElementById(id+'_count');
+      if(!_counter&&_ta.parentNode){
+        _counter=document.createElement('div');
+        _counter.id=id+'_count';
+        _counter.className='ic-char-count';
+        _counter.style.display='none';
+        _ta.parentNode.appendChild(_counter);
+      }
+      const _updCount=()=>{
+        if(!_counter) return;
+        const n=_ta.value.length, rem=MSG_MAX_LEN-n;
+        if(n>=MSG_MAX_LEN-100){
+          _counter.textContent=rem+' caractère'+(Math.abs(rem)>1?'s':'')+' restant'+(Math.abs(rem)>1?'s':'');
+          _counter.style.color=rem<=20?'#ff6b81':'#94a3b8';
+          _counter.style.display='';
+        }else{
+          _counter.style.display='none';
+        }
+      };
+      _ta.addEventListener('input',()=>{
+        _grow(_ta);
+        _updCount();
+        if(id==='icReplyText'&&State.activePlate){
+          // Brouillon de réponse
+          try{
+            const _v=_ta.value;
+            if(_v.trim()) localStorage.setItem('ic_draft_reply_'+nPlate(State.activePlate),_v);
+            else localStorage.removeItem('ic_draft_reply_'+nPlate(State.activePlate));
+          }catch(e){}
+          // Indicateur "est en train d'écrire" — broadcast debounced
+          if(State._typingCh&&State.user?.id&&_ta.value.trim()){
+            clearTimeout(State._typingBcTimer);
+            State._typingBcTimer=setTimeout(()=>{
+              try{State._typingCh.send({type:'broadcast',event:'typing',payload:{uid:State.user.id}});}catch(e){}
+            },300);
+          }
+        }
+      });
+      _ta.addEventListener('keydown',e=>{
+        if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+          e.preventDefault();
+          try{window.ImmatMessages[fn]?.();}catch(ex){}
+        }
+      });
+      _grow(_ta);
+    }
+  });
+  // Chips conversations récentes sous #icComposePlate (sélection rapide)
+  const _rc=$('icRecentChips'),_pi=$('icComposePlate');
+  if(_pi&&_rc&&!_pi.dataset.recentReady){
+    _pi.dataset.recentReady='1';
+    function _showChips(){
+      if(_pi.value.trim()){_rc.style.display='none';return;}
+      const threads=(State.threads||[]).slice(0,5);
+      if(!threads.length){_rc.style.display='none';return;}
+      _rc.innerHTML=threads.map(t=>{
+        const pseudo=State.pseudoMap[nPlate(t.plate)]||'';
+        const label=esc(t.plate)+(pseudo?' · '+esc(pseudo):'');
+        return'<button type="button" class="ic-recent-chip" onclick="ImmatMessages._pickChip(\''+js(t.plate)+'\')">'+label+'</button>';
+      }).join('');
+      _rc.style.display='flex';
+    }
+    _pi.addEventListener('focus',_showChips);
+    _pi.addEventListener('input',()=>{if(_pi.value.trim())_rc.style.display='none';else _showChips();});
+    _pi.addEventListener('blur',()=>setTimeout(()=>{_rc.style.display='none';},200));
+  }
+  // Aperçu destinataire sous #icComposePlate
+  const _pp=$('icComposePlatePreview'),_pe=$('icComposePlate');
+  if(_pe&&_pp&&!_pe.dataset.previewReady){
+    _pe.dataset.previewReady='1';
+    let _pt=null;
+    _pe.addEventListener('input',()=>{
+      clearTimeout(_pt);
+      const _pl=nPlate(_pe.value||'');
+      if(_pl.length<7){_pp.style.display='none';return;}
+      _pt=setTimeout(async()=>{
+        // Cache nearby en premier (zéro requête DB)
+        const _nb=window.S?.nearby?.find(x=>nPlate(x.plate)===_pl);
+        if(_nb){
+          _pp.textContent=fPlate(_pl)+(_nb.pseudo&&_nb.pseudo!=='Conducteur'?' · '+_nb.pseudo:'');
+          _pp.style.color='#4ade80';_pp.style.display='';
+          return;
+        }
+        try{
+          const{data:_pd}=await sb().from('profiles').select('pseudo').eq('owner_plate',_pl).maybeSingle();
+          if(_pd){
+            _pp.textContent=fPlate(_pl)+(_pd.pseudo?' · '+_pd.pseudo:'');
+            _pp.style.color='#94a3b8';
+          }else{
+            _pp.textContent=fPlate(_pl)+' — inconnu';
+            _pp.style.color='#64748b';
+          }
+          _pp.style.display='';
+        }catch(e){_pp.style.display='none';}
+      },450);
+    });
+  }
 }
 
 // ── F-TRUST : Gestion de confiance ──────────────────────────────
@@ -1126,6 +1474,36 @@ function unarchiveConv(plate){
   render();
 }
 
+// ── F-MUTE : Sourdine par conversation ──────────────────────────
+function getMuted(){
+  try{ return JSON.parse(localStorage.getItem('ic_muted')||'[]'); }catch(e){ return []; }
+}
+function isMuted(plate){
+  return getMuted().includes(nPlate(fPlate(plate)));
+}
+function toggleMute(plate){
+  plate = nPlate(fPlate(plate));
+  const muted = getMuted();
+  const now = muted.includes(plate);
+  localStorage.setItem('ic_muted', JSON.stringify(now ? muted.filter(p=>p!==plate) : [...muted, plate]));
+  toast(now ? '🔔 Notifications réactivées.' : '🔕 Conversation mise en sourdine.', 'ok');
+  render();
+}
+
+// ── F-MANUAL-UNREAD : Marquer une conversation comme non lue (pense-bête) ──
+function getManualUnread(){
+  try{ return JSON.parse(localStorage.getItem('ic_manual_unread')||'[]'); }catch(e){ return []; }
+}
+function isManualUnread(plate){
+  return getManualUnread().includes(nPlate(fPlate(plate)));
+}
+function setManualUnread(plate, val){
+  plate = nPlate(fPlate(plate));
+  const list = getManualUnread().filter(p=>p!==plate);
+  if(val) list.push(plate);
+  try{ localStorage.setItem('ic_manual_unread', JSON.stringify(list)); }catch(e){}
+}
+
 // ── F-SEARCH : Recherche dans les conversations ─────────────────
 function toggleSearch(){
   const bar = $('icSearchBar');
@@ -1166,6 +1544,25 @@ function closeCompose(){
   render();
 }
 
+function sharePosition(){
+  const lat=window.S?.myLat,lng=window.S?.myLng;
+  if(lat==null||lng==null) return toast('Position GPS non disponible.','bad');
+  if(!State.activePlate) return toast('Aucune conversation active.','bad');
+  const _p=typeof window._fuzzyPos==='function'?window._fuzzyPos(lat,lng):{lat,lng};
+  const url='https://www.google.com/maps?q='+_p.lat.toFixed(6)+','+_p.lng.toFixed(6);
+  const text='📍 Ma position : '+url;
+  const _rt=$('icReplyText');
+  if(_rt){_rt.value=text;try{_rt.dispatchEvent(new Event('input'));}catch(e){}_rt.focus();}
+}
+
+function _pickChip(plate){
+  const _pe=$('icComposePlate');
+  if(_pe){_pe.value=fPlate(plate);_pe.dispatchEvent(new Event('input'));}
+  const _rc=$('icRecentChips');
+  if(_rc) _rc.style.display='none';
+  setTimeout(()=>{try{$('icComposeText')?.focus();}catch(e){}},80);
+}
+
 // ── Menu thread — bottom sheet ────────────────────────────────────
 function openThreadMenu(){
   if(!State.activePlate) return;
@@ -1177,10 +1574,17 @@ function openThreadMenu(){
   const favBtn   = document.getElementById('icSheetFav');
   const archBtn  = document.getElementById('icSheetArch');
   const trustBtn = document.getElementById('icSheetTrust');
+  const muteBtn   = document.getElementById('icSheetMute');
+  const blockBtn  = document.getElementById('icSheetBlock');
+  const unreadBtn = document.getElementById('icSheetUnread');
 
   if(favBtn)   favBtn.textContent   = isFav  ? '⭐ Retirer des favoris' : '⭐ Ajouter aux favoris';
   if(archBtn)  archBtn.textContent  = isArch ? '📂 Désarchiver'         : '📁 Archiver';
   if(trustBtn) trustBtn.textContent = trust === 'TRUSTED' ? '✓ Révoquer confiance' : '✓ Marquer de confiance';
+  if(muteBtn)  muteBtn.textContent  = isMuted(plate) ? '🔔 Réactiver les notifications' : '🔕 Mettre en sourdine';
+  if(unreadBtn) unreadBtn.textContent = isManualUnread(plate) ? '✓ Marquer comme lu' : '👁️ Marquer comme non lu';
+  const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
+  if(blockBtn) blockBtn.textContent = _blocked ? '✅ Débloquer ce conducteur' : '🚫 Bloquer ce conducteur';
 
   const backdrop = document.getElementById('icSheetBackdrop');
   const sheet    = document.getElementById('icBottomSheet');
@@ -1242,9 +1646,28 @@ function _sheetAction(action){
     return;
   }
   closeSheet();
-  if(action === 'fav')   { isFav  ? unfavoriteConv(plate)                      : favoriteConv(plate); }
-  else if(action === 'arch')  { isArch ? unarchiveConv(plate)                       : archiveConv(plate); }
+  if(action === 'fav')        { isFav  ? unfavoriteConv(plate) : favoriteConv(plate); }
+  else if(action === 'arch')  { isArch ? unarchiveConv(plate)  : archiveConv(plate); }
   else if(action === 'trust') { setTrust(plate, trust === 'TRUSTED' ? 'NONE' : 'TRUSTED'); }
+  else if(action === 'mute')  { toggleMute(plate); }
+  else if(action === 'unread'){
+    const now = isManualUnread(plate);
+    setManualUnread(plate, !now);
+    toast(now ? 'Conversation marquée comme lue.' : 'Conversation marquée comme non lue.', 'ok');
+    render();
+  }
+  else if(action === 'block') {
+    const _blocked = getBlockLevel(plate) !== BLOCK_LEVELS.NONE;
+    if(_blocked){
+      try{ window.App?.unblockPlate?.(nPlate(plate)); }catch(e){}
+      try{ window.App?.closeBlocked?.(); }catch(e){}
+      toast('Conducteur débloqué.','ok');
+    }else{
+      try{ window.App?.blockPlate?.(nPlate(plate)); }catch(e){}
+      closeThread();
+    }
+    refresh();
+  }
   else if(action === 'del')   { deleteThread(plate); }
 }
 
@@ -1366,6 +1789,7 @@ window.ImmatMessages = {
   closeThread,
   deleteThread,
   deleteMessage,
+  copyMessage,
   deleteAllMessages,
   renderCallLog,
   sendToPlate,
@@ -1401,6 +1825,10 @@ window.ImmatMessages = {
   setDnd,
   saveDndHours,
   saveCallSettings,
+  markAllRead,
+  _pickChip,
+  sharePosition,
+  _scrollToBottom,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

@@ -145,6 +145,15 @@ button { border: 0; cursor: pointer; }
 }
 .speed strong { font-size: 24px; line-height: 1; }
 .speed small { font-size: 9px; color: var(--muted); }
+.speed.warn { border-color: #fb923c; color: #fb923c; }
+.speed.warn strong { color: #fb923c; }
+.speed.over { border-color: #ef4444; color: #ef4444; animation: speed-over-pulse 1s ease-in-out infinite; }
+.speed.over strong { color: #ef4444; }
+@keyframes speed-over-pulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  50% { box-shadow: 0 0 0 4px rgba(239,68,68,.35), 0 8px 24px rgba(0,0,0,.3); }
+}
+body.reduce-effects .speed.over { animation: none; }
 
 /* ── FAB STACK (droite) ── */
 .fab-stack {

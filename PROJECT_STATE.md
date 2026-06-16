@@ -47,7 +47,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix panneau Activité ne s'ouvrant pas — PR #307 (force .full + disable transition)**
+**Mission : Merge complet de la branche de dev vers main (65 commits, suites 1-23)**
+**Date :** 2026-06-16
+**Contexte :** Après le hotfix isolé (cherry-pick `02daf34`→`54b8b37`) déployé seul sur `main` plus tôt dans la session, l'utilisateur a demandé la fusion complète de la branche `claude/immatconnect-pro-app-dEKGR` vers `main`, avec vérification systématique avant déploiement.
+**Vérifications effectuées avant le merge :**
+- Revue du diff complet `main..dev` (8 fichiers, 841 insertions/71 suppressions)
+- Revue manuelle ciblée des fichiers sensibles D17 (`core/call-screen.js` : ajout chronomètre d'appel, purement additif ; `core/interaction-engine.js` : ajout TTL 90j localStorage, additif) — aucune logique d'appel/signalisation Agora modifiée
+- Scan de secrets sur le diff complet (`AGORA_APP_CERTIFICATE`, clés API, service_role) → aucune fuite détectée
+- `npm test` rejoué sur l'état complet de la branche de dev avant merge : 177 ✅ + 3 diagnostics OBD ✅
+- `node scripts/preflight-inline-js.mjs` : 7 scripts OK
+**Résultat :** merge `--no-ff` effectué (conflits PROJECT_STATE.md résolus manuellement — historique fusionné sans perte), `npm test` rejoué après résolution des conflits, puis push sur `main`.
+**Hors scope :** aucun changement de code applicatif au-delà de ce qui était déjà sur la branche de dev — le merge est un déploiement, pas une nouvelle fonctionnalité.
+
+---
+
+**Mission précédente : Fix panneau Activité ne s'ouvrant pas — PR #307 (force .full + disable transition)**
 **Date :** 2026-06-14
 **Cause racine profonde :** iOS Safari WKWebView calcule `translateY(100%)` AVANT que le layout flex soit résolu dans la même frame. La valeur de départ de la transition est donc 37px (hauteur du handle+padding seulement) → le sheet "monte légèrement" de 37px. min-height CSS et void offsetHeight ne suffisent pas car WKWebView ignore le reflow synchrone dans ce contexte.
 **Fix définitif :** Dans `navActivite()`, forcer `.full` (hauteur explicite via `top+bottom` CSS, indépendant du contenu), désactiver la transition CSS (`style.transition='none'`), clear le transform inline, retirer `.mini`, puis réactiver la transition via `requestAnimationFrame`. `.sheet.full` utilise des ancres CSS — pas de calcul flex → animation correcte.
@@ -213,9 +227,28 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
-**HOTFIX (hors séquence "suite N" — déployé isolément sur main, session 2026-06-16)**
+**PR #325 (suite 23) — Badge favori dans le journal d'appels (index.html, session 2026-06-16)**
 
-**Fix recherche profil par plaque (messages.js)**
+- **Parité visuelle** : le journal d'appels (`renderCallJournal()`) affiche désormais un badge ⭐ à côté de la plaque quand celle-ci fait partie des favoris (`localStorage.ic_favorites`), comme c'est déjà le cas dans la liste des conversations de messages.js (`.ic-trust-fav`).
+- **Lecture seule** : pas de nouveau bouton de bascule ajouté dans le journal d'appels — le marquage favori/non-favori reste géré exclusivement via le menu ⋯ du thread dans Messages (cohérence avec l'architecture existante, pas de duplication d'UI de bascule).
+- Aucune écriture, aucune nouvelle clé localStorage. 177 tests ✅.
+
+**PR #325 (suite 22) — Recherche dans le journal d'appels (index.html, session 2026-06-16)**
+
+- **Champ de recherche** : nouveau `<input id="callJournalSearch">` au-dessus du journal d'appels (`#icAppelsPane`), placé en sibling fixe hors du conteneur `#icCallLog` régénéré à chaque render (même pattern que `nearbySearch`) pour ne jamais perdre le focus/la frappe pendant la saisie.
+- `App._callJournalSearch` (état) + `App.setCallJournalSearch(v)` (setter, déclenche `renderCallJournal()`), même pattern que `App._callJournalFilter`/`App.setCallJournalFilter`.
+- **Filtrage** : `renderCallJournal()` filtre le journal sur la plaque normalisée (`nPlate`) ou le pseudo (`_pseudoMap`), insensible à la casse, combiné avec les filtres existants (Tous/Manqués/Émis/Reçus).
+- **État vide adapté** : message "Aucun appel pour « … »" quand une recherche est active sans résultat, au lieu du message générique.
+- Aucune écriture DB, aucun changement de schéma. 177 tests ✅.
+
+**PR #325 (suite 21) — Marquer une conversation comme non lue (messages.js, session 2026-06-16)**
+
+- **Marquer non lu** : nouveau bouton `#icSheetUnread` dans le menu ⋯ du thread, libellé dynamique ("👁️ Marquer comme non lu" / "✓ Marquer comme lu"). `getManualUnread()/isManualUnread()/setManualUnread()` — localStorage `ic_manual_unread` (tableau de plaques normalisées), même pattern que favoris/archives/sourdine.
+- **Effet visuel uniquement** : la conversation apparaît avec le pastille verte "non lu" dans la liste (classe `.unread` + `.ic-unread-dot`) même si tous les messages ont déjà été lus côté DB — sert de pense-bête, n'altère jamais `read_at` ni le badge global (qui reste basé sur les vrais messages non lus).
+- **Auto-clear** : le flag manuel est effacé automatiquement dans `openThread()` dès que la conversation est rouverte.
+- Aucune écriture DB ajoutée, aucune table touchée. 177 tests ✅.
+
+**PR #325 (suite 20) — Fix recherche profil par plaque (messages.js, session 2026-06-16)**
 
 - **Bug rapporté** : envoyer un message à une plaque visible sur la carte affichait "Aucun conducteur ImmatConnect trouvé avec cette plaque" alors que le profil existait.
 - **Root cause** : `findProfileByPlate()` n'essayait que 2 variantes (`fPlate` avec tirets, et une "compact" via `nPlate` qui conservait en réalité les tirets — bug de nommage), et n'inspectait jamais `r.error` : une erreur Supabase/RLS/réseau était donc silencieusement confondue avec "plaque introuvable".
@@ -224,14 +257,120 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
   - `findProfileByPlate(rawPlate)` réécrite : essaie en boucle 4 variantes dédupliquées (dashed/fPlate, compact, normalized/nPlate, raw uppercase brut), logge `[OBD_FIND_PROFILE_START]` et `[OBD_FIND_PROFILE_TRY]` à chaque essai, et retourne désormais un sentinel `{ __error }` dès qu'une requête Supabase renvoie une erreur (au lieu de continuer silencieusement).
   - `sendToPlate()` : log `[OBD_SEND_TARGET]` après résolution, et nouvelle branche `target?.__error` → toast distinct "Erreur recherche conducteur. Réessaie dans quelques secondes." (avant les checks existants "introuvable" et "auto-message").
 - **Hors scope (non touché, par consigne explicite)** : SQL/RPC, carte/`pickPlate()`, `S.selUid`, `contextVehicle.uid`, Realtime, badges, Activité, push, appels, REVOKE, schéma table `messages`, Service Worker.
-- **Déploiement** : cherry-pick isolé du commit `02daf34` (branche `claude/immatconnect-pro-app-dEKGR`) directement sur `main`, SANS les 19 autres fonctionnalités accumulées sur la branche de dev (typing indicator, mute, séparateurs de jour, etc.) — celles-ci restent en dev, non déployées, en attente de validation/décision séparée.
-- **Tests** : 177 ✅ + 3 diagnostics OBD ✅ (rejoués sur main avant déploiement). Validation terrain (logs OBD live) à faire pour confirmer laquelle des 4 branches du plan de décision s'applique (Phase 2 — RPC `get_public_profile_by_plate` / propagation uid — non démarrée, en attente de confirmation explicite).
+- **Déploiement** : initialement cherry-pické isolément (commit `02daf34`) directement sur `main` le 2026-06-16 matin, sans les autres fonctionnalités de la branche de dev. La branche complète a ensuite été fusionnée sur `main` le même jour (cf. section "DERNIÈRE MISSION TERMINÉE") après vérifications.
+- **Tests** : 177 ✅ + 3 diagnostics OBD ✅. Validation terrain (logs OBD live) à faire pour confirmer laquelle des 4 branches du plan de décision s'applique (Phase 2 — RPC `get_public_profile_by_plate` / propagation uid — non démarrée, en attente de confirmation explicite).
+
+**PR #325 (suite 19) — Bouton message dans le journal d'appels (session 2026-06-15)**
+
+- **Message button in call journal** : ajout d'un bouton 💬 (à côté de ⭐ et 📞) dans chaque entrée du journal d'appels (`renderCallJournal`), appelant `App.pickPlate(plate)` pour ouvrir la composition de message. Cohérence avec les listes Conducteurs proches et Récents. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
+**PR #325 (suite 18) — Horodatage relatif dans les véhicules récents (session 2026-06-15)**
+
+- **Recent vehicles timestamp** : la liste "Récents" (`openRecent()`) affiche désormais l'horodatage relatif de la dernière rencontre via `relTime(r.at)` ("à l'instant", "il y a X min", "hier HH:MM"…), à côté de la distance. La donnée `r.at` était déjà stockée par `addRecent()`. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
+**PR #325 (suite 17) — Partager / inviter à l'app (session 2026-06-15)**
+
+- **Share app** : bouton "📤 Inviter" dans la grille Paramètres → `App.shareApp()`. Utilise `navigator.share` (feuille de partage native iOS/Android) avec texte d'invitation + `CFG.site`. Fallback : `navigator.clipboard.writeText` puis `execCommand('copy')` (textarea hors écran) avec toast "Lien d'invitation copié ✓". `AbortError` (partage annulé) ignoré silencieusement. Croissance communautaire. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
+**PR #325 (suite 16) — Signalements hors ligne en attente : indicateur visible (session 2026-06-15)**
+
+- **Offline reports indicator** : `updateCommunityStatus()` affiche désormais le nombre de signalements en file d'attente (`S.offlineReports`). Hors ligne : suffixe "· N signalement(s) en attente d'envoi". En ligne : pastille orange "⏳ N" à côté des compteurs proches/alertes. Mis à jour quand un signalement est mis en file (catch de `saveReportRemote`) et quand la file est vidée (fin de `syncOfflineReports`). Donne un retour clair que rien n'est perdu en mode dégradé. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
+
+**PR #325 (suite 15) — Survitesse : retour visuel sur le compteur (session 2026-06-15)**
+
+- **Over-speed warning** : le widget vitesse `.speed` passe en orange (`.warn`) au-dessus de 110 km/h et en rouge pulsé (`.over`) au-dessus de 130 km/h (vitesse max autoroute FR). Toggle dans le handler `locate()` (`watchPosition`) après mise à jour de `speedVal`. Animation désactivée si `body.reduce-effects`. SW v40 → v41 (CACHE_NAME + CURRENT). 177 tests ✅.
+
+**PR #325 (suite 14) — Touche Échap pour fermer (session 2026-06-15)**
+
+- **Escape key** : handler `keydown` au niveau `document` (installé une fois via `body.dataset.icEscReady`). Priorité : ferme d'abord le bottom sheet `#icBottomSheet` s'il est ouvert (`closeSheet()`), sinon ferme la conversation active `#icThread` (`closeThread()`). Améliore l'accessibilité clavier / desktop. 177 tests ✅.
+
+**PR #325 (suite 13) — Bloquer/Débloquer depuis le menu du thread (session 2026-06-15)**
+
+- **Block from thread menu** : bouton `#icSheetBlock` (danger) dans le bottom sheet ⋯. Libellé dynamique via `getBlockLevel()` : "🚫 Bloquer" si non bloqué, "✅ Débloquer" sinon. `_sheetAction('block')` appelle `App.blockPlate()` (confirmation + persistance DB user_blocks + S.blocked) puis ferme le thread ; débloque via `App.unblockPlate()` + `App.closeBlocked()` pour éviter l'overlay liste. Réutilise l'infra de blocage existante (aucune logique dupliquée). 177 tests ✅.
+
+**PR #325 (suite 12) — Limite de longueur + compteur de caractères (session 2026-06-15)**
+
+- **Message length limit** : constante `MSG_MAX_LEN=1000`. Guard dans `sendToPlate()` (toast si dépassement). `maxLength` posé sur les textareas `icComposeText` et `icReplyText`. Compteur `.ic-char-count` créé dynamiquement sous chaque textarea, affiché uniquement dans les 100 derniers caractères, passe en rouge `#ff6b81` dans les 20 derniers. Tests : 177 ✅, preflight OK.
+
+**PR #325 (suite 11) — Indicateur de présence dans l'en-tête du thread (session 2026-06-15)**
+
+- **Presence indicator** : `_presenceLabel(plate)` lit `S.nearby` et calcule l'âge depuis `updated_at` : < 3 min → "🟢 Actif à proximité" (vert), < 10 min → "🟡 Vu il y a X min" (orange), sinon vide. Affiché en priorité dans le sous-titre `#icThreadSub` (sinon fallback niveau de confiance). `openThread()` le pose ; `refreshThread()` le rafraîchit à chaque nouveau message. Données 100% locales (S.nearby), zéro requête supplémentaire.
+
+**PR #325 (suite 10) — Copier un message (session 2026-06-15)**
+
+- **Copy message** : bouton ⧉ sur chaque bulle (apparait au hover/focus comme le bouton supprimer). `copyMessage(id)` retrouve le texte dans `State.threads[].list` par id, copie via `navigator.clipboard.writeText` avec fallback `execCommand('copy')` (textarea hors écran) pour les WebView sans Clipboard API. Toast "Message copié ✓". CSS `.ic-copy-msg` (gris neutre, opacity 0 → 1 au survol).
+
+**PR #325 (suite 9) — Séparateurs de jour dans le thread (session 2026-06-15)**
+
+- **Day separators** : `_dayLabel(date)` retourne "Aujourd'hui", "Hier", le jour de la semaine (< 7j) ou la date complète (j mois [année si différente]). Dans `_renderTimeline()`, suivi de `_prevDayKey` (année-mois-jour) → insère `<div class="ic-day-sep">` au changement de jour. Combiné proprement avec le séparateur de non-lus (les deux peuvent apparaître au même point). CSS : pilule grise centrée, `text-transform:capitalize`.
+
+**PR #325 (suite 8) — Réponses rapides dans le FloatingCard de message (session 2026-06-15)**
+
+- **Quick reply FloatingCard** : quand un message arrive et affiche le FloatingCard, 3 boutons `fcExtraActions` apparaissent : "✓ Reçu" → `sendToPlate(pl,'Bien reçu 👍')`, "🚗 J'arrive" → `sendToPlate(pl,"J'arrive ! 🚗")`, "En route" → `sendToPlate(pl,'En route 🚘')`. L'utilisateur peut répondre sans quitter la carte. Guard anti-boucle : les quick replies entrants n'affichent pas eux-mêmes des boutons. Preview texte étendu à 60 chars. Bouton "→ Ouvrir" remplace "Répondre →" pour ouvrir le thread complet.
+
+**PR #325 (suite 7) — Séparateur "N non lus" dans le thread (session 2026-06-15)**
+
+- **Séparateur messages non lus** : dans `_renderTimeline()`, détection des messages entrants avec `read_at === null` (`!_sent && !read_at`). Séparateur `<div class="ic-unread-sep">` inséré avant le premier non lu, affiche le compte "N non lu(s)". `openThread()` défile jusqu'au séparateur via `scrollIntoView({block:'center'})` si présent, sinon défile en bas. CSS : ligne violette `rgba(99,102,241,.35)` + texte `#818cf8`. Le séparateur disparaît naturellement au prochain re-render après que `markThreadRead()` a mis à jour les `read_at`.
+
+**PR #325 (suite 6) — Sourdine par conversation (session 2026-06-15)**
+
+- **Mute conversation** : `getMuted()` / `isMuted(plate)` / `toggleMute(plate)` — localStorage `ic_muted` (tableau de plaques normalisées). Bouton `#icSheetMute` dans le menu ⋯ (bottom sheet), libellé dynamique (🔕 Mettre en sourdine / 🔔 Réactiver). `_sheetAction('mute')` → `toggleMute()`. Guard dans `subscribe()` INSERT handler : son + vibration bloqués si `isMuted(sender_plate)`. Badge 🔕 discret dans la liste de threads pour les conversations muettes.
+
+**PR #325 (suite 5) — Indicateur de frappe "est en train d'écrire" (session 2026-06-15)**
+
+- **Typing indicator** : canal Supabase Realtime broadcast `ic_typ_{sorted_plates}` — sans table DB. `openThread()` souscrit ; `closeThread()` désabonne. Quand l'utilisateur tape dans `icReplyText`, broadcast `{type:'broadcast',event:'typing',payload:{uid}}` debounced 300ms. Réception → `#icTypingLabel` affiché (points animés + "est en train d'écrire…"), caché automatiquement après 3s d'inactivité. CSS `@keyframes ic-typing-blink` dans messages.css.
+
+**PR #325 (suite 4) — URL linkification dans les bulles de message (session 2026-06-15)**
+
+- **Détection et rendu des URLs dans les messages** : `_formatMsg(text)` dans messages.js — remplace `esc(item.message||'')` dans `_renderTimeline()`. Regex `/https?:\/\/[^\s<>"]+/g` ; liens ouverts dans `target="_blank" rel="noopener noreferrer"` ; affichage tronqué à 40 chars + "…". Les liens de position partagée (📍 Ma position : https://google.com/maps?…) sont maintenant cliquables.
+
+**PR #325 (suite 3) — Messages UX + fix CI (session 2026-06-15 soir)**
+
+- **Pseudo + couleur véhicule dans liste conversations** : `State.pseudoMap` + `State.colorMap` (Maps) peuplés post-render via async IIFE (nearby cache-first → DB SELECT IN fallback). Avatar coloré selon `vehicle_color`, pseudo affiché en gris sous la plaque.
+- **Badge unread count pill** : `.ic-unread-dot` redesigné en badge pill (min-width 18px, border-radius 999px) affichant le compte si >1.
+- **Bouton "Tout lu"** : `#icMarkAllReadBtn` dans le header messages — affiché si `setBadge(n>0)`, caché sinon. `markAllRead()` UPDATE en masse `read_at` via `IN (ids)`.
+- **Filtres journal d'appels** : 4 pills (Tous / Manqués / Émis / Reçus) — filtre client-side sur `log` avant render. `App._callJournalFilter` + `App.setCallJournalFilter(f)` persistants entre renders.
+- **Son + vibration sur nouveau message** : `AudioManager.playMessageBeep('msg_in_app')` + `navigator.vibrate(80)` dans le handler INSERT de `subscribe()` (guard idle + sons activés).
+- **Pseudo dans FloatingCard et notif** : `profilesByIds([m.sender_id])` puis `_sndPseudo` — titre FloatingCard = `plaque · pseudo`.
+- **Fix CI critique** : 7 guillemets typographiques U+2019/U+2018 dans `subMsgs()` de index.html → apostrophes droites. Preflight et smoke tests Playwright débloqués. Commit `e7850ea`.
+- SW v40.
+
+**PR #325 — Sprint 8 suite + Sprint 9 + UX améliorations (branche de travail, à merger)**
+
+- **S7-NEARBY D13** (4 fixes) : staleMinutes 10→5, distance arrondie 100m, debounce Realtime 2s, batch trust SELECT IN (`S._trustCache`/`S._ratingCache`), cache-first dans `showVehicleContextMenu`
+- **Position heartbeat 3min** : `_startDeviceHeartbeat` démarre `setInterval(180000)` → re-upsert `user_locations` même sans mouvement → conducteur stationnaire reste visible sur la carte
+- **S8-06 D20** : ANGE dégradation gracieuse — catch block affiche "Le conseiller est momentanément indisponible…" au lieu du message d'erreur brut
+- **S9 D18** : `subReports()` supprimé — canal Realtime mort (`ic_reports_{uid}`, handler vide)
+- **S9 D19** : TTL 90 jours `ic_interactions` + `ic_notifications` dans `interaction-engine.js`
+- **S7-PROFILE D14** : pseudo + dot couleur dans le menu contextuel véhicule
+- **Nearby search + FAB badge** : filtre texte plaque/pseudo dans le panneau Conducteurs proches ; badge bleu sur le FAB avec le compte
+- **MAX_BLOCKED=500** : plafond localStorage sur ic_blocked (D19)
+- **pseudo dans addRecent()** : la liste Récents affiche le pseudo à côté de la plaque
+- **Badges trust/rating dans renderNearby** : 🌟✅⚠️ depuis S._trustCache, ★4.x si avg≥4.0 et ≥3 votes — zéro requête DB supplémentaire
+- **Chronomètre d'appel** : `_startCallTimer()` / `_stopCallTimer()` dans call-screen.js — `#callOvTimer` (vue pleine) et `#callOvMiniTimer` (vue réduite) se mettent à jour chaque seconde dès CALL_ACCEPTED
+- **Durée dans journal d'appels** : `hide()` persiste `{requestId: durée_secs}` dans `ic_call_durations` ; `renderCallJournal()` affiche "1:23" entre le statut et la direction
+- **Bouton 📞 dans le menu contextuel véhicule** : `vehicleContextAction('call')` → `CallManager.contactByCall()`
+- **Boutons 💬/📞 dans la liste Conducteurs proches** : remplace le bouton "Contacter" unique
+- **Boutons 💬/📞 dans la liste Récents** : cohérence avec la liste Conducteurs proches
+- **Pseudo dans journal d'appels** : batch `_pseudoMap` (SELECT owner_plate,pseudo IN [plaques]) — `fmtDur()` + durée affichée inline
+- **Pseudo dans titre de thread messages** : async IIFE nearby cache-first → DB fallback, guard anti-race `title.textContent===localPlate`
+- **Indicateur fraîcheur position** dans `renderNearby()` : `updated_at` → "Xmin" orange (≥3min) ou gris (1-2min)
+- **Aperçu plaque destinataire** dans compose : `icComposePlatePreview`, debounce 450ms, nearby cache (vert) → DB fallback
+- **Auto-grow textarea + Ctrl/Cmd+Enter** dans `messages.js installInputs()` : `_grow()` max 160px, keydown listener sur `icComposeText` et `icReplyText`
+- SW v39
+
+**PR #320→#324 — Sprint 8 S8-01+S8-04 + CI auto-deploy**
+
+- **S8-01** : table `delete_audit_log` créée (SQL exécuté manuellement — Supabase SQL Editor). Edge Function `delete-account` mise à jour : INSERT pending au début, `recordStep()` après chaque étape, UPDATE completed/error à la fin. Dégradation gracieuse si table absente.
+- **S8-04** : Hint A2HS iOS ajouté dans Paramètres → Notifications : "📱 iPhone : pour recevoir les alertes quand l'app est fermée, ajoutez ImmatConnect à l'écran d'accueil…"
+- **CI auto-deploy** : workflow `deploy-edge-functions.yml` modifié — déclenchement automatique sur push vers `main` quand `supabase/functions/**` ou `supabase/migrations/**` changent. Suppression du déclenchement `workflow_dispatch` uniquement. Ajout de `supabase link` + `supabase db push --linked` (avec `continue-on-error: true`).
+- **Résultat** : tout déploiement EF ou migration est désormais automatique dès le merge dans main.
 
 ---
 
 ## 3. MISSION EN COURS
 
-Aucune — GO LIVE phase 1 terminé.
+PR #325 active — nombreuses améliorations UX en attente de merge dans main (voir section 2b).
 
 ---
 
@@ -467,7 +606,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v36
+SW version actif  : immatconnect-pro-v41
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -669,7 +808,33 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | GO LIVE session (suite 4) — PR #308-#314 : translateY→height:0, SW v26→v31, IIFE boucle fix, scrollTop reset, force display, auto-reload IIFE, bannière jaune BUILD S10, bouton Forcer MAJ Settings |
 | 2026-06-15 | IA session | GO LIVE session (suite 5) — B1 ✅ CONFIRMÉ. PR #318 (S14/v35) : panelActivite déplacé premier dans sheet DOM — fix définitif scrollTop iOS. PR #319 (v36) : nettoyage debug (bannière + toasts). Tests B2→B5 en cours. |
 | 2026-06-15 | IA session | GO LIVE PHASE 1 TERMINÉ — B1✅ B2✅ B3✅ B4✅ B5✅ tous confirmés terrain. REVOKE SELECT ON profiles FROM authenticated exécuté et vérifié (id/owner_plate/pseudo/vehicle_color uniquement). |
-| 2026-06-16 | IA session | HOTFIX (cherry-pick isolé sur main, hors branche de dev) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. Les 19 autres features de la branche de dev claude/immatconnect-pro-app-dEKGR restent NON déployées. 177 tests ✅. |
+| 2026-06-16 | IA session | HOTFIX (cherry-pick isolé sur main, hors branche de dev) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. Les 19 autres features de la branche de dev claude/immatconnect-pro-app-dEKGR restent NON déployées à ce stade. 177 tests ✅. |
+| 2026-06-15 | IA session | Sprint 8 S8-01+S8-04 terminés (delete_audit_log + A2HS iOS hint). CI auto-deploy activé (PR #320-#324) : push vers main sur supabase/** déclenche automatiquement EF + migrations. |
+| 2026-06-15 | IA session | PR #325 : S7-NEARBY D13 (staleMinutes 5min, distance 100m, debounce 2s, batch trust), heartbeat position 3min, S8-06 ANGE dégradation gracieuse, S9 D18 (subReports supprimé), S9 D19 (TTL 90j localStorage), S7-PROFILE D14 (pseudo + couleur dans context menu). SW v37. |
+| 2026-06-15 | IA session | PR #325 (suite) : pseudo addRecent(), badges trust/rating renderNearby, chronomètre appel (callOvTimer/callOvMiniTimer), durée dans journal (ic_call_durations), bouton 📞 menu contextuel carte, boutons 💬/📞 liste Conducteurs proches et Récents. SW v38. |
+| 2026-06-15 | IA session | PR #325 (suite 2) : pseudo dans journal d'appels (batch query profiles SELECT IN), pseudo dans titre thread messages (nearby cache-first → DB fallback), indicateur fraîcheur position dans renderNearby() (Xmin orange si ≥3min, gris si 1-2min), aperçu plaque destinataire dans compose (icComposePlatePreview, debounce 450ms), auto-grow textarea + Ctrl/Cmd+Enter pour envoyer dans messages.js. SW v39. |
+| 2026-06-15 | IA session | PR #325 (suite 3) : pseudo+couleur véhicule dans liste conversations (State.pseudoMap/colorMap, batch async IIFE), badge unread count pill, bouton "Tout lu" (#icMarkAllReadBtn + markAllRead()), filtres journal d'appels (4 pills client-side), son+vibration sur nouveau message, pseudo dans FloatingCard+notif. Fix CI : 7 guillemets typographiques U+2019 → apostrophes droites dans subMsgs() (commit e7850ea). SW v40. |
+| 2026-06-15 | IA session | PR #325 (suite 4) : _formatMsg() dans messages.js — détection URLs via regex, rendu en liens <a> cliquables (target=_blank, rel=noopener noreferrer, couleur #60a5fa, truncature 40 chars). Liens position partagée (📍 Ma position : https://…) désormais cliquables dans les bulles. |
+| 2026-06-15 | IA session | PR #325 (suite 5) : typing indicator — canal Supabase broadcast ic_typ_{sorted_plates}, openThread souscrit / closeThread désabonne, broadcast debounced 300ms sur frappe icReplyText, #icTypingLabel avec points animés (ic-typing-blink CSS), auto-hide 3s. |
+| 2026-06-15 | IA session | PR #325 (suite 6) : sourdine conversation — getMuted/isMuted/toggleMute (localStorage ic_muted), bouton #icSheetMute menu ⋯, guard son+vibration subscribe() INSERT, badge 🔕 liste threads. |
+| 2026-06-15 | IA session | PR #325 (suite 7) : séparateur "N non lus" dans le thread — _renderTimeline() détecte !_sent && !read_at, insère ic-unread-sep avec scrollIntoView au premier non lu. CSS ligne violette + texte #818cf8. |
+| 2026-06-15 | IA session | PR #325 (suite 8) : quick reply FloatingCard message — 3 boutons fcExtraActions (✓ Reçu / 🚗 J'arrive / En route) dans le FloatingCard, guard anti-boucle sur messages quick reply reçus, preview 60 chars. |
+| 2026-06-15 | IA session | PR #325 (suite 9) : séparateurs de jour dans le thread — _dayLabel() (Aujourd'hui/Hier/jour semaine/date), suivi _prevDayKey dans _renderTimeline(), ic-day-sep pilule grise centrée. |
+| 2026-06-15 | IA session | PR #325 (suite 10) : copier un message — bouton ⧉ sur chaque bulle, copyMessage(id) avec navigator.clipboard + fallback execCommand, toast confirmation. |
+| 2026-06-15 | IA session | PR #325 (suite 11) : indicateur de présence dans l'en-tête thread — _presenceLabel() lit S.nearby (🟢 <3min / 🟡 <10min), affiché en priorité dans #icThreadSub, rafraîchi par refreshThread(). |
+| 2026-06-15 | IA session | PR #325 (suite 12) : limite longueur message MSG_MAX_LEN=1000 (guard sendToPlate + maxLength textareas) + compteur de caractères dynamique .ic-char-count (visible <100 restants, rouge <20). 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 13) : bloquer/débloquer depuis menu thread — bouton #icSheetBlock, libellé dynamique getBlockLevel(), _sheetAction('block') réutilise App.blockPlate/unblockPlate. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 14) : touche Échap ferme le sheet puis la conversation (handler document keydown, guard body.dataset.icEscReady). 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 15) : survitesse — widget .speed orange >110 km/h, rouge pulsé >130 km/h, toggle dans locate(). SW v40 → v41. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 16) : indicateur signalements hors ligne en attente — updateCommunityStatus() affiche S.offlineReports (suffixe texte hors ligne, pastille ⏳ orange en ligne), MAJ dans saveReportRemote catch + fin syncOfflineReports. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 17) : partager/inviter — bouton 📤 Inviter dans Paramètres, App.shareApp() (navigator.share + fallback clipboard/execCommand), texte invitation + CFG.site. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 18) : horodatage relatif dans véhicules récents — openRecent() affiche relTime(r.at) à côté de la distance. 177 tests ✅. |
+| 2026-06-15 | IA session | PR #325 (suite 19) : bouton 💬 message dans le journal d'appels (renderCallJournal) → App.pickPlate, cohérence avec listes Proches/Récents. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 20) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 21) : marquer une conversation comme non lue — bouton #icSheetUnread, ic_manual_unread (localStorage), effet visuel uniquement (pastille verte), auto-clear à la réouverture du thread. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 22) : recherche dans le journal d'appels — input #callJournalSearch (sibling fixe hors liste), App._callJournalSearch/setCallJournalSearch, filtrage par plaque ou pseudo combiné aux filtres existants. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 23) : badge ⭐ favori dans le journal d'appels (lecture localStorage ic_favorites, parité visuelle avec messages.js, pas de nouveau bouton de bascule). 177 tests ✅. |
+| 2026-06-16 | IA session | MERGE COMPLET dev → main : fusion des 65 commits (suites 1-23) après vérification (177 tests ✅, scan secrets négatif, revue manuelle core/call-screen.js + core/interaction-engine.js). |
 
 ---
 
