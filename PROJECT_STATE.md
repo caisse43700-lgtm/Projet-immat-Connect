@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-33 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite34 (mémorisation du filtre du journal d'appels) ajoutée sur la branche de dev (commit `115e893`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-34 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -936,6 +936,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 33) : ajout d'`aria-label` sur les 3 champs de recherche (liste de conversations, recherche en thread, journal d'appels) pour l'accessibilité lecteur d'écran. Commit `5cbd324` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite33 (aria-label des champs de recherche) dans `main` (commit `d79791f`). |
 | 2026-06-16 | IA session | PR #325 (suite 34) : le filtre du journal d'appels (tous/manqués/émis/reçus) est désormais mémorisé dans `localStorage` (`ic_call_journal_filter`) et restauré à l'ouverture de l'app. Commit `115e893` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
+| 2026-06-16 | IA session | FUSION dev → main : intégration de la suite34 (mémorisation du filtre journal d'appels) dans `main` (commit `4b4adde`). |
 
 ---
 
