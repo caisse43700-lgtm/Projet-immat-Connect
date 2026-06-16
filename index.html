@@ -320,9 +320,13 @@
       </div>
 
       <div id="icThreadSearchBar" style="display:none;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06)">
-        <input id="icThreadSearchInput" type="text" placeholder="Rechercher dans la conversation…"
-               oninput="ImmatMessages.setThreadSearch(this.value)"
-               style="width:100%;box-sizing:border-box;background:#0b1420;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:13px">
+        <div style="position:relative">
+          <input id="icThreadSearchInput" type="text" placeholder="Rechercher dans la conversation…"
+                 oninput="ImmatMessages.setThreadSearch(this.value)"
+                 style="width:100%;box-sizing:border-box;background:#0b1420;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e2e8f0;padding:6px 30px 6px 10px;font-size:13px">
+          <button type="button" id="icThreadSearchClear" aria-label="Effacer la recherche" onclick="ImmatMessages.clearThreadSearch()" style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;font-size:16px;line-height:1;cursor:pointer;padding:6px 8px">×</button>
+        </div>
+        <div id="icThreadSearchCount" style="display:none;font-size:11px;color:#64748b;margin-top:4px;padding-left:2px"></div>
       </div>
 
       <!-- Carte contexte alerte active -->
