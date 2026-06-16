@@ -285,6 +285,7 @@
     <!-- Journal d'appels -->
     <div id="icAppelsPane" style="display:none;overflow-y:auto;flex:1">
       <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
+      <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
       <div id="icCallLog"></div>
     </div>
 
@@ -1885,6 +1886,11 @@ App.renderCallJournal=async function(){
     var _q=nPlate(App._callJournalSearch||'').toLowerCase();
     if(_q) log=log.filter(function(r){return nPlate(r.plate||'').toLowerCase().includes(_q)||(_pseudoMap[r.plate]||'').toLowerCase().includes(_q);});
     App._callJournalLastLog=log;
+    var countEl=$('callJournalSearchCount');
+    if(countEl){
+      if(_q){countEl.style.display='';countEl.textContent=log.length+' résultat'+(log.length>1?'s':'');}
+      else countEl.style.display='none';
+    }
     function _fpill(val,label){var on=_f===val;return '<button type="button" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
     var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button></span></div>'+
       '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+'</div>';

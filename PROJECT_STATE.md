@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-31 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-31 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite32 (compteur de résultats dans la recherche du journal d'appels) ajoutée sur la branche de dev (commit `af663ce`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -930,7 +930,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 30) : surlignage de la plaque et du pseudo (en plus de l'aperçu du message) dans la liste de conversations quand ils correspondent à la recherche active. Commit `146767f` sur la branche de dev. Front-only (messages.js). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | MERGE dev → main : fusion de la suite30 (surlignage plaque/pseudo liste) vers `main` (commit `3b358c4`). |
 | 2026-06-16 | IA session | PR #325 (suite 31) : surlignage plaque/pseudo dans le journal d'appels filtré — nouveau helper global `highlightHtml()` ajouté à `utils.js` (même logique split-sur-balises que `_highlightHtml()` de messages.js), appliqué à `App.renderCallJournal()`. Commit `9b63d95` sur la branche de dev. Front-only (index.html + utils.js). 177 tests ✅, preflight OK. |
-| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite31 (surlignage journal d'appels) vers `main`. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion de la suite31 (surlignage journal d'appels) vers `main` (commit `f7279fe`). |
+| 2026-06-16 | IA session | PR #325 (suite 32) : compteur "N résultat(s)" affiché sous le champ de recherche du journal d'appels pendant une recherche active (même pattern que le compteur de recherche en thread, suite28). Commit `af663ce` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 
 ---
 
