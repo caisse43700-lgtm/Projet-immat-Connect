@@ -68,6 +68,7 @@ const State = {
   channel:null,
   searchQuery:'',
   threadSearchQuery:'',
+  favOnly:false,
   callEventsCache:{},
   pseudoMap:{},
   colorMap:{},
@@ -596,7 +597,9 @@ function render(){
 
   // Favoris en tête (F-FAVORITES)
   const favs = getFavorites();
-  if(favs.length > 0){
+  if(State.favOnly){
+    threads = threads.filter(t => favs.includes(nPlate(t.plate)));
+  } else if(favs.length > 0){
     threads = [
       ...threads.filter(t => favs.includes(nPlate(t.plate))),
       ...threads.filter(t => !favs.includes(nPlate(t.plate)))
@@ -606,9 +609,11 @@ function render(){
   if(!threads.length){
     const helpText = State.mode === 'sent'
       ? 'Aucun message envoyé.'
-      : State.searchQuery
-        ? `Aucune conversation pour "${State.searchQuery}".`
-        : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
+      : State.favOnly
+        ? 'Aucune conversation favorite.'
+        : State.searchQuery
+          ? `Aucune conversation pour "${State.searchQuery}".`
+          : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
     list.innerHTML = `<div class="ic-empty">${helpText}</div>`;
     closeThread();
     return;
@@ -1082,6 +1087,13 @@ function clearThreadSearch(){
   if(input) input.value = '';
   setThreadSearch('');
   input?.focus();
+}
+
+function toggleFavOnly(){
+  State.favOnly = !State.favOnly;
+  const btn = $('icFavOnlyBtn');
+  if(btn) btn.classList.toggle('active', State.favOnly);
+  render();
 }
 
 async function sendNew(){
@@ -1950,6 +1962,7 @@ window.ImmatMessages = {
   setThreadSearch,
   clearThreadSearch,
   exportThread,
+  toggleFavOnly,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

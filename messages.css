@@ -362,6 +362,7 @@
   transition:.14s ease;
 }
 .ic-icon-btn:active { transform:scale(.92); }
+.ic-icon-btn.active { background:#fbbf24; border-color:#fbbf24; color:#1e1b06; }
 
 /* ---- Search bar ---- */
 .ic-search-bar { padding:0 0 8px; }
