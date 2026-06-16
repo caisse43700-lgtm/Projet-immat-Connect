@@ -213,6 +213,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 20) — Fix recherche profil par plaque (messages.js, session 2026-06-16)**
+
+- **Bug rapporté** : envoyer un message à une plaque visible sur la carte affichait "Aucun conducteur ImmatConnect trouvé avec cette plaque" alors que le profil existait.
+- **Root cause** : `findProfileByPlate()` n'essayait que 2 variantes (`fPlate` avec tirets, et une "compact" via `nPlate` qui conservait en réalité les tirets — bug de nommage), et n'inspectait jamais `r.error` : une erreur Supabase/RLS/réseau était donc silencieusement confondue avec "plaque introuvable".
+- **Fix (front-only, confiné à messages.js)** :
+  - Ajout de `compactPlate(v)` (strip tous caractères non alphanumériques, y compris les tirets).
+  - `findProfileByPlate(rawPlate)` réécrite : essaie en boucle 4 variantes dédupliquées (dashed/fPlate, compact, normalized/nPlate, raw uppercase brut), logge `[OBD_FIND_PROFILE_START]` et `[OBD_FIND_PROFILE_TRY]` à chaque essai, et retourne désormais un sentinel `{ __error }` dès qu'une requête Supabase renvoie une erreur (au lieu de continuer silencieusement).
+  - `sendToPlate()` : log `[OBD_SEND_TARGET]` après résolution, et nouvelle branche `target?.__error` → toast distinct "Erreur recherche conducteur. Réessaie dans quelques secondes." (avant les checks existants "introuvable" et "auto-message").
+- **Hors scope (non touché, par consigne explicite)** : SQL/RPC, carte/`pickPlate()`, `S.selUid`, `contextVehicle.uid`, Realtime, badges, Activité, push, appels, REVOKE, schéma table `messages`, Service Worker.
+- **Tests** : 177 ✅ + 3 diagnostics OBD ✅. Validation terrain (logs OBD live) à faire pour confirmer laquelle des 4 branches du plan de décision s'applique (Phase 2 — RPC `get_public_profile_by_plate` / propagation uid — non démarrée, en attente de confirmation explicite).
+
 **PR #325 (suite 19) — Bouton message dans le journal d'appels (session 2026-06-15)**
 
 - **Message button in call journal** : ajout d'un bouton 💬 (à côté de ⭐ et 📞) dans chaque entrée du journal d'appels (`renderCallJournal`), appelant `App.pickPlate(plate)` pour ouvrir la composition de message. Cohérence avec les listes Conducteurs proches et Récents. Changement JS/HTML (network-first), pas de bump SW. 177 tests ✅.
@@ -782,6 +793,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 17) : partager/inviter — bouton 📤 Inviter dans Paramètres, App.shareApp() (navigator.share + fallback clipboard/execCommand), texte invitation + CFG.site. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 18) : horodatage relatif dans véhicules récents — openRecent() affiche relTime(r.at) à côté de la distance. 177 tests ✅. |
 | 2026-06-15 | IA session | PR #325 (suite 19) : bouton 💬 message dans le journal d'appels (renderCallJournal) → App.pickPlate, cohérence avec listes Proches/Récents. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 20) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. 177 tests ✅. |
 
 ---
 

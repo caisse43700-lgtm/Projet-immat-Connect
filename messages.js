@@ -107,28 +107,57 @@ function myPlate(){
   );
 }
 
-async function findProfileByPlate(plate){
+function compactPlate(v){
+  return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+async function findProfileByPlate(rawPlate){
   const client = sb();
   if(!client) return null;
 
-  plate = fPlate(plate);
-  const compact = nPlate(plate);
+  const dashed = fPlate(rawPlate);
+  const compact = compactPlate(rawPlate);
+  const normalized = nPlate(rawPlate);
+  const raw = String(rawPlate || '').trim().toUpperCase();
 
-  let r = await client
-    .from('profiles')
-    .select('id,owner_plate,pseudo,vehicle_color')
-    .eq('owner_plate', plate)
-    .maybeSingle();
+  const variants = [...new Set([
+    dashed,
+    compact,
+    normalized,
+    raw
+  ].filter(Boolean))];
 
-  if(r.data) return r.data;
+  console.log('[OBD_FIND_PROFILE_START]', {
+    rawPlate,
+    dashed,
+    compact,
+    normalized,
+    variants
+  });
 
-  r = await client
-    .from('profiles')
-    .select('id,owner_plate,pseudo,vehicle_color')
-    .eq('owner_plate', compact)
-    .maybeSingle();
+  for(const value of variants){
+    const { data, error } = await client
+      .from('profiles')
+      .select('id,owner_plate,pseudo,vehicle_color')
+      .eq('owner_plate', value)
+      .maybeSingle();
 
-  return r.data || null;
+    console.log('[OBD_FIND_PROFILE_TRY]', {
+      value,
+      found: !!data,
+      data,
+      error
+    });
+
+    if(error){
+      console.warn('[findProfileByPlate error]', { value, error });
+      return { __error: error };
+    }
+
+    if(data) return data;
+  }
+
+  return null;
 }
 
 async function profilesByIds(ids){
@@ -1059,6 +1088,13 @@ async function sendToPlate(plate,text,opts){
 
 
   const target = await findProfileByPlate(plate);
+
+  console.log('[OBD_SEND_TARGET]', {
+    plate,
+    target
+  });
+
+  if(target?.__error){ toast('Erreur recherche conducteur. Réessaie dans quelques secondes.','bad'); return false; }
   if(!target?.id){ toast('Aucun conducteur ImmatConnect trouvé avec cette plaque.','bad'); return false; }
   if(target.id === u.id){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
 
