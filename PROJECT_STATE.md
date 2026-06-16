@@ -47,6 +47,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix bug critique — Activité (Reçus/Envoyés) toujours vide malgré messages fonctionnels — TERMINÉE**
+**Date :** 2026-06-16
+**Symptôme terrain :** sur 2 comptes (BZ-652-LL et BE-521-MM), les messages envoyés/reçus (y compris les signalements véhicule urgents) apparaissaient correctement dans l'onglet **Messages**, mais jamais dans **Activité → Tout/Véhicule → Reçus/Envoyés**, quel que soit le compte ou le sens du message.
+**Root cause découverte :** `index.html` déclare `const S={...}` (ligne 544) dans un `<script>` classique (pas `type="module"`). En JavaScript non-module, une déclaration top-level `const`/`let` reste dans le scope global lexical mais **n'est jamais posée comme propriété de `window`** (contrairement à `var`). Les auteurs avaient déjà ce réflexe pour `sb` (`window.sb=sb;` ligne 537) mais l'équivalent manquait pour `S`. Conséquence : `messages.js`, chargé comme script séparé, ne peut accéder à `S` que via `window.S` — et cette ligne, exécutée après chaque `refresh()` (`if(window.S) window.S._actMessages = State.messages;`), était un no-op silencieux depuis le début. Le flux Activité lit `S._actMessages` (qui restait `undefined`/`[]`), d'où un panneau vide en permanence, indépendamment du compte ou du sens (reçu/envoyé).
+**Fix appliqué (`index.html`) :**
+1. `window.S=S;` ajouté juste après la déclaration de `const S={...}` (ligne 544-545) — expose enfin l'état global aux autres scripts (`messages.js`, etc. — plusieurs autres lectures `window.S?.xxx` dans `index.html`/`messages.js` étaient probablement affectées par le même bug, désormais réparées par cette seule ligne).
+2. Défense complémentaire dans `App.actCatTab(tab)` : force un `ImmatMessages.refresh()` en arrière-plan à chaque changement d'onglet Reçus/Envoyés, puis re-render — évite un affichage figé si un message arrive entre deux ouvertures du panneau Activité.
+**Tests :** 177 ✅ + 3 diagnostics OBD ✅, preflight inline JS 7/7 OK.
+**Commit :** `d0fcc2d` sur `claude/immatconnect-pro-app-dEKGR`.
+**À valider en terrain :** envoyer un message entre les 2 comptes test, vérifier qu'il apparaît bien dans Activité → Reçus (côté destinataire) et Envoyés (côté expéditeur).
+**Second problème signalé, NON encore investigué :** "Je ne peux pas envoyer depuis BE 521" — échec d'envoi de message depuis le compte BE-521-MM. Aucune erreur précise rapportée (texte du toast affiché non communiqué) — analyse du code (`sendToPlate`, `findProfileByPlate`) n'a rien révélé de spécifique à ce compte ; nécessite le message d'erreur exact affiché à l'écran pour diagnostiquer plus avant.
+
+---
+
 **Mission : Fix bug fonctionnel — colonnes de position GPS manquantes sur `reports` — TERMINÉE, déployée**
 **Date :** 2026-06-16
 **Contexte :** Bug résiduel découvert pendant la réparation du pipeline CI migrations (cf. mission ci-dessous) : la table `reports` n'a jamais eu de colonnes de position, alors que `saveReportRemote()` (`index.html`) envoie systématiquement `latitude`/`longitude` dans le payload d'insertion depuis le premier déploiement. Confirmé vide via `information_schema.columns` (12 colonnes, aucune position). Conséquence : tout signalement relu depuis la base (reload, reconnexion, `postgres_changes`) perdait sa position — seul le broadcast Realtime reçu en direct la transportait.
@@ -444,7 +458,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-41 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Fusion en cours du fix `window.S=S` (Activité Reçus/Envoyés vide, commit `d0fcc2d`) de `claude/immatconnect-pro-app-dEKGR` vers `main`, demandée explicitement par l'utilisateur. À valider en terrain après déploiement : envoyer un message entre les 2 comptes test et confirmer son apparition dans Activité. Reste en attente : diagnostiquer l'échec d'envoi de message depuis le compte BE-521-MM (message d'erreur exact non communiqué).
 
 ---
 
