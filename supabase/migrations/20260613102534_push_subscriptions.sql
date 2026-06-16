@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- L'utilisateur gère uniquement ses propres abonnements
+DROP POLICY IF EXISTS "push_subs_self" ON push_subscriptions;
 CREATE POLICY "push_subs_self" ON push_subscriptions
   FOR ALL
   USING  (auth.uid() = user_id)

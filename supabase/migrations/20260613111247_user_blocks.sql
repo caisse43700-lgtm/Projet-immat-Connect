@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.user_blocks (
 ALTER TABLE public.user_blocks ENABLE ROW LEVEL SECURITY;
 
 -- Chaque utilisateur gère uniquement ses propres blocages
+DROP POLICY IF EXISTS "user_blocks_self" ON public.user_blocks;
 CREATE POLICY "user_blocks_self" ON public.user_blocks
   FOR ALL
   USING  (auth.uid() = user_id)
