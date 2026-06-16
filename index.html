@@ -194,7 +194,8 @@
       <div style="font-size:10px;color:rgba(239,68,68,.8);margin-top:6px;text-align:center">Enfant ou animal dans le véhicule · fumée · accident grave</div>
     </div>
     <div class="sig-vehicle-input">
-      <input id="sigVehiclePlate" class="plate-input" placeholder="Plaque : AB-123-CD" maxlength="9">
+      <label class="label" for="sigVehiclePlate">Plaque du véhicule à signaler</label>
+      <input id="sigVehiclePlate" class="plate-input" placeholder="AB-123-CD" maxlength="9" autocomplete="off">
     </div>
     <div class="alert-grid">
       <button class="alert-card urgent" onclick="App.vehicleSelectType('pneu')"><span class="icon">🔴</span><span>Pneu</span></button>
