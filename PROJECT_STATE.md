@@ -47,6 +47,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix bug critique — le titre du menu véhicule sur la carte écrasait l'indication "Ma position" — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Symptôme terrain :** depuis BE-521-MM, signaler/contacter un véhicule échouait toujours de façon intermittente après les 2 fixes précédents. L'utilisateur a fourni le vrai indice en comparant deux captures du menu contextuel véhicule : le même titre affiché ("Véhicule BE-521-MM") apparaissait tantôt avec 5 boutons, tantôt avec ~4 — preuve que la classe `.is-self` (qui cache le bouton 🚫 Bloquer via `app.css` : `.vehicle-context-menu.is-self .block-main{display:none}`) changeait bien d'état, alors que le titre, lui, restait identique.
+**Root cause découverte :** `App.showVehicleContextMenu(vehicle)` pose un titre correct dans `#vehicleContextPlate` selon que le véhicule tapé est le sien (`📍 Ma position`) ou un autre (`Véhicule XX-XXX-XX`), puis appelait `this.updateReportTarget?.()` — une fonction distincte chargée de mettre à jour le panneau de signalement, mais qui réécrit **le même élément DOM** `#vehicleContextPlate` (collision d'ID) avec `'Véhicule '+selectedVehiclePlate()`. Or `selectedVehiclePlate()` retombe sur des sources d'état parfois obsolètes (`S.selPlate`, `S.conv`...) quand le véhicule tapé est exclu (cas d'un vrai tap sur soi-même). Résultat : en tapant par erreur sur son propre véhicule (les deux téléphones de test étant physiquement proches), le menu affichait quand même la plaque du véhicule précédemment ciblé — donnant l'illusion que le bon véhicule était sélectionné — alors que `vehicleContextAction()` traite bien la requête comme `isSelf` en coulisses : il vide le destinataire du message, ou redirige "Signaler" vers le flux de signalement de position au lieu du flux véhicule. D'où des envois qui semblaient échouer au hasard, en réalité corrélés au véhicule réellement tapé sur la carte.
+**Fix appliqué (`index.html`, `App.showVehicleContextMenu`) :** `updateReportTarget()` est désormais appelée AVANT le bloc qui pose le titre spécifique self/non-self, qui a donc toujours le dernier mot sur `#vehicleContextPlate`.
+**Tests :** 177 ✅ + 3 diagnostics OBD ✅, preflight inline JS 7/7 OK.
+**Commit :** `36cf950` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`).
+**À valider en terrain :** depuis BE-521-MM, taper précisément sur le marqueur de l'AUTRE véhicule (pas le sien) et vérifier que le titre du menu correspond bien à la cible réelle, et que message/signalement partent correctement.
+
+---
+
 **Mission : Fix échec intermittent d'envoi/signalement depuis un véhicule proche (placeholder VEH-xxxx) — TERMINÉE, sur branche dev**
 **Date :** 2026-06-16
 **Symptôme terrain :** depuis le compte BE-521-MM, signaler/contacter un véhicule proche échouait de façon intermittente ("parfois ça marche, parfois pas") — confirmé non lié au cache (force-quit/reopen de l'app testé, n'a pas résolu seul).
@@ -469,7 +480,9 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Fix Activité (`window.S=S`, commit `d0fcc2d`) déjà fusionné et validé en terrain par l'utilisateur. Fix complémentaire du jour — retry RPC `profilesByIds` pour réduire le placeholder `VEH-xxxx` (échec intermittent de message/signalement vers un véhicule proche, commit `0427606`) — pushé sur `claude/immatconnect-pro-app-dEKGR`, **pas encore mergé sur `main`**, en attente de validation terrain (re-tester plusieurs fois le signalement/message vers un véhicule proche depuis BE-521-MM).
+Fix Activité (`window.S=S`, commit `d0fcc2d`) déjà fusionné et validé en terrain par l'utilisateur. Deux fixes complémentaires pour l'échec intermittent de message/signalement depuis BE-521-MM, tous deux sur `claude/immatconnect-pro-app-dEKGR`, **pas encore mergés sur `main`**, en attente de validation terrain :
+1. Retry RPC `profilesByIds` pour réduire le placeholder `VEH-xxxx` (commit `0427606`) — confirmé par l'utilisateur comme non lié au bug réellement observé, mais conservé comme durcissement légitime.
+2. Fix du titre du menu véhicule écrasé par `updateReportTarget()` (commit `36cf950`) — root cause probable du bug réel, identifiée grâce à l'indice du nombre de boutons (5 vs 4) repéré par l'utilisateur. **À valider en terrain en priorité.**
 
 ---
 
