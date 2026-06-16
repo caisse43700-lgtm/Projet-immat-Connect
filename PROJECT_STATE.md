@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-40 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite41 (aria-pressed sur les pastilles de filtre carte) sur la branche de dev, pas encore fusionnée. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-41 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -950,6 +950,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 40) : `aria-pressed` ajouté sur les pastilles de filtre du journal d'appels (Tous/Manqués/Émis/Reçus/Favoris). Commit `5ea962c` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite40 (aria-pressed pastilles journal d'appels) dans `main` (commit `c3b0af5`). |
 | 2026-06-16 | IA session | PR #325 (suite 41) : `aria-pressed` ajouté sur les pastilles de filtre des alertes carte (Tous/Route/Aide/Véhicule). Commit `b25f605` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
+| 2026-06-16 | IA session | FUSION dev → main : intégration de la suite41 (aria-pressed pastilles filtre carte) dans `main` (commit `ca00804`). |
 
 ---
 
