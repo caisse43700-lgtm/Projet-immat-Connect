@@ -282,6 +282,12 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 26) — Exporter/partager le journal d'appels (index.html, session 2026-06-16)**
+
+- **Export journal** : bouton 📤 dans l'en-tête de `#icAppelsPane` (`App.exportCallJournal()`), exporte la liste actuellement filtrée (pills Tous/Manqués/Émis/Reçus + recherche `callJournalSearch`) — `App._callJournalLastLog` capture le tableau filtré à chaque `renderCallJournal()`.
+- **Partage** : même pattern que `exportThread()` (messages.js, suite25) — `navigator.share` puis fallback clipboard/`execCommand('copy')`.
+- Aucune écriture DB, aucun changement de schéma. 177 tests ✅, preflight OK.
+
 **PR #325 (suite 25) — Exporter/partager une conversation (messages.js + index.html, session 2026-06-16)**
 
 - **Export thread** : bouton "📤 Exporter la conversation" dans le menu ⋯ du thread (`#icSheetExport`). `exportThread(plate)` construit un transcript texte horodaté (`[jj/mm HH:MM] Vous/PLAQUE : message`) à partir de `t.list` (tous les messages, indépendamment du filtre de recherche en cours).
@@ -438,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Boucle "suite N" reprise sur la branche de dev (suite24 recherche en thread, suite25 export conversation) — non fusionnées vers `main`, en attente de confirmation explicite pour la fusion. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
+Boucle "suite N" reprise sur la branche de dev (suite24 recherche en thread, suite25 export conversation, suite26 export journal d'appels) — non fusionnées vers `main`, en attente de confirmation explicite pour la fusion. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
 
 ---
 
@@ -911,6 +917,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | FIX bug fonctionnel résiduel : ajout colonnes `latitude`/`longitude` (double precision) sur `reports` (migration `20260616150925_reports_position_columns.sql`, commit `dc952d4`) + mise à jour vue `public_reports`. Corrige la perte de position des signalements au reload/reconnexion. Run CI `27627683881` : succès. |
 | 2026-06-16 | IA session | PR #325 (suite 24) : recherche dans la conversation — bouton 🔍 + `#icThreadSearchBar`, `_renderTimeline(searchQuery)` filtre les messages et masque les appels pendant la recherche. Front-only (messages.js + index.html). 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 25) : exporter/partager une conversation — bouton `#icSheetExport` dans le menu ⋯, `exportThread()` transcript texte horodaté + navigator.share/clipboard fallback. Front-only. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 26) : exporter/partager le journal d'appels — bouton 📤 dans `#icAppelsPane`, `App.exportCallJournal()` exporte la liste filtrée courante, même pattern navigator.share/clipboard. Front-only. 177 tests ✅. |
 
 ---
 
