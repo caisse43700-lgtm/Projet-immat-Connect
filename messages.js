@@ -793,6 +793,15 @@ function _dayLabel(d){
 function _renderTimeline(body, messages, callEvents, searchQuery){
   const q = (searchQuery||'').trim().toUpperCase();
   const filteredMessages = q ? (messages||[]).filter(m => (m.message||'').toUpperCase().includes(q)) : (messages||[]);
+  const countEl = document.getElementById('icThreadSearchCount');
+  if(countEl){
+    if(q){
+      countEl.style.display = '';
+      countEl.textContent = filteredMessages.length + ' résultat' + (filteredMessages.length > 1 ? 's' : '');
+    } else {
+      countEl.style.display = 'none';
+    }
+  }
   const allEvents = [
     ...filteredMessages.map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
     ...(q ? [] : (callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()})))
@@ -937,6 +946,9 @@ async function openThread(plate){
   const tsBar = $('icThreadSearchBar'), tsInput = $('icThreadSearchInput');
   if(tsBar)   tsBar.style.display = 'none';
   if(tsInput) tsInput.value = '';
+  const tsClear = $('icThreadSearchClear'), tsCount = $('icThreadSearchCount');
+  if(tsClear) tsClear.style.display = 'none';
+  if(tsCount) tsCount.style.display = 'none';
 
   // Chargement événements d'appel (F-CONVERSATION-ENGINE + F-APPEL)
   let callEvents = [];
@@ -1060,7 +1072,16 @@ function toggleThreadSearch(){
 
 function setThreadSearch(v){
   State.threadSearchQuery = v || '';
+  const clearBtn = $('icThreadSearchClear');
+  if(clearBtn) clearBtn.style.display = State.threadSearchQuery ? '' : 'none';
   refreshThread();
+}
+
+function clearThreadSearch(){
+  const input = $('icThreadSearchInput');
+  if(input) input.value = '';
+  setThreadSearch('');
+  input?.focus();
 }
 
 async function sendNew(){
@@ -1915,6 +1936,7 @@ window.ImmatMessages = {
   _scrollToBottom,
   toggleThreadSearch,
   setThreadSearch,
+  clearThreadSearch,
   exportThread,
 };
 
