@@ -213,6 +213,14 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **✅ B1 CONFIRMÉ** : panneau Activité fonctionnel (validé terrain 2026-06-15)
 - SW v36, APP_BUILD '2026-06-15', CURRENT 'immatconnect-pro-v36'
 
+**PR #325 (suite 22) — Recherche dans le journal d'appels (index.html, session 2026-06-16)**
+
+- **Champ de recherche** : nouveau `<input id="callJournalSearch">` au-dessus du journal d'appels (`#icAppelsPane`), placé en sibling fixe hors du conteneur `#icCallLog` régénéré à chaque render (même pattern que `nearbySearch`) pour ne jamais perdre le focus/la frappe pendant la saisie.
+- `App._callJournalSearch` (état) + `App.setCallJournalSearch(v)` (setter, déclenche `renderCallJournal()`), même pattern que `App._callJournalFilter`/`App.setCallJournalFilter`.
+- **Filtrage** : `renderCallJournal()` filtre le journal sur la plaque normalisée (`nPlate`) ou le pseudo (`_pseudoMap`), insensible à la casse, combiné avec les filtres existants (Tous/Manqués/Émis/Reçus).
+- **État vide adapté** : message "Aucun appel pour « … »" quand une recherche est active sans résultat, au lieu du message générique.
+- Aucune écriture DB, aucun changement de schéma. 177 tests ✅.
+
 **PR #325 (suite 21) — Marquer une conversation comme non lue (messages.js, session 2026-06-16)**
 
 - **Marquer non lu** : nouveau bouton `#icSheetUnread` dans le menu ⋯ du thread, libellé dynamique ("👁️ Marquer comme non lu" / "✓ Marquer comme lu"). `getManualUnread()/isManualUnread()/setManualUnread()` — localStorage `ic_manual_unread` (tableau de plaques normalisées), même pattern que favoris/archives/sourdine.
@@ -802,6 +810,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-15 | IA session | PR #325 (suite 19) : bouton 💬 message dans le journal d'appels (renderCallJournal) → App.pickPlate, cohérence avec listes Proches/Récents. 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 20) : fix findProfileByPlate() — compactPlate() + 4 variantes de recherche en boucle + détection erreur Supabase (sentinel __error) au lieu de "introuvable" silencieux ; logs OBD_FIND_PROFILE_START/TRY/SEND_TARGET. Front-only, messages.js uniquement. 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 21) : marquer une conversation comme non lue — bouton #icSheetUnread, ic_manual_unread (localStorage), effet visuel uniquement (pastille verte), auto-clear à la réouverture du thread. 177 tests ✅. |
+| 2026-06-16 | IA session | PR #325 (suite 22) : recherche dans le journal d'appels — input #callJournalSearch (sibling fixe hors liste), App._callJournalSearch/setCallJournalSearch, filtrage par plaque ou pseudo combiné aux filtres existants. 177 tests ✅. |
 
 ---
 

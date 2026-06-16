@@ -283,6 +283,7 @@
 
     <!-- Journal d'appels -->
     <div id="icAppelsPane" style="display:none;overflow-y:auto;flex:1">
+      <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
       <div id="icCallLog"></div>
     </div>
 
@@ -1867,10 +1868,12 @@ App.renderCallJournal=async function(){
     if(_f==='missed') log=log.filter(function(r){return r.status==='missed'||r.status==='expired';});
     else if(_f==='out') log=log.filter(function(r){return r.outgoing===true;});
     else if(_f==='in') log=log.filter(function(r){return !r.outgoing;});
+    var _q=nPlate(App._callJournalSearch||'').toLowerCase();
+    if(_q) log=log.filter(function(r){return nPlate(r.plate||'').toLowerCase().includes(_q)||(_pseudoMap[r.plate]||'').toLowerCase().includes(_q);});
     function _fpill(val,label){var on=_f===val;return '<button type="button" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
     var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button></div>'+
       '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+'</div>';
-    if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">Aucun appel dans cette catégorie.</div></div>';el.innerHTML=html;return;}
+    if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">'+(_q?'Aucun appel pour «\xa0'+esc(App._callJournalSearch||'')+'\xa0».':'Aucun appel dans cette catégorie.')+'</div></div>';el.innerHTML=html;return;}
     var lastDay='';
     log.forEach(function(r){
       var cfg=statusCfg[r.status]||{label:r.status,color:'#64748b',icon:'📞'};
@@ -1908,6 +1911,8 @@ App.callFromJournal=function(plate){
 };
 App._callJournalFilter='all';
 App.setCallJournalFilter=function(f){this._callJournalFilter=f;this.renderCallJournal();};
+App._callJournalSearch='';
+App.setCallJournalSearch=function(v){this._callJournalSearch=v;this.renderCallJournal();};
 App.actOpenConv=async function(plate){
   this.panel('messages');
   try{
