@@ -47,6 +47,22 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix bug fonctionnel — colonnes de position GPS manquantes sur `reports` — TERMINÉE, déployée**
+**Date :** 2026-06-16
+**Contexte :** Bug résiduel découvert pendant la réparation du pipeline CI migrations (cf. mission ci-dessous) : la table `reports` n'a jamais eu de colonnes de position, alors que `saveReportRemote()` (`index.html`) envoie systématiquement `latitude`/`longitude` dans le payload d'insertion depuis le premier déploiement. Confirmé vide via `information_schema.columns` (12 colonnes, aucune position). Conséquence : tout signalement relu depuis la base (reload, reconnexion, `postgres_changes`) perdait sa position — seul le broadcast Realtime reçu en direct la transportait.
+**Fix appliqué :** nouvelle migration `supabase/migrations/20260616150925_reports_position_columns.sql` :
+```sql
+ALTER TABLE public.reports
+  ADD COLUMN IF NOT EXISTS latitude  double precision,
+  ADD COLUMN IF NOT EXISTS longitude double precision;
+```
++ mise à jour de la vue `public_reports` pour ré-exposer `latitude`/`longitude` (toujours sans `reporter_id`, INV-COM-015). Noms de colonnes choisis par cohérence avec `user_locations` (qui utilise déjà `latitude`/`longitude`) plutôt que `lat`/`lng`.
+**Impact côté client :** aucun changement nécessaire dans `index.html` — `saveReportRemote()` envoyait déjà `latitude`/`longitude` (tier T1 du fallback cascadé réussira désormais directement), et la lecture (`_handleReport`/`syncCommunityAlerts`) lisait déjà défensivement `r.latitude??r.lat??null`.
+**Déploiement :** commit `dc952d4`, push direct sur `main` (après confirmation explicite utilisateur) → run CI `27627683881` : `status: completed`, `conclusion: success`. Les 12 migrations rejouées sans erreur, les 5 Edge Functions redéployées.
+**À vérifier en terrain (non bloquant) :** créer un nouveau signalement puis recharger l'app pour confirmer que sa position survit au reload (auparavant perdue).
+
+---
+
 **Mission : Fix critique production — GRANT SELECT manquant sur `profiles` (table-level, jamais appliqué)**
 **Date :** 2026-06-16
 **Symptôme terrain :** envoyer un message à une plaque (ex. `BZ-652-LL`) affichait "Erreur recherche conducteur. Réessaie dans quelques secondes." (le nouveau toast d'erreur ajouté par le hotfix `findProfileByPlate`, qui a révélé ce bug auparavant masqué silencieusement par l'ancien code).
@@ -409,7 +425,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — pipeline CI migrations réparé et vert (run `27626558202`). Prochaine étape suggérée : investiguer l'absence de colonnes de position sur `reports` (cf. section 2, dernière mission).
+Aucune — pipeline CI migrations réparé et vert, et bug de position GPS manquante sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain (créer un signalement, recharger l'app, confirmer que la position survit).
 
 ---
 
@@ -879,6 +895,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | Réconciliation historique distant (SQL Editor, utilisateur) : `DELETE FROM supabase_migrations.schema_migrations WHERE version='20260613'` — supprime la référence orpheline créée par le renommage, débloque `supabase db push`. |
 | 2026-06-16 | IA session | 3ᵉ bug découvert et corrigé en 2 temps : `public_reports_secure.sql` référençait `latitude/longitude` (échec CI run `27625228382`) puis `lat/lng` (échec encore) — colonnes inexistantes sur `reports` (vérifié via `information_schema.columns`, 12 colonnes réelles, aucune position). Vue corrigée pour ne référencer que les colonnes existantes. |
 | 2026-06-16 | IA session | Pipeline CI migrations VERT pour la 1ʳᵉ fois : run `27626558202` (commit `c24749e`) — 12 migrations appliquées (no-op pour la plupart, déjà en base manuellement) + 5 Edge Functions redéployées avec succès. |
+| 2026-06-16 | IA session | FIX bug fonctionnel résiduel : ajout colonnes `latitude`/`longitude` (double precision) sur `reports` (migration `20260616150925_reports_position_columns.sql`, commit `dc952d4`) + mise à jour vue `public_reports`. Corrige la perte de position des signalements au reload/reconnexion. Run CI `27627683881` : succès. |
 
 ---
 
