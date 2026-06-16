@@ -313,8 +313,15 @@
         </div>
         <div class="ic-thread-actions">
           <button type="button" id="icCallBtn" class="ic-call-btn" aria-label="Demander un contact" onclick="ImmatMessages.callActive()">📞</button>
+          <button type="button" class="ic-icon-btn" aria-label="Rechercher dans la conversation" onclick="ImmatMessages.toggleThreadSearch()">🔍</button>
           <button type="button" class="ic-icon-btn" aria-label="Menu conversation" onclick="ImmatMessages.openThreadMenu()">⋯</button>
         </div>
+      </div>
+
+      <div id="icThreadSearchBar" style="display:none;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <input id="icThreadSearchInput" type="text" placeholder="Rechercher dans la conversation…"
+               oninput="ImmatMessages.setThreadSearch(this.value)"
+               style="width:100%;box-sizing:border-box;background:#0b1420;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:13px">
       </div>
 
       <!-- Carte contexte alerte active -->
@@ -471,6 +478,7 @@
   <button type="button" id="icSheetTrust" class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('trust')">✓ Marquer de confiance</button>
   <button type="button" id="icSheetMute"  class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('mute')">🔕 Mettre en sourdine</button>
   <button type="button" id="icSheetUnread" class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('unread')">👁️ Marquer comme non lu</button>
+  <button type="button" id="icSheetExport" class="ic-sheet-btn" onclick="ImmatMessages._sheetAction('export')">📤 Exporter la conversation</button>
   <button type="button" id="icSheetBlock" class="ic-sheet-btn danger" onclick="ImmatMessages._sheetAction('block')">🚫 Bloquer ce conducteur</button>
   <button type="button" id="icSheetAbuse" class="ic-sheet-btn danger" onclick="ImmatMessages._sheetAction('abuse')">🚨 Signaler un abus ▾</button>
   <div id="icAbuseCategories" style="display:none;padding:2px 0">
@@ -1871,8 +1879,9 @@ App.renderCallJournal=async function(){
     else if(_f==='in') log=log.filter(function(r){return !r.outgoing;});
     var _q=nPlate(App._callJournalSearch||'').toLowerCase();
     if(_q) log=log.filter(function(r){return nPlate(r.plate||'').toLowerCase().includes(_q)||(_pseudoMap[r.plate]||'').toLowerCase().includes(_q);});
+    App._callJournalLastLog=log;
     function _fpill(val,label){var on=_f===val;return '<button type="button" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
-    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button></div>'+
+    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button></span></div>'+
       '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+'</div>';
     if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">'+(_q?'Aucun appel pour «\xa0'+esc(App._callJournalSearch||'')+'\xa0».':'Aucun appel dans cette catégorie.')+'</div></div>';el.innerHTML=html;return;}
     var lastDay='';
@@ -1914,6 +1923,33 @@ App._callJournalFilter='all';
 App.setCallJournalFilter=function(f){this._callJournalFilter=f;this.renderCallJournal();};
 App._callJournalSearch='';
 App.setCallJournalSearch=function(v){this._callJournalSearch=v;this.renderCallJournal();};
+App._callJournalLastLog=[];
+App.exportCallJournal=async function(){
+  var log=this._callJournalLastLog||[];
+  if(!log.length){ toast('Aucun appel à exporter.','bad'); return; }
+  var statusLabel={accepted:'Décroché',refused:'Refusé',missed:'Manqué',expired:'Manqué',cancelled:'Annulé',ended:'Terminé'};
+  var lines=log.map(function(r){
+    var d=new Date(r.at);
+    var ts=isNaN(d)?r.at:d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    var dir=r.outgoing?'Sortant':'Entrant';
+    return '['+ts+'] '+r.plate+' — '+dir+' — '+(statusLabel[r.status]||r.status);
+  });
+  var text="Journal d'appels — ImmatConnect\n\n"+lines.join('\n');
+  try{
+    if(navigator.share){ await navigator.share({title:"Journal d'appels ImmatConnect",text:text}); return; }
+  }catch(e){ if(e&&e.name==='AbortError') return; }
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Journal copié ✓','ok');
+  }catch(e){
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Journal copié ✓','ok');
+    }catch(e2){ toast("Impossible d'exporter le journal.",'bad'); }
+  }
+};
 App.actOpenConv=async function(plate){
   this.panel('messages');
   try{

@@ -67,6 +67,7 @@ const State = {
   activePlate:null,
   channel:null,
   searchQuery:'',
+  threadSearchQuery:'',
   callEventsCache:{},
   pseudoMap:{},
   colorMap:{},
@@ -779,11 +780,18 @@ function _dayLabel(d){
   return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})});
 }
 
-function _renderTimeline(body, messages, callEvents){
+function _renderTimeline(body, messages, callEvents, searchQuery){
+  const q = (searchQuery||'').trim().toUpperCase();
+  const filteredMessages = q ? (messages||[]).filter(m => (m.message||'').toUpperCase().includes(q)) : (messages||[]);
   const allEvents = [
-    ...(messages||[]).map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
-    ...(callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()}))
+    ...filteredMessages.map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
+    ...(q ? [] : (callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()})))
   ].sort((a,b) => a._ts - b._ts);
+
+  if(q && !allEvents.length){
+    body.innerHTML = `<div class="ic-empty" style="padding:24px 12px">Aucun message ne correspond à « ${esc(searchQuery.trim())} ».</div>`;
+    return;
+  }
 
   const firstUnreadIdx = allEvents.findIndex(e => e._type==='message' && !e._sent && !e.read_at);
   const unreadCount = firstUnreadIdx >= 0
@@ -847,6 +855,7 @@ function _presenceLabel(plate){
 async function openThread(plate){
   const localPlate = fPlate(plate);
   State.activePlate = localPlate;
+  State.threadSearchQuery = '';
   setManualUnread(localPlate, false);
   await markThreadRead(localPlate);
 
@@ -915,6 +924,9 @@ async function openThread(plate){
   if(listEl) listEl.style.display = 'none';
   if(hdr)    hdr.style.display    = 'none';
   if(sbar)   sbar.style.display   = 'none';
+  const tsBar = $('icThreadSearchBar'), tsInput = $('icThreadSearchInput');
+  if(tsBar)   tsBar.style.display = 'none';
+  if(tsInput) tsInput.value = '';
 
   // Chargement événements d'appel (F-CONVERSATION-ENGINE + F-APPEL)
   let callEvents = [];
@@ -924,7 +936,7 @@ async function openThread(plate){
     State.callEventsCache[nPlate(localPlate)] = callEvents;
   }catch(e){ callEvents = []; }
 
-  _renderTimeline(body, t.list, callEvents);
+  _renderTimeline(body, t.list, callEvents, State.threadSearchQuery);
 
   box.classList.add('show');
   const _sep = body.querySelector('.ic-unread-sep');
@@ -973,6 +985,7 @@ function closeThread(){
   if(hdr)    hdr.style.display    = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
+  State.threadSearchQuery = '';
   try{
     clearTimeout(State._typingHideTimer);
     clearTimeout(State._typingBcTimer);
@@ -1001,7 +1014,7 @@ function refreshThread(){
   const wasNearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
   const prevCount = body.querySelectorAll('.ic-bubble').length;
   const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
-  _renderTimeline(body, t.list, callEvents);
+  _renderTimeline(body, t.list, callEvents, State.threadSearchQuery);
   const newCount = body.querySelectorAll('.ic-bubble').length;
   const hint = $('icScrollHint');
   if(wasNearBottom || newCount <= prevCount){
@@ -1019,6 +1032,25 @@ function _scrollToBottom(){
   if(body) body.scrollTop = body.scrollHeight;
   const hint = $('icScrollHint');
   if(hint) hint.style.display = 'none';
+}
+
+function toggleThreadSearch(){
+  const bar = $('icThreadSearchBar');
+  const input = $('icThreadSearchInput');
+  if(!bar || !input) return;
+  const opening = bar.style.display === 'none';
+  bar.style.display = opening ? '' : 'none';
+  if(opening){
+    input.focus();
+  }else{
+    input.value = '';
+    setThreadSearch('');
+  }
+}
+
+function setThreadSearch(v){
+  State.threadSearchQuery = v || '';
+  refreshThread();
 }
 
 async function sendNew(){
@@ -1669,6 +1701,48 @@ function _sheetAction(action){
     refresh();
   }
   else if(action === 'del')   { deleteThread(plate); }
+  else if(action === 'export'){ exportThread(plate); }
+}
+
+async function exportThread(plate){
+  const t = State.threads.find(x => x.plate === plate);
+  const list = (t?.list || []).slice().sort((a,b) => new Date(a.created_at||0) - new Date(b.created_at||0));
+  if(!list.length) return toast('Aucun message à exporter.','bad');
+
+  const lines = list.map(m => {
+    const d = m.created_at ? new Date(m.created_at) : null;
+    const ts = d ? d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const who = m._sent ? 'Vous' : fPlate(plate);
+    return `[${ts}] ${who} : ${m.message || ''}`;
+  });
+  const text = `Conversation avec ${fPlate(plate)} — ImmatConnect\n\n` + lines.join('\n');
+
+  try{
+    if(navigator.share){
+      await navigator.share({ title: 'Conversation ImmatConnect', text });
+      return;
+    }
+  }catch(e){
+    if(e?.name === 'AbortError') return;
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Conversation copiée ✓','ok');
+  }catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Conversation copiée ✓','ok');
+    }catch(e2){
+      toast('Impossible d\'exporter la conversation.','bad');
+    }
+  }
 }
 
 function _reportAbuse(category){
@@ -1829,6 +1903,9 @@ window.ImmatMessages = {
   _pickChip,
   sharePosition,
   _scrollToBottom,
+  toggleThreadSearch,
+  setThreadSearch,
+  exportThread,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
