@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-37 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-37 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite38 (mémorisation du filtre « Favoris uniquement » des conversations) sur la branche de dev, pas encore fusionnée. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -943,6 +943,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite36 (filtre favoris journal d'appels) dans `main` (commit `e5d21b0`). |
 | 2026-06-16 | IA session | PR #325 (suite 37) : bouton ⭐ « Favoris uniquement » dans l'en-tête de la liste des conversations (parité avec le filtre Favoris du journal d'appels de la suite36). Commit `bdb0716` sur la branche de dev. Front-only (index.html + messages.js + messages.css). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite37 (favoris uniquement liste conversations) dans `main` (commit `8b26297`). |
+| 2026-06-16 | IA session | PR #325 (suite 38) : mémorisation du filtre « Favoris uniquement » de la liste des conversations dans `localStorage` (`ic_conv_fav_only`), parité avec le filtre du journal d'appels (suite34). Commit `2b65206` sur la branche de dev. Front-only (messages.js). 177 tests ✅. |
 
 ---
 

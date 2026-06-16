@@ -68,7 +68,7 @@ const State = {
   channel:null,
   searchQuery:'',
   threadSearchQuery:'',
-  favOnly:false,
+  favOnly:(function(){try{return localStorage.getItem('ic_conv_fav_only')==='1';}catch(e){return false;}})(),
   callEventsCache:{},
   pseudoMap:{},
   colorMap:{},
@@ -596,6 +596,8 @@ function render(){
   threads = threads.filter(t => !archived.includes(nPlate(t.plate)));
 
   // Favoris en tête (F-FAVORITES)
+  const favBtn = $('icFavOnlyBtn');
+  if(favBtn) favBtn.classList.toggle('active', State.favOnly);
   const favs = getFavorites();
   if(State.favOnly){
     threads = threads.filter(t => favs.includes(nPlate(t.plate)));
@@ -1091,6 +1093,7 @@ function clearThreadSearch(){
 
 function toggleFavOnly(){
   State.favOnly = !State.favOnly;
+  try{localStorage.setItem('ic_conv_fav_only', State.favOnly ? '1' : '0');}catch(e){}
   const btn = $('icFavOnlyBtn');
   if(btn) btn.classList.toggle('active', State.favOnly);
   render();
