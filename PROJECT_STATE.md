@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Boucle "suite N" reprise sur la branche de dev (suite24 recherche en thread, suite25 export conversation, suite26 export journal d'appels) — non fusionnées vers `main`, en attente de confirmation explicite pour la fusion. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
+Suites 24-26 fusionnées vers `main` (commit `cc0a21e`). Fix UX ajouté sur la branche de dev : ambiguïté placeholder/valeur sur le champ plaque véhicule (étape "Signaler → Véhicule") corrigée (commit `8260018`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Validation terrain GPS toujours à faire (non bloquant).
 
 ---
 
@@ -918,6 +918,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 24) : recherche dans la conversation — bouton 🔍 + `#icThreadSearchBar`, `_renderTimeline(searchQuery)` filtre les messages et masque les appels pendant la recherche. Front-only (messages.js + index.html). 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 25) : exporter/partager une conversation — bouton `#icSheetExport` dans le menu ⋯, `exportThread()` transcript texte horodaté + navigator.share/clipboard fallback. Front-only. 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 26) : exporter/partager le journal d'appels — bouton 📤 dans `#icAppelsPane`, `App.exportCallJournal()` exporte la liste filtrée courante, même pattern navigator.share/clipboard. Front-only. 177 tests ✅. |
+| 2026-06-16 | IA session | MERGE dev → main : fusion des suites 24-26 (11 commits) vers `main` (commit `cc0a21e`). |
+| 2026-06-16 | IA session | FIX UX (signalement copié d'une capture utilisateur) : champ `sigVehiclePlate` (étape "Signaler → Véhicule") — placeholder "Plaque : AB-123-CD" visuellement identique à une vraie valeur saisie, l'utilisateur croyait le champ rempli. Ajout d'un `<label>` explicite + placeholder simplifié + style `::placeholder` dédié (couleur muted). Commit `8260018` sur la branche de dev, en attente de fusion. Front-only (index.html + app.css). 177 tests ✅, preflight OK. |
 
 ---
 
