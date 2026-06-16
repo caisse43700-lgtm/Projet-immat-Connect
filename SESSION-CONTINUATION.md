@@ -998,3 +998,52 @@ SELECT version FROM supabase_migrations.schema_migrations ORDER BY version;
 ```
 Donne la liste authoritative des migrations que Supabase considère comme appliquées — la seule source de vérité fiable, plus fiable que toute déduction depuis l'historique PROJECT_STATE.
 
+### Suite — relance CI, réconciliation et 3ᵉ bug (colonnes position inexistantes sur `reports`)
+
+**Push du fix vers `main` (commit `b3f80dd`)** : déclenche automatiquement le run `27614647067`, qui échoue dès l'étape "Apply pending migrations" (4s) avec :
+```
+Remote migration versions not found in local migrations directory: 20260613.
+supabase migration repair --status reverted 20260613
+```
+Cause : le renommage des 12 fichiers a laissé `supabase_migrations.schema_migrations` avec une ligne `version='20260613'` qui ne correspond plus à aucun fichier local (l'ancien `20260613_call_requests_device_id.sql` est devenu `20260613111416_call_requests_device_id.sql`). `supabase db push` refuse de continuer tant que l'historique distant référence une version orpheline.
+
+**Fix** : l'utilisateur exécute en SQL Editor (équivalent fonctionnel de `supabase migration repair --status reverted`, qu'il n'a pas via CLI) :
+```sql
+DELETE FROM supabase_migrations.schema_migrations WHERE version = '20260613';
+```
+Confirmé exécuté (vérifié par un aller-retour de clarification, la première confirmation étant ambiguë).
+
+**Relance du job** via `mcp__github__actions_run_trigger` (`rerun_failed_jobs` sur le run `27614647067`) — interrompue temporairement par une activation du Mode Plan côté session (résolu en écrivant un plan minimal et en appelant `ExitPlanMode`, approuvé par l'utilisateur).
+
+**2ᵉ échec (run `81682367520` / job du run rerun)** : progression beaucoup plus loin (7s, ~7-8 migrations no-op `already exists, skipping` — confirmant qu'elles avaient déjà été appliquées manuellement par le passé), puis échec sur `20260613203627_public_reports_secure.sql` :
+```
+ERROR: column "latitude" does not exist (SQLSTATE 42703)
+At statement: CREATE VIEW public.public_reports AS SELECT ... latitude, ...
+```
+Root cause suspectée (preuve indirecte, code client `index.html` ligne ~1173, fonction `saveReportRemote`) : un fallback en cascade T1→T4 qui renomme `latitude/longitude` en `lat/lng` à la 3ᵉ tentative — suggérant que les vraies colonnes seraient `lat`/`lng`. **Fix appliqué sur cette hypothèse (commit `32161cc`)** : `lat, lng` à la place de `latitude, longitude` dans la vue. Repoussé sur `main`.
+
+**3ᵉ échec (run `27625228382`, 14:34)** : l'hypothèse `lat`/`lng` était **également fausse** :
+```
+ERROR: column "lat" does not exist (SQLSTATE 42703)
+```
+Cette fois, plutôt que de deviner une 3ᵉ fois, demande explicite à l'utilisateur d'exécuter une requête d'introspection en lecture seule :
+```sql
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_schema='public' AND table_name='reports' ORDER BY ordinal_position;
+```
+Résultat (4 captures d'écran successives, table à 12 lignes) — **liste complète et définitive des colonnes de `reports`** :
+```
+id (uuid), reporter_id (uuid), plate (text), reason (text), created_at (timestamptz),
+category (text), status (text), resolved_at (timestamptz), seen_at (timestamptz),
+actioned_at (timestamptz), urgency_level (text), target_plate (text)
+```
+**Aucune colonne de position n'existe sur `reports`.** Les deux tentatives précédentes (`latitude`/`longitude` puis `lat`/`lng`) ne pouvaient donc pas fonctionner, quelle que soit l'hypothèse de nommage.
+
+**Fix définitif (commit `c24749e`)** : la vue `public_reports` ne référence plus que les colonnes réellement présentes (`lat, lng` remplacés par `category`, qui existait déjà mais n'était pas inclus dans la vue). Repoussé sur `claude/immatconnect-pro-app-dEKGR` puis sur `main`.
+
+**Run final `27626558202` (commit `c24749e`, 14:54) : `status=completed`, `conclusion=success`.** Les 12 migrations se sont appliquées sans erreur et les 5 Edge Functions ont été redéployées — première exécution intégralement verte du workflow `deploy-edge-functions.yml` depuis sa création.
+
+### Bug fonctionnel résiduel découvert (hors scope CI, à traiter séparément)
+
+Le code client (`saveReportRemote` dans `index.html`, lignes ~1170-1175) construit systématiquement un payload d'insertion contenant `latitude`/`longitude` (tiers T1/T2) ou les renomme en `lat`/`lng` (tier T3) — mais **aucune de ces colonnes n'existe sur `reports`**. Conséquence très probable : tous les inserts réels passent par le tier T4 ("minimal", sans position), ou échouent silencieusement à transmettre des coordonnées. Les signalements communautaires n'ont donc historiquement jamais de position GPS persistée en base (la position visible en direct vient uniquement du broadcast Realtime, pas de la table). À investiguer/corriger dans une prochaine mission : soit ajouter une migration `ALTER TABLE reports ADD COLUMN lat double precision, ADD COLUMN lng double precision`, soit confirmer que c'est un choix de design volontaire (position éphémère via Realtime uniquement, jamais persistée).
+

@@ -65,22 +65,24 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ---
 
-**Mission : Réparation pipeline CI migrations (collision de versions + masquage d'erreur)**
+**Mission : Réparation pipeline CI migrations (collision de versions + masquage d'erreur) — TERMINÉE, pipeline vert**
 **Date :** 2026-06-16
 **Root cause du bug ci-dessus, corrigée à la source :**
 - 12 fichiers dans `supabase/migrations/` portaient des préfixes de version sur 8 chiffres seulement (`AAAAMMJJ`, sans heure). 4 fichiers partageaient `20260613`, 6 fichiers partageaient `20260614` → collision de clé primaire dans `supabase_migrations.schema_migrations` dès la 2ᵉ migration d'un même jour.
 - `continue-on-error: true` sur l'étape "Apply pending migrations" du workflow `deploy-edge-functions.yml` masquait cet échec : le job restait "✅ success" dans GitHub Actions malgré l'erreur réelle de `supabase db push`. Ce flag a été retiré — un futur échec de migration fera désormais échouer le job visiblement.
-**Fix appliqué (code uniquement, aucune action DB) :**
+**Fix appliqué (code) :**
 1. Tous les 12 fichiers renommés avec un préfixe complet `AAAAMMJJHHMMSS` (basé sur leur date de création réelle, ordre chronologique préservé) → versions désormais uniques, plus aucune collision possible.
 2. 3 fichiers contenaient des `CREATE POLICY` sans garde `DROP POLICY IF EXISTS` préalable (`push_subscriptions.sql`, `user_blocks.sql`, `device_sessions.sql`) → non rejouables si la policy existe déjà. Garde ajoutée sur chacun. Les 9 autres fichiers étaient déjà idempotents (`IF NOT EXISTS`, `CREATE OR REPLACE`, ou `DROP POLICY IF EXISTS` déjà présent).
 3. `continue-on-error: true` retiré de l'étape "Apply pending migrations".
-**Conséquence du renommage :** la base de données a un enregistrement `supabase_migrations.schema_migrations` avec l'ancienne version `20260613` (pour `call_requests_device_id`, seule migration ayant réellement été appliquée par CI). Comme tous les fichiers ont maintenant une nouvelle version, le **prochain** `supabase db push` rejouera les 12 migrations dans l'ordre (versions jamais vues). C'est sans risque : tout le contenu SQL est idempotent (vérifié ligne par ligne), donc rejouer une migration déjà appliquée manuellement (table déjà existante, policy déjà en place) ne produit aucune erreur ni duplication.
-**Ce que ça casse réellement (réponse à "qu'est-ce que ça casse en fait ?") :**
-- **Confirmé cassé puis réparé aujourd'hui :** envoi de message à une plaque tierce (`findProfileByPlate()` dans `messages.js`) — bloquant, visible par l'utilisateur.
-- **Probablement degradé silencieusement (même cause, même fix) :** tous les autres appels directs `.from('profiles').select(...)` dans `messages.js` et `index.html` (affichage pseudo dans le journal d'appels, titre de conversation, aperçu de composition, liste des véhicules récents) — ces lectures sont entourées de try/catch, donc l'échec ne produisait pas d'erreur visible, juste un pseudo manquant. Devrait être réparé par le même GRANT.
-- **Non cassé malgré l'absence d'application CI :** `device_sessions`, `driver_ratings`, `vehicle_trust_scores` (migration `user_trust`), `delete_audit_log` — toutes créées manuellement via SQL Editor avant l'introduction du mécanisme CI (`a577b9e`, 2026-06-15), donc déjà présentes en base indépendamment du bug.
-- **Non vérifié empiriquement (à confirmer) :** `public_profiles` (table + trigger de sync) et la vue `public_reports` (RLS reports sans `reporter_id`) — le signup fonctionne (qui dépend de `public_profiles` via `plateAvailable()`), ce qui suggère que `public_profiles` existe déjà, mais ce n'est pas une preuve formelle que le trigger de sync est actif. Les index de performance (`missing_indexes`) sont par nature inoffensifs s'ils manquent (juste plus lent, jamais d'erreur).
-**Reste à faire :** soit (a) laisser le prochain push sur `main` déclencher `supabase db push` qui rejouera proprement les 12 migrations (recommandé — confirmera/réparera tout en une fois, idempotent donc sans risque), soit (b) vérifier d'abord via SQL Editor (`SELECT version FROM supabase_migrations.schema_migrations ORDER BY version;`) ce qui est réellement enregistré comme appliqué.
+**Réconciliation de l'historique distant (SQL Editor, exécuté par l'utilisateur) :** `DELETE FROM supabase_migrations.schema_migrations WHERE version = '20260613';` — l'ancienne version (orpheline après le renommage) bloquait `supabase db push` avec "Remote migration versions not found in local migrations directory".
+**3ᵉ bug découvert en cours de réparation, lui aussi corrigé (vrai bug de fond, jamais détecté avant car cette migration n'avait jamais réellement été exécutée) :** `20260613203627_public_reports_secure.sql` définissait la vue `public.public_reports` avec des colonnes `latitude`/`longitude` (1ʳᵉ tentative, échec : colonne inexistante) puis `lat`/`lng` (2ᵉ tentative, échec : colonne inexistante non plus). Vérification empirique via `information_schema.columns` (exécutée par l'utilisateur en SQL Editor) : la table `reports` n'a **aucune colonne de position** — ses 12 colonnes réelles sont `id, reporter_id, plate, reason, created_at, category, status, resolved_at, seen_at, actioned_at, urgency_level, target_plate`. La vue a été corrigée pour ne référencer que les colonnes existantes (remplace `lat, lng` par `category`).
+**Conséquence fonctionnelle de ce 3ᵉ bug (hors scope du fix CI, à traiter séparément) :** la table `reports` n'a jamais stocké de coordonnées GPS, malgré le code client (`saveReportRemote` dans `index.html`) qui tente systématiquement d'envoyer `latitude`/`longitude` dans le payload d'insertion. Les signalements communautaires sont donc historiquement enregistrés sans position (tier de fallback "T4 minimal" ou équivalent sans coordonnées). **À investiguer dans une prochaine mission :** soit ajouter les colonnes `lat`/`lng` à la table `reports` (migration `ADD COLUMN`), soit confirmer que la position n'est volontairement portée que par le broadcast Realtime (pas par la table persistée).
+**Résultat final :** run CI `27626558202` (commit `c24749e`, push direct sur `main`) — `status: completed`, `conclusion: success`. Les 12 migrations ont été rejouées sans erreur (la plupart en no-op `already exists, skipping`, confirmant qu'elles avaient déjà été appliquées manuellement) et les 5 Edge Functions (`delete-account`, `export-user-data`, `submit-rating`, `send-push-notification`, `immat-brain-dialog`) ont été redéployées avec succès — pour la première fois depuis la mise en place du workflow.
+**Ce que ça a réellement cassé (réponse à "qu'est-ce que ça casse en fait ?") :**
+- **Confirmé cassé puis réparé avant cette mission :** envoi de message à une plaque tierce (`findProfileByPlate()` dans `messages.js`), via le GRANT manquant sur `profiles` (cf. mission précédente).
+- **Confirmé jamais appliqué, maintenant en place :** RLS stricte sur `reports` (lecture réservée à l'auteur) + vue `public_reports` (accès REST PII-free aux signalements) — ces deux objets n'avaient jamais existé en base avant le run `27626558202`.
+- **Confirmé sans impact (déjà présent en base avant le fix, créé manuellement) :** `device_sessions`, `driver_ratings`, `vehicle_trust_scores`, `delete_audit_log`, `public_profiles`, les index de `missing_indexes.sql`.
+- **Bug fonctionnel distinct révélé par cette réparation (jamais lié au pipeline CI) :** absence de colonnes de position sur `reports` — cf. ci-dessus.
 
 ---
 
@@ -407,7 +409,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-PR #325 active — nombreuses améliorations UX en attente de merge dans main (voir section 2b).
+Aucune — pipeline CI migrations réparé et vert (run `27626558202`). Prochaine étape suggérée : investiguer l'absence de colonnes de position sur `reports` (cf. section 2, dernière mission).
 
 ---
 
@@ -874,6 +876,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | MERGE COMPLET dev → main : fusion des 65 commits (suites 1-23) après vérification (177 tests ✅, scan secrets négatif, revue manuelle core/call-screen.js + core/interaction-engine.js). |
 | 2026-06-16 | IA session | FIX CRITIQUE PROD (SQL manuel) : `GRANT SELECT (id,owner_plate,pseudo,vehicle_color) ON public.profiles TO authenticated` — table-level grant jamais appliqué depuis le GO LIVE (REVOKE sans GRANT de compensation). Root cause CI : collision de version `20260613` dans 4 fichiers de migration → `supabase db push` avorte silencieusement (continue-on-error masque l'échec) depuis le premier essai. Vérifié avant/après via information_schema.column_privileges (0 ligne → 4 lignes). |
 | 2026-06-16 | IA session | RÉPARATION pipeline migrations : 12 fichiers `supabase/migrations/*.sql` renommés en versions uniques `AAAAMMJJHHMMSS` (fin des collisions de version) ; 3 fichiers rendus idempotents (`DROP POLICY IF EXISTS` ajouté avant `CREATE POLICY` dans push_subscriptions/user_blocks/device_sessions) ; `continue-on-error: true` retiré de l'étape "Apply pending migrations" du workflow `deploy-edge-functions.yml` pour que tout futur échec soit visible. Code uniquement, aucune action DB. |
+| 2026-06-16 | IA session | Réconciliation historique distant (SQL Editor, utilisateur) : `DELETE FROM supabase_migrations.schema_migrations WHERE version='20260613'` — supprime la référence orpheline créée par le renommage, débloque `supabase db push`. |
+| 2026-06-16 | IA session | 3ᵉ bug découvert et corrigé en 2 temps : `public_reports_secure.sql` référençait `latitude/longitude` (échec CI run `27625228382`) puis `lat/lng` (échec encore) — colonnes inexistantes sur `reports` (vérifié via `information_schema.columns`, 12 colonnes réelles, aucune position). Vue corrigée pour ne référencer que les colonnes existantes. |
+| 2026-06-16 | IA session | Pipeline CI migrations VERT pour la 1ʳᵉ fois : run `27626558202` (commit `c24749e`) — 12 migrations appliquées (no-op pour la plupart, déjà en base manuellement) + 5 Edge Functions redéployées avec succès. |
 
 ---
 
