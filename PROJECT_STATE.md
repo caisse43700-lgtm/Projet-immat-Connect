@@ -47,7 +47,26 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Merge complet de la branche de dev vers main (65 commits, suites 1-23)**
+**Mission : Fix critique production — GRANT SELECT manquant sur `profiles` (table-level, jamais appliqué)**
+**Date :** 2026-06-16
+**Symptôme terrain :** envoyer un message à une plaque (ex. `BZ-652-LL`) affichait "Erreur recherche conducteur. Réessaie dans quelques secondes." (le nouveau toast d'erreur ajouté par le hotfix `findProfileByPlate`, qui a révélé ce bug auparavant masqué silencieusement par l'ancien code).
+**Root cause découverte :**
+- `supabase db push` (workflow `deploy-edge-functions.yml`) n'a **jamais réussi à appliquer plus d'1 migration sur 12 en attente**. Logs CI (run `27543373052`, step "Apply pending migrations") : `ERROR: duplicate key value violates unique constraint "schema_migrations_pkey" — Key (version)=(20260613) already exists.` Cause : 4 fichiers de migration partagent le même préfixe de version `20260613` (sans heure) → collision de clé primaire dans `supabase_migrations.schema_migrations` → le push avorte dès la 2ᵉ migration. `continue-on-error: true` sur cette étape masquait l'échec (le job entier restait "✅ success" dans GitHub Actions malgré l'erreur réelle).
+- Conséquence : la migration `20260615_profiles_column_security.sql` (qui devait `GRANT SELECT (id, owner_plate, pseudo, vehicle_color) ON public.profiles TO authenticated` après un `REVOKE SELECT` antérieur exécuté manuellement) n'a **jamais été appliquée en base**.
+- Vérifié empiriquement via SQL Editor : `SELECT column_name FROM information_schema.column_privileges WHERE grantee='authenticated' AND table_name='profiles' AND privilege_type='SELECT'` → **0 ligne** avant correctif (aucun droit de lecture du tout sur `profiles` pour `authenticated`, ni table-level ni column-level).
+- La politique RLS `profiles_select_authenticated` (`auth.role() = 'authenticated'`) était elle déjà correctement en place — seul le `GRANT` manquait.
+- `get_my_profile()` (RPC SECURITY DEFINER, utilisée au login dans `index.html`) n'était pas affectée car elle contourne les grants de table — c'est pourquoi le login fonctionnait normalement pendant que `findProfileByPlate()` (lecture directe `.from('profiles')`) échouait silencieusement (avant le hotfix) puis explicitement (après).
+**Fix appliqué (manuel, SQL Editor, vérifié) :**
+```sql
+GRANT SELECT (id, owner_plate, pseudo, vehicle_color) ON public.profiles TO authenticated;
+```
+Revérifié après exécution : la requête de vérification retourne maintenant les 4 colonnes attendues (4 rows).
+**Reste à faire (non bloquant, planifié) :** corriger les noms de fichiers de migration en collision (préfixes `20260613`/`20260614`/`20260615` dupliqués) dans `supabase/migrations/` pour que `supabase db push` cesse d'avorter silencieusement, puis laisser CI rejouer proprement les migrations restantes (`device_sessions`, `driver_ratings`, `missing_indexes`, `public_profiles_secure`, `public_reports_secure`, `user_trust`, `delete_audit_log`) qui sont elles aussi potentiellement jamais appliquées.
+**Validation terrain :** ✅ confirmée par l'utilisateur (2026-06-16) — l'envoi de message à BZ-652-LL fonctionne après le GRANT, plus d'erreur "Erreur recherche conducteur".
+
+---
+
+**Mission précédente : Merge complet de la branche de dev vers main (65 commits, suites 1-23)**
 **Date :** 2026-06-16
 **Contexte :** Après le hotfix isolé (cherry-pick `02daf34`→`54b8b37`) déployé seul sur `main` plus tôt dans la session, l'utilisateur a demandé la fusion complète de la branche `claude/immatconnect-pro-app-dEKGR` vers `main`, avec vérification systématique avant déploiement.
 **Vérifications effectuées avant le merge :**
@@ -835,6 +854,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | PR #325 (suite 22) : recherche dans le journal d'appels — input #callJournalSearch (sibling fixe hors liste), App._callJournalSearch/setCallJournalSearch, filtrage par plaque ou pseudo combiné aux filtres existants. 177 tests ✅. |
 | 2026-06-16 | IA session | PR #325 (suite 23) : badge ⭐ favori dans le journal d'appels (lecture localStorage ic_favorites, parité visuelle avec messages.js, pas de nouveau bouton de bascule). 177 tests ✅. |
 | 2026-06-16 | IA session | MERGE COMPLET dev → main : fusion des 65 commits (suites 1-23) après vérification (177 tests ✅, scan secrets négatif, revue manuelle core/call-screen.js + core/interaction-engine.js). |
+| 2026-06-16 | IA session | FIX CRITIQUE PROD (SQL manuel) : `GRANT SELECT (id,owner_plate,pseudo,vehicle_color) ON public.profiles TO authenticated` — table-level grant jamais appliqué depuis le GO LIVE (REVOKE sans GRANT de compensation). Root cause CI : collision de version `20260613` dans 4 fichiers de migration → `supabase db push` avorte silencieusement (continue-on-error masque l'échec) depuis le premier essai. Vérifié avant/après via information_schema.column_privileges (0 ligne → 4 lignes). |
 
 ---
 
