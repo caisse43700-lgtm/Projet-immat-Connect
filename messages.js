@@ -635,7 +635,7 @@ function render(){
           <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
-              <span class="ic-plate">${esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${esc(pseudo)}</span>`:''}${trustBadge}${mutedBadge}</span>
+              <span class="ic-plate">${State.searchQuery ? _highlightHtml(esc(t.plate), State.searchQuery) : esc(t.plate)}${pseudo?` <span style="font-size:11px;font-weight:400;color:#94a3b8">${State.searchQuery ? _highlightHtml(esc(pseudo), State.searchQuery) : esc(pseudo)}</span>`:''}${trustBadge}${mutedBadge}</span>
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
