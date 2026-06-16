@@ -444,7 +444,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — suites 24-32 et fix UX placeholder plaque véhicule fusionnés vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
+Aucune — suites 24-32 et fix UX placeholder plaque véhicule fusionnés vers `main`. Suite33 (aria-label sur les 3 champs de recherche) ajoutée sur la branche de dev (commit `5cbd324`) — en attente de confirmation explicite pour la fusion vers `main`. Pipeline CI migrations réparé et vert, bug de position GPS sur `reports` corrigé et déployé (run `27627683881`). Prochaine étape suggérée : validation terrain GPS (créer un signalement, recharger l'app, confirmer que la position survit) — non bloquant.
 
 ---
 
@@ -933,6 +933,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | MERGE dev → main : fusion de la suite31 (surlignage journal d'appels) vers `main` (commit `f7279fe`). |
 | 2026-06-16 | IA session | PR #325 (suite 32) : compteur "N résultat(s)" affiché sous le champ de recherche du journal d'appels pendant une recherche active (même pattern que le compteur de recherche en thread, suite28). Commit `af663ce` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | MERGE dev → main : fusion de la suite32 (compteur recherche journal d'appels) vers `main` (commit `9143dcd`). |
+| 2026-06-16 | IA session | PR #325 (suite 33) : ajout d'`aria-label` sur les 3 champs de recherche (liste de conversations, recherche en thread, journal d'appels) pour l'accessibilité lecteur d'écran. Commit `5cbd324` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 
 ---
 
