@@ -40,6 +40,17 @@
   w.colorHex = c => COLOR_HEX[c || 'other'] || '#b388ff';
   w.colorLabel = c => COLOR_LABEL[c || ''] || 'Couleur non renseignée';
 
+  /* Surligne une recherche dans du HTML déjà échappé, sans toucher aux balises */
+  w.highlightHtml = (html, query) => {
+    const q = String(query || '').trim();
+    if (!q) return html;
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig');
+    return String(html || '').split(/(<[^>]+>)/g).map(seg => {
+      if (seg.indexOf('<') === 0) return seg;
+      return seg.replace(re, m => '<mark style="background:#fbbf24;color:#1e1b06;border-radius:3px;padding:0 1px">' + m + '</mark>');
+    }).join('');
+  };
+
   /* Type d'alerte */
   w.inferType = input => {
     const s = String(input || '').toLowerCase();
