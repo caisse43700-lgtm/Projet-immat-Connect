@@ -485,10 +485,24 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ---
 
+---
+
+**Mission : Fix "Mon profil ne s'ouvre pas" — TERMINÉE, sur branche dev**
+**Date :** 2026-06-17
+**Symptôme :** Taper "✏️ Mon profil" dans les Paramètres ne faisait rien visuellement (légère pression détectée, mais aucun écran n'apparaissait).
+**Root cause :** `forceOpenApp()` dans `ui.js` (appelée lors de l'init app via `app.openMap()` patchée par `patchApp()`) appelle `hideAuthScreens()` qui pose `style.display='none'` sur les 4 écrans d'auth (`#sw`, `#sa`, `#sp`, `#sr`). `openEditProfile()` ne faisait qu'ajouter `.active` sur `#sp`, mais le `style.display='none'` inline prime sur toute règle CSS — l'écran restait invisible. Idem pour `#appScreen` qui pouvait garder `style.display='block'` depuis `forceOpenApp()`.
+**Fix appliqué (`index.html`, `App.openEditProfile`) :**
+1. Au moment de masquer tous les écrans, effacer aussi `style.display` (pas seulement retirer `.active`).
+2. Effacer `style.display` de `#appScreen`.
+3. Avant d'ajouter `.active` sur `#sp`, effacer `_sp.style.display=''`.
+**Commit :** `4367f02` sur `claude/immatconnect-pro-app-dEKGR`.
+
+---
+
 ## 3. MISSION EN COURS
 
-Sprint 9 — Module Véhicule (démarré 2026-06-16). Sur branche `claude/immatconnect-pro-app-dEKGR`.
-4 commits de fixes UX menu carte + bug titre menu (commits `0427606` `36cf950` `be1de42` `670892c`) en attente de validation terrain et de merge vers `main`.
+Sprint 9 — Module Véhicule (démarré 2026-06-16) + fix UX menu carte. Sur branche `claude/immatconnect-pro-app-dEKGR`.
+Commits en attente de validation terrain et de merge vers `main` : `0427606` `36cf950` `be1de42` `670892c` (UX menu carte) + commits Sprint 9 (détails véhicule) + `4367f02` (fix Mon profil).
 
 ---
 
@@ -995,6 +1009,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite40 (aria-pressed pastilles journal d'appels) dans `main` (commit `c3b0af5`). |
 | 2026-06-16 | IA session | PR #325 (suite 41) : `aria-pressed` ajouté sur les pastilles de filtre des alertes carte (Tous/Route/Aide/Véhicule). Commit `b25f605` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite41 (aria-pressed pastilles filtre carte) dans `main` (commit `ca00804`). |
+| 2026-06-17 | IA session | UX menu véhicule (propre véhicule) — boutons Appeler/Message/Copier/Évaluer/Bloquer masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. Bouton restant renommé "🆘 Aide" + redirige directement vers `sigStepAide()`. Commits `be1de42` + `670892c` sur branche dev. |
+| 2026-06-17 | IA session | Sprint 9 — Détails véhicule : colonnes `vehicle_make`, `vehicle_model`, `vehicle_year`, `fuel_type` ajoutées à `profiles` + `public_profiles` + trigger `sync_public_profile()` + RPC `get_public_profiles_by_ids()` (migration `20260617100000_vehicle_details.sql`). Formulaire de profil étendu (4 champs + sélecteur carburant). Affichage dans le menu contextuel carte (marque modèle année · émoji carburant). Commits Sprint 9 sur branche dev. |
+| 2026-06-17 | IA session | FIX "Mon profil ne s'ouvre pas" : `hideAuthScreens()` dans ui.js posait `style.display='none'` sur `#sp` à l'init de l'app. `openEditProfile()` n'effaçait pas ce style inline — `.active` seul ne suffisait pas. Fix : effacer `style.display` sur tous les écrans d'auth + sur `#appScreen` avant d'activer `#sp`. Commit `4367f02` sur branche dev. |
 
 ---
 
