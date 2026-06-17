@@ -63,6 +63,8 @@ CREATE TRIGGER trg_sync_public_profile
 -- ============================================================
 -- 5. Mettre à jour la RPC get_public_profiles_by_ids
 -- ============================================================
+-- DROP requis : CREATE OR REPLACE ne peut pas changer le RETURNS TABLE (SQLSTATE 42P13)
+DROP FUNCTION IF EXISTS public.get_public_profiles_by_ids(uuid[]);
 CREATE OR REPLACE FUNCTION public.get_public_profiles_by_ids(p_ids uuid[])
 RETURNS TABLE(
   user_id       uuid,
