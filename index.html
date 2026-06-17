@@ -1749,7 +1749,7 @@ App._actModCard=function(item,cat){
         </div>
       </div>
       <div class="act-mod-actions">
-        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(item.plate)}','')">📞 Appel</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
+        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(item.plate)}','')">📞 Appel</button>${isNew?`<button class="act-mod-btn-ok" onclick="App.actMarkConvRead('${e(item.plate)}')">✓ Lu</button>`:''}<button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
       </div>
     </div>`;
   }
@@ -1801,11 +1801,26 @@ App.actViewOnMap=function(alertId){
   if(a?.lat!=null&&a?.lng!=null){this.closeActivityCat?.();this.navMap?.();try{if(S.map)S.map.setView([a.lat,a.lng],17,{animate:true})}catch(e){}}
   else toast('Position non disponible pour cette alerte.','bad');
 };
-App.markAllCatRead=function(){
+App.markAllCatRead=async function(){
   (S.alerts||[]).forEach(a=>{if(a.status!=='gone'&&a.status!=='resolved')a.status='seen';});
   if(typeof saveAlerts==='function')saveAlerts();
+  try{await window.ImmatMessages?.markAllRead?.();}catch(e){}
   this.renderCategoryFeed(S._actCat||'all',S._actCatTab||'recus');
   this.updateActBadge?.();toast('Tout marqué comme lu.','ok');
+};
+App.actMarkConvRead=function(plate){
+  const msgs=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&m._otherPlate===plate);
+  if(!msgs.length)return;
+  const now=new Date().toISOString();
+  const ids=msgs.map(m=>m.id);
+  try{
+    sb.from('messages').update({read_at:now}).in('id',ids).then(()=>{
+      msgs.forEach(m=>{m.read_at=now;});
+      try{window.ImmatMessages?.buildThreads?.();window.ImmatMessages?.render?.();}catch(e){}
+      this.renderCategoryFeed(S._actCat||'all',S._actCatTab||'recus');
+      this.updateActBadge?.();
+    });
+  }catch(e){}
 };
 App.openEditProfile=function(){
   try{
