@@ -273,11 +273,6 @@
       <input id="icSearchInput" type="search" placeholder="Rechercher une plaque…" aria-label="Rechercher une conversation par plaque" oninput="ImmatMessages.filterConv(this.value)">
     </div>
 
-    <!-- Onglets Messages / Appels -->
-    <div style="display:flex;border-bottom:1px solid #1e293b">
-      <button id="icTabMessages" type="button" onclick="App.switchContactTab&&App.switchContactTab('messages')" style="flex:1;padding:8px;border:none;background:none;color:#e2e8f0;font-size:13px;cursor:pointer;font-weight:600">Messages</button>
-      <button id="icTabAppels" type="button" onclick="App.switchContactTab&&App.switchContactTab('appels')" style="flex:1;padding:8px;border:none;background:none;color:#64748b;font-size:13px;cursor:pointer">Appels</button>
-    </div>
 
     <!-- Liste des conversations -->
     <div id="icMsgList" class="ic-mail-list">
@@ -1215,20 +1210,25 @@ App.navMessages=function(){
   document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.add('on');
   this.panel('messages');
-  this.switchContactTab('messages');
+  const _ml=$('icMsgList'),_cp=$('icAppelsPane');
+  if(_ml)_ml.style.display='';if(_cp)_cp.style.display='none';
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
+  try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.add('on');
   if(typeof window.S!=='undefined') window.S._unseenMissedCalls=0;
   this.panel('messages');
-  this.switchContactTab('appels');
+  const _ml=$('icMsgList'),_cp=$('icAppelsPane');
+  if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
+  try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
 };
 App.navSignaler=function(){
+  try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
@@ -1237,6 +1237,7 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
+  try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
@@ -1619,7 +1620,6 @@ App.renderCategoryFeed=function(cat,tab){
     const bar=document.getElementById('actStatusBar');if(bar)bar.style.display='none';return;
   }
   const now=Date.now();const isRecus=tab==='recus';
-  let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String)}catch(e){}
   const activeAlerts=(S.alerts||[]).filter(a=>{
     if(a.status==='gone'||a.status==='resolved') return false;
     const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null) return false;
@@ -1628,7 +1628,6 @@ App.renderCategoryFeed=function(cat,tab){
   const histAlerts=(S.alertHistory||[]).filter(a=>{
     const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null) return false;return now-ts<3*3600000;
   });
-  const msgs=(S._actMessages||[]).filter(m=>!deleted.includes(String(m.id)));
   const filterByCat=(a)=>cat==='all'||(cat==='route'&&a.group==='route')||(cat==='vehicle'&&(a.group==='vehicle'||a.type==='vehicule'))||(cat==='aide'&&a.group==='assist');
   let items=[];
   if(isRecus){
@@ -1645,14 +1644,6 @@ App.renderCategoryFeed=function(cat,tab){
       if(g.alerts.length===1)items.push({kind:'alert',alert:sorted[0],at:g.lastAt});
       else items.push({kind:'alertGroup',plate:g.plate,alerts:sorted,at:g.lastAt,unread:g.unread});
     });
-    if(cat==='vehicle'||cat==='all'){
-      const convMap={};
-      msgs.filter(m=>m._received).forEach(m=>{
-        const k=m._otherPlate||'?';if(!convMap[k])convMap[k]={plate:k,msgs:[],lastAt:0};
-        convMap[k].msgs.push(m);const t=new Date(m.created_at||0).getTime();if(t>convMap[k].lastAt)convMap[k].lastAt=t;
-      });
-      Object.values(convMap).forEach(c=>{const last=c.msgs[c.msgs.length-1];items.push({kind:'msg',plate:c.plate,body:last?.message||'',at:c.lastAt,unread:c.msgs.filter(m=>!m.read_at).length,msgs:c.msgs,_sent:false});});
-    }
   } else {
     const alertGrpMap={};
     histAlerts.filter(a=>a._mine&&filterByCat(a)).forEach(a=>{
@@ -1666,19 +1657,10 @@ App.renderCategoryFeed=function(cat,tab){
       if(g.alerts.length===1)items.push({kind:'alert',alert:sorted[0],at:g.lastAt});
       else items.push({kind:'alertGroup',plate:g.plate,alerts:sorted,at:g.lastAt,unread:g.unread});
     });
-    if(cat==='vehicle'||cat==='all'){
-      const convMap={};
-      msgs.filter(m=>m._sent).forEach(m=>{
-        const k=m._otherPlate||'?';if(!convMap[k])convMap[k]={plate:k,msgs:[],lastAt:0};
-        convMap[k].msgs.push(m);const t=new Date(m.created_at||0).getTime();if(t>convMap[k].lastAt)convMap[k].lastAt=t;
-      });
-      Object.values(convMap).forEach(c=>{const last=c.msgs[c.msgs.length-1];items.push({kind:'msg',plate:c.plate,body:last?.message||'',at:c.lastAt,unread:0,msgs:c.msgs,_sent:true});});
-    }
   }
   items.sort((a,b)=>b.at-a.at);
   const tf=S._actTypeFilter||'all';
-  if(tf==='msg')items=items.filter(i=>i.kind==='msg');
-  else if(tf==='alert')items=items.filter(i=>i.kind==='alert'||i.kind==='alertGroup');
+  if(tf==='alert')items=items.filter(i=>i.kind==='alert'||i.kind==='alertGroup');
   const _sq=S.activitySearch||'';if(_sq)items=items.filter(i=>App._activityMatchesSearch(i,_sq));
   const sf=S._actStatusFilter||this._actStatusFilter||'all';
   if(sf==='unread')items=items.filter(i=>{
@@ -1690,19 +1672,15 @@ App.renderCategoryFeed=function(cat,tab){
   const unread=items.filter(i=>i.unread>0||(i.kind==='alert'&&i.alert?.status!=='seen'&&i.alert?.status!=='present'&&!i.alert?._own)||(i.kind==='alertGroup'&&i.unread>0)).length;
   const tabBadge=document.getElementById('actTabBadge');
   if(tabBadge){tabBadge.textContent=unread>99?'99+':String(unread);tabBadge.style.display=isRecus&&unread>0?'flex':'none';}
-  const emptyTxts={recus:{route:'Aucun incident route reçu.',vehicle:'Aucun message ou alerte véhicule reçu.',aide:'Aucune demande d\'aide à proximité.',all:'Aucune activité récente.'},envoyes:{route:'Aucun signalement route envoyé.',vehicle:'Aucun message ou signalement envoyé.',aide:'Aucune demande d\'aide envoyée.',all:'Aucun historique envoyé.'}};
+  const emptyTxts={recus:{route:'Aucun signalement route reçu.',vehicle:'Aucun signalement véhicule reçu.',aide:'Aucune demande d\'aide à proximité.',all:'Aucune activité récente.'},envoyes:{route:'Aucun signalement route envoyé.',vehicle:'Aucun signalement véhicule envoyé.',aide:'Aucune demande d\'aide envoyée.',all:'Aucun historique envoyé.'}};
   if(!items.length){
     const _emptyMsg=_sq?'Aucun résultat pour cette plaque.':(emptyTxts[tab]?.[cat]||'Aucune activité.');
-    let emptyHtml='<div class="act-empty-cat">'+_emptyMsg;
-    if(isRecus&&(cat==='vehicle'||cat==='all')){const sc=msgs.filter(m=>m._sent).length;if(sc>0)emptyHtml+='<br><button type="button" style="margin-top:10px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#ccc;border-radius:10px;padding:8px 16px;cursor:pointer" onclick="App.actCatTab(\'envoyes\')">📤 Voir mes '+sc+' envoi'+(sc>1?'s':'')+' →</button>';}
-    emptyHtml+='</div>';
-    feed.innerHTML=emptyHtml;const bar=document.getElementById('actStatusBar');if(bar)bar.style.display='none';return;
+    feed.innerHTML='<div class="act-empty-cat">'+_emptyMsg+'</div>';
+    const bar=document.getElementById('actStatusBar');if(bar)bar.style.display='none';return;
   }
   feed.innerHTML=items.map(i=>this._actModCard(i,cat)).join('');
-  const unreadMsgs=items.filter(i=>i.unread>0).reduce((s,i)=>s+i.unread,0);
-  const bar=document.getElementById('actStatusBar'),txt=document.getElementById('actStatusText');
-  if(bar&&isRecus&&unreadMsgs>0){if(txt)txt.textContent=unreadMsgs+' nouveau'+(unreadMsgs>1?'x':'')+' message'+(unreadMsgs>1?'s':'')+' non lu'+(unreadMsgs>1?'s':'');bar.style.display='flex';}
-  else if(bar)bar.style.display='none';
+  const bar=document.getElementById('actStatusBar');
+  if(bar)bar.style.display='none';
 };
 App._actModCard=function(item,cat){
   const e=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1986,8 +1964,10 @@ App.renderCallJournal=async function(){
       return day.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
     }
     function timeStr(at){
+      if(!at&&at!==0) return '—';
       var d=new Date(at);
-      return isNaN(d)?at:d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      if(isNaN(d.getTime())||d.getFullYear()<2020) return '—';
+      return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     }
     var _durCache={};try{_durCache=JSON.parse(localStorage.getItem('ic_call_durations')||'{}')}catch(e){}
     var _favs=[];try{_favs=JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]')}catch(e){}
@@ -2029,18 +2009,21 @@ App.renderCallJournal=async function(){
       var msgBtn='<button type="button" onclick="App.pickPlate(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Message à '+r.plate+'">💬</button>';
       var callBtn='<button type="button" onclick="App.callFromJournal(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Rappeler '+r.plate+'">📞</button>';
       var rateBtn=(r.status==='accepted'||r.status==='ended')?'<button type="button" onclick="App.openRatingModal(\''+r.plate+'\',\'call\')" style="background:#1e293b;border:none;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Évaluer '+r.plate+'">⭐</button>':'';
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b">'+
-        '<span style="font-size:22px;width:32px;text-align:center">'+cfg.icon+'</span>'+
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1e293b;border-left:3px solid '+cfg.color+'">'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-weight:700;color:#e2e8f0;font-size:15px">'+(_q?highlightHtml(esc(r.plate),App._callJournalSearch):esc(r.plate))+(_favs.includes(nPlate(r.plate))?' <span title="Favori" style="font-size:11px">⭐</span>':'')+(_pseudoMap[r.plate]?' <span style="font-size:12px;font-weight:400;color:#94a3b8">'+(_q?highlightHtml(esc(_pseudoMap[r.plate]),App._callJournalSearch):esc(_pseudoMap[r.plate]))+'</span>':'')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
+          '<div style="font-weight:700;color:#e2e8f0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
+            (_q?highlightHtml(esc(r.plate),App._callJournalSearch):esc(r.plate))+
+            (_pseudoMap[r.plate]?' <span style="font-size:12px;font-weight:400;color:#94a3b8">'+(_q?highlightHtml(esc(_pseudoMap[r.plate]),App._callJournalSearch):esc(_pseudoMap[r.plate]))+'</span>':'')+
+            (_favs.includes(nPlate(r.plate))?' <span title="Favori" style="font-size:11px">⭐</span>':'')+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+
             '<span style="font-size:11px;color:'+cfg.color+'">'+cfg.label+'</span>'+
-            (_durCache[r.id]?'<span style="font-size:11px;color:#64748b">'+fmtDur(_durCache[r.id])+'</span>':'')+
-            '<span style="color:#334155">·</span>'+dirIcon+
+            '<span style="color:#334155;font-size:10px">·</span>'+dirIcon+
+            (_durCache[r.id]?'<span style="color:#334155;font-size:10px">·</span><span style="font-size:11px;color:#64748b">'+fmtDur(_durCache[r.id])+'</span>':'')+
           '</div>'+
         '</div>'+
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
-          '<span style="font-size:11px;color:#64748b">'+timeStr(r.at)+'</span>'+
+        '<div style="flex-shrink:0;text-align:right">'+
+          '<div style="font-size:11px;color:#64748b;margin-bottom:4px">'+timeStr(r.at)+'</div>'+
           '<div style="display:flex;gap:4px">'+rateBtn+msgBtn+callBtn+'</div>'+
         '</div>'+
       '</div>';

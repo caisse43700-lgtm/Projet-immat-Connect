@@ -69,7 +69,6 @@ const State = {
   searchQuery:'',
   threadSearchQuery:'',
   favOnly:(function(){try{return localStorage.getItem('ic_conv_fav_only')==='1';}catch(e){return false;}})(),
-  callEventsCache:{},
   pseudoMap:{},
   colorMap:{},
   _typingCh:null,
@@ -395,7 +394,7 @@ function buildThreads(){
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate).forEach(m=>{
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && !m.context_type).forEach(m=>{
     const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);
@@ -806,9 +805,10 @@ function _dayLabel(d){
   return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})});
 }
 
-function _renderTimeline(body, messages, callEvents, searchQuery){
+function _renderTimeline(body, messages, searchQuery){
   const q = (searchQuery||'').trim().toUpperCase();
-  const filteredMessages = q ? (messages||[]).filter(m => (m.message||'').toUpperCase().includes(q)) : (messages||[]);
+  const freeMessages = (messages||[]).filter(m => !m.context_type);
+  const filteredMessages = q ? freeMessages.filter(m => (m.message||'').toUpperCase().includes(q)) : freeMessages;
   const countEl = document.getElementById('icThreadSearchCount');
   if(countEl){
     if(q){
@@ -818,24 +818,22 @@ function _renderTimeline(body, messages, callEvents, searchQuery){
       countEl.style.display = 'none';
     }
   }
-  const allEvents = [
-    ...filteredMessages.map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
-    ...(q ? [] : (callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()})))
-  ].sort((a,b) => a._ts - b._ts);
+  const allEvents = filteredMessages
+    .map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()}))
+    .sort((a,b) => a._ts - b._ts);
 
   if(q && !allEvents.length){
     body.innerHTML = `<div class="ic-empty" style="padding:24px 12px">Aucun message ne correspond à « ${esc(searchQuery.trim())} ».</div>`;
     return;
   }
 
-  const firstUnreadIdx = allEvents.findIndex(e => e._type==='message' && !e._sent && !e.read_at);
+  const firstUnreadIdx = allEvents.findIndex(e => !e._sent && !e.read_at);
   const unreadCount = firstUnreadIdx >= 0
-    ? allEvents.filter(e => e._type==='message' && !e._sent && !e.read_at).length
+    ? allEvents.filter(e => !e._sent && !e.read_at).length
     : 0;
 
   let _prevDayKey = '';
   body.innerHTML = allEvents.map((item, idx) => {
-    // Séparateur de jour
     let daySep = '';
     if(item._ts){
       const _d = new Date(item._ts);
@@ -849,20 +847,6 @@ function _renderTimeline(body, messages, callEvents, searchQuery){
       ? `<div class="ic-unread-sep"><span>${unreadCount} non lu${unreadCount>1?'s':''}</span></div>`
       : '');
     const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
-    if(item._type === 'call'){
-      const isOut = item.outgoing;
-      const statusLabel = {
-        pending:'En attente',accepted:'Accepté ✅',refused:'Refusé ❌',
-        cancelled:'Annulé',missed:'Manqué ☎️'
-      }[item.status] || item.status;
-      const cls = item.status==='missed' ? 'call-missed' :
-                  item.status==='refused' ? 'call-refused' :
-                  isOut ? 'call-sent' : 'call-recv';
-      return sep + `<div class="ic-bubble ${cls}">
-        <div class="ic-bubble-text">📞 ${isOut ? 'Appel émis' : 'Appel reçu'} · ${statusLabel}</div>
-        <div class="ic-bubble-footer"><span class="ic-time">${esc(timeStr)}</span></div>
-      </div>`;
-    }
     return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
       <div class="ic-bubble-text">${q ? _highlightHtml(_formatMsg(item.message||''), searchQuery) : _formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
@@ -904,36 +888,33 @@ async function openThread(plate){
 
   if(!box || !body || !t) return;
 
+  // Titre : plaque provisoire, remplacé par le pseudo dès chargement
   if(title) title.textContent = localPlate;
-  // Enrichit le titre avec le pseudo : cache nearby d'abord, sinon DB
+
+  // Sous-titre : plaque + présence ou niveau confiance
+  if(sub){
+    const presence = _presenceLabel(localPlate);
+    if(presence){
+      sub.innerHTML = localPlate + ' · ' + presence;
+    }else{
+      const trust = getTrust(localPlate);
+      const trustSuffix = {CONTEXT:'📍 Contexte', TRUSTED:'✓ Confiance', FAVORITE:'⭐ Favori'}[trust] || '';
+      sub.textContent = localPlate + (trustSuffix ? ' · ' + trustSuffix : '');
+    }
+  }
+
+  // Enrichit le titre avec le pseudo seul (sans doublon de plaque)
   (async()=>{
     try{
       const _nb=window.S?.nearby?.find(x=>nPlate(x.plate)===nPlate(localPlate));
       if(_nb?.pseudo&&_nb.pseudo!=='Conducteur'){
-        if(title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_nb.pseudo;
+        if(title&&title.textContent===localPlate)title.textContent=_nb.pseudo;
         return;
       }
       const{data:_pd}=await sb().from('profiles').select('pseudo').eq('owner_plate',nPlate(localPlate)).maybeSingle();
-      if(_pd?.pseudo&&title&&title.textContent===localPlate)title.textContent=localPlate+' · '+_pd.pseudo;
+      if(_pd?.pseudo&&title&&title.textContent===localPlate)title.textContent=_pd.pseudo;
     }catch(e){}
   })();
-
-  // Sous-titre : présence (proximité) prioritaire, sinon niveau confiance (F-TRUST)
-  if(sub){
-    const presence = _presenceLabel(localPlate);
-    if(presence){
-      sub.innerHTML = presence;
-    }else{
-      const trust = getTrust(localPlate);
-      const subLabels = {
-        NONE:     'Appuie sur 📞 pour demander un contact',
-        CONTEXT:  '📍 Contexte actif',
-        TRUSTED:  '✓ Conducteur de confiance',
-        FAVORITE: '⭐ Favori prioritaire'
-      };
-      sub.textContent = subLabels[trust] || subLabels.NONE;
-    }
-  }
 
   // Carte contexte alerte active (F-CALL-CONTEXT)
   const ctxCard = $('icContextCard');
@@ -966,15 +947,7 @@ async function openThread(plate){
   if(tsClear) tsClear.style.display = 'none';
   if(tsCount) tsCount.style.display = 'none';
 
-  // Chargement événements d'appel (F-CONVERSATION-ENGINE + F-APPEL)
-  let callEvents = [];
-  try{
-    const allCalls = await (window.CallManager?.loadCallLog?.() || Promise.resolve([]));
-    callEvents = (allCalls||[]).filter(c => nPlate(fPlate(c.plate)) === nPlate(localPlate));
-    State.callEventsCache[nPlate(localPlate)] = callEvents;
-  }catch(e){ callEvents = []; }
-
-  _renderTimeline(body, t.list, callEvents, State.threadSearchQuery);
+  _renderTimeline(body, t.list, State.threadSearchQuery);
 
   box.classList.add('show');
   const _sep = body.querySelector('.ic-unread-sep');
@@ -1051,8 +1024,7 @@ function refreshThread(){
   }catch(e){}
   const wasNearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
   const prevCount = body.querySelectorAll('.ic-bubble').length;
-  const callEvents = State.callEventsCache[nPlate(State.activePlate)] || [];
-  _renderTimeline(body, t.list, callEvents, State.threadSearchQuery);
+  _renderTimeline(body, t.list, State.threadSearchQuery);
   const newCount = body.querySelectorAll('.ic-bubble').length;
   const hint = $('icScrollHint');
   if(wasNearBottom || newCount <= prevCount){
@@ -1194,7 +1166,8 @@ async function sendToPlate(plate,text,opts){
     receiver_id:target.id,
     target_plate:receiverPlate,
     message:text,
-    status:'accepted'
+    status:'accepted',
+    ...(_ctx.context_type ? {context_type:_ctx.context_type} : {})
   };
 
   const rich = {
