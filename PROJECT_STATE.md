@@ -47,6 +47,35 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : UX — menu contextuel son propre véhicule simplifié + bouton "🆘 Aide" direct — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Améliorations :** (1) Tous les boutons sans sens pour son propre véhicule (Message, Appel, Évaluer, Copier, Bloquer) masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. (2) Le seul bouton restant bascule son label/émoji vers "🆘 Aide" (JS dans `showVehicleContextMenu`) et appelle directement `App.sigStepAide()` au lieu de `openSignalHere()` — ouvre le panneau "De quoi avez-vous besoin ?" (Panne/Carburant/Batterie/Moteur…) sans passer par l'étape de choix Route/Véhicule/Aide.
+**Commits :** `be1de42` (CSS masquage boutons is-self) + `670892c` (label 🆘 Aide + navigation directe sigStepAide) sur `claude/immatconnect-pro-app-dEKGR`.
+
+---
+
+**Mission : Fix bug critique — le titre du menu véhicule sur la carte écrasait l'indication "Ma position" — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Symptôme terrain :** depuis BE-521-MM, signaler/contacter un véhicule échouait toujours de façon intermittente après les 2 fixes précédents. L'utilisateur a fourni le vrai indice en comparant deux captures du menu contextuel véhicule : le même titre affiché ("Véhicule BE-521-MM") apparaissait tantôt avec 5 boutons, tantôt avec ~4 — preuve que la classe `.is-self` (qui cache le bouton 🚫 Bloquer via `app.css` : `.vehicle-context-menu.is-self .block-main{display:none}`) changeait bien d'état, alors que le titre, lui, restait identique.
+**Root cause découverte :** `App.showVehicleContextMenu(vehicle)` pose un titre correct dans `#vehicleContextPlate` selon que le véhicule tapé est le sien (`📍 Ma position`) ou un autre (`Véhicule XX-XXX-XX`), puis appelait `this.updateReportTarget?.()` — une fonction distincte chargée de mettre à jour le panneau de signalement, mais qui réécrit **le même élément DOM** `#vehicleContextPlate` (collision d'ID) avec `'Véhicule '+selectedVehiclePlate()`. Or `selectedVehiclePlate()` retombe sur des sources d'état parfois obsolètes (`S.selPlate`, `S.conv`...) quand le véhicule tapé est exclu (cas d'un vrai tap sur soi-même). Résultat : en tapant par erreur sur son propre véhicule (les deux téléphones de test étant physiquement proches), le menu affichait quand même la plaque du véhicule précédemment ciblé — donnant l'illusion que le bon véhicule était sélectionné — alors que `vehicleContextAction()` traite bien la requête comme `isSelf` en coulisses : il vide le destinataire du message, ou redirige "Signaler" vers le flux de signalement de position au lieu du flux véhicule. D'où des envois qui semblaient échouer au hasard, en réalité corrélés au véhicule réellement tapé sur la carte.
+**Fix appliqué (`index.html`, `App.showVehicleContextMenu`) :** `updateReportTarget()` est désormais appelée AVANT le bloc qui pose le titre spécifique self/non-self, qui a donc toujours le dernier mot sur `#vehicleContextPlate`.
+**Tests :** 177 ✅ + 3 diagnostics OBD ✅, preflight inline JS 7/7 OK.
+**Commit :** `36cf950` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`).
+**À valider en terrain :** depuis BE-521-MM, taper précisément sur le marqueur de l'AUTRE véhicule (pas le sien) et vérifier que le titre du menu correspond bien à la cible réelle, et que message/signalement partent correctement.
+
+---
+
+**Mission : Fix échec intermittent d'envoi/signalement depuis un véhicule proche (placeholder VEH-xxxx) — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Symptôme terrain :** depuis le compte BE-521-MM, signaler/contacter un véhicule proche échouait de façon intermittente ("parfois ça marche, parfois pas") — confirmé non lié au cache (force-quit/reopen de l'app testé, n'a pas résolu seul).
+**Root cause découverte :** `loadOthers()` (index.html) appelle `profilesByIds(ids)` pour récupérer pseudo/plaque/couleur des véhicules proches via le RPC `get_public_profiles_by_ids`. En cas d'erreur RPC transitoire (réseau, latence, cold start), `profilesByIds` retournait silencieusement `{}` (aucun retry). Un fallback défensif existant (`if(!pl) pl='VEH-'+id.slice(0,4)`, ajouté lors d'un bug RLS précédent) affiche alors le véhicule avec une fausse plaque `VEH-xxxx` au lieu de sa vraie plaque. Le marqueur reste cliquable et visible normalement, mais toute tentative de message/signalement vers lui échoue silencieusement : `findProfileByPlate('VEH-xxxx')` ne trouve aucun profil avec ce libellé. Le marqueur se corrige seul au cycle de refresh suivant (d'où le caractère intermittent — dépend du timing exact du tap par rapport au cycle de refresh `loadOthers`).
+**Fix appliqué (`index.html`, fonction `profilesByIds`) :** ajout d'un retry unique (attente 500ms) avant d'abandonner et de retourner `{}`, pour absorber les erreurs RPC transitoires les plus courantes et réduire la fréquence d'apparition du placeholder `VEH-xxxx`.
+**Tests :** 177 ✅ + 3 diagnostics OBD ✅, preflight inline JS 7/7 OK.
+**Commit :** `0427606` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`).
+**À valider en terrain :** réessayer plusieurs fois de signaler/contacter un véhicule proche depuis BE-521-MM ; si le problème persiste encore parfois, il faudra remonter le contenu exact affiché sur la plaque du véhicule au moment de l'échec (vraie plaque ou "VEH-xxxx" visible dans la bulle/le champ) pour confirmer si ce fix suffit ou s'il faut aussi gérer l'envoi par uid en complément du fallback plaque.
+
+---
+
 **Mission : Fix bug critique — Activité (Reçus/Envoyés) toujours vide malgré messages fonctionnels — TERMINÉE**
 **Date :** 2026-06-16
 **Symptôme terrain :** sur 2 comptes (BZ-652-LL et BE-521-MM), les messages envoyés/reçus (y compris les signalements véhicule urgents) apparaissaient correctement dans l'onglet **Messages**, mais jamais dans **Activité → Tout/Véhicule → Reçus/Envoyés**, quel que soit le compte ou le sens du message.
@@ -456,9 +485,24 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ---
 
+---
+
+**Mission : Fix "Mon profil ne s'ouvre pas" — TERMINÉE, sur branche dev**
+**Date :** 2026-06-17
+**Symptôme :** Taper "✏️ Mon profil" dans les Paramètres ne faisait rien visuellement (légère pression détectée, mais aucun écran n'apparaissait).
+**Root cause :** `forceOpenApp()` dans `ui.js` (appelée lors de l'init app via `app.openMap()` patchée par `patchApp()`) appelle `hideAuthScreens()` qui pose `style.display='none'` sur les 4 écrans d'auth (`#sw`, `#sa`, `#sp`, `#sr`). `openEditProfile()` ne faisait qu'ajouter `.active` sur `#sp`, mais le `style.display='none'` inline prime sur toute règle CSS — l'écran restait invisible. Idem pour `#appScreen` qui pouvait garder `style.display='block'` depuis `forceOpenApp()`.
+**Fix appliqué (`index.html`, `App.openEditProfile`) :**
+1. Au moment de masquer tous les écrans, effacer aussi `style.display` (pas seulement retirer `.active`).
+2. Effacer `style.display` de `#appScreen`.
+3. Avant d'ajouter `.active` sur `#sp`, effacer `_sp.style.display=''`.
+**Commit :** `4367f02` sur `claude/immatconnect-pro-app-dEKGR`.
+
+---
+
 ## 3. MISSION EN COURS
 
-Fusion en cours du fix `window.S=S` (Activité Reçus/Envoyés vide, commit `d0fcc2d`) de `claude/immatconnect-pro-app-dEKGR` vers `main`, demandée explicitement par l'utilisateur. À valider en terrain après déploiement : envoyer un message entre les 2 comptes test et confirmer son apparition dans Activité. Reste en attente : diagnostiquer l'échec d'envoi de message depuis le compte BE-521-MM (message d'erreur exact non communiqué).
+Sprint 9 — Module Véhicule (démarré 2026-06-16) + fix UX menu carte. Sur branche `claude/immatconnect-pro-app-dEKGR`.
+Commits en attente de validation terrain et de merge vers `main` : `0427606` `36cf950` `be1de42` `670892c` (UX menu carte) + commits Sprint 9 (détails véhicule) + `4367f02` (fix Mon profil).
 
 ---
 
@@ -965,6 +1009,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite40 (aria-pressed pastilles journal d'appels) dans `main` (commit `c3b0af5`). |
 | 2026-06-16 | IA session | PR #325 (suite 41) : `aria-pressed` ajouté sur les pastilles de filtre des alertes carte (Tous/Route/Aide/Véhicule). Commit `b25f605` sur la branche de dev. Front-only (index.html). 177 tests ✅, preflight OK. |
 | 2026-06-16 | IA session | FUSION dev → main : intégration de la suite41 (aria-pressed pastilles filtre carte) dans `main` (commit `ca00804`). |
+| 2026-06-17 | IA session | UX menu véhicule (propre véhicule) — boutons Appeler/Message/Copier/Évaluer/Bloquer masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. Bouton restant renommé "🆘 Aide" + redirige directement vers `sigStepAide()`. Commits `be1de42` + `670892c` sur branche dev. |
+| 2026-06-17 | IA session | Sprint 9 — Détails véhicule : colonnes `vehicle_make`, `vehicle_model`, `vehicle_year`, `fuel_type` ajoutées à `profiles` + `public_profiles` + trigger `sync_public_profile()` + RPC `get_public_profiles_by_ids()` (migration `20260617100000_vehicle_details.sql`). Formulaire de profil étendu (4 champs + sélecteur carburant). Affichage dans le menu contextuel carte (marque modèle année · émoji carburant). Commits Sprint 9 sur branche dev. |
+| 2026-06-17 | IA session | FIX "Mon profil ne s'ouvre pas" : `hideAuthScreens()` dans ui.js posait `style.display='none'` sur `#sp` à l'init de l'app. `openEditProfile()` n'effaçait pas ce style inline — `.active` seul ne suffisait pas. Fix : effacer `style.display` sur tous les écrans d'auth + sur `#appScreen` avant d'activer `#sp`. Commit `4367f02` sur branche dev. |
 
 ---
 
