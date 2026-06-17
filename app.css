@@ -837,6 +837,9 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-mod-card { border-radius: 18px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 14px; flex: 0 0 auto; }
 .act-mod-card.act-mod-unread { border-color: rgba(255,59,92,.5); border-left: 3px solid #ff3b5c; background: rgba(255,59,92,.07); }
 .act-mod-card.act-mod-selected { border-color: rgba(41,121,255,.6); border-left: 3px solid #2979ff; background: rgba(41,121,255,.07); }
+.act-mod-card.act-mod-group { cursor: pointer; transition: background 0.15s; }
+.act-mod-card.act-mod-group:active { background: rgba(255,255,255,.10); }
+.act-mod-count-badge { background: #2979ff; color: #fff; font-size: 11px; font-weight: 700; border-radius: 12px; padding: 2px 8px; min-width: 22px; text-align: center; margin-top: 4px; }
 .act-mod-badge-row { display: flex; align-items: center; margin-bottom: 9px; }
 .act-mod-new-badge { background: #ff3b5c; color: #fff; font-size: 10px; font-weight: 950; border-radius: 6px; padding: 3px 9px; letter-spacing: 0.6px; }
 .act-mod-body { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 10px; }
