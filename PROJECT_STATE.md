@@ -47,6 +47,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : 8 corrections UI Messages + architecture — TERMINÉE, sur branche dev**
+**Date :** 2026-06-17
+**Commit :** `66a4cf4` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
+**Fichiers modifiés :** `messages.css`, `messages.js`, `index.html`
+
+**Corrections appliquées :**
+
+1. **Appels dans le thread Messages** — Suppression du bloc rendering call (code mort), du paramètre `callEvents` de `_renderTimeline`, du chargement `CallManager.loadCallLog()` dans `openThread()`, et de `callEventsCache` du State. Gain ~200ms à l'ouverture du thread.
+
+2. **Double immatriculation dans le thread header** — `icThreadTitle` affiche désormais le pseudo seul (ex: "Kas"), `icThreadSub` affiche la plaque + présence/confiance (ex: "BE-521-MM · 🟢 Actif à proximité"). Plus de doublon "PLATE · Pseudo" entre la liste et le header.
+
+3. **Thread qui déborde sur le journal d'appels** — `navAppels()`, `navSignaler()`, `navActivite()` appellent `window.ImmatMessages?.closeThread?.()` en premier. Le thread se ferme proprement à chaque changement de panel.
+
+4. **Compositeur invisible/coupé** — `.ic-thread.show` passe en `position:absolute; inset:0; z-index:5` → le thread recouvre tout le panel, le compositeur est toujours visible en bas. `.ic-thread-body` : `max-height:320px` supprimé, `min-height:0` pour que `flex:1` contraigne correctement. `.ic-thread-composer` : 3 colonnes (`36px minmax(0,1fr) 46px`) pour le bouton GPS, le textarea et le bouton envoi.
+
+5. **Colonne à gauche du journal d'appels** — Suppression de la colonne icône fixe 32px (emojis empilés = rectangle visuel). Remplacement par un `border-left:3px solid COLOR` coloré selon le statut (vert/rouge/gris). `timeStr()` renforcé : rejette les timestamps invalides ou antérieurs à 2020 → affiche "—" au lieu d'une valeur aberrante.
+
+6. **Architecture — Messages hors d'Activité** — Suppression des blocs `convMap` (Reçus/Envoyés) dans `renderCategoryFeed`. Activité = signalements uniquement. Messages = conversations texte uniquement. Variables `msgs` et `deleted` (devenues inutiles) supprimées. `actStatusBar` masquée (ne concernait que les messages). Empty states mis à jour ("message ou alerte" → "signalement").
+
+7+8. **Merge branche dev** — Commits `6df062d` (refactor nav — suppression onglets doublons) et `21c5f76` (filtre `context_type`) déjà présents dans la branche.
+
+---
+
 **Mission : Activité — groupement des signalements par plaque + vue détail au clic — TERMINÉE, sur branche dev**
 **Date :** 2026-06-17
 **Demande terrain :** plusieurs signalements reçus depuis la même plaque s'affichaient comme autant de cartes individuelles — difficile à lire. L'utilisateur voulait le même comportement que les messages : 1 carte par plaque, clic → liste de tous les signalements liés.
