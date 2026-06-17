@@ -47,6 +47,13 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : UX — menu contextuel son propre véhicule simplifié + bouton "🆘 Aide" direct — TERMINÉE, sur branche dev**
+**Date :** 2026-06-16
+**Améliorations :** (1) Tous les boutons sans sens pour son propre véhicule (Message, Appel, Évaluer, Copier, Bloquer) masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. (2) Le seul bouton restant bascule son label/émoji vers "🆘 Aide" (JS dans `showVehicleContextMenu`) et appelle directement `App.sigStepAide()` au lieu de `openSignalHere()` — ouvre le panneau "De quoi avez-vous besoin ?" (Panne/Carburant/Batterie/Moteur…) sans passer par l'étape de choix Route/Véhicule/Aide.
+**Commits :** `be1de42` (CSS masquage boutons is-self) + `670892c` (label 🆘 Aide + navigation directe sigStepAide) sur `claude/immatconnect-pro-app-dEKGR`.
+
+---
+
 **Mission : Fix bug critique — le titre du menu véhicule sur la carte écrasait l'indication "Ma position" — TERMINÉE, sur branche dev**
 **Date :** 2026-06-16
 **Symptôme terrain :** depuis BE-521-MM, signaler/contacter un véhicule échouait toujours de façon intermittente après les 2 fixes précédents. L'utilisateur a fourni le vrai indice en comparant deux captures du menu contextuel véhicule : le même titre affiché ("Véhicule BE-521-MM") apparaissait tantôt avec 5 boutons, tantôt avec ~4 — preuve que la classe `.is-self` (qui cache le bouton 🚫 Bloquer via `app.css` : `.vehicle-context-menu.is-self .block-main{display:none}`) changeait bien d'état, alors que le titre, lui, restait identique.
@@ -480,9 +487,8 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Fix Activité (`window.S=S`, commit `d0fcc2d`) déjà fusionné et validé en terrain par l'utilisateur. Deux fixes complémentaires pour l'échec intermittent de message/signalement depuis BE-521-MM, tous deux sur `claude/immatconnect-pro-app-dEKGR`, **pas encore mergés sur `main`**, en attente de validation terrain :
-1. Retry RPC `profilesByIds` pour réduire le placeholder `VEH-xxxx` (commit `0427606`) — confirmé par l'utilisateur comme non lié au bug réellement observé, mais conservé comme durcissement légitime.
-2. Fix du titre du menu véhicule écrasé par `updateReportTarget()` (commit `36cf950`) — root cause probable du bug réel, identifiée grâce à l'indice du nombre de boutons (5 vs 4) repéré par l'utilisateur. **À valider en terrain en priorité.**
+Sprint 9 — Module Véhicule (démarré 2026-06-16). Sur branche `claude/immatconnect-pro-app-dEKGR`.
+4 commits de fixes UX menu carte + bug titre menu (commits `0427606` `36cf950` `be1de42` `670892c`) en attente de validation terrain et de merge vers `main`.
 
 ---
 
