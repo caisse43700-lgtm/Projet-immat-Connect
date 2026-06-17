@@ -395,7 +395,7 @@ function buildThreads(){
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate).forEach(m=>{
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && !m.context_type).forEach(m=>{
     const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);
@@ -808,7 +808,8 @@ function _dayLabel(d){
 
 function _renderTimeline(body, messages, callEvents, searchQuery){
   const q = (searchQuery||'').trim().toUpperCase();
-  const filteredMessages = q ? (messages||[]).filter(m => (m.message||'').toUpperCase().includes(q)) : (messages||[]);
+  const freeMessages = (messages||[]).filter(m => !m.context_type);
+  const filteredMessages = q ? freeMessages.filter(m => (m.message||'').toUpperCase().includes(q)) : freeMessages;
   const countEl = document.getElementById('icThreadSearchCount');
   if(countEl){
     if(q){
@@ -1194,7 +1195,8 @@ async function sendToPlate(plate,text,opts){
     receiver_id:target.id,
     target_plate:receiverPlate,
     message:text,
-    status:'accepted'
+    status:'accepted',
+    ...(_ctx.context_type ? {context_type:_ctx.context_type} : {})
   };
 
   const rich = {
