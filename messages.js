@@ -819,8 +819,8 @@ function _renderTimeline(body, messages, callEvents, searchQuery){
     }
   }
   const allEvents = [
-    ...filteredMessages.map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()})),
-    ...(q ? [] : (callEvents||[]).map(c => ({...c, _type:'call', _ts:new Date(c.at||0).getTime()})))
+    ...filteredMessages.map(m => ({...m, _type:'message', _ts:new Date(m.created_at||0).getTime()}))
+    // Les appels sont uniquement dans le journal Appels — pas dans le thread messages
   ].sort((a,b) => a._ts - b._ts);
 
   if(q && !allEvents.length){

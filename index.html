@@ -273,11 +273,6 @@
       <input id="icSearchInput" type="search" placeholder="Rechercher une plaque…" aria-label="Rechercher une conversation par plaque" oninput="ImmatMessages.filterConv(this.value)">
     </div>
 
-    <!-- Onglets Messages / Appels -->
-    <div style="display:flex;border-bottom:1px solid #1e293b">
-      <button id="icTabMessages" type="button" onclick="App.switchContactTab&&App.switchContactTab('messages')" style="flex:1;padding:8px;border:none;background:none;color:#e2e8f0;font-size:13px;cursor:pointer;font-weight:600">Messages</button>
-      <button id="icTabAppels" type="button" onclick="App.switchContactTab&&App.switchContactTab('appels')" style="flex:1;padding:8px;border:none;background:none;color:#64748b;font-size:13px;cursor:pointer">Appels</button>
-    </div>
 
     <!-- Liste des conversations -->
     <div id="icMsgList" class="ic-mail-list">
@@ -1215,7 +1210,8 @@ App.navMessages=function(){
   document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.add('on');
   this.panel('messages');
-  this.switchContactTab('messages');
+  const _ml=$('icMsgList'),_cp=$('icAppelsPane');
+  if(_ml)_ml.style.display='';if(_cp)_cp.style.display='none';
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
@@ -1225,7 +1221,9 @@ App.navAppels=function(){
   document.getElementById('navAppels')?.classList.add('on');
   if(typeof window.S!=='undefined') window.S._unseenMissedCalls=0;
   this.panel('messages');
-  this.switchContactTab('appels');
+  const _ml=$('icMsgList'),_cp=$('icAppelsPane');
+  if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
+  try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
 };
 App.navSignaler=function(){
