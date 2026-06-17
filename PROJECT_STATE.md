@@ -47,6 +47,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Activité — groupement des signalements par plaque + vue détail au clic — TERMINÉE, sur branche dev**
+**Date :** 2026-06-17
+**Demande terrain :** plusieurs signalements reçus depuis la même plaque s'affichaient comme autant de cartes individuelles — difficile à lire. L'utilisateur voulait le même comportement que les messages : 1 carte par plaque, clic → liste de tous les signalements liés.
+**Fix appliqué (index.html + app.css, commit `cc75ba8`) :**
+- `renderCategoryFeed` : les alertes sont maintenant groupées par plaque (`alertGrpMap`). Si 2+ alertes proviennent de la même plaque → `kind:'alertGroup'` (1 carte de groupe). Si 1 seule alerte → carte individuelle existante (comportement inchangé).
+- `_actModCard` : nouveau rendu pour `kind:'alertGroup'` — plaque, dernier motif, "N signalement(s)", badge bleu compteur, badge "NOUVEAU" si non lus. La carte est cliquable.
+- `App.actOpenAlertGroup(plate)` : ouvre la vue détail — masque tabs/feed/barres, met à jour le header (plaque + compteur), affiche `#actAlertGroupFeed` avec toutes les alertes de la plaque (cartes individuelles standards).
+- `App.closeAlertGroup()` : bouton ‹ — restaure le header de catégorie, les onglets, le feed principal ; rappelle `renderCategoryFeed`.
+- Filtres type/unread/compteur badge adaptés pour `kind='alertGroup'`.
+- CSS : `.act-mod-group` (cursor pointer + feedback tactile) + `.act-mod-count-badge` (badge bleu).
+- HTML : `#actAlertGroupFeed` ajouté dans `actCatPanel`.
+**Branche dev :** commit `cc75ba8` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`).
+
+---
+
 **Mission : UX — menu contextuel son propre véhicule simplifié + bouton "🆘 Aide" direct — TERMINÉE, sur branche dev**
 **Date :** 2026-06-16
 **Améliorations :** (1) Tous les boutons sans sens pour son propre véhicule (Message, Appel, Évaluer, Copier, Bloquer) masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. (2) Le seul bouton restant bascule son label/émoji vers "🆘 Aide" (JS dans `showVehicleContextMenu`) et appelle directement `App.sigStepAide()` au lieu de `openSignalHere()` — ouvre le panneau "De quoi avez-vous besoin ?" (Panne/Carburant/Batterie/Moteur…) sans passer par l'étape de choix Route/Véhicule/Aide.
@@ -501,8 +516,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Sprint 9 — Module Véhicule (démarré 2026-06-16) + fix UX menu carte. Sur branche `claude/immatconnect-pro-app-dEKGR`.
-Commits en attente de validation terrain et de merge vers `main` : `0427606` `36cf950` `be1de42` `670892c` (UX menu carte) + commits Sprint 9 (détails véhicule) + `4367f02` (fix Mon profil).
+Aucune mission en cours. Prochaine mission : validation terrain + merge dev → main si validé.
 
 ---
 
@@ -1012,6 +1026,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-17 | IA session | UX menu véhicule (propre véhicule) — boutons Appeler/Message/Copier/Évaluer/Bloquer masqués via CSS `.is-self .vehicle-bubble:not(.alert-main){display:none}`. Bouton restant renommé "🆘 Aide" + redirige directement vers `sigStepAide()`. Commits `be1de42` + `670892c` sur branche dev. |
 | 2026-06-17 | IA session | Sprint 9 — Détails véhicule : colonnes `vehicle_make`, `vehicle_model`, `vehicle_year`, `fuel_type` ajoutées à `profiles` + `public_profiles` + trigger `sync_public_profile()` + RPC `get_public_profiles_by_ids()` (migration `20260617100000_vehicle_details.sql`). Formulaire de profil étendu (4 champs + sélecteur carburant). Affichage dans le menu contextuel carte (marque modèle année · émoji carburant). Commits Sprint 9 sur branche dev. |
 | 2026-06-17 | IA session | FIX "Mon profil ne s'ouvre pas" : `hideAuthScreens()` dans ui.js posait `style.display='none'` sur `#sp` à l'init de l'app. `openEditProfile()` n'effaçait pas ce style inline — `.active` seul ne suffisait pas. Fix : effacer `style.display` sur tous les écrans d'auth + sur `#appScreen` avant d'activer `#sp`. Commit `4367f02` sur branche dev. |
+| 2026-06-17 | IA session | Groupement signalements par plaque dans Activité — `renderCategoryFeed` crée des items `alertGroup` (2+ alertes même plaque), `_actModCard` rend la carte de groupe cliquable, `actOpenAlertGroup(plate)` affiche le sous-panel détail, `closeAlertGroup()` restaure le panel principal. Commit `cc75ba8` sur branche dev. |
 
 ---
 
