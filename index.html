@@ -1734,9 +1734,9 @@ App.openEditProfile=function(){
   if($('iProFuel'))$('iProFuel').value=p.fuel_type||'';
   hint('hProPlate','','Immatriculation définitive — non modifiable (INV-006).');
   if($('profileBackBtn'))$('profileBackBtn').style.display='';
-  ['sw','sa','sp','sr'].forEach(x=>document.getElementById(x)?.classList.remove('active'));
-  document.getElementById('appScreen')?.classList.remove('active');
-  const _sp=document.getElementById('sp');if(_sp){_sp.classList.add('active');setTimeout(()=>{_sp.scrollTop=0},30);}
+  ['sw','sa','sp','sr'].forEach(x=>{const _e=document.getElementById(x);if(_e){_e.classList.remove('active');_e.style.display='';}});
+  const _appSc=document.getElementById('appScreen');if(_appSc){_appSc.classList.remove('active');_appSc.style.display='';}
+  const _sp=document.getElementById('sp');if(_sp){_sp.style.display='';_sp.classList.add('active');setTimeout(()=>{_sp.scrollTop=0},30);}
   }catch(e){toast('Erreur ouverture profil: '+e.message,'bad');}
 };
 // ── Blocages cross-device depuis DB
