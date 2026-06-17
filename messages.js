@@ -283,14 +283,20 @@ function normalizeRows(rows, profs){
     const sp = fPlate(m.sender_plate || m.from_plate || profs[m.sender_id]?.owner_plate || '');
     const rp = fPlate(m.receiver_plate || m.to_plate || profs[m.receiver_id]?.owner_plate || m.target_plate || '');
 
-    const sent = (m.sender_id === uid) || (mp && nPlate(sp) === mp);
+    // uid match prime sur la plaque pour éviter les collisions (même plaque, comptes différents)
+    const sentById = uid && m.sender_id === uid;
+    const sentByPlate = !sentById && mp && nPlate(sp) === mp && nPlate(sp) !== nPlate(rp);
+    const sent = sentById || sentByPlate;
+
+    // _received : ni envoyé par moi, ni target_plate = ma plaque SI c'est aussi mon sender_plate
+    // (évite qu'un message avec target_plate = ma plaque soit classé reçu quand je suis l'émetteur)
     const received = !sent && (
-      m.receiver_id === uid ||
+      (uid && m.receiver_id === uid) ||
       (mp && (
-        nPlate(rp) === mp ||
-        nPlate(m.target_plate) === mp ||
-        nPlate(m.receiver_plate) === mp ||
-        nPlate(m.to_plate) === mp
+        (nPlate(rp) === mp && nPlate(sp) !== mp) ||
+        (nPlate(m.target_plate) === mp && nPlate(sp) !== mp) ||
+        (nPlate(m.receiver_plate) === mp && nPlate(sp) !== mp) ||
+        (nPlate(m.to_plate) === mp && nPlate(sp) !== mp)
       ))
     );
 
@@ -300,7 +306,7 @@ function normalizeRows(rows, profs){
       _received: received,
       _senderPlate: sp || 'INCONNU',
       _receiverPlate: rp || fPlate(m.target_plate) || 'INCONNU',
-      _otherPlate: sent ? (fPlate(rp) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
+      _otherPlate: sent ? (fPlate(rp) || fPlate(m.target_plate) || 'INCONNU') : (fPlate(sp) || 'INCONNU')
     };
   }).filter(m => {
     if(!m._otherPlate || m.status === 'rejected' || deletedIds.includes(String(m.id))) return false;
