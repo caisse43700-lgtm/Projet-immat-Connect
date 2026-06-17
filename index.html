@@ -1722,6 +1722,7 @@ App.markAllCatRead=function(){
   this.updateActBadge?.();toast('Tout marqué comme lu.','ok');
 };
 App.openEditProfile=function(){
+  try{
   const p=S.profile||{};
   if($('iPseudo'))$('iPseudo').value=p.pseudo||'';
   if($('iProPlate')){$('iProPlate').value=fPlate(p.owner_plate||'');$('iProPlate').disabled=true;}
@@ -1733,8 +1734,10 @@ App.openEditProfile=function(){
   if($('iProFuel'))$('iProFuel').value=p.fuel_type||'';
   hint('hProPlate','','Immatriculation définitive — non modifiable (INV-006).');
   if($('profileBackBtn'))$('profileBackBtn').style.display='';
-  this.show('sp');
-  setTimeout(()=>{try{$('sp')?.scrollTo({top:0,behavior:'instant'});}catch(e){}},30);
+  ['sw','sa','sp','sr'].forEach(x=>document.getElementById(x)?.classList.remove('active'));
+  document.getElementById('appScreen')?.classList.remove('active');
+  const _sp=document.getElementById('sp');if(_sp){_sp.classList.add('active');setTimeout(()=>{_sp.scrollTop=0},30);}
+  }catch(e){toast('Erreur ouverture profil: '+e.message,'bad');}
 };
 // ── Blocages cross-device depuis DB
 App.loadBlocksFromDB=async function(){
