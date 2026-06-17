@@ -1600,7 +1600,7 @@ App._renderTypeFilterBar=function(cat){
   const cur=S._actTypeFilter||'all';
   const sf=S._actStatusFilter||'all';
   const typeFilters=(cat==='all'||cat==='vehicle')?
-    ['all','msg','alert'].map(t=>`<button type="button" data-type="${t}" onclick="App.actTypeFilter('${t}')" style="border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap;background:${t===cur?'#2979ff':'rgba(255,255,255,.08)'};color:${t===cur?'#fff':'#ccc'};border:none;cursor:pointer">${t==='all'?'Tout':t==='msg'?'💬 Msgs':'⚠️ Alertes'}</button>`).join('')
+    ['all','alert'].map(t=>`<button type="button" data-type="${t}" onclick="App.actTypeFilter('${t}')" style="border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap;background:${t===cur?'#2979ff':'rgba(255,255,255,.08)'};color:${t===cur?'#fff':'#ccc'};border:none;cursor:pointer">${t==='all'?'Tout':'⚠️ Alertes'}</button>`).join('')
     : '';
   const statusFilter=`<button type="button" data-sf="unread" onclick="App.actStatusFilter(App._actStatusFilter==='unread'?'all':'unread')" style="border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap;background:${sf==='unread'?'#ef4444':'rgba(255,255,255,.08)'};color:${sf==='unread'?'#fff':'#ccc'};border:none;cursor:pointer">🔴 Non-lus</button>`;
   const sep=typeFilters?'<div style="width:1px;background:rgba(255,255,255,.1);flex-shrink:0;margin:0 4px"></div>':'';
@@ -1664,7 +1664,6 @@ App.renderCategoryFeed=function(cat,tab){
   const _sq=S.activitySearch||'';if(_sq)items=items.filter(i=>App._activityMatchesSearch(i,_sq));
   const sf=S._actStatusFilter||this._actStatusFilter||'all';
   if(sf==='unread')items=items.filter(i=>{
-    if(i.kind==='msg')return i.unread>0;
     if(i.kind==='alertGroup')return i.unread>0;
     const a=i.alert;if(!a)return false;
     return a.status!=='seen'&&a.status!=='present'&&a.status!=='resolved'&&!a._own;
