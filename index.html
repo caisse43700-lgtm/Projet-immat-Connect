@@ -108,6 +108,12 @@
         <div class="act-cat-name">Aide</div>
         <div class="act-cat-subdesc">Assistance</div>
       </button>
+      <button type="button" class="act-cat-card cat-station" onclick="App.openActivityCat('station')">
+        <div class="act-cat-icon-wrap">🅿️</div>
+        <span class="act-cat-badge" id="catBadgeStation" style="display:none">0</span>
+        <div class="act-cat-name">Stationné</div>
+        <div class="act-cat-subdesc">Véhicule signalé</div>
+      </button>
     </div>
     <div class="act-resume-hd"><span>Résumé rapide</span><button type="button" class="act-voir-tout" onclick="App.openActivityCat('all')">Voir tout ›</button></div>
     <div class="act-resume-list">
@@ -1124,11 +1130,15 @@ async subMsgs(){
           {label:'En route',bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'En route 🚘');}catch(e){}}},
         ];
         const _isVehicleReport=m.context_type==='vehicle_report';
-        this.showFloatingCard('💬','Message de '+_sndName,''+(_txt.slice(0,60)),'Vu','→ Ouvrir',null,async()=>{
+        const _isParkedReport=m.context_type==='parked_report';
+        const _isParkedResponse=m.context_type==='parked_response';
+        this.showFloatingCard(_isParkedReport?'🅿️':_isParkedResponse?'✅':'💬',_isParkedReport?'Véhicule stationné':_isParkedResponse?'Réponse stationné':'Message de '+_sndName,''+(_txt.slice(0,60)),'Vu','→ Ouvrir',null,async()=>{
           if(_isVehicleReport&&pl){
-            // Signalement véhicule → ouvrir Activité > Véhicule > Reçus
             this.navActivite?.();
             setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);
+          }else if(_isParkedReport||_isParkedResponse){
+            this.navActivite?.();
+            setTimeout(()=>{try{this.openActivityCat('station');S._actCatTab=_isParkedReport?'recus':'envoyes';setTimeout(()=>{try{this.renderStationFeed?.(_isParkedReport?'recus':'envoyes');}catch(e){}},150);}catch(e){}},150);
           }else{
             this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}
           }
@@ -1358,9 +1368,21 @@ App.sigStepStation=function(){
   $('sigStep2Station')?.classList.add('active');
   setTimeout(()=>$('sigStationPlate')?.focus(),80);
 };
-App.stationReport=function(type){
+App.stationReport=async function(type){
   const plate=nPlate($('sigStationPlate')?.value||'');
-  toast('Signalement véhicule stationné envoyé ✓','ok');
+  const labels={porte:'Porte mal fermée 🚪',feux:'Feux allumés 💡',vitre:'Vitre ouverte 🪟',animal:'Animal enfermé 🐾',enfant:'Enfant seul 👶',autre:'Problème véhicule ⚠️'};
+  const label=labels[type]||type;
+  const urgent=['animal','enfant'].includes(type);
+  if(plate&&window.ImmatMessages?.sendToPlate){
+    const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.';
+    try{await window.ImmatMessages.sendToPlate(plate,msg,{context_type:'parked_report',report_type:type});}catch(e){}
+  }
+  if(S.myLat!=null){
+    this.addCommunityAlert({type:'parked_'+type,label:'[STATIONNE] '+label,reason:'[STATIONNE] '+label,plate:plate||'STATIONNE',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'parked',_mine:true},{notify:false});
+    try{await this.saveReportRemote?.({plate:plate||'STATIONNE',reason:'[STATIONNE] '+label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'parked',urgency_level:urgent?'high':'medium'});}catch(e){}
+  }
+  toast('✓ Signalement stationné envoyé.','ok');
+  try{this.navActivite?.();setTimeout(()=>this.openActivityCat?.('station'),200);}catch(e){}
 };
 App.sigBack=function(){
   App.clearSignalHereContext?.();
@@ -1552,8 +1574,9 @@ App.renderActivityMain=function(){
   const bVehicleAlerts=activeAlerts.filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen'&&a.status!=='present').length;
   const bVehicle=vmUnread+bVehicleAlerts;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
+  const bStation=msgs.filter(m=>m.context_type==='parked_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
-  setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
+  setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);setBadge('catBadgeStation',bStation);
   const unreadAlerts=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present');
   // vehicle_report exclus : déjà comptés via l'alerte communautaire correspondante
   const unreadMsgsList=msgs.filter(m=>m._received&&!m.read_at&&m.context_type!=='vehicle_report'&&(!_rIds||!_rIds.has(String(m.id))));
@@ -1572,7 +1595,7 @@ App.openActivityCat=function(cat){
   this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
   if(main)main.style.display='none';if(panel)panel.style.display='flex';
-  const meta={route:{icon:'🚦',title:'Route',sub:'Incidents de circulation'},vehicle:{icon:'🚘',title:'Véhicule',sub:'Prévenir un conducteur'},aide:{icon:'🆘',title:'Aide',sub:'Demandes d\'assistance'},all:{icon:'🔔',title:'Tout',sub:'Toutes les alertes et messages'}};
+  const meta={route:{icon:'🚦',title:'Route',sub:'Incidents de circulation'},vehicle:{icon:'🚘',title:'Véhicule',sub:'Prévenir un conducteur'},aide:{icon:'🆘',title:'Aide',sub:'Demandes d\'assistance'},station:{icon:'🅿️',title:'Stationné',sub:'Véhicules signalés'},all:{icon:'🔔',title:'Tout',sub:'Toutes les alertes et messages'}};
   const m=meta[cat]||meta.all;
   const iconEl=document.getElementById('actCatIcon'),titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(iconEl)iconEl.textContent=m.icon;if(titleEl)titleEl.textContent=m.title;if(subEl)subEl.textContent=m.sub;
@@ -1584,7 +1607,7 @@ App.openActivityCat=function(cat){
     const st=a.status;if(st==='gone'||st==='resolved'||st==='seen') return;
     const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null) return;
     if(_now-ts>=(typeof ttlFor==='function'?ttlFor(a.type):3600000)) return;
-    const match=cat==='all'||(cat==='route'&&a.group==='route')||(cat==='vehicle'&&(a.group==='vehicle'||a.type==='vehicule'))||(cat==='aide'&&a.group==='assist');
+    const match=cat==='all'||(cat==='route'&&a.group==='route')||(cat==='vehicle'&&(a.group==='vehicle'||a.type==='vehicule'))||(cat==='aide'&&a.group==='assist')||(cat==='station'&&a.group==='parked');
     if(match&&isNearby(a)){a.status='seen';_changed=true;}
   });
   if(_changed&&typeof saveAlerts==='function')saveAlerts();
@@ -1849,6 +1872,123 @@ App.actHelpRate=function(alertId){
   toast('👍 Merci ! Score de confiance augmenté.','ok');
   this.renderAideFeed?.();
 };
+App._stationReplies={arrivant:'Je viens vérifier 🚗',regle:'C\'est réglé, merci ! ✅'};
+App.renderStationFeed=function(tab){
+  const feed=document.getElementById('actCatFeed');if(!feed)return;
+  const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let repliedIds,ratedIds;
+  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]'));}catch(e){repliedIds=new Set();}
+  try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_station_rated')||'[]'));}catch(e){ratedIds=new Set();}
+  let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String);}catch(e){}
+  const _rIds=S._readMsgIds;
+  const isRecus=tab!=='envoyes';
+  const allMsgs=(S._actMessages||[]).filter(m=>!deleted.includes(String(m.id)));
+  let html='';
+  if(isRecus){
+    const recus=allMsgs.filter(m=>m.context_type==='parked_report'&&m._received===true);
+    const enCours=recus.filter(m=>!repliedIds.has(String(m.id)));
+    const archived=recus.filter(m=>repliedIds.has(String(m.id)));
+    if(enCours.length){
+      html+=`<div class="act-vmg-sec-title" style="color:#14b8a6">🅿️ Signalements reçus (${enCours.length})</div>`;
+      html+=enCours.map(m=>{
+        const mid=e2(String(m.id));
+        const pl=e2(fPlate(m._otherPlate||m.sender_plate||m.from_plate||''));
+        const reason=String(m.message||'').replace(/^🅿️\s*(URGENT\s*:\s*)?/,'').slice(0,80);
+        const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+        const isRated=ratedIds.has(String(m.id));
+        return`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#14b8a6" onclick="App.actToggleVmCard(this)">
+          <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#14b8a6"></div><div class="act-vmg-info"><div class="act-vmg-plate">${pl||'Conducteur proche'}</div><div class="act-vmg-desc">${e2(reason)}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+          <div class="act-vmg-detail">
+            <div class="act-vmg-sec-lbl">Répondre</div>
+            <div class="act-vmg-replies">
+              <button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.actStationReply('${mid}','${pl}','arrivant')">Je viens vérifier 🚗</button>
+              <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actStationReply('${mid}','${pl}','regle')">C'est réglé ✅</button>
+            </div>
+            <div class="act-vmg-sec-lbl">Actions</div>
+            <div class="act-vmg-replies">
+              ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actStationRate('${mid}','${pl}')">👍 Info utile</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté</div>'}
+            </div>
+            <div class="act-vmg-contact">
+              <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${pl}')">💬 Message</button>
+              <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${pl}')">📞 Appeler</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    if(archived.length){
+      html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Archivés (${archived.length})</div>`;
+      html+=archived.map(m=>{
+        const pl=e2(fPlate(m._otherPlate||m.sender_plate||m.from_plate||''));
+        const reason=String(m.message||'').replace(/^🅿️\s*(URGENT\s*:\s*)?/,'').slice(0,80);
+        const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+        const mid=e2(String(m.id));
+        const isRated=ratedIds.has(String(m.id));
+        return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card act-vmg-archived act-vmg-encours" onclick="App.actToggleVmCard(this)">
+          <div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${pl||'Conducteur proche'}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2(reason)}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+          <div class="act-vmg-detail">
+            ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actStationRate('${mid}','${pl}')">👍 Info utile</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté</div>'}
+            <div class="act-vmg-contact">
+              <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${pl}')">💬 Message</button>
+              <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${pl}')">📞 Appeler</button>
+            </div>
+          </div>
+        </div></div>`;
+      }).join('');
+    }
+    if(!enCours.length&&!archived.length)html='<div class="act-empty-cat">Aucun signalement stationné reçu.</div>';
+  } else {
+    const envoyes=allMsgs.filter(m=>m.context_type==='parked_report'&&m._received!==true);
+    const responses=allMsgs.filter(m=>m.context_type==='parked_response'&&m._received===true);
+    if(envoyes.length){
+      html+=`<div class="act-vmg-sec-title" style="color:#14b8a6">🅿️ Signalements envoyés (${envoyes.length})</div>`;
+      html+=envoyes.map(m=>{
+        const pl=e2(fPlate(m._otherPlate||m.target_plate||''));
+        const reason=String(m.message||'').replace(/^🅿️\s*(URGENT\s*:\s*)?/,'').slice(0,80);
+        const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+        const mid=e2(String(m.id));
+        const reply=responses.find(r=>nPlate(r._otherPlate||r.sender_plate||'')===nPlate(m._otherPlate||m.target_plate||''));
+        return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card ${reply?'act-vmg-archived act-vmg-encours':'act-vmg-encours'}" style="${reply?'':'border-left-color:#14b8a6'}" onclick="App.actToggleVmCard(this)">
+          <div class="act-vmg-hd">${!reply?`<div class="act-vmg-dot" style="background:#14b8a6"></div>`:''}
+          <div class="act-vmg-info"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${e2(reason)}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+          ${reply?`<div class="act-vmg-detail"><div class="act-vmg-sec-lbl">Réponse reçue</div><div class="act-vmg-desc" style="color:#6ee7b7;padding:8px 0">${e2(String(reply.message||'').slice(0,100))}</div></div>`:''}
+        </div></div>`;
+      }).join('');
+    }
+    if(!envoyes.length)html='<div class="act-empty-cat">Aucun signalement stationné envoyé.</div>';
+  }
+  feed.innerHTML=html;
+  feed.querySelectorAll('.act-swipe-wrap').forEach(wrap=>{
+    let sx=0,dragging=false;
+    const inner=wrap.querySelector('.act-vmg-card');
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dragging=true;},{passive:true});
+    wrap.addEventListener('touchmove',e=>{if(!dragging)return;const dx=e.touches[0].clientX-sx;if(dx<-10&&inner)inner.style.transform='translateX('+Math.max(dx,-76)+'px)';},{passive:true});
+    wrap.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;const dx=e.changedTouches[0].clientX-sx;if(inner){inner.style.transform=dx<-40?'translateX(-76px)':'';if(dx>=-40)inner.style.transition='transform .2s';else inner.style.transition='';}});
+  });
+};
+App.actStationReply=async function(msgId,plate,key){
+  const msg=App._stationReplies[key]||key;
+  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
+  if(!replied.includes(String(msgId)))replied.push(String(msgId));
+  try{localStorage.setItem('ic_station_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  const pl=nPlate(plate||'');
+  if(pl&&window.ImmatMessages?.sendToPlate){
+    try{await window.ImmatMessages.sendToPlate(pl,msg,{context_type:'parked_response'});}catch(e){}
+  }
+  toast(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !','ok');
+  this.renderStationFeed?.('recus');this.updateActBadge?.();
+};
+App.actStationRate=function(msgId,plate){
+  let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_station_rated')||'[]');}catch(e){}
+  if(!rated.includes(String(msgId)))rated.push(String(msgId));
+  try{localStorage.setItem('ic_station_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
+  const pl=nPlate(plate||'');
+  if(pl&&typeof trustDelta==='function')try{trustDelta(pl,8);}catch(e){}
+  toast('👍 Info utile — score de confiance augmenté','ok');
+  this.renderStationFeed?.(S._actCatTab||'recus');
+};
 
 App.actCatTab=function(tab){
   S._actCatTab=tab;
@@ -1892,6 +2032,7 @@ App.actStatusFilter=function(v){
 App.renderCategoryFeed=function(cat,tab){
   const feed=document.getElementById('actCatFeed');if(!feed)return;
   if(cat==='aide'&&tab!=='nouveau'){this.renderAideFeed?.();return;}
+  if(cat==='station'&&tab!=='nouveau'){this.renderStationFeed?.(tab);return;}
   if(tab==='nouveau'){
     const signalBtn=cat==='route'?"App.navSignaler();App.closeActivityCat()":cat==='aide'?"App.navSignaler();App.closeActivityCat()":"App.navSignaler();App.closeActivityCat()";
     feed.innerHTML='<div class="act-cat-nouveau"><p class="act-cat-nouveau-info">Créer un nouveau signalement ou message</p><button type="button" class="act-mod-create" onclick="'+signalBtn+'">+ Signaler</button></div>';
@@ -2443,8 +2584,8 @@ App.updateActBadge=function(){
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
     const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
-    // vehicle_report exclus du badge nav : déjà compté via l'alerte communautaire
-    const unreadMsgs=_unreadAll.filter(m=>!m.context_type||m.context_type==='vehicle_response').length;
+    // vehicle_report et parked_report exclus du badge nav : comptés via catégorie dédiée
+    const unreadMsgs=_unreadAll.filter(m=>!m.context_type||m.context_type==='vehicle_response'||m.context_type==='parked_response').length;
     const unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
@@ -3382,7 +3523,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v52';
+      var CURRENT = 'immatconnect-pro-v53';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3460,7 +3601,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v52';
+  var CURRENT = 'immatconnect-pro-v53';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();

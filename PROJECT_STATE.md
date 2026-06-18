@@ -51,6 +51,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Véhicule stationné dans Activité — nouvelle catégorie 🅿️ — TERMINÉE (en attente de "Fusionner")**
+**Date :** 2026-06-18
+**Commit :** (à déterminer après push)
+**Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js`
+
+**Ce qui a été fait :**
+
+1. `stationReport(type)` — implémentation complète : envoie un message `parked_report` à la plaque cible, crée une alerte communautaire group='parked', navigue vers Activité > Stationné.
+2. `renderActivityMain` — badge `catBadgeStation` comptant les `parked_report` reçus non lus.
+3. `openActivityCat` meta — entrée `station: {icon:'🅿️', title:'Stationné', sub:'Véhicules signalés'}` + match seen pour group='parked'.
+4. `renderCategoryFeed` — hook station : `if(cat==='station'&&tab!=='nouveau'){this.renderStationFeed?.(tab);return;}`.
+5. `renderStationFeed(tab)` — architecture En cours / Archivé :
+   - **Reçus** : parked_report reçus — En cours (accordion avec "Je viens vérifier 🚗" / "C'est réglé ✅" / "👍 Info utile" / "💬 Message" / "📞 Appeler") — Archivé (swipeable + actions Info utile/Contact)
+   - **Envoyés** : parked_report envoyés + parked_response reçus en détail
+6. `actStationReply(msgId, plate, key)` — répond avec `parked_response`, stocke dans `ic_station_replied`.
+7. `actStationRate(msgId, plate)` — +8 confiance, stocke dans `ic_station_rated`.
+8. Subscription handler — floating card 🅿️ / ✅ selon context_type, redirige vers Activité > Stationné (tab recus/envoyes).
+9. `updateActBadge` — `parked_report` exclus du badge nav (comme `vehicle_report`).
+10. CSS — `.act-cat-card.cat-station` gradient teal + `.cat-station .act-cat-badge` teal + grille `repeat(2,1fr)` pour 4 catégories.
+11. SW v52 → v53.
+
+---
+
 **Mission : Suppression icContactTabs — onglets redondants avec la nav bas — TERMINÉE**
 **Date :** 2026-06-18
 **Commit :** `aaf2361` sur `main` (en attente de push — "Fusionner" requis)
@@ -641,7 +664,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune mission en cours.
+Aucune — "Véhicule stationné dans Activité" terminée, en attente de "Fusionner".
 
 ---
 
@@ -1152,6 +1175,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-17 | IA session | Sprint 9 — Détails véhicule : colonnes `vehicle_make`, `vehicle_model`, `vehicle_year`, `fuel_type` ajoutées à `profiles` + `public_profiles` + trigger `sync_public_profile()` + RPC `get_public_profiles_by_ids()` (migration `20260617100000_vehicle_details.sql`). Formulaire de profil étendu (4 champs + sélecteur carburant). Affichage dans le menu contextuel carte (marque modèle année · émoji carburant). Commits Sprint 9 sur branche dev. |
 | 2026-06-17 | IA session | FIX "Mon profil ne s'ouvre pas" : `hideAuthScreens()` dans ui.js posait `style.display='none'` sur `#sp` à l'init de l'app. `openEditProfile()` n'effaçait pas ce style inline — `.active` seul ne suffisait pas. Fix : effacer `style.display` sur tous les écrans d'auth + sur `#appScreen` avant d'activer `#sp`. Commit `4367f02` sur branche dev. |
 | 2026-06-17 | IA session | Groupement signalements par plaque dans Activité — `renderCategoryFeed` crée des items `alertGroup` (2+ alertes même plaque), `_actModCard` rend la carte de groupe cliquable, `actOpenAlertGroup(plate)` affiche le sous-panel détail, `closeAlertGroup()` restaure le panel principal. Commit `cc75ba8` sur branche dev. |
+| 2026-06-18 | IA session | UX Activité — thread Véhicule redesigné (En cours accordion + Archivé swipeable, boutons Merci/Je vérifie/Je m'arrête/Réglé + Info utile/Message/Appeler). Thread Aide (J'arrive 🚗 / Je peux vous aider 🙋, carte "helper coming" évaluable). Commit `be30ec9` sur main. |
+| 2026-06-18 | IA session | Véhicule stationné dans Activité — 4e catégorie 🅿️ : `stationReport(type)` complet, `renderStationFeed` (Reçus/Envoyés), `actStationReply`/`actStationRate`, floating card parked_report/parked_response, CSS teal, grille 2×2, SW v53. (commit à venir) |
 
 ---
 

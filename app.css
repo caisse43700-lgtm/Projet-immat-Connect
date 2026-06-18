@@ -790,17 +790,19 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-search-bar button { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:var(--muted); font-size:16px; padding:0 14px; cursor:pointer; flex-shrink:0; }
 .act-cats-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
 /* Cartes catégories */
-.act-categories { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
+.act-categories { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 22px; }
 .act-cat-card { position: relative; border-radius: 20px; padding: 18px 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: none; cursor: pointer; transition: transform .12s, box-shadow .12s; -webkit-tap-highlight-color: transparent; text-align: center; }
 .act-cat-card:active { transform: scale(.95); }
 .cat-route { background: linear-gradient(145deg,rgba(255,160,30,.22),rgba(255,100,0,.12)); border: 1px solid rgba(255,150,0,.3); }
 .cat-vehicle { background: linear-gradient(145deg,rgba(52,120,255,.22),rgba(0,160,255,.12)); border: 1px solid rgba(52,120,255,.3); }
 .cat-aide { background: linear-gradient(145deg,rgba(255,59,92,.22),rgba(200,0,60,.12)); border: 1px solid rgba(255,59,92,.3); }
+.act-cat-card.cat-station { background: linear-gradient(145deg,rgba(20,184,166,.22),rgba(0,188,212,.12)); border: 1px solid rgba(20,184,166,.35); }
 .act-cat-icon-wrap { font-size: 30px; line-height: 1; }
 .act-cat-badge { position: absolute; top: 8px; right: 8px; min-width: 19px; height: 19px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 950; color: #fff; padding: 0 5px; }
 .cat-route .act-cat-badge { background: #ff8c00; }
 .cat-vehicle .act-cat-badge { background: #2979ff; }
 .cat-aide .act-cat-badge { background: #ff3b5c; }
+.cat-station .act-cat-badge { background: #14b8a6; }
 .act-cat-name { font-size: 14px; font-weight: 950; color: var(--text); }
 .act-cat-subdesc { font-size: 11px; color: var(--muted); }
 /* Résumé rapide */
