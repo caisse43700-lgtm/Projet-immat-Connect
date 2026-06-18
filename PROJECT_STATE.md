@@ -47,9 +47,34 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Activité — messages véhicule urgents (context_type='vehicle_report') dans Reçus/Envoyés — TERMINÉE, sur branche dev**
+**Date :** 2026-06-18
+**Commit :** `787b1cb` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
+**Fichiers modifiés :** `index.html`
+
+**Ce qui a été fait :**
+
+Les messages envoyés via le menu contextuel véhicule (🚨 SIGNALEMENT URGENT, `context_type='vehicle_report'`) apparaissent désormais dans le panneau **Activité** sous les onglets **Reçus** et **Envoyés**, groupés par plaque, avec possibilité de les supprimer.
+
+1. **`renderCategoryFeed`** : lit `S._actMessages` filtrés sur `context_type==='vehicle_report'`, groupe par `_otherPlate`, crée des items `kind:'vehicleMsgGroup'`. Uniquement pour `cat==='all'` ou `cat==='vehicle'`.
+2. **`_actModCard`** : nouveau renderer `vehicleMsgGroup` — avatar 🚨, plaque, aperçu du dernier message, compteur, badge NOUVEAU si non lus. Cliquable → ouvre la vue détail. (En remplacement du code mort `kind:'msg'` supprimé.)
+3. **`actOpenVehicleMsgGroup(plate)`** : ouvre la vue détail dans `actAlertGroupFeed` — liste tous les messages de la plaque triés par date, marque les reçus comme lus, bouton "Supprimer" sur chaque message. Bouton ‹ → `closeAlertGroup()`.
+4. **`actDeleteVehicleMsg(id, plate)`** : supprime en DB Supabase, retire de `S._actMessages`, reconstruit les threads Messages, re-render la vue détail.
+5. **`closeAlertGroup`** : reset `S._actVehicleMsgGroupPlate` en plus de `S._actAlertGroupPlate`.
+6. **Filtres** : `sf='unread'` et compteur `unread` gèrent `vehicleMsgGroup`. `_activityMatchesSearch` inclut `msgs[0].body` dans la recherche.
+
+**Architecture validée :**
+- Messages texte libres → panel Messages uniquement (filtre `!m.context_type` dans `buildThreads()` + `_renderTimeline()` intact)
+- Alertes véhicule urgentes → panel Activité uniquement (sous Reçus/Envoyés)
+- Colonne `context_type` en production (migration `20260617120000_messages_context_type.sql` appliquée par CI run `27726467637`)
+
+177 tests ✅ · 3 diagnostics ✅ · preflight 7/7 OK
+
+---
+
 **Mission : Audit UX Messages/Appels — 3 corrections — TERMINÉE, sur branche dev**
 **Date :** 2026-06-18
-**Commit :** `de1079a` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
+**Commit :** `8966767` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
 **Fichiers modifiés :** `index.html`
 
 **Corrections appliquées :**
