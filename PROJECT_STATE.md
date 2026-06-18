@@ -47,6 +47,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit UX Messages/Appels — 3 corrections — TERMINÉE, sur branche dev**
+**Date :** 2026-06-18
+**Commit :** `de1079a` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
+**Fichiers modifiés :** `index.html`
+
+**Corrections appliquées :**
+
+1. **En-tête Messages (✏️ ⭐ 🔍) visible dans la vue Appels (IMG_5853)** — `navAppels()` masque désormais `ic-conv-header` et `icSearchBar`. `navMessages()` les restaure (avec `icSearchBar` conditionnel selon `_icSearchOpen`).
+
+2. **Bug syntax error critique — template literal `_actModCard` alertGroup cassé** — Dans `bdc6f21`, le fix onclick avait déplacé la backtick fermante du template sur la première ligne (après `>`), laissant les `${...}` suivants en dehors du template → SyntaxError silencieuse (tests qui ne se lançaient plus). Fix : backtick déplacée au bon endroit, template reconstitué. 177 tests ✅ + 3 diagnostics ✅ + preflight 7 scripts OK.
+
+3. **Architecture confirmée :** le déploiement CI `27726467637` (run associé au commit `3f220c8`) a appliqué avec succès la migration `context_type`. La colonne existe en base. Les nouveaux signalements envoyés via `vehicleAlertQuick`/`vehicleSendMsg` ont `context_type:'vehicle_report'` → ils n'apparaissent plus dans le thread Messages pour les nouveaux tests. L'apparition dans les captures IMG_5852 était due au cache Service Worker (ancien code en mémoire).
+
+---
+
 **Mission : 8 corrections UI Messages + architecture — TERMINÉE, sur branche dev**
 **Date :** 2026-06-17
 **Commit :** `66a4cf4` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
