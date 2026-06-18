@@ -992,10 +992,8 @@ function closeThread(){
   const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
   const sbar   = $('icSearchBar');
   if(box)    box.classList.remove('show');
-  // Ne pas réinitialiser si on est dans la vue Appels (icAppelsPane visible)
-  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
-  if(listEl && !_inAppels) listEl.style.display = '';
-  if(hdr    && !_inAppels) hdr.style.display    = '';
+  if(listEl) listEl.style.display = '';
+  if(hdr)    hdr.style.display    = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
   State.threadSearchQuery = '';
@@ -1613,8 +1611,7 @@ function closeCompose(){
   const compose = $('icComposePanel');
   const list    = $('icMsgList');
   if(compose) compose.classList.remove('show');
-  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
-  if(list && !_inAppels) list.style.display = '';
+  if(list)    list.style.display = '';
   State.mode = 'inbox';
   render();
 }
