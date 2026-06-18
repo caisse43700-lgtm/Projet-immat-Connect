@@ -1659,19 +1659,17 @@ App.actMarkVehicleMsg=function(id,plate){
   this.updateActBadge?.();
   this.actOpenVehicleMsgGroup(plate);
 };
+App._vmReplies={merci:'Bien reçu, merci ! 👍',verifie:'Je vérifie ça de suite 👀',arrete:"Je m'arrête pour vérifier ✓",regle:"C'est réglé, merci ! ✅"};
 App.actOpenVehicleMsgGroup=function(plate){
   S._actVehicleMsgGroupPlate=plate;
   const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
   const vmMsgs=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report'&&m._otherPlate===plate&&(isRecus?m._received===true:!m._received));
   const sorted=vmMsgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
-  const _rIds=S._readMsgIds;
-  const newMsgs=sorted.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id))));
-  const oldMsgs=sorted.filter(m=>!m._received||m.read_at||(_rIds&&_rIds.has(String(m.id))));
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
-  if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');
+  if(subEl)subEl.textContent=sorted.length+' signalement'+(sorted.length>1?'s':'');
   const backBtn=document.querySelector('#actCatPanel .act-cat-back');
-  if(backBtn){backBtn._prevOnclick=backBtn.getAttribute('onclick');backBtn.setAttribute('onclick','App.closeAlertGroup()');}
+  if(backBtn){backBtn.setAttribute('onclick','App.closeAlertGroup()');}
   document.querySelector('.act-cat-tabs')?.style.setProperty('display','none');
   document.getElementById('actTypeFilterBar')?.style.setProperty('display','none');
   document.getElementById('actStatusBar')?.style.setProperty('display','none');
@@ -1679,39 +1677,79 @@ App.actOpenVehicleMsgGroup=function(plate){
   const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const renderMsg=(m,isNew)=>{const mid=e2(String(m.id));const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${mid}','${e2(plate)}')" style="cursor:pointer"`:'';return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${e2(plate)}')">🗑️<br><span>Suppr.</span></div><div class="act-mod-card${isNew?' act-mod-unread':''}" ${click}><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div></div>`;};
   const ep=e2(plate);
-  const qr=`<div class="act-quick-bar"><div class="act-quick-label">Répondre rapidement à ${ep}</div><div class="act-quick-btns"><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Bien reçu, merci ! 👍')">Merci 👍</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Je vérifie ça de suite 👀')">Je vérifie 👀</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}',&quot;Je m\'arrête pour vérifier ✓&quot;)">Je m'arrête ✓</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','C\'est réglé, merci ! ✅')">Réglé ✅</button></div></div>`;
-  let html=qr;
-  if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
-  if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
-  gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
+  let repliedIds,ratedIds;
+  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(e){repliedIds=new Set();}
+  try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_rated')||'[]'));}catch(e){ratedIds=new Set();}
+  const enCours=sorted.filter(m=>!repliedIds.has(String(m.id)));
+  const archived=sorted.filter(m=>repliedIds.has(String(m.id)));
+  const renderEnCours=(m)=>{
+    const mid=e2(String(m.id));
+    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+    const isRated=ratedIds.has(String(m.id));
+    return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
+      <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+      <div class="act-vmg-detail">
+        <div class="act-vmg-sec-lbl">Répondre</div>
+        <div class="act-vmg-replies">
+          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','merci')">Merci 👍</button>
+          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','verifie')">Je vérifie 👀</button>
+          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','arrete')">Je m'arrête ✓</button>
+          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','regle')">Réglé ✅</button>
+        </div>
+        <div class="act-vmg-sec-lbl">Évaluer</div>
+        ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté utile</div>'}
+        <div class="act-vmg-sec-lbl">Contacter</div>
+        <div class="act-vmg-contact">
+          <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
+          <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
+        </div>
+      </div>
+    </div>`;
+  };
+  const renderArchived=(m)=>{
+    const mid=e2(String(m.id));
+    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+    const isRated=ratedIds.has(String(m.id));
+    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${ep}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-archived"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2((m.message||'').slice(0,90))}${(m.message||'').length>90?'…':''}</div></div><div class="act-vmg-time">${e2(time)}</div></div>${!isRated?`<button type="button" class="act-vmg-rate-btn act-vmg-rate-compact" onclick="App.actVmRate('${mid}','${ep}')">👍 Info utile</button>`:''}</div></div>`;
+  };
+  let html='';
+  if(enCours.length){html+=`<div class="act-vmg-sec-title">🔴 En cours (${enCours.length})</div>`+enCours.map(m=>renderEnCours(m)).join('');}
+  if(archived.length){html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Archivés (${archived.length})</div>`+archived.map(m=>renderArchived(m)).join('');}
+  gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun signalement véhicule pour cette plaque.</div>';
   const SW=76;
   gFeed.querySelectorAll('.act-swipe-wrap').forEach(wrap=>{
-    if(wrap._sw)return;wrap._sw=true;
-    let sx=0;
-    const card=wrap.querySelector('.act-mod-card');
-    if(!card)return;
+    if(wrap._sw)return;wrap._sw=true;let sx=0;
+    const card=wrap.querySelector('.act-vmg-card');if(!card)return;
     wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
-    wrap.addEventListener('touchend',e=>{
-      const dx=e.changedTouches[0].clientX-sx;
-      if(dx<-40){card.style.transform=`translateX(-${SW}px)`;}
-      else if(dx>20){card.style.transform='';}
-    },{passive:true});
+    wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(dx<-40){card.style.transform=`translateX(-${SW}px)`;}else if(dx>20){card.style.transform='';}},{passive:true});
   });
 };
-App.actDeleteVehicleMsg=async function(id,plate){
-  if(!confirm('Supprimer ce message ?')) return;
-  const sid=String(id);
-  let deleted=[];
-  try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
-  if(!deleted.includes(sid))deleted.push(sid);
-  try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(deleted.slice(-500)));}catch(e){}
-  if(window.S&&Array.isArray(S._actMessages))S._actMessages=S._actMessages.filter(m=>String(m.id)!==sid);
-  try{window.ImmatMessages?.buildThreads?.();}catch(_){}
-  this.actOpenVehicleMsgGroup(plate);
-  this.updateActBadge?.();
+App.actToggleVmCard=function(el){
+  const feed=el.closest('#actAlertGroupFeed');
+  if(feed)feed.querySelectorAll('.act-vmg-encours.open').forEach(c=>{if(c!==el)c.classList.remove('open');});
+  el.classList.toggle('open');
 };
+App.actVmReply=async function(msgId,plate,key){
+  const msg=App._vmReplies[key]||key;
+  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_vm_replied')||'[]');}catch(e){}
+  if(!replied.includes(msgId))replied.push(msgId);
+  try{localStorage.setItem('ic_vm_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  await this.actVehicleReply(plate,msg);
+  this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
+};
+App.actVmRate=function(msgId,plate){
+  let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_vm_rated')||'[]');}catch(e){}
+  if(!rated.includes(msgId))rated.push(msgId);
+  try{localStorage.setItem('ic_vm_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
+  try{if(plate&&typeof trustDelta==='function')trustDelta(plate,8);}catch(e){}
+  toast('👍 Info utile — score de confiance augmenté','ok');
+  this.actOpenVehicleMsgGroup(plate);
+};
+App.actVmCall=function(plate){try{window.CallManager?.contactByCall(nPlate(plate),'');}catch(e){}};
+
 App.actCatTab=function(tab){
   S._actCatTab=tab;
   S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
@@ -3243,7 +3281,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v50';
+      var CURRENT = 'immatconnect-pro-v51';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3321,7 +3359,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v50';
+  var CURRENT = 'immatconnect-pro-v51';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
