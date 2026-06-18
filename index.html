@@ -150,6 +150,10 @@
         <span class="sig-cat-icon">🆘</span>
         <span><span class="sig-cat-label">Aide</span><span class="sig-cat-sub">Besoin d'assistance</span></span>
       </button>
+      <button class="sig-cat-btn cat-station" onclick="App.sigStepStation()">
+        <span class="sig-cat-icon">🅿️</span>
+        <span><span class="sig-cat-label">Véhicule stationné</span><span class="sig-cat-sub">Porte, feux, danger</span></span>
+      </button>
     </div>
     <div id="signalHereIndicator" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(41,121,255,.15);border-radius:8px;font-size:12px;color:#2979ff;font-weight:600">📍 Position sélectionnée sur la carte</div>
   </div>
@@ -240,6 +244,25 @@
       <div id="aideCallList" class="altet-list"></div>
     </div>
   </div>
+  <!-- Étape 2 : sous-types Véhicule stationné -->
+  <div id="sigStep2Station" class="sig-step">
+    <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#00bcd4;display:inline-block"></span><span>Étape 2 / 2</span></div>
+    <div class="sig-step-title">Quel problème sur le véhicule ?</div>
+    <div class="sig-vehicle-input">
+      <label class="label" for="sigStationPlate">Plaque du véhicule concerné</label>
+      <input id="sigStationPlate" class="plate-input" placeholder="AB-123-CD" maxlength="9" autocomplete="off">
+    </div>
+    <div class="alert-grid">
+      <button class="alert-card medium" onclick="App.stationReport('porte');App.sigDone()"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
+      <button class="alert-card medium" onclick="App.stationReport('feux');App.sigDone()"><span class="icon">💡</span><span>Feux allumés</span></button>
+      <button class="alert-card medium" onclick="App.stationReport('vitre');App.sigDone()"><span class="icon">🪟</span><span>Vitre ouverte</span></button>
+      <button class="alert-card urgent" onclick="App.stationReport('animal');App.sigDone()"><span class="icon">🐾</span><span>Animal enfermé</span></button>
+      <button class="alert-card urgent" onclick="App.stationReport('enfant');App.sigDone()"><span class="icon">👶</span><span>Enfant seul</span></button>
+      <button class="alert-card info" onclick="App.stationReport('autre');App.sigDone()"><span class="icon">ℹ️</span><span>Autre</span></button>
+    </div>
+  </div>
+
   <div id="alertHistoryBox" class="altet-history" style="display:none;margin-top:4px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px">
     <div class="sig-section-hd" style="margin-bottom:6px">Mes signalements</div>
     <div id="alertHistoryList" class="altet-list"></div>
@@ -1327,8 +1350,17 @@ App.sigStepAide=function(){
   App.renderAideCallSection?.();
 };
 App._sigReset=function(){
-  ['sigStep2Route','sigStep2Vehicle','sigStep2Aide','sigStep3VehicleMsg'].forEach(id=>$(id)?.classList.remove('active'));
+  ['sigStep2Route','sigStep2Vehicle','sigStep2Aide','sigStep2Station','sigStep3VehicleMsg'].forEach(id=>$(id)?.classList.remove('active'));
   $('sigStep1')?.classList.add('active');
+};
+App.sigStepStation=function(){
+  $('sigStep1')?.classList.remove('active');
+  $('sigStep2Station')?.classList.add('active');
+  setTimeout(()=>$('sigStationPlate')?.focus(),80);
+};
+App.stationReport=function(type){
+  const plate=nPlate($('sigStationPlate')?.value||'');
+  toast('Signalement véhicule stationné envoyé ✓','ok');
 };
 App.sigBack=function(){
   App.clearSignalHereContext?.();
@@ -1517,7 +1549,8 @@ App.renderActivityMain=function(){
   const _rIds=S._readMsgIds;
   const vmUnread=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const bRoute=activeAlerts.filter(a=>a.group==='route').length;
-  const bVehicle=vmUnread;
+  const bVehicleAlerts=activeAlerts.filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen'&&a.status!=='present').length;
+  const bVehicle=vmUnread+bVehicleAlerts;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
@@ -3194,7 +3227,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v46';
+      var CURRENT = 'immatconnect-pro-v47';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3272,7 +3305,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v46';
+  var CURRENT = 'immatconnect-pro-v47';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
