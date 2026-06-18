@@ -842,6 +842,11 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-mod-count-badge { background: #2979ff; color: #fff; font-size: 11px; font-weight: 700; border-radius: 12px; padding: 2px 8px; min-width: 22px; text-align: center; margin-top: 4px; }
 .act-mod-badge-row { display: flex; align-items: center; margin-bottom: 9px; }
 .act-section-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 10px 4px 4px; color: #64748b; }
+.act-quick-bar { background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px 12px 12px; margin-bottom: 12px; }
+.act-quick-label { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 8px; }
+.act-quick-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.act-qbtn { background: #1e293b; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; color: #e2e8f0; font-size: 12px; font-weight: 600; padding: 7px 14px; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.act-qbtn:active { background: #334155; }
 .act-section-new { color: #ff3b5c; }
 .act-section-old { border-top: 1px solid rgba(255,255,255,.07); margin-top: 6px; padding-top: 12px; }
 .act-mod-new-badge { background: #ff3b5c; color: #fff; font-size: 10px; font-weight: 950; border-radius: 6px; padding: 3px 9px; letter-spacing: 0.6px; }

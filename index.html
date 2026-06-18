@@ -1599,6 +1599,13 @@ App.closeAlertGroup=function(){
   const gFeed=document.getElementById('actAlertGroupFeed');if(gFeed)gFeed.style.display='none';
   this.renderCategoryFeed(cat,S._actCatTab||'recus');
 };
+App.actVehicleReply=function(plate,msg){
+  if(!plate||!msg)return;
+  if(!window.ImmatMessages?.sendToPlate){toast('Messagerie indisponible.','bad');return;}
+  window.ImmatMessages.sendToPlate(plate,msg,{context_type:'vehicle_response'}).then(ok=>{
+    if(ok!==false){toast('Réponse envoyée ✅','ok');}else{toast('Erreur envoi.','bad');}
+  }).catch(()=>toast('Erreur envoi.','bad'));
+};
 App.actMarkVehicleMsg=function(id,plate){
   const m=(S._actMessages||[]).find(m=>String(m.id)===String(id));
   if(!m)return;
@@ -1632,7 +1639,9 @@ App.actOpenVehicleMsgGroup=function(plate){
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const renderMsg=(m,isNew)=>{const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${e2(String(m.id))}','${e2(plate)}')" style="cursor:pointer"`:'';return`<div class="act-mod-card${isNew?' act-mod-unread':''}" ${click}><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div>`;};
-  let html='';
+  const ep=e2(plate);
+  const qr=`<div class="act-quick-bar"><div class="act-quick-label">Répondre rapidement à ${ep}</div><div class="act-quick-btns"><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Bien reçu, merci ! 👍')">Merci 👍</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Je vérifie ça de suite 👀')">Je vérifie 👀</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}',&quot;Je m\'arrête pour vérifier ✓&quot;)">Je m'arrête ✓</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','C\'est réglé, merci ! ✅')">Réglé ✅</button></div></div>`;
+  let html=qr;
   if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
   if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
   gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
