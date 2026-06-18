@@ -1151,9 +1151,18 @@ async subMsgs(){
         }
         const _isUrgParked=/^🅿️\s*URGENT/i.test(_txt);
         const _stCleanLabel=_isParkedReport?String(_txt).replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').replace(/\.\s*Votre véhicule.*$/i,'').trim().slice(0,50):null;
+        const _stGps=_isParkedReport?(()=>{const _gm=String(_txt).match(/\[GPS:([-\d.]+),([-\d.]+)\]/);return _gm?{lat:parseFloat(_gm[1]),lng:parseFloat(_gm[2])}:null;})():null;
         const _fcTitle=_isParkedReport?(_isUrgParked?'🚨 ':'')+(_stCleanLabel||'Signalement stationné'):_isParkedResponse?'Réponse stationné':'Message de '+_sndName;
-        const _fcSub=_isParkedReport?'Signalé par '+_sndName:_isParkedResponse?'De '+_sndName:''+_sndName;
+        const _fcSub=_isParkedReport?'Signalé par '+_sndName+(_stGps?' · 📍 GPS':''): _isParkedResponse?'De '+_sndName:''+_sndName;
         const _fcBody=_isParkedReport?'Votre véhicule nécessite votre attention.':_isParkedResponse?String(_txt).slice(0,80):String(_txt).slice(0,60);
+        // Bouton rapide "📍 Carte" si GPS disponible dans la notification
+        if(_isParkedReport&&_stGps){
+          _qr=[
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
+            {label:'📍 Carte',bg:'rgba(20,184,166,.12)',color:'#5eead4',cb:()=>{this.actStationShowOnMap?.(_stGps.lat,_stGps.lng,_stCleanLabel||'Votre véhicule');}},
+          ];
+        }
         this.showFloatingCard(_isParkedReport?(_isUrgParked?'🚨':'🅿️'):_isParkedResponse?'✅':'💬',_fcTitle,_fcSub+' — '+_fcBody,'Vu','→ Activité',null,async()=>{
           if(_isVehicleReport&&pl){
             this.navActivite?.();
@@ -1402,14 +1411,13 @@ App.stationReport=async function(type){
   const labels={porte:'Porte mal fermée 🚪',feux:'Feux allumés 💡',vitre:'Vitre ouverte 🪟',animal:'Animal enfermé 🐾',enfant:'Enfant seul 👶',autre:'Problème véhicule ⚠️'};
   const label=labels[type]||type;
   const urgent=['animal','enfant'].includes(type);
-  const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.';
+  // GPS intégré dans le message privé — seul le propriétaire le reçoit
+  const _gps=(S.myLat!=null&&S.myLng!=null)?(' [GPS:'+S.myLat.toFixed(6)+','+S.myLng.toFixed(6)+']'):'';
+  const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.'+_gps;
   if(window.ImmatMessages?.sendToPlate){
     try{await window.ImmatMessages.sendToPlate(plate,msg,{context_type:'parked_report',report_type:type});}catch(e){}
   }
-  if(S.myLat!=null){
-    this.addCommunityAlert({type:'parked_'+type,label:'[STATIONNE] '+label,reason:'[STATIONNE] '+label,plate,lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'parked',_mine:true},{notify:false});
-    try{await this.saveReportRemote?.({plate,reason:'[STATIONNE] '+label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'parked',urgency_level:urgent?'high':'medium'});}catch(e){}
-  }
+  // Pas d'alerte communautaire publique — la position reste privée dans le message
   this.sigBack?.();
   toast('✅ Signalement stationné envoyé à '+fPlate(plate)+'.','ok');
   try{
@@ -1927,6 +1935,8 @@ App.renderStationFeed=function(tab){
   // Extrait le label propre depuis le corps du message stationné
   const _sLabel=body=>String(body||'').replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').replace(/\.\s*Votre véhicule.*$/i,'').trim().slice(0,60);
   const _isUrgent=body=>/^🅿️\s*URGENT/i.test(String(body||''));
+  // Extrait les coordonnées GPS embarquées dans le message [GPS:lat,lng]
+  const _parseGps=body=>{const m=String(body||'').match(/\[GPS:([-\d.]+),([-\d.]+)\]/);return m?{lat:parseFloat(m[1]),lng:parseFloat(m[2])}:null;};
   let repliedIds,ratedIds;
   try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]'));}catch(e){repliedIds=new Set();}
   try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_station_rated')||'[]'));}catch(e){ratedIds=new Set();}
@@ -1950,9 +1960,12 @@ App.renderStationFeed=function(tab){
         const isRated=ratedIds.has(String(m.id));
         const isUnread=!m.read_at&&(!_rIds||!_rIds.has(String(m.id)));
         const borderCol=urgent?'#f97316':'#14b8a6';
+        const gps=_parseGps(m.message);
+        const gpsBtn=gps?`<button type="button" class="act-vmg-cbtn" style="background:rgba(20,184,166,.15);color:#5eead4;border-color:rgba(20,184,166,.3);width:100%;margin-top:4px" onclick="event.stopPropagation();App.actStationShowOnMap(${gps.lat},${gps.lng},'${e2(label)}')">📍 Voir l'emplacement sur la carte</button>`:'';
         return`<div class="act-vmg-card act-vmg-encours" data-msgid="${mid}" style="border-left-color:${borderCol}" onclick="App.actToggleVmCard(this)">
           <div class="act-vmg-hd">${isUnread?`<div class="act-vmg-dot" style="background:${borderCol}"></div>`:''}<div class="act-vmg-info"><div class="act-vmg-plate">${pl||'Conducteur proche'}</div><div class="act-vmg-desc">${urgent?'🚨 ':''}<strong>${e2(label)}</strong></div></div><div class="act-vmg-time">${e2(time)}</div></div>
           <div class="act-vmg-detail">
+            ${gps?`<div style="background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.2);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:11px;color:#5eead4">📍 Position de votre véhicule disponible</div>`:''}
             <div class="act-vmg-sec-lbl">Que souhaitez-vous faire ?</div>
             <div class="act-vmg-replies">
               <button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.actStationReply('${mid}','${pl}','arrivant')">Je viens vérifier 🚗</button>
@@ -1967,6 +1980,7 @@ App.renderStationFeed=function(tab){
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${pl}')">💬 Répondre</button>
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${pl}')">📞 Appeler</button>
             </div>
+            ${gpsBtn}
           </div>
         </div>`;
       }).join('');
@@ -2040,6 +2054,23 @@ App.actStationReply=async function(msgId,plate,key){
   }
   toast(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !','ok');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
+};
+App.actStationShowOnMap=function(lat,lng,label){
+  // Ouvre la carte et place un marqueur privé temporaire visible uniquement par cet utilisateur
+  this.navMap?.();
+  setTimeout(()=>{
+    try{
+      if(!window.map)return toast('Carte non disponible.','bad');
+      window.map.setView([lat,lng],17);
+      // Supprime l'ancien marqueur privé stationné s'il existe
+      if(S._stationPrivateMarker){try{window.map.removeLayer(S._stationPrivateMarker);}catch(e){}}
+      const icon=window.L?.divIcon({className:'',html:`<div style="background:#14b8a6;border:3px solid #fff;border-radius:50%;width:22px;height:22px;box-shadow:0 0 0 4px rgba(20,184,166,.35),0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:13px">🅿️</div>`,iconSize:[28,28],iconAnchor:[14,14]});
+      S._stationPrivateMarker=window.L?.marker([lat,lng],{icon,title:'Votre véhicule stationné'})
+        .bindPopup(`<b>🅿️ ${label}</b><br><small>Position de votre véhicule</small>`,{closeButton:true,maxWidth:200})
+        .addTo(window.map).openPopup();
+      toast('📍 Position de votre véhicule affichée','ok');
+    }catch(e){toast('Impossible d\'afficher la carte.','bad');}
+  },300);
 };
 App.actStationDismiss=function(msgId){
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
