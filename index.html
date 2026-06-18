@@ -1679,13 +1679,26 @@ App.actOpenVehicleMsgGroup=function(plate){
   const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const renderMsg=(m,isNew)=>{const mid=e2(String(m.id));const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${mid}','${e2(plate)}')" style="cursor:pointer"`:'';const delBtn=`<button type="button" class="act-msg-del-btn" onclick="event.stopPropagation();App.actDeleteVehicleMsg('${mid}','${e2(plate)}')" title="Supprimer">×</button>`;return`<div class="act-mod-card${isNew?' act-mod-unread':''} act-msg-deletable" ${click}>${delBtn}<div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div>`;};
+  const renderMsg=(m,isNew)=>{const mid=e2(String(m.id));const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${mid}','${e2(plate)}')" style="cursor:pointer"`:'';return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${e2(plate)}')">🗑️<br><span>Suppr.</span></div><div class="act-mod-card${isNew?' act-mod-unread':''}" ${click}><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div></div>`;};
   const ep=e2(plate);
   const qr=`<div class="act-quick-bar"><div class="act-quick-label">Répondre rapidement à ${ep}</div><div class="act-quick-btns"><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Bien reçu, merci ! 👍')">Merci 👍</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Je vérifie ça de suite 👀')">Je vérifie 👀</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}',&quot;Je m\'arrête pour vérifier ✓&quot;)">Je m'arrête ✓</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','C\'est réglé, merci ! ✅')">Réglé ✅</button></div></div>`;
   let html=qr;
   if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
   if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
   gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
+  const SW=76;
+  gFeed.querySelectorAll('.act-swipe-wrap').forEach(wrap=>{
+    if(wrap._sw)return;wrap._sw=true;
+    let sx=0;
+    const card=wrap.querySelector('.act-mod-card');
+    if(!card)return;
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+    wrap.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-sx;
+      if(dx<-40){card.style.transform=`translateX(-${SW}px)`;}
+      else if(dx>20){card.style.transform='';}
+    },{passive:true});
+  });
 };
 App.actDeleteVehicleMsg=async function(id,plate){
   if(!confirm('Supprimer ce message ?')) return;
@@ -3230,7 +3243,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v49';
+      var CURRENT = 'immatconnect-pro-v50';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3308,7 +3321,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v49';
+  var CURRENT = 'immatconnect-pro-v50';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
