@@ -3155,24 +3155,43 @@ window.AngeAction = AngeAction;
 <!-- ── /Ange du Gardien ─────────────────────────────────────────────── -->
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./service-worker.js').catch(function(){});
+  var _swReg = null;
+  // Recharge automatiquement quand le SW controller change (nouveau SW activé)
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    try { sessionStorage.removeItem('_ic_br'); } catch(e) {}
+    window.location.reload();
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v43';
+      var CURRENT = 'immatconnect-pro-v44';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
       if (version === CURRENT) {
-        // Déjà à jour — masquer les deux bannières
         if (b) b.style.display = 'none';
         if (fb) fb.style.display = 'none';
       } else {
-        // Ancienne version — afficher la bannière de mise à jour
         if (b) b.style.display = 'flex';
       }
     }
+  });
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
+      _swReg = reg;
+      // Force un check immédiat — ne pas attendre le délai navigateur (24h)
+      reg.update();
+      // Si un nouveau SW est déjà en attente, lui dire de prendre le contrôle
+      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      reg.addEventListener('updatefound', function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', function() {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(function(){});
   });
 }
 // Force mise à jour SW — désinstalle le SW + vide caches + recharge
@@ -3205,7 +3224,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v43';
+  var CURRENT = 'immatconnect-pro-v44';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
