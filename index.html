@@ -1558,6 +1558,12 @@ App.actOpenAlertGroup=function(plate){
   const typeBar=document.getElementById('actTypeFilterBar');if(typeBar)typeBar.style.display='none';
   const gFeed=document.getElementById('actAlertGroupFeed');
   if(gFeed){gFeed.style.display='';gFeed.innerHTML=alerts.length?alerts.map(a=>this._actModCard({kind:'alert',alert:a,at:Number(a.at)||0},cat)).join(''):'<div class="act-empty-cat">Aucun signalement actif pour cette plaque.</div>';}
+  // Marquer toutes les alertes du groupe comme vues → badge disparaît
+  if(isRecus&&alerts.length){
+    alerts.forEach(a=>{if(a.status!=='gone'&&a.status!=='resolved')a.status='seen';});
+    if(typeof saveAlerts==='function')saveAlerts();
+    try{this.updateActBadge?.();}catch(e){}
+  }
 };
 App.closeAlertGroup=function(){
   S._actAlertGroupPlate=null;
@@ -1691,7 +1697,7 @@ App._actModCard=function(item,cat){
     const hasNew=item.unread>0;
     const avCls=lastA?.group==='route'?'act-av-route':lastA?.group==='assist'?'act-av-aide':'act-av-vehicle';
     const cnt=item.alerts.length;
-    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenAlertGroup(${JSON.stringify(item.plate)})">
+    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenAlertGroup('${e(item.plate)}')">`
       ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
       <div class="act-mod-body">
         <div class="act-mod-avatar ${avCls}">${m.icon}</div>
