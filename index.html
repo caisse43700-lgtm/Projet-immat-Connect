@@ -1123,22 +1123,38 @@ async subMsgs(){
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
       if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(_sndName||'Le conducteur')+' a vu votre signalement','ok');}
       if(!_ic003&&!_txt.includes('note confiance actuelle')){try{
-        const _isQr=['Bien reçu 👍',"J'arrive ! 🚗",'En route 🚘'].includes(_txt);
-        const _qr=_isQr?[]:[
-          {label:'✓ Reçu',  bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'Bien reçu 👍');}catch(e){}}},
-          {label:"🚗 J'arrive",bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,"J'arrive ! 🚗");}catch(e){}}},
-          {label:'En route',bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'En route 🚘');}catch(e){}}},
-        ];
         const _isVehicleReport=m.context_type==='vehicle_report';
         const _isParkedReport=m.context_type==='parked_report';
         const _isParkedResponse=m.context_type==='parked_response';
-        this.showFloatingCard(_isParkedReport?'🅿️':_isParkedResponse?'✅':'💬',_isParkedReport?'Véhicule stationné':_isParkedResponse?'Réponse stationné':'Message de '+_sndName,''+(_txt.slice(0,60)),'Vu','→ Ouvrir',null,async()=>{
+        const _isQr=['Bien reçu 👍',"J'arrive ! 🚗",'En route 🚘'].includes(_txt);
+        let _qr;
+        if(_isParkedReport&&pl){
+          _qr=[
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}this.updateActBadge?.();}},
+          ];
+        } else if(_isParkedResponse){
+          _qr=[];
+        } else {
+          _qr=_isQr?[]:[
+            {label:'✓ Reçu',  bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'Bien reçu 👍');}catch(e){}}},
+            {label:"🚗 J'arrive",bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,"J'arrive ! 🚗");}catch(e){}}},
+            {label:'En route',bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'En route 🚘');}catch(e){}}},
+          ];
+        }
+        this.showFloatingCard(_isParkedReport?'🅿️':_isParkedResponse?'✅':'💬',_isParkedReport?'Véhicule stationné · '+_sndName:_isParkedResponse?'Réponse stationné · '+_sndName:'Message de '+_sndName,''+(_txt.replace(/^🅿️\s*/,'').slice(0,60)),'Vu','→ Ouvrir',null,async()=>{
           if(_isVehicleReport&&pl){
             this.navActivite?.();
             setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);
           }else if(_isParkedReport||_isParkedResponse){
+            const _stTab=_isParkedReport?'recus':'envoyes';
             this.navActivite?.();
-            setTimeout(()=>{try{this.openActivityCat('station');S._actCatTab=_isParkedReport?'recus':'envoyes';setTimeout(()=>{try{this.renderStationFeed?.(_isParkedReport?'recus':'envoyes');}catch(e){}},150);}catch(e){}},150);
+            setTimeout(()=>{try{
+              this.openActivityCat('station');
+              S._actCatTab=_stTab;
+              document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===_stTab));
+              setTimeout(()=>{try{this.renderStationFeed?.(_stTab);}catch(e){}},150);
+            }catch(e){}},150);
           }else{
             this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}
           }
