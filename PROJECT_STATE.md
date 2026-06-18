@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-18
 Avancement             : ~45% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 74c0f30
+Branche production     : main (GitHub Pages) — commit 8aa9330
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -50,6 +50,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Restauration état session — icContactTabs + correctifs nav/SW/Messages — TERMINÉE**
+**Date :** 2026-06-18
+**Commits :** `959acf5`, `8aa9330` (rebased) sur `main`
+**Fichiers modifiés :** `index.html`, `messages.js`, `service-worker.js`
+
+**Résumé :** Suite à des allers-retours de revert, l'état final correspond à `58567a2` pour `index.html` (icContactTabs présents + fix nav/panels) et `8c17ac8` pour `messages.js` + `service-worker.js` (tous les correctifs de session). Correctifs actifs en production :
+- `closeCompose()` guard `_inAppels` — icMsgList ne réapparaît pas dans la vue Appels
+- Reset inline styles dans `navMessages()`/`navAppels()` — Messages s'ouvre correctement depuis Activité
+- SW `controllerchange` guard — pas de rechargement au premier install
+- icContactTabs (`#icTabMessages`/`#icTabAppels`) présents dans le DOM
+
+---
 
 **Mission : 6 corrections bugs UX/CI — panneaux superposés + tests E2E + SW reload — TERMINÉE**
 **Date :** 2026-06-18
