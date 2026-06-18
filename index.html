@@ -2178,21 +2178,24 @@ App.actStationReply=async function(msgId,plate,key){
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
 App.actStationShowOnMap=function(lat,lng,label){
-  // Ouvre la carte et place un marqueur privé temporaire visible uniquement par cet utilisateur
   this.navMap?.();
-  setTimeout(()=>{
+  const _doPlace=()=>{
     try{
       if(!window.map)return toast('Carte non disponible.','bad');
       window.map.setView([lat,lng],17);
-      // Supprime l'ancien marqueur privé stationné s'il existe
       if(S._stationPrivateMarker){try{window.map.removeLayer(S._stationPrivateMarker);}catch(e){}}
       const icon=window.L?.divIcon({className:'',html:`<div style="background:#14b8a6;border:3px solid #fff;border-radius:50%;width:22px;height:22px;box-shadow:0 0 0 4px rgba(20,184,166,.35),0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:13px">🅿️</div>`,iconSize:[28,28],iconAnchor:[14,14]});
       S._stationPrivateMarker=window.L?.marker([lat,lng],{icon,title:'Votre véhicule stationné'})
         .bindPopup(`<b>🅿️ ${label}</b><br><small>Position de votre véhicule</small>`,{closeButton:true,maxWidth:200})
         .addTo(window.map).openPopup();
       toast('📍 Position de votre véhicule affichée','ok');
-    }catch(e){toast('Impossible d\'afficher la carte.','bad');}
-  },300);
+    }catch(e){
+      if(S._stationMapRetry){S._stationMapRetry=false;toast('Impossible d\'afficher la carte.','bad');}
+      else{S._stationMapRetry=true;setTimeout(_doPlace,600);}
+    }
+  };
+  S._stationMapRetry=false;
+  setTimeout(_doPlace,500);
 };
 App.actStationDismiss=function(msgId){
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
