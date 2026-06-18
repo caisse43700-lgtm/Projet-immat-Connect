@@ -1,7 +1,7 @@
-/* service-worker.js — ImmatConnect — SESSION OBD-003d §20 */
+/* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v41';
+const CACHE_NAME  = 'immatconnect-pro-v44';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -73,9 +73,12 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   // Supabase API — réseau uniquement, jamais mis en cache
   if (e.request.url.includes('supabase.co')) return;
-  // Navigation HTML — toujours réseau, jamais mis en cache
+  // Navigation HTML — cache:'no-store' pour court-circuiter le cache HTTP de WebKit
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match(OFFLINE_URL)));
+    e.respondWith(
+      fetch(new Request(e.request.url, { cache: 'no-store' }))
+        .catch(() => caches.match(OFFLINE_URL))
+    );
     return;
   }
 
@@ -93,6 +96,16 @@ self.addEventListener('fetch', (e) => {
       })
       .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
   );
+});
+
+// ─── Message SKIP_WAITING depuis la page ─────────────────────────────────────
+self.addEventListener('message', (e) => {
+  if (!e.data) return;
+  if (e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data.type === 'SELF_DESTRUCT') {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.registration.unregister());
+  }
 });
 
 // ─── Push notifications ──────────────────────────────────────────────────────

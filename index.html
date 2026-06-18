@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=9">
+  <link rel="stylesheet" href="app.css?v=10">
   <link rel="stylesheet" href="messages.css?v=4">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -525,9 +525,9 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:5,maxMsgPerMinute:5};
-const APP_BUILD='2026-06-15';
+const APP_BUILD='2026-06-19';
 window.APP_BUILD=APP_BUILD;
-(function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
+(function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){if(_b>_lb)localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{if(!_lb||_b>=_lb)localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
 function _vapidKey(b64){const pad='='.repeat((4-b64.length%4)%4);const b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
 const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
@@ -775,7 +775,7 @@ openGardienDashboard(){
           </div>
           <div style="background:#0f0f1a;border-radius:6px;padding:8px">
             <div style="color:#555;font-size:10px;margin-bottom:2px">CACHE_NAME</div>
-            <div id="dashCacheName" style="color:#38bdf8;font-weight:700;font-size:11px">immatconnect-pro-v22</div>
+            <div id="dashCacheName" style="color:#38bdf8;font-weight:700;font-size:11px">—</div>
           </div>
         </div>
         <div style="margin-top:8px;font-size:10px;color:#555">Recalcul complet : <code>node scripts/health-scores.js</code></div>
@@ -1186,10 +1186,10 @@ const{reporter_id:_r,...p2}=payload;r=await sb.from('reports').insert(p2).select
 const{latitude,longitude,...p3base}=p2;r=await sb.from('reports').insert({...p3base,lat:latitude,lng:longitude}).select('id');if(!r.error){console.info('saveReportRemote ✅ T3');_bcast({...p3base,lat:latitude,lng:longitude,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
 const{lat:__,lng:___,...minimal}=payload;r=await sb.from('reports').insert({plate:minimal.plate,reason:minimal.reason,created_at:minimal.created_at||new Date().toISOString()}).select('id');if(!r.error){console.info('saveReportRemote ✅ T4 minimal');_bcast({...payload,...(r.data?.[0]||{})});return r.data?.[0]?.id??null;}
 throw r.error}catch(e){console.error('saveReportRemote ❌',e);_bcast(payload);S.offlineReports.unshift(payload);S.offlineReports=S.offlineReports.slice(0,50);saveAlerts();try{App.updateCommunityStatus?.()}catch(_){}toast('Signalement hors ligne (réessai auto).','bad')}},async syncOfflineReports(){if(!S.networkOnline||!S.offlineReports?.length)return;const queue=[...S.offlineReports];S.offlineReports=[];for(const p of queue){const dbId=await this.saveReportRemote(p);if(dbId){const match=(S.alerts||[]).find(a=>a._mine&&!a.remoteId&&nPlate(a.plate||'')===nPlate(p.plate||''));if(match)match.remoteId=String(dbId);}}saveAlerts();try{this.updateCommunityStatus?.()}catch(_){}},
-ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedVehiclePlate(){const own=this.ownPlate();const candidates=[S.contextVehicle?.plate,S.selPlate,$('iTarget')?.value,S.conv].map(nPlate).filter(Boolean).filter(p=>p!=='ALL'&&p!==own);return candidates[0]||''},updateReportTarget(){const p=this.selectedVehiclePlate();const panel=$('reportPanel'),line=$('reportTargetLine'),title=$('reportVehicleTitle'),ctx=$('vehicleContextPlate');const vehicleMode=panel?.classList.contains('vehicle-only');if(ctx)ctx.textContent=p?'Véhicule '+p:'Véhicule';if(title)title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'🚗 Informer les conducteurs';if(line){line.classList.toggle('warn',vehicleMode&&!p);line.innerHTML=vehicleMode?(p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.'):'Information générale envoyée aux véhicules proches.'}},setReportMode(mode){const p=$('reportPanel');if(!p)return;p.classList.toggle('vehicle-only',mode==='vehicle');p.classList.toggle('full-report',mode!=='vehicle');const title=p.querySelector('h2');const desc=p.querySelector('p');if(title)title.textContent=mode==='vehicle'?'Alerter le véhicule':'Signaler';if(desc)desc.textContent=mode==='vehicle'?'Choisis uniquement une information concernant le véhicule sélectionné.':"Informe les conducteurs proches, la route ou demande de l'aide.";this.updateReportTarget?.()},openReport(){this.panel('altet');App.sigBack?.()},openVehicleReport(){this.panel('altet');App.sigStepVehicle?.()},reportVehicleOrDrivers(label){const panel=$('reportPanel');if(panel?.classList.contains('vehicle-only'))return this.vehicleAlert(label);return this.driverInfo(label)},async driverInfo(label){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Localise-toi avant.','bad');}const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);const reason='[CONDUCTEURS] '+label;const _al=this.addCommunityAlert({type:'vehicule',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'vehicle',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),urgency_level:urgent?'high':'medium'});S._reporting=false;try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/driverInfo'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('driverInfo: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');notifyAlert('🚗 Information envoyée',label,urgent?'urgent':'important')},vehicleAlert(label){let p=this.selectedVehiclePlate();const own=this.ownPlate();if(!p)return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');if(p===own)return toast("Impossible de te signaler toi-même.",'bad');if($('iTarget'))$('iTarget').value=p;const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';if($('iMsg'))$('iMsg').value=msg;S.selPlate=p;S.conv=p;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});this.updateReportTarget?.();this.closeOverlay('reportPanel');this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposePlate'))$('icComposePlate').value=p;if($('icComposeText'))$('icComposeText').value=msg;}catch(e){}},80);try{window.ImmatMessages?.setContextTrust?.(p,'vehicle','signalement véhicule',1800000)}catch(e){}toast('Signalement préparé pour '+p+'. Appuie sur Envoyer pour le transmettre.','ok')},async roadReport(type){if(S._reporting)return;S._reporting=true;const rLat=S.tapLat??S.myLat,rLng=S.tapLng??S.myLng;S.tapLat=null;S.tapLng=null;if(rLat!==null&&S.myLat!==null){const _dKm=km(rLat,rLng,S.myLat,S.myLng);if(_dKm>10)toast('📍 Signalement à '+Math.round(_dKm)+' km de votre position.','warn');}if(rLat===null){S._reporting=false;return toast('Active le GPS ou choisis un point sur la carte.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:rLat,lng:rLng,level:meta.level,group:'route',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:rLat,longitude:rLng,created_at:new Date().toISOString(),category:'route',urgency_level:meta.level==='urgent'?'high':meta.level==='important'?'medium':'low'});S._reporting=false;try{window.ImmatOrganism?.observe?.('ROAD_CREATED',{type,lat:rLat,lng:rLng,_src:'ImmatConnect/roadReport'})}catch(e){}
+ownPlate(){return nPlate(S.profile?.owner_plate||$('tbPlate')?.textContent||'')},selectedVehiclePlate(){const own=this.ownPlate();const candidates=[S.contextVehicle?.plate,S.selPlate,$('iTarget')?.value,S.conv].map(nPlate).filter(Boolean).filter(p=>p!=='ALL'&&p!==own);return candidates[0]||''},updateReportTarget(){const p=this.selectedVehiclePlate();const panel=$('reportPanel'),line=$('reportTargetLine'),title=$('reportVehicleTitle'),ctx=$('vehicleContextPlate');const vehicleMode=panel?.classList.contains('vehicle-only');if(ctx)ctx.textContent=p?'Véhicule '+p:'Véhicule';if(title)title.textContent=vehicleMode?(p?'🚗 Prévenir le véhicule '+p:'🚗 Prévenir le véhicule'):'🚗 Informer les conducteurs';if(line){line.classList.toggle('warn',vehicleMode&&!p);line.innerHTML=vehicleMode?(p?'Véhicule concerné : <b>'+esc(p)+'</b>':'Sélectionne un véhicule sur la carte pour le signaler.'):'Information générale envoyée aux véhicules proches.'}},setReportMode(mode){const p=$('reportPanel');if(!p)return;p.classList.toggle('vehicle-only',mode==='vehicle');p.classList.toggle('full-report',mode!=='vehicle');const title=p.querySelector('h2');const desc=p.querySelector('p');if(title)title.textContent=mode==='vehicle'?'Alerter le véhicule':'Signaler';if(desc)desc.textContent=mode==='vehicle'?'Choisis uniquement une information concernant le véhicule sélectionné.':"Informe les conducteurs proches, la route ou demande de l'aide.";this.updateReportTarget?.()},openReport(){this.panel('altet');App.sigBack?.()},openVehicleReport(){this.panel('altet');App.sigStepVehicle?.()},reportVehicleOrDrivers(label){const panel=$('reportPanel');if(panel?.classList.contains('vehicle-only'))return this.vehicleAlert(label);return this.driverInfo(label)},async driverInfo(label){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Localise-toi avant.','bad');}const urgent=/pneu|roue|fumée|feu|incendie/i.test(label);const reason='[CONDUCTEURS] '+label;const _al=this.addCommunityAlert({type:'vehicule',label:'Information conducteurs',reason,plate:'CONDUCTEURS',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'vehicle',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'CONDUCTEURS',reason,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),urgency_level:urgent?'high':'medium'});S._reporting=false;try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/driverInfo'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('driverInfo: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');notifyAlert('🚗 Information envoyée',label,urgent?'urgent':'important')},vehicleAlert(label){let p=this.selectedVehiclePlate();const own=this.ownPlate();if(!p)return toast("Clique d'abord le véhicule concerné sur la carte.",'bad');if(p===own)return toast("Impossible de te signaler toi-même.",'bad');if($('iTarget'))$('iTarget').value=p;const msg=(/pneu|roue|fumée|feu|incendie/i.test(label)?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';S.selPlate=p;S.conv=p;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:p});this.updateReportTarget?.();this.closeOverlay('reportPanel');if(window.ImmatMessages?.sendToPlate){window.ImmatMessages.sendToPlate(p,msg,{context_type:'vehicle_report'}).then(ok=>{if(ok!==false){toast('Signalement envoyé à '+p+'.','ok');try{this.navActivite?.();}catch(e){}}else{toast('Erreur envoi signalement.','bad');}}).catch(()=>toast('Erreur envoi signalement.','bad'));}else{toast('Messagerie non disponible.','bad');}},async roadReport(type){if(S._reporting)return;S._reporting=true;const rLat=S.tapLat??S.myLat,rLng=S.tapLng??S.myLng;S.tapLat=null;S.tapLng=null;if(rLat!==null&&S.myLat!==null){const _dKm=km(rLat,rLng,S.myLat,S.myLng);if(_dKm>10)toast('📍 Signalement à '+Math.round(_dKm)+' km de votre position.','warn');}if(rLat===null){S._reporting=false;return toast('Active le GPS ou choisis un point sur la carte.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ROUTE] '+meta.label,plate:'ROUTE',lat:rLat,lng:rLng,level:meta.level,group:'route',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ROUTE',reason:'[ROUTE] '+meta.label,latitude:rLat,longitude:rLng,created_at:new Date().toISOString(),category:'route',urgency_level:meta.level==='urgent'?'high':meta.level==='important'?'medium':'low'});S._reporting=false;try{window.ImmatOrganism?.observe?.('ROAD_CREATED',{type,lat:rLat,lng:rLng,_src:'ImmatConnect/roadReport'})}catch(e){}
 try{window.InteractionEngine?.create?.({type:'VEHICLE_REPORT_CREATED',initiator:this.ownPlate?.(),context_id:_dbId??null,payload:{reportType:type,lat:rLat,lng:rLng},status:'active'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('roadReport: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('✅ Signalement envoyé aux conducteurs proches.','ok');notifyAlert(meta.icon+' Signalement',meta.label,meta.level)},async assist(type){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Active le GPS pour signaler ta position.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'help',urgency_level:meta.level==='urgent'?'high':meta.level==='important'?'medium':'low'});S._reporting=false;try{window.ImmatOrganism?.observe?.('HELP_CREATED',{type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/assist'})}catch(e){}
 try{window.InteractionEngine?.create?.({type:'HELP_REQUEST_CREATED',initiator:this.ownPlate?.(),context_id:_dbId??null,payload:{assistType:type,lat:S.myLat,lng:S.myLng},status:'active'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('assist: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('🆘 Demande d\'aide envoyée aux conducteurs proches.','ok');notifyAlert(meta.icon+' Aide demandée',meta.label,meta.level)},openAssist(){this.openReport()},
-openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini');s.classList.add('full');S.sheetSnap='full';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';['altet','drive','messages','settings','activite'].forEach(x=>{$('panel'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p);$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock()} },
+openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini');s.classList.add('full');S.sheetSnap='full';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';['altet','drive','messages','settings','activite'].forEach(x=>{const _pe=$('panel'+x[0].toUpperCase()+x.slice(1));if(_pe){_pe.classList.toggle('on',x===p);_pe.style.display='';}$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock()} },
 openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><button type="button" onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty-msg">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p,level='BLOCK_ALL'){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!['BLOCK_MESSAGES','BLOCK_CALLS','BLOCK_ALL'].includes(level))level='BLOCK_ALL';if(!S.blocked.includes(p))S.blocked.push(p);if(S.blocked.length>500)S.blocked=S.blocked.slice(-500);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');lvls[p]=level;localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}try{if(sb&&S.uid)sb.from('user_blocks').upsert({user_id:S.uid,blocked_plate:p,level},{onConflict:'user_id,blocked_plate'}).then(({error})=>{if(error)console.warn('blockPlate DB',error);})}catch(e){}try{window.ImmatOrganism?.observe?.('BLOCK_APPLIED',{plate:p,level,_src:'ImmatConnect/blockPlate'})}catch(e){}try{window.InteractionEngine?.create?.({type:'BLOCK',initiator:fPlate(S.profile?.owner_plate||''),target:fPlate(p),payload:{plate:p,level},status:'resolved'})}catch(e){}this.loadMsgs();this.loadOthers()},unblockPlate(p){p=nPlate(p);S.blocked=S.blocked.filter(x=>x!==p);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');delete lvls[p];localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}try{if(sb&&S.uid)sb.from('user_blocks').delete().eq('user_id',S.uid).eq('blocked_plate',p).then(({error})=>{if(error)console.warn('unblockPlate DB',error);})}catch(e){}this.openBlocked()},openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="list-item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b>'+(r.pseudo&&r.pseudo!=='Conducteur'?' · '+esc(r.pseudo):'')+' <br><small>'+(r.dist?(Math.round(r.dist*1000/100)*100)+' m':'dist. inconnue')+(r.at?' · '+esc(relTime(r.at)):'')+'</small></span><div style="display:flex;gap:4px"><button type="button" onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Message">💬</button><button type="button" onclick="window.CallManager?.contactByCall(\''+js(r.plate)+'\',\'\');App.closeRecent()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Appel">📞</button></div></div>').join(''):'<div class="empty-msg">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},clearRecent(){if(!S.recent.length)return toast('Aucun véhicule récent.','bad');S.recent=[];safeSet('ic_recent_vehicles',S.recent);this.openRecent();},openLegal(){$('legal').classList.add('show');this.legalTab('privacy');},closeLegal(){$('legal').classList.remove('show')},legalTab(t){$('legalPrivacy').style.display=t==='privacy'?'':'none';$('legalCgu').style.display=t==='cgu'?'':'none';document.querySelectorAll('.legal-tab').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes(t)));},openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},closeOverlay(id){$(id)?.classList.remove('show');if(id==='reportPanel')this.clearSignalHereContext?.();},closeAllOverlays(){['reportPanel','nearbyPanel'].forEach(id=>this.closeOverlay(id))},
 voiceInput(target,mode){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible.','bad');$(target)?.focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;toast(mode==='plate'?'Dicte la plaque…':'Dicte ton message…','ok');rec.onresult=e=>{let txt=e.results?.[0]?.[0]?.transcript||'';$(target).value=mode==='plate'?this.normalizeSpokenPlate(txt):txt};rec.onerror=()=>toast('Vocal indisponible.','bad');rec.start()}catch(e){toast('Vocal indisponible.','bad')}},normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},voicePlate(){this.voiceInput('icComposePlate','plate')},voiceMsg(){this.voiceInput('icComposeText','message')},
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){const _sosLast=Number(localStorage.getItem('ic_sos_last')||0);const _sosCd=15*60*1000;if(Date.now()-_sosLast<_sosCd&&_sosLast>0){const rem=Math.ceil((_sosCd-(Date.now()-_sosLast))/60000);return toast('⏳ Signalement SOS : patientez encore '+rem+' min avant un nouveau SOS.','bad');}localStorage.setItem('ic_sos_last',String(Date.now()));try{window.ImmatOrganism?.observe?.('SOS_TRIGGERED',{lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/sos'})}catch(e){}if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
@@ -1209,6 +1209,7 @@ App.navMessages=function(){
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.add('on');
+  ['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='';if(_cp)_cp.style.display='none';
@@ -1225,6 +1226,7 @@ App.navAppels=function(){
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.add('on');
   if(typeof window.S!=='undefined') window.S._unseenMissedCalls=0;
+  ['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
@@ -1234,6 +1236,7 @@ App.navAppels=function(){
   if(_sbar)_sbar.style.display='none';
   try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
+  setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='flex'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -1733,7 +1736,15 @@ App.renderCategoryFeed=function(cat,tab){
     });
     Object.values(vmMap).forEach(g=>{
       const sorted=g.msgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
-      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread});
+      // Dédoublon : retirer alertGroup/alert de même plaque, vehicleMsgGroup prend le dessus
+      const dupIdx=items.findIndex(i=>{
+        if(i.kind==='alertGroup')return i.plate===g.plate;
+        if(i.kind==='alert'){const p=i.alert?.plate||i.alert?.from_plate||i.alert?.sender_plate;return p===g.plate;}
+        return false;
+      });
+      const _hasAlert=dupIdx>=0;
+      if(_hasAlert)items.splice(dupIdx,1);
+      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread,_hasAlert});
     });
   }
   items.sort((a,b)=>b.at-a.at);
@@ -1791,7 +1802,8 @@ App._actModCard=function(item,cat){
     const cnt=item.msgs.length;
     const lastMsg=item.msgs[0];
     const time=item.at?relTime(item.at):'';
-    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenVehicleMsgGroup('${e(item.plate)}')">
+    const _openFn=item._hasAlert?`App.actOpenAlertGroup('${e(item.plate)}')`:`App.actOpenVehicleMsgGroup('${e(item.plate)}')`;
+    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="${_openFn}">
       ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
       <div class="act-mod-body">
         <div class="act-mod-avatar act-av-vehicle">🚨</div>
@@ -2551,28 +2563,8 @@ function showReputationToast(){
 
     const oldVehicleAlert = App.vehicleAlert ? App.vehicleAlert.bind(App) : null;
     App.vehicleAlert = function(label){
-      const own = App.ownPlate?.() || "";
-      const p = App.selectedVehiclePlate?.() || (window.S && S.selPlate) || "";
-      const plate = window.nPlate ? nPlate(p) : String(p || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
-
-      if(!plate || plate === own){
-        return oldVehicleAlert ? oldVehicleAlert(label) : undefined;
-      }
-
-      const urgent = /pneu|roue|fumée|feu|incendie/i.test(label);
-      const msg = (urgent ? "🚨 SIGNALEMENT URGENT : " : "⚠️ SIGNALEMENT : ") +
-        label + ". Pouvez-vous vérifier votre véhicule ?";
-
-      const composePlate = document.getElementById("icComposePlate");
-      const composeText = document.getElementById("icComposeText");
-
-      if(composePlate) composePlate.value = plate;
-      if(composeText) composeText.value = msg;
-
-      try{ App.closeOverlay?.("reportPanel"); }catch(e){}
-      App.panel("messages");
-      window.ImmatMessages?.setMode?.("compose");
-      toast?.("Signalement préparé pour " + plate + ". Appuie sur envoyer.", "ok");
+      // Déléguer à la version originale qui envoie via sendToPlate avec context_type:'vehicle_report'
+      return oldVehicleAlert ? oldVehicleAlert(label) : undefined;
     };
 
     const oldOpenInboxBadge = App.openInboxBadge ? App.openInboxBadge.bind(App) : null;
@@ -2819,10 +2811,10 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=2"></script>
 <script src="core/mobile-autotest.js?v=1"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=17"></script>
+<script src="messages.js?v=19"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=3"></script>
-<script src="ui.js?v=8"></script>
+<script src="ui.js?v=9"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
@@ -3166,43 +3158,81 @@ window.AngeAction = AngeAction;
 <!-- ── /Ange du Gardien ─────────────────────────────────────────────── -->
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./service-worker.js').catch(function(){});
+  var _swReg = null;
+  // Ne recharger que si un SW existait déjà (= mise à jour), pas sur le premier install
+  var _hadSwController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (!_hadSwController) { _hadSwController = true; return; }
+    try { sessionStorage.removeItem('_ic_br'); } catch(e) {}
+    window.location.reload();
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v41';
+      var CURRENT = 'immatconnect-pro-v44';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
       if (version === CURRENT) {
-        // Déjà à jour — masquer les deux bannières
         if (b) b.style.display = 'none';
         if (fb) fb.style.display = 'none';
       } else {
-        // Ancienne version — afficher la bannière de mise à jour
         if (b) b.style.display = 'flex';
       }
     }
+  });
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
+      _swReg = reg;
+      // Force un check immédiat — ne pas attendre le délai navigateur (24h)
+      reg.update();
+      // Si un nouveau SW est déjà en attente, lui dire de prendre le contrôle
+      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      reg.addEventListener('updatefound', function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', function() {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(function(){});
   });
 }
 // Force mise à jour SW — désinstalle le SW + vide caches + recharge
 window._forceSwUpdate = async function() {
   var btn = document.getElementById('forceSwUpdateBtn');
   if (btn) { btn.textContent = '⏳ Mise à jour…'; btn.disabled = true; }
+  // 1. Vider tous les caches Caches API
   try {
     if (window.caches) {
       var keys = await window.caches.keys();
       await Promise.all(keys.map(function(k){ return window.caches.delete(k); }));
     }
   } catch(e) {}
+  // 2a. Via getRegistrations() (peut échouer silencieusement sur iOS)
   try {
     if (navigator.serviceWorker) {
       var regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(function(r){ return r.unregister(); }));
     }
   } catch(e) {}
+  // 2b. Via le controller direct (contournement bug iOS où getRegistrations() renvoie [])
+  try {
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    }
+    if (_swReg) { await _swReg.unregister(); }
+  } catch(e) {}
+  // 2c. Demander au SW de se désinscrire lui-même
+  try {
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SELF_DESTRUCT' });
+    }
+  } catch(e) {}
   try{sessionStorage.removeItem('_ic_br');}catch(e){}
+  try{localStorage.removeItem('_ic_build');}catch(e){}
+  await new Promise(function(r){ setTimeout(r, 300); });
   window.location.replace(location.origin+location.pathname+'?r='+Date.now());
 };
 // Abonnement CALL_MISSED → badge onglet Appels
@@ -3216,7 +3246,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v40';
+  var CURRENT = 'immatconnect-pro-v44';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
