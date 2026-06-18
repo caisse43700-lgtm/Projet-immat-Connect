@@ -527,7 +527,7 @@ const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:5,maxMsgPerMinute:5};
 const APP_BUILD='2026-06-19';
 window.APP_BUILD=APP_BUILD;
-(function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
+(function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){if(_b>_lb)localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{if(!_lb||_b>=_lb)localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
 function _vapidKey(b64){const pad='='.repeat((4-b64.length%4)%4);const b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
 const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key):null; window.sb=sb;
