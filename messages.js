@@ -747,6 +747,7 @@ async function markAllRead(){
   try{
     await client.from('messages').update({read_at:now}).in('id',ids);
     unread.forEach(m=>{ m.read_at = now; });
+    try{if(!window.S._readMsgIds)window.S._readMsgIds=new Set();ids.forEach(id=>window.S._readMsgIds.add(String(id)));const _arr=[...window.S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}
   }catch(e){}
   buildThreads();
   setBadge(0);
@@ -765,6 +766,8 @@ async function markThreadRead(plate){
     try{
       await client.from('messages').update({read_at:now}).in('id',ids);
       unread.forEach(m=>{ m.read_at = now; });
+      // Persister dans S._readMsgIds pour survie aux rechargements
+      try{if(!window.S._readMsgIds)window.S._readMsgIds=new Set();ids.forEach(id=>window.S._readMsgIds.add(String(id)));const _arr=[...window.S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}
     }catch(e){}
   }
 
