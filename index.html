@@ -1719,7 +1719,7 @@ App.renderCategoryFeed=function(cat,tab){
       vmMap[k].msgs.push(m);
       const t=m.created_at?new Date(m.created_at).getTime():0;
       if(t>vmMap[k].lastAt)vmMap[k].lastAt=t;
-      if(isRecus&&!m.read_at)vmMap[k].unread++;
+      if(isRecus&&!m.read_at&&!(S._readMsgIds?.has(String(m.id))))vmMap[k].unread++;
     });
     Object.values(vmMap).forEach(g=>{
       const sorted=g.msgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
