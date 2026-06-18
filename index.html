@@ -260,12 +260,12 @@
       <input id="sigStationPlate" class="plate-input" placeholder="AB-123-CD" maxlength="9" autocomplete="off">
     </div>
     <div class="alert-grid">
-      <button class="alert-card medium" onclick="App.stationReport('porte');App.sigDone()"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
-      <button class="alert-card medium" onclick="App.stationReport('feux');App.sigDone()"><span class="icon">💡</span><span>Feux allumés</span></button>
-      <button class="alert-card medium" onclick="App.stationReport('vitre');App.sigDone()"><span class="icon">🪟</span><span>Vitre ouverte</span></button>
-      <button class="alert-card urgent" onclick="App.stationReport('animal');App.sigDone()"><span class="icon">🐾</span><span>Animal enfermé</span></button>
-      <button class="alert-card urgent" onclick="App.stationReport('enfant');App.sigDone()"><span class="icon">👶</span><span>Enfant seul</span></button>
-      <button class="alert-card info" onclick="App.stationReport('autre');App.sigDone()"><span class="icon">ℹ️</span><span>Autre</span></button>
+      <button class="alert-card medium" onclick="App.stationReport('porte')"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
+      <button class="alert-card medium" onclick="App.stationReport('feux')"><span class="icon">💡</span><span>Feux allumés</span></button>
+      <button class="alert-card medium" onclick="App.stationReport('vitre')"><span class="icon">🪟</span><span>Vitre ouverte</span></button>
+      <button class="alert-card urgent" onclick="App.stationReport('animal')"><span class="icon">🐾</span><span>Animal enfermé</span></button>
+      <button class="alert-card urgent" onclick="App.stationReport('enfant')"><span class="icon">👶</span><span>Enfant seul</span></button>
+      <button class="alert-card info" onclick="App.stationReport('autre')"><span class="icon">ℹ️</span><span>Autre</span></button>
     </div>
   </div>
 
@@ -1129,9 +1129,10 @@ async subMsgs(){
         const _isQr=['Bien reçu 👍',"J'arrive ! 🚗",'En route 🚘'].includes(_txt);
         let _qr;
         if(_isParkedReport&&pl){
+          const _archiveStation=(msgId)=>{let r=[];try{r=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}if(!r.includes(String(msgId)))r.push(String(msgId));try{localStorage.setItem('ic_station_replied',JSON.stringify(r.slice(-500)));}catch(e){}if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}};
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
           ];
         } else if(_isParkedResponse){
           _qr=[];
@@ -1386,19 +1387,29 @@ App.sigStepStation=function(){
 };
 App.stationReport=async function(type){
   const plate=nPlate($('sigStationPlate')?.value||'');
+  if(!plate)return toast('Indique la plaque du véhicule stationné.','bad');
   const labels={porte:'Porte mal fermée 🚪',feux:'Feux allumés 💡',vitre:'Vitre ouverte 🪟',animal:'Animal enfermé 🐾',enfant:'Enfant seul 👶',autre:'Problème véhicule ⚠️'};
   const label=labels[type]||type;
   const urgent=['animal','enfant'].includes(type);
-  if(plate&&window.ImmatMessages?.sendToPlate){
-    const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.';
+  const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.';
+  if(window.ImmatMessages?.sendToPlate){
     try{await window.ImmatMessages.sendToPlate(plate,msg,{context_type:'parked_report',report_type:type});}catch(e){}
   }
   if(S.myLat!=null){
-    this.addCommunityAlert({type:'parked_'+type,label:'[STATIONNE] '+label,reason:'[STATIONNE] '+label,plate:plate||'STATIONNE',lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'parked',_mine:true},{notify:false});
-    try{await this.saveReportRemote?.({plate:plate||'STATIONNE',reason:'[STATIONNE] '+label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'parked',urgency_level:urgent?'high':'medium'});}catch(e){}
+    this.addCommunityAlert({type:'parked_'+type,label:'[STATIONNE] '+label,reason:'[STATIONNE] '+label,plate,lat:S.myLat,lng:S.myLng,level:urgent?'urgent':'important',group:'parked',_mine:true},{notify:false});
+    try{await this.saveReportRemote?.({plate,reason:'[STATIONNE] '+label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'parked',urgency_level:urgent?'high':'medium'});}catch(e){}
   }
-  toast('✓ Signalement stationné envoyé.','ok');
-  try{this.navActivite?.();setTimeout(()=>this.openActivityCat?.('station'),200);}catch(e){}
+  this.sigBack?.();
+  toast('✅ Signalement stationné envoyé à '+fPlate(plate)+'.','ok');
+  try{
+    this.navActivite?.();
+    setTimeout(()=>{
+      this.openActivityCat?.('station');
+      S._actCatTab='envoyes';
+      document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='envoyes'));
+      setTimeout(()=>this.renderStationFeed?.('envoyes'),150);
+    },200);
+  }catch(e){}
 };
 App.sigBack=function(){
   App.clearSignalHereContext?.();
