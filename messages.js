@@ -1960,6 +1960,7 @@ window.ImmatMessages = {
   saveDndHours,
   saveCallSettings,
   markAllRead,
+  markThreadRead,
   _pickChip,
   sharePosition,
   _scrollToBottom,

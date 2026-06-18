@@ -1499,13 +1499,14 @@ App.renderActivityMain=function(){
     return now-ts<(typeof ttlFor==='function'?ttlFor(a.type):3600000)&&isNearby(a);
   });
   const msgs=(S._actMessages||[]).filter(m=>!deleted.includes(String(m.id)));
-  const vmUnread=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at).length;
+  const _rIds=S._readMsgIds;
+  const vmUnread=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const bRoute=activeAlerts.filter(a=>a.group==='route').length;
   const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length+vmUnread;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
-  const unread=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present').length+msgs.filter(m=>m._received&&!m.read_at).length;
+  const unread=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present').length+msgs.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const enCours=activeAlerts.filter(a=>a.status==='seen'||a.status==='present').length;
   const newSubEl=document.getElementById('resumeNewSub'),encSubEl=document.getElementById('resumeEncSub');
   const newBadgeEl=document.getElementById('resumeNewBadge'),encBadgeEl=document.getElementById('resumeEncBadge');
@@ -1614,6 +1615,8 @@ App.actOpenVehicleMsgGroup=function(plate){
   if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
   if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
   gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
+  // Marquer aussi les messages libres (sans context_type) de cette plaque comme lus
+  try{window.ImmatMessages?.markThreadRead?.(plate);}catch(_){}
 };
 App.actDeleteVehicleMsg=async function(id,plate){
   try{
