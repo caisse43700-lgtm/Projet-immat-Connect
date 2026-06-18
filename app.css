@@ -662,6 +662,8 @@ body.night #map { filter: brightness(.7) contrast(1.1) saturate(.8); }
 body.keyboard-open .fab-stack,
 body.keyboard-open .speed,
 body.keyboard-open .bottom-nav { display: none !important; }
+#appScreen:has(.sheet.full) .fab-stack { display: none; }
+#appScreen:has(.sheet.full) .speed { display: none; }
 body.keyboard-open .sheet { bottom: 0 !important; }
 
 /* ── MODE CONDUITE ── */
