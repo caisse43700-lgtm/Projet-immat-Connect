@@ -3157,8 +3157,10 @@ window.AngeAction = AngeAction;
 <script>
 if ('serviceWorker' in navigator) {
   var _swReg = null;
-  // Recharge automatiquement quand le SW controller change (nouveau SW activé)
+  // Ne recharger que si un SW existait déjà (= mise à jour), pas sur le premier install
+  var _hadSwController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (!_hadSwController) { _hadSwController = true; return; }
     try { sessionStorage.removeItem('_ic_br'); } catch(e) {}
     window.location.reload();
   });
