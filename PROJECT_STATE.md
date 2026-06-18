@@ -9,16 +9,16 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-14
-Avancement             : ~40% du plan fonctionnel implémenté — GO LIVE en cours
+Date de mise à jour    : 2026-06-18
+Avancement             : ~45% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages)
-Branche de travail     : claude/immatconnect-pro-app-dEKGR
+Branche production     : main (GitHub Pages) — commit 74c0f30
+Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 ```
 
-### Ce qui fonctionne en production (validé terrain 2026-06-14)
+### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
 
 - Appels vocaux bidirectionnels via Agora RTC ✅
 - Annulation A → overlay B se ferme ✅
@@ -34,6 +34,10 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - Realtime actif sur messages + call_requests ✅
 - B1 PII test PASSED ✅ (colonnes email/phone non exposées aux autres utilisateurs)
 - messages.js : getProfile() utilise colonnes explicites (fix column-level security) ✅
+- **[2026-06-18]** Alertes véhicule urgentes (🚨 context_type='vehicle_report') visibles dans Activité → Reçus/Envoyés, groupées par plaque, supprimables ✅
+- **[2026-06-18]** Architecture panels clarifiée : Messages = textes libres, Activité = signalements + alertes urgentes, Appels = journal ✅
+- **[2026-06-18]** Badges corrects : Messages (textes libres), Activité (tout), carte Véhicule (alertes + urgents) ✅
+- **[2026-06-18]** En-tête Messages (✏️ ⭐ 🔍) masqué dans la vue Appels ✅
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
