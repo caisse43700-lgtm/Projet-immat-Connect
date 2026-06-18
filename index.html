@@ -1234,6 +1234,7 @@ App.navAppels=function(){
   if(_sbar)_sbar.style.display='none';
   try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
+  setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='flex'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -2808,7 +2809,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=2"></script>
 <script src="core/mobile-autotest.js?v=1"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=18"></script>
+<script src="messages.js?v=19"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=3"></script>
 <script src="ui.js?v=9"></script>

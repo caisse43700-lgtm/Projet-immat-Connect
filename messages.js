@@ -1613,7 +1613,8 @@ function closeCompose(){
   const compose = $('icComposePanel');
   const list    = $('icMsgList');
   if(compose) compose.classList.remove('show');
-  if(list)    list.style.display = '';
+  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
+  if(list && !_inAppels) list.style.display = '';
   State.mode = 'inbox';
   render();
 }
