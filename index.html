@@ -1522,7 +1522,8 @@ App.renderActivityMain=function(){
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
   const unreadAlerts=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present');
-  const unreadMsgsList=msgs.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id))));
+  // vehicle_report exclus : déjà comptés via l'alerte communautaire correspondante
+  const unreadMsgsList=msgs.filter(m=>m._received&&!m.read_at&&m.context_type!=='vehicle_report'&&(!_rIds||!_rIds.has(String(m.id))));
   const unread=unreadAlerts.length+unreadMsgsList.length;
   const enCoursAlerts=activeAlerts.filter(a=>a.status==='seen'||a.status==='present');
   const enCours=enCoursAlerts.length;
@@ -2254,9 +2255,8 @@ App.updateActBadge=function(){
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
     const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
-    const unreadFreeMsgs=_unreadAll.filter(m=>!m.context_type).length;
-    const unreadVehicleReportMsgs=_unreadAll.filter(m=>m.context_type==='vehicle_report').length;
-    const unreadMsgs=unreadFreeMsgs+unreadVehicleReportMsgs;
+    // vehicle_report exclus du badge nav : déjà compté via l'alerte communautaire
+    const unreadMsgs=_unreadAll.filter(m=>!m.context_type||m.context_type==='vehicle_response').length;
     const unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
