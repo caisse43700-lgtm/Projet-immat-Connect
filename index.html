@@ -571,7 +571,7 @@ let _schedFeedId=null,_schedBadgeId=null;
 function schedFeed(){cancelAnimationFrame(_schedFeedId);_schedFeedId=requestAnimationFrame(()=>App.renderActivityFeed?.())}
 function schedBadge(){cancelAnimationFrame(_schedBadgeId);_schedBadgeId=requestAnimationFrame(()=>App.updateActBadge?.())}
 function normalizeAlert(raw){if(!raw)return null;const remoteId=String(raw.remoteId||raw.rid||raw.id||'').trim();const type=raw.type||inferType((raw.reason||'')+(raw.label||'')+(raw.plate||''));const meta=cat(type);const at=raw.at?Number(raw.at):raw.created_at?new Date(raw.created_at).getTime():Date.now();const key=remoteId||String(raw.id||['local',type,raw.lat??raw.latitude,raw.lng??raw.longitude,at].join('|'));return{key,id:String(raw.id||remoteId||key),remoteId:remoteId||null,type,label:raw.label||meta.label,reason:(raw.reason||raw.label||meta.label||'').replace(/^\[[^\]]+\]\s*/,'').trim(),level:raw.level||meta.level,group:raw.group||meta.group,plate:nPlate(raw.plate||''),lat:raw.lat!=null?Number(raw.lat):raw.latitude!=null?Number(raw.latitude):null,lng:raw.lng!=null?Number(raw.lng):raw.longitude!=null?Number(raw.longitude):null,at,status:String(raw.status||'active').toLowerCase(),updatedAt:raw.updated_at?new Date(raw.updated_at).getTime():at,updated_at:raw.updated_at||raw.created_at||new Date(at).toISOString(),_mine:raw._mine===true};}
-function upsertAlert(alert){if(!alert||!alert.key)return null;if(['resolved','gone','expired','deleted'].includes(String(alert.status||'')))return null;if((S.resolvedRemoteIds||[]).some(r=>r&&(String(r)===String(alert.key)||String(r)===String(alert.remoteId||''))))return null;if(Date.now()-alert.at>ttlFor(alert.type))return null;const idx=(S.alerts||[]).findIndex(a=>String(a.key||a.remoteId||a.id||'')===String(alert.key));if(idx>=0){const ex=S.alerts[idx];if(ex.updatedAt&&alert.updatedAt&&ex.updatedAt>alert.updatedAt)return ex;S.alerts[idx]={...ex,...alert};return S.alerts[idx];}S.alerts.unshift(alert);S.alerts=S.alerts.slice(0,80);S.alertHistory.unshift({...alert,seenAt:Date.now()});S.alertHistory=S.alertHistory.slice(0,150);return alert;}
+function upsertAlert(alert){if(!alert||!alert.key)return null;if(['resolved','gone','expired','deleted'].includes(String(alert.status||'')))return null;if((S.resolvedRemoteIds||[]).some(r=>r&&(String(r)===String(alert.key)||String(r)===String(alert.remoteId||''))))return null;if(Date.now()-alert.at>ttlFor(alert.type))return null;const idx=(S.alerts||[]).findIndex(a=>String(a.key||a.remoteId||a.id||'')===String(alert.key));if(idx>=0){const ex=S.alerts[idx];if(ex.updatedAt&&alert.updatedAt&&ex.updatedAt>alert.updatedAt)return ex;const _st=(ex.status==='seen'&&alert.status==='active')?'seen':alert.status;S.alerts[idx]={...ex,...alert,status:_st};return S.alerts[idx];}S.alerts.unshift(alert);S.alerts=S.alerts.slice(0,80);S.alertHistory.unshift({...alert,seenAt:Date.now()});S.alertHistory=S.alertHistory.slice(0,150);return alert;}
 function syncDerivedAlertUI(){saveAlerts();try{App.syncAlertMarkers?.()}catch(e){}try{App.renderAlerts?.()}catch(e){}try{App.renderMyAlertsBlock?.()}catch(e){}schedFeed();schedBadge();try{App.updateCommunityStatus?.()}catch(e){}}
 function saveAlerts(){safeSet('ic_alerts',S.alerts.slice(0,80));safeSet('ic_alert_history',S.alertHistory.slice(0,150));safeSet('ic_offline_reports',S.offlineReports.slice(0,50));safeSet('ic_resolved_remote_ids',(S.resolvedRemoteIds||[]).slice(0,200))}
 function distanceOf(a){if(S.myLat==null||S.myLng==null||a.lat==null||a.lng==null)return null;try{return km(S.myLat,S.myLng,Number(a.lat),Number(a.lng))}catch(e){return null}}
@@ -1595,8 +1595,8 @@ App.actOpenVehicleMsgGroup=function(plate){
   // Capturer nouveaux/anciens AVANT marquage — pour la séparation visuelle
   const newMsgs=sorted.filter(m=>m._received&&!m.read_at);
   const oldMsgs=sorted.filter(m=>!m._received||m.read_at);
-  // Marquer comme lu immédiatement en mémoire (évite réapparition de la pastille)
-  if(newMsgs.length){const now=new Date().toISOString();newMsgs.forEach(m=>{m.read_at=now;});this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
+  // Marquer comme lu immédiatement en mémoire + dans le Set persistant (survit aux refreshes)
+  if(newMsgs.length){const now=new Date().toISOString();if(!S._readMsgIds)S._readMsgIds=new Set();newMsgs.forEach(m=>{m.read_at=now;S._readMsgIds.add(String(m.id));});this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
   if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');
@@ -2216,7 +2216,7 @@ App.updateActBadge=function(){
     const now=Date.now();
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
-    const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id)));
+    const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
     const unreadFreeMsgs=_unreadAll.filter(m=>!m.context_type).length;
     const unreadVehicleReportMsgs=_unreadAll.filter(m=>m.context_type==='vehicle_report').length;
     const unreadMsgs=unreadFreeMsgs+unreadVehicleReportMsgs;
