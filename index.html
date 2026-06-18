@@ -525,7 +525,7 @@ window.__lastJsError='none';window.onerror=function(msg,src,line,col,err){window
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={url:'https://vemgdkkbldgyvaisudkd.supabase.co',key:'sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ',site:'https://caisse43700-lgtm.github.io/Projet-immat-Connect/',staleMinutes:5,maxMsgPerMinute:5};
-const APP_BUILD='2026-06-15';
+const APP_BUILD='2026-06-18';
 window.APP_BUILD=APP_BUILD;
 (function(){try{var _b=APP_BUILD,_lb=localStorage.getItem('_ic_build');if(_lb&&_lb!==_b&&!sessionStorage.getItem('_ic_br')){localStorage.setItem('_ic_build',_b);sessionStorage.setItem('_ic_br','1');location.replace(location.origin+location.pathname+'?r='+Date.now());}else{localStorage.setItem('_ic_build',_b);sessionStorage.removeItem('_ic_br');}}catch(e){}})();
 const VAPID_PUBLIC_KEY='BBcxYGFV6-kUVnZlNYj08GpEeGH_EjkSBIfOj8GiQayuD79frWC4N7lLHvsGXMhiWJWSt1BKBf1rWV0f_KeqErs';
@@ -3171,7 +3171,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v41';
+      var CURRENT = 'immatconnect-pro-v42';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3216,7 +3216,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v40';
+  var CURRENT = 'immatconnect-pro-v42';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
