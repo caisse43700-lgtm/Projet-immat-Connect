@@ -274,6 +274,12 @@
     </div>
 
 
+    <!-- Onglets Messages / Appels -->
+    <div id="icContactTabs" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:2px">
+      <button type="button" id="icTabMessages" onclick="App.switchContactTab('messages')" style="flex:1;padding:8px 0;background:none;border:none;color:#e2e8f0;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid #2f7bff">💬 Messages</button>
+      <button type="button" id="icTabAppels" onclick="App.switchContactTab('appels')" style="flex:1;padding:8px 0;background:none;border:none;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent">📞 Appels</button>
+    </div>
+
     <!-- Liste des conversations -->
     <div id="icMsgList" class="ic-mail-list">
       <div class="ic-empty ic-empty-help">💬 Aucun message pour l'instant.<br><small>Clique sur un véhicule sur la carte pour démarrer une conversation.</small></div>
@@ -1209,6 +1215,7 @@ App.navMessages=function(){
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.add('on');
+  ['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='';if(_cp)_cp.style.display='none';
@@ -1216,6 +1223,9 @@ App.navMessages=function(){
   if(_hdr)_hdr.style.display='';
   const _sbar=$('icSearchBar');
   try{if(_sbar)_sbar.style.display=localStorage.getItem('_icSearchOpen')==='1'?'':'none';}catch(e){}
+  var _tbM=$('icTabMessages'),_tbA=$('icTabAppels');
+  if(_tbM){_tbM.style.color='#e2e8f0';_tbM.style.borderBottomColor='#2f7bff';}
+  if(_tbA){_tbA.style.color='#64748b';_tbA.style.borderBottomColor='transparent';}
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
@@ -1225,9 +1235,13 @@ App.navAppels=function(){
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.add('on');
   if(typeof window.S!=='undefined') window.S._unseenMissedCalls=0;
+  ['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
+  var _tbM2=$('icTabMessages'),_tbA2=$('icTabAppels');
+  if(_tbM2){_tbM2.style.color='#64748b';_tbM2.style.borderBottomColor='transparent';}
+  if(_tbA2){_tbA2.style.color='#e2e8f0';_tbA2.style.borderBottomColor='#2f7bff';}
   const _hdr=document.querySelector('#icMessagesPro .ic-conv-header');
   if(_hdr)_hdr.style.display='none';
   const _sbar=$('icSearchBar');
@@ -2016,11 +2030,13 @@ App.switchContactTab=function(tab){
   if(!msgPane||!callPane) return;
   if(tab==='appels'){
     msgPane.style.display='none'; callPane.style.display='flex';
-    if(tabMsg) tabMsg.style.color='#64748b'; if(tabCall) tabCall.style.color='#e2e8f0';
+    if(tabMsg){tabMsg.style.color='#64748b';tabMsg.style.borderBottomColor='transparent';}
+    if(tabCall){tabCall.style.color='#e2e8f0';tabCall.style.borderBottomColor='#2f7bff';}
     if(typeof this.renderCallJournal==='function') try{this.renderCallJournal();}catch(e){}
   } else {
     callPane.style.display='none'; msgPane.style.display='flex';
-    if(tabMsg) tabMsg.style.color='#e2e8f0'; if(tabCall) tabCall.style.color='#64748b';
+    if(tabMsg){tabMsg.style.color='#e2e8f0';tabMsg.style.borderBottomColor='#2f7bff';}
+    if(tabCall){tabCall.style.color='#64748b';tabCall.style.borderBottomColor='transparent';}
   }
 };
 App.renderCallJournal=async function(){
