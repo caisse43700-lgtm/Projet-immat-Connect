@@ -1592,8 +1592,11 @@ App.actOpenVehicleMsgGroup=function(plate){
   const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
   const vmMsgs=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report'&&m._otherPlate===plate&&(isRecus?m._received===true:!m._received));
   const sorted=vmMsgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
-  const unreadMsgs=vmMsgs.filter(m=>m._received&&!m.read_at);
-  if(unreadMsgs.length){const now=new Date().toISOString();const ids=unreadMsgs.map(m=>m.id);try{sb.from('messages').update({read_at:now}).in('id',ids).then(()=>{unreadMsgs.forEach(m=>{m.read_at=now;});this.updateActBadge?.();});}catch(_){}}
+  // Capturer nouveaux/anciens AVANT marquage — pour la séparation visuelle
+  const newMsgs=sorted.filter(m=>m._received&&!m.read_at);
+  const oldMsgs=sorted.filter(m=>!m._received||m.read_at);
+  // Marquer comme lu immédiatement en mémoire (évite réapparition de la pastille)
+  if(newMsgs.length){const now=new Date().toISOString();newMsgs.forEach(m=>{m.read_at=now;});this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
   if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');
@@ -1606,22 +1609,11 @@ App.actOpenVehicleMsgGroup=function(plate){
   const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  gFeed.innerHTML=sorted.length?sorted.map(m=>{
-    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    return `<div class="act-mod-card">
-      <div class="act-mod-body">
-        <div class="act-mod-avatar act-av-vehicle">🚨</div>
-        <div class="act-mod-info">
-          <div class="act-mod-plate">${e2(m._otherPlate||plate)}</div>
-          <div class="act-mod-desc">${e2(m.body||'')}</div>
-        </div>
-        <div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div></div>
-      </div>
-      <div class="act-mod-actions">
-        <button class="act-mod-btn-del" onclick="App.actDeleteVehicleMsg('${e2(String(m.id))}','${e2(plate)}')">Supprimer</button>
-      </div>
-    </div>`;
-  }).join(''):'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
+  const renderMsg=(m,isNew)=>{const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';return`<div class="act-mod-card${isNew?' act-mod-unread':''}"><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div></div></div></div>`;};
+  let html='';
+  if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
+  if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
+  gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
 };
 App.actDeleteVehicleMsg=async function(id,plate){
   try{
@@ -1804,7 +1796,7 @@ App._actModCard=function(item,cat){
         <div class="act-mod-avatar act-av-vehicle">🚨</div>
         <div class="act-mod-info">
           <div class="act-mod-plate">${e(item.plate)}</div>
-          <div class="act-mod-desc">${e((lastMsg?.body||'').slice(0,60))}</div>
+          <div class="act-mod-desc">${e((lastMsg?.message||'').slice(0,60))}</div>
           <div class="act-mod-loc">💬 ${cnt} message${cnt>1?'s':''}</div>
         </div>
         <div class="act-mod-meta">
