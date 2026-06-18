@@ -275,6 +275,8 @@ body.reduce-effects .speed.over { animation: none; }
 }
 .nav-btn svg { transition: .15s ease; }
 .nav-btn span { line-height: 1; letter-spacing: .2px; }
+.nav-btn-ange { color: #a78bfa; }
+.nav-btn-ange:active { color: #c4b5fd; }
 .nav-btn.on { color: var(--green); }
 .nav-btn.on svg { filter: drop-shadow(0 0 6px rgba(0,255,179,.4)); }
 .nav-btn.on::before {
