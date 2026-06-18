@@ -1173,7 +1173,8 @@ async function sendToPlate(plate,text,opts){
     target_plate:receiverPlate,
     message:text,
     status:'accepted',
-    ...(_ctx.context_type ? {context_type:_ctx.context_type} : {})
+    ...(_ctx.context_type ? {context_type:_ctx.context_type} : {}),
+    ...(_ctx.image_url    ? {image_url:_ctx.image_url}       : {})
   };
 
   const rich = {
@@ -1198,9 +1199,17 @@ async function sendToPlate(plate,text,opts){
   }
 
   State.activePlate = receiverPlate;
-  toast('Message envoyé à ' + receiverPlate + '.','ok');
-  // Push fire-and-forget vers le destinataire (INV-COM-010 : plaque uniquement, pas le contenu)
-  try{const _c=sb();if(_c&&target?.id){_c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:'💬 ImmatConnect — Nouveau message',body:senderPlate+' vous a envoyé un message',data:{type:'message',plate:senderPlate},tag:'msg-'+senderPlate}}).catch(()=>{});}}catch(e){}
+  if(!_ctx.suppressToast) toast('Message envoyé à ' + receiverPlate + '.','ok');
+  // Push fire-and-forget vers le destinataire — titre adapté au contexte
+  try{
+    const _c=sb();
+    if(_c&&target?.id){
+      const _isParked=_ctx.context_type==='parked_report';
+      const _pushTitle=_isParked?'🅿️ ImmatConnect — Problème sur votre véhicule':'💬 ImmatConnect — Nouveau message';
+      const _pushBody=_isParked?(senderPlate+' a signalé un problème sur votre véhicule'+(_ctx.image_url?' 📷':'')):senderPlate+' vous a envoyé un message';
+      _c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:_pushTitle,body:_pushBody,data:{type:_isParked?'parked_report':'message',plate:senderPlate},tag:(_isParked?'parked-':'msg-')+senderPlate}}).catch(()=>{});
+    }
+  }catch(e){}
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{

@@ -259,13 +259,36 @@
       <label class="label" for="sigStationPlate">Plaque du véhicule concerné</label>
       <input id="sigStationPlate" class="plate-input" placeholder="AB-123-CD" maxlength="9" autocomplete="off">
     </div>
-    <div class="alert-grid">
-      <button class="alert-card medium" onclick="App.stationReport('porte')"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
-      <button class="alert-card medium" onclick="App.stationReport('feux')"><span class="icon">💡</span><span>Feux allumés</span></button>
-      <button class="alert-card medium" onclick="App.stationReport('vitre')"><span class="icon">🪟</span><span>Vitre ouverte</span></button>
-      <button class="alert-card urgent" onclick="App.stationReport('animal')"><span class="icon">🐾</span><span>Animal enfermé</span></button>
-      <button class="alert-card urgent" onclick="App.stationReport('enfant')"><span class="icon">👶</span><span>Enfant seul</span></button>
-      <button class="alert-card info" onclick="App.stationReport('autre')"><span class="icon">ℹ️</span><span>Autre</span></button>
+    <div id="stationTypeGrid" class="alert-grid">
+      <button class="alert-card medium" onclick="App.stationSelectType('porte')"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
+      <button class="alert-card medium" onclick="App.stationSelectType('feux')"><span class="icon">💡</span><span>Feux allumés</span></button>
+      <button class="alert-card medium" onclick="App.stationSelectType('vitre')"><span class="icon">🪟</span><span>Vitre ouverte</span></button>
+      <button class="alert-card urgent" onclick="App.stationSelectType('animal')"><span class="icon">🐾</span><span>Animal enfermé</span></button>
+      <button class="alert-card urgent" onclick="App.stationSelectType('enfant')"><span class="icon">👶</span><span>Enfant seul</span></button>
+      <button class="alert-card info" onclick="App.stationSelectType('autre')"><span class="icon">ℹ️</span><span>Autre</span></button>
+    </div>
+    <!-- Étape photo — apparaît après sélection du type -->
+    <div id="stationPhotoStep" style="display:none;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <button type="button" onclick="App._stationPhotoReset()" style="background:none;border:none;color:#60a5fa;font-size:13px;cursor:pointer;padding:0">← Autre type</button>
+        <span style="flex:1;font-size:14px;font-weight:600;color:#e2e8f0" id="stationTypeLabel"></span>
+      </div>
+      <div style="background:rgba(20,184,166,.08);border:1.5px dashed rgba(20,184,166,.35);border-radius:14px;padding:16px;text-align:center;margin-bottom:12px">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">📷 Joindre une photo du problème (optionnel)</div>
+        <label for="stationPhotoInput" style="display:inline-flex;align-items:center;gap:6px;background:rgba(20,184,166,.2);color:#5eead4;border:1.5px solid rgba(20,184,166,.4);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:600">
+          📷 Prendre / choisir une photo
+          <input id="stationPhotoInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="App.stationPhotoChosen(this)">
+        </label>
+        <div id="stationPhotoPreview" style="display:none;margin-top:12px">
+          <img id="stationPhotoImg" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:6px" alt="Aperçu photo">
+          <div id="stationPhotoStatus" style="font-size:11px;color:#5eead4;margin-bottom:4px"></div>
+          <button type="button" onclick="App.stationPhotoClear()" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:2px">✕ Supprimer la photo</button>
+        </div>
+        <div id="stationUploadStatus" style="display:none;font-size:12px;color:#94a3b8;margin-top:10px">⏳ Compression et envoi de la photo…</div>
+      </div>
+      <button type="button" id="stationSendBtn" class="act-btn primary" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px" onclick="App.stationSendWithPhoto()">
+        Envoyer le signalement →
+      </button>
     </div>
     <div style="margin-top:10px;background:rgba(239,68,68,.10);border:1.5px solid rgba(239,68,68,.4);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:10px">
       <span style="font-size:11px;color:#ef4444;font-weight:600;flex:1">🚨 Vie en danger → appelez les secours</span>
@@ -1403,23 +1426,116 @@ App._sigReset=function(){
 App.sigStepStation=function(){
   $('sigStep1')?.classList.remove('active');
   $('sigStep2Station')?.classList.add('active');
+  this._stationPhotoReset?.();
   setTimeout(()=>$('sigStationPlate')?.focus(),80);
 };
-App.stationReport=async function(type){
+// ── Réinitialise l'état photo stationné (appelé à chaque ouverture du panneau)
+App._stationPhotoReset=function(){
+  S._stationSelectedType=null;S._stationPhotoUrl=null;
+  const pi=$('stationPhotoInput');if(pi)pi.value='';
+  const pp=$('stationPhotoPreview');if(pp)pp.style.display='none';
+  const us=$('stationUploadStatus');if(us)us.style.display='none';
+  const tg=$('stationTypeGrid');if(tg)tg.style.display='';
+  const ps=$('stationPhotoStep');if(ps)ps.style.display='none';
+};
+// ── Sélection du type → affiche l'étape photo
+App.stationSelectType=function(type){
+  const plate=nPlate($('sigStationPlate')?.value||'');
+  if(!plate)return toast('Indique la plaque du véhicule stationné.','bad');
+  const labels={porte:'Porte mal fermée 🚪',feux:'Feux allumés 💡',vitre:'Vitre ouverte 🪟',animal:'Animal enfermé 🐾',enfant:'Enfant seul 👶',autre:'Problème véhicule ⚠️'};
+  S._stationSelectedType=type;S._stationPhotoUrl=null;
+  const lbl=$('stationTypeLabel');if(lbl)lbl.textContent=(labels[type]||type)+' ✓';
+  const tg=$('stationTypeGrid');if(tg)tg.style.display='none';
+  const pp=$('stationPhotoPreview');if(pp)pp.style.display='none';
+  const us=$('stationUploadStatus');if(us)us.style.display='none';
+  const pi=$('stationPhotoInput');if(pi)pi.value='';
+  const ps=$('stationPhotoStep');if(ps)ps.style.display='';
+};
+// ── Sélection de photo : aperçu immédiat + compression + upload en arrière-plan
+App.stationPhotoChosen=async function(input){
+  const file=input?.files?.[0];if(!file)return;
+  const pp=$('stationPhotoPreview'),img=$('stationPhotoImg'),st=$('stationPhotoStatus'),us=$('stationUploadStatus');
+  // Aperçu immédiat (avant upload)
+  const reader=new FileReader();
+  reader.onload=e=>{if(img)img.src=e.target.result;if(pp)pp.style.display='';};
+  reader.readAsDataURL(file);
+  if(st)st.textContent='⏳ Envoi en cours…';
+  if(us)us.style.display='';
+  S._stationPhotoUrl=null;
+  const url=await this._stationUploadPhoto(file);
+  if(us)us.style.display='none';
+  if(url){S._stationPhotoUrl=url;if(st)st.textContent='✅ Photo prête à envoyer';}
+  else{if(st)st.textContent='⚠️ Erreur upload — signalement envoyé sans photo';}
+};
+// ── Supprime la photo sélectionnée
+App.stationPhotoClear=function(){
+  S._stationPhotoUrl=null;
+  const pi=$('stationPhotoInput');if(pi)pi.value='';
+  const pp=$('stationPhotoPreview');if(pp)pp.style.display='none';
+  const us=$('stationUploadStatus');if(us)us.style.display='none';
+};
+// ── Compression canvas → Blob JPEG max 1024px / qualité 0.82
+App._stationCompressImage=function(file,maxPx,quality){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let{width,height}=img;
+        if(width>maxPx||height>maxPx){if(width>height){height=Math.round(height*maxPx/width);width=maxPx;}else{width=Math.round(width*maxPx/height);height=maxPx;}}
+        const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+        canvas.getContext('2d').drawImage(img,0,0,width,height);
+        canvas.toBlob(blob=>resolve(blob),'image/jpeg',quality);
+      };
+      img.onerror=()=>resolve(null);
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+// ── Upload vers Supabase Storage parked-photos → retourne l'URL publique ou null
+App._stationUploadPhoto=async function(file){
+  try{
+    const client=window.sb?.();if(!client)return null;
+    const compressed=await this._stationCompressImage(file,1024,0.82);
+    if(!compressed)return null;
+    const path='parked/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg';
+    const{data,error}=await client.storage.from('parked-photos').upload(path,compressed,{contentType:'image/jpeg',upsert:false});
+    if(error){console.warn('[stationUpload]',error.message);return null;}
+    const{data:{publicUrl}}=client.storage.from('parked-photos').getPublicUrl(path);
+    return publicUrl||null;
+  }catch(e){console.warn('[stationUpload]',e);return null;}
+};
+// ── Envoi final depuis l'étape photo
+App.stationSendWithPhoto=async function(){
+  const type=S._stationSelectedType;
+  if(!type)return;
+  const btn=$('stationSendBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Envoi…';}
+  try{await this.stationReport(type,S._stationPhotoUrl||null);}finally{
+    if(btn){btn.disabled=false;btn.textContent='Envoyer le signalement →';}
+  }
+};
+// ── Envoi du signalement stationné (type + photoUrl optionnelle)
+App.stationReport=async function(type,photoUrl){
   const plate=nPlate($('sigStationPlate')?.value||'');
   if(!plate)return toast('Indique la plaque du véhicule stationné.','bad');
   const labels={porte:'Porte mal fermée 🚪',feux:'Feux allumés 💡',vitre:'Vitre ouverte 🪟',animal:'Animal enfermé 🐾',enfant:'Enfant seul 👶',autre:'Problème véhicule ⚠️'};
   const label=labels[type]||type;
   const urgent=['animal','enfant'].includes(type);
-  // GPS intégré dans le message privé — seul le propriétaire le reçoit
+  // GPS privé embarqué dans le corps du message — seul le propriétaire le reçoit
   const _gps=(S.myLat!=null&&S.myLng!=null)?(' [GPS:'+S.myLat.toFixed(6)+','+S.myLng.toFixed(6)+']'):'';
   const msg='🅿️ '+(urgent?'URGENT : ':'')+label+'. Votre véhicule nécessite votre attention.'+_gps;
+  const opts={context_type:'parked_report',report_type:type,suppressToast:true};
+  if(photoUrl)opts.image_url=photoUrl;
   if(window.ImmatMessages?.sendToPlate){
-    try{await window.ImmatMessages.sendToPlate(plate,msg,{context_type:'parked_report',report_type:type});}catch(e){}
+    try{await window.ImmatMessages.sendToPlate(plate,msg,opts);}catch(e){}
   }
   // Pas d'alerte communautaire publique — la position reste privée dans le message
   this.sigBack?.();
-  toast('✅ Signalement stationné envoyé à '+fPlate(plate)+'.','ok');
+  const _photoHint=photoUrl?' 📷':'';
+  toast('✅ Signalement envoyé à '+fPlate(plate)+_photoHint+'.','ok');
   try{
     this.navActivite?.();
     setTimeout(()=>{
@@ -1981,6 +2097,7 @@ App.renderStationFeed=function(tab){
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${pl}')">📞 Appeler</button>
             </div>
             ${gpsBtn}
+            ${m.image_url?`<div style="margin-top:8px"><img src="${e2(m.image_url)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid rgba(20,184,166,.25)" onclick="event.stopPropagation();App.actStationViewPhoto('${e2(m.image_url)}')" alt="Photo du problème"><div style="font-size:10px;color:#5eead4;margin-top:4px;text-align:center">📷 Appuyer pour agrandir</div></div>`:''}
           </div>
         </div>`;
       }).join('');
@@ -1996,6 +2113,7 @@ App.renderStationFeed=function(tab){
         return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card act-vmg-archived act-vmg-encours" onclick="App.actToggleVmCard(this)">
           <div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">✅ ${pl||'Conducteur proche'}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2(label)}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
           <div class="act-vmg-detail">
+            ${m.image_url?`<div style="margin-bottom:8px"><img src="${e2(m.image_url)}" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid rgba(20,184,166,.2)" onclick="event.stopPropagation();App.actStationViewPhoto('${e2(m.image_url)}')" alt="Photo du problème"><div style="font-size:10px;color:#5eead4;margin-top:4px;text-align:center">📷 Appuyer pour agrandir</div></div>`:''}
             ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actStationRate('${mid}','${pl}')">👍 Signalement utile</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté</div>'}
             <div class="act-vmg-contact">
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${pl}')">💬 Répondre</button>
@@ -2026,7 +2144,7 @@ App.renderStationFeed=function(tab){
         return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card ${reply?'act-vmg-archived act-vmg-encours':'act-vmg-encours'}" style="${reply?'':'border-left-color:#14b8a6'}" onclick="App.actToggleVmCard(this)">
           <div class="act-vmg-hd" style="gap:6px">
           <div class="act-vmg-info" style="flex:1;min-width:0"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${urgent?'🚨 ':''}<strong>${e2(label)}</strong></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${_statusBadge}<div class="act-vmg-time">${e2(time)}</div></div></div>
-          ${reply?`<div class="act-vmg-detail"><div class="act-vmg-sec-lbl">Réponse du conducteur</div><div class="act-vmg-desc" style="color:#6ee7b7;padding:8px 0">${e2(String(reply.message||'').slice(0,100))}</div></div>`:''}
+          ${(reply||m.image_url)?`<div class="act-vmg-detail">${reply?`<div class="act-vmg-sec-lbl">Réponse du conducteur</div><div class="act-vmg-desc" style="color:#6ee7b7;padding:8px 0">${e2(String(reply.message||'').slice(0,100))}</div>`:''}${m.image_url?`<div style="margin-top:${reply?'8':'0'}px"><img src="${e2(m.image_url)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid rgba(20,184,166,.25)" onclick="event.stopPropagation();App.actStationViewPhoto('${e2(m.image_url)}')" alt="Photo envoyée"><div style="font-size:10px;color:#5eead4;margin-top:4px;text-align:center">📷 Photo du signalement</div></div>`:''}</div>`:''}
         </div></div>`;
       }).join('');
     }
@@ -2079,6 +2197,20 @@ App.actStationDismiss=function(msgId){
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   this.renderStationFeed?.('recus');this.updateActBadge?.();
+};
+App.actStationViewPhoto=function(url){
+  let ov=document.getElementById('stationPhotoLightbox');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='stationPhotoLightbox';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;cursor:pointer';
+    ov.innerHTML='<img id="stationLbImg" style="max-width:96vw;max-height:96vh;object-fit:contain;border-radius:8px">'
+      +'<button style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation();document.getElementById(\'stationPhotoLightbox\').style.display=\'none\'">✕</button>';
+    ov.addEventListener('click',()=>{ov.style.display='none';});
+    document.body.appendChild(ov);
+  }
+  document.getElementById('stationLbImg').src=url;
+  ov.style.display='flex';
 };
 App.actStationRate=function(msgId,plate){
   let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_station_rated')||'[]');}catch(e){}
