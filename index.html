@@ -1517,12 +1517,14 @@ App.renderActivityMain=function(){
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
-  const unread=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present').length+msgs.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
+  const unreadAlerts=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present');
+  const unreadMsgsList=msgs.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id))));
+  const unread=unreadAlerts.length+unreadMsgsList.length;
   const enCoursAlerts=activeAlerts.filter(a=>a.status==='seen'||a.status==='present');
   const enCours=enCoursAlerts.length;
   const newSubEl=document.getElementById('resumeNewSub'),encSubEl=document.getElementById('resumeEncSub');
   const newBadgeEl=document.getElementById('resumeNewBadge'),encBadgeEl=document.getElementById('resumeEncBadge');
-  if(newSubEl)newSubEl.textContent=unread>0?(unread+' alerte'+(unread>1?'s':'')+' non lue'+(unread>1?'s':'')):'Aucune alerte non lue';
+  if(newSubEl){if(unread>0){const parts=[];unreadAlerts.slice(0,2).forEach(a=>{const lbl=String(a.label||a.reason||a.type||'Alerte').replace(/^\[.*?\]\s*/,'').slice(0,22);parts.push(lbl);});unreadMsgsList.slice(0,2).forEach(m=>{const lbl='Msg '+String(m._otherPlate||'').slice(0,9);parts.push(lbl);});newSubEl.textContent=parts.slice(0,3).join(' · ')+(unread>3?' …':'');}else{newSubEl.textContent='Aucune alerte non lue';}}
   if(encSubEl){if(enCours>0){const labels=enCoursAlerts.slice(0,3).map(a=>a.label||a.reason||a.type||'Alerte').map(s=>String(s).replace(/^\[.*?\]\s*/,'').slice(0,25));encSubEl.textContent=labels.join(' · ')+(enCours>3?' …':'');}else{encSubEl.textContent='Aucune action en attente';}}
   if(newBadgeEl){newBadgeEl.textContent=unread>99?'99+':String(unread);newBadgeEl.style.display=unread>0?'flex':'none';}
   if(encBadgeEl){encBadgeEl.textContent=enCours>99?'99+':String(enCours);encBadgeEl.style.display=enCours>0?'flex':'none';}
