@@ -877,7 +877,7 @@ openRatingModal(plate,context){if(!plate)return;S.ratingCtx={plate:String(plate)
 setRatingStar(n){if(!S.ratingCtx)return;S.ratingCtx.score=n;[1,2,3,4,5].forEach(i=>{const b=$('ratingStar'+i);if(b)b.style.color=i<=n?'#FFD700':'rgba(255,255,255,.2)';});},
 async submitRating(){if(!S.ratingCtx)return;if(!S.ratingCtx.score||S.ratingCtx.score<1)return toast('Sélectionne au moins 1 étoile.','bad');try{const _sess=await sb.auth.getSession();const _jwt=_sess?.data?.session?.access_token;if(!_jwt)return toast('Non connecté.','bad');const _comment=($('ratingComment')?.value||'').trim()||undefined;const _r=await fetch(CFG.url+'/functions/v1/submit-rating',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_jwt},body:JSON.stringify({rated_plate:S.ratingCtx.plate,score:S.ratingCtx.score,comment:_comment,context:S.ratingCtx.context})});const _j=await _r.json();if(!_r.ok)return toast(_j.error||'Erreur lors de l\'envoi.','bad');toast('Avis envoyé. Merci !','ok');this.closeRatingModal();}catch(e){toast('Erreur lors de l\'envoi.','bad');}},
 closeRatingModal(){const _o=$('ratingModalOverlay');if(_o)_o.remove();S.ratingCtx=null;},
-_activityMatchesSearch(item,query){const q=String(query||'').trim();if(!q)return true;const qPlate=nPlate(q);const qText=q.toLowerCase();const fields=[item?.plate,item?.target,item?.initiator,item?.alert?.plate,item?.alert?.from_plate,item?.alert?.sender_plate,item?.alert?.reporter_plate,item?.body,item?.message,item?.reason,item?.alert?.reason,item?.type,item?.kind].filter(Boolean).map(String);return fields.some(v=>{const raw=v.toLowerCase();const plate=nPlate(v);return raw.includes(qText)||(qPlate&&plate.includes(qPlate));});},
+_activityMatchesSearch(item,query){const q=String(query||'').trim();if(!q)return true;const qPlate=nPlate(q);const qText=q.toLowerCase();const fields=[item?.plate,item?.target,item?.initiator,item?.alert?.plate,item?.alert?.from_plate,item?.alert?.sender_plate,item?.alert?.reporter_plate,item?.body,item?.message,item?.reason,item?.alert?.reason,item?.type,item?.kind,item?.msgs?.[0]?.body].filter(Boolean).map(String);return fields.some(v=>{const raw=v.toLowerCase();const plate=nPlate(v);return raw.includes(qText)||(qPlate&&plate.includes(qPlate));});},
 setActivitySearch(query){S.activitySearch=String(query||'').trim();clearTimeout(S._activitySearchTimer);S._activitySearchTimer=setTimeout(()=>{try{this.renderActivityMain?.();if(S._actCat)this.renderCategoryFeed?.(S._actCat,S._actCatTab||'recus');}catch(e){console.warn('activity search refresh',e);}},300);},
 saveNotifPref(key,val){try{const p=JSON.parse(localStorage.getItem('ic_notif_prefs')||'{}');p[key]=!!val;localStorage.setItem('ic_notif_prefs',JSON.stringify(p));}catch(e){}},requestPermissions(){try{if('Notification'in window&&Notification.permission==='granted')this.subscribePush?.();}catch(e){}this.registerServiceWorker()},
 async requestPushPermission(){try{if(!('Notification'in window)||!('PushManager'in window))return false;let p=Notification.permission;if(p==='default')p=await Notification.requestPermission();if(p==='granted'){await this.subscribePush?.();return true;}return false;}catch(e){console.warn('[push] requestPushPermission',e);return false;}},
@@ -1575,6 +1575,7 @@ App.actOpenAlertGroup=function(plate){
 };
 App.closeAlertGroup=function(){
   S._actAlertGroupPlate=null;
+  S._actVehicleMsgGroupPlate=null;
   const cat=S._actCat||'vehicle';
   const catMeta={vehicle:{title:'Véhicule',sub:'Prévenir un conducteur'},route:{title:'Route',sub:'Incidents & trafic'},aide:{title:'Assistance',sub:"Demander de l'aide"},all:{title:'Activité',sub:'Tous les signalements'}};
   const {title,sub}=catMeta[cat]||catMeta['all'];
@@ -1586,6 +1587,51 @@ App.closeAlertGroup=function(){
   const mainFeed=document.getElementById('actCatFeed');if(mainFeed)mainFeed.style.display='';
   const gFeed=document.getElementById('actAlertGroupFeed');if(gFeed)gFeed.style.display='none';
   this.renderCategoryFeed(cat,S._actCatTab||'recus');
+};
+App.actOpenVehicleMsgGroup=function(plate){
+  S._actVehicleMsgGroupPlate=plate;
+  const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
+  const vmMsgs=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report'&&m._otherPlate===plate&&(isRecus?m._received===true:!m._received));
+  const sorted=vmMsgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
+  const unreadMsgs=vmMsgs.filter(m=>m._received&&!m.read_at);
+  if(unreadMsgs.length){const now=new Date().toISOString();const ids=unreadMsgs.map(m=>m.id);try{sb.from('messages').update({read_at:now}).in('id',ids).then(()=>{unreadMsgs.forEach(m=>{m.read_at=now;});this.updateActBadge?.();});}catch(_){}}
+  const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
+  if(titleEl)titleEl.textContent=plate;
+  if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');
+  const backBtn=document.querySelector('#actCatPanel .act-cat-back');
+  if(backBtn){backBtn._prevOnclick=backBtn.getAttribute('onclick');backBtn.setAttribute('onclick','App.closeAlertGroup()');}
+  document.querySelector('.act-cat-tabs')?.style.setProperty('display','none');
+  document.getElementById('actTypeFilterBar')?.style.setProperty('display','none');
+  document.getElementById('actStatusBar')?.style.setProperty('display','none');
+  const mainFeed=document.getElementById('actCatFeed');if(mainFeed)mainFeed.style.display='none';
+  const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
+  gFeed.style.display='';
+  const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  gFeed.innerHTML=sorted.length?sorted.map(m=>{
+    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+    return `<div class="act-mod-card">
+      <div class="act-mod-body">
+        <div class="act-mod-avatar act-av-vehicle">🚨</div>
+        <div class="act-mod-info">
+          <div class="act-mod-plate">${e2(m._otherPlate||plate)}</div>
+          <div class="act-mod-desc">${e2(m.body||'')}</div>
+        </div>
+        <div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div></div>
+      </div>
+      <div class="act-mod-actions">
+        <button class="act-mod-btn-del" onclick="App.actDeleteVehicleMsg('${e2(String(m.id))}','${e2(plate)}')">Supprimer</button>
+      </div>
+    </div>`;
+  }).join(''):'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
+};
+App.actDeleteVehicleMsg=async function(id,plate){
+  try{
+    await sb.from('messages').delete().eq('id',id);
+    if(window.S&&Array.isArray(S._actMessages))S._actMessages=S._actMessages.filter(m=>String(m.id)!==String(id));
+    try{window.ImmatMessages?.buildThreads?.();}catch(_){}
+    this.actOpenVehicleMsgGroup(plate);
+    this.updateActBadge?.();
+  }catch(err){toast('Erreur lors de la suppression.','bad');}
 };
 App.actCatTab=function(tab){
   S._actCatTab=tab;
@@ -1672,17 +1718,34 @@ App.renderCategoryFeed=function(cat,tab){
       else items.push({kind:'alertGroup',plate:g.plate,alerts:sorted,at:g.lastAt,unread:g.unread});
     });
   }
+  if(cat==='all'||cat==='vehicle'){
+    const vmRaw=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report');
+    const vmFiltered=isRecus?vmRaw.filter(m=>m._received===true):vmRaw.filter(m=>!m._received);
+    const vmMap={};
+    vmFiltered.forEach(m=>{
+      const k=m._otherPlate||'?';
+      if(!vmMap[k])vmMap[k]={plate:k,msgs:[],lastAt:0,unread:0};
+      vmMap[k].msgs.push(m);
+      const t=m.created_at?new Date(m.created_at).getTime():0;
+      if(t>vmMap[k].lastAt)vmMap[k].lastAt=t;
+      if(isRecus&&!m.read_at)vmMap[k].unread++;
+    });
+    Object.values(vmMap).forEach(g=>{
+      const sorted=g.msgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
+      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread});
+    });
+  }
   items.sort((a,b)=>b.at-a.at);
   const tf=S._actTypeFilter||'all';
   if(tf==='alert')items=items.filter(i=>i.kind==='alert'||i.kind==='alertGroup');
   const _sq=S.activitySearch||'';if(_sq)items=items.filter(i=>App._activityMatchesSearch(i,_sq));
   const sf=S._actStatusFilter||this._actStatusFilter||'all';
   if(sf==='unread')items=items.filter(i=>{
-    if(i.kind==='alertGroup')return i.unread>0;
+    if(i.kind==='alertGroup'||i.kind==='vehicleMsgGroup')return i.unread>0;
     const a=i.alert;if(!a)return false;
     return a.status!=='seen'&&a.status!=='present'&&a.status!=='resolved'&&!a._own;
   });
-  const unread=items.filter(i=>i.unread>0||(i.kind==='alert'&&i.alert?.status!=='seen'&&i.alert?.status!=='present'&&!i.alert?._own)||(i.kind==='alertGroup'&&i.unread>0)).length;
+  const unread=items.filter(i=>i.unread>0||(i.kind==='alert'&&i.alert?.status!=='seen'&&i.alert?.status!=='present'&&!i.alert?._own)||(i.kind==='alertGroup'&&i.unread>0)||(i.kind==='vehicleMsgGroup'&&i.unread>0)).length;
   const tabBadge=document.getElementById('actTabBadge');
   if(tabBadge){tabBadge.textContent=unread>99?'99+':String(unread);tabBadge.style.display=isRecus&&unread>0?'flex':'none';}
   const emptyTxts={recus:{route:'Aucun signalement route reçu.',vehicle:'Aucun signalement véhicule reçu.',aide:'Aucune demande d\'aide à proximité.',all:'Aucune activité récente.'},envoyes:{route:'Aucun signalement route envoyé.',vehicle:'Aucun signalement véhicule envoyé.',aide:'Aucune demande d\'aide envoyée.',all:'Aucun historique envoyé.'}};
@@ -1722,25 +1785,25 @@ App._actModCard=function(item,cat){
       </div>
     </div>`;
   }
-  if(item.kind==='msg'){
+  if(item.kind==='vehicleMsgGroup'){
+    const hasNew=item.unread>0;
+    const cnt=item.msgs.length;
+    const lastMsg=item.msgs[0];
     const time=item.at?relTime(item.at):'';
-    const isNew=item.unread>0&&!item._sent;
-    const isSel=S.selPlate&&nPlate(item.plate)===S.selPlate;
-    return `<div class="act-mod-card${isNew?' act-mod-unread':''}${isSel?' act-mod-selected':''}">
-      ${isNew?'<div class="act-mod-badge-row"><span class="act-mod-new-badge">NOUVEAU</span></div>':''}
+    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenVehicleMsgGroup('${e(item.plate)}')">
+      ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
       <div class="act-mod-body">
-        <div class="act-mod-avatar act-av-vehicle">💬</div>
+        <div class="act-mod-avatar act-av-vehicle">🚨</div>
         <div class="act-mod-info">
           <div class="act-mod-plate">${e(item.plate)}</div>
-          <div class="act-mod-desc">${e((item.body||'').slice(0,60))}</div>
+          <div class="act-mod-desc">${e((lastMsg?.body||'').slice(0,60))}</div>
+          <div class="act-mod-loc">💬 ${cnt} message${cnt>1?'s':''}</div>
         </div>
         <div class="act-mod-meta">
           <div class="act-mod-time">${e(time)}</div>
-          ${isNew?'<div class="act-mod-status-dot"></div>':'<span class="act-mod-status-lbl vu">Vu</span>'}
+          ${hasNew?'<div class="act-mod-status-dot"></div>':''}
+          <div class="act-mod-count-badge">${cnt}</div>
         </div>
-      </div>
-      <div class="act-mod-actions">
-        ${!item._sent?`<button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je m\\'arrête.')">Je m'arrête</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','Je vérifie.')">Je vérifie</button><button class="act-mod-btn-quick" onclick="App.actQuickReply('${e(item.plate)}','🙏 Merci !')">🙏 Merci</button><button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Msg</button><button class="act-mod-btn-contact" onclick="CallManager.contactByCall('${e(item.plate)}','')">📞 Appel</button>${isNew?`<button class="act-mod-btn-ok" onclick="App.actMarkConvRead('${e(item.plate)}')">✓ Lu</button>`:''}<button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`:`<button class="act-mod-btn-reply" onclick="App.actOpenConv('${e(item.plate)}')">💬 Répondre</button><button class="act-mod-btn-del" onclick="App.actDeleteConv('${e(item.plate)}')">Supprimer</button>`}
       </div>
     </div>`;
   }
