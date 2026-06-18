@@ -51,6 +51,25 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : 4 corrections UX/bug — doublon Activité, build text bleed, vehicleAlert→Messages, closeThread — TERMINÉE, sur branche dev**
+**Date :** 2026-06-18
+**Commit :** (en cours) sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `messages.js`, `app.css`, `service-worker.js`
+
+**Corrections appliquées :**
+
+1. **Doublon Activité** (IMG_5857) — Dans `renderCategoryFeed`, quand une plaque a à la fois un `alertGroup` (S.alerts) et un `vehicleMsgGroup` (S._actMessages), seul le vehicleMsgGroup est affiché. Son onclick ouvre `actOpenAlertGroup` si un alert existe, `actOpenVehicleMsgGroup` sinon. La carte d'alerte brute est supprimée des items.
+
+2. **Build text bleed** (IMG_5856) — `.act-cat-panel` avait pas de background → le contenu derrière perçait. Fix : `background: #0c1624` ajouté dans app.css. De plus, `panel()` ne réinitialisait pas `style.display` inline, causant des panels simultanément visibles après `navActivite`. Fix : `_pe.style.display=''` dans la boucle forEach de `panel()`.
+
+3. **vehicleAlert → Messages** (IMG_5858) — vehicleAlert() passait par le compose panel de Messages (→ sendNew sans context_type). Fix : vehicleAlert() envoie directement via `sendToPlate(plate, msg, {context_type:'vehicle_report'})`, puis navigue vers Activité. Le patch ui.js est simplifié pour déléguer à l'original.
+
+4. **closeThread reset icMsgList** — closeThread() dans messages.js réinitialisait `icMsgList.style.display=''` même quand on est dans la vue Appels (icAppelsPane.style.display='flex'), annulant le masquage fait par navAppels(). Fix : vérification `_inAppels` avant la réinitialisation.
+
+**SW/Build :** v43 / 2026-06-19
+
+---
+
 **Mission : Activité — messages véhicule urgents (context_type='vehicle_report') dans Reçus/Envoyés — TERMINÉE, sur branche dev**
 **Date :** 2026-06-18
 **Commit :** `787b1cb` sur `claude/immatconnect-pro-app-dEKGR` (pas encore mergé sur `main`)
