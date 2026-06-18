@@ -1679,7 +1679,7 @@ App.actOpenVehicleMsgGroup=function(plate){
   const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const renderMsg=(m,isNew)=>{const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${e2(String(m.id))}','${e2(plate)}')" style="cursor:pointer"`:'';return`<div class="act-mod-card${isNew?' act-mod-unread':''}" ${click}><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div>`;};
+  const renderMsg=(m,isNew)=>{const mid=e2(String(m.id));const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${mid}','${e2(plate)}')" style="cursor:pointer"`:'';const delBtn=`<button type="button" class="act-msg-del-btn" onclick="event.stopPropagation();App.actDeleteVehicleMsg('${mid}','${e2(plate)}')" title="Supprimer">×</button>`;return`<div class="act-mod-card${isNew?' act-mod-unread':''} act-msg-deletable" ${click}>${delBtn}<div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div>`;};
   const ep=e2(plate);
   const qr=`<div class="act-quick-bar"><div class="act-quick-label">Répondre rapidement à ${ep}</div><div class="act-quick-btns"><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Bien reçu, merci ! 👍')">Merci 👍</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','Je vérifie ça de suite 👀')">Je vérifie 👀</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}',&quot;Je m\'arrête pour vérifier ✓&quot;)">Je m'arrête ✓</button><button type="button" class="act-qbtn" onclick="App.actVehicleReply('${ep}','C\'est réglé, merci ! ✅')">Réglé ✅</button></div></div>`;
   let html=qr;
@@ -1688,13 +1688,16 @@ App.actOpenVehicleMsgGroup=function(plate){
   gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
 };
 App.actDeleteVehicleMsg=async function(id,plate){
-  try{
-    await sb.from('messages').delete().eq('id',id);
-    if(window.S&&Array.isArray(S._actMessages))S._actMessages=S._actMessages.filter(m=>String(m.id)!==String(id));
-    try{window.ImmatMessages?.buildThreads?.();}catch(_){}
-    this.actOpenVehicleMsgGroup(plate);
-    this.updateActBadge?.();
-  }catch(err){toast('Erreur lors de la suppression.','bad');}
+  if(!confirm('Supprimer ce message ?')) return;
+  const sid=String(id);
+  let deleted=[];
+  try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
+  if(!deleted.includes(sid))deleted.push(sid);
+  try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(deleted.slice(-500)));}catch(e){}
+  if(window.S&&Array.isArray(S._actMessages))S._actMessages=S._actMessages.filter(m=>String(m.id)!==sid);
+  try{window.ImmatMessages?.buildThreads?.();}catch(_){}
+  this.actOpenVehicleMsgGroup(plate);
+  this.updateActBadge?.();
 };
 App.actCatTab=function(tab){
   S._actCatTab=tab;
@@ -3227,7 +3230,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v48';
+      var CURRENT = 'immatconnect-pro-v49';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3305,7 +3308,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v48';
+  var CURRENT = 'immatconnect-pro-v49';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
