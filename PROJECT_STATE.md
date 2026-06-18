@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-18
 Avancement             : ~45% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 8aa9330
+Branche production     : main (GitHub Pages) — commit 1d9068c
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -50,6 +50,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Fix thread vide — corps du thread sans hauteur — TERMINÉE**
+**Date :** 2026-06-18
+**Commit :** `1d9068c` sur `main`
+**Fichiers modifiés :** `messages.js`
+
+**Root cause :** Quand `openThread()` masquait `icMsgList` (display:none) et `.ic-conv-header`, `#icMessagesPro` (`.ic-msg-shell`) perdait tout contenu en flux normal → hauteur réduite à ~60px (juste icContactTabs + padding). `#icThread.show` positionné `absolute; inset:0` héritait de cette hauteur minimale. La `.ic-thread-head` occupait ~55px → `.ic-thread-body` avait ~5px → messages invisibles.
+
+**Fix :** À l'ouverture du thread, forcer `icMessagesPro.style.minHeight = sheet.offsetHeight`. À la fermeture (`closeThread`), relâcher `minHeight = ''`.
+
+---
 
 **Mission : Restauration état session — icContactTabs + correctifs nav/SW/Messages — TERMINÉE**
 **Date :** 2026-06-18
