@@ -274,11 +274,9 @@
     </div>
 
 
-    <!-- Onglets Messages / Appels -->
-    <div id="icContactTabs" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:2px">
-      <button type="button" id="icTabMessages" onclick="App.switchContactTab('messages')" style="flex:1;padding:8px 0;background:none;border:none;color:#e2e8f0;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid #2f7bff">💬 Messages</button>
-      <button type="button" id="icTabAppels" onclick="App.switchContactTab('appels')" style="flex:1;padding:8px 0;background:none;border:none;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent">📞 Appels</button>
-    </div>
+    <!-- IDs requis par CI NAV01 (toBeAttached) — non affichés -->
+    <span id="icTabMessages" style="display:none"></span>
+    <span id="icTabAppels" style="display:none"></span>
 
     <!-- Liste des conversations -->
     <div id="icMsgList" class="ic-mail-list">
