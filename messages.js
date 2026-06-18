@@ -1205,9 +1205,12 @@ async function sendToPlate(plate,text,opts){
     const _c=sb();
     if(_c&&target?.id){
       const _isParked=_ctx.context_type==='parked_report';
-      const _pushTitle=_isParked?'🅿️ ImmatConnect — Problème sur votre véhicule':'💬 ImmatConnect — Nouveau message';
-      const _pushBody=_isParked?(senderPlate+' a signalé un problème sur votre véhicule'+(_ctx.image_url?' 📷':'')):senderPlate+' vous a envoyé un message';
-      _c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:_pushTitle,body:_pushBody,data:{type:_isParked?'parked_report':'message',plate:senderPlate},tag:(_isParked?'parked-':'msg-')+senderPlate}}).catch(()=>{});
+      const _isParkedResp=_ctx.context_type==='parked_response';
+      const _pushTitle=_isParked?'🅿️ ImmatConnect — Problème sur votre véhicule':_isParkedResp?'🅿️ ImmatConnect — Signalement pris en compte':'💬 ImmatConnect — Nouveau message';
+      const _pushBody=_isParked?(senderPlate+' a signalé un problème sur votre véhicule'+(_ctx.image_url?' 📷':'')):_isParkedResp?(senderPlate+' a répondu à votre signalement'):(senderPlate+' vous a envoyé un message');
+      const _pushType=_isParked?'parked_report':_isParkedResp?'parked_response':'message';
+      const _pushTag=(_isParked||_isParkedResp)?'parked-':'msg-';
+      _c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:_pushTitle,body:_pushBody,data:{type:_pushType,plate:senderPlate},tag:_pushTag+senderPlate}}).catch(()=>{});
     }
   }catch(e){}
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
