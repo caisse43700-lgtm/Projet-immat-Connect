@@ -1095,7 +1095,16 @@ async subMsgs(){
           {label:"🚗 J'arrive",bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,"J'arrive ! 🚗");}catch(e){}}},
           {label:'En route',bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'En route 🚘');}catch(e){}}},
         ];
-        this.showFloatingCard('💬','Message de '+_sndName,''+(_txt.slice(0,60)),'Vu','→ Ouvrir',null,async()=>{this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}},null,_qr);
+        const _isVehicleReport=m.context_type==='vehicle_report';
+        this.showFloatingCard('💬','Message de '+_sndName,''+(_txt.slice(0,60)),'Vu','→ Ouvrir',null,async()=>{
+          if(_isVehicleReport&&pl){
+            // Signalement véhicule → ouvrir Activité > Véhicule > Reçus
+            this.navActivite?.();
+            setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);
+          }else{
+            this.panel('messages');try{window.ImmatMessages?.setMode?.('inbox');await window.ImmatMessages?.refresh?.();if(pl)window.ImmatMessages?.openThread?.(pl)}catch(e){}
+          }
+        },null,_qr);
       }catch(e){}}
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
