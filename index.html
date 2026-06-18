@@ -3198,19 +3198,36 @@ if ('serviceWorker' in navigator) {
 window._forceSwUpdate = async function() {
   var btn = document.getElementById('forceSwUpdateBtn');
   if (btn) { btn.textContent = '⏳ Mise à jour…'; btn.disabled = true; }
+  // 1. Vider tous les caches Caches API
   try {
     if (window.caches) {
       var keys = await window.caches.keys();
       await Promise.all(keys.map(function(k){ return window.caches.delete(k); }));
     }
   } catch(e) {}
+  // 2a. Via getRegistrations() (peut échouer silencieusement sur iOS)
   try {
     if (navigator.serviceWorker) {
       var regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(function(r){ return r.unregister(); }));
     }
   } catch(e) {}
+  // 2b. Via le controller direct (contournement bug iOS où getRegistrations() renvoie [])
+  try {
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    }
+    if (_swReg) { await _swReg.unregister(); }
+  } catch(e) {}
+  // 2c. Demander au SW de se désinscrire lui-même
+  try {
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SELF_DESTRUCT' });
+    }
+  } catch(e) {}
   try{sessionStorage.removeItem('_ic_br');}catch(e){}
+  try{localStorage.removeItem('_ic_build');}catch(e){}
+  await new Promise(function(r){ setTimeout(r, 300); });
   window.location.replace(location.origin+location.pathname+'?r='+Date.now());
 };
 // Abonnement CALL_MISSED → badge onglet Appels

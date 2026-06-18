@@ -100,7 +100,12 @@ self.addEventListener('fetch', (e) => {
 
 // ─── Message SKIP_WAITING depuis la page ─────────────────────────────────────
 self.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (!e.data) return;
+  if (e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data.type === 'SELF_DESTRUCT') {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.registration.unregister());
+  }
 });
 
 // ─── Push notifications ──────────────────────────────────────────────────────
