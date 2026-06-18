@@ -1212,6 +1212,10 @@ App.navMessages=function(){
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='';if(_cp)_cp.style.display='none';
+  const _hdr=document.querySelector('#icMessagesPro .ic-conv-header');
+  if(_hdr)_hdr.style.display='';
+  const _sbar=$('icSearchBar');
+  try{if(_sbar)_sbar.style.display=localStorage.getItem('_icSearchOpen')==='1'?'':'none';}catch(e){}
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
@@ -1224,6 +1228,10 @@ App.navAppels=function(){
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
+  const _hdr=document.querySelector('#icMessagesPro .ic-conv-header');
+  if(_hdr)_hdr.style.display='none';
+  const _sbar=$('icSearchBar');
+  if(_sbar)_sbar.style.display='none';
   try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
 };
@@ -1697,7 +1705,7 @@ App._actModCard=function(item,cat){
     const hasNew=item.unread>0;
     const avCls=lastA?.group==='route'?'act-av-route':lastA?.group==='assist'?'act-av-aide':'act-av-vehicle';
     const cnt=item.alerts.length;
-    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenAlertGroup('${e(item.plate)}')">`
+    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="App.actOpenAlertGroup('${e(item.plate)}')">
       ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
       <div class="act-mod-body">
         <div class="act-mod-avatar ${avCls}">${m.icon}</div>
