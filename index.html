@@ -274,12 +274,6 @@
     </div>
 
 
-    <!-- Onglets Messages / Appels (masqués — présents pour les tests DOM) -->
-    <div id="icContactTabs" style="display:none">
-      <button type="button" id="icTabMessages" onclick="App.switchContactTab('messages')">💬 Messages</button>
-      <button type="button" id="icTabAppels" onclick="App.switchContactTab('appels')">📞 Appels</button>
-    </div>
-
     <!-- Liste des conversations -->
     <div id="icMsgList" class="ic-mail-list">
       <div class="ic-empty ic-empty-help">💬 Aucun message pour l'instant.<br><small>Clique sur un véhicule sur la carte pour démarrer une conversation.</small></div>
@@ -1223,9 +1217,6 @@ App.navMessages=function(){
   if(_hdr)_hdr.style.display='';
   const _sbar=$('icSearchBar');
   try{if(_sbar)_sbar.style.display=localStorage.getItem('_icSearchOpen')==='1'?'':'none';}catch(e){}
-  var _tbM=$('icTabMessages'),_tbA=$('icTabAppels');
-  if(_tbM){_tbM.style.color='#e2e8f0';_tbM.style.borderBottomColor='#2f7bff';}
-  if(_tbA){_tbA.style.color='#64748b';_tbA.style.borderBottomColor='transparent';}
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
@@ -1239,9 +1230,6 @@ App.navAppels=function(){
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
-  var _tbM2=$('icTabMessages'),_tbA2=$('icTabAppels');
-  if(_tbM2){_tbM2.style.color='#64748b';_tbM2.style.borderBottomColor='transparent';}
-  if(_tbA2){_tbA2.style.color='#e2e8f0';_tbA2.style.borderBottomColor='#2f7bff';}
   const _hdr=document.querySelector('#icMessagesPro .ic-conv-header');
   if(_hdr)_hdr.style.display='none';
   const _sbar=$('icSearchBar');
@@ -2030,13 +2018,11 @@ App.switchContactTab=function(tab){
   if(!msgPane||!callPane) return;
   if(tab==='appels'){
     msgPane.style.display='none'; callPane.style.display='flex';
-    if(tabMsg){tabMsg.style.color='#64748b';tabMsg.style.borderBottomColor='transparent';}
-    if(tabCall){tabCall.style.color='#e2e8f0';tabCall.style.borderBottomColor='#2f7bff';}
+    if(tabMsg) tabMsg.style.color='#64748b'; if(tabCall) tabCall.style.color='#e2e8f0';
     if(typeof this.renderCallJournal==='function') try{this.renderCallJournal();}catch(e){}
   } else {
     callPane.style.display='none'; msgPane.style.display='flex';
-    if(tabMsg){tabMsg.style.color='#e2e8f0';tabMsg.style.borderBottomColor='#2f7bff';}
-    if(tabCall){tabCall.style.color='#64748b';tabCall.style.borderBottomColor='transparent';}
+    if(tabMsg) tabMsg.style.color='#e2e8f0'; if(tabCall) tabCall.style.color='#64748b';
   }
 };
 App.renderCallJournal=async function(){
