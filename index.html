@@ -1513,7 +1513,7 @@ App.renderActivityMain=function(){
   const _rIds=S._readMsgIds;
   const vmUnread=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const bRoute=activeAlerts.filter(a=>a.group==='route').length;
-  const bVehicle=activeAlerts.filter(a=>a.group==='vehicle'||a.type==='vehicule').length+vmUnread;
+  const bVehicle=vmUnread;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);
