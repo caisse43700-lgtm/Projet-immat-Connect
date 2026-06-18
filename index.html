@@ -1600,7 +1600,7 @@ App.openActivityCat=function(cat){
   const iconEl=document.getElementById('actCatIcon'),titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(iconEl)iconEl.textContent=m.icon;if(titleEl)titleEl.textContent=m.title;if(subEl)subEl.textContent=m.sub;
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
-  const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=cat==='all'?'none':'';
+  const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=(cat==='all'||cat==='station')?'none':'';
   // Marquer les alertes de cette catégorie comme vues avant le rendu
   const _now=Date.now();let _changed=false;
   (S.alerts||[]).forEach(a=>{
@@ -1988,6 +1988,21 @@ App.actStationRate=function(msgId,plate){
   if(pl&&typeof trustDelta==='function')try{trustDelta(pl,8);}catch(e){}
   toast('👍 Info utile — score de confiance augmenté','ok');
   this.renderStationFeed?.(S._actCatTab||'recus');
+};
+App.actDeleteMsg=function(msgId){
+  let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
+  if(!d.includes(String(msgId)))d.push(String(msgId));
+  try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)));}catch(e){}
+  if(S._actCat==='station'){this.renderStationFeed?.(S._actCatTab||'recus');}
+  else{this.renderCategoryFeed?.(S._actCat||'all',S._actCatTab||'recus');}
+  this.updateActBadge?.();
+};
+App.actDeleteVehicleMsg=async function(msgId,plate){
+  let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
+  if(!d.includes(String(msgId)))d.push(String(msgId));
+  try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)));}catch(e){}
+  if(window.ImmatMessages?.deleteMessage){try{await ImmatMessages.deleteMessage(msgId);}catch(e){}}
+  this.actOpenVehicleMsgGroup?.(plate);this.updateActBadge?.();
 };
 
 App.actCatTab=function(tab){
