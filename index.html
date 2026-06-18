@@ -1596,7 +1596,7 @@ App.actOpenVehicleMsgGroup=function(plate){
   const newMsgs=sorted.filter(m=>m._received&&!m.read_at);
   const oldMsgs=sorted.filter(m=>!m._received||m.read_at);
   // Marquer comme lu immédiatement en mémoire + dans le Set persistant (survit aux refreshes)
-  if(newMsgs.length){const now=new Date().toISOString();if(!S._readMsgIds)S._readMsgIds=new Set();newMsgs.forEach(m=>{m.read_at=now;S._readMsgIds.add(String(m.id));});this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
+  if(newMsgs.length){const now=new Date().toISOString();if(!S._readMsgIds)S._readMsgIds=new Set();newMsgs.forEach(m=>{m.read_at=now;S._readMsgIds.add(String(m.id));});try{const _arr=[...S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
   if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');

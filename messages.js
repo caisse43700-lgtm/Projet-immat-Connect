@@ -355,8 +355,12 @@ async function refresh(){
   const raw = [...map.values()].sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
   const profs = await profilesByIds(raw.flatMap(m=>[m.sender_id,m.receiver_id]));
   State.messages = normalizeRows(raw, profs);
-  // Appliquer les IDs marqués comme lus côté client (évite réapparition badge après refresh)
-  try{const _rIds=window.S?._readMsgIds;if(_rIds?.size){const _now=new Date().toISOString();State.messages.forEach(m=>{if(_rIds.has(String(m.id))&&!m.read_at)m.read_at=_now;});}}catch(e){}
+  // Appliquer les IDs marqués comme lus (mémoire + localStorage) — survit aux rechargements
+  try{
+    if(!window.S._readMsgIds){const _stored=JSON.parse(localStorage.getItem('ic_read_msg_ids')||'[]');window.S._readMsgIds=new Set(_stored);}
+    const _rIds=window.S._readMsgIds;
+    if(_rIds.size){const _now=new Date().toISOString();State.messages.forEach(m=>{if(_rIds.has(String(m.id))&&!m.read_at)m.read_at=_now;});}
+  }catch(e){}
 
   try{ if(window.S) window.S._actMessages = State.messages; }catch(e){}
   try{ window.App?.updateActBadge?.(); }catch(e){}
