@@ -267,6 +267,12 @@
       <button class="alert-card urgent" onclick="App.stationReport('enfant')"><span class="icon">👶</span><span>Enfant seul</span></button>
       <button class="alert-card info" onclick="App.stationReport('autre')"><span class="icon">ℹ️</span><span>Autre</span></button>
     </div>
+    <div style="margin-top:10px;background:rgba(239,68,68,.10);border:1.5px solid rgba(239,68,68,.4);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;color:#ef4444;font-weight:600;flex:1">🚨 Vie en danger → appelez les secours</span>
+      <a href="tel:15" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">15</a>
+      <a href="tel:17" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">17</a>
+      <a href="tel:18" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">18</a>
+    </div>
   </div>
 
   <div id="alertHistoryBox" class="altet-history" style="display:none;margin-top:4px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px">
@@ -1606,7 +1612,7 @@ App.renderActivityMain=function(){
   const bVehicleAlerts=activeAlerts.filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen'&&a.status!=='present').length;
   const bVehicle=vmUnread+bVehicleAlerts;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
-  const bStation=msgs.filter(m=>m.context_type==='parked_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
+  const bStation=msgs.filter(m=>(m.context_type==='parked_report'||m.context_type==='parked_response')&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
   setBadge('catBadgeRoute',bRoute);setBadge('catBadgeVehicle',bVehicle);setBadge('catBadgeAide',bAide);setBadge('catBadgeStation',bStation);
   const unreadAlerts=activeAlerts.filter(a=>a.status!=='seen'&&a.status!=='present');
@@ -1951,6 +1957,7 @@ App.renderStationFeed=function(tab){
             <div class="act-vmg-replies">
               <button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.actStationReply('${mid}','${pl}','arrivant')">Je viens vérifier 🚗</button>
               <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actStationReply('${mid}','${pl}','regle')">Déjà réglé ✅</button>
+              <button type="button" class="act-vmg-rbtn" style="color:#94a3b8;border-color:rgba(148,163,184,.3)" onclick="event.stopPropagation();App.actStationDismiss('${mid}')">Pas mon véhicule ❌</button>
             </div>
             <div class="act-vmg-sec-lbl">Actions</div>
             <div class="act-vmg-replies">
@@ -1988,6 +1995,10 @@ App.renderStationFeed=function(tab){
   } else {
     const envoyes=allMsgs.filter(m=>m.context_type==='parked_report'&&m._received!==true);
     const responses=allMsgs.filter(m=>m.context_type==='parked_response'&&m._received===true);
+    // Auto-marquer les réponses comme lues à l'ouverture de l'onglet Envoyés
+    let _envDidMark=false;
+    responses.forEach(r=>{if(!r.read_at&&(!_rIds||!_rIds.has(String(r.id)))){if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(r.id));_envDidMark=true;}});
+    if(_envDidMark){try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}setTimeout(()=>{try{this.updateActBadge?.();}catch(e){}},0);}
     if(envoyes.length){
       html+=`<div class="act-vmg-sec-title" style="color:#14b8a6">🅿️ Signalements envoyés (${envoyes.length})</div>`;
       html+=envoyes.map(m=>{
@@ -1997,9 +2008,10 @@ App.renderStationFeed=function(tab){
         const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
         const mid=e2(String(m.id));
         const reply=responses.find(r=>nPlate(r._otherPlate||r.sender_plate||'')===nPlate(m._otherPlate||m.target_plate||''));
+        const _statusBadge=reply?`<span style="font-size:10px;background:rgba(74,222,128,.15);color:#4ade80;padding:2px 6px;border-radius:10px;margin-left:auto;flex-shrink:0">✅ Répondu</span>`:`<span style="font-size:10px;background:rgba(20,184,166,.12);color:#5eead4;padding:2px 6px;border-radius:10px;margin-left:auto;flex-shrink:0">⏳ En attente</span>`;
         return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card ${reply?'act-vmg-archived act-vmg-encours':'act-vmg-encours'}" style="${reply?'':'border-left-color:#14b8a6'}" onclick="App.actToggleVmCard(this)">
-          <div class="act-vmg-hd">${!reply?`<div class="act-vmg-dot" style="background:#14b8a6"></div>`:''}
-          <div class="act-vmg-info"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${urgent?'🚨 ':''}<strong>${e2(label)}</strong></div></div><div class="act-vmg-time">${e2(time)}</div></div>
+          <div class="act-vmg-hd" style="gap:6px">
+          <div class="act-vmg-info" style="flex:1;min-width:0"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${urgent?'🚨 ':''}<strong>${e2(label)}</strong></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${_statusBadge}<div class="act-vmg-time">${e2(time)}</div></div></div>
           ${reply?`<div class="act-vmg-detail"><div class="act-vmg-sec-lbl">Réponse du conducteur</div><div class="act-vmg-desc" style="color:#6ee7b7;padding:8px 0">${e2(String(reply.message||'').slice(0,100))}</div></div>`:''}
         </div></div>`;
       }).join('');
@@ -2029,13 +2041,21 @@ App.actStationReply=async function(msgId,plate,key){
   toast(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !','ok');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
+App.actStationDismiss=function(msgId){
+  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
+  if(!replied.includes(String(msgId)))replied.push(String(msgId));
+  try{localStorage.setItem('ic_station_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  this.renderStationFeed?.('recus');this.updateActBadge?.();
+};
 App.actStationRate=function(msgId,plate){
   let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_station_rated')||'[]');}catch(e){}
   if(!rated.includes(String(msgId)))rated.push(String(msgId));
   try{localStorage.setItem('ic_station_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
   const pl=nPlate(plate||'');
   if(pl&&typeof trustDelta==='function')try{trustDelta(pl,8);}catch(e){}
-  toast('👍 Info utile — score de confiance augmenté','ok');
+  toast('👍 Signalement utile — merci pour votre retour !','ok');
   this.renderStationFeed?.(S._actCatTab||'recus');
 };
 App.actDeleteMsg=function(msgId){
@@ -2648,8 +2668,8 @@ App.updateActBadge=function(){
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
     const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
-    // vehicle_report et parked_report exclus du badge nav : comptés via catégorie dédiée
-    const unreadMsgs=_unreadAll.filter(m=>!m.context_type||m.context_type==='vehicle_response'||m.context_type==='parked_response').length;
+    // vehicle_report/parked_report/parked_response exclus du badge nav : comptés dans leur catégorie dédiée
+    const unreadMsgs=_unreadAll.filter(m=>!m.context_type||m.context_type==='vehicle_response').length;
     const unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
