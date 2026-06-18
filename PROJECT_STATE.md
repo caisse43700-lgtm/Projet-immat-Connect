@@ -28,7 +28,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - Carte radar Leaflet ✅
 - Sonnerie téléphone (WAV généré en mémoire) ✅
 - Dashboard Gardien (8 voyants + Global Verification Center) ✅
-- Service Worker v54 (network-first, allSettled non-bloquant) ✅
+- Service Worker v55 (network-first, allSettled non-bloquant) ✅
 - 6 Secrets Supabase configurés (AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, ANTHROPIC_API_KEY) ✅
 - 5 Edge Functions déployées via GitHub Actions ✅
 - Realtime actif sur messages + call_requests ✅
@@ -39,6 +39,8 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **[2026-06-18]** Badges corrects : Messages (textes libres), Activité (tout), carte Véhicule (alertes + urgents) ✅
 - **[2026-06-18]** En-tête Messages (✏️ ⭐ 🔍) masqué dans la vue Appels ✅
 - **[2026-06-18]** Catégorie Stationné 🅿️ complète : Reçus (label propre, badge décrémente au tap, "Pas mon véhicule", urgence 15/17/18) + Envoyés (statut ⏳/✅ explicite, réponse conducteur) + floating card améliorée ✅
+- **[2026-06-18]** GPS privé dans signalement stationné : position embarquée `[GPS:lat,lng]` dans le corps du message (invisible à l'affichage), bouton "📍 Voir l'emplacement sur la carte" dans Reçus, marqueur privé Leaflet visible uniquement par le propriétaire ✅
+- **[2026-06-18]** Photo véhicule stationné : capture + compression Canvas (max 1024px JPEG 0.82), upload Supabase Storage bucket `parked-photos`, thumbnail 160px dans Reçus (En cours + Traités) + Envoyés, lightbox plein écran (`actStationViewPhoto`), push notification adapté 🅿️ ✅
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
@@ -51,6 +53,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Photo véhicule stationné + GPS privé — feature complète — TERMINÉE**
+**Date :** 2026-06-18
+**Commit :** `b824af1` sur `claude/immatconnect-pro-app-dEKGR` (en attente "Fusionner")
+**Fichiers modifiés :** `index.html`, `messages.js`, `service-worker.js`, `supabase/migrations/20260618140000_messages_image_url_parked_storage.sql`
+
+**Ce qui a été fait :**
+1. Flux signalement 2 étapes : choix type → photo optionnelle → envoi (`stationSelectType`, `_stationPhotoReset`).
+2. `_stationCompressImage` : Canvas API max 1024px JPEG q=0.82 côté client.
+3. `_stationUploadPhoto` : upload bucket Supabase Storage `parked-photos` (UUID path, public URL non devinable).
+4. `stationSendWithPhoto` : envoi unifié type + photoUrl.
+5. `stationReport(type, photoUrl)` : `image_url` dans opts → payload messages.js.
+6. `messages.js` : `image_url` dans le payload INSERT ; `suppressToast` ; titre push 🅿️ adapté.
+7. `renderStationFeed` Reçus "En cours" : thumbnail 160px + `actStationViewPhoto` au tap.
+8. `renderStationFeed` Reçus "Traités" : thumbnail 140px dans le détail accordéon.
+9. `renderStationFeed` Envoyés : thumbnail 160px dans le détail (condition `reply||m.image_url`).
+10. `actStationViewPhoto(url)` : lightbox plein écran (overlay rgba 95%, `✕` + tap-anywhere pour fermer).
+11. GPS privé : `[GPS:lat,lng]` embarqué dans le corps, `actStationShowOnMap`, marqueur Leaflet privé `S._stationPrivateMarker`.
+12. Migration SQL : `image_url text` sur messages + bucket `parked-photos` + RLS upload/lecture.
+13. SW v54 → v55.
+14. 177 ✅ + 3 diagnostics ✅ + preflight 7/7 OK.
+
+---
 
 **Mission : Stationné Reçus/Envoyés — label propre + badge décrémente + 5 corrections audit — TERMINÉE**
 **Date :** 2026-06-18
@@ -1199,7 +1224,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-17 | IA session | FIX "Mon profil ne s'ouvre pas" : `hideAuthScreens()` dans ui.js posait `style.display='none'` sur `#sp` à l'init de l'app. `openEditProfile()` n'effaçait pas ce style inline — `.active` seul ne suffisait pas. Fix : effacer `style.display` sur tous les écrans d'auth + sur `#appScreen` avant d'activer `#sp`. Commit `4367f02` sur branche dev. |
 | 2026-06-17 | IA session | Groupement signalements par plaque dans Activité — `renderCategoryFeed` crée des items `alertGroup` (2+ alertes même plaque), `_actModCard` rend la carte de groupe cliquable, `actOpenAlertGroup(plate)` affiche le sous-panel détail, `closeAlertGroup()` restaure le panel principal. Commit `cc75ba8` sur branche dev. |
 | 2026-06-18 | IA session | UX Activité — thread Véhicule redesigné (En cours accordion + Archivé swipeable, boutons Merci/Je vérifie/Je m'arrête/Réglé + Info utile/Message/Appeler). Thread Aide (J'arrive 🚗 / Je peux vous aider 🙋, carte "helper coming" évaluable). Commit `be30ec9` sur main. |
-| 2026-06-18 | IA session | Véhicule stationné dans Activité — 4e catégorie 🅿️ : `stationReport(type)` complet, `renderStationFeed` (Reçus/Envoyés), `actStationReply`/`actStationRate`, floating card parked_report/parked_response, CSS teal, grille 2×2, SW v53. (commit à venir) |
+| 2026-06-18 | IA session | Véhicule stationné dans Activité — 4e catégorie 🅿️ : `stationReport(type)` complet, `renderStationFeed` (Reçus/Envoyés), `actStationReply`/`actStationRate`, floating card parked_report/parked_response, CSS teal, grille 2×2, SW v53. Commits `b6ee30b` + `96a8203` sur main. |
+| 2026-06-18 | IA session | GPS privé stationné : `[GPS:lat,lng]` embarqué dans le corps du message (non visible à l'affichage), `actStationShowOnMap` ouvre la carte avec marqueur Leaflet privé visible uniquement par le propriétaire. `_parseGps()` helper. SW v54. Commit `e682c82` sur branche dev — en attente "Fusionner". |
+| 2026-06-18 | IA session | Photo véhicule stationné — feature complète : flux 2 étapes (type → photo → envoi), compression Canvas max 1024px JPEG 0.82, upload Supabase Storage bucket `parked-photos` (UUID path), `image_url` dans payload messages.js, thumbnail 160px dans Reçus/Traités/Envoyés, lightbox plein écran `actStationViewPhoto`, migration SQL (`image_url` + bucket + RLS), push titre 🅿️ adapté, SW v55. 177 tests ✅ + 3 diagnostics ✅. Commit `b824af1` sur branche dev — en attente "Fusionner". |
 
 ---
 
