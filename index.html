@@ -1802,8 +1802,7 @@ App._actModCard=function(item,cat){
     const cnt=item.msgs.length;
     const lastMsg=item.msgs[0];
     const time=item.at?relTime(item.at):'';
-    const _openFn=item._hasAlert?`App.actOpenAlertGroup('${e(item.plate)}')`:`App.actOpenVehicleMsgGroup('${e(item.plate)}')`;
-    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="${_openFn}">
+    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="this.classList.remove('act-mod-unread');this.querySelector('.act-mod-badge-row')?.remove();this.querySelector('.act-mod-status-dot')?.remove();App.actOpenVehicleMsgGroup('${e(item.plate)}')">
       ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
       <div class="act-mod-body">
         <div class="act-mod-avatar act-av-vehicle">🚨</div>
