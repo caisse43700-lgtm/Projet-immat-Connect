@@ -10,9 +10,9 @@
 
 ```
 Date de mise à jour    : 2026-06-18
-Avancement             : ~45% du plan fonctionnel implémenté — EN PRODUCTION
+Avancement             : ~48% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit aaf2361
+Branche production     : main (GitHub Pages) — commit 96a8203
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -28,7 +28,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - Carte radar Leaflet ✅
 - Sonnerie téléphone (WAV généré en mémoire) ✅
 - Dashboard Gardien (8 voyants + Global Verification Center) ✅
-- Service Worker v25 (network-first, allSettled non-bloquant) ✅
+- Service Worker v54 (network-first, allSettled non-bloquant) ✅
 - 6 Secrets Supabase configurés (AGORA_APP_ID, AGORA_APP_CERTIFICATE, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, ANTHROPIC_API_KEY) ✅
 - 5 Edge Functions déployées via GitHub Actions ✅
 - Realtime actif sur messages + call_requests ✅
@@ -38,6 +38,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - **[2026-06-18]** Architecture panels clarifiée : Messages = textes libres, Activité = signalements + alertes urgentes, Appels = journal ✅
 - **[2026-06-18]** Badges corrects : Messages (textes libres), Activité (tout), carte Véhicule (alertes + urgents) ✅
 - **[2026-06-18]** En-tête Messages (✏️ ⭐ 🔍) masqué dans la vue Appels ✅
+- **[2026-06-18]** Catégorie Stationné 🅿️ complète : Reçus (label propre, badge décrémente au tap, "Pas mon véhicule", urgence 15/17/18) + Envoyés (statut ⏳/✅ explicite, réponse conducteur) + floating card améliorée ✅
 
 ### Ce qui bloque (P0) — à corriger avant GO MAIN
 
@@ -51,26 +52,48 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Véhicule stationné dans Activité — nouvelle catégorie 🅿️ — TERMINÉE (en attente de "Fusionner")**
+**Mission : Stationné Reçus/Envoyés — label propre + badge décrémente + 5 corrections audit — TERMINÉE**
 **Date :** 2026-06-18
-**Commit :** `4daa0a4` sur `main` (en attente de "Fusionner")
+**Commits :** `b6ee30b` + `96a8203` sur `main`
+**Fichiers modifiés :** `index.html`, `service-worker.js`
+
+**Ce qui a été fait (commit b6ee30b) :**
+1. `renderStationFeed` Reçus — label propre extrait du corps ("Feux allumés 💡" au lieu du texte verbeux), point bleu conditionnel (non lu seulement), `data-msgid` sur chaque carte, terminologie stationné (pas véhicule).
+2. `renderStationFeed` Envoyés — même extraction label + `<strong>` + 🚨 si urgent, "Réponse du conducteur".
+3. `actToggleVmCard` — marque comme lu dans `S._readMsgIds` au 1er tap (si `data-msgid` présent), retire le point, décrémente `catBadgeStation` via `updateActBadge`.
+4. Floating card `parked_report` — titre = label propre, sous-titre = "Signalé par XX-XXX-XX", 🚨 si URGENT.
+5. SW v53 → v54.
+
+**Ce qui a été fait (commit 96a8203 — audit) :**
+1. Toast `actStationRate` : "Info utile" → "Signalement utile" (cohérence bouton).
+2. `catBadgeStation` : inclut `parked_response` reçues (badge visible pour signalant quand propriétaire répond).
+3. Badge nav : `parked_response` exclu (évite double comptage).
+4. Envoyés : auto-mark `parked_response` lues à l'ouverture ; dot ambigu → badge "⏳ En attente" / "✅ Répondu".
+5. `actStationDismiss` : bouton "Pas mon véhicule ❌" — archive sans réponse pour mauvaise plaque.
+6. Panneau Signaler stationné : bloc urgence 15/17/18 cohérent avec Route/Véhicule/Aide.
+
+**Architecture finale :**
+- `parked_report` reçu → `catBadgeStation` (pas nav badge) → Reçus En cours → tap = lu → Traités après réponse/dismiss
+- `parked_response` reçu → `catBadgeStation` (pas nav badge) → auto-lu à l'ouverture Envoyés → visible inline dans la carte d'envoi
+- `parked_report` envoyé → Envoyés avec statut ⏳/✅ explicite
+
+---
+
+**Mission : Véhicule stationné dans Activité — nouvelle catégorie 🅿️ — TERMINÉE**
+**Date :** 2026-06-18
+**Commit :** `4daa0a4` sur `main`
 **Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js`
 
 **Ce qui a été fait :**
-
-1. `stationReport(type)` — implémentation complète : envoie un message `parked_report` à la plaque cible, crée une alerte communautaire group='parked', navigue vers Activité > Stationné.
-2. `renderActivityMain` — badge `catBadgeStation` comptant les `parked_report` reçus non lus.
-3. `openActivityCat` meta — entrée `station: {icon:'🅿️', title:'Stationné', sub:'Véhicules signalés'}` + match seen pour group='parked'.
-4. `renderCategoryFeed` — hook station : `if(cat==='station'&&tab!=='nouveau'){this.renderStationFeed?.(tab);return;}`.
-5. `renderStationFeed(tab)` — architecture En cours / Archivé :
-   - **Reçus** : parked_report reçus — En cours (accordion avec "Je viens vérifier 🚗" / "C'est réglé ✅" / "👍 Info utile" / "💬 Message" / "📞 Appeler") — Archivé (swipeable + actions Info utile/Contact)
-   - **Envoyés** : parked_report envoyés + parked_response reçus en détail
-6. `actStationReply(msgId, plate, key)` — répond avec `parked_response`, stocke dans `ic_station_replied`.
-7. `actStationRate(msgId, plate)` — +8 confiance, stocke dans `ic_station_rated`.
-8. Subscription handler — floating card 🅿️ / ✅ selon context_type, redirige vers Activité > Stationné (tab recus/envoyes).
-9. `updateActBadge` — `parked_report` exclus du badge nav (comme `vehicle_report`).
-10. CSS — `.act-cat-card.cat-station` gradient teal + `.cat-station .act-cat-badge` teal + grille `repeat(2,1fr)` pour 4 catégories.
-11. SW v52 → v53.
+1. `stationReport(type)` — envoie `parked_report`, crée alerte communautaire group='parked', navigue vers Activité > Stationné > Envoyés.
+2. `renderActivityMain` — badge `catBadgeStation`.
+3. `openActivityCat` meta station + match seen group='parked'.
+4. `renderCategoryFeed` — hook station.
+5. `actStationReply`, `actStationRate`, `actDeleteMsg`.
+6. Subscription handler floating card.
+7. `updateActBadge` — `parked_report` exclus badge nav.
+8. CSS grille 2×2 + couleurs teal stationné.
+9. SW v52 → v53.
 
 ---
 
