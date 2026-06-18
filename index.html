@@ -1599,16 +1599,26 @@ App.closeAlertGroup=function(){
   const gFeed=document.getElementById('actAlertGroupFeed');if(gFeed)gFeed.style.display='none';
   this.renderCategoryFeed(cat,S._actCatTab||'recus');
 };
+App.actMarkVehicleMsg=function(id,plate){
+  const m=(S._actMessages||[]).find(m=>String(m.id)===String(id));
+  if(!m)return;
+  const now=new Date().toISOString();
+  m.read_at=now;
+  if(!S._readMsgIds)S._readMsgIds=new Set();
+  S._readMsgIds.add(String(id));
+  try{const _arr=[...S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}
+  try{sb.from('messages').update({read_at:now}).eq('id',id);}catch(_){}
+  this.updateActBadge?.();
+  this.actOpenVehicleMsgGroup(plate);
+};
 App.actOpenVehicleMsgGroup=function(plate){
   S._actVehicleMsgGroupPlate=plate;
   const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
   const vmMsgs=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report'&&m._otherPlate===plate&&(isRecus?m._received===true:!m._received));
   const sorted=vmMsgs.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
-  // Capturer nouveaux/anciens AVANT marquage — pour la séparation visuelle
-  const newMsgs=sorted.filter(m=>m._received&&!m.read_at);
-  const oldMsgs=sorted.filter(m=>!m._received||m.read_at);
-  // Marquer comme lu immédiatement en mémoire + dans le Set persistant (survit aux refreshes)
-  if(newMsgs.length){const now=new Date().toISOString();if(!S._readMsgIds)S._readMsgIds=new Set();newMsgs.forEach(m=>{m.read_at=now;S._readMsgIds.add(String(m.id));});try{const _arr=[...S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}this.updateActBadge?.();try{sb.from('messages').update({read_at:now}).in('id',newMsgs.map(m=>m.id));}catch(_){}}
+  const _rIds=S._readMsgIds;
+  const newMsgs=sorted.filter(m=>m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id))));
+  const oldMsgs=sorted.filter(m=>!m._received||m.read_at||(_rIds&&_rIds.has(String(m.id))));
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
   if(subEl)subEl.textContent=sorted.length+' message'+(sorted.length>1?'s':'');
@@ -1621,13 +1631,11 @@ App.actOpenVehicleMsgGroup=function(plate){
   const gFeed=document.getElementById('actAlertGroupFeed');if(!gFeed)return;
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const renderMsg=(m,isNew)=>{const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';return`<div class="act-mod-card${isNew?' act-mod-unread':''}"><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div></div></div></div>`;};
+  const renderMsg=(m,isNew)=>{const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';const click=isNew?`onclick="App.actMarkVehicleMsg('${e2(String(m.id))}','${e2(plate)}')" style="cursor:pointer"`:'';return`<div class="act-mod-card${isNew?' act-mod-unread':''}" ${click}><div class="act-mod-body"><div class="act-mod-avatar act-av-vehicle">🚨</div><div class="act-mod-info"><div class="act-mod-plate">${e2(m._otherPlate||plate)}</div><div class="act-mod-desc">${e2(m.message||'')}</div></div><div class="act-mod-meta"><div class="act-mod-time">${e2(time)}</div>${isNew?'<div style="font-size:10px;color:#ff3b5c;font-weight:700;margin-top:2px">Appuyer pour marquer lu</div>':''}</div></div></div>`;};
   let html='';
   if(newMsgs.length){html+=`<div class="act-section-label act-section-new">🔴 Nouveaux (${newMsgs.length})</div>`+newMsgs.map(m=>renderMsg(m,true)).join('');}
   if(oldMsgs.length){html+=`<div class="act-section-label act-section-old">Anciens</div>`+oldMsgs.map(m=>renderMsg(m,false)).join('');}
   gFeed.innerHTML=html||'<div class="act-empty-cat">Aucun message véhicule pour cette plaque.</div>';
-  // Marquer aussi les messages libres (sans context_type) de cette plaque comme lus
-  try{window.ImmatMessages?.markThreadRead?.(plate);}catch(_){}
 };
 App.actDeleteVehicleMsg=async function(id,plate){
   try{
