@@ -925,22 +925,9 @@ async function openThread(plate){
     }catch(e){}
   })();
 
-  // Carte contexte alerte active (F-CALL-CONTEXT)
+  // Bandeau alerte supprimé — les signalements sont dans Activité
   const ctxCard = $('icContextCard');
-  if(ctxCard){
-    const alerts = (window.S?.alerts || []).filter(a =>
-      a.status !== 'resolved' &&
-      (nPlate(a.plate||a.target_plate||'') === nPlate(localPlate) ||
-       nPlate(a.sender_plate||'') === nPlate(localPlate))
-    );
-    if(alerts.length > 0){
-      const a = alerts[0];
-      ctxCard.style.display = '';
-      ctxCard.innerHTML = `⚠️ <strong>Alerte active</strong> : ${esc(a.reason || a.category || 'Signalement')}`;
-    } else {
-      ctxCard.style.display = 'none';
-    }
-  }
+  if(ctxCard) ctxCard.style.display = 'none';
 
   // Masquer la liste (thread prend la place)
   const listEl = $('icMsgList');
