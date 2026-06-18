@@ -51,22 +51,26 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : 4 corrections UX/bug — doublon Activité, build text bleed, vehicleAlert→Messages, closeThread — TERMINÉE, sur branche dev**
+**Mission : 6 corrections bugs UX/CI — panneaux superposés + tests E2E + SW reload — TERMINÉE**
 **Date :** 2026-06-18
-**Commit :** (en cours) sur `claude/immatconnect-pro-app-dEKGR`
-**Fichiers modifiés :** `index.html`, `messages.js`, `app.css`, `service-worker.js`
+**Commits :** `db90ab3`, `51e7ef3`, `3a87c30`, `58567a2` sur `main`
+**Fichiers modifiés :** `index.html`, `messages.js`, `service-worker.js`
 
 **Corrections appliquées :**
 
-1. **Doublon Activité** (IMG_5857) — Dans `renderCategoryFeed`, quand une plaque a à la fois un `alertGroup` (S.alerts) et un `vehicleMsgGroup` (S._actMessages), seul le vehicleMsgGroup est affiché. Son onclick ouvre `actOpenAlertGroup` si un alert existe, `actOpenVehicleMsgGroup` sinon. La carte d'alerte brute est supprimée des items.
+1. **`closeCompose()` guard `_inAppels`** (`messages.js`) — identique à `closeThread()`. Si l'utilisateur est dans la vue Appels (icAppelsPane.style.display='flex'), `icMsgList` n'est plus réaffiché.
 
-2. **Build text bleed** (IMG_5856) — `.act-cat-panel` avait pas de background → le contenu derrière perçait. Fix : `background: #0c1624` ajouté dans app.css. De plus, `panel()` ne réinitialisait pas `style.display` inline, causant des panels simultanément visibles après `navActivite`. Fix : `_pe.style.display=''` dans la boucle forEach de `panel()`.
+2. **`navAppels()` setTimeout 350ms** — re-cache `icMsgList` 350ms après l'affichage de `icAppelsPane` pour absorber tout appel asynchrone de `closeCompose`/`closeThread`.
 
-3. **vehicleAlert → Messages** (IMG_5858) — vehicleAlert() passait par le compose panel de Messages (→ sendNew sans context_type). Fix : vehicleAlert() envoie directement via `sendToPlate(plate, msg, {context_type:'vehicle_report'})`, puis navigue vers Activité. Le patch ui.js est simplifié pour déléguer à l'original.
+3. **Bug critique : panneau Messages ne s'ouvrait pas depuis Activité** (`index.html`) — `navActivite()` posait `style.display='none'` sur `panelMessages` (inline). Quand `navMessages()` était appelé ensuite, `setPanel()` changeait seulement les classes `.on` — l'inline style l'emportait, `panelMessages` restait caché et `panelActivite` restait visible par-dessus. Fix : reset de `style.display=''` sur tous les panels AVANT d'appeler `this.panel()` dans `navMessages()` et `navAppels()`.
 
-4. **closeThread reset icMsgList** — closeThread() dans messages.js réinitialisait `icMsgList.style.display=''` même quand on est dans la vue Appels (icAppelsPane.style.display='flex'), annulant le masquage fait par navAppels(). Fix : vérification `_inAppels` avant la réinitialisation.
+4. **SW `controllerchange` guard** (`index.html`) — `controllerchange` se déclenche aussi lors du premier `claim()` d'un SW fraîchement installé. Dans un contexte vierge (Playwright, 1re visite), cela causait un `window.location.reload()` inattendu qui interrompait les tests E2E (T08 smoke, call-screen NAV01). Fix : `_hadSwController = !!navigator.serviceWorker.controller` — ne recharger que si un SW était déjà actif avant.
 
-**SW/Build :** v43 / 2026-06-19
+5. **Ajout `#icTabMessages` / `#icTabAppels` dans le DOM** (`index.html`) — Le test CI `NAV01` cherchait ces éléments via `toBeAttached()`. Ils n'existaient que dans le JS. Ajout de deux boutons-onglets visibles au-dessus de `icMsgList`, avec synchronisation de l'état actif (bordure bleue) dans `switchContactTab()`, `navMessages()` et `navAppels()`.
+
+6. **messages.js?v=19** — bump de version CDN pour forcer le rechargement.
+
+**SW/Build :** v44 / 2026-06-19
 
 ---
 
@@ -602,7 +606,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune mission en cours. Prochaine mission : validation terrain + merge dev → main si validé.
+Aucune mission en cours.
 
 ---
 
