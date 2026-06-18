@@ -940,6 +940,11 @@ async function openThread(plate){
   if(listEl) listEl.style.display = 'none';
   if(hdr)    hdr.style.display    = 'none';
   if(sbar)   sbar.style.display   = 'none';
+  // icMsgList masqué → icMessagesPro s'effondre → icThread perd sa hauteur.
+  // On force icMessagesPro à la hauteur du sheet pour que icThread.show (inset:0) puisse s'étirer.
+  const _shell = document.getElementById('icMessagesPro');
+  const _sheetH = document.getElementById('sheet')?.offsetHeight || Math.round(window.innerHeight * 0.72);
+  if(_shell) _shell.style.minHeight = _sheetH + 'px';
   const tsBar = $('icThreadSearchBar'), tsInput = $('icThreadSearchInput');
   if(tsBar)   tsBar.style.display = 'none';
   if(tsInput) tsInput.value = '';
@@ -992,6 +997,9 @@ function closeThread(){
   const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
   const sbar   = $('icSearchBar');
   if(box)    box.classList.remove('show');
+  // Relâcher la hauteur forcée sur le shell
+  const _shellC = document.getElementById('icMessagesPro');
+  if(_shellC) _shellC.style.minHeight = '';
   // Ne pas réinitialiser si on est dans la vue Appels (icAppelsPane visible)
   const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
   if(listEl && !_inAppels) listEl.style.display = '';
