@@ -53,7 +53,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 **Mission : Véhicule stationné dans Activité — nouvelle catégorie 🅿️ — TERMINÉE (en attente de "Fusionner")**
 **Date :** 2026-06-18
-**Commit :** (à déterminer après push)
+**Commit :** `4daa0a4` sur `main` (en attente de "Fusionner")
 **Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js`
 
 **Ce qui a été fait :**
