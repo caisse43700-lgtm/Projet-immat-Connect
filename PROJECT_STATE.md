@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-19
 Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 9683a17 (poussé)
+Branche production     : main (GitHub Pages) — commit 670c03b (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -54,9 +54,28 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Code review — 4 correctifs robustesse post-audit — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** `670c03b` sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`
+
+**Correctifs appliqués (suite du /code-review --effort high) :**
+
+1. **MEDIUM — `_refreshQuota()` crash sessionStorage bloqué** (`index.html`) — `JSON.parse(sessionStorage.getItem(...))` sans try/catch lançait une `SecurityError` dans les WebViews iOS avec stockage bloqué, crashant `open()` et `send()`. Fix : `let d; try{d=JSON.parse(...);}catch(_){d={n:0,t:0};}`.
+
+2. **LOW — Double toast après timeout `startVoice()`** (`index.html`) — `rec.abort()` (déclenché par le timeout 8s) provoque aussi `onerror` avec `e.error==='aborted'` sur Chrome/Safari, affichant "Micro indisponible." après le toast "Temps dépassé". Fix : `if(e.error!=='aborted')toast(...)` dans `onerror`.
+
+3. **A1+ALTITUDE — `actConfirmAlert()` : wrapper vacueux + DB jamais fermée** (`index.html`) — (a) Le `if(a){...}` après `if(!a){return;}` était vacuously true (code mort trompeur). (b) Quand l'alerte était absente de `S.alerts` (expirée localement), le record DB pouvait rester ouvert indéfiniment. Fix : suppression du wrapper `if(a)` ; ajout d'une mise à jour DB de repli `sb.from('reports').update(...).eq('id',id)` dans la branche `!a`.
+
+4. **MEDIUM — Guardian Loop ne s'abonne pas à `HELP_CREATED`/`VEHICLE_MESSAGE_SENT`** (`guardian-loop.js` v10) — `ImmatBus.emit('HELP_CREATED',...)` (ajouté dans `assist()`) et `ImmatBus.emit('VEHICLE_MESSAGE_SENT',...)` (dans `driverInfo()`) n'avaient pas de `bus.on(...)` correspondant dans `_sub()` → `observe()` ne se déclenchait pas en temps réel. Fix : abonnements ajoutés.
+
+SW v68 — guardian-loop.js?v=10.
+
+---
+
 **Mission : Audits Activité + Dashboard Gardien — 6 corrections post-audit — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
+**Commit :** `f3a5048` sur `main` (poussé)
 **Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`
 
 **Corrections appliquées :**
@@ -67,11 +86,11 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 3. **HAUTE — driverInfo() sans ImmatBus ni IE** (`index.html`) — Broadcast "Information conducteurs" (signalements véhicule généraux) n'émettait ni ImmatBus ni IE.create → Guardian heuristique HEURISTIC-007 ne déclenchait jamais pour cette action. Fix : `ImmatBus.emit('VEHICLE_MESSAGE_SENT',...)` + `IE.create({type:'VEHICLE_ALERT',...})` ajoutés après l'ImmatOrganism.observe existant.
 
-4. **CRITIQUE — snapshot Ange getPending() sans plaque** (`index.html`) — `GuardianLoop.getPending()` (ligne ~3768) retournait les recommandations de TOUTES les plaques observées → fuite potentielle de données d'autres conducteurs dans le contexte IA. Corrigé : `getPending(S.profile?.owner_plate||'')`.
+4. **CRITIQUE — snapshot Ange getPending() sans plaque** (`index.html`) — `GuardianLoop.getPending(ownPlate||'')` — chaîne vide est falsy, retournait ALL records. Corrigé : `const _ownPl=S.profile?.owner_plate; const _gp=(_ownPl&&GuardianLoop.getPending(_ownPl))??[]`.
 
 5. **MOYENNE — Dashboard Gardien visible pour tous** (`index.html` CSS) — `.gardien-debug-tool{display:inline-flex}` affichait le bouton Dashboard et "Sync alertes" à tous les utilisateurs. Corrigé : `.gardien-debug-tool{display:none}` + `body.is-gardien .gardien-debug-tool{display:inline-flex}` — visible uniquement si le rôle gardien est confirmé.
 
-6. **MOYENNE — actConfirmAlert() silencieux si alerte expirée** (`index.html`) — Si l'alerte avait expiré ou été clôturée entre-temps, `S.alerts.find()` retournait `undefined` → `if(a)` skipé silencieusement, aucun feedback. Fix : guard explicite `if(!a)` avec toast "Cette alerte a déjà été clôturée." + return anticipé.
+6. **MOYENNE — actConfirmAlert() silencieux si alerte expirée** (`index.html`) — Guard `if(!a)` ajouté (approfondi dans le commit 670c03b).
 
 SW v67 — guardian-loop.js?v=9.
 
@@ -909,7 +928,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — audit Route terminé, 9 corrections appliquées, en attente "Fusionner".
+Aucune — code review terminé, 4 correctifs robustesse appliqués et fusionnés (commit 670c03b).
 
 ---
 
@@ -1442,7 +1461,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Audit GPS complet + 10 corrections Bus→IE→Guardian→GVC→Ange : IE v6 GPS_FIX+GPS_STARTED, guardian-loop v8 HEURISTIC-009 GPS, GVC v8 checkGPS() 9 items, mobile-autotest v3 gpsAutotest(), locate() GPS_FIX IE+Bus+S.myAccuracy+S.myGpsAt, zIndexOffset 0→1000, jitter anti-stacking alertes, snapshot Ange gps_active/invisible/radius_km/gps_accuracy/gps_age_sec. SW v64→v65. Commit 24e6e88. |
 | 2026-06-19 | IA session | Audit nav avancée + 7 corrections : AbortController searchGps (race condition), voiceGps timeout 8s, OSRM timeout 8s, N1 étapes épuisées auto-recalcul, N2 vocal recalcul, N3 autoFollow après recalcul, V1 slider vitesse de parole 0.5x→1.4x. SW v65→v66. Commit 1281c60. |
 | 2026-06-19 | IA session | Audit Ange (conseiller IA) + 5 corrections : S.panel mis à jour dans App.panel() (CRITIQUE), ANGE_SUGGESTION dans TYPE_META IE v7 (HAUTE), startVoice() timeout 8s (HAUTE), #angeQuota indicateur quota restant (MOYENNE), scroll-to-bottom renderResponse() + Escape listener (BASSE). SW v66. |
-| 2026-06-19 | IA session | Audits Activité + Dashboard Gardien + 6 corrections : HEURISTIC-004 corrigée (ROAD_ALERT/GPS_FIX retirés → ANGE_SUGGESTION ajouté), assist() type IE HELP_REQUEST_CREATED→HELP + ImmatBus.emit, driverInfo() ImmatBus.emit+IE.create ajoutés, snapshot Ange getPending(ownPlate), CSS gardien-debug-tool masqué non-gardiens, actConfirmAlert() guard alerte expirée. guardian-loop.js v9, SW v67. |
+| 2026-06-19 | IA session | Audits Activité + Dashboard Gardien + 6 corrections : HEURISTIC-004 corrigée (ROAD_ALERT/GPS_FIX retirés → ANGE_SUGGESTION ajouté), assist() type IE HELP_REQUEST_CREATED→HELP + ImmatBus.emit, driverInfo() ImmatBus.emit+IE.create ajoutés, snapshot Ange getPending(ownPlate), CSS gardien-debug-tool masqué non-gardiens, actConfirmAlert() guard alerte expirée. guardian-loop.js v9, SW v67. Commits 459c298 (Ange) + f3a5048 (Activité+Guardian). |
+| 2026-06-19 | IA session | Code review --effort high : 4 correctifs robustesse — _refreshQuota() try/catch sessionStorage, startVoice() onerror skip 'aborted', actConfirmAlert() suppression wrapper vacueux + DB fallback quand !a, Guardian bus.on HELP_CREATED+VEHICLE_MESSAGE_SENT. guardian-loop.js v10, SW v68. Commit 670c03b. |
 
 ---
 
