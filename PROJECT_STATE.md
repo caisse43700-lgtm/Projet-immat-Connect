@@ -54,6 +54,17 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Ange Intelligence Overhaul — 5 améliorations P1→P5 — TERMINÉE**
+**Date :** 2026-06-19
+**Commits :** `862f8f2` (P2+P4) · `3cbe1ff` (P5) · `93f6f4c` (P1) · `f784fcb` (P3) sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `core/narrator.js` v2, `supabase/functions/immat-brain-dialog/index.ts`, `service-worker.js` v81
+
+- **P1 — Ange Prédictif** : pré-appel Claude pendant les moments calmes (NOMINAL + idle 90s), cache `ic_ange_predicted`, affiché à l'ouverture du panneau (bulle violette "J'ai réfléchi en avance")
+- **P2 — Mémoire Émotionnelle** : `narrator.js` v2 — chaque événement stocke son urgence au moment de l'émission ; `getJournalText()` trie par poids émotionnel `urgency × e^(-min/30)` au lieu de chronologie
+- **P3 — Monologue Privé** : `AngeMonologue` toutes les 8 min pendant la conduite, appelle `mode:'monologue'` → Claude réfléchit en silence, stocke dans `ic_ange_conscience` (5 entrées, 2h) ; la préoccupation la plus haute priorité est injectée dans le snapshot au moment de la question utilisateur
+- **P4 — Compression Contextuelle Adaptative** : `max_tokens` varie selon urgence — FLASH (≥7) : 80 tokens, STANDARD (3-6) : 200, DEEP (<3) : 400. Note `⚡ MODE FLASH` injectée dans le contexte dynamique
+- **P5 — Question Jamais Posée** : après chaque réponse Ange, affiche un angle mort de l'âme (`S._soul.blind_spots[0]`) sous forme de suggestion cliquable (cooldown 10 min)
+
 **Mission : ImmatCoPilot v1 + ImmatKernel v1 + ImmatSoul v1 — éveil total du système — TERMINÉE**
 **Date :** 2026-06-19
 **Commits :** `d9fc68d` (Soul) · `f86b863` (Kernel) · `240d26d` (CoPilot) · `5057bef` (fix syntax) sur `main` (poussé)
@@ -1029,7 +1040,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — carte de risque vivante déployée (commit 14ca851).
+Aucune — Ange Intelligence Overhaul P1→P5 déployé (commit f784fcb).
 
 ---
 
@@ -1567,6 +1578,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Carte de risque vivante : road_risk_segments (score bayésien décroissance 30j), trigger SQL auto, RPC get_risk_zones(), _getWeather() OpenMeteo background, _checkRiskZonesDebounced() alerte proactive < 500m, overlay Leaflet jaune/orange/rouge, guardian-loop v11 RISK category. SW v69. Commit 14ca851. |
 | 2026-06-19 | IA session | BrainEngine v1 + SwarmEngine v1 + Narrator v1 + ImmatConsciousness v1 — intelligence synthétique (synthèse 5 modules, convergence 0-4, focus unique, cross-module bridges, adaptiveThreshold BehaviorPulse+fiabilité). SW v74→v75. Commits 89d8858 + suivants. |
 | 2026-06-19 | IA session | ImmatSoul v1 (harmonie 0-10, angles morts, trajectoire, insight français, SOUL_AWAKENING), ImmatKernel v1 (fiabilité 0-100%, détection sommeil iOS, auto-recovery, KERNEL_RESURRECTION), ImmatCoPilot v1 (11 déclencheurs, voix autonome FR, mémoire 2h, #copilotPanel). Fix SyntaxError `.map(s=>({})join()` → `_sigLabels`. SW v77. Commits d9fc68d+f86b863+240d26d+5057bef. |
+| 2026-06-19 | IA session | Ange Intelligence Overhaul P1→P5 : P2 Mémoire Émotionnelle (narrator.js v2, tri par poids émotionnel), P4 Compression Adaptative (FLASH/STANDARD/DEEP, 80/200/400 tokens), P5 Question Jamais Posée (blind spot après chaque réponse, cooldown 10min), P1 Ange Prédictif (AngePredictor, pre-call idle, cache ic_ange_predicted), P3 Monologue Privé (AngeMonologue, 8min conduite, ic_ange_conscience, injection snapshot). SW v81. Commits 862f8f2+3cbe1ff+93f6f4c+f784fcb. |
 
 ---
 
