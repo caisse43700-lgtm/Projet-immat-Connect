@@ -1161,8 +1161,8 @@ async subMsgs(){
         if(_isParkedReport&&pl){
 
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{let _ok=false;try{const _r=await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});_ok=_r!==false;}catch(e){}if(_ok){_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');}this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{let _ok=false;try{const _r=await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});_ok=_r!==false;}catch(e){}if(_ok){_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');}this.updateActBadge?.();}},
           ];
         } else if(_isParkedResponse){
           _qr=[];
@@ -1182,8 +1182,8 @@ async subMsgs(){
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
         if(_isParkedReport&&_stGps){
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{let _ok=false;try{const _r=await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});_ok=_r!==false;}catch(e){}if(_ok){_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');}this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{let _ok=false;try{const _r=await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});_ok=_r!==false;}catch(e){}if(_ok){_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');}this.updateActBadge?.();}},
             {label:'📍 Carte',bg:'rgba(20,184,166,.12)',color:'#5eead4',cb:()=>{this.actStationShowOnMap?.(_stGps.lat,_stGps.lng,_stCleanLabel||'Votre véhicule');}},
           ];
         }
@@ -2205,6 +2205,7 @@ App.actStationDismiss=function(msgId){
   try{localStorage.setItem('ic_station_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  toast('Signalement ignoré ✓','ok');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
 App.actStationViewPhoto=function(url){
@@ -2857,7 +2858,7 @@ App.updateActBadge=function(){
     const total=unreadAlerts+unreadMsgs;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     const msgBadge=$('msgNavBadge');
-    if(msgBadge){msgBadge.textContent=unreadFreeMsgs>99?'99+':String(unreadFreeMsgs);msgBadge.style.display=unreadFreeMsgs>0?'flex':'none';}
+    if(msgBadge){msgBadge.textContent=unreadMsgs>99?'99+':String(unreadMsgs);msgBadge.style.display=unreadMsgs>0?'flex':'none';}
     const callBadge=$('callNavBadge');
     const missedCount=(typeof S!=='undefined'&&S._unseenMissedCalls)||0;
     if(callBadge){callBadge.textContent=missedCount>99?'99+':String(missedCount);callBadge.style.display=missedCount>0?'flex':'none';}
