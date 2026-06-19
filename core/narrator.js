@@ -45,6 +45,8 @@ const Narrator = (function () {
     'SOUL_AWAKENING',
     // Fiabilité — ImmatKernel
     'KERNEL_RESURRECTION', 'KERNEL_DEGRADED', 'KERNEL_HEALTHY',
+    // Co-pilote autonome
+    'COPILOT_SPOKE',
   ]);
 
   // Événements déclenchant une bulle proactive
@@ -144,6 +146,8 @@ const Narrator = (function () {
         return `⚠️ Fiabilité système dégradée: ${p?.score||'?'}% — niveau ${p?.level||'?'}`;
       case 'KERNEL_HEALTHY':
         return `✅ Système pleinement opérationnel: ${p?.score||'?'}% de fiabilité`;
+      case 'COPILOT_SPOKE':
+        return `💬 Co-pilote [${p?.theme||'?'}]: ${p?.message ? p.message.slice(0,80)+'…' : ''}`;
       default: return ev;
     }
   }
