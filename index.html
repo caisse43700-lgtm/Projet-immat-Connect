@@ -896,7 +896,20 @@ openGardienDashboard(){
             <button onclick="document.getElementById('gardienDiagLiveStream').innerHTML='';localStorage.removeItem('ic_gardien_diag');toast('Effacé','ok')" style="background:#0c1a2e;color:#555;border:1px solid #333;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer">🗑</button>
           </div>
         </div>
-        <div style="font-size:10px;color:#555;margin-bottom:8px">Ange surveille chaque flux (messages, signalements, appels, GPS, badges…) et détecte les écarts par rapport aux Lois Fonctionnelles. Cycle automatique toutes les 30 s.</div>
+        <div style="font-size:10px;color:#555;margin-bottom:8px">Ange surveille chaque flux et détecte les écarts par rapport aux Lois Fonctionnelles. Watchdog temps réel + cycle automatique 30 s.</div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">Je teste actuellement :</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px" id="gardienFlowSelector">
+            <button onclick="GardienDiagnostic.setActiveFlow(null);document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#1e3a5f;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">Tout</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-MESSAGE-SEND');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">💬 Message</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-PARKED-REPORT');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">🅿️ Stationné</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-VEHICLE-ALERT');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">🚗 Véhicule</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-ROUTE-REPORT');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">🛣 Route</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-HELP-REQUEST');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">🆘 Aide</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-CALL');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">📞 Appel</button>
+            <button onclick="GardienDiagnostic.setActiveFlow('FLOW-GPS');document.querySelectorAll('#gardienFlowSelector button').forEach(b=>b.style.background='#0f172a');this.style.background='#1e3a5f'" style="background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">📍 GPS</button>
+          </div>
+        </div>
         <div id="gardienDiagLiveStream" style="max-height:400px;overflow-y:auto"></div>
       </div>
       <div style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px">
@@ -921,11 +934,19 @@ openGardienDashboard(){
         ig.innerHTML=items.map(i=>`<div style="background:#0f172a;border-radius:6px;padding:6px 8px"><div style="color:#555;margin-bottom:2px">${i.label}</div><div style="color:${i.col};font-weight:700">${i.val}${i.unit}</div></div>`).join('');
       }
     }catch(_){}
-    // Charger l'historique diagnostic existant
+    // Charger l'historique diagnostic existant + récurrences
     try{
       const hist=window.GardienDiagnostic?.getHistory?.()??[];
       const stream=$('gardienDiagLiveStream');
-      if(stream&&hist.length===0)stream.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">Aucun cycle de diagnostic encore effectué. Cliquer "Analyser" ou attendre le cycle automatique (30s).</div>';
+      if(stream&&hist.length===0){stream.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">Aucun cycle encore. Cliquer "Analyser" ou attendre le cycle auto (30s).</div>';}
+      // Récurrences
+      const rec=window.GardienDiagnostic?.getRecurrenceReport?.()??[];
+      if(rec.length){
+        const recDiv=document.createElement('div');
+        recDiv.style.cssText='background:#0a0f1a;border:1px solid #3b1616;border-radius:8px;padding:10px;margin-bottom:10px';
+        recDiv.innerHTML='<div style="font-size:11px;color:#f87171;font-weight:700;margin-bottom:6px">🔁 Flux instables (24h)</div>'+rec.map(r=>`<div style="font-size:11px;color:#94a3b8;padding:2px 0">${r.flux} — <b style="color:#f87171">${r.count} occurrence(s)</b></div>`).join('');
+        stream.insertAdjacentElement('beforebegin',recDiv);
+      }
     }catch(_){}
   }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
 },
@@ -3619,7 +3640,7 @@ function showReputationToast(){
 <script src="core/immat-consciousness.js?v=1"></script>
 <script src="core/immat-soul.js?v=1"></script>
 <script src="core/immat-copilot.js?v=1"></script>
-<script src="core/gardien-diagnostic.js?v=1"></script>
+<script src="core/gardien-diagnostic.js?v=2"></script>
 <script src="ui.js?v=9"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->

@@ -57,7 +57,18 @@ const SwarmEngine = (function () {
         alerts.filter(a => (a._mine || a._own) && a.target_plate).map(a => a.target_plate)
       )].slice(0, 5),
       at: Date.now(),
+      // Payload diagnostic croisé (lu par GardienDiagnostic des autres appareils)
+      _diag: {
+        gps_ok: !!(window.S?.myGpsAt && Date.now() - window.S.myGpsAt < 120_000),
+        rt_ok:  !!(window.CallManager?.getRuntimeState?.()?.realtimeStatus === 'SUBSCRIBED'),
+        kr:     window.S?._reliability?.score ?? null,
+        at:     Date.now(),
+      },
     };
+  }
+
+  function _getPresenceState() {
+    try { return _ch?.presenceState?.() ?? {}; } catch (_) { return {}; }
   }
 
   // ── Utilitaires ───────────────────────────────────────────────────────────
@@ -186,7 +197,7 @@ const SwarmEngine = (function () {
     if (_ch)    { try { _ch.unsubscribe(); } catch (_) {} _ch = null; }
   }
 
-  return { start, stop };
+  return { start, stop, _getPresenceState };
 
 })();
 
