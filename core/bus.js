@@ -42,6 +42,7 @@ const EVENTS = Object.freeze({
   PARKED_RESPONSE_SENT:              'PARKED_RESPONSE_SENT',
   PARKED_REPORT_DISMISSED:           'PARKED_REPORT_DISMISSED',
   PARKED_REPORT_RATED:               'PARKED_REPORT_RATED',
+  HELP_RESPONSE_SENT:                'HELP_RESPONSE_SENT',
 });
 
 const ImmatBus = (function () {

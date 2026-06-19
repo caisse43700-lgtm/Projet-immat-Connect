@@ -136,7 +136,38 @@
     ]);
   }
 
-  // ── 7. WebRTC / Agora ────────────────────────────────────────────
+  // ── 7. Aide ──────────────────────────────────────────────────────
+  function checkAide(){
+    var S = w.S || {};
+    var alerts = S.alerts || [];
+    var now = Date.now();
+    var ttlFn = w.ttlFor;
+    var nearby = alerts.filter(function(a){
+      if(a._mine||a._own) return false;
+      if(a.group!=='assist') return false;
+      if(a.status==='gone'||a.status==='resolved') return false;
+      var ts = a.at!=null ? Number(a.at) : null; if(ts===null) return false;
+      return now-ts < (typeof ttlFn==='function' ? ttlFn(a.type) : 3600000);
+    });
+    var myActive = alerts.filter(function(a){
+      return a.group==='assist' && (a._mine||a._own) && a.status!=='gone' && a.status!=='resolved';
+    });
+    var helperComing = myActive.filter(function(a){ return a.status==='helper_coming'; });
+    var repliedRaw = [];
+    try{ repliedRaw = JSON.parse(localStorage.getItem('ic_help_replied')||'[]'); }catch(e){}
+    var replied = new Set(repliedRaw.map(String));
+    var notAnswered = nearby.filter(function(a){ return !replied.has(String(a.id)); });
+    var gpsOk = S.myLat!=null && S.myLng!=null;
+    return makeSection('aide', [
+      item('GPS disponible', gpsOk, gpsOk?'disponible':'indisponible', !gpsOk?'Position GPS manquante — demande sans coordonnées':'', !gpsOk?'Autoriser la localisation':''),
+      item('Demandes proches', true, notAnswered.length>0?notAnswered.length+' sans réponse':'aucune', '', ''),
+      item('Ma demande active', true, myActive.length>0?myActive.length+' en cours':'aucune', '', ''),
+      item('Helper en route', true, helperComing.length>0?helperComing.length+' helper(s)':'aucun', '', ''),
+      item('ImmatMessages', !!w.ImmatMessages, w.ImmatMessages?'présent':'absent', !w.ImmatMessages?'Réponses aide indisponibles':'', ''),
+    ]);
+  }
+
+  // ── 8. WebRTC / Agora ────────────────────────────────────────────
   function checkWebRTC(){
     var ace = w.AgoraCallEngine;
     var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -287,6 +318,7 @@
       calls:     checkCalls(),
       audio:     checkAudio(),
       station:   checkStation(),
+      aide:      checkAide(),
       webrtc:    checkWebRTC(),
       cache:     await checkCache(),
       supabase:  await checkSupabase()

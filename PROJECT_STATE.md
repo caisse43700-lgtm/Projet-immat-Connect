@@ -54,6 +54,30 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Amélioration complète de la feature Aide — corrections + intégration architecturale — TERMINÉE**
+**Date :** 2026-06-19
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/bus.js`, `core/interaction-engine.js`, `core/guardian-loop.js`, `core/global-verification-center.js`
+
+**Corrections et intégrations appliquées :**
+
+1. **Bug critique `_actModCard` non-owned assist** — 3 bugs : "J'arrive" appelait `actQuickReply(plate)` au lieu de `actHelpReply(alertId,'arrivant')` ; "Je ne peux pas" envoyait un message (via `actQuickReply`) au lieu de refus silencieux ; "💬 Msg" appelait `actHelpReply(plate)` au lieu de `actOpenConv(plate)`. Les 3 corrigés.
+
+2. **Doublon `App.actHelpReply`** — ancienne version (ligne ~2911, ouvrait seulement la composition de message) coexistait avec la nouvelle version complète (ligne ~2097). Ancienne version supprimée.
+
+3. **Floating card `addCommunityAlert`** — appelait `actHelpReply(plate)` avec mauvaise signature. Corrigé en `actHelpReply(saved.id,'arrivant')`.
+
+4. **Warning incendie dans `App.assist`** — ajout d'un toast "🔥 Appelez le 18 (Pompiers) en PRIORITÉ !" différé 800ms après le toast principal, uniquement pour `type==='incendie'`.
+
+5. **`cleanupAlerts` alternatives par type** — message d'expiration enrichi : "Appelez le 18" (incendie), "Appelez le 15 (SAMU) ou 112" (blessure/malaise), "Appelez le 3040" (perdu/panne).
+
+6. **`<div id="sigAideNearbySection">` ajouté** dans `sigStep2Aide` — cible de `renderAideCallSection()` (qui était déjà implémentée mais ciblait un élément absent → silencieusement no-op).
+
+7. **Aide context dans snapshot Ange** — `aide_pending`, `aide_helper_coming`, `aide_nearby` ajoutés après `station_responses` pour enrichir le contexte IA.
+
+8. **Intégration architecturale Aide** (Bus→IE→Guardian→GVC→Ange) — `core/bus.js` v48 (HELP_RESPONSE_SENT), `core/interaction-engine.js` v3 (HELP_RESPONSE TYPE_META), `core/guardian-loop.js` v4 (HEURISTIC-006 + bus subscription), `core/global-verification-center.js` v4 (section 7 checkAide). SW v58→v59.
+
+---
+
 **Mission : Intégration architecturale complète (Bus→IE→Guardian→GVC→Ange) + corrections Audio/SW — TERMINÉE**
 **Date :** 2026-06-19
 **Commits :** `222f627`, `8cbec7e`, `a609bd2`, `3bcbe16`, `b30a905` sur `main` (en attente push "Fusionner")
@@ -756,7 +780,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — intégration architecturale terminée, en attente de "Fusionner".
+Aucune — amélioration Aide terminée, en attente de "Fusionner".
 
 ---
 
@@ -1279,6 +1303,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Fix AudioManager.init() jamais appelé — guard `_initialized` dans audio-manager.js + appel dans openMap() (listeners click/touchstart s'enregistrent maintenant au démarrage). Commit `a609bd2` sur main. |
 | 2026-06-19 | IA session | 4 bugs audit Station corrigés : toast erreur vert→rouge sur échec, plaque effacée après envoi (`_sigReset`), badge quick-reply (`updateActBadge`), SW STATIC_CACHE URLs sans `?v=` → ajout params correspondants. SW v57→v58. Commit `3bcbe16` sur main. |
 | 2026-06-19 | IA session | Intégration architecturale complète Station (Bus→IE→Guardian→GVC→Ange) — bus.js v47 (4 événements parked), interaction-engine.js v2 (TYPE_META parked), guardian-loop.js v3 (HEURISTIC-005 + CATEGORY STATION), global-verification-center.js v3 (section checkStation), index.html (Bus emits + snapshot Ange enrichi), messages.js v20 (types IE + Bus emits quick-reply). Commit `b30a905` sur main — en attente push "Fusionner". |
+| 2026-06-19 | IA session | Amélioration complète Aide : 8 corrections (3 bugs _actModCard, doublon actHelpReply, floating card signature, warning incendie, cleanupAlerts alternatives, sigAideNearbySection HTML, snapshot Ange aide_pending/helper_coming/nearby) + intégration Bus→IE→Guardian→GVC→Ange (bus.js v48, interaction-engine.js v3, guardian-loop.js v4, global-verification-center.js v4, SW v59). |
 
 ---
 

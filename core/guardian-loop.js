@@ -29,6 +29,7 @@ const GuardianLoop = (function () {
     REVIEW:  'review',
     ABUSE:   'abuse',
     STATION: 'station',
+    HELP:    'help',
   };
 
   const REC_STATUS = {
@@ -41,11 +42,12 @@ const GuardianLoop = (function () {
 
   // Seuils des heuristiques — ajustables sans changement de structure
   const HEURISTICS = {
-    BLOCK_THRESHOLD:   3,
-    ABUSE_THRESHOLD:   2,
-    MISSED_THRESHOLD:  5,
-    TRUST_THRESHOLD:   5,
-    PARKED_THRESHOLD:  1,
+    BLOCK_THRESHOLD:         3,
+    ABUSE_THRESHOLD:         2,
+    MISSED_THRESHOLD:        5,
+    TRUST_THRESHOLD:         5,
+    PARKED_THRESHOLD:        1,
+    HELP_RESPONSE_THRESHOLD: 1,
   };
 
   // ── Persistence ──────────────────────────────────────────────────────────────
@@ -251,9 +253,26 @@ const GuardianLoop = (function () {
       if (rec) created.push(rec);
     }
 
+    // HEURISTIC-006 — Aide donnée à un conducteur en difficulté (FLOW-ASSIST-RESPONSE)
+    const helpResponses = interactions.filter(i => i.type === 'HELP_RESPONSE');
+    if (helpResponses.length >= HEURISTICS.HELP_RESPONSE_THRESHOLD && !existingHeuristics.includes('HEURISTIC-006')) {
+      const rec = recommend({
+        category:        CATEGORIES.HELP,
+        severity:        SEVERITIES.LOW,
+        plate:           p,
+        evidence:        helpResponses.map(i => ({ type: i.type, timestamp: i.timestamp, target: i.target })),
+        interaction_ids: helpResponses.map(i => i.id),
+        heuristic:       'HEURISTIC-006',
+        flow_id:         'FLOW-ASSIST-RESPONSE',
+        invariant_id:    'INV-COM-005',
+        message:         `${helpResponses.length} aide(s) proposée(s) à des conducteurs en difficulté — conducteur solidaire`,
+      });
+      if (rec) created.push(rec);
+    }
+
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
@@ -376,6 +395,8 @@ window.GuardianLoop = GuardianLoop;
     bus.on('CALL_ACCEPTED',      function (e) { _trigger(e.payload); });
     // HEURISTIC-005 : signalements stationnés
     bus.on('PARKED_REPORT_SENT', function (e) { _trigger(e.payload); });
+    // HEURISTIC-006 : aide proposée
+    bus.on('HELP_RESPONSE_SENT', function (e) { _trigger(e.payload); });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _sub);
