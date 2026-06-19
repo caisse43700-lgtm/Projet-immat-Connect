@@ -74,7 +74,9 @@ const Narrator = (function () {
 
   function _add(ev, payload) {
     const list = _load();
-    list.push({ ev, p: _compact(payload), at: Date.now() });
+    // u = urgence BrainEngine au moment de l'événement — sert au tri par saillance émotionnelle
+    const u = window.S?._brainOrientation?.urgency || 0;
+    list.push({ ev, p: _compact(payload), at: Date.now(), u });
     _save(list);
   }
 
@@ -224,11 +226,18 @@ const Narrator = (function () {
     try {
       const list = _load();
       if (!list.length) return '';
-      const rows = list.slice(-15).reverse().map(e => {
+      const now = Date.now();
+      // Tri par saillance émotionnelle : urgence × décroissance exponentielle (demi-vie 30 min).
+      // Un incident critique récent prime sur 20 événements anodins récents.
+      const scored = list
+        .map(e => ({ ...e, _w: (e.u || 0) * Math.exp(-(now - e.at) / 1_800_000) + 0.01 }))
+        .sort((a, b) => b._w - a._w)
+        .slice(0, 15);
+      const rows = scored.map(e => {
         const t = new Date(e.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         return `[${t}] ${_describe(e.ev, e.p)}`;
       });
-      return '=== JOURNAL (récent en premier) ===\n' + rows.join('\n');
+      return '=== JOURNAL (saillance émotionnelle) ===\n' + rows.join('\n');
     } catch (_) { return ''; }
   }
 

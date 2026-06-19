@@ -135,8 +135,11 @@ const STATIC_SYSTEM_GARDIEN    = nsToPrompt(3) + '\n\n' + KNOWLEDGE_GARDIEN;    
 const STATIC_SYSTEM_CONDUCTEUR = nsToPrompt(1) + '\n\n' + KNOWLEDGE_CONDUCTEUR; // depth 1 + guide usage
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
-function buildDynamicContext(snapshot: unknown, mode: string, feature: string, depth: 1 | 2 | 3): string {
-  return `Capacité : ${feature} | Mode : ${mode} | Depth : ${depth}
+function buildDynamicContext(snapshot: unknown, mode: string, feature: string, depth: 1 | 2 | 3, compressionLevel: 'FLASH' | 'STANDARD' | 'DEEP'): string {
+  const urgencyNote = compressionLevel === 'FLASH'
+    ? '\n⚡ MODE FLASH — Urgence conducteur ≥7. Réponds en UNE phrase directe. Champ "juste" uniquement. Pas d\'options.'
+    : '';
+  return `Capacité : ${feature} | Mode : ${mode} | Depth : ${depth}${urgencyNote}
 Snapshot : ${anonymize(JSON.stringify(snapshot ?? {}))}`;
 }
 
@@ -290,6 +293,12 @@ Deno.serve(async (req) => {
     const mode     = typeof body.mode     === 'string' ? body.mode.slice(0, 50)       : 'consultation';
     const snapshot = body.snapshot ?? {};
 
+    // Compression adaptative selon l'urgence BrainEngine du snapshot
+    const snapshotData = snapshot as Record<string, unknown>;
+    const brainUrgency = typeof snapshotData.brain_urgency === 'number' ? snapshotData.brain_urgency as number : 0;
+    const compressionLevel: 'FLASH' | 'STANDARD' | 'DEEP' =
+      brainUrgency >= 7 ? 'FLASH' : brainUrgency >= 3 ? 'STANDARD' : 'DEEP';
+
     if (!message.trim()) {
       return Response.json({ ok: false, reason: 'message_required' }, { status: 400, headers: corsHeaders });
     }
@@ -309,7 +318,7 @@ Deno.serve(async (req) => {
 
     // ── 5. Contexte dynamique ──
     const t_prompt = Date.now();
-    const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth);
+    const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth, compressionLevel);
     const prompt_ms = Date.now() - t_prompt;
 
     // ── 6. Appel Anthropic — cache sur la partie statique ──
@@ -320,7 +329,7 @@ Deno.serve(async (req) => {
     try {
       const completion = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: isGardien ? 800 : 400,
+        max_tokens: compressionLevel === 'FLASH' ? 80 : (isGardien ? 800 : compressionLevel === 'STANDARD' ? 200 : 400),
         system: [
           { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
           { type: 'text', text: dynamicContext },
@@ -353,6 +362,8 @@ Deno.serve(async (req) => {
       mode,
       role: role ?? 'observer',
       depth,
+      compressionLevel,
+      brainUrgency,
       historyLen: history.length,
       hasProposal: Boolean(result.proposal),
       fallback: result._fallback ?? false,
