@@ -54,6 +54,32 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : BrainEngine — moteur cognitif OODA + prédictions proactives — EN COURS**
+**Date :** 2026-06-19
+**Commit :** (en attente push — fichiers modifiés : `core/brain-engine.js` créé, `index.html`, `service-worker.js`)
+
+**Ce qui a été construit :**
+
+1. **`core/brain-engine.js` v1** — boucle OODA (Observe→Orient→Predict→Decide→Act) tickant toutes les 30 s.
+
+2. **`_observe()`** — capture une photo instantanée de l'état : lat/lng, âge GPS, vitesse estimée, isDriving, heure, isNight, isRushHour, météo (cache `S._weatherCache`), zones à risque les plus proches, nombre de véhicules proches, alertes actives, durée de silence du bus ImmatBus.
+
+3. **`_orient()`** — détecte 7 signaux (RISK_ZONE_NEAR, HIGH_RISK_CONTEXT, NIGHT_WEATHER_DRIVING, DRIVING_SILENCE, STALE_GPS, HIGH_ALERT_DENSITY, ISOLATED_DRIVER) et calcule un score d'urgence 0–10.
+
+4. **`_predict()`** — génère jusqu'à 3 prédictions avec niveau de confiance : INCIDENT_PROBABLE (0.75), UNEXPECTED_STOP (0.60), ISOLATED_DRIVER (0.80).
+
+5. **`_decide()`** — sélectionne l'action unique : ALERT_HIGH_URGENCY (urgence ≥ 7), PREDICTIVE_WARNING (prédiction haute confiance), GUARDIAN_SYNC (défaut).
+
+6. **`_act()`** — exécute : `ImmatBus.emit('BRAIN_TICK')`, relocate GPS si périmé, toast + voix si urgence, `ImmatBus.emit('BRAIN_PREDICTION')`, sync GuardianLoop.
+
+7. **Intégration index.html** — `<script src="core/brain-engine.js?v=1">` ajouté ; `BrainEngine.start()` appelé dans `openMap()` après `AudioManager.init()`.
+
+8. **Snapshot Ange enrichi** — `brain_urgency`, `brain_signals`, `brain_summary`, `brain_predictions` injectés dans le snapshot envoyé à `immat-brain-dialog`.
+
+9. **SW v70** — `brain-engine.js?v=1` ajouté dans `STATIC_CACHE`.
+
+---
+
 **Mission : Carte de risque vivante — intelligence collective prédictive — TERMINÉE**
 **Date :** 2026-06-19
 **Commit :** `14ca851` sur `main` (poussé)
