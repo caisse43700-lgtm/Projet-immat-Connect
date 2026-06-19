@@ -54,29 +54,42 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BrainEngine — moteur cognitif OODA + prédictions proactives — EN COURS**
+**Mission : SwarmEngine v1 — intelligence collective toutes catégories — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** (en attente push — fichiers modifiés : `core/brain-engine.js` créé, `index.html`, `service-worker.js`)
+**Commit :** `47db121` sur `main` (poussé)
+**Fichiers modifiés :** `core/swarm-engine.js` (créé), `core/narrator.js` (mis à jour), `index.html`, `service-worker.js`
 
 **Ce qui a été construit :**
 
-1. **`core/brain-engine.js` v1** — boucle OODA (Observe→Orient→Predict→Decide→Act) tickant toutes les 30 s.
+Supabase Realtime Presence — chaque conducteur diffuse son état cognitif anonymisé (position arrondie ≈111m, urgence BrainEngine, needs_help, compteurs de signalements actifs par catégorie, plaques signalées). Convergence de signaux indépendants → alertes collectives.
 
-2. **`_observe()`** — capture une photo instantanée de l'état : lat/lng, âge GPS, vitesse estimée, isDriving, heure, isNight, isRushHour, météo (cache `S._weatherCache`), zones à risque les plus proches, nombre de véhicules proches, alertes actives, durée de silence du bus ImmatBus.
+- **AIDE ≥1** conducteur proche en difficulté → toast + voix immédiat (`SWARM_HELP_NEARBY`)
+- **VÉHICULE ≥3** conducteurs signalent même plaque → confirmation collective (`SWARM_PLATE_CONFIRMED`)
+- **STATIONNEMENT ≥2** signalements dans rayon 500m → obstruction confirmée (`SWARM_PARKING_CONFIRMED`)
+- **ROUTE ≥3** urgences simultanées dans 2km → danger collectif réel (`SWARM_ROUTE_DANGER`)
 
-3. **`_orient()`** — détecte 7 signaux (RISK_ZONE_NEAR, HIGH_RISK_CONTEXT, NIGHT_WEATHER_DRIVING, DRIVING_SILENCE, STALE_GPS, HIGH_ALERT_DENSITY, ISOLATED_DRIVER) et calcule un score d'urgence 0–10.
+Cooldowns par catégorie (2/10/5/5 min). Fraîcheur 5 min. Narrator mis à jour pour journaliser et décrire les 4 événements swarm. SW v73.
 
-4. **`_predict()`** — génère jusqu'à 3 prédictions avec niveau de confiance : INCIDENT_PROBABLE (0.75), UNEXPECTED_STOP (0.60), ISOLATED_DRIVER (0.80).
+---
 
-5. **`_decide()`** — sélectionne l'action unique : ALERT_HIGH_URGENCY (urgence ≥ 7), PREDICTIVE_WARNING (prédiction haute confiance), GUARDIAN_SYNC (défaut).
+**Mission : Narrator v1 — intelligence zéro-token omnisciente — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** `47db121` sur `main` (poussé)
+**Fichiers modifiés :** `core/narrator.js` (créé), `index.html`, `service-worker.js`
 
-6. **`_act()`** — exécute : `ImmatBus.emit('BRAIN_TICK')`, relocate GPS si périmé, toast + voix si urgence, `ImmatBus.emit('BRAIN_PREDICTION')`, sync GuardianLoop.
+- Journal localStorage 6h (50 événements max), écoute ImmatBus wildcard
+- `getSituation()` : résumé situationnel en français (GPS, heure, météo, vitesse, BrainEngine, zones à risque, social)
+- `getJournalText()` : 15 derniers événements horodatés → injectés dans snapshot Ange
+- "Ange chuchote" : bulle `#narratorWhisper` proactive (cooldown 3 min) sur signaux critiques
 
-7. **Intégration index.html** — `<script src="core/brain-engine.js?v=1">` ajouté ; `BrainEngine.start()` appelé dans `openMap()` après `AudioManager.init()`.
+---
 
-8. **Snapshot Ange enrichi** — `brain_urgency`, `brain_signals`, `brain_summary`, `brain_predictions` injectés dans le snapshot envoyé à `immat-brain-dialog`.
+**Mission : BrainEngine v1 + 4 correctifs robustesse — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** `47db121` sur `main` (poussé)
+**Fichiers modifiés :** `core/brain-engine.js` (créé), `index.html`, `service-worker.js`
 
-9. **SW v70** — `brain-engine.js?v=1` ajouté dans `STATIC_CACHE`.
+Boucle OODA (Observe→Orient→Predict→Decide→Act) tickant toutes les 30 s. 7 signaux orientés, 3 prédictions, cooldown 5 min alertes, `S.myGpsAt` corrigé, `_firstTickDone` anti-fausse-alarme au boot, guard `z.lat==null`. SW v72→v73.
 
 ---
 
