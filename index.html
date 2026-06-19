@@ -1424,6 +1424,7 @@ App.sigStepAide=function(){
 App._sigReset=function(){
   ['sigStep2Route','sigStep2Vehicle','sigStep2Aide','sigStep2Station','sigStep3VehicleMsg'].forEach(id=>$(id)?.classList.remove('active'));
   $('sigStep1')?.classList.add('active');
+  this._stationPhotoReset?.();
 };
 App.sigStepStation=function(){
   $('sigStep1')?.classList.remove('active');
@@ -2166,16 +2167,19 @@ App.renderStationFeed=function(tab){
 };
 App.actStationReply=async function(msgId,plate,key){
   const msg=App._stationReplies[key]||key;
-  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
-  if(!replied.includes(String(msgId)))replied.push(String(msgId));
-  try{localStorage.setItem('ic_station_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
-  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
-  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   const pl=nPlate(plate||'');
+  let _sent=false;
   if(pl&&window.ImmatMessages?.sendToPlate){
-    try{await window.ImmatMessages.sendToPlate(pl,msg,{context_type:'parked_response',suppressToast:true});}catch(e){}
+    try{const _r=await window.ImmatMessages.sendToPlate(pl,msg,{context_type:'parked_response',suppressToast:true});_sent=_r!==false;}catch(e){}
   }
-  toast(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !','ok');
+  if(_sent){
+    let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}
+    if(!replied.includes(String(msgId)))replied.push(String(msgId));
+    try{localStorage.setItem('ic_station_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
+    if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
+    try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  }
+  toast(_sent?(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !'):'❌ Envoi échoué, réessaie.','ok');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
 App.actStationShowOnMap=function(lat,lng,label){
