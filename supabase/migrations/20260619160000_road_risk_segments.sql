@@ -41,9 +41,9 @@ DECLARE
   v_key  text;
   v_conf integer;
 BEGIN
-  -- Accepter les deux nommages de colonnes (latitude/longitude ou lat/lng)
-  v_lat := COALESCE(NEW.latitude, NEW.lat);
-  v_lng := COALESCE(NEW.longitude, NEW.lng);
+  -- reports utilise uniquement latitude/longitude (migration 20260616)
+  v_lat := NEW.latitude;
+  v_lng := NEW.longitude;
   IF v_lat IS NULL OR v_lng IS NULL THEN RETURN NEW; END IF;
 
   -- Cellule à 3 décimales ≈ 111 m de précision
@@ -83,13 +83,13 @@ CREATE TRIGGER trg_road_risk
 -- 4. Population initiale depuis les données existantes (idempotent)
 INSERT INTO road_risk_segments (cell_key, lat, lng, incident_count, confirmed_count, last_incident_at, risk_score)
 SELECT
-  ROUND(COALESCE(latitude, lat)::numeric, 3)::text || '_' ||
-  ROUND(COALESCE(longitude, lng)::numeric, 3)::text               AS cell_key,
-  ROUND(COALESCE(latitude, lat)::numeric, 3)::double precision    AS cell_lat,
-  ROUND(COALESCE(longitude, lng)::numeric, 3)::double precision   AS cell_lng,
-  COUNT(*)::integer                                                AS incident_count,
+  ROUND(latitude::numeric, 3)::text || '_' ||
+  ROUND(longitude::numeric, 3)::text                              AS cell_key,
+  ROUND(latitude::numeric, 3)::double precision                   AS cell_lat,
+  ROUND(longitude::numeric, 3)::double precision                  AS cell_lng,
+  COUNT(*)::integer                                               AS incident_count,
   COUNT(*) FILTER (WHERE status IN ('resolved','confirmed'))::integer AS confirmed_count,
-  MAX(created_at)                                                  AS last_incident_at,
+  MAX(created_at)                                                 AS last_incident_at,
   LEAST(100,
     COUNT(*)::double precision
     * GREATEST(0.1,
@@ -97,14 +97,14 @@ SELECT
       )
     * EXP(-GREATEST(0, EXTRACT(EPOCH FROM (now() - MAX(created_at)))) / (30.0 * 86400))
     * 20.0
-  )                                                                AS risk_score
+  )                                                               AS risk_score
 FROM reports
-WHERE COALESCE(latitude, lat) IS NOT NULL
-  AND COALESCE(longitude, lng) IS NOT NULL
+WHERE latitude IS NOT NULL
+  AND longitude IS NOT NULL
   AND created_at > now() - INTERVAL '6 months'
 GROUP BY
-  ROUND(COALESCE(latitude, lat)::numeric, 3),
-  ROUND(COALESCE(longitude, lng)::numeric, 3)
+  ROUND(latitude::numeric, 3),
+  ROUND(longitude::numeric, 3)
 HAVING COUNT(*) >= 1
 ON CONFLICT (cell_key) DO NOTHING;
 
