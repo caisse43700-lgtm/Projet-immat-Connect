@@ -96,7 +96,8 @@
     var am = w.AudioManager;
     var rs = hasFn(am, 'getRuntimeState') ? safe(function(){ return am.getRuntimeState(); }, {}) : {};
     var ctxState = rs && rs.webAudioContextState;
-    var ctxOk = !ctxState || ctxState === 'running';
+    // 'suspended' est l'état initial normal sur iOS (se débloque au premier tap) — non critique
+    var ctxOk = !ctxState || ctxState === 'running' || ctxState === 'suspended';
     var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     return makeSection('audio', [
       item('AudioManager', !!am, am ? 'présent' : 'absent', !am ? 'AudioManager absent' : '', ''),
