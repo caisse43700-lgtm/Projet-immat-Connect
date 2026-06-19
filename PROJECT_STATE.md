@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-19
 Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit b30a905 (en attente push "Fusionner")
+Branche production     : main (GitHub Pages) — commit dea7ac1 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -780,7 +780,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — amélioration Aide terminée, en attente de "Fusionner".
+Aucune — sessions Véhicule audit + fix SW update poussées.
 
 ---
 
@@ -1304,6 +1304,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | 4 bugs audit Station corrigés : toast erreur vert→rouge sur échec, plaque effacée après envoi (`_sigReset`), badge quick-reply (`updateActBadge`), SW STATIC_CACHE URLs sans `?v=` → ajout params correspondants. SW v57→v58. Commit `3bcbe16` sur main. |
 | 2026-06-19 | IA session | Intégration architecturale complète Station (Bus→IE→Guardian→GVC→Ange) — bus.js v47 (4 événements parked), interaction-engine.js v2 (TYPE_META parked), guardian-loop.js v3 (HEURISTIC-005 + CATEGORY STATION), global-verification-center.js v3 (section checkStation), index.html (Bus emits + snapshot Ange enrichi), messages.js v20 (types IE + Bus emits quick-reply). Commit `b30a905` sur main — en attente push "Fusionner". |
 | 2026-06-19 | IA session | Amélioration complète Aide : 8 corrections (3 bugs _actModCard, doublon actHelpReply, floating card signature, warning incendie, cleanupAlerts alternatives, sigAideNearbySection HTML, snapshot Ange aide_pending/helper_coming/nearby) + intégration Bus→IE→Guardian→GVC→Ange (bus.js v48, interaction-engine.js v3, guardian-loop.js v4, global-verification-center.js v4, SW v59). |
+| 2026-06-19 | IA session | Audit complet Véhicule + intégration architecturale Bus→IE→Guardian→GVC→Ange : bus.js v49 (3 events), interaction-engine.js v4 (VEHICLE_RESPONSE TYPE_META), guardian-loop.js v5 (HEURISTIC-007 + category VEHICLE), global-verification-center.js v5 (section checkVehicle), messages.js v21 (Bus emits + types IE + push notifications véhicule), index.html (actVehicleReply+actVmRate corrigés, vmResponseUnread dans bVehicle, vehicle_response exclu nav badge, Envoyés redesigné, snapshot Ange vehicle_pending/vehicle_responses). SW v60. Commit 86295a8. |
+| 2026-06-19 | IA session | Fix SW update bloqué sur iOS : `{updateViaCache:'none'}` sur les 2 appels `register()` (principal + registerServiceWorker) — contourne le cache HTTP Safari qui servait l'ancien service-worker.js après Force MAJ. `location.replace(?r=timestamp)` dans controllerchange à la place de `reload()` — contourne aussi le cache HTTP sur la page HTML elle-même. Commit dea7ac1. |
 
 ---
 
