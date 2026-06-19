@@ -136,7 +136,31 @@
     ]);
   }
 
-  // ── 7. Aide ──────────────────────────────────────────────────────
+  // ── 7. Véhicule (alertes ciblées) ───────────────────────────────
+  function checkVehicle(){
+    var S = w.S || {};
+    var msgs = S._actMessages || [];
+    var ratedRaw = [];
+    try{ ratedRaw = JSON.parse(localStorage.getItem('ic_vm_rated')||'[]'); }catch(e){}
+    var repliedRaw = [];
+    try{ repliedRaw = JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'); }catch(e){}
+    var rated = new Set(ratedRaw.map(String));
+    var replied = new Set(repliedRaw.map(String));
+    var received = msgs.filter(function(m){ return m.context_type==='vehicle_report' && m._received===true; }).length;
+    var pending = msgs.filter(function(m){ return m.context_type==='vehicle_report' && m._received===true && !replied.has(String(m.id)); }).length;
+    var sent = msgs.filter(function(m){ return m.context_type==='vehicle_report' && !m._received; }).length;
+    var responses = msgs.filter(function(m){ return m.context_type==='vehicle_response' && m._received===true; }).length;
+    var hasMsgs = !!w.ImmatMessages;
+    return makeSection('vehicule', [
+      item('ImmatMessages', hasMsgs, hasMsgs?'présent':'absent', !hasMsgs?'Module messages absent':'', ''),
+      item('Signalements reçus', true, received>0?received+' reçus ('+pending+' sans réponse)':'aucun', '', ''),
+      item('Signalements envoyés', true, sent>0?String(sent):'aucun', '', ''),
+      item('Réponses reçues', true, responses>0?String(responses):'aucune', '', ''),
+      item('Évaluations données', true, rated.size>0?rated.size+' noté(s) utiles':'aucune', '', ''),
+    ]);
+  }
+
+  // ── 8. Aide ──────────────────────────────────────────────────────
   function checkAide(){
     var S = w.S || {};
     var alerts = S.alerts || [];
@@ -167,7 +191,7 @@
     ]);
   }
 
-  // ── 8. WebRTC / Agora ────────────────────────────────────────────
+  // ── 9. WebRTC / Agora ────────────────────────────────────────────
   function checkWebRTC(){
     var ace = w.AgoraCallEngine;
     var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -186,7 +210,7 @@
     ]);
   }
 
-  // ── 7. Cache / Service Worker ────────────────────────────────────
+  // ── 10. Cache / Service Worker ───────────────────────────────────
   async function checkCache(){
     var swOk = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
     var swSupport = !!navigator.serviceWorker;
@@ -231,7 +255,7 @@
     ]);
   }
 
-  // ── 8. Supabase ──────────────────────────────────────────────────
+  // ── 11. Supabase ─────────────────────────────────────────────────
   async function checkSupabase(){
     var client = w.sb || w.supabaseClient;
     if(!client){
@@ -318,6 +342,7 @@
       calls:     checkCalls(),
       audio:     checkAudio(),
       station:   checkStation(),
+      vehicule:  checkVehicle(),
       aide:      checkAide(),
       webrtc:    checkWebRTC(),
       cache:     await checkCache(),

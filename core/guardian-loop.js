@@ -30,6 +30,7 @@ const GuardianLoop = (function () {
     ABUSE:   'abuse',
     STATION: 'station',
     HELP:    'help',
+    VEHICLE: 'vehicle',
   };
 
   const REC_STATUS = {
@@ -46,8 +47,9 @@ const GuardianLoop = (function () {
     ABUSE_THRESHOLD:         2,
     MISSED_THRESHOLD:        5,
     TRUST_THRESHOLD:         5,
-    PARKED_THRESHOLD:        1,
-    HELP_RESPONSE_THRESHOLD: 1,
+    PARKED_THRESHOLD:         1,
+    HELP_RESPONSE_THRESHOLD:  1,
+    VEHICLE_ALERT_THRESHOLD:  1,
   };
 
   // ── Persistence ──────────────────────────────────────────────────────────────
@@ -253,6 +255,23 @@ const GuardianLoop = (function () {
       if (rec) created.push(rec);
     }
 
+    // HEURISTIC-007 — Alertes véhicule envoyées (FLOW-VEHICLE-ALERT)
+    const vehicleAlerts = interactions.filter(i => i.type === 'VEHICLE_ALERT');
+    if (vehicleAlerts.length >= HEURISTICS.VEHICLE_ALERT_THRESHOLD && !existingHeuristics.includes('HEURISTIC-007')) {
+      const rec = recommend({
+        category:        CATEGORIES.VEHICLE,
+        severity:        SEVERITIES.LOW,
+        plate:           p,
+        evidence:        vehicleAlerts.map(i => ({ type: i.type, timestamp: i.timestamp, target: i.target })),
+        interaction_ids: vehicleAlerts.map(i => i.id),
+        heuristic:       'HEURISTIC-007',
+        flow_id:         'FLOW-VEHICLE-ALERT',
+        invariant_id:    'INV-COM-001',
+        message:         `${vehicleAlerts.length} alerte(s) véhicule envoyée(s) — conducteur vigilant`,
+      });
+      if (rec) created.push(rec);
+    }
+
     // HEURISTIC-006 — Aide donnée à un conducteur en difficulté (FLOW-ASSIST-RESPONSE)
     const helpResponses = interactions.filter(i => i.type === 'HELP_RESPONSE');
     if (helpResponses.length >= HEURISTICS.HELP_RESPONSE_THRESHOLD && !existingHeuristics.includes('HEURISTIC-006')) {
@@ -272,7 +291,7 @@ const GuardianLoop = (function () {
 
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
@@ -394,9 +413,12 @@ window.GuardianLoop = GuardianLoop;
     // HEURISTIC-004 : interactions positives
     bus.on('CALL_ACCEPTED',      function (e) { _trigger(e.payload); });
     // HEURISTIC-005 : signalements stationnés
-    bus.on('PARKED_REPORT_SENT', function (e) { _trigger(e.payload); });
+    bus.on('PARKED_REPORT_SENT',    function (e) { _trigger(e.payload); });
     // HEURISTIC-006 : aide proposée
-    bus.on('HELP_RESPONSE_SENT', function (e) { _trigger(e.payload); });
+    bus.on('HELP_RESPONSE_SENT',    function (e) { _trigger(e.payload); });
+    // HEURISTIC-007 : alertes véhicule envoyées
+    bus.on('VEHICLE_REPORT_SENT',   function (e) { _trigger(e.payload); });
+    bus.on('VEHICLE_RESPONSE_SENT', function (e) { _trigger(e.payload); });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _sub);

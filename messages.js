@@ -1206,10 +1206,12 @@ async function sendToPlate(plate,text,opts){
     if(_c&&target?.id){
       const _isParked=_ctx.context_type==='parked_report';
       const _isParkedResp=_ctx.context_type==='parked_response';
-      const _pushTitle=_isParked?'🅿️ ImmatConnect — Problème sur votre véhicule':_isParkedResp?'🅿️ ImmatConnect — Signalement pris en compte':'💬 ImmatConnect — Nouveau message';
-      const _pushBody=_isParked?(senderPlate+' a signalé un problème sur votre véhicule'+(_ctx.image_url?' 📷':'')):_isParkedResp?(senderPlate+' a répondu à votre signalement'):(senderPlate+' vous a envoyé un message');
-      const _pushType=_isParked?'parked_report':_isParkedResp?'parked_response':'message';
-      const _pushTag=(_isParked||_isParkedResp)?'parked-':'msg-';
+      const _isVehicle=_ctx.context_type==='vehicle_report';
+      const _isVehicleResp=_ctx.context_type==='vehicle_response';
+      const _pushTitle=_isParked?'🅿️ ImmatConnect — Problème sur votre véhicule':_isParkedResp?'🅿️ ImmatConnect — Signalement pris en compte':_isVehicle?'🚗 ImmatConnect — Signalement sur votre véhicule':_isVehicleResp?'🚗 ImmatConnect — Réponse à votre alerte':'💬 ImmatConnect — Nouveau message';
+      const _pushBody=_isParked?(senderPlate+' a signalé un problème sur votre véhicule'+(_ctx.image_url?' 📷':'')):_isParkedResp?(senderPlate+' a répondu à votre signalement'):_isVehicle?(senderPlate+' a signalé un problème sur votre véhicule'):_isVehicleResp?(senderPlate+' a répondu à votre alerte'):(senderPlate+' vous a envoyé un message');
+      const _pushType=_isParked?'parked_report':_isParkedResp?'parked_response':_isVehicle?'vehicle_report':_isVehicleResp?'vehicle_response':'message';
+      const _pushTag=(_isParked||_isParkedResp)?'parked-':(_isVehicle||_isVehicleResp)?'veh-':'msg-';
       _c.functions.invoke('send-push-notification',{body:{targetUserId:target.id,title:_pushTitle,body:_pushBody,data:{type:_pushType,plate:senderPlate},tag:_pushTag+senderPlate}}).catch(()=>{});
     }
   }catch(e){}
@@ -1217,12 +1219,14 @@ async function sendToPlate(plate,text,opts){
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{if(_ctx.context_type==='parked_report'&&window.ImmatBus)window.ImmatBus.emit('PARKED_REPORT_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{if(_ctx.context_type==='parked_response'&&window.ImmatBus)window.ImmatBus.emit('PARKED_RESPONSE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
+  try{if(_ctx.context_type==='vehicle_report'&&window.ImmatBus)window.ImmatBus.emit('VEHICLE_REPORT_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
+  try{if(_ctx.context_type==='vehicle_response'&&window.ImmatBus)window.ImmatBus.emit('VEHICLE_RESPONSE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{
     const _iePayload = {to:receiverPlate, from:senderPlate};
     if(_ctx.context_type) _iePayload.context_type = _ctx.context_type;
     if(_ctx.context_id)   _iePayload.context_id   = _ctx.context_id;
     window.InteractionEngine?.create?.({
-      type: _ctx.context_type==='parked_report' ? 'PARKED_REPORT' : _ctx.context_type==='parked_response' ? 'PARKED_RESPONSE' : 'MESSAGE',
+      type: _ctx.context_type==='parked_report' ? 'PARKED_REPORT' : _ctx.context_type==='parked_response' ? 'PARKED_RESPONSE' : _ctx.context_type==='vehicle_report' ? 'VEHICLE_ALERT' : _ctx.context_type==='vehicle_response' ? 'VEHICLE_RESPONSE' : 'MESSAGE',
       initiator: senderPlate,
       target: receiverPlate,
       payload: _iePayload,
@@ -1341,7 +1345,7 @@ async function subscribe(){
         try{
           const _sp=fPlate(m.sender_plate||m.from_plate||'');
           window.InteractionEngine?.create?.({
-            type: m.context_type==='parked_report' ? 'PARKED_REPORT' : m.context_type==='parked_response' ? 'PARKED_RESPONSE' : 'MESSAGE',
+            type: m.context_type==='parked_report' ? 'PARKED_REPORT' : m.context_type==='parked_response' ? 'PARKED_RESPONSE' : m.context_type==='vehicle_report' ? 'VEHICLE_ALERT' : m.context_type==='vehicle_response' ? 'VEHICLE_RESPONSE' : 'MESSAGE',
             initiator:_sp||'UNKNOWN',
             target:fPlate(myPlate()),
             payload:{from:_sp,to:fPlate(myPlate()),context_type:m.context_type||''},

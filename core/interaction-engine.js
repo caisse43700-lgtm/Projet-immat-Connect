@@ -53,6 +53,8 @@
     PARKED_RESPONSE:   { obd: 'PARKED_RESPONSE_SENT',  flow: 'FLOW-STATION',        invariants: ['INV-STATION-001'] },
     // ── Feature Aide ─────────────────────────────────────────────────────────
     HELP_RESPONSE:     { obd: 'HELP_RESPONSE_SENT',    flow: 'FLOW-ASSIST-RESPONSE', invariants: ['INV-COM-005'] },
+    // ── Feature Véhicule (alertes ciblées) ───────────────────────────────────
+    VEHICLE_RESPONSE:  { obd: 'VEHICLE_RESPONSE_SENT', flow: 'FLOW-VEHICLE-RESPONSE', invariants: ['INV-COM-001'] },
   };
 
   const nPlate = p => String(p||'').replace(/[\s-]/g,'').toUpperCase();
