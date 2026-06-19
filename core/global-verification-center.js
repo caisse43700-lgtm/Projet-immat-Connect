@@ -172,6 +172,41 @@
     ]);
   }
 
+  // ── 7bis. Route (alertes communautaires) ────────────────────────
+  function checkRoute(){
+    var S = w.S || {};
+    var alerts = S.alerts || [];
+    var now = Date.now();
+    var ttlFn = w.ttlFor;
+    var routeActive = alerts.filter(function(a){
+      if(a.group!=='route') return false;
+      if(a.status==='gone'||a.status==='resolved') return false;
+      var ts = a.at!=null ? Number(a.at) : null; if(ts===null) return false;
+      return now-ts < (typeof ttlFn==='function' ? ttlFn(a.type) : 3600000);
+    });
+    var myActive = alerts.filter(function(a){
+      return a.group==='route' && (a._mine||a._own) && a.status!=='gone' && a.status!=='resolved';
+    });
+    var nearby = routeActive.filter(function(a){ return !a._mine && !a._own; });
+    var gpsOk = S.myLat!=null && S.myLng!=null;
+    var ie = w.InteractionEngine;
+    var ledgerRoadAlerts = 0;
+    try{
+      if(ie && typeof ie.getRuntimeState==='function'){
+        var rs = ie.getRuntimeState();
+        ledgerRoadAlerts = (rs.byType && rs.byType.ROAD_ALERT) || 0;
+      }
+    }catch(e){}
+    var hasRoadReport = !!(w.App && typeof w.App.roadReport==='function');
+    return makeSection('route', [
+      item('GPS disponible', gpsOk, gpsOk?'disponible':'indisponible', !gpsOk?'Position GPS manquante — signalement sans coordonnées':'', !gpsOk?'Autoriser la localisation':''),
+      item('Alertes actives proches', true, nearby.length>0?nearby.length+' incident(s) actif(s)':'aucun', '', ''),
+      item('Mes signalements actifs', true, myActive.length>0?myActive.length+' en cours':'aucun', '', ''),
+      item('App.roadReport', hasRoadReport, hasRoadReport?'ok':'absent', !hasRoadReport?'Fonction signalement route absente':'', ''),
+      item('Ledger IE (ROAD_ALERT)', true, ledgerRoadAlerts>0?ledgerRoadAlerts+' signalement(s) enregistré(s)':'0 — aucun signalement ou IE non câblé', '', ''),
+    ]);
+  }
+
   // ── 8. Aide ──────────────────────────────────────────────────────
   function checkAide(){
     var S = w.S || {};
@@ -355,6 +390,7 @@
       audio:     checkAudio(),
       station:   checkStation(),
       vehicule:  checkVehicle(),
+      route:     checkRoute(),
       aide:      checkAide(),
       webrtc:    checkWebRTC(),
       cache:     await checkCache(),

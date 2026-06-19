@@ -386,6 +386,37 @@
     };
   }
 
+  function routeAutotest(){
+    var ie = w.InteractionEngine;
+    var byType = {};
+    try{ if(ie && typeof ie.getRuntimeState==='function') byType=ie.getRuntimeState().byType||{}; }catch(e){}
+    var routeAlerts = (w.S && w.S.alerts || []).filter(function(a){ return a.group==='route'; });
+    var myRouteAlerts = routeAlerts.filter(function(a){ return a._mine||a._own; });
+    var nearbyRouteAlerts = routeAlerts.filter(function(a){ return !a._mine && !a._own; });
+    var gl = w.GuardianLoop;
+    var guardianRoadRecs = 0;
+    try{
+      if(gl && typeof gl.getAll==='function'){
+        guardianRoadRecs = gl.getAll(null,{limit:50}).filter(function(r){ return r.category==='road'; }).length;
+      }
+    }catch(e){}
+    return {
+      hasRoadReportFn:   typeof (w.App && w.App.roadReport)==='function',
+      hasSigStepRoute:   typeof (w.App && w.App.sigStepRoute)==='function',
+      dom: {
+        sigStep2Route: byId('sigStep2Route','sigStep2Route'),
+        catBadgeRoute: byId('catBadgeRoute','catBadgeRoute'),
+        alertsToolbar: byId('alertsToolbar','alertsToolbar'),
+      },
+      ledgerRoadAlerts:    byType.ROAD_ALERT||0,
+      routeAlertsActive:   routeAlerts.length,
+      myRouteAlerts:       myRouteAlerts.length,
+      nearbyRouteAlerts:   nearbyRouteAlerts.length,
+      guardianRoadRecs:    guardianRoadRecs,
+      busHasRoadCreated: !!(w.ImmatBus && typeof w.ImmatBus.on==='function'),
+    };
+  }
+
   function reportsAutotest(){
     var ie = w.InteractionEngine;
     var byType = {};
@@ -542,6 +573,7 @@
       audioAutotest: audioAutotest(),
       contactNavAutotest: contactNavAutotest(),
       helpAutotest: helpAutotest(),
+      routeAutotest: routeAutotest(),
       reportsAutotest: reportsAutotest(),
       registryAutotest: registryAutotest(),
       angeGuardianAutotest: angeGuardianAutotest(),

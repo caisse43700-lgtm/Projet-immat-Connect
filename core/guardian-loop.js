@@ -33,6 +33,7 @@ const GuardianLoop = (function () {
     VEHICLE: 'vehicle',
     CALL:    'call',
     MESSAGE: 'message',
+    ROAD:    'road',
   };
 
   const REC_STATUS = {
@@ -53,6 +54,7 @@ const GuardianLoop = (function () {
     HELP_RESPONSE_THRESHOLD:  1,
     VEHICLE_ALERT_THRESHOLD:  1,
     MESSAGE_THRESHOLD:        3,
+    ROAD_ALERT_THRESHOLD:     1,
   };
 
   // ── Persistence ──────────────────────────────────────────────────────────────
@@ -292,9 +294,26 @@ const GuardianLoop = (function () {
       if (rec) created.push(rec);
     }
 
+    // HEURISTIC-008 — Signalements route envoyés (FLOW-ROAD-SIGNAL)
+    const roadAlerts = interactions.filter(i => i.type === 'ROAD_ALERT');
+    if (roadAlerts.length >= HEURISTICS.ROAD_ALERT_THRESHOLD && !existingHeuristics.includes('HEURISTIC-008')) {
+      const rec = recommend({
+        category:        CATEGORIES.ROAD,
+        severity:        SEVERITIES.LOW,
+        plate:           p,
+        evidence:        roadAlerts.map(i => ({ type: i.type, timestamp: i.timestamp, target: i.target })),
+        interaction_ids: roadAlerts.map(i => i.id),
+        heuristic:       'HEURISTIC-008',
+        flow_id:         'FLOW-ROAD-SIGNAL',
+        invariant_id:    'INV-COM-011',
+        message:         `${roadAlerts.length} signalement(s) route envoyé(s) — conducteur vigilant sur la route`,
+      });
+      if (rec) created.push(rec);
+    }
+
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED', 'ROAD_ALERT'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
@@ -424,6 +443,8 @@ window.GuardianLoop = GuardianLoop;
     // HEURISTIC-007 : alertes véhicule envoyées
     bus.on('VEHICLE_REPORT_SENT',   function (e) { _trigger(e.payload); });
     bus.on('VEHICLE_RESPONSE_SENT', function (e) { _trigger(e.payload); });
+    // HEURISTIC-008 : signalements route
+    bus.on('ROAD_CREATED', function (e) { _trigger(e.payload); });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _sub);
