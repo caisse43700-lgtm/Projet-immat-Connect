@@ -54,6 +54,35 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit et intégration complète Route (Bus→IE→Guardian→GVC→Ange + corrections UI) — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** `c77bcda` sur `main` (en attente push "Fusionner")
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`, `core/global-verification-center.js`, `core/mobile-autotest.js`
+
+**Corrections appliquées (9 gaps sur 11 identifiés) :**
+
+1. **G1 CRITIQUE** — `roadReport()` : type IE corrigé `'VEHICLE_REPORT_CREATED'` → `'ROAD_ALERT'`. Le ledger IE était à 0 pour tous les signalements route depuis le début.
+
+2. **G2 HAUTE** — `guardian-loop.js` v7 : catégorie `ROAD: 'road'` ajoutée aux CATEGORIES, seuil `ROAD_ALERT_THRESHOLD: 1` aux HEURISTICS, **HEURISTIC-008** (1 signalement route → recommandation "conducteur vigilant"), `'ROAD_ALERT'` dans les positifs de HEURISTIC-004, `bus.on('ROAD_CREATED', ...)` dans `_sub()`.
+
+3. **G3 HAUTE** — `global-verification-center.js` v7 : section `checkRoute()` ajoutée (GPS, alertes actives proches, mes signalements, présence `App.roadReport`, ledger IE ROAD_ALERT), insérée dans `run()`.
+
+4. **G4/G5 HAUTE** — `roadReport()` : `ImmatBus.emit('ROAD_CREATED', {plate, type, lat, lng})` ajouté après `IE.create` — ferme la chaîne OBD→IE→Bus→Guardian.
+
+5. **G6 MOYENNE** — Snapshot Ange : champs `route_active` (alertes route non expirées) et `route_types` (types uniques) ajoutés après `guardian_alerts`.
+
+6. **G7 MOYENNE** — `_actModCard` route : boutons 💬 Msg / 📞 Appel supprimés quand `plate='ROUTE'` (n'utilise plus `a.plate` — utilise `from_plate||sender_plate` uniquement, et exclut la valeur littérale `'ROUTE'`).
+
+7. **G8 MOYENNE** — `catBadgeRoute` : exclut désormais `status==='seen'||status==='present'` (cohérence avec Véhicule — les alertes vues ne comptent plus dans le badge).
+
+8. **G9 BASSE** — `cleanupAlerts()` : notification d'expiration pour les signalements route propres (`_mine||_own`) : "Votre signalement «label» a expiré automatiquement."
+
+9. **G11 BASSE** — `mobile-autotest.js` v2 : `routeAutotest()` ajoutée avec vérification DOM (`sigStep2Route`, `catBadgeRoute`), ledger IE ROAD_ALERT, alertes actives par groupe, recommandations Guardian route, disponibilité Bus.
+
+SW v63 — versions guardian-loop.js?v=7, global-verification-center.js?v=7, mobile-autotest.js?v=2.
+
+---
+
 **Mission : Amélioration complète de la feature Aide — corrections + intégration architecturale — TERMINÉE**
 **Date :** 2026-06-19
 **Fichiers modifiés :** `index.html`, `service-worker.js`, `core/bus.js`, `core/interaction-engine.js`, `core/guardian-loop.js`, `core/global-verification-center.js`
@@ -780,7 +809,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — sessions Messages/Téléphone audit + corrections OBD/registre/Ange poussées.
+Aucune — audit Route terminé, 9 corrections appliquées, en attente "Fusionner".
 
 ---
 
@@ -1308,6 +1337,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Fix SW update bloqué sur iOS : `{updateViaCache:'none'}` sur les 2 appels `register()` (principal + registerServiceWorker) — contourne le cache HTTP Safari qui servait l'ancien service-worker.js après Force MAJ. `location.replace(?r=timestamp)` dans controllerchange à la place de `reload()` — contourne aussi le cache HTTP sur la page HTML elle-même. Commit dea7ac1. |
 | 2026-06-19 | IA session | Audit Messages+Téléphone Bus→IE→Guardian→GVC→Ange : bus.js v50 (MESSAGE_SENT/RECEIVED), messages.js v22 (emits Bus pour messages simples), guardian-loop.js v6 (CALL+MESSAGE categories, CALL_ACCEPTED dans HEURISTIC-004 fix subscription morte, MESSAGE_SENT/RECEIVED subscriptions), global-verification-center.js v6 (checkMessages live counts, checkCalls live counts), index.html (snapshot Ange +messages_threads, +call_realtime_ok, +call_pending_out). SW v61. Commit 789907e. |
 | 2026-06-19 | IA session | Fix registre IE + analytics appels + Guardian→Ange : interaction-engine.js v5 (CALL_RECEIVED dans TYPE_META, total_calls compte tous les états), calls.js v18 (IE.create CALL_RECEIVED dans _showIncomingPopup), snapshot Ange +guardian_pending +guardian_alerts. SW v62. Commit 9683a17. |
+| 2026-06-19 | IA session | Audit Route complet + 9 corrections Bus→IE→Guardian→GVC→Ange : G1 type IE ROAD_ALERT, G2 Guardian HEURISTIC-008+ROAD category, G3 GVC checkRoute(), G4/G5 Bus emit ROAD_CREATED dans roadReport(), G6 snapshot Ange route_active/route_types, G7 boutons ROUTE exclus _actModCard, G8 catBadgeRoute filtre seen/present, G9 cleanupAlerts notif expiry route, G11 mobile-autotest routeAutotest(). SW v63. Commit c77bcda. |
 
 ---
 
