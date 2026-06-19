@@ -3685,7 +3685,10 @@ const AngeDialog={
     if(resp&&resp.style.display==='none'){
       resp.style.display='block';
       resp.dataset.welcome='1';
-      resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';
+      // P1 — Afficher la prédiction en cache si fraîche (sinon message d'accueil standard)
+      try{const _p=JSON.parse(localStorage.getItem('ic_ange_predicted')||'null');if(_p&&Date.now()-_p.at<(_p.validite_minutes||8)*60_000){resp.innerHTML=`<div style="border-left:3px solid #7c6af7;padding:6px 10px;background:#0f0f1a;border-radius:0 6px 6px 0;margin-bottom:8px"><div style="color:#a5b4fc;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">✦ J'ai réfléchi en avance</div><div style="color:#e2e8f0;font-size:13px;line-height:1.6">${esc(_p.anticipation)}</div></div><div style="color:#888;font-size:12px;font-style:italic;padding-top:4px">Tu as une question différente ?</div>`;localStorage.removeItem('ic_ange_predicted');}else{resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';}}catch(_){resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';}
+      // Démarrer AngePredictor au premier open (différé 5s — modules doivent être initialisés)
+      if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){}},5000);}
     }
     this._refreshQuota();
     if(!this._escHandler){this._escHandler=e=>{if(e.key==='Escape')this.close();};document.addEventListener('keydown',this._escHandler);}
@@ -3825,6 +3828,46 @@ const AngeDialog={
     }finally{
       btn.disabled=false;spin.style.display='none';
     }
+  }
+};
+
+// ── AngePredictor — P1 : Ange pré-calcule pendant les moments calmes ─────────
+// Toutes les 2 min, si focus NOMINAL + conducteur inactif 90s + pas de cache :
+// appelle immat-brain-dialog en mode 'prediction' et stocke l'anticipation.
+// Consommée à l'ouverture du panel Ange → réponse instantanée, zéro latence.
+const AngePredictor={
+  _lastInteraction:0,_timer:null,_running:false,
+  _shouldPredict(){
+    try{
+      const focus=window.ImmatConsciousness?.getFocus?.()||'NOMINAL';
+      const cold=window.S?._reliability?.cold_start!==false;
+      const idle=Date.now()-this._lastInteraction>90_000;
+      const cached=!!localStorage.getItem('ic_ange_predicted');
+      return focus==='NOMINAL'&&!cold&&idle&&!cached;
+    }catch(_){return false;}
+  },
+  async _predict(){
+    if(!this._shouldPredict())return;
+    try{
+      const sn={};
+      try{const bo=window.S?._brainOrientation;if(bo){sn.brain_urgency=bo.urgency;sn.brain_summary=bo.summary;}}catch(_){}
+      try{const c=window.S?._consciousness;if(c){sn.consciousness_focus=c.focus;sn.consciousness_trend=c.trend;}}catch(_){}
+      try{const n=window.Narrator?.getSituation?.();if(n)sn.narrator_situation=n;}catch(_){}
+      try{const s=window.S?._soul;if(s){sn.soul_insight=s.insight;sn.soul_trajectory=s.trajectory;}}catch(_){}
+      const res=await window.sb?.functions?.invoke('immat-brain-dialog',{body:{message:'__predict__',mode:'prediction',feature:'GENERAL',snapshot:sn,history:[]}});
+      const d=res?.data;
+      if(d?.anticipation){
+        localStorage.setItem('ic_ange_predicted',JSON.stringify({anticipation:String(d.anticipation).slice(0,300),validite_minutes:Number(d.validite_minutes)||8,at:Date.now()}));
+      }
+    }catch(_){}
+  },
+  _tick(){this._lastInteraction=Date.now();},
+  start(){
+    if(this._running)return;this._running=true;
+    this._lastInteraction=Date.now();
+    document.addEventListener('touchstart',()=>this._tick(),{passive:true});
+    document.addEventListener('click',()=>this._tick(),{passive:true});
+    this._timer=setInterval(()=>this._predict(),2*60_000);
   }
 };
 

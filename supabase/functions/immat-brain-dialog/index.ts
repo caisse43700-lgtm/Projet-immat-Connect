@@ -316,6 +316,40 @@ Deno.serve(async (req) => {
       })
       .filter((m): m is HistMsg => m !== null);
 
+    // ── 5b. Mode prédiction (P1 — Ange Prédictif) ──────────────────────────
+    if (mode === 'prediction') {
+      if (brainUrgency >= 4) {
+        return Response.json({ ok: false, reason: 'urgency_too_high_for_prediction' }, { headers: corsHeaders });
+      }
+      const predDynamic = buildDynamicContext(snapshot, 'prediction', feature, depth, 'STANDARD');
+      const predMsg = 'Observe ce conducteur maintenant. De quoi aura-t-il probablement besoin dans les 10 prochaines minutes ?\nRéponds UNIQUEMENT en JSON : {"anticipation":"[une phrase directe en français, max 60 mots]","validite_minutes":8}';
+      let predRaw = '';
+      try {
+        const predComp = await anthropic.messages.create({
+          model: CLAUDE_MODEL,
+          max_tokens: 120,
+          system: [
+            { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: predDynamic },
+          ],
+          messages: [{ role: 'user', content: predMsg }],
+        });
+        predRaw = predComp.content[0]?.type === 'text' ? predComp.content[0].text : '';
+      } catch {
+        return Response.json({ ok: false, reason: 'model_error' }, { status: 502, headers: corsHeaders });
+      }
+      try {
+        const m = predRaw.match(/\{[\s\S]*\}/);
+        if (m) {
+          const parsed = JSON.parse(m[0]) as Record<string, unknown>;
+          if (typeof parsed.anticipation === 'string' && parsed.anticipation.trim()) {
+            return Response.json({ ok: true, anticipation: parsed.anticipation.trim(), validite_minutes: typeof parsed.validite_minutes === 'number' ? parsed.validite_minutes : 8 }, { headers: corsHeaders });
+          }
+        }
+      } catch { /* ignore */ }
+      return Response.json({ ok: false, reason: 'prediction_parse_error' }, { headers: corsHeaders });
+    }
+
     // ── 5. Contexte dynamique ──
     const t_prompt = Date.now();
     const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth, compressionLevel);
