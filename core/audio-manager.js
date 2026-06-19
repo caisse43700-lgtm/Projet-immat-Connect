@@ -321,7 +321,10 @@
 
   // ── Init ─────────────────────────────────────────────────────────
 
+  var _initialized = false;
   function init() {
+    if (_initialized) return;
+    _initialized = true;
     _ensureSources();
     try {
       document.addEventListener('click', _onUserGesture, { passive: true });
