@@ -3541,9 +3541,9 @@ function showReputationToast(){
 </script>
 
 
-<script src="core/interaction-engine.js?v=4"></script>
+<script src="core/interaction-engine.js?v=5"></script>
 <script src="core/guardian-loop.js?v=6"></script>
-<script src="calls.js?v=17"></script>
+<script src="calls.js?v=18"></script>
 <script src="core/call-screen.js?v=8"></script>
 <script src="core/audio-manager.js?v=3"></script>
 <script src="core/call-notification-runtime.js?v=1"></script>
@@ -3748,6 +3748,7 @@ const AngeDialog={
       try{const _vmAll=S._actMessages||[];const _vmRplRaw=[];try{JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').forEach(x=>_vmRplRaw.push(String(x)));}catch(_){}const _vmRpl=new Set(_vmRplRaw);snapshot.vehicle_pending=_vmAll.filter(m=>m.context_type==='vehicle_report'&&m._received&&!_vmRpl.has(String(m.id))).length;snapshot.vehicle_responses=_vmAll.filter(m=>m.context_type==='vehicle_response'&&m._received).length;}catch(e){}
       try{const _aM=S._actMessages||[];snapshot.messages_threads=new Set(_aM.filter(m=>!m.context_type&&m._otherPlate).map(m=>m._otherPlate)).size;}catch(e){}
       try{const _crs=window.CallManager?.getRuntimeState?.()??{};snapshot.call_realtime_ok=(_crs.realtimeStatus==='SUBSCRIBED');snapshot.call_pending_out=!!_crs.hasPendingOutgoing;}catch(e){}
+      try{const _gp=window.GuardianLoop?.getPending?.()??[];snapshot.guardian_pending=_gp.length;snapshot.guardian_alerts=_gp.slice(0,3).map(r=>({category:r.category,severity:r.severity,heuristic:r.heuristic,message:(r.message||'').slice(0,120)}));}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
@@ -3916,7 +3917,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v61';
+      var CURRENT = 'immatconnect-pro-v62';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3994,7 +3995,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v61';
+  var CURRENT = 'immatconnect-pro-v62';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();

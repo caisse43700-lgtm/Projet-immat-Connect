@@ -590,6 +590,7 @@ const CallManager = (function () {
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté
     _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
+    try{ window.InteractionEngine?.create?.({type:'CALL_RECEIVED', initiator:plate||'', target:_myPlate||null, payload:{requestId:req.id}, status:'received'}); }catch(e){}
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
       _missedCallIds.add(req.id);

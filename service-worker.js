@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v61';
+const CACHE_NAME  = 'immatconnect-pro-v62';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -10,7 +10,7 @@ const STATIC_CACHE = [
   './offline.html',
   './manifest.json',
   './utils.js?v=3',
-  './calls.js?v=17',
+  './calls.js?v=18',
   './messages.js?v=22',
   './badge.js',
   './ui.js?v=9',
@@ -19,7 +19,7 @@ const STATIC_CACHE = [
   './core/brain.js?v=45',
   './core/governance.js?v=45',
   './core/immatOrganism.js?v=46',
-  './core/interaction-engine.js?v=4',
+  './core/interaction-engine.js?v=5',
   './core/guardian-loop.js?v=6',
   './core/messages-runtime-diagnostics.js?v=1',
   './core/mobile-autotest.js?v=1',
