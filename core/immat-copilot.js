@@ -140,16 +140,17 @@ const ImmatCoPilot = (function () {
     const urgency = br.urgency || 0;
     if (urgency >= 6 && _canSpeak('brain_urgency')) {
       const signals = (br.signals || []).slice(0, 2);
+      const _sigLabels = {
+        RISK_ZONE_NEAR:       'zone à risque proche',
+        HIGH_RISK_CONTEXT:    'contexte à risque élevé',
+        NIGHT_WEATHER_DRIVING:'conduite nocturne par mauvais temps',
+        DRIVING_SILENCE:      'silence réseau inhabituel',
+        ISOLATED_DRIVER:      'isolement nocturne',
+        STALE_GPS:            'GPS à actualiser',
+        HIGH_ALERT_DENSITY:   'densité d\'alertes',
+      };
       const why = signals.length
-        ? ' (' + signals.map(s => ({
-            RISK_ZONE_NEAR:       'zone à risque proche',
-            HIGH_RISK_CONTEXT:    'contexte à risque élevé',
-            NIGHT_WEATHER_DRIVING:'conduite nocturne par mauvais temps',
-            DRIVING_SILENCE:      'silence réseau inhabituel',
-            ISOLATED_DRIVER:      'isolement nocturne',
-            STALE_GPS:            'GPS à actualiser',
-            HIGH_ALERT_DENSITY:   'densité d\'alertes',
-          }[s] || s).join(', ') + ')'
+        ? ' (' + signals.map(s => _sigLabels[s] || s).join(', ') + ')'
         : '';
       return { theme: 'brain_urgency',
         msg: `Je note une tension dans ton contexte de conduite${why}. Rien d'alarmant, mais je reste attentif.` };
