@@ -2740,37 +2740,37 @@ App.rcOpenMessages=function(){
 App.actConfirmAlert=function(id,status){
   const a=S.alerts.find(x=>x.id===id);
   if(!a){
-    // Alerte expirée ou clôturée entre-temps — ne pas bloquer silencieusement
-    if(status==='gone'||status==='resolved')toast('Cette alerte a déjà été clôturée.','bad');
+    // Alert absent localement — tenter la fermeture DB au cas où le record serait encore ouvert côté serveur
+    if((status==='gone'||status==='resolved')&&sb){
+      sb.from('reports').update({status:'resolved',resolved_at:new Date().toISOString(),actioned_at:new Date().toISOString()}).eq('id',id).then(({error})=>{if(error)console.warn('actConfirmAlert stale UPDATE',error);});
+    }
     this.renderActivityFeed?.();this.updateActBadge?.();return;
   }
-  if(a){
-    if((status==='gone'||status==='resolved')&&!canResolveAlert(a)){
-      toast("Seul le créateur peut clôturer une demande d'aide.",'bad');
-      this.renderActivityFeed();
-      this.updateActBadge();
-      return;
-    }
-    a.status=status;
-    if(status==='seen'&&(a.group==='vehicle'||a.type==='vehicule')&&a.plate){const _myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');try{if(S.chCommunityReports)S.chCommunityReports.send({type:'broadcast',event:'vehicle_seen',payload:{target_plate:nPlate(a.plate),sender_plate:_myPl}});}catch(e){}}
-    if(status==='gone'||status==='resolved'){
-      if(a.remoteId){
-        // UPDATE DB — source de vérité (fire-and-forget)
-        if(sb)sb.from('reports').update({status:'resolved',resolved_at:new Date().toISOString(),actioned_at:new Date().toISOString()}).eq('id',a.remoteId).then(({error})=>{if(error)console.warn('actConfirmAlert UPDATE DB',error);});
-        // Broadcast fallback pour rétrocompatibilité
-        try{
-          if(S.chCommunityReports){
-            S.chCommunityReports.send({type:'broadcast',event:'resolve_report',payload:{remoteId:a.remoteId}});
-          }
-        }catch(e){}
-        S.resolvedRemoteIds=[...(S.resolvedRemoteIds||[]).filter(x=>x!==a.remoteId),a.remoteId].slice(0,200);
-      }
-      // Suppression immédiate locale
-      S.alerts=S.alerts.filter(x=>x.id!==id);
-      [id,a.key].filter(Boolean).forEach(k=>{if(S.alertMarkersById[k]){try{S.map?.removeLayer(S.alertMarkersById[k])}catch(e){}delete S.alertMarkersById[k];}});
-    }
-    if(typeof saveAlerts==='function') saveAlerts();
+  if((status==='gone'||status==='resolved')&&!canResolveAlert(a)){
+    toast("Seul le créateur peut clôturer une demande d'aide.",'bad');
+    this.renderActivityFeed();
+    this.updateActBadge();
+    return;
   }
+  a.status=status;
+  if(status==='seen'&&(a.group==='vehicle'||a.type==='vehicule')&&a.plate){const _myPl=nPlate(S.profile?.owner_plate||this.ownPlate?.()||'');try{if(S.chCommunityReports)S.chCommunityReports.send({type:'broadcast',event:'vehicle_seen',payload:{target_plate:nPlate(a.plate),sender_plate:_myPl}});}catch(e){}}
+  if(status==='gone'||status==='resolved'){
+    if(a.remoteId){
+      // UPDATE DB — source de vérité (fire-and-forget)
+      if(sb)sb.from('reports').update({status:'resolved',resolved_at:new Date().toISOString(),actioned_at:new Date().toISOString()}).eq('id',a.remoteId).then(({error})=>{if(error)console.warn('actConfirmAlert UPDATE DB',error);});
+      // Broadcast fallback pour rétrocompatibilité
+      try{
+        if(S.chCommunityReports){
+          S.chCommunityReports.send({type:'broadcast',event:'resolve_report',payload:{remoteId:a.remoteId}});
+        }
+      }catch(e){}
+      S.resolvedRemoteIds=[...(S.resolvedRemoteIds||[]).filter(x=>x!==a.remoteId),a.remoteId].slice(0,200);
+    }
+    // Suppression immédiate locale
+    S.alerts=S.alerts.filter(x=>x.id!==id);
+    [id,a.key].filter(Boolean).forEach(k=>{if(S.alertMarkersById[k]){try{S.map?.removeLayer(S.alertMarkersById[k])}catch(e){}delete S.alertMarkersById[k];}});
+  }
+  if(typeof saveAlerts==='function') saveAlerts();
   this.renderActivityFeed();
   this.updateActBadge();
   toast(status==='gone'||status==='resolved'?'Signalement retiré ✓':'Merci de la confirmation ✓','ok');
@@ -3661,7 +3661,7 @@ function showReputationToast(){
 const AngeDialog={
   _refreshQuota(){
     const el=$('angeQuota');if(!el)return;
-    const d=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0,"t":0}');
+    let d;try{d=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0,"t":0}');}catch(_){d={n:0,t:0};}
     const n=(Date.now()-d.t>3600000)?0:d.n;
     const left=10-n;
     if(left<=3){el.textContent=left===0?'Quota atteint':`${left} question${left>1?'s':''} restante${left>1?'s':''}`;el.style.color=left<=1?'#f0a500':'#888';}
@@ -3740,7 +3740,7 @@ const AngeDialog={
       if(btn){btn.style.color='#f0a500';btn.textContent='🎤';}
       const _at=setTimeout(()=>{try{rec.abort();}catch(e){}if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Temps dépassé — réessaie.','bad');},8000);
       rec.onresult=e=>{clearTimeout(_at);const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
-      rec.onerror=()=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');};
+      rec.onerror=e=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}if(e.error!=='aborted')toast('Micro indisponible.','bad');};
       rec.onend=()=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
       rec.start();
     }catch(e){if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');}
@@ -3774,7 +3774,7 @@ const AngeDialog={
       try{const _vmAll=S._actMessages||[];const _vmRplRaw=[];try{JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').forEach(x=>_vmRplRaw.push(String(x)));}catch(_){}const _vmRpl=new Set(_vmRplRaw);snapshot.vehicle_pending=_vmAll.filter(m=>m.context_type==='vehicle_report'&&m._received&&!_vmRpl.has(String(m.id))).length;snapshot.vehicle_responses=_vmAll.filter(m=>m.context_type==='vehicle_response'&&m._received).length;}catch(e){}
       try{const _aM=S._actMessages||[];snapshot.messages_threads=new Set(_aM.filter(m=>!m.context_type&&m._otherPlate).map(m=>m._otherPlate)).size;}catch(e){}
       try{const _crs=window.CallManager?.getRuntimeState?.()??{};snapshot.call_realtime_ok=(_crs.realtimeStatus==='SUBSCRIBED');snapshot.call_pending_out=!!_crs.hasPendingOutgoing;}catch(e){}
-      try{const _gp=window.GuardianLoop?.getPending?.(S.profile?.owner_plate||'')??[];snapshot.guardian_pending=_gp.length;snapshot.guardian_alerts=_gp.slice(0,3).map(r=>({category:r.category,severity:r.severity,heuristic:r.heuristic,message:(r.message||'').slice(0,120)}));}catch(e){}
+      try{const _ownPl=S.profile?.owner_plate;const _gp=(_ownPl&&window.GuardianLoop?.getPending?.(_ownPl))??[];snapshot.guardian_pending=_gp.length;snapshot.guardian_alerts=_gp.slice(0,3).map(r=>({category:r.category,severity:r.severity,heuristic:r.heuristic,message:(r.message||'').slice(0,120)}));}catch(e){}
       try{const _rA=(S.alerts||[]).filter(a=>a.group==='route'&&a.status!=='gone'&&a.status!=='resolved');snapshot.route_active=_rA.length;snapshot.route_types=[...new Set(_rA.map(a=>a.type))].slice(0,5);}catch(e){}
       try{snapshot.gps_active=!!(S.watchId!=null);snapshot.invisible=!!S.invisible;snapshot.radius_km=S.radiusKm||5;if(S.myAccuracy!=null)snapshot.gps_accuracy=Math.round(S.myAccuracy);if(S.myGpsAt){const _gAge=Math.round((Date.now()-S.myGpsAt)/1000);snapshot.gps_age_sec=_gAge;}}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
@@ -3945,7 +3945,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v67';
+      var CURRENT = 'immatconnect-pro-v68';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -4023,7 +4023,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v67';
+  var CURRENT = 'immatconnect-pro-v68';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();

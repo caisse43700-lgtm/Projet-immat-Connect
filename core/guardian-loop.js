@@ -459,11 +459,13 @@ window.GuardianLoop = GuardianLoop;
     bus.on('MESSAGE_RECEIVED',   function (e) { _trigger(e.payload); });
     // HEURISTIC-005 : signalements stationnés
     bus.on('PARKED_REPORT_SENT',    function (e) { _trigger(e.payload); });
-    // HEURISTIC-006 : aide proposée
+    // HEURISTIC-006 : aide proposée ou demandée
     bus.on('HELP_RESPONSE_SENT',    function (e) { _trigger(e.payload); });
+    bus.on('HELP_CREATED',          function (e) { _trigger(e.payload); });
     // HEURISTIC-007 : alertes véhicule envoyées
     bus.on('VEHICLE_REPORT_SENT',   function (e) { _trigger(e.payload); });
     bus.on('VEHICLE_RESPONSE_SENT', function (e) { _trigger(e.payload); });
+    bus.on('VEHICLE_MESSAGE_SENT',  function (e) { _trigger(e.payload); });
     // HEURISTIC-008 : signalements route
     bus.on('ROAD_CREATED', function (e) { _trigger(e.payload); });
     // HEURISTIC-009 : GPS actif
