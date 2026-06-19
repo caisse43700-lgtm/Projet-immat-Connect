@@ -65,12 +65,19 @@
     function el(id){ return !!document.getElementById(id); }
     var im = w.ImmatMessages;
     var imrd = w.ImmatMessagesRuntimeDiagnostics;
+    var allMsgs = w.S && w.S._actMessages ? w.S._actMessages : [];
+    var plainMsgs = allMsgs.filter(function(m){ return !m.context_type; });
+    var unreadCount = plainMsgs.filter(function(m){ return m._received && !m.read_at; }).length;
+    var threadPlates = new Set(plainMsgs.filter(function(m){ return m._otherPlate; }).map(function(m){ return m._otherPlate; }));
+    var threadCount = threadPlates.size;
     return makeSection('messages', [
       item('ImmatMessages', !!im, im ? 'présent' : 'absent', !im ? 'Module Messages absent' : '', !im ? 'Recharger l\'app' : ''),
       item('Diagnostic messages', !!imrd, imrd ? 'présent' : 'absent', !imrd ? 'Diagnostics messages absents' : '', ''),
       item('#icMessagesPro', el('icMessagesPro'), el('icMessagesPro') ? 'présent' : 'absent', !el('icMessagesPro') ? 'Ouvrir l\'onglet Messages d\'abord' : '', ''),
       item('#icMsgList', el('icMsgList'), el('icMsgList') ? 'présent' : 'absent', '', ''),
-      item('sendToPlate', hasFn(im, 'sendToPlate'), hasFn(im, 'sendToPlate') ? 'ok' : 'absent', !hasFn(im, 'sendToPlate') ? 'Envoi de message indisponible' : '', '')
+      item('sendToPlate', hasFn(im, 'sendToPlate'), hasFn(im, 'sendToPlate') ? 'ok' : 'absent', !hasFn(im, 'sendToPlate') ? 'Envoi de message indisponible' : '', ''),
+      item('Messages non lus', true, unreadCount > 0 ? unreadCount + ' non lu(s)' : 'aucun', '', ''),
+      item('Conversations actives', true, threadCount > 0 ? threadCount + ' fil(s)' : 'aucune', '', ''),
     ]);
   }
 
@@ -82,12 +89,17 @@
     var rs = hasFn(cm, 'getRuntimeState') ? safe(function(){ return cm.getRuntimeState(); }, {}) : {};
     var rtOk = !!(rs && rs.realtimeStatus === 'SUBSCRIBED');
     var hasRTC = !!w.AgoraRTC;
+    var missedCount = rs.missedCallsCount || 0;
+    var callMode = rs.callScreenMode || null;
+    var pendingOut = rs.hasPendingOutgoing || false;
     return makeSection('calls', [
       item('CallManager', !!cm, cm ? 'présent' : 'absent', !cm ? 'CallManager absent' : '', !cm ? 'Recharger l\'app' : ''),
       item('CallScreen', !!cs, cs ? 'présent' : 'absent', !cs ? 'CallScreen absent' : '', ''),
       item('Realtime Supabase', rtOk, rs && rs.realtimeStatus ? rs.realtimeStatus : 'inconnu', !rtOk ? 'Realtime non SUBSCRIBED — appels impossibles' : '', !rtOk ? 'Recharger l\'app' : ''),
       item('AgoraCallEngine', !!ace, ace ? 'présent' : 'absent', !ace ? 'Moteur Agora absent — voix impossible' : '', !ace ? 'Vérifier agora-call-engine.js chargé' : ''),
-      item('AgoraRTC SDK', hasRTC, hasRTC ? 'v' + (w.AgoraRTC.VERSION || '?') : 'absent', !hasRTC ? 'SDK Agora absent — vérifier CDN' : '', !hasRTC ? 'Vérifier réseau vers download.agora.io' : '')
+      item('AgoraRTC SDK', hasRTC, hasRTC ? 'v' + (w.AgoraRTC.VERSION || '?') : 'absent', !hasRTC ? 'SDK Agora absent — vérifier CDN' : '', !hasRTC ? 'Vérifier réseau vers download.agora.io' : ''),
+      item('Appels manqués', true, missedCount > 0 ? missedCount + ' non vu(s)' : 'aucun', '', ''),
+      item('Appel en cours', true, callMode ? 'Mode : ' + callMode : (pendingOut ? 'sortant en attente' : 'aucun'), '', ''),
     ]);
   }
 

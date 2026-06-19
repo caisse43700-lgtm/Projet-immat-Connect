@@ -1221,6 +1221,7 @@ async function sendToPlate(plate,text,opts){
   try{if(_ctx.context_type==='parked_response'&&window.ImmatBus)window.ImmatBus.emit('PARKED_RESPONSE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{if(_ctx.context_type==='vehicle_report'&&window.ImmatBus)window.ImmatBus.emit('VEHICLE_REPORT_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{if(_ctx.context_type==='vehicle_response'&&window.ImmatBus)window.ImmatBus.emit('VEHICLE_RESPONSE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
+  try{if(!_ctx.context_type&&window.ImmatBus)window.ImmatBus.emit('MESSAGE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{
     const _iePayload = {to:receiverPlate, from:senderPlate};
     if(_ctx.context_type) _iePayload.context_type = _ctx.context_type;
@@ -1334,6 +1335,7 @@ async function subscribe(){
       );
       if(isForMe){
         try{window.ImmatOrganism?.observe?.('MSG_RECEIVED',{_src:'ImmatConnect/messages/subscribe'})}catch(e){}
+        try{const _sPlate=fPlate(m.sender_plate||m.from_plate||'');if(!m.context_type&&_sPlate&&window.ImmatBus)window.ImmatBus.emit('MESSAGE_RECEIVED',{from:_sPlate,plate:_sPlate,_src:'messages/subscribe'});}catch(e){}
         // Bip son + vibration si sons activés, pas d'appel en cours, et conversation non mise en sourdine
         try{
           const _senderPlate = m.sender_plate||m.from_plate||'';

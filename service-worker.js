@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v60';
+const CACHE_NAME  = 'immatconnect-pro-v61';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -11,23 +11,23 @@ const STATIC_CACHE = [
   './manifest.json',
   './utils.js?v=3',
   './calls.js?v=17',
-  './messages.js?v=21',
+  './messages.js?v=22',
   './badge.js',
   './ui.js?v=9',
   './core/invariants.js?v=45',
-  './core/bus.js?v=49',
+  './core/bus.js?v=50',
   './core/brain.js?v=45',
   './core/governance.js?v=45',
   './core/immatOrganism.js?v=46',
   './core/interaction-engine.js?v=4',
-  './core/guardian-loop.js?v=5',
+  './core/guardian-loop.js?v=6',
   './core/messages-runtime-diagnostics.js?v=1',
   './core/mobile-autotest.js?v=1',
   './core/obdSession.js',
   './core/obdGateway.js',
   './core/aiController.js',
   './core/agora-call-engine.js?v=5',
-  './core/global-verification-center.js?v=5',
+  './core/global-verification-center.js?v=6',
   './core/audio-manager.js?v=3',
   './core/call-screen.js?v=8',
   './core/call-notification-runtime.js?v=1',

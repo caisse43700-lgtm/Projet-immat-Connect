@@ -31,6 +31,8 @@ const GuardianLoop = (function () {
     STATION: 'station',
     HELP:    'help',
     VEHICLE: 'vehicle',
+    CALL:    'call',
+    MESSAGE: 'message',
   };
 
   const REC_STATUS = {
@@ -43,13 +45,14 @@ const GuardianLoop = (function () {
 
   // Seuils des heuristiques — ajustables sans changement de structure
   const HEURISTICS = {
-    BLOCK_THRESHOLD:         3,
-    ABUSE_THRESHOLD:         2,
-    MISSED_THRESHOLD:        5,
-    TRUST_THRESHOLD:         5,
+    BLOCK_THRESHOLD:          3,
+    ABUSE_THRESHOLD:          2,
+    MISSED_THRESHOLD:         5,
+    TRUST_THRESHOLD:          5,
     PARKED_THRESHOLD:         1,
     HELP_RESPONSE_THRESHOLD:  1,
     VEHICLE_ALERT_THRESHOLD:  1,
+    MESSAGE_THRESHOLD:        3,
   };
 
   // ── Persistence ──────────────────────────────────────────────────────────────
@@ -291,7 +294,7 @@ const GuardianLoop = (function () {
 
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
@@ -410,8 +413,10 @@ window.GuardianLoop = GuardianLoop;
     bus.on('ABUSE_REPORTED', function (e) { _trigger(e.payload); });
     // HEURISTIC-001 : blocages
     bus.on('BLOCK_APPLIED',  function (e) { _trigger(e.payload); });
-    // HEURISTIC-004 : interactions positives
+    // HEURISTIC-004 : interactions positives (appels acceptés + messages)
     bus.on('CALL_ACCEPTED',      function (e) { _trigger(e.payload); });
+    bus.on('MESSAGE_SENT',       function (e) { _trigger(e.payload); });
+    bus.on('MESSAGE_RECEIVED',   function (e) { _trigger(e.payload); });
     // HEURISTIC-005 : signalements stationnés
     bus.on('PARKED_REPORT_SENT',    function (e) { _trigger(e.payload); });
     // HEURISTIC-006 : aide proposée
