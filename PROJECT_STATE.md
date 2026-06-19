@@ -54,6 +54,36 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Diagnostic IA Gardien — GardienDiagnostic v2 + Conscience Temporelle — TERMINÉE**
+**Date :** 2026-06-19
+**Commits :** `17a4b6f` (v1) · `1905cb9` (v2) · `8a8a87e` (conscience temporelle) sur `main` (poussé)
+**Fichiers modifiés :** `core/gardien-diagnostic.js` (créé), `supabase/functions/_shared/knowledge-gardien-flows.ts` (créé), `supabase/functions/immat-brain-dialog/index.ts`, `core/swarm-engine.js`, `index.html`, `service-worker.js` v84
+
+**Livre des Lois Fonctionnelles** (`knowledge-gardien-flows.ts`) :
+- 15 flux documentés exhaustivement : MESSAGE-SEND, PARKED-REPORT, PARKED-RESPONSE, VEHICLE-ALERT, ROUTE-REPORT, HELP-REQUEST, HELP-RESPONSE, CALL, PUSH-NOTIFY, GPS, ANGE-QUERY, SWARM, BADGES, INTELLIGENCE, AUTH
+- Pour chaque flux : trigger, chaîne obligatoire (ordre exact), état expéditeur, état destinataire, invariants actifs, pannes communes, vérifications gardien
+- Intégré dans STATIC_SYSTEM_GARDIEN (Ange connaît désormais les lois de tout)
+
+**GardienDiagnostic** (`core/gardien-diagnostic.js`) :
+- Écoute tous les ImmatBus events en continu (wildcard `*`)
+- **Watchdog d'achèvement** : détecte ce qui N'arrive PAS (MESSAGE_SENT sans écho 5s, ANGE_MESSAGE_SENT sans réponse 15s…) → alerte immédiate
+- **Diagnostic croisé Swarm** : SwarmEngine expose `_getPresenceState()` + payload `_diag` (gps_ok, rt_ok, kernel_score) → le gardien voit l'état de tous les appareils connectés
+- **Contexte de test actif** : sélecteur 7 flux dans le dashboard → analyse focalisée
+- **Mémoire des récurrences 24h** : flux instables (2+ violations) affichés en rouge
+- **Conscience temporelle** : `_buildDiagHistory()` envoie les 4 derniers cycles comme `history` à Ange → tendances détectées (aggravation/amélioration/nouveau/stable)
+- Cycle automatique 30s + bouton "Analyser" + alerte watchdog immédiate
+- Démarrage automatique 10s après login gardien
+
+**Edge Function** — nouveau mode `gardien_diagnostic` :
+- Gardien uniquement (403 sinon), max_tokens 700, history temporelle incluse
+- Ange produit `{diagnostics[], synthese, priorite_immediate}` avec champ `tendance`
+- Prompt adapté selon présence ou non d'historique
+
+**Dashboard gardien enrichi** :
+- Section "Diagnostic IA" : flux live, sélecteur test, récurrences
+- Grille intelligence synthétique (Brain, Consciousness, Soul, Kernel, GPS, Realtime)
+- Icônes tendance : 📈 aggravation / 📉 amélioration / 🆕 nouveau
+
 **Mission : Ange Intelligence Overhaul — 5 améliorations P1→P5 — TERMINÉE**
 **Date :** 2026-06-19
 **Commits :** `862f8f2` (P2+P4) · `3cbe1ff` (P5) · `93f6f4c` (P1) · `f784fcb` (P3) sur `main` (poussé)
