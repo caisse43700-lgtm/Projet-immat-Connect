@@ -5,15 +5,21 @@
  * et construit un WorldState unifié avec convergence, tendance, et un unique FOCUS.
  *
  * Sources lues toutes les 5 s :
- *   BrainEngine   → urgence individuelle (0–10), signaux actifs
- *   GuardianLoop  → recommandations critiques/hautes en attente
- *   SwarmEngine   → alertes collectives récentes (trackées via ImmatBus)
- *   Narrator      → résumé situationnel en français
- *   ImmatOrganism → santé du système (violations récentes)
+ *   BrainEngine    → urgence individuelle (0–10), signaux actifs
+ *   GuardianLoop   → recommandations critiques/hautes en attente
+ *   SwarmEngine    → alertes collectives récentes (trackées via ImmatBus)
+ *   Narrator       → résumé situationnel en français
+ *   ImmatOrganism  → santé du système (violations récentes)
+ *   BehaviorPulse  → charge cognitive du conducteur (0–10)
+ *
+ * Inversion BehaviorPulse :
+ *   cognitiveLoad ≥ 7 (overwhelmed) → seuil de convergence monte de 2 à 3,
+ *   focus restreint aux seuls signaux vitaux (aide, critique).
+ *   Plus le conducteur est surchargé, plus le système se tait.
  *
  * Sortie :
  *   S._consciousness          → snapshot injecté dans contexte Ange
- *   ImmatBus CONSCIOUSNESS_UPDATE → quand convergence ≥ 2 modules alertent
+ *   ImmatBus CONSCIOUSNESS_UPDATE → quand convergence ≥ seuil adaptatif
  *
  * Connexions cross-module établies ici (ponts qui n'existaient pas) :
  *   SWARM_PLATE_CONFIRMED → GuardianLoop.observe(plate)
@@ -97,6 +103,19 @@ const ImmatConsciousness = (function () {
     } catch (_) { return { health: 'unknown', violations: 0, available: false }; }
   }
 
+  function _readPulse() {
+    try {
+      const p = window.S?._behaviorPulse;
+      if (!p) return { cognitiveLoad: 0, state: 'calm', available: false };
+      return {
+        cognitiveLoad: p.cognitiveLoad || 0,
+        state:         p.state || 'calm',
+        torpor:        !!p.torpor,
+        available:     true,
+      };
+    } catch (_) { return { cognitiveLoad: 0, state: 'calm', available: false }; }
+  }
+
   // ── Convergence — combien de modules détectent simultanément un danger ──
 
   function _convergence(brain, guardian, swarm, organism) {
@@ -175,6 +194,7 @@ const ImmatConsciousness = (function () {
       const swarm    = _readSwarm();
       const narrator = _readNarrator();
       const organism = _readOrganism();
+      const pulse    = _readPulse();
       const conv     = _convergence(brain, guardian, swarm, organism);
 
       // Historique pour tendance
@@ -182,7 +202,21 @@ const ImmatConsciousness = (function () {
       if (_history.length > HISTORY_LEN) _history.shift();
 
       const trend = _trend();
-      const focus = _focus(brain, guardian, swarm, conv);
+
+      // ── Inversion BehaviorPulse ──────────────────────────────────────
+      // Plus le conducteur est surchargé, plus le seuil monte.
+      // overwhelmed (≥7) : seuls SWARM_HELP_NEEDED et GUARDIAN_CRITICAL passent.
+      // elevated   (≥4) : seuil +1 — moins de bruit.
+      // calm             : comportement normal.
+      const overwhelmed = pulse.available && pulse.cognitiveLoad >= 7;
+      const elevated    = pulse.available && pulse.cognitiveLoad >= 4 && pulse.cognitiveLoad < 7;
+
+      let focus = _focus(brain, guardian, swarm, conv);
+      if (overwhelmed && focus !== 'SWARM_HELP_NEEDED' && focus !== 'GUARDIAN_CRITICAL') {
+        focus = 'NOMINAL'; // système silencieux — seulement le vital passe
+      }
+
+      const adaptiveThreshold = overwhelmed ? 3 : elevated ? 2 : CONV_THRESHOLD;
 
       const worldState = {
         at:          Date.now(),
@@ -191,23 +225,27 @@ const ImmatConsciousness = (function () {
         swarm,
         narrator,
         organism,
+        pulse,
         convergence: conv,
         trend,
         focus,
+        adaptive_threshold: adaptiveThreshold,
       };
 
       if (window.S) window.S._consciousness = worldState;
 
       _crossModule(brain, guardian, swarm);
 
-      if (conv.score >= CONV_THRESHOLD) {
+      if (conv.score >= adaptiveThreshold) {
         try {
           window.ImmatBus?.emit?.('CONSCIOUSNESS_UPDATE', {
             convergence: conv.score,
             focus,
             trend,
-            votes:       conv.votes,
-            _src:        'ImmatConsciousness',
+            votes:            conv.votes,
+            cognitive_load:   pulse.cognitiveLoad,
+            cognitive_state:  pulse.state,
+            _src:             'ImmatConsciousness',
           });
         } catch (_) {}
       }
