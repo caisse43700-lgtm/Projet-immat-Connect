@@ -4,6 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { NS } from '../_shared/nervous-system.ts';
 import { KNOWLEDGE_CONDUCTEUR } from '../_shared/knowledge-conducteur.ts';
 import { KNOWLEDGE_GARDIEN } from '../_shared/knowledge-gardien.ts';
+import { KNOWLEDGE_GARDIEN_FLOWS } from '../_shared/knowledge-gardien-flows.ts';
 
 // ── Configuration ─────────────────────────────────────────────────────────
 // CLAUDE_MODEL peut être surchargé via secret Supabase (CLAUDE_MODEL=claude-opus-4-8)
@@ -131,7 +132,7 @@ Langue : français.`;
 // ── System prompts statiques — calculés au démarrage, mis en cache Anthropic ─
 // Crash au démarrage si NS invalide : fail-fast > fail silencieux.
 validateNSSchema(); // DET-002
-const STATIC_SYSTEM_GARDIEN    = nsToPrompt(3) + '\n\n' + KNOWLEDGE_GARDIEN;    // depth 3 + guide technique
+const STATIC_SYSTEM_GARDIEN    = nsToPrompt(3) + '\n\n' + KNOWLEDGE_GARDIEN + '\n\n' + KNOWLEDGE_GARDIEN_FLOWS; // depth 3 + guide + lois flux
 const STATIC_SYSTEM_CONDUCTEUR = nsToPrompt(1) + '\n\n' + KNOWLEDGE_CONDUCTEUR; // depth 1 + guide usage
 
 // ── Contexte dynamique — non caché (varie à chaque appel) ─────────────────
@@ -385,6 +386,56 @@ Deno.serve(async (req) => {
         }
       } catch { /* ignore */ }
       return Response.json({ ok: false, reason: 'monologue_parse_error' }, { headers: corsHeaders });
+    }
+
+    // ── 5b. Mode diagnostic gardien (GardienDiagnostic — analyse anomalies) ──
+    if (mode === 'gardien_diagnostic') {
+      if (!isGardien) {
+        return Response.json({ ok: false, reason: 'gardien_only' }, { status: 403, headers: corsHeaders });
+      }
+      const diagDynamic = buildDynamicContext(snapshot, 'gardien_diagnostic', feature, 3, 'DEEP');
+      const diagMsg = `Tu es le cerveau de diagnostic de cette application. Tu viens de recevoir un rapport d'anomalies détectées en temps réel.
+Chaque anomalie décrit un écart entre le comportement ATTENDU (selon les Lois Fonctionnelles que tu connais) et le comportement OBSERVÉ.
+Analyse chaque anomalie, identifie la cause racine probable, et propose une action corrective concrète.
+Réponds UNIQUEMENT en JSON :
+{
+  "diagnostics": [
+    {
+      "flux": "FLOW-xxx (nom du flux concerné)",
+      "anomalie": "description courte",
+      "cause_racine": "cause technique probable (max 60 mots)",
+      "action": "action corrective concrète pour le gardien (max 40 mots)",
+      "severite": 1-5
+    }
+  ],
+  "synthese": "résumé global de l'état du système en 1 phrase (max 50 mots)",
+  "priorite_immediate": "l'anomalie la plus urgente à corriger (nom du flux + action)"
+}`;
+      let diagRaw = '';
+      try {
+        const diagComp = await anthropic.messages.create({
+          model: CLAUDE_MODEL,
+          max_tokens: 600,
+          system: [
+            { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: diagDynamic },
+          ],
+          messages: [{ role: 'user', content: diagMsg }],
+        });
+        diagRaw = diagComp.content[0]?.type === 'text' ? diagComp.content[0].text : '';
+      } catch {
+        return Response.json({ ok: false, reason: 'model_error' }, { status: 502, headers: corsHeaders });
+      }
+      try {
+        const m = diagRaw.match(/\{[\s\S]*\}/);
+        if (m) {
+          const parsed = JSON.parse(m[0]) as Record<string, unknown>;
+          if (Array.isArray(parsed.diagnostics)) {
+            return Response.json({ ok: true, diagnostics: parsed.diagnostics, synthese: parsed.synthese ?? '', priorite_immediate: parsed.priorite_immediate ?? '' }, { headers: corsHeaders });
+          }
+        }
+      } catch { /* ignore */ }
+      return Response.json({ ok: false, reason: 'diagnostic_parse_error' }, { headers: corsHeaders });
     }
 
     // ── 5. Contexte dynamique ──
