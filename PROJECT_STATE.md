@@ -56,7 +56,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 **Mission : ImmatConsciousness v1 — conscience synthétique, âme du système — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** (en cours)
+**Commit :** `89d8858` sur `main` (poussé)
 **Fichiers modifiés :** `core/immat-consciousness.js` (créé), `core/narrator.js` (mis à jour), `index.html`, `service-worker.js`
 
 **Ce qui a été construit :**
