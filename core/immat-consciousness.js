@@ -216,7 +216,10 @@ const ImmatConsciousness = (function () {
         focus = 'NOMINAL'; // système silencieux — seulement le vital passe
       }
 
-      const adaptiveThreshold = overwhelmed ? 3 : elevated ? 2 : CONV_THRESHOLD;
+      // Kernel fiabilité : données dégradées → seuil +1 supplémentaire
+      const rel = window.S?._reliability;
+      const reliabilityPenalty = (rel && rel.score < 75 && !rel.cold_start) ? 1 : 0;
+      const adaptiveThreshold = overwhelmed ? 3 : elevated ? 2 + reliabilityPenalty : CONV_THRESHOLD + reliabilityPenalty;
 
       const worldState = {
         at:          Date.now(),
@@ -294,8 +297,9 @@ const ImmatConsciousness = (function () {
   function getWorldState()  { return window.S?._consciousness || null; }
   function getFocus()       { return window.S?._consciousness?.focus || 'NOMINAL'; }
   function getConvergence() { return window.S?._consciousness?.convergence?.score || 0; }
+  function _flushHistory()  { _history = []; } // appelé par ImmatKernel sur résurrection
 
-  return { start, stop, getWorldState, getFocus, getConvergence };
+  return { start, stop, getWorldState, getFocus, getConvergence, _flushHistory };
 
 })();
 

@@ -43,6 +43,8 @@ const Narrator = (function () {
     'CONSCIOUSNESS_UPDATE',
     // Éveil — ImmatSoul
     'SOUL_AWAKENING',
+    // Fiabilité — ImmatKernel
+    'KERNEL_RESURRECTION', 'KERNEL_DEGRADED', 'KERNEL_HEALTHY',
   ]);
 
   // Événements déclenchant une bulle proactive
@@ -136,6 +138,12 @@ const Narrator = (function () {
         return `🧠 Conscience: convergence ${p?.convergence||'?'}/4 modules — focus ${p?.focus||'?'} — tendance ${p?.trend||'stable'}`;
       case 'SOUL_AWAKENING':
         return `✨ Éveil: harmonie ${p?.harmony||'?'}/10 — ${p?.trajectory||'stable'} — ${p?.insight ? p.insight.slice(0,80)+'…' : ''}`;
+      case 'KERNEL_RESURRECTION':
+        return `🔄 Système réveillé après ${p?.gap_ms ? Math.round(p.gap_ms/1000)+'s' : '?'} de sommeil — historiques flushés`;
+      case 'KERNEL_DEGRADED':
+        return `⚠️ Fiabilité système dégradée: ${p?.score||'?'}% — niveau ${p?.level||'?'}`;
+      case 'KERNEL_HEALTHY':
+        return `✅ Système pleinement opérationnel: ${p?.score||'?'}% de fiabilité`;
       default: return ev;
     }
   }

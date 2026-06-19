@@ -241,7 +241,13 @@ const ImmatSoul = (function () {
         || w.swarm.hasHelp
         || blindSpots.length >= 2;
 
-      const soul = { insight, harmony, trajectory, blind_spots: blindSpots, awakening };
+      // Qualifier l'insight par la fiabilité des données (Kernel)
+      const rel = window.S?._reliability;
+      const finalInsight = (rel?.degraded && !rel.cold_start)
+        ? `⚠️ Données partielles (${rel.score}% de fiabilité) — ${insight}`
+        : insight;
+
+      const soul = { insight: finalInsight, harmony, trajectory, blind_spots: blindSpots, awakening, at: Date.now() };
 
       if (window.S) window.S._soul = soul;
 
@@ -275,12 +281,13 @@ const ImmatSoul = (function () {
     if (_timer) { clearInterval(_timer); _timer = null; }
   }
 
-  function getSoul()      { return window.S?._soul || null; }
-  function getInsight()   { return window.S?._soul?.insight || null; }
-  function getHarmony()   { return window.S?._soul?.harmony?.score ?? null; }
-  function isAwakened()   { return !!(window.S?._soul?.awakening); }
+  function getSoul()        { return window.S?._soul || null; }
+  function getInsight()     { return window.S?._soul?.insight || null; }
+  function getHarmony()     { return window.S?._soul?.harmony?.score ?? null; }
+  function isAwakened()     { return !!(window.S?._soul?.awakening); }
+  function _flushSnapshots(){ _snapshots = []; } // appelé par ImmatKernel sur résurrection
 
-  return { start, stop, getSoul, getInsight, getHarmony, isAwakened };
+  return { start, stop, getSoul, getInsight, getHarmony, isAwakened, _flushSnapshots };
 
 })();
 
