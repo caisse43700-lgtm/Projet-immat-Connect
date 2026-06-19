@@ -54,6 +54,31 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Corrections navigation avancées (voix, recherche, route, OSRM) — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js`
+
+**Corrections appliquées :**
+
+1. **B3 — AbortController sur searchGps** — Annule la requête Nominatim précédente avant chaque nouvelle recherche → élimine les race conditions d'affichage. Min 3 chars (au lieu de 2).
+
+2. **B4 — Timeout SpeechRecognition** — `voiceGps()` : timeout 8s, `rec.abort()` automatique, cleanup `clearTimeout` dans `onresult`/`onerror`/`onend`.
+
+3. **B5 — Timeout 8s sur fetch OSRM** — `pickDest()` : `AbortController` avec `setTimeout 8s` → l'interface ne se gèle plus sur réseau mobile lent.
+
+4. **N1 — Étapes épuisées (navigation perdue)** — `checkRoute()` : si `S.nextStep >= routeSteps.length` et pas encore arrivé → parole "Recalcul de l'itinéraire.", affichage "🔄 Recalcul…", `pickDest()` relancé, `autoFollow=true` à la résolution.
+
+5. **N2 — Notification vocale recalcul** — `autoRecalculateRoute()` : `speak('Recalcul de l\'itinéraire.',true)` avant le `pickDest`.
+
+6. **N3 — autoFollow=true après recalcul** — `autoRecalculateRoute()` et `checkRoute()` (N1) : `.then(()=>{S.autoFollow=true;})` → la carte recentre automatiquement après un recalcul.
+
+7. **V1 — Vitesse de parole configurable** — `speak()` : utilise `get('ic_voice_rate','.86')` au lieu de `.86` hardcodé. `App.setVoiceRate(r)` ajouté. Slider `<input type="range" id="voiceRateSlider">` dans Paramètres → section Voix GPS (0.5x lent → 1.4x rapide). Initialisé dans `openMap()`.
+
+SW v65.
+
+---
+
 **Mission : Audit et intégration complète GPS/Carte (Bus→IE→Guardian→GVC→Ange + corrections UI) — TERMINÉE**
 **Date :** 2026-06-19
 **Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
