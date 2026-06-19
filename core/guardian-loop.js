@@ -35,6 +35,7 @@ const GuardianLoop = (function () {
     MESSAGE: 'message',
     ROAD:    'road',
     GPS:     'gps',
+    RISK:    'risk',
   };
 
   const REC_STATUS = {
@@ -470,6 +471,8 @@ window.GuardianLoop = GuardianLoop;
     bus.on('ROAD_CREATED', function (e) { _trigger(e.payload); });
     // HEURISTIC-009 : GPS actif
     bus.on('GPS_LOCATED',  function (e) { _trigger(e.payload); });
+    // HEURISTIC-010 : approche d'une zone à risque connue
+    bus.on('RISK_ZONE_APPROACHED', function (e) { _trigger(e.payload); });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _sub);
