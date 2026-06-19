@@ -9,10 +9,10 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-18
+Date de mise à jour    : 2026-06-19
 Avancement             : ~48% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 96a8203
+Branche production     : main (GitHub Pages) — commit 2790ff7 (en attente push "Fusionner")
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -53,6 +53,25 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Audit final stationné — 5 corrections post-déploiement — TERMINÉE**
+**Date :** 2026-06-19
+**Commits :** `7d54b24`, `2790ff7`, + commit en cours (en attente "Fusionner")
+**Fichiers modifiés :** `index.html`
+
+**Corrections appliquées :**
+
+1. **Bug critique upload photo** (`window.sb?.()` → `window.sb`) — `_stationUploadPhoto` appelait le client Supabase comme une fonction → retournait `null` silencieusement → toutes les photos échouaient. Les photos étaient perdues depuis le premier déploiement. Fix : accès direct à l'objet client.
+
+2. **Indicateur 📷 absent dans l'en-tête des cartes Envoyés** — Cohérence avec les Reçus qui affichaient déjà 📷. Ajout de `${m.image_url?' 📷':''}` dans le header.
+
+3. **Feed ne se re-rendait pas après réponse rapide depuis la notif flottante** — Quand le propriétaire clique "Je vérifie" ou "Réglé" depuis la floating card et que l'onglet Stationné est déjà ouvert, la carte restait "En cours". Ajout de `if(S._actCat==='station')this.renderStationFeed?.('recus')` dans les 4 callbacks `_qr`.
+
+4. **Badge de l'onglet "Reçus" jamais affiché en catégorie Station** — `renderCategoryFeed` retournait early avant la mise à jour de `actTabBadge`. Ajout du calcul et de l'affichage du badge directement dans `renderStationFeed`.
+
+5. **Double toast lors d'une réponse** — `sendToPlate` affichait "Message envoyé à XX-XXX-XX" EN PLUS du toast personnalisé "🚗 Je viens vérifier envoyé !". Ajout de `suppressToast:true` sur les 5 occurrences d'appels `sendToPlate` avec `context_type:'parked_response'`.
+
+---
 
 **Mission : Photo véhicule stationné + GPS privé — feature complète — TERMINÉE**
 **Date :** 2026-06-18

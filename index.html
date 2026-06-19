@@ -1161,8 +1161,8 @@ async subMsgs(){
         if(_isParkedReport&&pl){
 
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
           ];
         } else if(_isParkedResponse){
           _qr=[];
@@ -1182,8 +1182,8 @@ async subMsgs(){
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
         if(_isParkedReport&&_stGps){
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response',suppressToast:true});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
             {label:'📍 Carte',bg:'rgba(20,184,166,.12)',color:'#5eead4',cb:()=>{this.actStationShowOnMap?.(_stGps.lat,_stGps.lng,_stCleanLabel||'Votre véhicule');}},
           ];
         }
@@ -2064,6 +2064,7 @@ App.renderStationFeed=function(tab){
   const _rIds=S._readMsgIds;
   const isRecus=tab!=='envoyes';
   const allMsgs=(S._actMessages||[]).filter(m=>!deleted.includes(String(m.id)));
+  const _tabBadge=document.getElementById('actTabBadge');if(_tabBadge){const _n=isRecus?allMsgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!repliedIds.has(String(m.id))&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length:0;_tabBadge.textContent=_n>99?'99+':String(_n);_tabBadge.style.display=isRecus&&_n>0?'flex':'none';}
   let html='';
   if(isRecus){
     const recus=allMsgs.filter(m=>m.context_type==='parked_report'&&m._received===true);
@@ -2172,7 +2173,7 @@ App.actStationReply=async function(msgId,plate,key){
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   const pl=nPlate(plate||'');
   if(pl&&window.ImmatMessages?.sendToPlate){
-    try{await window.ImmatMessages.sendToPlate(pl,msg,{context_type:'parked_response'});}catch(e){}
+    try{await window.ImmatMessages.sendToPlate(pl,msg,{context_type:'parked_response',suppressToast:true});}catch(e){}
   }
   toast(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !','ok');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
