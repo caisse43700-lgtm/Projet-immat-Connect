@@ -54,9 +54,40 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit et intégration complète GPS/Carte (Bus→IE→Guardian→GVC→Ange + corrections UI) — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/interaction-engine.js`, `core/guardian-loop.js`, `core/global-verification-center.js`, `core/mobile-autotest.js`
+
+**Corrections GPS appliquées :**
+
+1. **CRITIQUE — GPS_FIX dans IE TYPE_META** (`interaction-engine.js` v6) — Types `GPS_FIX` (obd: GPS_FIX_RECORDED) et `GPS_STARTED` (obd: GPS_NAV_STARTED) ajoutés. Le ledger IE enregistre désormais chaque première fixation GPS par session.
+
+2. **CRITIQUE — IE.create(GPS_FIX) dans locate()** (`index.html`) — Appelé dans le bloc `_locateObserved` (1 fois par session GPS) : `InteractionEngine.create({type:'GPS_FIX', initiator, payload:{lat,lng,accuracy}})`.
+
+3. **HAUTE — zIndexOffset corrigé** (`index.html`) — Marqueur self : `zIndexOffset:0` → `zIndexOffset:1000`. Le véhicule de l'utilisateur apparaît maintenant au-dessus des autres véhicules (qui sont à 2400 zIndex car riseOnHover=true).
+
+4. **HAUTE — S.myAccuracy + S.myGpsAt stockés** (`index.html`) — Après chaque fix GPS : `S.myAccuracy=pos.coords.accuracy` et `S.myGpsAt=Date.now()`. Permet la vérification de fraîcheur dans GVC et l'affichage de la précision.
+
+5. **HAUTE — accuracy dans Bus GPS_LOCATED** (`index.html`) — `ImmatBus.emit('GPS_LOCATED', {lat,lng,accuracy:S.myAccuracy})` enrichi.
+
+6. **HAUTE — Anti-superposition marqueurs alertes** (`index.html`) — Jitter circulaire (~10m) dans `addCommunityAlertMarker` quand un marqueur existant est dans un rayon de 0.00012° — évite le stacking des pastilles d'alerte.
+
+7. **HAUTE — Guardian HEURISTIC-009** (`guardian-loop.js` v8) — Catégorie `GPS:'gps'`, seuil `GPS_FIX_THRESHOLD:3`, HEURISTIC-009 (≥3 sessions GPS → "conducteur actif sur carte"), `GPS_FIX` dans les positifs HEURISTIC-004, `bus.on('GPS_LOCATED',...)` dans `_sub()`.
+
+8. **HAUTE — checkGPS() dans GVC** (`global-verification-center.js` v8) — Section `gps` avec 9 items : watchId actif, position connue, fraîcheur (<2min), précision, invisible, rayon, conducteurs proches, ledger IE GPS_FIX, recommandations Guardian GPS. Insérée dans `run()` entre `route:` et `aide:`.
+
+9. **MOYENNE — Snapshot Ange enrichi GPS** (`index.html`) — `gps_active`, `invisible`, `radius_km`, `gps_accuracy`, `gps_age_sec` ajoutés dans le snapshot envoyé à immat-brain-dialog.
+
+10. **MOYENNE — gpsAutotest()** (`mobile-autotest.js` v3) — Fonction de diagnostic : watchId, position, fraîcheur, précision, invisible, rayon, nearbyCount, alertMarkerCount, selfMarkerZIndex (vérifie ≥1000), ledger GPS_FIX, présence Bus/map/clusterGroup.
+
+SW v64 — versions interaction-engine.js?v=6, guardian-loop.js?v=8, global-verification-center.js?v=8, mobile-autotest.js?v=3.
+
+---
+
 **Mission : Audit et intégration complète Route (Bus→IE→Guardian→GVC→Ange + corrections UI) — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** `c77bcda` sur `main` (en attente push "Fusionner")
+**Commit :** `c77bcda` sur `main` (poussé)
 **Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`, `core/global-verification-center.js`, `core/mobile-autotest.js`
 
 **Corrections appliquées (9 gaps sur 11 identifiés) :**

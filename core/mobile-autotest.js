@@ -386,6 +386,39 @@
     };
   }
 
+  function gpsAutotest(){
+    var S = w.S || {};
+    var ie = w.InteractionEngine;
+    var byType = {};
+    try{ if(ie && typeof ie.getRuntimeState==='function') byType=ie.getRuntimeState().byType||{}; }catch(e){}
+    var alertMkrCount = 0;
+    try{ alertMkrCount = Object.keys(S.alertMarkersById || {}).length; }catch(e){}
+    var myMkr = S.myMarker;
+    var myMkrZIdx = null;
+    try{ myMkrZIdx = myMkr && myMkr.options && myMkr.options.zIndexOffset; }catch(e){}
+    var watchActive = S.watchId != null;
+    var ageMs = S.myGpsAt ? Date.now() - S.myGpsAt : null;
+    var fresh = ageMs != null && ageMs < 120000;
+    return {
+      watchActive:      watchActive,
+      hasPosition:      S.myLat != null && S.myLng != null,
+      myGpsAt:          S.myGpsAt || null,
+      ageSeconds:       ageMs != null ? Math.round(ageMs / 1000) : null,
+      positionFresh:    fresh,
+      accuracy:         S.myAccuracy != null ? Math.round(S.myAccuracy) : null,
+      invisible:        !!S.invisible,
+      radiusKm:         S.radiusKm || 5,
+      nearbyCount:      (S.nearby || []).length,
+      alertMarkerCount: alertMkrCount,
+      selfMarkerZIndex: myMkrZIdx,
+      selfMarkerZIndexOk: myMkrZIdx != null && myMkrZIdx >= 1000,
+      ledgerGpsFixes:   byType.GPS_FIX || 0,
+      hasBusGpsLocated: !!(w.ImmatBus && typeof w.ImmatBus.on === 'function'),
+      mapExists:        !!S.map,
+      clusterGroupExists: !!S.clusterGroup,
+    };
+  }
+
   function routeAutotest(){
     var ie = w.InteractionEngine;
     var byType = {};
@@ -573,6 +606,7 @@
       audioAutotest: audioAutotest(),
       contactNavAutotest: contactNavAutotest(),
       helpAutotest: helpAutotest(),
+      gpsAutotest: gpsAutotest(),
       routeAutotest: routeAutotest(),
       reportsAutotest: reportsAutotest(),
       registryAutotest: registryAutotest(),

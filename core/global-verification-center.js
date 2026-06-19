@@ -207,6 +207,37 @@
     ]);
   }
 
+  // ── 7ter. GPS / Carte ────────────────────────────────────────────
+  function checkGPS(){
+    var S = w.S || {};
+    var gpsActive = S.watchId != null;
+    var hasPos = S.myLat != null && S.myLng != null;
+    var ageMs = S.myGpsAt ? Date.now() - S.myGpsAt : null;
+    var fresh = ageMs != null && ageMs < 120000;
+    var ie = w.InteractionEngine;
+    var ledgerGpsFixes = 0;
+    try{
+      if(ie && typeof ie.getRuntimeState==='function'){
+        var rs = ie.getRuntimeState();
+        ledgerGpsFixes = (rs.byType && rs.byType.GPS_FIX) || 0;
+      }
+    }catch(e){}
+    var gl = w.GuardianLoop;
+    var gpsRecs = 0;
+    try{ if(gl && typeof gl.getAll==='function') gpsRecs = gl.getAll(null,{limit:50}).filter(function(r){ return r.category==='gps'; }).length; }catch(e){}
+    return makeSection('gps', [
+      item('GPS actif', gpsActive, gpsActive ? 'watchPosition actif' : 'inactif', !gpsActive ? 'GPS non démarré' : '', !gpsActive ? 'Appuyer sur Localiser' : ''),
+      item('Position connue', hasPos, hasPos ? S.myLat.toFixed(5)+','+S.myLng.toFixed(5) : 'inconnue', !hasPos ? 'Position GPS inconnue' : '', !hasPos ? 'Autoriser la localisation' : ''),
+      item('Fraîcheur GPS', fresh || !hasPos, ageMs != null ? Math.round(ageMs / 1000)+'s' : 'jamais', !fresh && hasPos ? 'Position GPS périmée (>2min)' : '', ''),
+      item('Précision', true, S.myAccuracy != null ? Math.round(S.myAccuracy)+'m' : 'inconnue', '', ''),
+      item('Mode invisible', true, S.invisible ? 'actif' : 'désactivé', '', ''),
+      item('Rayon détection', true, (S.radiusKm || 5)+' km', '', ''),
+      item('Conducteurs proches', true, (S.nearby || []).length > 0 ? (S.nearby || []).length+' véhicule(s)' : 'aucun', '', ''),
+      item('Ledger IE (GPS_FIX)', true, ledgerGpsFixes > 0 ? ledgerGpsFixes+' session(s)' : '0 — GPS non câblé IE ou jamais utilisé', '', ''),
+      item('Recs Guardian GPS', true, gpsRecs > 0 ? gpsRecs+' recommandation(s)' : 'aucune', '', ''),
+    ]);
+  }
+
   // ── 8. Aide ──────────────────────────────────────────────────────
   function checkAide(){
     var S = w.S || {};
@@ -391,6 +422,7 @@
       station:   checkStation(),
       vehicule:  checkVehicle(),
       route:     checkRoute(),
+      gps:       checkGPS(),
       aide:      checkAide(),
       webrtc:    checkWebRTC(),
       cache:     await checkCache(),

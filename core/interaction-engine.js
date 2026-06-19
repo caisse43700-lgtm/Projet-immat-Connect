@@ -56,6 +56,9 @@
     HELP_RESPONSE:     { obd: 'HELP_RESPONSE_SENT',    flow: 'FLOW-ASSIST-RESPONSE', invariants: ['INV-COM-005'] },
     // ── Feature Véhicule (alertes ciblées) ───────────────────────────────────
     VEHICLE_RESPONSE:  { obd: 'VEHICLE_RESPONSE_SENT', flow: 'FLOW-VEHICLE-RESPONSE', invariants: ['INV-COM-001'] },
+    // ── Feature GPS / Carte ──────────────────────────────────────────────────────
+    GPS_FIX:           { obd: 'GPS_FIX_RECORDED',       flow: 'FLOW-GPS-FIX',         invariants: ['INV-COM-001'] },
+    GPS_STARTED:       { obd: 'GPS_NAV_STARTED',         flow: 'FLOW-GPS-NAV',          invariants: ['INV-COM-001'] },
   };
 
   const nPlate = p => String(p||'').replace(/[\s-]/g,'').toUpperCase();

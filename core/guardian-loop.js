@@ -34,6 +34,7 @@ const GuardianLoop = (function () {
     CALL:    'call',
     MESSAGE: 'message',
     ROAD:    'road',
+    GPS:     'gps',
   };
 
   const REC_STATUS = {
@@ -55,6 +56,7 @@ const GuardianLoop = (function () {
     VEHICLE_ALERT_THRESHOLD:  1,
     MESSAGE_THRESHOLD:        3,
     ROAD_ALERT_THRESHOLD:     1,
+    GPS_FIX_THRESHOLD:        3,
   };
 
   // ── Persistence ──────────────────────────────────────────────────────────────
@@ -311,9 +313,26 @@ const GuardianLoop = (function () {
       if (rec) created.push(rec);
     }
 
+    // HEURISTIC-009 — Conducteur GPS actif (plusieurs fixs enregistrés)
+    const gpsFixes = interactions.filter(i => i.type === 'GPS_FIX');
+    if (gpsFixes.length >= HEURISTICS.GPS_FIX_THRESHOLD && !existingHeuristics.includes('HEURISTIC-009')) {
+      const rec = recommend({
+        category:        CATEGORIES.GPS,
+        severity:        SEVERITIES.LOW,
+        plate:           p,
+        evidence:        gpsFixes.slice(0, 3).map(i => ({ type: i.type, timestamp: i.timestamp })),
+        interaction_ids: gpsFixes.slice(0, 3).map(i => i.id),
+        heuristic:       'HEURISTIC-009',
+        flow_id:         'FLOW-GPS-FIX',
+        invariant_id:    'INV-COM-001',
+        message:         `${gpsFixes.length} session(s) GPS enregistrée(s) — conducteur actif sur carte`,
+      });
+      if (rec) created.push(rec);
+    }
+
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED', 'ROAD_ALERT'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED', 'ROAD_ALERT', 'GPS_FIX'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
@@ -445,6 +464,8 @@ window.GuardianLoop = GuardianLoop;
     bus.on('VEHICLE_RESPONSE_SENT', function (e) { _trigger(e.payload); });
     // HEURISTIC-008 : signalements route
     bus.on('ROAD_CREATED', function (e) { _trigger(e.payload); });
+    // HEURISTIC-009 : GPS actif
+    bus.on('GPS_LOCATED',  function (e) { _trigger(e.payload); });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _sub);
