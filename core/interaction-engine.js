@@ -59,6 +59,8 @@
     // ── Feature GPS / Carte ──────────────────────────────────────────────────────
     GPS_FIX:           { obd: 'GPS_FIX_RECORDED',       flow: 'FLOW-GPS-FIX',         invariants: ['INV-COM-001'] },
     GPS_STARTED:       { obd: 'GPS_NAV_STARTED',         flow: 'FLOW-GPS-NAV',          invariants: ['INV-COM-001'] },
+    // ── Feature Ange (conseiller IA) ─────────────────────────────────────────────
+    ANGE_SUGGESTION:   { obd: 'ANGE_QUERIED',            flow: 'FLOW-ANGE-CONSULT',     invariants: ['INV-COM-014'] },
   };
 
   const nPlate = p => String(p||'').replace(/[\s-]/g,'').toUpperCase();

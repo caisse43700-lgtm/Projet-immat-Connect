@@ -54,9 +54,30 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit Ange (conseiller IA) — 5 corrections post-audit — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/interaction-engine.js`
+
+**Corrections appliquées :**
+
+1. **CRITIQUE — `S.panel` jamais mis à jour** (`index.html`) — `App.panel()` est un wrapper qui ne mémorisait pas le panel actif dans `S.panel`. Ange recevait toujours `feature:'GENERAL'` quel que soit l'écran ouvert. Fix : `try{if(window.S)S.panel=panel;}catch(_){}` ajouté au début du wrapper.
+
+2. **HAUTE — `ANGE_SUGGESTION` absent de `TYPE_META`** (`core/interaction-engine.js` v7) — `IE.create({type:'ANGE_SUGGESTION',...})` créait une interaction sans meta (pas de champ `obd`, pas de `flow`, pas d'invariants) → aucun événement OBD émis, pas de journalisation Bus. Fix : `ANGE_SUGGESTION: { obd: 'ANGE_QUERIED', flow: 'FLOW-ANGE-CONSULT', invariants: ['INV-COM-014'] }` ajouté dans TYPE_META.
+
+3. **HAUTE — `startVoice()` sans timeout** (`index.html`) — `AngeDialog.startVoice()` n'avait pas de timeout SpeechRecognition (contrairement à `voiceGps()` déjà corrigé). Fix : timeout 8s identique — `_at=setTimeout(rec.abort,8000)` + `clearTimeout(_at)` dans `onresult`/`onerror`/`onend`.
+
+4. **MOYENNE — Indicateur quota manquant** (`index.html`) — L'utilisateur découvrait la limite de 10 appels/heure uniquement en l'atteignant. Fix : `#angeQuota` ajouté dans `#angeInputArea`, méthode `_refreshQuota()` affiche le nombre restant dès qu'il descend ≤ 3 (rouge si ≤ 1), appelée dans `open()` et après chaque `send()`.
+
+5. **BASSE — Scroll-to-bottom absent + Escape non géré** (`index.html`) — Après une réponse longue d'Ange, l'utilisateur devait scroller manuellement. Fix : `requestAnimationFrame(()=>p.scrollTop=p.scrollHeight)` ajouté dans `renderResponse()`. Bonus : listener Escape dans `open()` pour fermer le panel au clavier (nettoyé dans `close()`).
+
+SW v66 — version interaction-engine.js?v=7.
+
+---
+
 **Mission : Corrections navigation avancées (voix, recherche, route, OSRM) — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** (en cours)
+**Commit :** `1281c60` sur `main` (poussé)
 **Fichiers modifiés :** `index.html`, `service-worker.js`
 
 **Corrections appliquées :**
@@ -1394,6 +1415,10 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Audit Messages+Téléphone Bus→IE→Guardian→GVC→Ange : bus.js v50 (MESSAGE_SENT/RECEIVED), messages.js v22 (emits Bus pour messages simples), guardian-loop.js v6 (CALL+MESSAGE categories, CALL_ACCEPTED dans HEURISTIC-004 fix subscription morte, MESSAGE_SENT/RECEIVED subscriptions), global-verification-center.js v6 (checkMessages live counts, checkCalls live counts), index.html (snapshot Ange +messages_threads, +call_realtime_ok, +call_pending_out). SW v61. Commit 789907e. |
 | 2026-06-19 | IA session | Fix registre IE + analytics appels + Guardian→Ange : interaction-engine.js v5 (CALL_RECEIVED dans TYPE_META, total_calls compte tous les états), calls.js v18 (IE.create CALL_RECEIVED dans _showIncomingPopup), snapshot Ange +guardian_pending +guardian_alerts. SW v62. Commit 9683a17. |
 | 2026-06-19 | IA session | Audit Route complet + 9 corrections Bus→IE→Guardian→GVC→Ange : G1 type IE ROAD_ALERT, G2 Guardian HEURISTIC-008+ROAD category, G3 GVC checkRoute(), G4/G5 Bus emit ROAD_CREATED dans roadReport(), G6 snapshot Ange route_active/route_types, G7 boutons ROUTE exclus _actModCard, G8 catBadgeRoute filtre seen/present, G9 cleanupAlerts notif expiry route, G11 mobile-autotest routeAutotest(). SW v63. Commit c77bcda. |
+
+| 2026-06-19 | IA session | Audit GPS complet + 10 corrections Bus→IE→Guardian→GVC→Ange : IE v6 GPS_FIX+GPS_STARTED, guardian-loop v8 HEURISTIC-009 GPS, GVC v8 checkGPS() 9 items, mobile-autotest v3 gpsAutotest(), locate() GPS_FIX IE+Bus+S.myAccuracy+S.myGpsAt, zIndexOffset 0→1000, jitter anti-stacking alertes, snapshot Ange gps_active/invisible/radius_km/gps_accuracy/gps_age_sec. SW v64→v65. Commit 24e6e88. |
+| 2026-06-19 | IA session | Audit nav avancée + 7 corrections : AbortController searchGps (race condition), voiceGps timeout 8s, OSRM timeout 8s, N1 étapes épuisées auto-recalcul, N2 vocal recalcul, N3 autoFollow après recalcul, V1 slider vitesse de parole 0.5x→1.4x. SW v65→v66. Commit 1281c60. |
+| 2026-06-19 | IA session | Audit Ange (conseiller IA) + 5 corrections : S.panel mis à jour dans App.panel() (CRITIQUE), ANGE_SUGGESTION dans TYPE_META IE v7 (HAUTE), startVoice() timeout 8s (HAUTE), #angeQuota indicateur quota restant (MOYENNE), scroll-to-bottom renderResponse() + Escape listener (BASSE). SW v66. |
 
 ---
 

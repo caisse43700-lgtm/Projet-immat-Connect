@@ -3277,6 +3277,8 @@ function showReputationToast(){
 
     App.panel = function(panel){
       if(panel === "contact") panel = "messages";
+      // Mémoriser le panel actif pour le snapshot Ange (contexte de la question)
+      try{if(window.S)S.panel=panel;}catch(_){}
 
       const result = oldPanel ? oldPanel(panel) : undefined;
 
@@ -3542,7 +3544,7 @@ function showReputationToast(){
 </script>
 
 
-<script src="core/interaction-engine.js?v=6"></script>
+<script src="core/interaction-engine.js?v=7"></script>
 <script src="core/guardian-loop.js?v=8"></script>
 <script src="calls.js?v=18"></script>
 <script src="core/call-screen.js?v=8"></script>
@@ -3642,12 +3644,20 @@ function showReputationToast(){
       <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000" style="flex:1"></textarea>
       <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" style="background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#c4b5fd;padding:10px 12px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1">🎙️</button>
     </div>
-    <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span id="angeQuota" style="font-size:11px;color:#555"></span><button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button></div>
   </div>
 </div>
 
 <script>
 const AngeDialog={
+  _refreshQuota(){
+    const el=$('angeQuota');if(!el)return;
+    const d=JSON.parse(sessionStorage.getItem('ic_ange_calls')||'{"n":0,"t":0}');
+    const n=(Date.now()-d.t>3600000)?0:d.n;
+    const left=10-n;
+    if(left<=3){el.textContent=left===0?'Quota atteint':`${left} question${left>1?'s':''} restante${left>1?'s':''}`;el.style.color=left<=1?'#f0a500':'#888';}
+    else{el.textContent='';el.style.color='#555';}
+  },
   open(){
     $('angePanel').style.display='flex';
     $('angeOverlay').style.display='block';
@@ -3657,13 +3667,15 @@ const AngeDialog={
       resp.dataset.welcome='1';
       resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';
     }
+    this._refreshQuota();
+    if(!this._escHandler){this._escHandler=e=>{if(e.key==='Escape')this.close();};document.addEventListener('keydown',this._escHandler);}
     setTimeout(()=>$('angeMsg')?.focus(),100);
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
-    // Vider le panel : la réponse ne doit pas persister entre sessions d'ouverture
+    if(this._escHandler){document.removeEventListener('keydown',this._escHandler);this._escHandler=null;}
     const resp=$('angeResponse');
     if(resp){resp.style.display='none';resp.innerHTML='';delete resp.dataset.welcome;}
   },
@@ -3699,6 +3711,8 @@ const AngeDialog={
     const _tts=(r.juste||r.sources||'').replace(/<[^>]*>/g,'').slice(0,200);
     if(_tts&&typeof speak==='function'&&S.voice)setTimeout(()=>speak(_tts,false),200);
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{panel:S?.panel||'GENERAL'})}catch(e){}
+    // Scroll-to-bottom pour que la réponse soit visible sans manipulation manuelle
+    requestAnimationFrame(()=>{const p=$('angePanel');if(p)p.scrollTop=p.scrollHeight;});
   },
   feedback(v,btn){
     // Remplace les boutons par un remerciement
@@ -3715,9 +3729,10 @@ const AngeDialog={
       const rec=new SR();
       rec.lang='fr-FR';rec.interimResults=false;
       if(btn){btn.style.color='#f0a500';btn.textContent='🎤';}
-      rec.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
-      rec.onerror=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');};
-      rec.onend=()=>{if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
+      const _at=setTimeout(()=>{try{rec.abort();}catch(e){}if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Temps dépassé — réessaie.','bad');},8000);
+      rec.onresult=e=>{clearTimeout(_at);const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
+      rec.onerror=()=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');};
+      rec.onend=()=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
       rec.start();
     }catch(e){if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');}
   },
@@ -3731,6 +3746,7 @@ const AngeDialog={
     if(_now-_aData.t>3600000){_aData.n=0;} // reset après 1h
     if(_aData.n>=10){toast('Limite Ange atteinte (10/heure). Réessaie dans quelques minutes.','bad');return;}
     _aData.n++;_aData.t=_now;sessionStorage.setItem(_aKey,JSON.stringify(_aData));
+    this._refreshQuota();
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_MESSAGE_SENT',{panel:S.panel||'GENERAL'})}catch(e){}
     // Historique de la session (3 derniers échanges = 6 messages)
     const _hKey='ic_ange_history';
@@ -3920,7 +3936,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v65';
+      var CURRENT = 'immatconnect-pro-v66';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3998,7 +4014,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v65';
+  var CURRENT = 'immatconnect-pro-v66';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
