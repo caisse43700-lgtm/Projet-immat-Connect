@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-19
 Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 670c03b (poussé)
+Branche production     : main (GitHub Pages) — commit 14ca851 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -53,6 +53,35 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Carte de risque vivante — intelligence collective prédictive — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** `14ca851` sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`, `supabase/migrations/20260619160000_road_risk_segments.sql`
+
+**Ce qui a été construit :**
+
+1. **Table `road_risk_segments`** — cellules ~100 m × 100 m couvrant la carte. Chaque cellule accumule `incident_count`, `confirmed_count`, `last_incident_at`, `risk_score` (0–100).
+
+2. **Score bayésien avec décroissance temporelle** — `score = incidents × taux_confirmation × exp(-jours/30) × 20`. Un incident d'hier vaut 10× plus qu'un incident de 3 mois.
+
+3. **Trigger SQL `update_road_risk_on_report()`** — chaque INSERT/UPDATE de statut sur `reports` recalcule automatiquement le score de la cellule concernée.
+
+4. **Population initiale** — données des 6 derniers mois de `reports` injectées à la création (idempotent).
+
+5. **RPC `get_risk_zones(lat, lng, radius_km)`** — exposée au front via `sb.rpc()`, retourne les 20 zones les plus dangereuses dans le rayon.
+
+6. **`App._getWeather(lat, lng)`** — fetch OpenMeteo (gratuit, sans clé, cache 15 min) → tague `weather_condition` (clear/cloudy/fog/rain/snow/showers/storm) en background sur chaque signalement route et aide.
+
+7. **`App._checkRiskZonesDebounced()`** — appelé toutes les 30s dans `locate()`. Si zone > score 30 à moins de 500m : toast + voix GPS + `ImmatBus.emit('RISK_ZONE_APPROACHED')`.
+
+8. **`App._renderRiskOverlay()`** — cercles Leaflet jaune/orange/rouge proportionnels au score sur la carte. Popup : nb signalements, confirmés, score, âge.
+
+9. **`guardian-loop.js` v11** — catégorie `RISK` + `bus.on('RISK_ZONE_APPROACHED')`.
+
+SW v69 — guardian-loop.js?v=11.
+
+---
 
 **Mission : Code review — 4 correctifs robustesse post-audit — TERMINÉE**
 **Date :** 2026-06-19
@@ -928,7 +957,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — code review terminé, 4 correctifs robustesse appliqués et fusionnés (commit 670c03b).
+Aucune — carte de risque vivante déployée (commit 14ca851).
 
 ---
 
@@ -1463,6 +1492,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Audit Ange (conseiller IA) + 5 corrections : S.panel mis à jour dans App.panel() (CRITIQUE), ANGE_SUGGESTION dans TYPE_META IE v7 (HAUTE), startVoice() timeout 8s (HAUTE), #angeQuota indicateur quota restant (MOYENNE), scroll-to-bottom renderResponse() + Escape listener (BASSE). SW v66. |
 | 2026-06-19 | IA session | Audits Activité + Dashboard Gardien + 6 corrections : HEURISTIC-004 corrigée (ROAD_ALERT/GPS_FIX retirés → ANGE_SUGGESTION ajouté), assist() type IE HELP_REQUEST_CREATED→HELP + ImmatBus.emit, driverInfo() ImmatBus.emit+IE.create ajoutés, snapshot Ange getPending(ownPlate), CSS gardien-debug-tool masqué non-gardiens, actConfirmAlert() guard alerte expirée. guardian-loop.js v9, SW v67. Commits 459c298 (Ange) + f3a5048 (Activité+Guardian). |
 | 2026-06-19 | IA session | Code review --effort high : 4 correctifs robustesse — _refreshQuota() try/catch sessionStorage, startVoice() onerror skip 'aborted', actConfirmAlert() suppression wrapper vacueux + DB fallback quand !a, Guardian bus.on HELP_CREATED+VEHICLE_MESSAGE_SENT. guardian-loop.js v10, SW v68. Commit 670c03b. |
+| 2026-06-19 | IA session | Carte de risque vivante : road_risk_segments (score bayésien décroissance 30j), trigger SQL auto, RPC get_risk_zones(), _getWeather() OpenMeteo background, _checkRiskZonesDebounced() alerte proactive < 500m, overlay Leaflet jaune/orange/rouge, guardian-loop v11 RISK category. SW v69. Commit 14ca851. |
 
 ---
 
