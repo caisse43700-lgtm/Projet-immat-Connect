@@ -350,6 +350,43 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, reason: 'prediction_parse_error' }, { headers: corsHeaders });
     }
 
+    // ── 5c. Mode monologue privé (P3 — Ange pense en silence) ───────────────
+    if (mode === 'monologue') {
+      const monoDynamic = buildDynamicContext(snapshot, 'monologue', feature, depth, 'DEEP');
+      const monoMsg = `Tu es seul, personne ne te lit. Observe ce conducteur maintenant.\nQu'est-ce qui te préoccupe dans ce que tu vois ? Qu'est-ce qu'il ne t'a pas demandé mais que tu aimerais lui signaler ?\nRéponds en JSON : {"concern":"[ta préoccupation en français, max 80 mots]","evidence":["signal1","signal2"],"priority":1-5,"silence":false}`;
+      let monoRaw = '';
+      try {
+        const monoComp = await anthropic.messages.create({
+          model: CLAUDE_MODEL,
+          max_tokens: 180,
+          system: [
+            { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: monoDynamic },
+          ],
+          messages: [{ role: 'user', content: monoMsg }],
+        });
+        monoRaw = monoComp.content[0]?.type === 'text' ? monoComp.content[0].text : '';
+      } catch {
+        return Response.json({ ok: false, reason: 'model_error' }, { status: 502, headers: corsHeaders });
+      }
+      try {
+        const m = monoRaw.match(/\{[\s\S]*\}/);
+        if (m) {
+          const parsed = JSON.parse(m[0]) as Record<string, unknown>;
+          if (typeof parsed.concern === 'string' && parsed.concern.trim()) {
+            return Response.json({
+              ok: true,
+              concern:   parsed.concern.trim(),
+              evidence:  Array.isArray(parsed.evidence) ? parsed.evidence.slice(0, 3) : [],
+              priority:  typeof parsed.priority === 'number' ? Math.min(5, Math.max(1, parsed.priority)) : 1,
+              silence:   parsed.silence === true,
+            }, { headers: corsHeaders });
+          }
+        }
+      } catch { /* ignore */ }
+      return Response.json({ ok: false, reason: 'monologue_parse_error' }, { headers: corsHeaders });
+    }
+
     // ── 5. Contexte dynamique ──
     const t_prompt = Date.now();
     const dynamicContext = buildDynamicContext(snapshot, mode, feature, depth, compressionLevel);

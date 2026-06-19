@@ -3687,8 +3687,8 @@ const AngeDialog={
       resp.dataset.welcome='1';
       // P1 — Afficher la prédiction en cache si fraîche (sinon message d'accueil standard)
       try{const _p=JSON.parse(localStorage.getItem('ic_ange_predicted')||'null');if(_p&&Date.now()-_p.at<(_p.validite_minutes||8)*60_000){resp.innerHTML=`<div style="border-left:3px solid #7c6af7;padding:6px 10px;background:#0f0f1a;border-radius:0 6px 6px 0;margin-bottom:8px"><div style="color:#a5b4fc;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">✦ J'ai réfléchi en avance</div><div style="color:#e2e8f0;font-size:13px;line-height:1.6">${esc(_p.anticipation)}</div></div><div style="color:#888;font-size:12px;font-style:italic;padding-top:4px">Tu as une question différente ?</div>`;localStorage.removeItem('ic_ange_predicted');}else{resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';}}catch(_){resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';}
-      // Démarrer AngePredictor au premier open (différé 5s — modules doivent être initialisés)
-      if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){}},5000);}
+      // Démarrer AngePredictor + AngeMonologue au premier open (différé 5s)
+      if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){};try{AngeMonologue.start();}catch(_){}},5000);}
     }
     this._refreshQuota();
     if(!this._escHandler){this._escHandler=e=>{if(e.key==='Escape')this.close();};document.addEventListener('keydown',this._escHandler);}
@@ -3796,6 +3796,8 @@ const AngeDialog={
       try{snapshot.gps_active=!!(S.watchId!=null);snapshot.invisible=!!S.invisible;snapshot.radius_km=S.radiusKm||5;if(S.myAccuracy!=null)snapshot.gps_accuracy=Math.round(S.myAccuracy);if(S.myGpsAt){const _gAge=Math.round((Date.now()-S.myGpsAt)/1000);snapshot.gps_age_sec=_gAge;}}catch(e){}
       try{const _bo=S._brainOrientation;const _bp=S._brainPredictions;if(_bo){snapshot.brain_urgency=_bo.urgency;snapshot.brain_signals=_bo.signals;snapshot.brain_summary=_bo.summary;}if(_bp&&_bp.length){snapshot.brain_predictions=_bp.slice(0,3).map(p=>({type:p.type,confidence:p.confidence,reason:p.reason}));}}catch(e){}
       try{const _ns=window.Narrator?.getSituation?.();const _nj=window.Narrator?.getJournalText?.();if(_ns)snapshot.narrator_situation=_ns;if(_nj)snapshot.narrator_journal=_nj;}catch(e){}try{const _cw=window.ImmatConsciousness?.getWorldState?.();if(_cw){snapshot.consciousness_focus=_cw.focus;snapshot.consciousness_convergence=_cw.convergence?.score;snapshot.consciousness_trend=_cw.trend;if(_cw.convergence?.votes?.length)snapshot.consciousness_votes=_cw.convergence.votes;}}catch(e){}try{const _sl=window.ImmatSoul?.getSoul?.();if(_sl){snapshot.soul_insight=_sl.insight;snapshot.soul_harmony=_sl.harmony?.score;snapshot.soul_trajectory=_sl.trajectory;if(_sl.blind_spots?.length)snapshot.soul_blind_spots=_sl.blind_spots;snapshot.soul_awakening=!!_sl.awakening;}}catch(e){}try{const _kr=window.ImmatKernel?.getReliability?.();if(_kr){snapshot.data_reliability=_kr.score;snapshot.data_level=_kr.level;if(_kr.cold_start)snapshot.data_cold_start=true;if(_kr.resurrection)snapshot.data_resurrection=true;if(_kr.degraded)snapshot.data_degraded=true;}}catch(e){}
+      // P3 — Monologue privé : préoccupation de l'Ange injectée comme contexte implicite
+      try{const _mc=typeof AngeMonologue!=='undefined'?AngeMonologue.getTopConcern?.():null;if(_mc)snapshot.ange_preoccupation=_mc.concern;}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
@@ -3868,6 +3870,47 @@ const AngePredictor={
     document.addEventListener('touchstart',()=>this._tick(),{passive:true});
     document.addEventListener('click',()=>this._tick(),{passive:true});
     this._timer=setInterval(()=>this._predict(),2*60_000);
+  }
+};
+
+// ── AngeMonologue — P3 : Ange pense en silence pendant la conduite ───────────
+// Toutes les 8 min si driveMode actif : appelle immat-brain-dialog en mode
+// 'monologue'. La préoccupation stockée (priority >= 3, non-silencieuse)
+// est injectée dans le snapshot du prochain appel utilisateur.
+const AngeMonologue={
+  _STORAGE:'ic_ange_conscience',_INTERVAL:8*60_000,_MAX_AGE:2*3600_000,
+  _timer:null,_running:false,
+  _shouldThink(){return !!window.S?.driveMode;},
+  async _think(){
+    if(!this._shouldThink())return;
+    try{
+      const sn={};
+      try{const bo=window.S?._brainOrientation;if(bo){sn.brain_urgency=bo.urgency;sn.brain_signals=bo.signals;sn.brain_summary=bo.summary;}}catch(_){}
+      try{const c=window.S?._consciousness;if(c){sn.consciousness_focus=c.focus;sn.consciousness_convergence=c.convergence?.score;sn.consciousness_trend=c.trend;}}catch(_){}
+      try{const s=window.S?._soul;if(s){sn.soul_insight=s.insight;sn.soul_harmony=s.harmony?.score;sn.soul_blind_spots=s.blind_spots;sn.soul_trajectory=s.trajectory;}}catch(_){}
+      try{const k=window.S?._reliability;if(k){sn.data_reliability=k.score;sn.data_degraded=k.degraded;}}catch(_){}
+      try{sn.narrator_journal=window.Narrator?.getJournalText?.();}catch(_){}
+      const res=await window.sb?.functions?.invoke('immat-brain-dialog',{body:{message:'__monologue__',mode:'monologue',feature:'GENERAL',snapshot:sn,history:[]}});
+      const d=res?.data;
+      if(d?.concern){
+        const now=Date.now();let list=[];
+        try{list=JSON.parse(localStorage.getItem(this._STORAGE)||'[]');}catch(_){}
+        list=list.filter(e=>now-e.at<this._MAX_AGE);
+        list.push({concern:String(d.concern).slice(0,300),evidence:Array.isArray(d.evidence)?d.evidence.slice(0,3):[],priority:Number(d.priority)||1,silence:!!d.silence,at:now});
+        localStorage.setItem(this._STORAGE,JSON.stringify(list.slice(-5)));
+      }
+    }catch(_){}
+  },
+  getTopConcern(){
+    try{
+      const now=Date.now();
+      const list=JSON.parse(localStorage.getItem(this._STORAGE)||'[]').filter(e=>now-e.at<this._MAX_AGE);
+      return list.filter(e=>!e.silence&&e.priority>=3).sort((a,b)=>b.priority-a.priority)[0]||null;
+    }catch(_){return null;}
+  },
+  start(){
+    if(this._running)return;this._running=true;
+    this._timer=setInterval(()=>this._think(),this._INTERVAL);
   }
 };
 
