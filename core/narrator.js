@@ -41,6 +41,8 @@ const Narrator = (function () {
     'SWARM_PARKING_CONFIRMED', 'SWARM_ROUTE_DANGER',
     // Conscience synthétique — ImmatConsciousness
     'CONSCIOUSNESS_UPDATE',
+    // Éveil — ImmatSoul
+    'SOUL_AWAKENING',
   ]);
 
   // Événements déclenchant une bulle proactive
@@ -132,6 +134,8 @@ const Narrator = (function () {
         return `⚠️ Danger route collectif: ${p?.count||3} conducteurs (urgence moy. ${p?.avg_urgency||'?'}/10)`;
       case 'CONSCIOUSNESS_UPDATE':
         return `🧠 Conscience: convergence ${p?.convergence||'?'}/4 modules — focus ${p?.focus||'?'} — tendance ${p?.trend||'stable'}`;
+      case 'SOUL_AWAKENING':
+        return `✨ Éveil: harmonie ${p?.harmony||'?'}/10 — ${p?.trajectory||'stable'} — ${p?.insight ? p.insight.slice(0,80)+'…' : ''}`;
       default: return ev;
     }
   }
