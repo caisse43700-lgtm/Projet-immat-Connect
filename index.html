@@ -1161,8 +1161,8 @@ async subMsgs(){
         if(_isParkedReport&&pl){
 
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
           ];
         } else if(_isParkedResponse){
           _qr=[];
@@ -1182,8 +1182,8 @@ async subMsgs(){
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
         if(_isParkedReport&&_stGps){
           _qr=[
-            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
-            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);this.updateActBadge?.();}},
+            {label:'🚗 Je vérifie',bg:'rgba(20,184,166,.15)',color:'#5eead4',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,'Je viens vérifier 🚗',{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
+            {label:'✅ Réglé',bg:'rgba(74,222,128,.1)',color:'#4ade80',cb:async()=>{try{await window.ImmatMessages?.sendToPlate(pl,"C'est réglé, merci ! ✅",{context_type:'parked_response'});}catch(e){}_archiveStation(m.id);if(S._actCat==='station')this.renderStationFeed?.('recus');this.updateActBadge?.();}},
             {label:'📍 Carte',bg:'rgba(20,184,166,.12)',color:'#5eead4',cb:()=>{this.actStationShowOnMap?.(_stGps.lat,_stGps.lng,_stCleanLabel||'Votre véhicule');}},
           ];
         }
@@ -2147,7 +2147,7 @@ App.renderStationFeed=function(tab){
         const _statusBadge=reply?`<span style="font-size:10px;background:rgba(74,222,128,.15);color:#4ade80;padding:2px 6px;border-radius:10px;margin-left:auto;flex-shrink:0">✅ Répondu</span>`:`<span style="font-size:10px;background:rgba(20,184,166,.12);color:#5eead4;padding:2px 6px;border-radius:10px;margin-left:auto;flex-shrink:0">⏳ En attente</span>`;
         return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteMsg('${mid}')">🗑</div><div class="act-vmg-card ${reply?'act-vmg-archived act-vmg-encours':'act-vmg-encours'}" style="${reply?'':'border-left-color:#14b8a6'}" onclick="App.actToggleVmCard(this)">
           <div class="act-vmg-hd" style="gap:6px">
-          <div class="act-vmg-info" style="flex:1;min-width:0"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${urgent?'🚨 ':''}<strong>${e2(label)}</strong></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${_statusBadge}<div class="act-vmg-time">${e2(time)}</div></div></div>
+          <div class="act-vmg-info" style="flex:1;min-width:0"><div class="act-vmg-plate ${reply?'act-vmg-plate-arch':''}">${pl||'Véhicule signalé'}</div><div class="act-vmg-desc ${reply?'act-vmg-desc-arch':''}">${urgent?'🚨 ':''}<strong>${e2(label)}</strong>${m.image_url?' 📷':''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${_statusBadge}<div class="act-vmg-time">${e2(time)}</div></div></div>
           ${(reply||m.image_url)?`<div class="act-vmg-detail">${reply?`<div class="act-vmg-sec-lbl">Réponse du conducteur</div><div class="act-vmg-desc" style="color:#6ee7b7;padding:8px 0">${e2(String(reply.message||'').slice(0,100))}</div>`:''}${m.image_url?`<div style="margin-top:${reply?'8':'0'}px"><img src="${e2(m.image_url)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid rgba(20,184,166,.25)" onclick="event.stopPropagation();App.actStationViewPhoto('${e2(m.image_url)}')" alt="Photo envoyée"><div style="font-size:10px;color:#5eead4;margin-top:4px;text-align:center">📷 Photo du signalement</div></div>`:''}</div>`:''}
         </div></div>`;
       }).join('');
