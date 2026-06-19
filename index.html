@@ -1501,7 +1501,7 @@ App._stationCompressImage=function(file,maxPx,quality){
 // ── Upload vers Supabase Storage parked-photos → retourne l'URL publique ou null
 App._stationUploadPhoto=async function(file){
   try{
-    const client=window.sb?.();if(!client)return null;
+    const client=window.sb;if(!client)return null;
     const compressed=await this._stationCompressImage(file,1024,0.82);
     if(!compressed)return null;
     const path='parked/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg';
