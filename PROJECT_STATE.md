@@ -54,6 +54,50 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Journal d'appels — 2 bugs UX corrigés — TERMINÉE**
+**Date :** 2026-06-19
+**Fichiers modifiés :** `index.html` (navAppels + pickPlate), `service-worker.js` v87
+
+**Corrections appliquées :**
+
+1. **Bug layout "grande case vide à gauche"** — `navAppels()` utilisait `display='flex'` pour afficher `#icAppelsPane`, créant un flex horizontal (champ de recherche + résultats en colonnes). Corrigé en `display='block'` (2 occurrences : l'affectation principale + le guard du setTimeout 350ms).
+
+2. **Bug superposition "autre carte derrière"** — Le bouton 💬 dans chaque entrée du journal appelait `App.pickPlate()`, dont le override interne exécutait `App.panel("messages")` sans réinitialiser l'état des onglets (icMsgList caché, icAppelsPane visible). Résultat : la liste de messages flashait derrière le journal. Corrigé : remplacement de `App.panel("messages")` par `App.navMessages()` dans le override `pickPlate`, qui rétablit correctement l'état complet du panel Messages (icMsgList visible, icAppelsPane caché, tabs nav corrects) avant d'ouvrir le mode compose.
+
+SW v86 → v87.
+
+---
+
+**Mission : Zones à risque cohérentes — accidents uniquement — TERMINÉE**
+**Date :** 2026-06-19
+**Fichiers modifiés :** `index.html`, `service-worker.js` v86, `supabase/migrations/20260619170000_risk_zones_accident_only.sql` (créé)
+
+**Ce qui a été fait :**
+- Migration SQL : trigger `update_road_risk_on_report()` reécrit avec filtre strict — seuls `[ROUTE] Accident%`, `[ROUTE] Obstacle%`, `[ROUTE] Danger%` alimentent les zones à risque. Police, travaux, bouchons, assistance : ignorés.
+- TRUNCATE + reconstruction propre de `road_risk_segments` depuis les données existantes avec le nouveau filtre + `HAVING COUNT(*) >= 2` (min 2 accidents au même endroit).
+- UI : toast "X accident(s) à cet endroit" + popup "Zone accidentogène" (anciens libellés moins précis remplacés).
+- Les conducteurs peuvent toujours signaler toutes les catégories — seul le CALCUL des zones à risque est filtré.
+
+---
+
+**Mission : Panneau Paramètres — 10 améliorations — TERMINÉE**
+**Date :** 2026-06-19
+**Fichiers modifiés :** `index.html`, `service-worker.js` v85
+
+**Ce qui a été fait :**
+1. Rayon de détection visible dans Paramètres (slider synchronisé avec la carte, id=radiusSettingsSlider)
+2. Auto-statut conduite (toggle ic_auto_status → setPresence conduite/disponible selon vitesse GPS)
+3. Notifications Messages + Appels (toggles notifMessagesToggle + notifCallsToggle)
+4. Réinitialisation sélective RGPD (GPS / alertes / confiance — 3 boutons distincts)
+5. Section Ange IA (angeProactiveToggle + angeMonologueToggle)
+6. Mode économie batterie (batterySaveToggle → GPS options allégées : pas highAccuracy, maximumAge 10s, timeout 30s)
+7. Statistiques personnelles (settingsStatsGrid : compteurs appels/messages/signalements/favoris depuis localStorage)
+8. Signaler un abus (plate + raison → supabase abuse_reports)
+9. Synchronisation openMap() pour initialiser tous les nouveaux contrôles
+10. updateDrivingMode() étendu avec logique auto-statut (speed >20→conduite, <5 pendant 30s→disponible)
+
+---
+
 **Mission : Diagnostic IA Gardien — GardienDiagnostic v2 + Conscience Temporelle — TERMINÉE**
 **Date :** 2026-06-19
 **Commits :** `17a4b6f` (v1) · `1905cb9` (v2) · `8a8a87e` (conscience temporelle) sur `main` (poussé)
@@ -1070,7 +1114,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — Ange Intelligence Overhaul P1→P5 déployé (commit f784fcb).
+Aucune — Journal d'appels corrigé (2 bugs layout + superposition), zones à risque cohérentes, Paramètres enrichis. À commiter et pousser.
 
 ---
 
@@ -1609,6 +1653,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | BrainEngine v1 + SwarmEngine v1 + Narrator v1 + ImmatConsciousness v1 — intelligence synthétique (synthèse 5 modules, convergence 0-4, focus unique, cross-module bridges, adaptiveThreshold BehaviorPulse+fiabilité). SW v74→v75. Commits 89d8858 + suivants. |
 | 2026-06-19 | IA session | ImmatSoul v1 (harmonie 0-10, angles morts, trajectoire, insight français, SOUL_AWAKENING), ImmatKernel v1 (fiabilité 0-100%, détection sommeil iOS, auto-recovery, KERNEL_RESURRECTION), ImmatCoPilot v1 (11 déclencheurs, voix autonome FR, mémoire 2h, #copilotPanel). Fix SyntaxError `.map(s=>({})join()` → `_sigLabels`. SW v77. Commits d9fc68d+f86b863+240d26d+5057bef. |
 | 2026-06-19 | IA session | Ange Intelligence Overhaul P1→P5 : P2 Mémoire Émotionnelle (narrator.js v2, tri par poids émotionnel), P4 Compression Adaptative (FLASH/STANDARD/DEEP, 80/200/400 tokens), P5 Question Jamais Posée (blind spot après chaque réponse, cooldown 10min), P1 Ange Prédictif (AngePredictor, pre-call idle, cache ic_ange_predicted), P3 Monologue Privé (AngeMonologue, 8min conduite, ic_ange_conscience, injection snapshot). SW v81. Commits 862f8f2+3cbe1ff+93f6f4c+f784fcb. |
+| 2026-06-19 | IA session | Panneau Paramètres — 10 améliorations : rayon dans settings, auto-statut conduite, notifs messages+appels, réinitialisation sélective RGPD, toggles Ange (proactif+monologue), mode économie batterie GPS, statistiques personnelles, signalement abus. SW v85. |
+| 2026-06-19 | IA session | Zones à risque cohérentes : trigger SQL filtré accidents uniquement ([ROUTE] Accident/Obstacle/Danger), TRUNCATE + rebuild road_risk_segments (HAVING ≥2), UI "X accident(s)" + "Zone accidentogène". Migration 20260619170000. SW v86. |
+| 2026-06-19 | IA session | Journal d'appels — 2 bugs UX : (1) display:flex→block dans navAppels (layout horizontal corrigé), (2) App.panel("messages")→App.navMessages() dans pickPlate override (superposition panneaux corrigée). SW v87. |
 
 ---
 

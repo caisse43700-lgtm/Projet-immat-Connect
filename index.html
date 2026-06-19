@@ -1400,7 +1400,7 @@ App.navAppels=function(){
   ['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
-  if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='flex';
+  if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='block';
   var _tbM2=$('icTabMessages'),_tbA2=$('icTabAppels');
   if(_tbM2){_tbM2.style.color='#64748b';_tbM2.style.borderBottomColor='transparent';}
   if(_tbA2){_tbA2.style.color='#e2e8f0';_tbA2.style.borderBottomColor='#2f7bff';}
@@ -1410,7 +1410,7 @@ App.navAppels=function(){
   if(_sbar)_sbar.style.display='none';
   try{this.renderCallJournal();}catch(e){}
   try{this.updateActBadge?.()}catch(e){}
-  setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='flex'&&_m)_m.style.display='none';},350);
+  setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='block'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -3374,7 +3374,7 @@ function showReputationToast(){
       if(composePlate) composePlate.value = p;
 
       try{
-        App.panel("messages");
+        App.navMessages();
         window.ImmatMessages?.setMode?.("compose");
       }catch(e){
         if(oldPickPlate) return oldPickPlate(plate);
