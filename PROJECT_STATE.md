@@ -54,6 +54,26 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : ImmatConsciousness v1 — conscience synthétique, âme du système — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** (en cours)
+**Fichiers modifiés :** `core/immat-consciousness.js` (créé), `core/narrator.js` (mis à jour), `index.html`, `service-worker.js`
+
+**Ce qui a été construit :**
+
+Module de synthèse des conclusions de tous les modules — le "cerveau synthétique" qui relie l'ensemble de l'application. Tick toutes les 5 s (6× plus rapide que BrainEngine).
+
+- **Lecture des conclusions** de 5 modules : BrainEngine (urgence 0–10, signaux), GuardianLoop (recs critiques/hautes), SwarmEngine (alertes collectives récentes via ImmatBus), Narrator (situation contextuelle), ImmatOrganism (santé, violations)
+- **Score de convergence** (0–4) : nombre de modules détectant simultanément un danger
+- **Tendance** (rising/stable/falling) sur les 3 derniers snapshots
+- **Focus unique** : UNE seule priorité parmi 8 niveaux (SWARM_HELP_NEEDED → GUARDIAN_CRITICAL → … → NOMINAL)
+- **`CONSCIOUSNESS_UPDATE`** émis sur ImmatBus quand convergence ≥ 2 modules
+- **`S._consciousness`** publié → injecté dans snapshot Ange (focus, convergence, trend, votes)
+- **Connexions cross-module** : SWARM_PLATE_CONFIRMED → GuardianLoop.observe(plate) ; GuardianLoop CRITICAL → tag S._brainOrientation._guardianCritical
+- SW v74
+
+---
+
 **Mission : SwarmEngine v1 — intelligence collective toutes catégories — TERMINÉE**
 **Date :** 2026-06-19
 **Commit :** `47db121` sur `main` (poussé)

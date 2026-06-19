@@ -39,6 +39,8 @@ const Narrator = (function () {
     // Intelligence collective — SwarmEngine
     'SWARM_HELP_NEARBY', 'SWARM_PLATE_CONFIRMED',
     'SWARM_PARKING_CONFIRMED', 'SWARM_ROUTE_DANGER',
+    // Conscience synthétique — ImmatConsciousness
+    'CONSCIOUSNESS_UPDATE',
   ]);
 
   // Événements déclenchant une bulle proactive
@@ -128,6 +130,8 @@ const Narrator = (function () {
         return `🅿️ Obstruction confirmée collectivement: ${p?.count||2} signalements dans la zone`;
       case 'SWARM_ROUTE_DANGER':
         return `⚠️ Danger route collectif: ${p?.count||3} conducteurs (urgence moy. ${p?.avg_urgency||'?'}/10)`;
+      case 'CONSCIOUSNESS_UPDATE':
+        return `🧠 Conscience: convergence ${p?.convergence||'?'}/4 modules — focus ${p?.focus||'?'} — tendance ${p?.trend||'stable'}`;
       default: return ev;
     }
   }
