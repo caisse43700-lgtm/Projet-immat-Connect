@@ -108,7 +108,35 @@
     ]);
   }
 
-  // ── 6. WebRTC / Agora ────────────────────────────────────────────
+  // ── 6. Station (Véhicule Stationné) ─────────────────────────────
+  function checkStation(){
+    var S = w.S || {};
+    var msgs = S._actMessages || [];
+    var repliedRaw = [];
+    try{ repliedRaw = JSON.parse(localStorage.getItem('ic_station_replied') || '[]'); }catch(e){}
+    var replied = new Set(repliedRaw.map(String));
+    var pending = msgs.filter(function(m){
+      return m.context_type === 'parked_report' && m._received === true && !replied.has(String(m.id));
+    }).length;
+    var sent = msgs.filter(function(m){
+      return m.context_type === 'parked_report' && !m._received;
+    }).length;
+    var responses = msgs.filter(function(m){
+      return m.context_type === 'parked_response' && m._received === true;
+    }).length;
+    var gpsOk = S.myLat != null && S.myLng != null;
+    var hasMsgs = !!w.ImmatMessages;
+    return makeSection('station', [
+      item('ImmatMessages', hasMsgs, hasMsgs ? 'présent' : 'absent', !hasMsgs ? 'Module messages absent' : '', ''),
+      item('GPS pour signalement', gpsOk, gpsOk ? 'disponible' : 'indisponible', !gpsOk ? 'Position GPS manquante — signalement sans coordonnées' : '', !gpsOk ? 'Autoriser la localisation' : ''),
+      item('Signalements reçus', true, pending > 0 ? pending + ' en attente' : 'aucun en attente', '', ''),
+      item('Signalements envoyés', true, sent > 0 ? String(sent) : 'aucun', '', ''),
+      item('Réponses reçues', true, responses > 0 ? String(responses) : 'aucune', '', ''),
+      item('Bucket photos', true, 'parked-photos (public)', '', ''),
+    ]);
+  }
+
+  // ── 7. WebRTC / Agora ────────────────────────────────────────────
   function checkWebRTC(){
     var ace = w.AgoraCallEngine;
     var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -258,6 +286,7 @@
       messages:  checkMessages(),
       calls:     checkCalls(),
       audio:     checkAudio(),
+      station:   checkStation(),
       webrtc:    checkWebRTC(),
       cache:     await checkCache(),
       supabase:  await checkSupabase()

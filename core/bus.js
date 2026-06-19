@@ -38,6 +38,10 @@ const EVENTS = Object.freeze({
   MAP_OPENED:                        'MAP_OPENED',
   GPS_LOCATED:                       'GPS_LOCATED',
   VEHICLES_LOADED:                   'VEHICLES_LOADED',
+  PARKED_REPORT_SENT:                'PARKED_REPORT_SENT',
+  PARKED_RESPONSE_SENT:              'PARKED_RESPONSE_SENT',
+  PARKED_REPORT_DISMISSED:           'PARKED_REPORT_DISMISSED',
+  PARKED_REPORT_RATED:               'PARKED_REPORT_RATED',
 });
 
 const ImmatBus = (function () {

@@ -1220,7 +1220,7 @@ async function sendToPlate(plate,text,opts){
     if(_ctx.context_type) _iePayload.context_type = _ctx.context_type;
     if(_ctx.context_id)   _iePayload.context_id   = _ctx.context_id;
     window.InteractionEngine?.create?.({
-      type:'MESSAGE',
+      type: _ctx.context_type==='parked_report' ? 'PARKED_REPORT' : _ctx.context_type==='parked_response' ? 'PARKED_RESPONSE' : 'MESSAGE',
       initiator: senderPlate,
       target: receiverPlate,
       payload: _iePayload,
@@ -1339,10 +1339,10 @@ async function subscribe(){
         try{
           const _sp=fPlate(m.sender_plate||m.from_plate||'');
           window.InteractionEngine?.create?.({
-            type:'MESSAGE',
+            type: m.context_type==='parked_report' ? 'PARKED_REPORT' : m.context_type==='parked_response' ? 'PARKED_RESPONSE' : 'MESSAGE',
             initiator:_sp||'UNKNOWN',
             target:fPlate(myPlate()),
-            payload:{from:_sp,to:fPlate(myPlate())},
+            payload:{from:_sp,to:fPlate(myPlate()),context_type:m.context_type||''},
             status:'resolved'
           });
         }catch(e){}

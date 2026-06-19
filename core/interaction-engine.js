@@ -47,7 +47,10 @@
     CALL_ENDED:       { obd: 'CALL_ENDED',            flow: 'FLOW-008-B',          invariants: ['INV-CALL-002'], reserved: true },
     CALL_FAILED:      { obd: 'CALL_FAILED',           flow: 'FLOW-008-B',          invariants: ['INV-CALL-002'], reserved: true },
     CALL_NETWORK_LOST:{ obd: 'CALL_NETWORK_LOST',     flow: 'FLOW-008-B',          invariants: ['INV-CALL-002'], reserved: true },
-    CALL_RECONNECTED: { obd: 'CALL_RECONNECTED',      flow: 'FLOW-008-B',          invariants: ['INV-CALL-002'], reserved: true }
+    CALL_RECONNECTED:  { obd: 'CALL_RECONNECTED',      flow: 'FLOW-008-B',          invariants: ['INV-CALL-002'], reserved: true },
+    // ── Feature Véhicule Stationné ───────────────────────────────────────────
+    PARKED_REPORT:     { obd: 'PARKED_REPORT_SENT',    flow: 'FLOW-STATION',        invariants: ['INV-STATION-001'] },
+    PARKED_RESPONSE:   { obd: 'PARKED_RESPONSE_SENT',  flow: 'FLOW-STATION',        invariants: ['INV-STATION-001'] },
   };
 
   const nPlate = p => String(p||'').replace(/[\s-]/g,'').toUpperCase();

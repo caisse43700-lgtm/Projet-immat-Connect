@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
   <script src="core/invariants.js?v=45"></script>
-  <script src="core/bus.js?v=46"></script>
+  <script src="core/bus.js?v=47"></script>
   <script src="core/brain.js?v=45"></script>
   <script src="core/governance.js?v=45"></script>
   <script src="core/immatOrganism.js?v=46"></script>
@@ -1538,6 +1538,7 @@ App.stationReport=async function(type,photoUrl){
   if(window.ImmatMessages?.sendToPlate){
     try{await window.ImmatMessages.sendToPlate(plate,msg,opts);}catch(e){}
   }
+  try{if(window.ImmatBus)window.ImmatBus.emit('PARKED_REPORT_SENT',{target:plate,plate,report_type:type,hasPhoto:!!photoUrl,_src:'stationReport'});}catch(e){}
   // Pas d'alerte communautaire publique — la position reste privée dans le message
   this.sigBack?.();
   const _photoHint=photoUrl?' 📷':'';
@@ -2180,6 +2181,7 @@ App.actStationReply=async function(msgId,plate,key){
     if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
     try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   }
+  if(_sent)try{if(window.ImmatBus)window.ImmatBus.emit('PARKED_RESPONSE_SENT',{target:nPlate(plate||''),plate:nPlate(plate||''),key,_src:'actStationReply'});}catch(e){}
   toast(_sent?(key==='arrivant'?'🚗 Je viens vérifier envoyé !':'✅ Réponse envoyée !'):'❌ Envoi échoué, réessaie.',_sent?'ok':'bad');
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
@@ -2211,6 +2213,7 @@ App.actStationDismiss=function(msgId){
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   toast('Signalement ignoré ✓','ok');
+  try{if(window.ImmatBus)window.ImmatBus.emit('PARKED_REPORT_DISMISSED',{msgId:String(msgId),_src:'station'});}catch(e){}
   this.renderStationFeed?.('recus');this.updateActBadge?.();
 };
 App.actStationViewPhoto=function(url){
@@ -2233,6 +2236,7 @@ App.actStationRate=function(msgId,plate){
   try{localStorage.setItem('ic_station_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
   const pl=nPlate(plate||'');
   if(pl&&typeof trustDelta==='function')try{trustDelta(pl,8);}catch(e){}
+  try{if(window.ImmatBus)window.ImmatBus.emit('PARKED_REPORT_RATED',{plate:pl,msgId:String(msgId),_src:'station'});}catch(e){}
   toast('👍 Signalement utile — merci pour votre retour !','ok');
   this.renderStationFeed?.(S._actCatTab||'recus');
 };
@@ -3415,8 +3419,8 @@ function showReputationToast(){
 </script>
 
 
-<script src="core/interaction-engine.js?v=1"></script>
-<script src="core/guardian-loop.js?v=2"></script>
+<script src="core/interaction-engine.js?v=2"></script>
+<script src="core/guardian-loop.js?v=3"></script>
 <script src="calls.js?v=17"></script>
 <script src="core/call-screen.js?v=8"></script>
 <script src="core/audio-manager.js?v=3"></script>
@@ -3425,10 +3429,10 @@ function showReputationToast(){
 <script src="core/agora-call-engine.js?v=5"></script>
 <script src="core/calls-runtime-diagnostics.js?v=2"></script>
 <script src="core/guardian-summary-engine.js?v=1"></script>
-<script src="core/global-verification-center.js?v=2"></script>
+<script src="core/global-verification-center.js?v=3"></script>
 <script src="core/mobile-autotest.js?v=1"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=19"></script>
+<script src="messages.js?v=20"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=3"></script>
 <script src="ui.js?v=9"></script>
@@ -3617,6 +3621,7 @@ const AngeDialog={
       const _spdCat=_spd>90?'rapide':_spd>30?'normale':_spd>0?'lente':'arrêt';
       try{const _d=window.ImmatOrganism?.diagnose?.()||{};snapshot={health:_d.health,summary:_d.summary,violations:(_d.violations||[]).slice(0,3).map(v=>({invariant:v.invariant,severity:v.severity})),panel:S.panel||'GENERAL',speed_cat:_spdCat,driving:!!S.driveMode,hasRoute:!!S.routeDest,nearby:(S.nearby||[]).length,alerts:(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length};}catch(e){}
       try{const _cs=window.CallScreen?.getState?.();const _ar=window.AudioManager?.getRuntimeState?.();snapshot.call_mode=_cs?.mode||'idle';snapshot.audio_blocked=!!(_ar?.lastAudioBlocked);snapshot.sounds_enabled=window.S?.sounds!==false;}catch(e){}
+      try{snapshot.messages_unread=S.unreadMsgCount||0;snapshot.missed_calls=S._unseenMissedCalls||0;const _sr=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]').map(String));snapshot.station_pending=(S._actMessages||[]).filter(m=>m.context_type==='parked_report'&&m._received&&!_sr.has(String(m.id))).length;snapshot.station_responses=(S._actMessages||[]).filter(m=>m.context_type==='parked_response'&&m._received).length;}catch(e){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
@@ -3785,7 +3790,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v57';
+      var CURRENT = 'immatconnect-pro-v58';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
@@ -3863,7 +3868,7 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v57';
+  var CURRENT = 'immatconnect-pro-v58';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
