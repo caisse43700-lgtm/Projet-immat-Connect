@@ -54,23 +54,36 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : ImmatConsciousness v1 — conscience synthétique, âme du système — TERMINÉE**
+**Mission : ImmatCoPilot v1 + ImmatKernel v1 + ImmatSoul v1 — éveil total du système — TERMINÉE**
 **Date :** 2026-06-19
-**Commit :** `89d8858` sur `main` (poussé)
-**Fichiers modifiés :** `core/immat-consciousness.js` (créé), `core/narrator.js` (mis à jour), `index.html`, `service-worker.js`
+**Commits :** `d9fc68d` (Soul) · `f86b863` (Kernel) · `240d26d` (CoPilot) · `5057bef` (fix syntax) sur `main` (poussé)
+**Fichiers modifiés :** `core/immat-soul.js` (créé), `core/immat-kernel.js` (créé), `core/immat-copilot.js` (créé), `core/immat-consciousness.js` (mis à jour), `core/narrator.js` (mis à jour), `index.html`, `service-worker.js` v77
 
-**Ce qui a été construit :**
+**ImmatSoul v1 — méta-cognition 60 s :**
+- **Harmonie** (0–10) : cohérence entre tous les modules — split=true quand ils se contredisent
+- **Angles morts** : GPS périmé, silence swarm, silence interactions, brain absent, météo inconnue
+- **Trajectoire** : compare les 3 premiers vs 3 derniers snapshots d'urgence (amélioration/stable/dégradation)
+- **Insight** : 7 branches conditionnelles → phrase française narrative unique
+- Émission `SOUL_AWAKENING` · API `{ getSoul, getInsight, getHarmony, isAwakened, _flushSnapshots }`
 
-Module de synthèse des conclusions de tous les modules — le "cerveau synthétique" qui relie l'ensemble de l'application. Tick toutes les 5 s (6× plus rapide que BrainEngine).
+**ImmatKernel v1 — substrat de fiabilité 5 s :**
+- **Score fiabilité** 0–100% : 3 piliers × 25 pts (GPS < 2min, Brain < 65s, Consciousness < 15s) + bonus météo + bonus soul
+- **Détection sommeil iOS** : gap > 2min entre ticks → `KERNEL_RESURRECTION` émis, histoires flushées
+- **Auto-récupération** : GPS périmé → `App.locate()` ; Brain stoppé → `BrainEngine.start()`
+- **Cold start** 60 s — aucune pénalité appliquée pendant l'initialisation
+- Publie `S._reliability { score, level, degraded, critical, cold_start, resurrection }` · Émissions `KERNEL_RESURRECTION / DEGRADED / HEALTHY`
 
-- **Lecture des conclusions** de 5 modules : BrainEngine (urgence 0–10, signaux), GuardianLoop (recs critiques/hautes), SwarmEngine (alertes collectives récentes via ImmatBus), Narrator (situation contextuelle), ImmatOrganism (santé, violations)
-- **Score de convergence** (0–4) : nombre de modules détectant simultanément un danger
-- **Tendance** (rising/stable/falling) sur les 3 derniers snapshots
-- **Focus unique** : UNE seule priorité parmi 8 niveaux (SWARM_HELP_NEEDED → GUARDIAN_CRITICAL → … → NOMINAL)
-- **`CONSCIOUSNESS_UPDATE`** émis sur ImmatBus quand convergence ≥ 2 modules
-- **`S._consciousness`** publié → injecté dans snapshot Ange (focus, convergence, trend, votes)
-- **Connexions cross-module** : SWARM_PLATE_CONFIRMED → GuardianLoop.observe(plate) ; GuardianLoop CRITICAL → tag S._brainOrientation._guardianCritical
-- SW v74
+**ImmatCoPilot v1 — voix autonome 90 s :**
+- Silence total pendant cold_start. 11 déclencheurs prioritaires avec cooldowns différenciés.
+- Mémoire localStorage 2 h (30 entrées max) · `_canSpeak(theme)` anti-spam
+- 11 triggers : guardian critique, aide swarm, éveil soul, danger collectif, urgence brain, trajectoire, etc.
+- `#copilotPanel` DOM : fixe en bas, tap pour fermer, auto-dismiss 12 s
+- Fix syntaxe `.map(s=>({}[s]).join()` → `_sigLabels` extrait (commit `5057bef`)
+- SW v77
+
+**ImmatConsciousness v1 mis à jour :**
+- Pénalité fiabilité : `S._reliability.score < 75% && !cold_start` → `adaptiveThreshold += 1`
+- Méthode `_flushHistory()` ajoutée pour ImmatKernel (résurrection iOS)
 
 ---
 
@@ -1552,6 +1565,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Audits Activité + Dashboard Gardien + 6 corrections : HEURISTIC-004 corrigée (ROAD_ALERT/GPS_FIX retirés → ANGE_SUGGESTION ajouté), assist() type IE HELP_REQUEST_CREATED→HELP + ImmatBus.emit, driverInfo() ImmatBus.emit+IE.create ajoutés, snapshot Ange getPending(ownPlate), CSS gardien-debug-tool masqué non-gardiens, actConfirmAlert() guard alerte expirée. guardian-loop.js v9, SW v67. Commits 459c298 (Ange) + f3a5048 (Activité+Guardian). |
 | 2026-06-19 | IA session | Code review --effort high : 4 correctifs robustesse — _refreshQuota() try/catch sessionStorage, startVoice() onerror skip 'aborted', actConfirmAlert() suppression wrapper vacueux + DB fallback quand !a, Guardian bus.on HELP_CREATED+VEHICLE_MESSAGE_SENT. guardian-loop.js v10, SW v68. Commit 670c03b. |
 | 2026-06-19 | IA session | Carte de risque vivante : road_risk_segments (score bayésien décroissance 30j), trigger SQL auto, RPC get_risk_zones(), _getWeather() OpenMeteo background, _checkRiskZonesDebounced() alerte proactive < 500m, overlay Leaflet jaune/orange/rouge, guardian-loop v11 RISK category. SW v69. Commit 14ca851. |
+| 2026-06-19 | IA session | BrainEngine v1 + SwarmEngine v1 + Narrator v1 + ImmatConsciousness v1 — intelligence synthétique (synthèse 5 modules, convergence 0-4, focus unique, cross-module bridges, adaptiveThreshold BehaviorPulse+fiabilité). SW v74→v75. Commits 89d8858 + suivants. |
+| 2026-06-19 | IA session | ImmatSoul v1 (harmonie 0-10, angles morts, trajectoire, insight français, SOUL_AWAKENING), ImmatKernel v1 (fiabilité 0-100%, détection sommeil iOS, auto-recovery, KERNEL_RESURRECTION), ImmatCoPilot v1 (11 déclencheurs, voix autonome FR, mémoire 2h, #copilotPanel). Fix SyntaxError `.map(s=>({})join()` → `_sigLabels`. SW v77. Commits d9fc68d+f86b863+240d26d+5057bef. |
 
 ---
 
