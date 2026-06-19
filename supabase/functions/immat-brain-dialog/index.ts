@@ -394,33 +394,41 @@ Deno.serve(async (req) => {
         return Response.json({ ok: false, reason: 'gardien_only' }, { status: 403, headers: corsHeaders });
       }
       const diagDynamic = buildDynamicContext(snapshot, 'gardien_diagnostic', feature, 3, 'DEEP');
-      const diagMsg = `Tu es le cerveau de diagnostic de cette application. Tu viens de recevoir un rapport d'anomalies détectées en temps réel.
-Chaque anomalie décrit un écart entre le comportement ATTENDU (selon les Lois Fonctionnelles que tu connais) et le comportement OBSERVÉ.
-Analyse chaque anomalie, identifie la cause racine probable, et propose une action corrective concrète.
+      const hasPrevHistory = Array.isArray(body.history) && body.history.length > 0;
+      const diagMsg = `Tu es le cerveau de diagnostic de cette application.${hasPrevHistory ? '\nIMPORTANT : tu as un historique des cycles précédents dans la conversation. Utilise-le pour détecter les tendances (dégradation progressive, anomalie persistante, problème cyclique) et affiner ta cause racine.' : ''}
+Tu viens de recevoir un rapport d'anomalies détectées en temps réel.
+Chaque anomalie décrit un écart entre le comportement ATTENDU (Lois Fonctionnelles) et le comportement OBSERVÉ.
+Analyse chaque anomalie en tenant compte de l'évolution temporelle si tu as un historique.
 Réponds UNIQUEMENT en JSON :
 {
   "diagnostics": [
     {
-      "flux": "FLOW-xxx (nom du flux concerné)",
+      "flux": "FLOW-xxx",
       "anomalie": "description courte",
-      "cause_racine": "cause technique probable (max 60 mots)",
-      "action": "action corrective concrète pour le gardien (max 40 mots)",
-      "severite": 1-5
+      "cause_racine": "cause technique probable avec contexte temporel si pertinent (max 70 mots)",
+      "action": "action corrective concrète (max 40 mots)",
+      "severite": 1-5,
+      "tendance": "stable|aggravation|amélioration|nouveau"
     }
   ],
-  "synthese": "résumé global de l'état du système en 1 phrase (max 50 mots)",
-  "priorite_immediate": "l'anomalie la plus urgente à corriger (nom du flux + action)"
+  "synthese": "résumé global avec évolution temporelle si applicable (max 60 mots)",
+  "priorite_immediate": "flux + action la plus urgente"
 }`;
       let diagRaw = '';
       try {
+        // Construire les messages avec l'historique temporel des cycles précédents
+        const diagMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+          ...(history as Array<{ role: 'user' | 'assistant'; content: string }>),
+          { role: 'user', content: diagMsg },
+        ];
         const diagComp = await anthropic.messages.create({
           model: CLAUDE_MODEL,
-          max_tokens: 600,
+          max_tokens: 700,
           system: [
             { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
             { type: 'text', text: diagDynamic },
           ],
-          messages: [{ role: 'user', content: diagMsg }],
+          messages: diagMessages,
         });
         diagRaw = diagComp.content[0]?.type === 'text' ? diagComp.content[0].text : '';
       } catch {

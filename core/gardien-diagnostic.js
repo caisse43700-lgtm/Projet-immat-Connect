@@ -271,6 +271,35 @@ window.GardienDiagnostic = (function () {
     _render(result);
   }
 
+  // ── Mémoire temporelle — historique des cycles pour Ange ──────────────────
+  // Convertit les N derniers cycles en paires user/assistant pour Ange.
+  // Ange peut ainsi raisonner sur les tendances et l'évolution dans le temps.
+  function _buildDiagHistory(maxCycles = 4) {
+    try {
+      const now = Date.now();
+      const list = JSON.parse(localStorage.getItem(_STORAGE_KEY) || '[]')
+        .filter(e => now - e.ts < _MAX_AGE_MS && e.from !== 'local') // uniquement les cycles avec anomalies
+        .slice(-maxCycles);
+      if (!list.length) return [];
+
+      const history = [];
+      for (const cycle of list) {
+        const age = Math.round((now - cycle.ts) / 1000);
+        const userMsg = `[Cycle il y a ${age}s] ${cycle.diagnostics?.length ?? 0} anomalie(s) détectée(s).`;
+        const assistantMsg = JSON.stringify({
+          synthese: cycle.synthese || '',
+          diagnostics: (cycle.diagnostics || []).map(d => ({
+            flux: d.flux, anomalie: d.anomalie, severite: d.severite,
+          })),
+          priorite_immediate: cycle.priorite_immediate || null,
+        });
+        history.push({ role: 'user', content: userMsg });
+        history.push({ role: 'assistant', content: assistantMsg });
+      }
+      return history;
+    } catch (_) { return []; }
+  }
+
   // ── Cycle diagnostic ───────────────────────────────────────────────────────
   async function _diagnose() {
     if (!window.S?.isGardien) return;
@@ -289,9 +318,12 @@ window.GardienDiagnostic = (function () {
     // Enregistrer la récurrence pour les anomalies détectées
     for (const a of anomalies) if (a.flux && a.flux !== 'MULTI-FLUX') _recordRecurrence(a.flux);
 
+    // Construire la mémoire temporelle (4 cycles précédents)
+    const diagHistory = _buildDiagHistory(4);
+
     try {
       const res = await window.sb.functions.invoke('immat-brain-dialog', {
-        body: { message: '__gardien_diagnostic__', mode: 'gardien_diagnostic', feature: 'GARDIEN', snapshot: { ...snap, anomalies_detectees: anomalies }, history: [] },
+        body: { message: '__gardien_diagnostic__', mode: 'gardien_diagnostic', feature: 'GARDIEN', snapshot: { ...snap, anomalies_detectees: anomalies }, history: diagHistory },
       });
       const d = res?.data;
       if (d?.ok && Array.isArray(d.diagnostics)) {
@@ -354,8 +386,9 @@ window.GardienDiagnostic = (function () {
 
     for (const d of (result.diagnostics || [])) {
       const sc = d.severite >= 4 ? '#f87171' : d.severite >= 3 ? '#fb923c' : d.severite >= 2 ? '#facc15' : '#4ade80';
+      const tendanceIcon = d.tendance === 'aggravation' ? '📈' : d.tendance === 'amélioration' ? '📉' : d.tendance === 'nouveau' ? '🆕' : '';
       html += `<div style="padding:7px;background:#0f172a;border-radius:6px;border-left:2px solid ${sc};margin-bottom:5px">
-        <div style="font-size:10px;color:${sc};font-weight:700">${_esc(d.flux)} · Sév.${d.severite}</div>
+        <div style="font-size:10px;color:${sc};font-weight:700">${_esc(d.flux)} · Sév.${d.severite}${tendanceIcon ? ' · ' + tendanceIcon + ' ' + _esc(d.tendance) : ''}</div>
         <div style="font-size:11px;color:#cbd5e1">🔍 ${_esc(d.anomalie)}</div>
         <div style="font-size:11px;color:#94a3b8">💡 ${_esc(d.cause_racine||'')}</div>
         <div style="font-size:11px;color:#7c3aed">→ ${_esc(d.action||'')}</div>
