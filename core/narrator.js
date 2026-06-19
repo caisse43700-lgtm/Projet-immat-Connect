@@ -36,11 +36,16 @@ const Narrator = (function () {
     'GPS_LOCATED',
     'ANGE_MESSAGE_SENT', 'ANGE_RESPONSE_RECEIVED',
     'OBD_FINDING_CREATED',
+    // Intelligence collective — SwarmEngine
+    'SWARM_HELP_NEARBY', 'SWARM_PLATE_CONFIRMED',
+    'SWARM_PARKING_CONFIRMED', 'SWARM_ROUTE_DANGER',
   ]);
 
   // Événements déclenchant une bulle proactive
   const WHISPER_EVENTS = new Set([
     'RISK_ZONE_APPROACHED', 'BRAIN_PREDICTION', 'GUARDIAN_RECOMMENDATION_CREATED',
+    // Swarm : seul le stationnement reçoit un whisper (les autres ont déjà un toast)
+    'SWARM_PARKING_CONFIRMED',
   ]);
 
   let _lastWhisperAt = 0;
@@ -114,6 +119,15 @@ const Narrator = (function () {
       case 'ANGE_MESSAGE_SENT':    return `Question posée à Ange`;
       case 'ANGE_RESPONSE_RECEIVED': return `Réponse Ange reçue`;
       case 'OBD_FINDING_CREATED':  return `Diagnostic: ${p?.finding||'?'}`;
+      // Intelligence collective
+      case 'SWARM_HELP_NEARBY':
+        return `🆘 Intelligence collective: ${p?.count||1} conducteur(s) proche(s) en difficulté (à ${p?.nearest_km ? (p.nearest_km < 1 ? Math.round(p.nearest_km*1000)+'m' : p.nearest_km.toFixed(1)+'km') : '?'})`;
+      case 'SWARM_PLATE_CONFIRMED':
+        return `🚨 Plaque(s) confirmée(s) collectivement: ${(p?.plates||[]).map(x=>x.plate+' ×'+x.count).join(', ')}`;
+      case 'SWARM_PARKING_CONFIRMED':
+        return `🅿️ Obstruction confirmée collectivement: ${p?.count||2} signalements dans la zone`;
+      case 'SWARM_ROUTE_DANGER':
+        return `⚠️ Danger route collectif: ${p?.count||3} conducteurs (urgence moy. ${p?.avg_urgency||'?'}/10)`;
       default: return ev;
     }
   }
@@ -215,6 +229,9 @@ const Narrator = (function () {
     if (ev === 'GUARDIAN_RECOMMENDATION_CREATED') {
       const sev = p?.severity;
       if (sev === 'CRITICAL' || sev === 'HIGH') return (p?.message || 'Alerte Guardian').slice(0, 80);
+    }
+    if (ev === 'SWARM_PARKING_CONFIRMED') {
+      return `🅿️ ${p?.count||2} conducteurs signalent une obstruction à proximité.`;
     }
     return null;
   }
