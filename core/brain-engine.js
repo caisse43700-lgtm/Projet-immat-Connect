@@ -9,16 +9,21 @@ window.__BrainEngineV1 = true;
 
 const BrainEngine = (function () {
 
-  const TICK_MS      = 30_000;
-  const SILENCE_WARN = 5 * 60_000;   // 5 min sans événement bus = silence suspect
+  const TICK_MS            = 30_000;
+  const SILENCE_WARN       = 5 * 60_000;   // 5 min sans événement bus = silence suspect
+  const ALERT_COOLDOWN     = 5 * 60_000;   // cooldown entre deux alertes haute urgence
+  const PREDICT_COOLDOWN   = 10 * 60_000;  // cooldown entre deux avertissements prédictifs
 
-  let _timer   = null;
-  let _running = false;
-  let _prevState  = null;
-  let _state      = null;
-  let _orientation = null;
-  let _predictions = [];
-  let _tickCount  = 0;
+  let _timer              = null;
+  let _running            = false;
+  let _prevState          = null;
+  let _state              = null;
+  let _orientation        = null;
+  let _predictions        = [];
+  let _tickCount          = 0;
+  let _firstTickDone      = false;          // skip alertes au 1er tick (boot)
+  let _lastHighUrgencyAt  = 0;             // horodatage dernière alerte haute urgence
+  let _lastPredictWarnAt  = 0;             // horodatage dernier avertissement prédictif
 
   // ── 1. OBSERVE ────────────────────────────────────────────────────────────────
   function _observe() {
@@ -29,41 +34,38 @@ const BrainEngine = (function () {
 
     const lat  = S.myLat  ?? null;
     const lng  = S.myLng  ?? null;
-    const gpsAge = S._lastLocateAt ? now - S._lastLocateAt : null;
+    // S.myGpsAt est mis à jour par locate() dans index.html
+    const gpsAge = S.myGpsAt ? now - S.myGpsAt : null;
 
-    // Vitesse estimée — déplacée de S._lastSpeed si disponible, sinon null
     const speed = S._lastSpeed ?? null;
-
     const isDriving = speed != null ? speed > 8 : (gpsAge != null && gpsAge < 120_000 && S._locateCount > 1);
 
     const isNight    = hour < 6 || hour >= 21;
     const isRushHour = (hour >= 7 && hour <= 9) || (hour >= 17 && hour <= 19);
 
-    const weather = S._weatherCache?.condition ?? null;
+    const weather    = S._weatherCache?.condition ?? null;
     const badWeather = weather === 'storm' || weather === 'showers' || weather === 'fog' || weather === 'snow';
 
-    const riskZones   = Array.isArray(S.riskZones)   ? S.riskZones   : [];
-    const alerts      = Array.isArray(S.alerts)       ? S.alerts.filter(a => a.status !== 'resolved' && a.status !== 'gone') : [];
-    const nearbyCount = Array.isArray(S.nearby)       ? S.nearby.length : 0;
+    const riskZones   = Array.isArray(S.riskZones) ? S.riskZones : [];
+    const alerts      = Array.isArray(S.alerts)
+      ? S.alerts.filter(a => a.status !== 'resolved' && a.status !== 'gone')
+      : [];
+    const nearbyCount = Array.isArray(S.nearby) ? S.nearby.length : 0;
 
     // Silence bus = temps depuis dernier événement
     let silenceSince = null;
     try {
       const journal = window.ImmatBus?.getJournal?.() || [];
-      if (journal.length) {
-        const last = journal[journal.length - 1];
-        silenceSince = now - last.at;
-      }
+      if (journal.length) silenceSince = now - journal[journal.length - 1].at;
     } catch (_) {}
 
-    // Zone à risque la plus proche (< 3 km)
+    // Zone à risque la plus proche
     let nearestRisk = null;
     if (lat != null && lng != null && riskZones.length) {
       for (const z of riskZones) {
+        if (z.lat == null || z.lng == null) continue; // données mal formées
         const d = _km(lat, lng, z.lat, z.lng);
-        if (!nearestRisk || d < nearestRisk.dist) {
-          nearestRisk = { ...z, dist: d };
-        }
+        if (!nearestRisk || d < nearestRisk.dist) nearestRisk = { ...z, dist: d };
       }
     }
 
@@ -117,9 +119,7 @@ const BrainEngine = (function () {
     return {
       signals,
       urgency: Math.min(10, urgency),
-      summary: signals.length
-        ? signals.join(' + ')
-        : 'Situation nominale',
+      summary: signals.length ? signals.join(' + ') : 'Situation nominale',
     };
   }
 
@@ -127,7 +127,6 @@ const BrainEngine = (function () {
   function _predict(st, or_) {
     const preds = [];
 
-    // Incident probable : zone à risque + mauvais temps + conduite
     if (or_.signals.includes('RISK_ZONE_NEAR') && st.badWeather && st.isDriving) {
       preds.push({
         type: 'INCIDENT_PROBABLE',
@@ -135,17 +134,13 @@ const BrainEngine = (function () {
         reason: 'Zone à risque + météo dégradée + conduite active',
       });
     }
-
-    // Arrêt inattendu : conduite + silence bus prolongé (possible panne/accident)
     if (st.isDriving && or_.signals.includes('DRIVING_SILENCE')) {
       preds.push({
         type: 'UNEXPECTED_STOP',
         confidence: 0.60,
-        reason: 'Conduite active sans activité réseau depuis ' + Math.round((st.silenceSince||0) / 60_000) + ' min',
+        reason: 'Conduite active sans activité réseau depuis ' + Math.round((st.silenceSince || 0) / 60_000) + ' min',
       });
     }
-
-    // Conducteur isolé : nuit, pas de véhicules proches, conduite
     if (or_.signals.includes('ISOLATED_DRIVER') && st.isNight) {
       preds.push({
         type: 'ISOLATED_DRIVER',
@@ -171,13 +166,15 @@ const BrainEngine = (function () {
 
   // ── 5. ACT ────────────────────────────────────────────────────────────────────
   function _act(decision, st, or_, preds) {
-    // Toujours émettre le tick pour que les modules puissent lire l'état
+    const now = Date.now();
+
+    // Toujours émettre le tick (bus interne — pas d'impact utilisateur)
     try {
       window.ImmatBus?.emit?.('BRAIN_TICK', {
-        urgency:   or_.urgency,
-        signals:   or_.signals,
-        action:    decision.action,
-        _src:      'BrainEngine/tick',
+        urgency: or_.urgency,
+        signals: or_.signals,
+        action:  decision.action,
+        _src:    'BrainEngine/tick',
       });
     } catch (_) {}
 
@@ -186,16 +183,24 @@ const BrainEngine = (function () {
       try { window.App.locate(); } catch (_) {}
     }
 
-    if (decision.action === 'ALERT_HIGH_URGENCY') {
-      const msg = _buildUrgencyMessage(or_.signals, st);
-      try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (_) {}
-      try { if (typeof speak === 'function' && window.S?.voice) speak(msg, true); } catch (_) {}
+    // Alerte haute urgence — cooldown 5 min + skip 1er tick (état GPS pas encore stable)
+    if (decision.action === 'ALERT_HIGH_URGENCY' && _firstTickDone) {
+      if (now - _lastHighUrgencyAt >= ALERT_COOLDOWN) {
+        _lastHighUrgencyAt = now;
+        const msg = _buildUrgencyMessage(or_.signals, st);
+        try { if (typeof toast === 'function') toast(msg, 'bad'); } catch (_) {}
+        try { if (typeof speak === 'function' && window.S?.voice) speak(msg, true); } catch (_) {}
+      }
     }
 
+    // Avertissement prédictif — cooldown 10 min
     if (decision.action === 'PREDICTIVE_WARNING') {
       const pred = decision.prediction;
-      const msg  = _predictionMessage(pred);
-      try { if (typeof toast === 'function') toast('🧠 ' + msg, 'warn'); } catch (_) {}
+      if (now - _lastPredictWarnAt >= PREDICT_COOLDOWN) {
+        _lastPredictWarnAt = now;
+        const msg = _predictionMessage(pred);
+        try { if (typeof toast === 'function') toast('🧠 ' + msg, 'warn'); } catch (_) {}
+      }
       try {
         window.ImmatBus?.emit?.('BRAIN_PREDICTION', {
           type:       pred.type,
@@ -206,18 +211,15 @@ const BrainEngine = (function () {
       } catch (_) {}
     }
 
-    if (decision.action === 'GUARDIAN_SYNC') {
-      // Sync silencieux vers GuardianLoop si urgence > 0
-      if (or_.urgency > 0) {
-        try {
-          window.GuardianLoop?._trigger?.({
-            type:    'BRAIN_CONTEXT',
-            signals: or_.signals,
-            urgency: or_.urgency,
-            _src:    'BrainEngine/guardianSync',
-          });
-        } catch (_) {}
-      }
+    if (decision.action === 'GUARDIAN_SYNC' && or_.urgency > 0) {
+      try {
+        window.GuardianLoop?._trigger?.({
+          type:    'BRAIN_CONTEXT',
+          signals: or_.signals,
+          urgency: or_.urgency,
+          _src:    'BrainEngine/guardianSync',
+        });
+      } catch (_) {}
     }
   }
 
@@ -226,12 +228,8 @@ const BrainEngine = (function () {
     if (signals.includes('HIGH_RISK_CONTEXT') && signals.includes('NIGHT_WEATHER_DRIVING')) {
       return '⚠️ Attention : zone à risque élevé, conditions météo dégradées, conduite nocturne.';
     }
-    if (signals.includes('RISK_ZONE_NEAR')) {
-      return '⚠️ Zone à risque dans votre trajectoire.';
-    }
-    if (signals.includes('DRIVING_SILENCE')) {
-      return '⚠️ Aucune activité depuis plusieurs minutes — tout va bien ?';
-    }
+    if (signals.includes('RISK_ZONE_NEAR')) return '⚠️ Zone à risque dans votre trajectoire.';
+    if (signals.includes('DRIVING_SILENCE')) return '⚠️ Aucune activité depuis plusieurs minutes — tout va bien ?';
     return '⚠️ Situation à risque détectée (' + signals.join(', ') + ').';
   }
 
@@ -243,7 +241,7 @@ const BrainEngine = (function () {
   }
 
   // ── Détection de changement significatif ─────────────────────────────────────
-  function _significant(prev, curr, or_) {
+  function _significant(prev, or_) {
     if (!prev) return true;
     if (or_.urgency >= 5) return true;
     if (or_.urgency !== (prev._urgency || 0)) return true;
@@ -254,12 +252,11 @@ const BrainEngine = (function () {
   function _tick() {
     try {
       _tickCount++;
-      const st   = _observe();
-      const or_  = _orient(st);
+      const st    = _observe();
+      const or_   = _orient(st);
       const preds = _predict(st, or_);
-      const dec  = _decide(st, or_, preds);
+      const dec   = _decide(st, or_, preds);
 
-      // Publie sur S pour Ange et dashboard
       if (window.S) {
         window.S._brainState       = st;
         window.S._brainOrientation = or_;
@@ -269,13 +266,13 @@ const BrainEngine = (function () {
       _orientation = or_;
       _predictions = preds;
 
-      if (_significant(_prevState, st, or_)) {
+      if (_significant(_prevState, or_)) {
         _act(dec, st, or_, preds);
       }
 
-      _prevState = { ...st, _urgency: or_.urgency };
+      _prevState     = { ...st, _urgency: or_.urgency };
+      _firstTickDone = true;
     } catch (e) {
-      // Ne jamais laisser le moteur s'éteindre sur une erreur
       try { window.ImmatBus?.emit?.('INVARIANT_WARNING', { inv: 'BRAIN-001', msg: e?.message, _src: 'BrainEngine' }); } catch (_) {}
     }
   }
