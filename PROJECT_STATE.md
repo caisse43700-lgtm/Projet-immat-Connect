@@ -54,6 +54,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audits Activité + Dashboard Gardien — 6 corrections post-audit — TERMINÉE**
+**Date :** 2026-06-19
+**Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/guardian-loop.js`
+
+**Corrections appliquées :**
+
+1. **CRITIQUE — HEURISTIC-004 incohérente** (`guardian-loop.js` v9) — `ROAD_ALERT` et `GPS_FIX` retirés des interactions positives de confiance : ils ont leurs propres heuristiques (008/009) et ne représentent pas des interactions inter-utilisateurs. Remplacés par `ANGE_SUGGESTION` (question posée à l'IA = acte réfléchi positif). Seuil inchangé (5).
+
+2. **CRITIQUE — assist() type IE erroné** (`index.html`) — `IE.create({type:'HELP_REQUEST_CREATED',...})` utilisait un type absent de TYPE_META → aucun OBD émis, aucune journalisation. Corrigé en `type:'HELP'` (TYPE_META → obd:'HELP_CREATED'). + `ImmatBus.emit('HELP_CREATED',...)` ajouté — Guardian Loop reçoit maintenant l'événement.
+
+3. **HAUTE — driverInfo() sans ImmatBus ni IE** (`index.html`) — Broadcast "Information conducteurs" (signalements véhicule généraux) n'émettait ni ImmatBus ni IE.create → Guardian heuristique HEURISTIC-007 ne déclenchait jamais pour cette action. Fix : `ImmatBus.emit('VEHICLE_MESSAGE_SENT',...)` + `IE.create({type:'VEHICLE_ALERT',...})` ajoutés après l'ImmatOrganism.observe existant.
+
+4. **CRITIQUE — snapshot Ange getPending() sans plaque** (`index.html`) — `GuardianLoop.getPending()` (ligne ~3768) retournait les recommandations de TOUTES les plaques observées → fuite potentielle de données d'autres conducteurs dans le contexte IA. Corrigé : `getPending(S.profile?.owner_plate||'')`.
+
+5. **MOYENNE — Dashboard Gardien visible pour tous** (`index.html` CSS) — `.gardien-debug-tool{display:inline-flex}` affichait le bouton Dashboard et "Sync alertes" à tous les utilisateurs. Corrigé : `.gardien-debug-tool{display:none}` + `body.is-gardien .gardien-debug-tool{display:inline-flex}` — visible uniquement si le rôle gardien est confirmé.
+
+6. **MOYENNE — actConfirmAlert() silencieux si alerte expirée** (`index.html`) — Si l'alerte avait expiré ou été clôturée entre-temps, `S.alerts.find()` retournait `undefined` → `if(a)` skipé silencieusement, aucun feedback. Fix : guard explicite `if(!a)` avec toast "Cette alerte a déjà été clôturée." + return anticipé.
+
+SW v67 — guardian-loop.js?v=9.
+
+---
+
 **Mission : Audit Ange (conseiller IA) — 5 corrections post-audit — TERMINÉE**
 **Date :** 2026-06-19
 **Commit :** (en cours — à pusher sur `claude/immatconnect-pro-app-dEKGR`)
@@ -1419,6 +1442,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Audit GPS complet + 10 corrections Bus→IE→Guardian→GVC→Ange : IE v6 GPS_FIX+GPS_STARTED, guardian-loop v8 HEURISTIC-009 GPS, GVC v8 checkGPS() 9 items, mobile-autotest v3 gpsAutotest(), locate() GPS_FIX IE+Bus+S.myAccuracy+S.myGpsAt, zIndexOffset 0→1000, jitter anti-stacking alertes, snapshot Ange gps_active/invisible/radius_km/gps_accuracy/gps_age_sec. SW v64→v65. Commit 24e6e88. |
 | 2026-06-19 | IA session | Audit nav avancée + 7 corrections : AbortController searchGps (race condition), voiceGps timeout 8s, OSRM timeout 8s, N1 étapes épuisées auto-recalcul, N2 vocal recalcul, N3 autoFollow après recalcul, V1 slider vitesse de parole 0.5x→1.4x. SW v65→v66. Commit 1281c60. |
 | 2026-06-19 | IA session | Audit Ange (conseiller IA) + 5 corrections : S.panel mis à jour dans App.panel() (CRITIQUE), ANGE_SUGGESTION dans TYPE_META IE v7 (HAUTE), startVoice() timeout 8s (HAUTE), #angeQuota indicateur quota restant (MOYENNE), scroll-to-bottom renderResponse() + Escape listener (BASSE). SW v66. |
+| 2026-06-19 | IA session | Audits Activité + Dashboard Gardien + 6 corrections : HEURISTIC-004 corrigée (ROAD_ALERT/GPS_FIX retirés → ANGE_SUGGESTION ajouté), assist() type IE HELP_REQUEST_CREATED→HELP + ImmatBus.emit, driverInfo() ImmatBus.emit+IE.create ajoutés, snapshot Ange getPending(ownPlate), CSS gardien-debug-tool masqué non-gardiens, actConfirmAlert() guard alerte expirée. guardian-loop.js v9, SW v67. |
 
 ---
 

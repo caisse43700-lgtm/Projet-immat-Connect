@@ -331,8 +331,10 @@ const GuardianLoop = (function () {
     }
 
     // HEURISTIC-004 — Interactions positives → confiance (INV-COM-018)
+    // ROAD_ALERT et GPS_FIX exclus : ils ont leurs propres heuristiques (008/009)
+    // et ne représentent pas des interactions inter-utilisateurs
     const positive = interactions.filter(i =>
-      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED', 'ROAD_ALERT', 'GPS_FIX'].includes(i.type)
+      ['THANKS', 'MESSAGE', 'HELP', 'CONTACT_ACCEPTED', 'PARKED_RESPONSE', 'HELP_RESPONSE', 'VEHICLE_ALERT', 'VEHICLE_RESPONSE', 'CALL_ACCEPTED', 'ANGE_SUGGESTION'].includes(i.type)
     );
     if (positive.length >= HEURISTICS.TRUST_THRESHOLD && !existingHeuristics.includes('HEURISTIC-004')) {
       const sample = positive.slice(0, 5);
