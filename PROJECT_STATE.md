@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-19
 Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit dea7ac1 (poussé)
+Branche production     : main (GitHub Pages) — commit 9683a17 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -780,7 +780,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — sessions Véhicule audit + fix SW update poussées.
+Aucune — sessions Messages/Téléphone audit + corrections OBD/registre/Ange poussées.
 
 ---
 
@@ -1306,6 +1306,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Amélioration complète Aide : 8 corrections (3 bugs _actModCard, doublon actHelpReply, floating card signature, warning incendie, cleanupAlerts alternatives, sigAideNearbySection HTML, snapshot Ange aide_pending/helper_coming/nearby) + intégration Bus→IE→Guardian→GVC→Ange (bus.js v48, interaction-engine.js v3, guardian-loop.js v4, global-verification-center.js v4, SW v59). |
 | 2026-06-19 | IA session | Audit complet Véhicule + intégration architecturale Bus→IE→Guardian→GVC→Ange : bus.js v49 (3 events), interaction-engine.js v4 (VEHICLE_RESPONSE TYPE_META), guardian-loop.js v5 (HEURISTIC-007 + category VEHICLE), global-verification-center.js v5 (section checkVehicle), messages.js v21 (Bus emits + types IE + push notifications véhicule), index.html (actVehicleReply+actVmRate corrigés, vmResponseUnread dans bVehicle, vehicle_response exclu nav badge, Envoyés redesigné, snapshot Ange vehicle_pending/vehicle_responses). SW v60. Commit 86295a8. |
 | 2026-06-19 | IA session | Fix SW update bloqué sur iOS : `{updateViaCache:'none'}` sur les 2 appels `register()` (principal + registerServiceWorker) — contourne le cache HTTP Safari qui servait l'ancien service-worker.js après Force MAJ. `location.replace(?r=timestamp)` dans controllerchange à la place de `reload()` — contourne aussi le cache HTTP sur la page HTML elle-même. Commit dea7ac1. |
+| 2026-06-19 | IA session | Audit Messages+Téléphone Bus→IE→Guardian→GVC→Ange : bus.js v50 (MESSAGE_SENT/RECEIVED), messages.js v22 (emits Bus pour messages simples), guardian-loop.js v6 (CALL+MESSAGE categories, CALL_ACCEPTED dans HEURISTIC-004 fix subscription morte, MESSAGE_SENT/RECEIVED subscriptions), global-verification-center.js v6 (checkMessages live counts, checkCalls live counts), index.html (snapshot Ange +messages_threads, +call_realtime_ok, +call_pending_out). SW v61. Commit 789907e. |
+| 2026-06-19 | IA session | Fix registre IE + analytics appels + Guardian→Ange : interaction-engine.js v5 (CALL_RECEIVED dans TYPE_META, total_calls compte tous les états), calls.js v18 (IE.create CALL_RECEIVED dans _showIncomingPopup), snapshot Ange +guardian_pending +guardian_alerts. SW v62. Commit 9683a17. |
 
 ---
 
