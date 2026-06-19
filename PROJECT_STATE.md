@@ -10,9 +10,9 @@
 
 ```
 Date de mise à jour    : 2026-06-19
-Avancement             : ~48% du plan fonctionnel implémenté — EN PRODUCTION
+Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 2790ff7 (en attente push "Fusionner")
+Branche production     : main (GitHub Pages) — commit b30a905 (en attente push "Fusionner")
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -53,6 +53,31 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 ---
 
 ## 2. DERNIÈRE MISSION TERMINÉE
+
+**Mission : Intégration architecturale complète (Bus→IE→Guardian→GVC→Ange) + corrections Audio/SW — TERMINÉE**
+**Date :** 2026-06-19
+**Commits :** `222f627`, `8cbec7e`, `a609bd2`, `3bcbe16`, `b30a905` sur `main` (en attente push "Fusionner")
+**Fichiers modifiés :** `index.html`, `service-worker.js`, `core/audio-manager.js`, `core/bus.js`, `core/interaction-engine.js`, `core/guardian-loop.js`, `core/global-verification-center.js`, `messages.js`
+
+**Corrections et intégrations appliquées :**
+
+1. **Fix bannière SW en boucle** (`index.html`) — `CURRENT = 'immatconnect-pro-v53'` alors que le SW actif était v56 → bannière "Version disponible" réapparaissait à chaque rechargement. Mis à jour v53→v56→v57→v58 pour correspondre au SW actif.
+
+2. **AudioContext `suspended` fausse alarme critique** (`core/global-verification-center.js`) — Le Dashboard Gardien affichait Audio comme CRITIQUE avec "Contexte audio non running (suspended)". Sur iOS, `suspended` est l'état **normal** avant le premier tap utilisateur. Fix : `ctxState === 'running' || ctxState === 'suspended'` → état OK.
+
+3. **AudioManager.init() jamais appelé** (`core/audio-manager.js`, `index.html`) — Les listeners `click`/`touchstart` pour reprendre l'AudioContext étaient enregistrés dans `init()`, mais cette méthode n'était jamais invoquée → l'AudioContext restait suspendu même après interaction. Fix : guard `_initialized` dans `init()` + appel `AudioManager.init()` dans `openMap()`.
+
+4. **4 bugs audit Station** (`index.html`, `service-worker.js`) — Toast erreur affiché en vert (fix `_sent ? 'ok' : 'bad'`), plaque non effacée après envoi (fix `_sigReset()`), badge quick-reply manquant (ajout `updateActBadge()`), URLs SW STATIC_CACHE sans `?v=` (ajout params correspondants). SW v57→v58.
+
+5. **Intégration architecturale complète Station** — Chaîne Bus→IE→Guardian→GVC→Ange entièrement câblée pour la fonctionnalité Stationné :
+   - `core/bus.js` v47 : 4 nouveaux EVENTS (`PARKED_REPORT_SENT`, `PARKED_RESPONSE_SENT`, `PARKED_REPORT_DISMISSED`, `PARKED_REPORT_RATED`)
+   - `core/interaction-engine.js` v2 : TYPE_META `PARKED_REPORT` et `PARKED_RESPONSE` (flow FLOW-STATION, invariant INV-STATION-001)
+   - `core/guardian-loop.js` v3 : CATEGORY STATION, HEURISTIC-005 (seuil 1 signalement → recommandation gardien), PARKED_RESPONSE dans les interactions positives HEURISTIC-004, `_plate()` lit le champ `target`
+   - `core/global-verification-center.js` v3 : section 6 `checkStation()` (messages reçus non lus, réponses envoyées, quota rapports)
+   - `index.html` : Bus emits dans `stationReport()`, `actStationReply()`, `actStationDismiss()`, `actStationRate()` ; snapshot Ange enrichi (`messages_unread`, `missed_calls`, `station_pending`, `station_responses`)
+   - `messages.js` v20 : types IE `PARKED_REPORT`/`PARKED_RESPONSE` dans `sendToPlate()` et handler realtime ; Bus emits dans `sendToPlate()` pour les quick-replies (chemin qui contourne `actStationReply()`)
+
+---
 
 **Mission : Audit final stationné — 5 corrections post-déploiement — TERMINÉE**
 **Date :** 2026-06-19
@@ -731,7 +756,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — "Véhicule stationné dans Activité" terminée, en attente de "Fusionner".
+Aucune — intégration architecturale terminée, en attente de "Fusionner".
 
 ---
 
@@ -967,7 +992,7 @@ Supabase URL      : https://vemgdkkbldgyvaisudkd.supabase.co
 Anon key          : sb_publishable_4MiqXFtJgg20xm4KaxE_2Q_IsMdI6gJ  (publishable — OK dans le client)
 Agora App ID      : 4771f029e9c6446e872a598870bb74f3  (public par conception — OK dans le client)
 Agora Certificate : dans secrets Supabase → AGORA_APP_CERTIFICATE  (jamais dans le code)
-SW version actif  : immatconnect-pro-v41
+SW version actif  : immatconnect-pro-v58
 ```
 
 ### Edge Functions déployées sur Supabase
@@ -1048,13 +1073,16 @@ _terminalRequestIds   (dans AgoraCallEngine + CallScreen — en mémoire, pas lo
 ### Versions actuelles des fichiers principaux
 
 ```
-calls.js              : v18+ (device_id + call rate limit ic_call_times)
+calls.js              : v17 (device_id + call rate limit ic_call_times)
 core/call-screen.js   : v8
 core/agora-call-engine.js : v5
-core/audio-manager.js : v7
-core/interaction-engine.js : v2  (_emitObd guard CALL_*)
-messages.js           : v17+ (relTime, aria-label ic-delete-msg)
-service-worker.js     : immatconnect-pro-v25
+core/audio-manager.js : v3  (init() guard _initialized, appelé dans openMap())
+core/bus.js           : v47 (PARKED_REPORT_SENT, PARKED_RESPONSE_SENT, PARKED_REPORT_DISMISSED, PARKED_REPORT_RATED)
+core/interaction-engine.js : v2  (TYPE_META PARKED_REPORT, PARKED_RESPONSE)
+core/guardian-loop.js : v3  (CATEGORY STATION, HEURISTIC-005, _plate() target)
+core/global-verification-center.js : v3  (section 6 checkStation())
+messages.js           : v20 (Bus emits parked, IE types parked, suppressToast, Bus quick-reply path)
+service-worker.js     : immatconnect-pro-v58
 app.css               : v9  (map-alert-filter-bar + map-filter-pill + cluster-icon)
 APP_BUILD             : 2026-06-15
 manifest.json         : shortcuts (Signaler/Carte/Appels), categories, apple-touch-icon
@@ -1246,6 +1274,11 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-18 | IA session | Véhicule stationné dans Activité — 4e catégorie 🅿️ : `stationReport(type)` complet, `renderStationFeed` (Reçus/Envoyés), `actStationReply`/`actStationRate`, floating card parked_report/parked_response, CSS teal, grille 2×2, SW v53. Commits `b6ee30b` + `96a8203` sur main. |
 | 2026-06-18 | IA session | GPS privé stationné : `[GPS:lat,lng]` embarqué dans le corps du message (non visible à l'affichage), `actStationShowOnMap` ouvre la carte avec marqueur Leaflet privé visible uniquement par le propriétaire. `_parseGps()` helper. SW v54. Commit `e682c82` sur branche dev — en attente "Fusionner". |
 | 2026-06-18 | IA session | Photo véhicule stationné — feature complète : flux 2 étapes (type → photo → envoi), compression Canvas max 1024px JPEG 0.82, upload Supabase Storage bucket `parked-photos` (UUID path), `image_url` dans payload messages.js, thumbnail 160px dans Reçus/Traités/Envoyés, lightbox plein écran `actStationViewPhoto`, migration SQL (`image_url` + bucket + RLS), push titre 🅿️ adapté, SW v55. 177 tests ✅ + 3 diagnostics ✅. Commit `b824af1` sur branche dev — en attente "Fusionner". |
+| 2026-06-19 | IA session | Fix bannière SW en boucle — CURRENT v53→v58 dans index.html (2 occurrences). Commit `222f627` sur main. |
+| 2026-06-19 | IA session | Fix AudioContext `suspended` fausse alarme critique — GVC section audio : `suspended` traité comme OK (état normal iOS avant 1er tap). Commit `8cbec7e` sur main. |
+| 2026-06-19 | IA session | Fix AudioManager.init() jamais appelé — guard `_initialized` dans audio-manager.js + appel dans openMap() (listeners click/touchstart s'enregistrent maintenant au démarrage). Commit `a609bd2` sur main. |
+| 2026-06-19 | IA session | 4 bugs audit Station corrigés : toast erreur vert→rouge sur échec, plaque effacée après envoi (`_sigReset`), badge quick-reply (`updateActBadge`), SW STATIC_CACHE URLs sans `?v=` → ajout params correspondants. SW v57→v58. Commit `3bcbe16` sur main. |
+| 2026-06-19 | IA session | Intégration architecturale complète Station (Bus→IE→Guardian→GVC→Ange) — bus.js v47 (4 événements parked), interaction-engine.js v2 (TYPE_META parked), guardian-loop.js v3 (HEURISTIC-005 + CATEGORY STATION), global-verification-center.js v3 (section checkStation), index.html (Bus emits + snapshot Ange enrichi), messages.js v20 (types IE + Bus emits quick-reply). Commit `b30a905` sur main — en attente push "Fusionner". |
 
 ---
 

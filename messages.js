@@ -1215,6 +1215,8 @@ async function sendToPlate(plate,text,opts){
   }catch(e){}
   try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{to:receiverPlate,from:senderPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
   try{window.ImmatOrganism?.observe?.('MSG_SENT',{to:receiverPlate,_src:'ImmatConnect/messages/sendToPlate'})}catch(e){}
+  try{if(_ctx.context_type==='parked_report'&&window.ImmatBus)window.ImmatBus.emit('PARKED_REPORT_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
+  try{if(_ctx.context_type==='parked_response'&&window.ImmatBus)window.ImmatBus.emit('PARKED_RESPONSE_SENT',{target:receiverPlate,plate:receiverPlate,_src:'messages/sendToPlate'});}catch(e){}
   try{
     const _iePayload = {to:receiverPlate, from:senderPlate};
     if(_ctx.context_type) _iePayload.context_type = _ctx.context_type;
