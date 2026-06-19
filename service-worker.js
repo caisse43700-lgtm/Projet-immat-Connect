@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v56';
+const CACHE_NAME  = 'immatconnect-pro-v57';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -9,27 +9,31 @@ const OFFLINE_URL = './offline.html';
 const STATIC_CACHE = [
   './offline.html',
   './manifest.json',
-  './utils.js',
-  './calls.js',
-  './messages.js',
+  './utils.js?v=3',
+  './calls.js?v=17',
+  './messages.js?v=19',
   './badge.js',
-  './ui.js',
-  './core/invariants.js',
-  './core/bus.js',
-  './core/brain.js',
-  './core/governance.js',
-  './core/immatOrganism.js',
-  './core/interaction-engine.js',
-  './core/guardian-loop.js',
-  './core/messages-runtime-diagnostics.js',
-  './core/mobile-autotest.js',
+  './ui.js?v=9',
+  './core/invariants.js?v=45',
+  './core/bus.js?v=46',
+  './core/brain.js?v=45',
+  './core/governance.js?v=45',
+  './core/immatOrganism.js?v=46',
+  './core/interaction-engine.js?v=1',
+  './core/guardian-loop.js?v=2',
+  './core/messages-runtime-diagnostics.js?v=1',
+  './core/mobile-autotest.js?v=1',
   './core/obdSession.js',
   './core/obdGateway.js',
   './core/aiController.js',
-  './core/agora-call-engine.js',
-  './core/global-verification-center.js',
-  './core/audio-manager.js',
-  './core/call-screen.js',
+  './core/agora-call-engine.js?v=5',
+  './core/global-verification-center.js?v=2',
+  './core/audio-manager.js?v=3',
+  './core/call-screen.js?v=8',
+  './core/call-notification-runtime.js?v=1',
+  './core/calls-runtime-diagnostics.js?v=2',
+  './core/guardian-summary-engine.js?v=1',
+  './core/guardian-dashboard-summary.js?v=3',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant
