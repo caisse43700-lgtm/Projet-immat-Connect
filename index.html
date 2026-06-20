@@ -4112,6 +4112,8 @@ if ('serviceWorker' in navigator) {
   var _swReg = null;
   // Ne recharger que si un SW existait déjà (= mise à jour), pas sur le premier install
   var _hadSwController = !!navigator.serviceWorker.controller;
+  // Version du SW actif au premier message reçu — pas de constante codée en dur
+  var _swLoadVersion = null;
   navigator.serviceWorker.addEventListener('controllerchange', function() {
     if (!_hadSwController) { _hadSwController = true; return; }
     try { sessionStorage.removeItem('_ic_br'); } catch(e) {}
@@ -4119,15 +4121,21 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'SW_UPDATED') {
-      var CURRENT = 'immatconnect-pro-v69';
       var version = e.data.version || '';
       var b = document.getElementById('swUpdateBanner');
       var fb = document.getElementById('forceSwFixBanner');
-      if (version === CURRENT) {
+      if (_swLoadVersion === null) {
+        // Premier message : mémoriser la version active → c'est la bonne
+        _swLoadVersion = version;
         if (b) b.style.display = 'none';
         if (fb) fb.style.display = 'none';
-      } else {
+      } else if (version !== _swLoadVersion) {
+        // Nouvelle version différente → proposer mise à jour
         if (b) b.style.display = 'flex';
+      } else {
+        // Même version → tout est à jour
+        if (b) b.style.display = 'none';
+        if (fb) fb.style.display = 'none';
       }
     }
   });
@@ -4197,12 +4205,11 @@ window._forceSwUpdate = async function() {
 })();
 // Affiche le bouton Force MAJ si le SW actif n'est pas à jour + met à jour l'affichage CACHE_NAME
 (async function() {
-  var CURRENT = 'immatconnect-pro-v69';
   try {
     if (!window.caches) return;
     var keys = await window.caches.keys();
     var active = keys.filter(function(k){ return k.indexOf('immatconnect-pro-') === 0; });
-    var hasCurrentCache = active.some(function(k){ return k>=CURRENT; });
+    var hasCurrentCache = active.length > 0;
     // Mettre à jour l'affichage CACHE_NAME avec la vraie valeur live
     var el = document.getElementById('dashCacheName');
     if (el && active.length) el.textContent = active[active.length - 1];
