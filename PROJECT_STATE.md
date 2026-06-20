@@ -54,6 +54,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Crosshair GPS — cercle au centre de la carte (quand GPS inactif) — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `app.css` (v10→v11), `service-worker.js` v106→v107
+
+**Ce qui a été fait :**
+- Audit : aucun "cercle au centre de la carte" n'existait dans le code — le `S.myMarker` (icône SVG circulaire) est uniquement créé lors d'un fix GPS.
+- Ajout de `<div id="mapCenterPin">` avec SVG crosshair (cercle bleu 44px + 4 lignes directrices) positionné en `position:fixed;left:50%;top:50%` → reste visuellement au centre de l'écran quelle que soit la position de la carte (comme Waze/Google Maps).
+- **Show** : `initMap()` affiche le crosshair si `S.myLat === null` (premier démarrage sans GPS).
+- **Hide** : callback `watchPosition` masque le crosshair dès le premier fix GPS reçu et le marqueur placé.
+- **Show retour** : `toggleInvisible()` (passer en mode invisible) retire le marqueur et affiche le crosshair — l'utilisateur voit toujours un repère visuel de la position de la carte.
+- CSS : masque automatiquement si sheet plein écran ou clavier ouvert (parité avec les FABs).
+- SW v106 → v107, app.css v10 → v11.
+
+---
+
+**Mission : Fix régression véhicule ne bouge pas — panTo → setView — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v104→v105→v106 (PR #356)
+
+**Mission : Navigation GPS — zoom adaptatif + fitBounds protégé — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v103→v104→v105 (PR #355)
+
 **Mission : Immatest v2 — robot de test in-app complet — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `core/immat-test-engine.js` (v2), `index.html` (v1→v2), `service-worker.js` v103→v104
@@ -1126,7 +1149,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — Immatest v2 commitée et poussée (18 scénarios in-app). À fusionner sur main via "Fusionner".
+Aucune — Crosshair GPS commitée et poussée. À fusionner sur main via "Fusionner".
 
 ---
 
@@ -1669,6 +1692,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Zones à risque cohérentes : trigger SQL filtré accidents uniquement ([ROUTE] Accident/Obstacle/Danger), TRUNCATE + rebuild road_risk_segments (HAVING ≥2), UI "X accident(s)" + "Zone accidentogène". Migration 20260619170000. SW v86. |
 | 2026-06-19 | IA session | Journal d'appels — 2 bugs UX : (1) display:flex→block dans navAppels (layout horizontal corrigé), (2) App.panel("messages")→App.navMessages() dans pickPlate override (superposition panneaux corrigée). SW v87. |
 | 2026-06-20 | IA session | Audio restauré (tous sons actifs, seul bip démarrage iOS silencieux) + AU-10 fix (parseInt v100+) + "Mes signalements" supprimé + Ange "Voir le tableau de bord →" (immat-copilot.js v2) + Immatest v2 (18 scénarios in-app complets : auth, emails, nav, overlays, messages UI+DB, appels, signalement, activité, localStorage, trust/block, présence, audio, SW, GVC, OBD, Realtime, UX). SW v104. |
+| 2026-06-20 | IA session | Navigation GPS — zoom adaptatif (17 normal, 18 proche virage <150m, 16 vue 2D) + fitBounds protégé pendant driveMode (PR #355). Fix régression marqueur véhicule figé : panTo→setView (PR #356). SW v106. |
+| 2026-06-20 | IA session | Crosshair GPS — `#mapCenterPin` SVG crosshair bleu fixé au centre écran (position:fixed 50%/50%) : visible quand GPS inactif (S.myLat===null ou mode invisible), masqué dès premier fix GPS. app.css v11, SW v107. |
 
 ---
 

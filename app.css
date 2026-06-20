@@ -1116,3 +1116,19 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
   font-weight: 800;
   line-height: 1;
 }
+
+/* ── Crosshair centre carte (visible quand GPS non actif) ── */
+#mapCenterPin {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 450;
+  display: none;
+  filter: drop-shadow(0 1px 5px rgba(0,0,0,.5));
+  transition: opacity .2s;
+}
+#appScreen:has(.sheet.full) #mapCenterPin,
+#appScreen:has(#sheet .panel.on) #mapCenterPin,
+body.keyboard-open #mapCenterPin { display: none !important; }
