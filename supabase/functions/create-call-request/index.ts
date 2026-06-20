@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
         requester_plate: requester_plate ?? null,
         receiver_plate: receiver_plate ?? null,
         source: 'vehicle_contact',
+        expires_at: new Date(Date.now() + 35_000).toISOString(),
       })
       .select()
       .single()

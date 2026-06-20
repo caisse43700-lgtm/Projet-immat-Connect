@@ -80,20 +80,11 @@ const CallManager = (function () {
       .select('id, receiver_plate, receiver_id, expires_at')
       .eq('requester_id', _uid)
       .eq('status', 'pending')
+      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (!data) return;
-    if (data.expires_at && new Date(data.expires_at) <= new Date()) {
-      try {
-        await _sb.from('call_requests')
-          .update({ status: 'expired' })
-          .eq('id', data.id)
-          .eq('requester_id', _uid)
-          .eq('status', 'pending');
-      } catch (_) {}
-      return;
-    }
     let receiverPlate = data.receiver_plate;
     if (!receiverPlate && data.receiver_id) {
       const { data: prof } = await _sb
