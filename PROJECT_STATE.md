@@ -54,6 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix bouton 🚨 nearby panel + appels manqués dans Activity — TERMINÉE**
+**Date :** 2026-06-20
+**Commit :** `b000b57` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v111→v112
+
+**Ce qui a été fait :**
+- **BUG FIX — bouton 🚨 renderNearby** : `vehicleAlertQuick(plate)` passait la plaque comme `label` → toast "Indique la plaque" au lieu d'ouvrir le flux véhicule. Remplacé par `vehicleAlertFromNearby(plate)` : pré-remplit `sigVehiclePlate`, ferme le panel, ouvre le flux 3-clics (`openVehicleReport()`).
+- **NOUVELLE FEATURE — Appels manqués dans Activity** : item 📵 "Appels manqués" dans le Résumé rapide d'Activité, visible uniquement si `S._unseenMissedCalls > 0`. Tap → `navAppels()` + filtre automatique `setCallJournalFilter('missed')`. `renderActivityMain` mis à jour.
+
+SW v111 → v112.
+
+---
+
 **Mission : Panel conducteurs proches enrichi + push retry + rate limit DB — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `index.html`, `service-worker.js` v110→v111, `supabase/functions/send-push-notification/index.ts`, `supabase/migrations/20260620110000_messages_rate_limit.sql` (créé)
