@@ -109,7 +109,7 @@ const CallManager = (function () {
     if (!receiverPlate && _pendingCallPlate) receiverPlate = _pendingCallPlate;
     // Ne pas afficher l'overlay si la plaque est inconnue — évite '--' en recovery
     if (!receiverPlate) return;
-    _showSentBanner(receiverPlate, data.id);
+    _showSentBanner(receiverPlate, data.id, true /* recovery — ne pas rejouer la tonalité */);
   }
 
   function _startIncomingRecoveryPolling() {
@@ -630,7 +630,7 @@ const CallManager = (function () {
     try{ if (window.CallScreen?.getState?.().mode === 'incoming') window.CallScreen.hide(); }catch(e){}
   }
 
-  function _showSentBanner(plate, requestId) {
+  function _showSentBanner(plate, requestId, recovery) {
     setTimeout(async () => {
       if (_pendingCallId !== requestId) return;
       _pendingCallId = null;
@@ -650,7 +650,7 @@ const CallManager = (function () {
       const csState = typeof window.CallScreen.getState === 'function' ? window.CallScreen.getState() : null;
       if (csState && csState.mode === 'outgoing' && csState.requestId === requestId) return;
       if (effectivePlate) {
-        window.CallScreen.showOutgoing({ to: effectivePlate, plate: effectivePlate, requestId: requestId });
+        window.CallScreen.showOutgoing({ to: effectivePlate, plate: effectivePlate, requestId: requestId, skipAudio: !!recovery });
         return;
       }
       // Plaque inconnue : ne pas ouvrir l'overlay avec '--', passer au banner legacy

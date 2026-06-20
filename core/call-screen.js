@@ -202,7 +202,9 @@
     // Dedup — CALL_INITIATED peut être émis 2x (ImmatBus + ImmatOrganism)
     if (_state.mode === 'outgoing' && rid && _state.requestId === rid) return;
     _state = { mode: 'outgoing', plate: plate, requestId: rid };
-    try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
+    if (!data.skipAudio) {
+      try { if (w.AudioManager && w.AudioManager.playOutgoingTone) w.AudioManager.playOutgoingTone({ context: 'outgoing', plate: plate }); } catch(e) {}
+    }
     _render('outgoing', plate, 'Demande de contact envoyée…',
       _BTN.cancel,
       30000);
