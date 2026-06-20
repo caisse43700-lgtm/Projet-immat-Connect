@@ -456,8 +456,8 @@ function setMode(mode){
     return;
   }
 
-  // inbox / sent / default
-  if(list) list.style.display = '';
+  // inbox / sent / default — ne pas afficher si on est dans le journal d'appels
+  if(list && ($('icAppelsPane')?.style.display || '') !== 'block') list.style.display = '';
   render();
 }
 
@@ -1049,7 +1049,7 @@ function closeThread(){
   const _shellC = document.getElementById('icMessagesPro');
   if(_shellC) _shellC.style.minHeight = '';
   // Ne pas réinitialiser si on est dans la vue Appels (icAppelsPane visible)
-  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
+  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'block';
   if(listEl && !_inAppels) listEl.style.display = '';
   if(hdr    && !_inAppels) hdr.style.display    = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
