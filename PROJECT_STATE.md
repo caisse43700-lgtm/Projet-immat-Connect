@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Immatest v2 — robot de test in-app complet — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `core/immat-test-engine.js` (v2), `index.html` (v1→v2), `service-worker.js` v103→v104
+
+**Ce qui a été fait :**
+1. **Audio restauré** — tous les sons activés (sonnerie, bips messages, tonalité sortante) ; seul le bip de démarrage au premier touch iOS reste silencieux.
+2. **Test AU-10 corrigé** — regex `/v1[2-9]|v[2-9]\d/` ne couvrait pas v100+ ; remplacé par `parseInt(m[1], 10) >= 12`.
+3. **"Mes signalements" supprimé** du panneau Signaler (redondant avec Activité).
+4. **Ange — bouton "Voir le tableau de bord →"** ajouté dans le message copilot du thème `guardian` (immat-copilot.js v2).
+5. **Immatest intégré dans le Dashboard Gardien** — `core/immat-test-engine.js` v1 puis v2, onglet 🧪 dans le dashboard, panneau avec résultats live.
+6. **Immatest v2 — 18 scénarios complets** couvrant : auth/session, emails/réinitialisation mot de passe, navigation 5 onglets, 11 overlays + fermetures, messages UI, messages envoi→DB, appels signaling, signalement étapes+urgences, activité panels, localStorage JSON, confiance/blocage, présence/paramètres, audio, SW cache, GVC 8 sections, OBD/organisme, Realtime Supabase, ergonomie UX (tap targets ≥44px, aria-labels, boutons retour).
+
 **Mission : Journal d'appels — 2 bugs UX corrigés — TERMINÉE**
 **Date :** 2026-06-19
 **Fichiers modifiés :** `index.html` (navAppels + pickPlate), `service-worker.js` v87
@@ -1114,7 +1126,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — Journal d'appels corrigé (2 bugs layout + superposition), zones à risque cohérentes, Paramètres enrichis. À commiter et pousser.
+Aucune — Immatest v2 commitée et poussée (18 scénarios in-app). À fusionner sur main via "Fusionner".
 
 ---
 
@@ -1656,6 +1668,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-19 | IA session | Panneau Paramètres — 10 améliorations : rayon dans settings, auto-statut conduite, notifs messages+appels, réinitialisation sélective RGPD, toggles Ange (proactif+monologue), mode économie batterie GPS, statistiques personnelles, signalement abus. SW v85. |
 | 2026-06-19 | IA session | Zones à risque cohérentes : trigger SQL filtré accidents uniquement ([ROUTE] Accident/Obstacle/Danger), TRUNCATE + rebuild road_risk_segments (HAVING ≥2), UI "X accident(s)" + "Zone accidentogène". Migration 20260619170000. SW v86. |
 | 2026-06-19 | IA session | Journal d'appels — 2 bugs UX : (1) display:flex→block dans navAppels (layout horizontal corrigé), (2) App.panel("messages")→App.navMessages() dans pickPlate override (superposition panneaux corrigée). SW v87. |
+| 2026-06-20 | IA session | Audio restauré (tous sons actifs, seul bip démarrage iOS silencieux) + AU-10 fix (parseInt v100+) + "Mes signalements" supprimé + Ange "Voir le tableau de bord →" (immat-copilot.js v2) + Immatest v2 (18 scénarios in-app complets : auth, emails, nav, overlays, messages UI+DB, appels, signalement, activité, localStorage, trust/block, présence, audio, SW, GVC, OBD, Realtime, UX). SW v104. |
 
 ---
 
