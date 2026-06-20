@@ -2859,6 +2859,7 @@ App.switchContactTab=function(tab){
 App.renderCallJournal=async function(){
   var el=$('icCallLog'); if(!el) return;
   // Afficher immédiatement le contenu précédent — évite le flash "Chargement…"
+  if(!App._callJournalCachedHTML){try{App._callJournalCachedHTML=localStorage.getItem('ic_call_journal_html')||null;}catch(_){}}
   if(App._callJournalCachedHTML) {
     el.innerHTML=App._callJournalCachedHTML;
   } else {
@@ -2963,6 +2964,7 @@ App.renderCallJournal=async function(){
       '</div>';
     });
     App._callJournalCachedHTML=html;
+    try{localStorage.setItem('ic_call_journal_html',html);}catch(_){}
     el.innerHTML=html;
   }catch(e){if(el&&!App._callJournalCachedHTML)el.innerHTML='<div style="padding:16px;color:#ef4444">Erreur chargement appels.</div>';}
 };
