@@ -19,7 +19,7 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="app.css?v=10">
-  <link rel="stylesheet" href="messages.css?v=4">
+  <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
   <script src="core/invariants.js?v=45"></script>
@@ -1373,6 +1373,7 @@ App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.cla
 
 // ── Navigation
 App.navMessages=function(){
+  document.body.classList.remove('appels-mode');
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navAppels')?.classList.remove('on');
@@ -1391,6 +1392,7 @@ App.navMessages=function(){
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
 App.navAppels=function(){
+  document.body.classList.add('appels-mode');
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
@@ -1415,6 +1417,7 @@ App.navAppels=function(){
   setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='block'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
+  document.body.classList.remove('appels-mode');
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
@@ -1424,6 +1427,7 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
+  document.body.classList.remove('appels-mode');
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
