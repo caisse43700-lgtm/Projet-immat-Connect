@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v108';
+const CACHE_NAME  = 'immatconnect-pro-v109';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -12,7 +12,7 @@ const STATIC_CACHE = [
   './utils.js?v=3',
   './calls.js?v=20',
   './messages.js?v=23',
-  './badge.js',
+  './badge.js?v=1',
   './ui.js?v=9',
   './core/invariants.js?v=45',
   './core/bus.js?v=50',
@@ -23,9 +23,9 @@ const STATIC_CACHE = [
   './core/guardian-loop.js?v=11',
   './core/messages-runtime-diagnostics.js?v=1',
   './core/mobile-autotest.js?v=3',
-  './core/obdSession.js',
-  './core/obdGateway.js',
-  './core/aiController.js',
+  './core/obdSession.js?v=1',
+  './core/obdGateway.js?v=1',
+  './core/aiController.js?v=1',
   './core/agora-call-engine.js?v=5',
   './core/global-verification-center.js?v=8',
   './core/audio-manager.js?v=8',

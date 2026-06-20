@@ -54,6 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit global — 6 bugs corrigés (PII, GPS backoff, SW versioning, myMarker null-safe, RGPD deleteAccount, auth call GPS) — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v108→v109
+
+**Bugs corrigés :**
+- **BUG-001** — PII : `user_locations.user_name` stockait `ud.user.email` → remplacé par `S.profile?.owner_plate||''` (plaque du propriétaire, anonyme).
+- **BUG-003** — GPS timeout infini : retry illimité → backoff exponentiel (1.5s × 2ⁿ, max 30s, max 5 tentatives), toast explicatif après le 5e échec. `S._gpsRetry=0` réinitialisé sur succès.
+- **BUG-008** — SW versioning : `badge.js`, `obdSession.js`, `obdGateway.js`, `aiController.js` ajoutés sans `?v=` → ajout `?v=1`. SW v108→v109.
+- **BUG-009** — `myMarker` null-safe : `if(S.myMarker&&S.map){try{S.map.removeLayer(S.myMarker);}catch(_){}}S.myMarker=null` (try/catch évite crash si couche déjà retirée).
+- **BUG-012** — `deleteAccount()` RGPD : purge uniquement les clés `ic_*` et `_ic_*` (pas les clés tierces) via `Object.keys(localStorage).filter(k=>k.startsWith('ic_')||k.startsWith('_ic_'))`.
+- **BUG-014** — Auth call dans GPS : `sb.auth.getUser()` appelé toutes les 4-12s → remplacé par `S.uid` + `S.profile?.owner_plate` (aucun appel réseau supplémentaire dans le callback GPS).
+
+---
+
 **Mission : Fix suivi GPS continu — carte suit la position en temps réel — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `index.html`, `service-worker.js` v107→v108
@@ -1707,6 +1721,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Navigation GPS — zoom adaptatif (17 normal, 18 proche virage <150m, 16 vue 2D) + fitBounds protégé pendant driveMode (PR #355). Fix régression marqueur véhicule figé : panTo→setView (PR #356). SW v106. |
 | 2026-06-20 | IA session | Crosshair GPS — `#mapCenterPin` SVG crosshair bleu fixé au centre écran (position:fixed 50%/50%) : visible quand GPS inactif (S.myLat===null ou mode invisible), masqué dès premier fix GPS. app.css v11, SW v107. |
 | 2026-06-20 | IA session | Fix suivi GPS continu — bug `autoFollow` : `setView()` de locate() déclenchait `zoomstart` → autoFollow=false → carte ne suivait plus. Fix : flag `S._gpsMoving` + listeners séparés + moveend/zoomend clear. SW v108. |
+| 2026-06-20 | IA session | Audit global — 6 bugs corrigés : BUG-001 PII user_name→owner_plate, BUG-003 GPS retry backoff (max 5 × max 30s), BUG-008 SW versioning badge.js+3 core sans ?v=, BUG-009 myMarker null-safe try/catch, BUG-012 deleteAccount purge ic_* RGPD, BUG-014 sb.auth.getUser() éliminé du callback GPS → S.uid direct. SW v109. |
 
 ---
 
