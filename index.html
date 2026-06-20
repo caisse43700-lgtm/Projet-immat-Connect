@@ -2858,7 +2858,12 @@ App.switchContactTab=function(tab){
 };
 App.renderCallJournal=async function(){
   var el=$('icCallLog'); if(!el) return;
-  el.innerHTML='<div style="padding:20px;text-align:center;color:#64748b;font-size:13px">Chargement…</div>';
+  // Afficher immédiatement le contenu précédent — évite le flash "Chargement…"
+  if(App._callJournalCachedHTML) {
+    el.innerHTML=App._callJournalCachedHTML;
+  } else {
+    el.innerHTML='<div style="padding:20px;text-align:center;color:#64748b;font-size:13px">Chargement…</div>';
+  }
   try{
     var log=window.CallManager?.loadCallLog?await window.CallManager.loadCallLog(60):[];
     if(!log||!log.length){
@@ -2957,9 +2962,11 @@ App.renderCallJournal=async function(){
         '</div>'+
       '</div>';
     });
+    App._callJournalCachedHTML=html;
     el.innerHTML=html;
-  }catch(e){if(el)el.innerHTML='<div style="padding:16px;color:#ef4444">Erreur chargement appels.</div>';}
+  }catch(e){if(el&&!App._callJournalCachedHTML)el.innerHTML='<div style="padding:16px;color:#ef4444">Erreur chargement appels.</div>';}
 };
+App._callJournalCachedHTML=null;
 App.callFromJournal=function(plate){
   if(!plate) return;
   try{ window.CallManager?.openContactOptions?.(plate,''); }catch(e){}
