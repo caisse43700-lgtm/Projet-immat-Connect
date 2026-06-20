@@ -3660,6 +3660,77 @@ function showReputationToast(){
 <script src="core/immat-consciousness.js?v=1"></script>
 <script src="core/immat-soul.js?v=1"></script>
 <script src="core/immat-copilot.js?v=2"></script>
+<script src="core/immat-test-engine.js?v=1"></script>
+<script>
+const ImmatestUI = {
+  _visible: false,
+  toggle() {
+    this._visible = !this._visible;
+    const body = document.getElementById('gardienDashboardBody');
+    const panel = document.getElementById('immatestPanel');
+    const btn = document.getElementById('btnImmatestTab');
+    if (body)  body.style.display  = this._visible ? 'none' : '';
+    if (panel) panel.style.display = this._visible ? 'block' : 'none';
+    if (btn)   btn.style.background = this._visible ? '#4c3fa0' : '#1e1b4b';
+    if (this._visible) {
+      const plateInput = document.getElementById('immatestPlateB');
+      if (plateInput && !plateInput.value) {
+        const myPlate = window.S?.profile?.owner_plate || '';
+        // Pré-remplir avec la plaque connue de l'autre compte si différente
+        plateInput.value = '';
+        plateInput.focus();
+      }
+    }
+  },
+  async run() {
+    const btn     = document.getElementById('immatestRunBtn');
+    const status  = document.getElementById('immatestStatus');
+    const results = document.getElementById('immatestResults');
+    const summary = document.getElementById('immatestSummary');
+    const plateB  = (document.getElementById('immatestPlateB')?.value || '').trim().toUpperCase();
+
+    if (!plateB) { status.textContent = '⚠️ Renseigne la plaque du compte B pour les tests message/appel.'; return; }
+    if (!window.ImmatTestEngine) { status.textContent = '❌ ImmatTestEngine non chargé.'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ En cours…';
+    results.innerHTML = '';
+    summary.style.display = 'none';
+
+    let html = '';
+
+    window.ImmatTestEngine.run(
+      plateB,
+      function onProgress(ev) {
+        if (ev.type === 'scenario_start') {
+          status.textContent = ev.scenario.label + '…';
+          html += `<div id="sc-${ev.scenario.id}" style="margin-bottom:10px"><div style="color:#7c6af7;font-weight:700;font-size:12px;margin-bottom:4px">${ev.scenario.label}</div><div class="sc-checks-${ev.scenario.id}"></div></div>`;
+          results.innerHTML = html;
+        }
+        if (ev.type === 'scenario_done') {
+          const container = results.querySelector('.sc-checks-' + ev.scenario.id);
+          if (container) {
+            container.innerHTML = ev.checks.map(function(c) {
+              const icon = c.pass ? '✅' : '❌';
+              const col  = c.pass ? '#86efac' : '#fca5a5';
+              const det  = c.detail ? `<span style="color:#64748b;font-size:10px"> — ${c.detail}</span>` : '';
+              return `<div style="padding:3px 0;border-bottom:1px solid #0f0f1a;font-size:12px">${icon} <span style="color:${col}">${c.label}</span>${det}</div>`;
+            }).join('');
+          }
+        }
+      },
+      function onDone(res) {
+        btn.disabled = false;
+        btn.textContent = '▶ Relancer';
+        status.textContent = '';
+        const failColor = res.fail === 0 ? '#86efac' : '#fca5a5';
+        summary.style.display = 'block';
+        summary.innerHTML = `<span style="color:${failColor};font-weight:700">${res.pass}/${res.total} tests OK</span>${res.fail > 0 ? ` · <span style="color:#fca5a5">${res.fail} échec(s)</span>` : ' — 🎉 Tout est bon !'}<br><span style="color:#555;font-size:10px">Vérifier aussi sur l'autre téléphone (${plateB}) que les messages/appels ont bien été reçus.</span>`;
+      }
+    );
+  }
+};
+</script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
 <script src="ui.js?v=9"></script>
 
@@ -3692,11 +3763,36 @@ function showReputationToast(){
 
 <!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
 <div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto" role="dialog" aria-modal="true" aria-label="Dashboard Gardien">
-  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0">
-    <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
+  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1">
+    <div style="display:flex;gap:10px;align-items:center">
+      <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
+      <button id="btnImmatestTab" onclick="ImmatestUI.toggle()" style="background:#1e1b4b;border:1px solid #4c3fa0;border-radius:8px;color:#a5b4fc;font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer">🧪 Immatest</button>
+    </div>
     <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer">✕</button>
   </div>
   <div id="gardienDashboardBody" style="padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0;line-height:1.6"></div>
+
+  <!-- ── Immatest Panel ─────────────────────────────────────────────── -->
+  <div id="immatestPanel" style="display:none;padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0">
+    <div style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="color:#a5b4fc;font-weight:700;font-size:14px">🧪 Immatest</div>
+          <div style="color:#555;font-size:11px;margin-top:2px">Tests automatiques en temps réel</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="immatestPlateB" placeholder="Plaque B (ex: BE-521-MM)" style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;width:140px;outline:none" value="">
+          <button id="immatestRunBtn" onclick="ImmatestUI.run()" style="background:#7c6af7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">▶ Lancer</button>
+        </div>
+      </div>
+      <div id="immatestStatus" style="font-size:12px;color:#555;margin-bottom:8px"></div>
+      <div id="immatestResults"></div>
+      <div id="immatestSummary" style="display:none;margin-top:12px;padding:10px;background:#0f0f1a;border-radius:8px;font-size:12px"></div>
+    </div>
+    <div style="color:#555;font-size:11px;text-align:center;padding-bottom:8px">
+      Messages de test supprimés automatiquement après vérification · Audio Agora non testé (hors périmètre)
+    </div>
+  </div>
 </div>
 <!-- ── /Dashboard Gardien ────────────────────────────────────────────── -->
 
