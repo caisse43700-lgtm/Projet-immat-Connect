@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix suivi GPS continu — carte suit la position en temps réel — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v107→v108
+
+**Cause racine :** Dans `initMap()`, le listener `S.map.on('dragstart zoomstart', ()=>S.autoFollow=false)` était déclenché par le `setView()` programmatique de `locate()` lui-même (zoomstart = changement de zoom 6→17). Résultat : `autoFollow` passait à `false` dès le premier fix GPS → la carte ne suivait plus la position après le premier point.
+
+**Fix :** Flag `S._gpsMoving=true` positionné avant chaque `setView()` GPS/recenter. Listeners séparés (dragstart / zoomstart) vérifient `if(!S._gpsMoving)` avant de désactiver `autoFollow`. `moveend/zoomend` remet `_gpsMoving=false`. Seuls les gestes utilisateur (drag/pinch réel) désactivent maintenant `autoFollow`.
+
+SW v107 → v108.
+
+---
+
 **Mission : Crosshair GPS — cercle au centre de la carte (quand GPS inactif) — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `index.html`, `app.css` (v10→v11), `service-worker.js` v106→v107
@@ -1694,6 +1706,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Audio restauré (tous sons actifs, seul bip démarrage iOS silencieux) + AU-10 fix (parseInt v100+) + "Mes signalements" supprimé + Ange "Voir le tableau de bord →" (immat-copilot.js v2) + Immatest v2 (18 scénarios in-app complets : auth, emails, nav, overlays, messages UI+DB, appels, signalement, activité, localStorage, trust/block, présence, audio, SW, GVC, OBD, Realtime, UX). SW v104. |
 | 2026-06-20 | IA session | Navigation GPS — zoom adaptatif (17 normal, 18 proche virage <150m, 16 vue 2D) + fitBounds protégé pendant driveMode (PR #355). Fix régression marqueur véhicule figé : panTo→setView (PR #356). SW v106. |
 | 2026-06-20 | IA session | Crosshair GPS — `#mapCenterPin` SVG crosshair bleu fixé au centre écran (position:fixed 50%/50%) : visible quand GPS inactif (S.myLat===null ou mode invisible), masqué dès premier fix GPS. app.css v11, SW v107. |
+| 2026-06-20 | IA session | Fix suivi GPS continu — bug `autoFollow` : `setView()` de locate() déclenchait `zoomstart` → autoFollow=false → carte ne suivait plus. Fix : flag `S._gpsMoving` + listeners séparés + moveend/zoomend clear. SW v108. |
 
 ---
 
