@@ -367,6 +367,7 @@ body.reduce-effects .speed.over { animation: none; }
   place-items: center;
   border: 1px solid rgba(255,255,255,.1);
   transition: .14s ease;
+  z-index: 100;
 }
 .sheet-close:active { background: rgba(255,59,92,.2); color: var(--red); }
 
@@ -378,7 +379,7 @@ body.reduce-effects .speed.over { animation: none; }
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
-  padding-right: 40px;
+  padding-right: 60px;
 }
 .panel-inner-hd > span { font-size: 18px; font-weight: 950; color: var(--text); }
 .section-lbl { font-size: 11px; font-weight: 950; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin: 14px 0 8px; }
