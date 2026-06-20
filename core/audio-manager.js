@@ -121,10 +121,11 @@
   }
 
   function _syntheticBeep(freqHz, durationMs, volume) {
-    var ctx = _resumeCtx();
-    // Ne pas programmer sur un contexte suspendu : les oscillateurs se déclencheraient
-    // au premier toucher écran (ctx.resume()) même sans appel actif.
-    if (!ctx || ctx.state === 'suspended') return;
+    // Vérifier l'état AVANT toute tentative de resume.
+    // ctx.resume() est async : si appelé avant le check, l'état passe à 'resuming'
+    // et contourne le guard — les oscillateurs se déclenchent au premier toucher.
+    var ctx = _getOrCreateCtx();
+    if (!ctx || ctx.state !== 'running') return;
     try {
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
@@ -173,9 +174,9 @@
   // à être rejoués à tout moment (appel entrant sans geste).
   function unlockFromUserGesture() {
     if (_unlocked) return;
-    // Annuler les synthétiques programmés avant le geste pour éviter qu'ils
-    // démarrent au moment de ctx.resume() si aucun appel n'est actif.
-    if (!_currentlyPlaying) _stopSynthetic();
+    // Toujours annuler les synthétiques avant resume — même si _currentlyPlaying
+    // est défini (ex : recovery d'appel entrant pré-geste).
+    _stopSynthetic();
     _ensureSources();
     _resumeCtx();
     var ok = true;

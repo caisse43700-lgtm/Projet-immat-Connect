@@ -51,7 +51,9 @@
 
   function onIncomingPending(callState) {
     var plate = (callState && callState.from) || 'Conducteur';
-    try { _audio()?.playIncomingRingtone?.({ context: 'incoming', plate: plate }); } catch (e) {}
+    if (!(callState && callState.skipAudio)) {
+      try { _audio()?.playIncomingRingtone?.({ context: 'incoming', plate: plate }); } catch (e) {}
+    }
     _visualFallbackUsed = true;
     _vibrate([400, 200, 400, 200, 400]);
     _browserNotify('Appel entrant', plate + ' souhaite vous contacter', 'immat-incoming');

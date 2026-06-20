@@ -216,7 +216,9 @@
     // Dedup — CALL_RECEIVED peut être émis 2x (ImmatBus + ImmatOrganism)
     if (_state.mode === 'incoming' && rid && _state.requestId === rid) return;
     _state = { mode: 'incoming', plate: plate, requestId: rid };
-    try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({ context: 'incoming', plate: plate }); } catch(e) {}
+    if (!(data && data.skipAudio)) {
+      try { if (w.AudioManager && w.AudioManager.playIncomingRingtone) w.AudioManager.playIncomingRingtone({ context: 'incoming', plate: plate }); } catch(e) {}
+    }
     _render('incoming', plate, 'Demande de contact entrante',
       _BTN.refuse + _BTN.accept,
       0);

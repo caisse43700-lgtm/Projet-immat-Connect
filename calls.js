@@ -126,7 +126,7 @@ const CallManager = (function () {
     if (!data) return;
     if (_seenIncomingCallIds.has(data.id)) return;
     _seenIncomingCallIds.add(data.id);
-    _showIncomingPopup(data);
+    _showIncomingPopup(data, { skipAudio: true });
   }
 
   function openContactOptions(plate, uid) {
@@ -567,7 +567,7 @@ const CallManager = (function () {
     }, 1000);
   }
 
-  function _showIncomingPopup(req) {
+  function _showIncomingPopup(req, opts) {
     // Dedup : postgres_changes INSERT peut se répéter après reconnexion Realtime,
     // et _recoverIncomingPendingCalls peut tirer en parallèle → un seul affichage par requestId
     if (_seenIncomingCallIds.has(req.id)) {
@@ -580,7 +580,7 @@ const CallManager = (function () {
     _incomingCallPlate = req.requester_plate || null; // fallback pour acceptCall si DB retourne null
     _joinCallSignal(req.id); // B rejoint le canal signal dès la réception pour recevoir CANCEL
     _startCancelPoll(req.id); // Filet de sécurité — détecte annulation en 2s si broadcast raté
-    _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, _src:'ImmatConnect/calls/subscribeIncomingCalls'});
+    _emitCallEvent('CALL_RECEIVED', {from: plate, requestId: req.id, skipAudio: !!(opts && opts.skipAudio), _src:'ImmatConnect/calls/subscribeIncomingCalls'});
     try{ window.InteractionEngine?.create?.({type:'CALL_RECEIVED', initiator:plate||'', target:_myPlate||null, payload:{requestId:req.id}, status:'received'}); }catch(e){}
     const _onMissed = () => {
       if (_missedCallIds.has(req.id)) return;
