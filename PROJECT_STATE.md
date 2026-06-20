@@ -54,6 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Panel conducteurs proches enrichi + push retry + rate limit DB — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v110→v111, `supabase/functions/send-push-notification/index.ts`, `supabase/migrations/20260620110000_messages_rate_limit.sql` (créé)
+
+**Ce qui a été fait :**
+- **B — `renderNearby()` enrichi** : point de fraîcheur coloré (●vert <60s / ●orange <3min / ●gris >3min) avant chaque plaque ; en-tête compteur "N connecté(s) dans le rayon" + bouton "↻ Actualiser" ; bouton 🚨 `vehicleAlertQuick()` ; bouton 📍 zoom carte + fermeture panel.
+- **C1 — Push notification retry** : `sendWithRetry()` tente jusqu'à 3 fois sur erreurs 5xx transitoires (backoff 1s / 2s), échoue immédiatement sur 4xx. `Promise.allSettled` préserve la gestion des 410/404 expirés.
+- **C2 — Rate limit DB messages** : migration `20260620110000_messages_rate_limit.sql` — fonction `check_message_rate_limit(uid)` SECURITY DEFINER (max 30 messages/minute/utilisateur) + policy RLS `messages_rate_limited_insert` WITH CHECK.
+
+SW v110 → v111.
+
+---
+
 **Mission : Audit global phase 2 — 6 bugs robustesse (race condition GPS, channel Realtime, loadOthers throttle, XSS js(), double getUser(), subscribeCommunityReports async) — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `index.html`, `service-worker.js` v109→v110
@@ -1741,6 +1754,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Fix suivi GPS continu — bug `autoFollow` : `setView()` de locate() déclenchait `zoomstart` → autoFollow=false → carte ne suivait plus. Fix : flag `S._gpsMoving` + listeners séparés + moveend/zoomend clear. SW v108. |
 | 2026-06-20 | IA session | Audit global — 6 bugs corrigés : BUG-001 PII user_name→owner_plate, BUG-003 GPS retry backoff (max 5 × max 30s), BUG-008 SW versioning badge.js+3 core sans ?v=, BUG-009 myMarker null-safe try/catch, BUG-012 deleteAccount purge ic_* RGPD, BUG-014 sb.auth.getUser() éliminé du callback GPS → S.uid direct. SW v109. |
 | 2026-06-20 | IA session | Audit global phase 2 — 6 bugs robustesse : BUG-002 race condition GPS callback (_locateCbRunning try/finally), BUG-004 subLocs channel leak (sauvegarde old ref avant null + removeChannel), BUG-006 loadOthers throttle 2s (_loadOthersAt), BUG-010 subscribeCommunityReports async + await removeChannel, BUG-011 double getUser() éliminé (syncCommunityAlerts + _handleReport → S.uid), BUG-015 js() XSS guillemets doubles (&quot;). SW v110. |
+| 2026-06-20 | IA session | Panel conducteurs proches enrichi (point fraîcheur ●, compteur + ↻ Actualiser, boutons 🚨 alerte + 📍 carte), push notification retry 3 tentatives backoff 1s/2s sur 5xx, migration rate limit DB (max 30 msg/min/user, RLS WITH CHECK). SW v111. |
 
 ---
 

@@ -7,6 +7,30 @@ import webPush from 'npm:web-push@3.6.7';
 import { corsHeaders } from '../_shared/cors.ts';
 import { createClient }  from 'jsr:@supabase/supabase-js@2';
 
+// Retry jusqu'à 2 fois sur erreurs 5xx transitoires ; échoue immédiatement sur 4xx.
+async function sendWithRetry(
+  sub: { endpoint: string; p256dh: string; auth: string },
+  payload: string,
+): Promise<void> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await webPush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        payload,
+        { TTL: 60 },
+      );
+      return;
+    } catch (err: unknown) {
+      lastErr = err;
+      const status = (err as any)?.statusCode;
+      if (status && status < 500) throw err; // 4xx = permanent, pas de retry
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -59,20 +83,12 @@ Deno.serve(async (req) => {
 
     const payload = JSON.stringify({ title, body: notifBody || '', data: data || {}, tag: tag || 'immatconnect' });
 
-    const results = await Promise.allSettled(
-      subs.map(s =>
-        webPush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payload,
-          { TTL: 60 },
-        )
-      )
-    );
+    const results = await Promise.allSettled(subs.map(s => sendWithRetry(s, payload)));
 
     const sent   = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    // Supprimer les abonnements expirés (410 Gone)
+    // Supprimer les abonnements expirés (410 Gone / 404)
     const expired: string[] = [];
     results.forEach((r, i) => {
       if (r.status === 'rejected') {
