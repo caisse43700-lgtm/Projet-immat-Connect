@@ -174,6 +174,8 @@
   // à être rejoués à tout moment (appel entrant sans geste).
   function unlockFromUserGesture() {
     if (_unlocked) return;
+    // Si les sons sont désactivés, marquer comme débloqué sans rien jouer.
+    if (!_soundsEnabled()) { _unlocked = true; return; }
     // Toujours annuler les synthétiques avant resume — même si _currentlyPlaying
     // est défini (ex : recovery d'appel entrant pré-geste).
     _stopSynthetic();
