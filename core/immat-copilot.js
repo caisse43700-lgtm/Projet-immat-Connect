@@ -252,7 +252,10 @@ const ImmatCoPilot = (function () {
         silence_ok:    '✅',
       }[theme] || '💬';
 
-      el.innerHTML = `<span style="opacity:.55;font-size:11px;display:block;margin-bottom:4px">Ange · co-pilote</span>${icon} ${msg}`;
+      const actionBtn = theme === 'guardian'
+        ? `<button onclick="event.stopPropagation();try{window.App.openGardienDashboard();}catch(e){} var p=document.getElementById('copilotPanel');if(p){p.style.opacity='0';setTimeout(()=>p.remove(),400);}" style="display:inline-block;margin-top:10px;padding:6px 14px;background:#7c6af7;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Voir le tableau de bord →</button>`
+        : '';
+      el.innerHTML = `<span style="opacity:.55;font-size:11px;display:block;margin-bottom:4px">Ange · co-pilote</span>${icon} ${msg}${actionBtn}`;
       el.style.opacity = '1';
 
       // Auto-effacement après 12 s (sauf urgence)
