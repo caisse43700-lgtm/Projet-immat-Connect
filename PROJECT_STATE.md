@@ -54,6 +54,24 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Audit global phase 2 — 6 bugs robustesse (race condition GPS, channel Realtime, loadOthers throttle, XSS js(), double getUser(), subscribeCommunityReports async) — TERMINÉE**
+**Date :** 2026-06-20
+**Fichiers modifiés :** `index.html`, `service-worker.js` v109→v110
+
+**Bugs corrigés :**
+- **BUG-002** — Race condition `locate()` callback async : flag `_locateCbRunning` + try/finally empêche deux upserts concurrents sur `user_locations`.
+- **BUG-004** — `subLocs()` fuite channel Realtime : retry sauvegarde l'ancien ref avant `S.chLoc=null`, appelle `sb.removeChannel(old)` avant de re-souscrire.
+- **BUG-006** — `loadOthers()` throttle 2s : guard `S._loadOthersAt` évite les appels redondants GPS+Realtime dans la même fenêtre.
+- **BUG-010** — `subscribeCommunityReports()` async + `await sb.removeChannel()` : l'ancien channel est bien fermé avant la nouvelle souscription.
+- **BUG-011** — Double `getUser()` éliminé : `syncCommunityAlerts()` et `_handleReport()` utilisent `S.uid` (déjà en cache) au lieu d'appeler l'API auth.
+- **BUG-015** — `js()` XSS : ajout de `replace(/"/g,'&quot;')` pour empêcher la sortie d'attribut HTML via les guillemets doubles.
+
+(BUG-007 `_authRunning` : déjà protégé par `finally{S._authRunning=false;}` — pas de changement nécessaire.)
+
+SW v109 → v110.
+
+---
+
 **Mission : Audit global — 6 bugs corrigés (PII, GPS backoff, SW versioning, myMarker null-safe, RGPD deleteAccount, auth call GPS) — TERMINÉE**
 **Date :** 2026-06-20
 **Fichiers modifiés :** `index.html`, `service-worker.js` v108→v109
@@ -1722,6 +1740,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Crosshair GPS — `#mapCenterPin` SVG crosshair bleu fixé au centre écran (position:fixed 50%/50%) : visible quand GPS inactif (S.myLat===null ou mode invisible), masqué dès premier fix GPS. app.css v11, SW v107. |
 | 2026-06-20 | IA session | Fix suivi GPS continu — bug `autoFollow` : `setView()` de locate() déclenchait `zoomstart` → autoFollow=false → carte ne suivait plus. Fix : flag `S._gpsMoving` + listeners séparés + moveend/zoomend clear. SW v108. |
 | 2026-06-20 | IA session | Audit global — 6 bugs corrigés : BUG-001 PII user_name→owner_plate, BUG-003 GPS retry backoff (max 5 × max 30s), BUG-008 SW versioning badge.js+3 core sans ?v=, BUG-009 myMarker null-safe try/catch, BUG-012 deleteAccount purge ic_* RGPD, BUG-014 sb.auth.getUser() éliminé du callback GPS → S.uid direct. SW v109. |
+| 2026-06-20 | IA session | Audit global phase 2 — 6 bugs robustesse : BUG-002 race condition GPS callback (_locateCbRunning try/finally), BUG-004 subLocs channel leak (sauvegarde old ref avant null + removeChannel), BUG-006 loadOthers throttle 2s (_loadOthersAt), BUG-010 subscribeCommunityReports async + await removeChannel, BUG-011 double getUser() éliminé (syncCommunityAlerts + _handleReport → S.uid), BUG-015 js() XSS guillemets doubles (&quot;). SW v110. |
 
 ---
 
