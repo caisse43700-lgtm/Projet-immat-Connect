@@ -157,7 +157,7 @@
   function _$(id) { return document.getElementById(id); }
 
   function _soundsEnabled() {
-    try { return w.S ? w.S.sounds !== false : true; } catch (e) { return true; }
+    return false;
   }
 
   // ── Unlock ──────────────────────────────────────────────────────
