@@ -1669,7 +1669,7 @@ test('AU-07 — CallScreen appelle stopCallAudio dans hide', () => ok(_screenSrc
 
 test('AU-08 — SW cache audio-manager.js',  () => ok(_swSrc.includes('./core/audio-manager.js')));
 test('AU-09 — SW cache call-screen.js',    () => ok(_swSrc.includes('./core/call-screen.js')));
-test('AU-10 — SW version >= v12',          () => ok(_swSrc.includes('v12') || /v1[2-9]|v[2-9]\d/.test(_swSrc)));
+test('AU-10 — SW version >= v12',          () => { const m = _swSrc.match(/immatconnect-pro-v(\d+)/); return ok(m && parseInt(m[1], 10) >= 12); });
 
 test('AU-11 — calls.js : _recoverIncomingPendingCalls',  () => ok(_callsSrc.includes('_recoverIncomingPendingCalls')));
 test('AU-12 — calls.js : _startIncomingRecoveryPolling', () => ok(_callsSrc.includes('_startIncomingRecoveryPolling')));
