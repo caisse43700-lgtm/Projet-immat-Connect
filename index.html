@@ -1401,6 +1401,8 @@ App.navAppels=function(){
   this.panel('messages');
   const _ml=$('icMsgList'),_cp=$('icAppelsPane');
   if(_ml)_ml.style.display='none';if(_cp)_cp.style.display='block';
+  // Réinitialiser icCallLog au cas où setMode('compose') l'aurait caché
+  var _cl=$('icCallLog');if(_cl)_cl.style.display='';
   var _tbM2=$('icTabMessages'),_tbA2=$('icTabAppels');
   if(_tbM2){_tbM2.style.color='#64748b';_tbM2.style.borderBottomColor='transparent';}
   if(_tbA2){_tbA2.style.color='#e2e8f0';_tbA2.style.borderBottomColor='#2f7bff';}

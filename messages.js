@@ -1689,9 +1689,14 @@ function closeCompose(){
   const compose = $('icComposePanel');
   const list    = $('icMsgList');
   if(compose) compose.classList.remove('show');
-  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'flex';
-  if(list && !_inAppels) list.style.display = '';
   State.mode = 'inbox';
+  // Si on était dans le journal d'appels, y retourner proprement
+  const _inAppels = ($('icAppelsPane')?.style.display || '') === 'block';
+  if(_inAppels){
+    try{ window.App?.navAppels?.(); }catch(_){}
+    return;
+  }
+  if(list) list.style.display = '';
   render();
 }
 
