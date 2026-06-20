@@ -2,4 +2,7 @@
 node_modules/
 playwright-report/
 test-results/
+immatest/.env
+immatest/report/last-run.html
+immatest/node_modules/
 

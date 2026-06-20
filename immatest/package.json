@@ -1,0 +1,17 @@
+{
+  "name": "immatest",
+  "version": "1.0.0",
+  "description": "Robot de test bout-en-bout ImmatConnect Pro",
+  "main": "runner.js",
+  "scripts": {
+    "test": "node runner.js",
+    "test:headless": "node runner.js --headless",
+    "test:auth": "node runner.js --scenario S01",
+    "test:messages": "node runner.js --scenario S02",
+    "test:signalement": "node runner.js --scenario S03",
+    "test:appels": "node runner.js --scenario S04"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0"
+  }
+}
