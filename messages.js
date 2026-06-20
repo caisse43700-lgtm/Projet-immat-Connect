@@ -635,7 +635,18 @@ function render(){
     return;
   }
 
-  list.innerHTML = threads.map(t=>{
+  // Séparateurs de date
+  const _dnow = new Date(); _dnow.setHours(0,0,0,0);
+  const _dyest = new Date(_dnow); _dyest.setDate(_dnow.getDate()-1);
+  function _dayLabel(ts){
+    if(!ts) return '';
+    const d = new Date(ts); d.setHours(0,0,0,0);
+    if(d.getTime()===_dnow.getTime()) return "Aujourd'hui";
+    if(d.getTime()===_dyest.getTime()) return 'Hier';
+    return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  }
+
+  const {html: _listHtml} = threads.reduce((acc, t) => {
     const last = t.last || {};
     const timeStr = last.created_at ? (typeof relTime==='function'?relTime(new Date(last.created_at).getTime()):new Date(last.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
     const trust = getTrust(t.plate);
@@ -649,10 +660,40 @@ function render(){
     const _avStyle = _vc && _vc !== 'other' ? ` style="background:${_avBg};border-color:transparent"` : '';
     const mutedBadge = isMuted(t.plate) ? '<span title="Sourdine" style="font-size:11px;opacity:.6">🔕</span>' : '';
     const manualUnread = !t.unread && isManualUnread(t.plate);
-    return `
+    const isUnread = !!(t.unread || manualUnread);
+
+    // Séparateur de date
+    const _dayLbl = _dayLabel(last.created_at);
+    let _sep = '';
+    if(_dayLbl && _dayLbl !== acc.lastDate){
+      _sep = `<div class="ic-day-sep">${_dayLbl}</div>`;
+      acc.lastDate = _dayLbl;
+    }
+
+    // Direction du dernier message
+    const _isSent = last._sent === true;
+    const _dirPfx = _isSent
+      ? '<span class="ic-preview-dir">Vous : </span>'
+      : (pseudo ? `<span class="ic-preview-dir">${esc(pseudo.split(' ')[0])} : </span>` : '');
+
+    // Icône de type
+    const _ct = last.context_type || '';
+    const _typeIcon = _ct === 'vehicle_report' ? '🚨 ' :
+      _ct === 'parked_report' ? '🅿️ ' :
+      _ct === 'parked_response' ? '🚗 ' :
+      (last.message||'').includes('google.com/maps') ? '📍 ' : '';
+
+    // Aperçu
+    const _rawPreview = last.message || '';
+    const _preview = State.searchQuery
+      ? _highlightHtml(esc(_rawPreview), State.searchQuery)
+      : esc(_rawPreview);
+
+    acc.html += _sep + `
       <div class="ic-swipe-wrap">
-        <div class="ic-mail-row ${(t.unread||manualUnread)?'unread':''} ${State.activePlate===t.plate?'active':''}"
-             data-plate="${esc(t.plate)}">
+        <div class="ic-mail-row ${isUnread?'unread':''} ${State.activePlate===t.plate?'active':''}"
+             data-plate="${esc(t.plate)}"
+             style="border-left:3px solid ${isUnread?'#00ffb3':'transparent'}">
           <div class="ic-avatar"${_avStyle}>🚗</div>
           <div class="ic-row-body">
             <div class="ic-row-top">
@@ -660,15 +701,21 @@ function render(){
               <span class="ic-row-time">${esc(timeStr)}</span>
             </div>
             <div class="ic-row-bot">
-              <span class="ic-preview">${State.searchQuery ? _highlightHtml(esc(last.message || ''), State.searchQuery) : esc(last.message || '')}</span>
-              <span class="ic-unread-dot">${t.unread > 1 ? t.unread : ''}</span>
+              <span class="ic-preview">${_dirPfx}${_typeIcon}${_preview}</span>
+              <div class="ic-row-actions">
+                <button class="ic-row-call-btn" data-plate="${esc(t.plate)}" title="Appeler ${esc(t.plate)}">📞</button>
+                <span class="ic-unread-dot">${t.unread > 1 ? t.unread : ''}</span>
+              </div>
             </div>
           </div>
         </div>
         <button class="ic-swipe-del" data-plate="${esc(t.plate)}">Supprimer</button>
       </div>
     `;
-  }).join('');
+    return acc;
+  }, {html: '', lastDate: ''});
+
+  list.innerHTML = _listHtml;
 
   list.querySelectorAll('.ic-swipe-wrap').forEach(wrap => {
     const row = wrap.querySelector('.ic-mail-row');
@@ -677,6 +724,11 @@ function render(){
       openThread(row.dataset.plate);
     });
     _initRowSwipe(wrap);
+    const callBtn = wrap.querySelector('.ic-row-call-btn');
+    if(callBtn) callBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      try{ window.CallManager?.openContactOptions?.(callBtn.dataset.plate, ''); }catch(_){}
+    });
   });
 
   // ── Section Archivées ─────────────────────────────────────────

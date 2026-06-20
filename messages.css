@@ -315,6 +315,48 @@
   display:flex;
 }
 
+/* ---- Séparateur de date ---- */
+.ic-day-sep {
+  font-size:10px;
+  font-weight:700;
+  color:#4a6080;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  padding:10px 4px 4px;
+}
+
+/* ---- Direction dans l'aperçu ---- */
+.ic-preview-dir {
+  color:#506070;
+  font-size:11px;
+  flex-shrink:0;
+}
+
+/* ---- Actions rapides (bouton 📞 + badge) ---- */
+.ic-row-actions {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex-shrink:0;
+}
+
+.ic-row-call-btn {
+  background:none;
+  border:none;
+  padding:2px 4px;
+  font-size:14px;
+  cursor:pointer;
+  line-height:1;
+  opacity:.55;
+  transition:opacity .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.ic-row-call-btn:hover,
+.ic-row-call-btn:active {
+  opacity:1;
+}
+
 /* ---- Badge (kept for compatibility, hidden in new design) ---- */
 .ic-badge {
   display:none;

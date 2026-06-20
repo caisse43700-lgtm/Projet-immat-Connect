@@ -2889,6 +2889,15 @@ App.renderCallJournal=async function(){
     }
     var _durCache={};try{_durCache=JSON.parse(localStorage.getItem('ic_call_durations')||'{}')}catch(e){}
     var _favs=[];try{_favs=JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]')}catch(e){}
+    var _trustRaw={};try{_trustRaw=JSON.parse(localStorage.getItem('ic_trust_scores')||'{}')}catch(e){}
+    function _trustBadgeCJ(plate){
+      var p=nPlate(plate);
+      if(_favs.includes(p)) return ' <span title="Favori" style="font-size:11px">⭐</span>';
+      var t=_trustRaw[p];
+      if(t&&t.level==='TRUSTED') return ' <span title="Conducteur de confiance" style="font-size:10px;color:#00ffb3">✓</span>';
+      if(t&&t.level==='CONTEXT') return ' <span title="Contact récent" style="font-size:10px;color:#7bb8ff">📍</span>';
+      return '';
+    }
     function fmtDur(secs){var m=Math.floor(secs/60),s=secs%60;return m+':'+(s<10?'0':'')+s}
     var statusCfg={
       accepted:{label:'Décroché',color:'#22c55e',icon:'✅'},
@@ -2932,7 +2941,7 @@ App.renderCallJournal=async function(){
           '<div style="font-weight:700;color:#e2e8f0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
             (_q?highlightHtml(esc(r.plate),App._callJournalSearch):esc(r.plate))+
             (_pseudoMap[r.plate]?' <span style="font-size:12px;font-weight:400;color:#94a3b8">'+(_q?highlightHtml(esc(_pseudoMap[r.plate]),App._callJournalSearch):esc(_pseudoMap[r.plate]))+'</span>':'')+
-            (_favs.includes(nPlate(r.plate))?' <span title="Favori" style="font-size:11px">⭐</span>':'')+
+            _trustBadgeCJ(r.plate)+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+
             '<span style="font-size:11px;color:'+cfg.color+'">'+cfg.label+'</span>'+
