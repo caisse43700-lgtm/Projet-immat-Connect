@@ -356,8 +356,8 @@ body.reduce-effects .speed.over { animation: none; }
 }
 .sheet-close {
   position: absolute;
-  top: 8px; right: 12px;
-  width: 44px; height: 44px;
+  top: 20px; right: 20px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   background: rgba(255,255,255,.08);
   color: var(--muted);

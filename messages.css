@@ -438,6 +438,7 @@
   inset:0;
   z-index:5;
   border-radius:16px;
+  overflow:visible;
 }
 
 /* ---- Scroll hint (nouveau message) ---- */
