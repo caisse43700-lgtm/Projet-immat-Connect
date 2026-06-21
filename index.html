@@ -3929,7 +3929,7 @@ const ImmatestUI = {
 .cs-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .gardien-debug-tool{display:none}body.is-gardien .gardien-debug-tool{display:inline-flex}#angeFab{display:none!important}
 #angeOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:3001;background:rgba(0,0,0,.55)}
-#angePanel{display:none;position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 6px);left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:16px;max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - 64px - env(safe-area-inset-bottom,0px) - 6px));overflow-y:auto;flex-direction:column;gap:12px}
+#angePanel{display:none;position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 6px);left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:0;max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - 64px - env(safe-area-inset-bottom,0px) - 6px));overflow-y:auto;flex-direction:column;gap:12px}
 @media(orientation:landscape) and (max-height:560px){
   #angePanel{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
   #angeOverlay{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
@@ -3940,7 +3940,7 @@ const ImmatestUI = {
 .ange-section{margin-bottom:10px}
 .ange-label{color:#7c6af7;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .ange-question{background:#1e1b4b;border-left:3px solid #7c6af7;padding:8px 10px;border-radius:0 6px 6px 0;color:#c4b5fd;font-style:italic}
-#angeInputArea{display:flex;flex-direction:column;gap:8px}
+#angeInputArea{display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
 #angeMsg{background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#e2e8f0;padding:10px;font-size:14px;resize:none;outline:none;font-family:inherit}
 #angeMsg:focus{border-color:#7c6af7}
 #angeSubmit{background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
