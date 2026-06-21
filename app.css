@@ -750,6 +750,9 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .inst { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .front-car-banner { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .map-shade { width: auto; }
+  /* Dashboard header — 1 ligne en paysage */
+  #gardienHeaderRight { width: auto; flex: 1; order: 2; }
+  #gardienCloseBtn { order: 3; }
 }
 
 @media (max-width: 380px) {

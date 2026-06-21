@@ -3876,13 +3876,13 @@ const ImmatestUI = {
 
 <!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
 <div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto" role="dialog" aria-modal="true" aria-label="Dashboard Gardien">
-  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding-top:max(calc(env(safe-area-inset-top,0px) + 8px),14px);padding-right:max(calc(env(safe-area-inset-right,0px) + 8px),16px);padding-bottom:10px;padding-left:max(calc(env(safe-area-inset-left,0px) + 8px),16px);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:sticky;top:0;z-index:1">
-    <div id="gardienHeaderLeft" style="display:flex;align-items:center;min-width:0;padding-top:12px">
-      <span style="color:#c4b5fd;font-weight:700;font-size:15px;white-space:nowrap">🔍 Dashboard Gardien</span>
+  <div id="gardienDashboardHeader" style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding-top:max(calc(env(safe-area-inset-top,0px) + 8px),14px);padding-right:max(calc(env(safe-area-inset-right,0px) + 8px),16px);padding-bottom:10px;padding-left:max(calc(env(safe-area-inset-left,0px) + 8px),16px);display:flex;flex-wrap:wrap;align-items:center;gap:6px;position:sticky;top:0;z-index:1">
+    <div id="gardienHeaderLeft" style="flex:1;min-width:0;display:flex;align-items:center;order:1;min-height:44px;overflow:hidden">
+      <span style="color:#c4b5fd;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🔍 Dashboard Gardien</span>
     </div>
-    <div id="gardienHeaderRight" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0">
+    <button id="gardienCloseBtn" onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:10px 12px;flex-shrink:0;order:2">✕</button>
+    <div id="gardienHeaderRight" style="width:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center;order:3">
       <button id="btnImmatestTab" onclick="ImmatestUI.toggle()" style="background:#1e1b4b;border:1px solid #4c3fa0;border-radius:8px;color:#a5b4fc;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center">🧪 Immatest</button>
-      <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:10px 12px">✕</button>
     </div>
   </div>
   <div id="gardienDashboardBody" style="padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0;line-height:1.6"></div>
