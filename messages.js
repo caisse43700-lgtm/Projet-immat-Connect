@@ -69,6 +69,7 @@ const State = {
   searchQuery:'',
   threadSearchQuery:'',
   favOnly:(function(){try{return localStorage.getItem('ic_conv_fav_only')==='1';}catch(e){return false;}})(),
+  unreadOnly:(function(){try{return localStorage.getItem('ic_conv_unread_only')==='1';}catch(e){return false;}})(),
   pseudoMap:{},
   colorMap:{},
   _typingCh:null,
@@ -622,12 +623,24 @@ function render(){
     ];
   }
 
+  // Filtre non-lus (F-UNREAD)
+  const _uoBtn = $('icUnreadOnlyBtn');
+  if(_uoBtn){
+    _uoBtn.classList.toggle('active', State.unreadOnly);
+    _uoBtn.setAttribute('aria-pressed', State.unreadOnly ? 'true' : 'false');
+  }
+  if(State.unreadOnly){
+    threads = threads.filter(t => !!(t.unread || isManualUnread(t.plate)));
+  }
+
   if(!threads.length){
     const helpText = State.mode === 'sent'
       ? 'Aucun message envoyé.'
-      : State.favOnly
-        ? 'Aucune conversation favorite.'
-        : State.searchQuery
+      : State.unreadOnly
+        ? 'Aucune conversation non lue.'
+        : State.favOnly
+          ? 'Aucune conversation favorite.'
+          : State.searchQuery
           ? `Aucune conversation pour "${State.searchQuery}".`
           : '💬 Aucun message reçu.<br><small style="display:block;margin-top:5px;font-size:11px;color:#9aacc2">Clique sur un véhicule sur la carte pour démarrer une conversation.</small>';
     list.innerHTML = `<div class="ic-empty">${helpText}</div>`;
@@ -1135,6 +1148,14 @@ function toggleFavOnly(){
   try{localStorage.setItem('ic_conv_fav_only', State.favOnly ? '1' : '0');}catch(e){}
   const btn = $('icFavOnlyBtn');
   if(btn) btn.classList.toggle('active', State.favOnly);
+  render();
+}
+
+function toggleUnreadOnly(){
+  State.unreadOnly = !State.unreadOnly;
+  try{localStorage.setItem('ic_conv_unread_only', State.unreadOnly ? '1' : '0');}catch(e){}
+  const btn = $('icUnreadOnlyBtn');
+  if(btn) btn.classList.toggle('active', State.unreadOnly);
   render();
 }
 
@@ -2033,6 +2054,7 @@ window.ImmatMessages = {
   clearThreadSearch,
   exportThread,
   toggleFavOnly,
+  toggleUnreadOnly,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

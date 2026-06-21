@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Filtre "Non lus seulement" dans la liste des conversations — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `messages.js` v23→v24, `service-worker.js` v123→v124
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Filtre 📬 Non lus seulement** : bouton `icUnreadOnlyBtn` (📬) ajouté dans l'en-tête Messages, entre "Tout lu" et ⭐ favoris. Toggle `State.unreadOnly` + localStorage `ic_conv_unread_only`. Quand actif (bouton doré) : filtre la liste pour ne montrer que les conversations avec messages non lus. Message vide adapté : "Aucune conversation non lue." Parallèle au filtre ⭐ favOnly existant. `toggleUnreadOnly()` ajouté dans messages.js et exporté.
+
+SW v123 → v124.
+
+---
+
 **Mission : Barre de réponses rapides dans le fil de messages — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `359e2df` sur `claude/immatconnect-pro-app-dEKGR`
