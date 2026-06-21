@@ -3988,7 +3988,6 @@ const AngeDialog={
     }
     this._refreshQuota();
     if(!this._escHandler){this._escHandler=e=>{if(e.key==='Escape')this.close();};document.addEventListener('keydown',this._escHandler);}
-    setTimeout(()=>$('angeMsg')?.focus(),100);
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
