@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : "Mes signalements" dans le Résumé rapide Activité — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v116→v117
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Item 📤 Mes signalements dans Résumé rapide** : visible uniquement quand l'utilisateur a des alertes envoyées encore actives (`_mine||_own`, non résolues, dans le TTL). Affiche le compte + "X signalement(s) en cours". Tap → `navActivite()` + `openActivityCat('all')` + `actCatTab('envoyes')` pour ouvrir directement l'onglet "Envoyés".
+
+SW v116 → v117.
+
+---
+
 **Mission : Modal "Conducteurs de confiance" dans les Paramètres — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
