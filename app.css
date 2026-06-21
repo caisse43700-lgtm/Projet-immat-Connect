@@ -17,6 +17,10 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --radius: 24px;
   --shadow: 0 28px 80px rgba(0,0,0,.38);
+  /* ── Modes de présentation (Overlay / Panel / Fullscreen) ── */
+  --sheet-h-overlay: 52dvh;
+  --sheet-h-panel:   70dvh;
+  --sheet-h-full:    calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom));
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -351,6 +355,26 @@ body.reduce-effects .speed.over { animation: none; }
   transition: background .2s;
 }
 .handle:active { background: var(--green); }
+
+/* ── MODES SHEET — portrait ──────────────────────────────────────────────────
+   Hauteurs par famille UX. Compatibles avec data-sheet-mode futur.
+   En paysage, top + bottom déterminent la hauteur (height ignoré). ── */
+@media (orientation:portrait) {
+  /* Overlay — Famille A : carte visible ~48 % */
+  #sheet:has(#panelAltet.on) {
+    height: min(var(--sheet-h-overlay), calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
+  }
+  /* Panel — Famille B : carte partiellement visible */
+  #sheet:has(#panelActivite.on),
+  #sheet:has(#panelMessages.on),
+  #sheet:has(#panelDrive.on) {
+    height: min(var(--sheet-h-panel), calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
+  }
+  /* Fullscreen — Famille C : carte absente */
+  #sheet:has(#panelSettings.on) {
+    height: var(--sheet-h-full);
+  }
+}
 #sheetArrowOpen {
   display: none; /* replaced by bottom nav */
 }
@@ -701,10 +725,13 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     left: calc(58px + env(safe-area-inset-left,0px));
     right: 0;
     bottom: 0;
-    top: 0;
+    top: 30dvh;
+    height: auto;    /* top+bottom déterminent la hauteur en paysage */
     max-height: none;
     border-radius: 0;
   }
+  /* Fullscreen en paysage — Famille C : top:0, carte absente */
+  #sheet:has(#panelSettings.on) { top: 0; }
   .sheet.mini { transform: translateX(100%); }
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
