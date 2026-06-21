@@ -3940,13 +3940,13 @@ const ImmatestUI = {
 .ange-section{margin-bottom:10px}
 .ange-label{color:#7c6af7;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .ange-question{background:#1e1b4b;border-left:3px solid #7c6af7;padding:8px 10px;border-radius:0 6px 6px 0;color:#c4b5fd;font-style:italic}
-#angeInputArea{display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
-#angeMsgWrap{position:relative}
-#angeMsg{background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#e2e8f0;padding:10px 48px 10px 10px;font-size:14px;resize:none;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
-#angeMsg:focus{border-color:#7c6af7}
-#angeMic{position:absolute;bottom:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.35);color:#c4b5fd;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
-#angeMic:active{background:rgba(124,106,247,.35)}
-#angeSubmit{background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+#angeInputArea{display:flex;flex-direction:column;gap:10px;padding-bottom:16px}
+#angeMsg{background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#e2e8f0;padding:12px;font-size:14px;resize:none;outline:none;font-family:inherit;width:100%;box-sizing:border-box;line-height:1.5}
+#angeMsg:focus{border-color:#7c6af7;box-shadow:0 0 0 3px rgba(124,106,247,.15)}
+#angeActions{display:flex;gap:8px;align-items:stretch}
+#angeMic{width:48px;flex-shrink:0;border-radius:12px;background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.3);color:#c4b5fd;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#angeMic:active{background:rgba(124,106,247,.28)}
+#angeSubmit{flex:1;background:#7c6af7;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;min-height:48px}
 #angeSubmit:disabled{opacity:.5;cursor:default}
 @keyframes ange-rotate{to{transform:rotate(360deg)}}
 #angeSpin{text-align:center;color:#7c6af7;font-size:13px;display:none;padding:14px 0}
@@ -3964,12 +3964,12 @@ const ImmatestUI = {
   <div id="angePreview" style="display:none"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
-    <div id="angeMsgWrap">
-      <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
+    <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000"></textarea>
+    <div id="angeActions">
       <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" aria-label="Dicter ma question">🎙️</button>
+      <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
     </div>
-    <div style="display:flex;justify-content:flex-end"><span id="angeQuota" style="font-size:11px;color:#555"></span></div>
-    <button id="angeSubmit" onclick="AngeDialog.send()">Envoyer</button>
+    <span id="angeQuota" style="font-size:11px;color:#555;text-align:right;display:block;margin-top:-4px"></span>
   </div>
 </div>
 
