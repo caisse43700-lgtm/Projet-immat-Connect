@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=13">
+  <link rel="stylesheet" href="app.css?v=14">
   <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -85,8 +85,8 @@
   <!-- Écran principal Activité -->
   <div id="actMain" class="act-main">
     <div class="act-main-hd">
-      <div class="act-main-title">Activité</div>
-      <div class="act-main-sub">Messages et alertes</div>
+      <div><div class="act-main-title">Activité</div><div class="act-main-sub">Messages et alertes</div></div>
+      <button type="button" class="ph-close" onclick="App.closeSheet()">✕</button>
     </div>
     <div class="act-search-bar"><input id="activitySearchInput" type="search" placeholder="Rechercher une plaque…" inputmode="search" autocomplete="off" oninput="App.setActivitySearch(this.value)"><button type="button" onclick="document.getElementById('activitySearchInput').value='';App.setActivitySearch('')" aria-label="Effacer la recherche">✕</button></div>
     <div class="act-cats-lbl">Choisissez une catégorie</div>
@@ -138,6 +138,7 @@
     <div class="act-cat-hd">
       <button type="button" class="act-cat-back" onclick="App.closeActivityCat()">‹</button>
       <div class="act-cat-hd-mid"><span id="actCatIcon" class="act-cat-hd-icon">🚘</span><div><div id="actCatTitle" class="act-cat-hd-title">Véhicule</div><div id="actCatSub" class="act-cat-hd-sub">Prévenir un conducteur</div></div></div>
+      <button type="button" class="ph-close" onclick="App.closeSheet()">✕</button>
     </div>
     <div class="act-cat-tabs">
       <button type="button" class="act-cat-tab on" data-tab="recus" onclick="App.actCatTab('recus')">Reçus <span class="act-tab-badge" id="actTabBadge" style="display:none">0</span></button>

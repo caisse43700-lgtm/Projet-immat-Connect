@@ -455,7 +455,8 @@ body.rotating .sheet { transition: none !important; }
 /* Phase 1 — masquer .sheet-close global sur les panels migrés */
 #sheet:has(#panelSettings.on) .sheet-close,
 #sheet:has(#panelDrive.on) .sheet-close,
-#sheet:has(#sigStep1.active) .sheet-close { display: none; }
+#sheet:has(#sigStep1.active) .sheet-close,
+#sheet:has(#panelActivite.on) .sheet-close { display: none; }
 
 /* ── PANELS ── */
 .panel { display: none; }
@@ -877,7 +878,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 /* ── ACTIVITÉ REFONDÉE ── */
 /* Écran principal */
 .act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; padding-bottom: 32px; }
-.act-main-hd { margin-bottom: 16px; }
+.act-main-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .act-main-title { font-size: 22px; font-weight: 950; color: var(--text); }
 .act-main-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
 .act-search-bar { display:flex; gap:8px; margin-bottom:14px; }
@@ -919,7 +920,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 /* Sous-panneau catégorie */
 .act-cat-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #0c1624; }
 .act-cat-hd { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; flex: 0 0 auto; }
-.act-cat-back { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); font-size: 22px; color: var(--text); cursor: pointer; display: grid; place-items: center; flex: 0 0 auto; line-height: 1; }
+.act-cat-back { width: 38px; height: 38px; min-width: 44px; min-height: 44px; border-radius: 50%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); font-size: 22px; color: var(--text); cursor: pointer; display: grid; place-items: center; flex: 0 0 auto; line-height: 1; }
 .act-cat-hd-mid { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .act-cat-hd-icon { font-size: 28px; flex: 0 0 auto; }
 .act-cat-hd-title { font-size: 18px; font-weight: 950; color: var(--text); }
