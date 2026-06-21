@@ -744,7 +744,6 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .inst { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .front-car-banner { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .map-shade { width: auto; }
-  #angePanel { left: calc(58px + env(safe-area-inset-left,0px)); }
 }
 
 @media (max-width: 380px) {

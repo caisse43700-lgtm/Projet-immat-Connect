@@ -3921,8 +3921,12 @@ const ImmatestUI = {
 .cs-btn-mute{background:#1e293b;color:#e2e8f0;border:1px solid #334155}
 .cs-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .gardien-debug-tool{display:none}body.is-gardien .gardien-debug-tool{display:inline-flex}#angeFab{display:none!important}
-#angeOverlay{display:none;position:fixed;inset:0;z-index:3001;background:rgba(0,0,0,.55)}
-#angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom,8px));max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));overflow-y:auto;flex-direction:column;gap:12px}
+#angeOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-bottom));z-index:3001;background:rgba(0,0,0,.55)}
+#angePanel{display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom));left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:16px;max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - var(--nav-h) - env(safe-area-inset-bottom,0px)));overflow-y:auto;flex-direction:column;gap:12px}
+@media(orientation:landscape) and (max-height:560px){
+  #angePanel{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
+  #angeOverlay{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
+}
 #angeHeader{display:flex;justify-content:space-between;align-items:center;color:#c4b5fd;font-weight:700;font-size:15px}
 #angeHeader button{background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px}
 #angeResponse{display:none;background:#1a1a2e;border-radius:10px;padding:12px;color:#e2e8f0;font-size:13px;line-height:1.6;white-space:pre-wrap}
