@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Masquer/restaurer entrées individuelles du journal d'appels — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `592be69` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v121→v122
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — ✕ Masquer un appel** : bouton discret sur chaque entrée du journal d'appels. Masque localement (ic_hidden_calls localStorage) sans toucher la base. `App.hideCallEntry(id)` + `App.restoreHiddenCalls()`. En-tête du journal : bouton "Restaurer (N)" conditionnel quand N entrées masquées.
+
+SW v121 → v122.
+
+---
+
 **Mission : Bouton Confiance dans le menu contextuel véhicule — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `0e88f38` sur `claude/immatconnect-pro-app-dEKGR`
