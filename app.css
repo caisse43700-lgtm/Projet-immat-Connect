@@ -387,7 +387,7 @@ body.rotating .sheet { transition: none !important; }
 }
 .sheet-close {
   position: absolute;
-  top: max(calc(env(safe-area-inset-top, 0px) + 8px), 20px);
+  top: 20px;
   right: max(calc(env(safe-area-inset-right, 0px) + 8px), 20px);
   width: 44px; height: 44px;
   border-radius: 50%;
