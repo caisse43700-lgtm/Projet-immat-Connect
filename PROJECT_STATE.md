@@ -54,6 +54,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Phase 2 Messages — Boutons X natifs dans les 4 vues du panel Messages — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** à pousser sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `app.css?v=15`, `service-worker.js` v149→v150
+
+**Ce qui a été fait :**
+- **A11 — `.ic-conv-header-acts`** : ajout bouton `.ph-close` ✕ après le bouton ✏️ (Nouveau message). Masque le `.sheet-close` flottant via `:has(#panelMessages.on)`.
+- **A12 — `#icAppelsPane`** : ajout `.panel-header` [Journal d'appels][✕] comme premier enfant du pane (avant le champ de recherche).
+- **A13 — `#icComposePanel`** : remplacement de `.ic-compose-hd` par `.panel-header` avec `.ph-back` ← (closeCompose), `.ph-title-group` + `.ph-title.ic-compose-title`, bouton 🗑 (flex-shrink:0), `.ph-close` ✕. La classe `.ic-compose-title` est préservée (aucune référence JS).
+- **A14 — `.ic-thread-actions`** : ajout bouton `.ph-close` ✕ après le bouton ⋯.
+- **CSS** : `:has(#panelMessages.on) .sheet-close { display: none }` + `.ic-conv-header-acts .ph-close, .ic-thread-actions .ph-close { margin-right: 0 }`.
+- `app.css?v=14 → ?v=15`, SW `v149 → v150`.
+
+Précédente mission terminée :
+
 **Mission : PR 2 — Ange UX responsive + Fix nav cachée iOS — TERMINÉE ET VALIDÉE TERRAIN**
 **Date :** 2026-06-21
 **Commits :** `d2f1549` (ange-open class) · `5132815` (suppression auto-focus — fix final) sur `main` (poussé)
@@ -1425,28 +1440,23 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-PR 3 — Rotation / Orientation polish (portrait ↔ paysage)
+PRIORITÉ 2 — Phase 2 Signaler (A4→A8 : ← + titre + X pour chaque sous-étape)
 
-Objectif : stabiliser les transitions portrait ↔ paysage sans toucher au métier.
-
+Périmètre : #panelAltet et ses 5 sous-vues (Route, Véhicule, Aide, Stationné, Véhicule-Stationné).
 Audit obligatoire avant code :
-  - Ouvrir Activité en portrait → tourner paysage : panel saute ? se ferme ? hauteur brutale ?
-  - Ouvrir Signaler en portrait → tourner paysage : même vérifications
-  - Ouvrir Messages en portrait → tourner paysage : scroll perdu ? draft effacé ? filtre actif ?
-  - Vérifier PWA iOS + Android
+  - Identifier chaque sub-view active (class .active ? display ? z-index ?)
+  - Vérifier que closeSheet() est disponible depuis chaque view
+  - Grep des classes de back-button existantes pour ne pas créer de conflit JS
+Règle : jamais deux X simultanés. Priorité : ← retour + ✕ fermeture panel.
 
-Cibles potentielles (à confirmer par l'audit) :
-  - Transition height → auto brutale sur les panels
-  - Panels ouverts qui se ferment à la rotation
-  - État utilisateur perdu (scroll, draft, filtre actif)
+PRIORITÉ 3 (après Signaler) — Phase 2 Modales Settings
+  #blocked, #favoritesModal, #trustedModal, #recent, #legal
 
-Périmètre autorisé :
-  - CSS transitions/animations uniquement si possible
-  - JS minimal si CSS insuffisant
+PRIORITÉ 4 (après Settings) — Dashboard Gardien
+  Ne pas toucher sauf bug reporté terrain.
 
-Ne pas toucher :
-  - Supabase, Messages métier, Appels, Ange IA, Stationnement, Notifications
-  - Aucune nouvelle fonctionnalité
+PRIORITÉ 5 (post-UX) — PR 3 Rotation / Orientation polish
+  CSS transitions sur les transitions portrait ↔ paysage.
 ```
 
 ---
@@ -1991,6 +2001,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | PR 2 — Ange UX responsive : C1 AngeDialog.open() ferme panels A/B avant ouverture, P1 #angePanel left paysage +58px nav latérale, M1 max-height 80vh→min(80dvh,…safe-area), M2 padding-bottom max(16px,safe-area-bottom). SW v131. |
 | 2026-06-21 | IA session | Fix nav cachée Ange iOS — cause racine : auto-focus #angeMsg déclenchait le clavier iOS → visual viewport rétréci → .bottom-nav sortait de la zone visible. Correction : suppression setTimeout focus(). SW v138. Commits d2f1549 + 5132815. Validé terrain. |
 | 2026-06-21 | IA session | PR 3 démarrée — Rotation / Orientation polish. Audit en cours. |
+| 2026-06-21 | IA session | Phase 2 Messages — X natifs A11→A14 : .ph-close dans .ic-conv-header-acts, panel-header Journal d'appels, panel-header Nouveau message (← + 🗑 + ✕ en remplacement .ic-compose-hd), .ph-close dans .ic-thread-actions. :has(#panelMessages.on) .sheet-close. app.css v15, SW v150. |
 
 ---
 

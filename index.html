@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=14">
+  <link rel="stylesheet" href="app.css?v=15">
   <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -326,6 +326,7 @@
         <button type="button" id="icFavOnlyBtn" class="ic-icon-btn" onclick="ImmatMessages.toggleFavOnly()" title="Afficher uniquement les favoris" aria-label="Afficher uniquement les conversations favorites" aria-pressed="false">⭐</button>
         <button type="button" class="ic-icon-btn" onclick="ImmatMessages.toggleSearch()" title="Rechercher">🔍</button>
         <button type="button" class="ic-icon-btn" onclick="ImmatMessages.setMode('compose')" title="Nouveau message">✏️</button>
+        <button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button>
       </div>
     </div>
 
@@ -346,6 +347,7 @@
 
     <!-- Journal d'appels -->
     <div id="icAppelsPane" style="display:none;overflow-y:auto;flex:1">
+      <div class="panel-header" style="padding:12px 16px"><div class="ph-title-group"><span class="ph-title">Journal d'appels</span></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
       <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" aria-label="Rechercher dans le journal d'appels par plaque ou pseudo" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
       <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
       <div id="icCallLog"></div>
@@ -353,10 +355,11 @@
 
     <!-- Composition nouveau message -->
     <div id="icComposePanel" class="ic-compose-panel">
-      <div class="ic-compose-hd">
-        <button type="button" class="ic-back-btn" aria-label="Retour" onclick="ImmatMessages.closeCompose()">‹</button>
-        <span class="ic-compose-title">Nouveau message</span>
-        <button type="button" onclick="ImmatMessages.deleteAllMessages()" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer">🗑</button>
+      <div class="panel-header">
+        <button type="button" class="ph-back" aria-label="Retour" onclick="ImmatMessages.closeCompose()">←</button>
+        <div class="ph-title-group"><span class="ph-title ic-compose-title">Nouveau message</span></div>
+        <button type="button" onclick="ImmatMessages.deleteAllMessages()" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>
+        <button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button>
       </div>
       <div class="ic-compose-row">
         <input id="icComposePlate" maxlength="9" placeholder="Plaque destinataire">
@@ -379,6 +382,7 @@
           <button type="button" id="icCallBtn" class="ic-call-btn" aria-label="Demander un contact" onclick="ImmatMessages.callActive()">📞</button>
           <button type="button" class="ic-icon-btn" aria-label="Rechercher dans la conversation" onclick="ImmatMessages.toggleThreadSearch()">🔍</button>
           <button type="button" class="ic-icon-btn" aria-label="Menu conversation" onclick="ImmatMessages.openThreadMenu()">⋯</button>
+          <button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button>
         </div>
       </div>
 

@@ -456,7 +456,12 @@ body.rotating .sheet { transition: none !important; }
 #sheet:has(#panelSettings.on) .sheet-close,
 #sheet:has(#panelDrive.on) .sheet-close,
 #sheet:has(#sigStep1.active) .sheet-close,
-#sheet:has(#panelActivite.on) .sheet-close { display: none; }
+#sheet:has(#panelActivite.on) .sheet-close,
+#sheet:has(#panelMessages.on) .sheet-close { display: none; }
+
+/* Phase 2 Messages — ajustement margin des ph-close dans flex-row existants */
+.ic-conv-header-acts .ph-close,
+.ic-thread-actions .ph-close { margin-right: 0; }
 
 /* ── PANELS ── */
 .panel { display: none; }
