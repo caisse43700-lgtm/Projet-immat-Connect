@@ -333,6 +333,9 @@ body.reduce-effects .speed.over { animation: none; }
   overflow-y: auto;
   transition: height .28s cubic-bezier(.22,1,.36,1), padding .28s cubic-bezier(.22,1,.36,1);
   will-change: height;
+}
+body.rotating .sheet { transition: none !important; }
+.sheet {
   overscroll-behavior: contain;
 }
 .sheet.mini {
@@ -740,7 +743,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .act-main-hd { margin-bottom: 8px; }
   .act-main { padding-bottom: 16px; }
   .speed { left: calc(58px + env(safe-area-inset-left,0px) + 8px); bottom: 10px; width: 56px; height: 56px; }
-  .fab-stack { right: 10px; bottom: 10px; }
+  .fab-stack { right: calc(10px + env(safe-area-inset-right,0px)); bottom: 10px; }
   .overlay { left: calc(58px + env(safe-area-inset-left,0px) + 10px); bottom: 10px; }
   .inst { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .front-car-banner { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
