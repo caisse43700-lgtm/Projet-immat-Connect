@@ -706,6 +706,9 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     border-radius: 0;
   }
   .sheet.mini { transform: translateX(100%); }
+  .act-categories { grid-template-columns: repeat(4,1fr); }
+  .act-main-hd { margin-bottom: 8px; }
+  .act-main { padding-bottom: 16px; }
   .speed { left: calc(58px + env(safe-area-inset-left,0px) + 8px); bottom: 10px; width: 56px; height: 56px; }
   .fab-stack { right: 10px; bottom: 10px; }
   .overlay { left: calc(58px + env(safe-area-inset-left,0px) + 10px); bottom: 10px; }
@@ -781,7 +784,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 
 /* ── ACTIVITÉ REFONDÉE ── */
 /* Écran principal */
-.act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; }
+.act-main { display: flex; flex-direction: column; gap: 0; min-height: 50vh; padding-bottom: 32px; }
 .act-main-hd { margin-bottom: 16px; }
 .act-main-title { font-size: 22px; font-weight: 950; color: var(--text); }
 .act-main-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
