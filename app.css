@@ -455,7 +455,7 @@ body.rotating .sheet { transition: none !important; }
 /* Phase 1 — masquer .sheet-close global sur les panels migrés */
 #sheet:has(#panelSettings.on) .sheet-close,
 #sheet:has(#panelDrive.on) .sheet-close,
-#sheet:has(#sigStep1.active) .sheet-close,
+#sheet:has(#panelAltet.on) .sheet-close,
 #sheet:has(#panelActivite.on) .sheet-close,
 #sheet:has(#panelMessages.on) .sheet-close { display: none; }
 

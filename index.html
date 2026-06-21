@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=15">
+  <link rel="stylesheet" href="app.css?v=16">
   <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -178,7 +178,7 @@
 
   <!-- Étape 2 : sous-types Route -->
   <div id="sigStep2Route" class="sig-step">
-    <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div class="panel-header"><button type="button" class="ph-back" onclick="App.sigBack()">←</button><div class="ph-title-group"><span class="ph-title">Incident route</span></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Type d'incident route</div>
     <div class="alert-grid">
@@ -197,7 +197,7 @@
 
   <!-- Étape 2 : sous-types Véhicule -->
   <div id="sigStep2Vehicle" class="sig-step">
-    <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div class="panel-header"><button type="button" class="ph-back" onclick="App.sigBack()">←</button><div class="ph-title-group"><span class="ph-title">Problème véhicule</span></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span>Étape 2 / 3</span></div>
     <div class="sig-step-title">Quel problème sur le véhicule ?</div>
     <div style="margin-bottom:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);border-radius:12px;padding:10px 12px">
@@ -226,7 +226,7 @@
 
   <!-- Étape 3 : messages pré-rédigés véhicule -->
   <div id="sigStep3VehicleMsg" class="sig-step">
-    <button class="sig-back-btn" onclick="App.vehicleStep3Back()">← Retour</button>
+    <div class="panel-header"><button type="button" class="ph-back sig-back-btn" onclick="App.vehicleStep3Back()">←</button><div class="ph-title-group"><span class="ph-title">Message à envoyer</span></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 3 / 3</span></div>
     <div id="sigStep3TypeLabel" class="sig-step-title" style="font-size:15px"></div>
     <div id="sigStep3PlateChip" style="display:inline-flex;align-items:center;gap:6px;background:rgba(41,121,255,.15);border:1px solid rgba(41,121,255,.4);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;color:#90caf9;margin-bottom:12px;letter-spacing:.5px"></div>
@@ -237,7 +237,7 @@
 
   <!-- Étape 2 : sous-types Aide -->
   <div id="sigStep2Aide" class="sig-step">
-    <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div class="panel-header"><button type="button" class="ph-back" onclick="App.sigBack()">←</button><div class="ph-title-group"><span class="ph-title">Demande d'aide</span></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">De quoi avez-vous besoin ?</div>
     <div id="sigAideNearbySection" style="display:none"></div>
@@ -265,7 +265,7 @@
   </div>
   <!-- Étape 2 : sous-types Véhicule stationné -->
   <div id="sigStep2Station" class="sig-step">
-    <button class="sig-back-btn" onclick="App.sigBack()">← Retour</button>
+    <div class="panel-header"><button type="button" class="ph-back" onclick="App.sigBack()">←</button><div class="ph-title-group"><span class="ph-title">Véhicule stationné</span></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#00bcd4;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Quel problème sur le véhicule ?</div>
     <div class="sig-vehicle-input">

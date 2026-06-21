@@ -54,6 +54,22 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Phase 2 Signaler — Boutons ← + ✕ natifs dans les 5 sous-steps de #panelAltet — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** à pousser sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `app.css?v=16`, `service-worker.js` v150→v151
+
+**Ce qui a été fait :**
+- **sigStep2Route** : `.sig-back-btn` → `.panel-header` [← "Incident route" ✕]
+- **sigStep2Vehicle** : `.sig-back-btn` → `.panel-header` [← "Problème véhicule" ✕]
+- **sigStep3VehicleMsg** : `.sig-back-btn` → `.panel-header` [← "Message à envoyer" ✕], `.ph-back` conserve classe `.sig-back-btn` (compatibilité immat-test-engine:410)
+- **sigStep2Aide** : `.sig-back-btn` → `.panel-header` [← "Demande d'aide" ✕]
+- **sigStep2Station** : `.sig-back-btn` → `.panel-header` [← "Véhicule stationné" ✕]
+- **CSS** : `:has(#sigStep1.active) .sheet-close` → `:has(#panelAltet.on) .sheet-close` (couvre toutes les étapes)
+- Stepper graphique et `.sig-step-title` conservés sous le `.panel-header`
+
+Précédente mission terminée :
+
 **Mission : Phase 2 Messages — Boutons X natifs dans les 4 vues du panel Messages — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** à pousser sur `claude/immatconnect-pro-app-dEKGR`
@@ -1440,7 +1456,7 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-PRIORITÉ 2 — Phase 2 Signaler (A4→A8 : ← + titre + X pour chaque sous-étape)
+PRIORITÉ 3 — Phase 2 Modales Settings (après validation terrain Signaler)
 
 Périmètre : #panelAltet et ses 5 sous-vues (Route, Véhicule, Aide, Stationné, Véhicule-Stationné).
 Audit obligatoire avant code :
@@ -2002,6 +2018,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | Fix nav cachée Ange iOS — cause racine : auto-focus #angeMsg déclenchait le clavier iOS → visual viewport rétréci → .bottom-nav sortait de la zone visible. Correction : suppression setTimeout focus(). SW v138. Commits d2f1549 + 5132815. Validé terrain. |
 | 2026-06-21 | IA session | PR 3 démarrée — Rotation / Orientation polish. Audit en cours. |
 | 2026-06-21 | IA session | Phase 2 Messages — X natifs A11→A14 : .ph-close dans .ic-conv-header-acts, panel-header Journal d'appels, panel-header Nouveau message (← + 🗑 + ✕ en remplacement .ic-compose-hd), .ph-close dans .ic-thread-actions. :has(#panelMessages.on) .sheet-close. app.css v15, SW v150. |
+| 2026-06-21 | IA session | Phase 2 Signaler — panel-header [← titre ✕] sur les 5 sous-steps (Route/Véhicule/Messages-véhicule/Aide/Stationné). :has(#sigStep1.active)→:has(#panelAltet.on). sigStep3VehicleMsg conserve .sig-back-btn pour immat-test-engine:410. app.css v16, SW v151. |
 
 ---
 
