@@ -54,9 +54,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Bouton ⭐ favori par entrée dans le journal d'appels — TERMINÉE**
+**Mission : Statistiques d'appels dans les Paramètres — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v113→v114
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Stats d'appels dans Paramètres** : `refreshStats()` enrichi avec 4 nouvelles tuiles : 👥 Conducteurs favoris (ic_conv_favorites), 📞 Appels décrochés (count de ic_call_durations), ⏱️ Durée totale (somme formatée H:MMmin), 📊 Durée moyenne (moyenne formatée). La grille passe de 5 à 9 tuiles.
+
+SW v113 → v114.
+
+---
+
+**Mission : Bouton ⭐ favori par entrée dans le journal d'appels — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `c059797` sur `claude/immatconnect-pro-app-dEKGR`
 **Fichiers modifiés :** `index.html`, `service-worker.js` v112→v113
 
 **Ce qui a été fait :**
