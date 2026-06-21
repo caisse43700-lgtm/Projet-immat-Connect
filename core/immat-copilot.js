@@ -222,7 +222,7 @@ const ImmatCoPilot = (function () {
         el = document.createElement('div');
         el.id = 'copilotPanel';
         el.style.cssText = [
-          'position:fixed', 'bottom:72px', 'left:12px', 'right:12px',
+          'position:fixed', 'bottom:calc(var(--nav-h,64px) + env(safe-area-inset-bottom,0px) + 12px)', 'left:12px', 'right:12px',
           'background:rgba(15,20,35,0.96)', 'color:#e8eaf6',
           'border-radius:14px', 'padding:14px 16px',
           'font-size:14px', 'line-height:1.5',
