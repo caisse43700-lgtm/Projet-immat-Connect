@@ -3974,6 +3974,7 @@ const AngeDialog={
   },
   open(){
     try{if(window.App?.closeSheet)window.App.closeSheet();['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});}catch(_){}
+    document.body.classList.add('ange-open');
     $('angePanel').style.display='flex';
     $('angeOverlay').style.display='block';
     const resp=$('angeResponse');
@@ -3991,6 +3992,7 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
+    document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
     if(this._escHandler){document.removeEventListener('keydown',this._escHandler);this._escHandler=null;}

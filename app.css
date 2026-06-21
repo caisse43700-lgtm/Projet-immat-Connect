@@ -689,7 +689,7 @@ body.night #map { filter: brightness(.7) contrast(1.1) saturate(.8); }
 /* ── CLAVIER OUVERT ── */
 body.keyboard-open .fab-stack,
 body.keyboard-open .speed,
-body.keyboard-open .bottom-nav { display: none !important; }
+body.keyboard-open:not(.ange-open) .bottom-nav { display: none !important; }
 #appScreen:has(.sheet.full) .fab-stack,
 #appScreen:has(#sheet .panel.on) .fab-stack { display: none; }
 #appScreen:has(.sheet.full) .speed,
