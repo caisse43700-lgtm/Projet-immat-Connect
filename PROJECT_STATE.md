@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Barre de réponses rapides dans le fil de messages — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `359e2df` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v122→v123
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Réponses rapides dans le fil** : rangée horizontale scrollable de 7 chips (OK 👍 / J'arrive ! / Merci 🙏 / En route 🚗 / Compris ! / 5 min ⏱ / Je ne peux pas) au-dessus du compositeur dans #icThread. Chaque chip appelle `ImmatMessages.quick(text)` pour envoi immédiat sans passer par la textarea.
+
+SW v122 → v123.
+
+---
+
 **Mission : Masquer/restaurer entrées individuelles du journal d'appels — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `592be69` sur `claude/immatconnect-pro-app-dEKGR`
