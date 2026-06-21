@@ -123,6 +123,14 @@
       <div class="act-resume-item"><div class="act-resume-ico ok">✅</div><div class="act-resume-info"><div class="act-resume-name">Traités</div><div class="act-resume-detail">Historique consulté</div></div><span class="act-resume-badge green">✓</span></div>
       <div class="act-resume-item" id="resumeMissedItem" style="display:none;cursor:pointer" onclick="App.navAppels();setTimeout(()=>{App.setCallJournalFilter('missed');},300)" role="button"><div class="act-resume-ico" style="background:rgba(239,68,68,.15);color:#ef4444">📵</div><div class="act-resume-info"><div class="act-resume-name">Appels manqués</div><div class="act-resume-detail" id="resumeMissedSub">Aucun appel manqué</div></div><span class="act-resume-badge" id="resumeMissedBadge" style="display:none">0</span></div>
       <div class="act-resume-item" id="resumeMineItem" style="display:none;cursor:pointer" onclick="App.navActivite();setTimeout(()=>{App.openActivityCat('all');setTimeout(()=>{App.actCatTab('envoyes');},80);},350)" role="button"><div class="act-resume-ico" style="background:rgba(99,102,241,.15);color:#818cf8">📤</div><div class="act-resume-info"><div class="act-resume-name">Mes signalements</div><div class="act-resume-detail" id="resumeMineSub">Aucun signalement actif</div></div><span class="act-resume-badge" id="resumeMineBadge" style="display:none">0</span></div>
+      <div class="act-resume-item" id="resumeUnreadMsgsItem" style="display:none;cursor:pointer" onclick="App.navMessages()" role="button">
+        <div class="act-resume-ico" style="background:rgba(59,130,246,.15);color:#60a5fa">💬</div>
+        <div class="act-resume-info">
+          <div class="act-resume-name">Messages non lus</div>
+          <div class="act-resume-detail" id="resumeUnreadMsgsSub">Aucun message non lu</div>
+        </div>
+        <span class="act-resume-badge" id="resumeUnreadMsgsBadge" style="display:none">0</span>
+      </div>
     </div>
   </div>
   <!-- Sous-panneau catégorie -->
@@ -1844,6 +1852,17 @@ App.renderActivityMain=function(){
   if(newBadgeEl){newBadgeEl.textContent=unread>99?'99+':String(unread);newBadgeEl.style.display=unread>0?'flex':'none';}
   if(encBadgeEl){encBadgeEl.textContent=enCours>99?'99+':String(enCours);encBadgeEl.style.display=enCours>0?'flex':'none';}
   const _mc=S._unseenMissedCalls||0;const _mi=document.getElementById('resumeMissedItem');const _mb=document.getElementById('resumeMissedBadge');const _ms=document.getElementById('resumeMissedSub');if(_mi)_mi.style.display=_mc>0?'flex':'none';if(_mb){_mb.textContent=_mc>99?'99+':String(_mc);_mb.style.display=_mc>0?'flex':'none';}if(_ms)_ms.textContent=_mc>0?_mc+' appel'+(_mc>1?'s':'')+' manqué'+(_mc>1?'s':''):'Aucun appel manqué';const _mine=(S.alerts||[]).filter(a=>(a._mine||a._own)&&a.status!=='gone'&&a.status!=='resolved'&&(now-Number(a.at||0)<(typeof ttlFor==='function'?ttlFor(a.type):3600000)));const _mn=_mine.length;const _mineItem=document.getElementById('resumeMineItem');const _mineBadge=document.getElementById('resumeMineBadge');const _mineSub=document.getElementById('resumeMineSub');if(_mineItem)_mineItem.style.display=_mn>0?'flex':'none';if(_mineBadge){_mineBadge.textContent=_mn>99?'99+':String(_mn);_mineBadge.style.display=_mn>0?'flex':'none';}if(_mineSub)_mineSub.textContent=_mn>0?_mn+' signalement'+(_mn>1?'s':'')+' en cours':'Aucun signalement actif';
+const _deleted2=[];try{JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').forEach(x=>_deleted2.push(String(x)));}catch(e){}
+const _rIds2=S._readMsgIds;
+const _unreadConv=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!m.context_type&&!_deleted2.includes(String(m.id))&&(!_rIds2||!_rIds2.has(String(m.id))));
+const _ucN=_unreadConv.length;
+const _ucC=new Set(_unreadConv.map(m=>m._otherPlate||m._convPlate).filter(Boolean)).size;
+const _umItem=document.getElementById('resumeUnreadMsgsItem');
+const _umBadge=document.getElementById('resumeUnreadMsgsBadge');
+const _umSub=document.getElementById('resumeUnreadMsgsSub');
+if(_umItem)_umItem.style.display=_ucN>0?'flex':'none';
+if(_umBadge){_umBadge.textContent=_ucN>99?'99+':String(_ucN);_umBadge.style.display=_ucN>0?'flex':'none';}
+if(_umSub)_umSub.textContent=_ucN>0?_ucN+' message'+(_ucN>1?'s':'')+(_ucC>0?' de '+_ucC+' contact'+(_ucC>1?'s':''):'')+' non lu'+(_ucN>1?'s':''):'Aucun message non lu';
 };
 App.openActivityCat=function(cat){
   S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
