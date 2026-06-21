@@ -54,6 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : PR 2 — Ange UX responsive (C1 panels / P1 paysage / M1 dvh / M2 safe-area) — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en attente push branche dev)
+**Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js` v130→v131
+
+**Ce qui a été fait :**
+- **C1 (Critique)** : `AngeDialog.open()` ferme désormais la sheet et retire `.on` de tous les panels A/B avant d'afficher l'overlay Ange. Guard `try/catch` pour robustesse.
+- **P1 (Paysage)** : `#angePanel { left: calc(58px + env(safe-area-inset-left,0px)) }` dans le media query landscape — Ange ne couvre plus la nav latérale.
+- **M1 (iOS dvh)** : `max-height:80vh` → `max-height:min(80dvh, calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))` dans l'inline CSS `#angePanel`.
+- **M2 (safe-area)** : `padding-bottom:max(16px,env(safe-area-inset-bottom,8px))` ajouté — contenu Ange visible sur iPhone avec home indicator.
+- `service-worker.js` v130 → v131.
+
+Précédente mission terminée :
+
 **Mission : BUG FIX — Boutons panelAltet non réactifs (pointer-events:none via .mini + :has()) — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `0d3673e` sur `main` (poussé)
@@ -1952,6 +1966,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | FIX CRITIQUE — mismatch version messages.js : index.html chargeait ?v=23 mais SW v124 ne cachait que ?v=24 → ancien SW servait vieux messages.js sans toggleUnreadOnly → TypeError 📬 + instabilité. Fix : index.html?v=24 + SW bumpe v125. |
 | 2026-06-21 | IA session | FEATURE — Réponse citée ↩️ dans le fil : bouton ↩ sur chaque bulle reçue, barre #icQuotePreview violette, préfixe "> citation\n" à l'envoi, rendu .ic-msg-quote (bordure violette, italique gris). messages.js v25, SW v126. Commit 566f495. |
 | 2026-06-21 | IA session | BUG FIX — Boutons panelAltet (Route/Véhicule/Aide/Stationné/X) non réactifs après PR 1 : :not(.mini) ajouté sur les 5 sélecteurs :has() portrait (app.css). Cause : App.closeSheet() laissait panelAltet.on=true → :has() écrasait height:0 (visible) mais pointer-events:none restait → tout le sheet non cliquable. CSS-only. SW v130. |
+| 2026-06-21 | IA session | PR 2 — Ange UX responsive : C1 AngeDialog.open() ferme panels A/B avant ouverture, P1 #angePanel left paysage +58px nav latérale, M1 max-height 80vh→min(80dvh,…safe-area), M2 padding-bottom max(16px,safe-area-bottom). SW v131. |
 
 ---
 

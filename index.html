@@ -3922,7 +3922,7 @@ const ImmatestUI = {
 .cs-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .gardien-debug-tool{display:none}body.is-gardien .gardien-debug-tool{display:inline-flex}#angeFab{display:none!important}
 #angeOverlay{display:none;position:fixed;inset:0;z-index:3001;background:rgba(0,0,0,.55)}
-#angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;max-height:80vh;overflow-y:auto;flex-direction:column;gap:12px}
+#angePanel{display:none;position:fixed;bottom:0;left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom,8px));max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));overflow-y:auto;flex-direction:column;gap:12px}
 #angeHeader{display:flex;justify-content:space-between;align-items:center;color:#c4b5fd;font-weight:700;font-size:15px}
 #angeHeader button{background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px}
 #angeResponse{display:none;background:#1a1a2e;border-radius:10px;padding:12px;color:#e2e8f0;font-size:13px;line-height:1.6;white-space:pre-wrap}
@@ -3969,6 +3969,7 @@ const AngeDialog={
     else{el.textContent='';el.style.color='#555';}
   },
   open(){
+    try{if(window.App?.closeSheet)window.App.closeSheet();['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});}catch(_){}
     $('angePanel').style.display='flex';
     $('angeOverlay').style.display='block';
     const resp=$('angeResponse');
