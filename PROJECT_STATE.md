@@ -54,9 +54,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Item "Messages non lus" dans le Résumé rapide Activité — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `3a5a390` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v118→v119
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Item 💬 Messages non lus dans Résumé rapide** : visible uniquement quand `S._actMessages` contient des messages de conversation (context_type absent) reçus et non lus. Affiche le nombre de messages + de contacts distincts ("X message(s) de Y contact(s) non lu(s)"). Tap → `navMessages()`. Complète la triade des items conditionnels : Appels manqués / Mes signalements / Messages non lus.
+
+SW v118 → v119.
+
+---
+
 **Mission : Bouton "Tester les notifications" dans les Paramètres — TERMINÉE**
 **Date :** 2026-06-21
-**Commit :** (en cours)
+**Commit :** `90f843a` sur `claude/immatconnect-pro-app-dEKGR`
 **Fichiers modifiés :** `index.html`, `service-worker.js` v117→v118
 
 **Ce qui a été fait :**
