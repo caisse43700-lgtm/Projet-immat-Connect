@@ -56,7 +56,7 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 **Mission : BUG FIX — Boutons panelAltet non réactifs (pointer-events:none via .mini + :has()) — TERMINÉE**
 **Date :** 2026-06-21
-**Commit :** (en cours — à pousser sur `claude/immatconnect-pro-app-dEKGR`)
+**Commit :** `0d3673e` sur `main` (poussé)
 **Fichiers modifiés :** `app.css`, `service-worker.js` v129→v130
 
 **Ce qui a été fait :**
@@ -1399,7 +1399,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — Fix pointer-events panelAltet commité sur dev. À fusionner sur main via "Fusionner".
+Aucune.
 
 ---
 
