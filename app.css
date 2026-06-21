@@ -360,18 +360,20 @@ body.reduce-effects .speed.over { animation: none; }
    Hauteurs par famille UX. Compatibles avec data-sheet-mode futur.
    En paysage, top + bottom déterminent la hauteur (height ignoré). ── */
 @media (orientation:portrait) {
-  /* Overlay — Famille A : carte visible ~48 % */
-  #sheet:has(#panelAltet.on) {
+  /* Overlay — Famille A : carte visible ~48 %
+     :not(.mini) garantit que le sheet réellement fermé reste height:0
+     et pointer-events:none même si un panel a encore la classe .on */
+  #sheet:not(.mini):has(#panelAltet.on) {
     height: min(var(--sheet-h-overlay), calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
   }
   /* Panel — Famille B : carte partiellement visible */
-  #sheet:has(#panelActivite.on),
-  #sheet:has(#panelMessages.on),
-  #sheet:has(#panelDrive.on) {
+  #sheet:not(.mini):has(#panelActivite.on),
+  #sheet:not(.mini):has(#panelMessages.on),
+  #sheet:not(.mini):has(#panelDrive.on) {
     height: min(var(--sheet-h-panel), calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
   }
   /* Fullscreen — Famille C : carte absente */
-  #sheet:has(#panelSettings.on) {
+  #sheet:not(.mini):has(#panelSettings.on) {
     height: var(--sheet-h-full);
   }
 }

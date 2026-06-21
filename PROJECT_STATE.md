@@ -54,6 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : BUG FIX — Boutons panelAltet non réactifs (pointer-events:none via .mini + :has()) — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours — à pousser sur `claude/immatconnect-pro-app-dEKGR`)
+**Fichiers modifiés :** `app.css`, `service-worker.js` v129→v130
+
+**Ce qui a été fait :**
+- **AUDIT COMPLET** : Route/Véhicule/Aide/Stationné/X — tous KO pour la même cause racine.
+- **CAUSE RACINE** : `App.closeSheet()` ajoute `.mini` au sheet sans retirer `.on` du panel actif. PR 1's `:has()` (spécificité 210) écrase `height:0` de `.sheet.mini` (spec 20) → sheet visible à 52dvh. Mais `.sheet.mini { pointer-events:none }` (spec 20) n'est PAS écrasé par `:has()` (qui ne déclare que `height`) → tous les descendants héritent `pointer-events:none` → clics impossibles. Bug latent avant PR 1 (height:0 cachait le problème), rendu perceptible par PR 1.
+- **CORRECTION** : ajout de `:not(.mini)` sur les 5 sélecteurs `:has()` portrait dans `app.css` — les hauteurs dynamiques ne s'appliquent que quand le sheet est réellement ouvert. CSS-only, aucun changement JS.
+- `service-worker.js` v129 → v130.
+
+Précédente mission terminée :
+
 **Mission : Réponse citée (↩️ quoted reply) dans le fil de messages — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `566f495` sur `claude/immatconnect-pro-app-dEKGR`
@@ -1386,7 +1399,7 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune — Crosshair GPS commitée et poussée. À fusionner sur main via "Fusionner".
+Aucune — Fix pointer-events panelAltet commité sur dev. À fusionner sur main via "Fusionner".
 
 ---
 
@@ -1938,6 +1951,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | 6 features UX : item Messages non lus Activité, onboarding A2HS iOS, bouton Confiance menu contextuel, masquer appels journal, réponses rapides fil messages, filtre 📬 Non lus. SW v118→v124. Commits 3a5a390→595c884. |
 | 2026-06-21 | IA session | FIX CRITIQUE — mismatch version messages.js : index.html chargeait ?v=23 mais SW v124 ne cachait que ?v=24 → ancien SW servait vieux messages.js sans toggleUnreadOnly → TypeError 📬 + instabilité. Fix : index.html?v=24 + SW bumpe v125. |
 | 2026-06-21 | IA session | FEATURE — Réponse citée ↩️ dans le fil : bouton ↩ sur chaque bulle reçue, barre #icQuotePreview violette, préfixe "> citation\n" à l'envoi, rendu .ic-msg-quote (bordure violette, italique gris). messages.js v25, SW v126. Commit 566f495. |
+| 2026-06-21 | IA session | BUG FIX — Boutons panelAltet (Route/Véhicule/Aide/Stationné/X) non réactifs après PR 1 : :not(.mini) ajouté sur les 5 sélecteurs :has() portrait (app.css). Cause : App.closeSheet() laissait panelAltet.on=true → :has() écrasait height:0 (visible) mais pointer-events:none restait → tout le sheet non cliquable. CSS-only. SW v130. |
 
 ---
 
