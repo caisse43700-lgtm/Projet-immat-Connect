@@ -1060,24 +1060,25 @@ poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){
   try{
     const rec=new SR();
     this._voiceRec=rec;
-    rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;
+    rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=true;
     if(btn){btn.style.color='#f0a500';btn.textContent='⏹';}
-    toast("🎤 Dites l'adresse ou le lieu…",'ok');
+    toast("🎤 Dites l'adresse — tapez ⏹ pour valider",'ok');
     let _last='';
-    const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},10000);
+    const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},20000);
     rec.onresult=e=>{
       let interimT='';
       for(let i=e.resultIndex;i<e.results.length;i++){
         if(e.results[i].isFinal){
           let best=e.results[i][0].transcript,bestC=-1;
           for(let j=0;j<e.results[i].length;j++){const c=e.results[i][j].confidence??0;if(c>bestC){bestC=c;best=e.results[i][j].transcript;}}
-          _last+=best;
+          _last+=((_last&&!_last.endsWith(' '))?' ':'')+best;
         } else interimT+=e.results[i][0].transcript;
       }
       const inp=$('gpsSearch');if(inp)inp.value=_last+interimT;
     };
     rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
-    rec.onend=()=>{clearTimeout(_at);_reset();if(_last){$('gpsSearch').value=_last;this.searchGps();}};
+    rec.onend=()=>{clearTimeout(_at);_reset();if(_last){$('gpsSearch').value=_last.trim();this.searchGps();}};
+    $('gpsSearch').blur();
     rec.start();
   }catch(e){_reset();toast('Micro indisponible.','bad');}
 },
