@@ -3961,12 +3961,10 @@ const ImmatestUI = {
   <div id="angePreview" style="display:none"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
   <div id="angeInputArea">
-    <div style="display:flex;gap:8px;align-items:flex-end">
-      <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000" style="flex:1"></textarea>
-      <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" style="background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#c4b5fd;padding:0 14px;font-size:20px;cursor:pointer;flex-shrink:0;align-self:stretch;min-width:44px">🎙️</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span id="angeQuota" style="font-size:11px;color:#555"></span>
+    <textarea id="angeMsg" rows="3" placeholder="Pose une question à l'Ange…" maxlength="2000" style="width:100%"></textarea>
+    <span id="angeQuota" style="font-size:11px;color:#555;text-align:right;display:block"></span>
+    <div style="display:flex;gap:8px">
+      <button id="angeMic" onclick="AngeDialog.startVoice()" title="Dicter ma question" style="flex:1;background:#1a1a2e;border:1px solid #444;border-radius:10px;color:#c4b5fd;font-size:15px;font-weight:600;min-height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🎙️ Dicter</button>
       <button id="angeSubmit" onclick="AngeDialog.send()" style="flex:1">Envoyer</button>
     </div>
   </div>
