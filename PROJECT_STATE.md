@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Bouton "Tester les notifications" dans les Paramètres — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v117→v118
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Test push notification** : bouton "🔔 Tester les notifications" ajouté en bas de la section Notifications dans les Paramètres. Appelle `testPushNotification()` : vérifie la permission (propose `requestPushPermission()` si nécessaire), puis envoie une notification via `serviceWorker.showNotification()` (plus fiable sur iOS/Android) avec fallback `new Notification()`. Toast de confirmation.
+
+SW v117 → v118.
+
+---
+
 **Mission : "Mes signalements" dans le Résumé rapide Activité — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
