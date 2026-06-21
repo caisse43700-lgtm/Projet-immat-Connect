@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Modal "Conducteurs de confiance" dans les Paramètres — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v115→v116
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Modal conducteurs de confiance** : bouton "🤝 Confiance" dans les Paramètres (à côté de "⭐ Favoris"). Ouvre un modal listant toutes les plaques dans `ic_trust` avec niveau `'TRUSTED'`. Chaque entrée a : bouton 💬 (ouvre la messagerie) + bouton ✕ (révoque la confiance via `removeTrustedModal()`, appelle `ImmatMessages.setTrust(plate,'NONE')` si disponible, fallback localStorage direct). État vide : "Aucun conducteur de confiance." La triade Settings est complète : Bloqués / Favoris / Confiance.
+
+SW v115 → v116.
+
+---
+
 **Mission : Modal "Conducteurs favoris" dans les Paramètres — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
