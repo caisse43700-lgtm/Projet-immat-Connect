@@ -54,6 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Bouton ⭐ favori par entrée dans le journal d'appels — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v112→v113
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — ⭐ favori par entrée du journal d'appels** : chaque ligne du journal d'appels (`renderCallJournal`) affiche désormais un bouton ⭐/☆ permettant d'ajouter ou retirer la plaque des favoris conducteurs (`ic_conv_favorites`). Bouton coloré (⭐ or/☆ gris) selon l'état courant, titre contextuel "Retirer des favoris" / "Ajouter aux favoris". Appelle `ImmatMessages.favoriteConv/unfavoriteConv()` avec fallback localStorage direct. Rafraîchit le journal (`renderCallJournal()`) après toggle.
+- Nouvelle méthode `App.toggleCallJournalFav(plate)` ajoutée.
+
+SW v112 → v113.
+
+---
+
 **Mission : Fix bouton 🚨 nearby panel + appels manqués dans Activity — TERMINÉE**
 **Date :** 2026-06-20
 **Commit :** `b000b57` sur `claude/immatconnect-pro-app-dEKGR`

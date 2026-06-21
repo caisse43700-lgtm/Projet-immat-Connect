@@ -2953,6 +2953,7 @@ App.renderCallJournal=async function(){
       var msgBtn='<button type="button" onclick="App.pickPlate(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Message à '+r.plate+'">💬</button>';
       var callBtn='<button type="button" onclick="App.callFromJournal(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Rappeler '+r.plate+'">📞</button>';
       var rateBtn=(r.status==='accepted'||r.status==='ended')?'<button type="button" onclick="App.openRatingModal(\''+r.plate+'\',\'call\')" style="background:#1e293b;border:none;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="Évaluer '+r.plate+'">⭐</button>':'';
+      var _fp=nPlate(r.plate);var _isFav=_favs.includes(_fp);var favBtn='<button type="button" onclick="App.toggleCallJournalFav(\''+r.plate+'\')" style="background:#1e293b;border:none;border-radius:8px;color:'+(_isFav?'#fbbf24':'#64748b')+';padding:6px 10px;font-size:12px;cursor:pointer;min-height:36px" title="'+(_isFav?'Retirer des favoris':'Ajouter aux favoris')+'">'+(_isFav?'⭐':'☆')+'</button>';
       html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1e293b;border-left:3px solid '+cfg.color+'">'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-weight:700;color:#e2e8f0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
@@ -2968,7 +2969,7 @@ App.renderCallJournal=async function(){
         '</div>'+
         '<div style="flex-shrink:0;text-align:right">'+
           '<div style="font-size:11px;color:#64748b;margin-bottom:4px">'+timeStr(r.at)+'</div>'+
-          '<div style="display:flex;gap:4px">'+rateBtn+msgBtn+callBtn+'</div>'+
+          '<div style="display:flex;gap:4px">'+rateBtn+favBtn+msgBtn+callBtn+'</div>'+
         '</div>'+
       '</div>';
     });
@@ -2984,6 +2985,7 @@ App.callFromJournal=function(plate){
 };
 App._callJournalFilter=(function(){try{return localStorage.getItem('ic_call_journal_filter')||'all';}catch(e){return'all';}})();
 App.setCallJournalFilter=function(f){this._callJournalFilter=f;try{localStorage.setItem('ic_call_journal_filter',f);}catch(e){}this.renderCallJournal();};
+App.toggleCallJournalFav=function(plate){var p=nPlate(plate);var favs=[];try{favs=JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]');}catch(e){}var isFav=favs.includes(p);try{if(isFav)window.ImmatMessages.unfavoriteConv(p);else window.ImmatMessages.favoriteConv(p);}catch(e){isFav?favs.splice(favs.indexOf(p),1):favs.push(p);try{localStorage.setItem('ic_conv_favorites',JSON.stringify(favs));}catch(e2){}}this.renderCallJournal();};
 App._callJournalSearch='';
 App.setCallJournalSearch=function(v){this._callJournalSearch=v;this.renderCallJournal();};
 App._callJournalLastLog=[];
