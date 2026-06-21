@@ -3756,7 +3756,7 @@ function showReputationToast(){
 <script src="badge.js"></script>
 <script src="messages.js?v=25"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
-<script src="core/guardian-dashboard-summary.js?v=3"></script>
+<script src="core/guardian-dashboard-summary.js?v=4"></script>
 <script src="core/immat-kernel.js?v=1"></script>
 <script src="core/brain-engine.js?v=1"></script>
 <script src="core/narrator.js?v=2"></script>
@@ -3876,12 +3876,12 @@ const ImmatestUI = {
 
 <!-- ── Dashboard Gardien ────────────────────────────────────────────── -->
 <div id="gardienDashboard" style="display:none;position:fixed;inset:0;z-index:4001;background:rgba(0,0,0,.92);overflow-y:auto" role="dialog" aria-modal="true" aria-label="Dashboard Gardien">
-  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1">
-    <div style="display:flex;gap:10px;align-items:center">
+  <div style="background:#0a0a18;border-bottom:2px solid #7c6af7;padding-top:max(calc(env(safe-area-inset-top,0px) + 8px),14px);padding-right:max(calc(env(safe-area-inset-right,0px) + 8px),16px);padding-bottom:14px;padding-left:max(calc(env(safe-area-inset-left,0px) + 8px),16px);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:1">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="color:#c4b5fd;font-weight:700;font-size:15px">🔍 Dashboard Gardien</span>
-      <button id="btnImmatestTab" onclick="ImmatestUI.toggle()" style="background:#1e1b4b;border:1px solid #4c3fa0;border-radius:8px;color:#a5b4fc;font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer">🧪 Immatest</button>
+      <button id="btnImmatestTab" onclick="ImmatestUI.toggle()" style="background:#1e1b4b;border:1px solid #4c3fa0;border-radius:8px;color:#a5b4fc;font-size:11px;font-weight:700;padding:10px 12px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center">🧪 Immatest</button>
     </div>
-    <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer">✕</button>
+    <button onclick="App.closeGardienDashboard()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:10px 12px">✕</button>
   </div>
   <div id="gardienDashboardBody" style="padding:16px;max-width:600px;margin:0 auto;font-size:13px;color:#e2e8f0;line-height:1.6"></div>
 

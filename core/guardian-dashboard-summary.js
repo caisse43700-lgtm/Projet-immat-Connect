@@ -148,10 +148,10 @@
     if($('guardianSummaryHeaderActions')) return true;
     var actions = document.createElement('div');
     actions.id = 'guardianSummaryHeaderActions';
-    actions.style.cssText = 'display:flex;gap:6px;align-items:center;margin-left:auto;padding-left:8px';
-    var btnStyle = 'background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
-    var globalBtnStyle = 'background:#0f2b1f;color:#4ade80;border:1px solid #22c55e;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
-    var majBtnStyle = 'background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f6;border-radius:6px;padding:3px 8px;font-weight:700;font-size:10px;cursor:pointer';
+    actions.style.cssText = 'display:flex;gap:6px;align-items:center;margin-left:auto;padding-left:8px;flex-wrap:wrap';
+    var btnStyle = 'background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:6px;padding:10px 12px;font-weight:700;font-size:10px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center';
+    var globalBtnStyle = 'background:#0f2b1f;color:#4ade80;border:1px solid #22c55e;border-radius:6px;padding:10px 12px;font-weight:700;font-size:10px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center';
+    var majBtnStyle = 'background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f6;border-radius:6px;padding:10px 12px;font-weight:700;font-size:10px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center';
     actions.innerHTML = '<button id="guardianDiagToggleBtn" type="button" style="'+btnStyle+'">Diagnostic</button>'+
                         '<button id="guardianCopyReportBtn" type="button" style="'+btnStyle+'">Copier</button>'+
                         '<button id="guardianGlobalCheckBtn" type="button" style="'+globalBtnStyle+'">Global</button>'+
