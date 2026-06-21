@@ -399,6 +399,15 @@
       <button id="icScrollHint" type="button" style="display:none" onclick="ImmatMessages._scrollToBottom()">↓ Nouveau message</button>
       <div id="icTypingLabel" style="display:none;padding:4px 12px 2px;font-size:12px;color:#94a3b8;font-style:italic"><span class="ic-typing-dots"><span></span><span></span><span></span></span> est en train d'écrire…</div>
 
+      <div id="icQuickReplies" style="display:flex;gap:6px;padding:5px 12px 4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-top:1px solid rgba(255,255,255,.04)">
+        <button type="button" onclick="ImmatMessages.quick('OK 👍')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">OK 👍</button>
+        <button type="button" onclick="ImmatMessages.quick('J\'arrive !')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">J'arrive !</button>
+        <button type="button" onclick="ImmatMessages.quick('Merci 🙏')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Merci 🙏</button>
+        <button type="button" onclick="ImmatMessages.quick('En route 🚗')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">En route 🚗</button>
+        <button type="button" onclick="ImmatMessages.quick('Compris !')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Compris !</button>
+        <button type="button" onclick="ImmatMessages.quick('5 minutes ⏱')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">5 min ⏱</button>
+        <button type="button" onclick="ImmatMessages.quick('Je ne peux pas.')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Je ne peux pas</button>
+      </div>
       <div class="ic-thread-composer">
         <button type="button" class="ic-icon-btn" title="Partager ma position GPS" onclick="ImmatMessages.sharePosition()" style="flex-shrink:0;font-size:16px;padding:4px 8px;opacity:.75">📍</button>
         <textarea id="icReplyText" placeholder="Message…"></textarea>
