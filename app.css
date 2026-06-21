@@ -438,6 +438,19 @@ body.rotating .sheet { transition: none !important; }
   transition: .14s ease;
 }
 .ph-close:active { background: rgba(255,59,92,.2); color: var(--red); }
+.ph-back {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 50%;
+  color: var(--muted); font-size: 16px; font-weight: 950;
+  cursor: pointer;
+  margin-left: -8px;
+  transition: .14s ease;
+}
+.ph-back:active { background: rgba(255,255,255,.15); color: var(--text); }
 /* Phase 1 — masquer .sheet-close global sur les panels migrés */
 #sheet:has(#panelSettings.on) .sheet-close,
 #sheet:has(#panelDrive.on) .sheet-close,
