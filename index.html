@@ -1051,7 +1051,23 @@ async deleteMyLocation(){try{let{data:ud}=await sb.auth.getUser();if(ud?.user)aw
 async toggleInvisible(){S.invisible=!S.invisible;set('ic_invisible',S.invisible?'1':'0');if(S.invisible){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;if(S.myMarker&&S.map)S.map.removeLayer(S.myMarker);S.myMarker=null;{const _mcp=$('mapCenterPin');if(_mcp)_mcp.style.display='block';}await this.deleteMyLocation();toast('Invisible : position retirée.','ok')}else this.locate();this.refresh()},
 setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers();this.renderAlerts();const _rs=$('radiusSettingsSlider');if(_rs)_rs.value=S.radiusKm;const _rv=$('radiusSettingsVal');if(_rv)_rv.textContent=S.radiusKm+' km';},recenter(){S.autoFollow=true;if(S.myLat!==null&&S.map){const _rz=S.mapView==='drive'?(S.driveMode?17:16):14;S._gpsMoving=true;S.map.setView([S.myLat,S.myLng],_rz,{animate:true});}else this.locate()},cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer&&S.map)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst')?.classList.remove('show');$('routeMini')?.classList.remove('show');toast('GPS arrêté.','ok')},updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15);this.updateFrontVehicle();if(get('ic_auto_status','0')==='1'){if(S.lastSpeed>20&&S._autoStatusLast!=='conduite'){S._autoStatusLast='conduite';if(S._autoStatusResetTimer){clearTimeout(S._autoStatusResetTimer);S._autoStatusResetTimer=null;}try{window.ImmatMessages?.setPresence?.('conduite');}catch(_){}}else if(S.lastSpeed<5&&S._autoStatusLast==='conduite'&&!S._autoStatusResetTimer){S._autoStatusResetTimer=setTimeout(()=>{S._autoStatusResetTimer=null;if(S.lastSpeed<5&&S._autoStatusLast==='conduite'){S._autoStatusLast=null;try{window.ImmatMessages?.setPresence?.('disponible');}catch(_){}}},30000);}}},
 openGps(){this.panel('drive');this.openSheet();setTimeout(()=>$('gpsSearch')?.focus(),120)},async searchGps(){let q=$('gpsSearch').value.trim(),box=$('gpsResults');if(q.length<3)return;if(S._nominatimCtrl){try{S._nominatimCtrl.abort();}catch(e){}}S._nominatimCtrl=new AbortController();box.innerHTML='<div class="empty-msg">Recherche…</div>';try{let p=new URLSearchParams({format:'json',limit:'10',countrycodes:'fr',addressdetails:'1',q:q+' France'});if(S.myLat!==null&&S.myLng!==null){p.set('viewbox',(S.myLng-.35)+','+(S.myLat+.35)+','+(S.myLng+.35)+','+(S.myLat-.35));p.set('bounded','0')}let arr=await(await fetch('https://nominatim.openstreetmap.org/search?'+p,{signal:S._nominatimCtrl.signal})).json();S._nominatimCtrl=null;arr=(arr||[]).map(r=>{let lat=+r.lat,lon=+r.lon,dist=(S.myLat!==null&&S.myLng!==null)?km(S.myLat,S.myLng,lat,lon):999999;return{...r,dist}}).sort((a,b)=>a.dist-b.dist);box.innerHTML=arr.length?arr.map(r=>{let d=r.dist<1?Math.round(r.dist*1000)+' m':r.dist<999999?r.dist.toFixed(1)+' km':'';let n=String(r.display_name||'').split(',');return'<button type="button" data-lat="'+Number(r.lat)+'" data-lon="'+Number(r.lon)+'" data-name="'+esc(r.display_name)+'" onclick="App.pickDest(+this.dataset.lat,+this.dataset.lon,this.dataset.name)"><span>📍</span><span><b>'+esc(n[0]||r.display_name)+'</b><small>'+esc(n.slice(1,3).join(', '))+'</small></span><span>'+esc(d)+'</span></button>'}).join(''):'<div class="empty-msg">Aucun résultat.</div>'}catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="empty-msg">Recherche indisponible.</div>'}},
-poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Micro indisponible.','bad');$('gpsSearch').focus();return}try{let rec=new SR();rec.lang='fr-FR';rec.interimResults=false;const _vt=setTimeout(()=>{try{rec.abort();}catch(e){}toast('Temps dépassé — réessaie.','bad');},8000);toast("Dis l'adresse ou le lieu.",'ok');rec.onresult=e=>{clearTimeout(_vt);let t=e.results?.[0]?.[0]?.transcript||'';if(t){$('gpsSearch').value=t;this.searchGps()}};rec.onerror=()=>{clearTimeout(_vt);toast('Micro indisponible.','bad');};rec.onend=()=>clearTimeout(_vt);rec.start()}catch(e){toast('Micro indisponible.','bad')}},
+poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){
+  const _reset=()=>{this._voiceRec=null;};
+  if(this._voiceRec){try{this._voiceRec.stop();}catch(e){}  _reset();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Micro non disponible.','bad');$('gpsSearch').focus();return;}
+  try{
+    const rec=new SR();this._voiceRec=rec;
+    rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+    toast("🎤 Dites l'adresse ou le lieu…",'ok');
+    let _last='';
+    const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},10000);
+    rec.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;_last=t;const inp=$('gpsSearch');if(inp)inp.value=t;};
+    rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
+    rec.onend=()=>{clearTimeout(_at);_reset();if(_last){$('gpsSearch').value=_last;this.searchGps();}};
+    rec.start();
+  }catch(e){_reset();toast('Micro indisponible.','bad');}
+},
 async pickDest(lat,lon,name){if(S.myLat===null)return toast('Localise-toi avant.','bad');S.routeDest={lat,lon,name};S.nextStep=0;this.addGpsHistory({lat,lon,name});try{let url='https://router.project-osrm.org/route/v1/driving/'+S.myLng+','+S.myLat+';'+lon+','+lat+'?overview=full&geometries=geojson&steps=true';const _oc=new AbortController(),_ot=setTimeout(()=>_oc.abort(),8000);let j,_r2;try{j=await(await fetch(url,{signal:_oc.signal})).json();}finally{clearTimeout(_ot);}let r=j?.routes?.[0];if(!r)throw new Error('no route');let leg=r.legs[0];S.routeSteps=(leg.steps||[]).map(st=>({lat:st.maneuver.location[1],lon:st.maneuver.location[0],text:instr(st)}));let coords=r.geometry.coordinates.map(c=>[c[1],c[0]]);if(S.routeLayer)S.map.removeLayer(S.routeLayer);S.routeLayer=L.polyline(coords,{color:'#2f7bff',weight:6,opacity:.86}).addTo(S.map);if(S.driveMode&&S.myLat!==null){S.map.setView([S.myLat,S.myLng],17,{animate:true});}else{S.map.fitBounds(S.routeLayer.getBounds(),{padding:[45,45]});}let kmv=(r.distance/1000).toFixed(1),min=Math.round(r.duration/60),eta=new Date(Date.now()+r.duration*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('routeMini').className='route-mini show';$('routeMini').innerHTML='<span><b>'+kmv+' km</b><br>'+min+' min · arrivée '+eta+'</span><button type="button" onclick="App.startNav()">Démarrer</button>';this.showInst('🧭','Itinéraire : '+kmv+' km, '+min+' min.');speak('Itinéraire calculé.',true);this.updateNavPremium()}catch(e){toast('Impossible de calculer.','bad')}},
 startNav(){S.driveMode=true;S.autoFollow=true;this.closeSheet();this.locate();this.showInst('🧭',S.routeSteps[0]?.text||'Démarrage navigation.');speak('Démarrage de la navigation.',true);try{window.ImmatOrganism?.observe?.('GPS_STARTED',{dest:S.routeDest?.name||'',_src:'ImmatConnect/startNav'})}catch(e){}},showInst(i,t){$('instI').textContent=i;$('instT').textContent=t;$('inst').classList.add('show')},checkRoute(){if(!S.driveMode||!S.routeDest||S.myLat===null)return;let end=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon)*1000;if(end<35){this.showInst('🏁','Vous êtes arrivé.');speak('Vous êtes arrivé.',true);S.driveMode=false;return}let stp=S.routeSteps[S.nextStep];if(!stp&&S.routeSteps.length>0&&!S._recalcLock){S._recalcLock=true;speak('Recalcul de l\'itinéraire.',true);this.showInst('🔄','Recalcul…');if($('recalcVal'))$('recalcVal').textContent='...';this.pickDest(S.routeDest.lat,S.routeDest.lon,S.routeDest.name).then(()=>{S.autoFollow=true;}).finally(()=>setTimeout(()=>S._recalcLock=false,12000));return;}if(stp&&km(S.myLat,S.myLng,stp.lat,stp.lon)*1000<75){this.showInst('➡️',stp.text);speak(stp.text);S.nextStep++}this.updateNavPremium();this.autoRecalculateRoute()},
 updateNavPremium(){const eta=$('etaVal'),rem=$('remainVal'),lim=$('limitVal'),traf=$('trafficVal'),lane=$('laneVal'),rec=$('recalcVal'),bar=$('trafficBar');if(!eta||!rem)return;const near=(S.nearby||[]).length;const activeAlerts=(S.alerts||[]).filter(a=>a.status!=='gone'&&a.status!=='resolved').length;if(lim)lim.textContent=S.myLat!==null?S.lastSpeed+' km/h':'--';if(traf)traf.textContent=near;if(lane)lane.textContent=activeAlerts;if(bar)bar.style.width='0%';if(!S.routeDest||S.myLat===null){eta.textContent='--';rem.textContent='--';rec.textContent='OK';return}const dist=km(S.myLat,S.myLng,S.routeDest.lat,S.routeDest.lon),avg=S.lastSpeed>10?S.lastSpeed:42,min=Math.max(1,Math.round((dist/avg)*60));eta.textContent=new Date(Date.now()+min*60000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});rem.textContent=dist<1?Math.round(dist*1000)+' m':dist.toFixed(1)+' km';rec.textContent='Auto'},autoRecalculateRoute(){if(!S.driveMode||!S.routeDest||S.nextStep>=S.routeSteps.length||S.myLat===null)return;const stp=S.routeSteps[Math.min(S.nextStep,S.routeSteps.length-1)];if(!stp)return;const d=km(S.myLat,S.myLng,stp.lat,stp.lon)*1000;if(d>450&&!S._recalcLock){S._recalcLock=true;speak('Recalcul de l\'itinéraire.',true);if($('recalcVal'))$('recalcVal').textContent='...';this.pickDest(S.routeDest.lat,S.routeDest.lon,S.routeDest.name).then(()=>{S.autoFollow=true;}).finally(()=>setTimeout(()=>S._recalcLock=false,12000))}},
@@ -4055,19 +4071,27 @@ const AngeDialog={
     try{const k='ic_ange_feedback';const arr=JSON.parse(localStorage.getItem(k)||'[]');arr.push({v,t:Date.now()});localStorage.setItem(k,JSON.stringify(arr.slice(-20)));}catch(e){}
   },
   startVoice(){
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){toast('Micro indisponible.','bad');$('angeMsg').focus();return;}
     const btn=$('angeMic');
+    const _reset=()=>{this._rec=null;if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
+    if(this._rec){try{this._rec.stop();}catch(e){}  _reset();return;}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
     try{
       const rec=new SR();
-      rec.lang='fr-FR';rec.interimResults=false;
-      if(btn){btn.style.color='#f0a500';btn.textContent='🎤';}
-      const _at=setTimeout(()=>{try{rec.abort();}catch(e){}if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Temps dépassé — réessaie.','bad');},8000);
-      rec.onresult=e=>{clearTimeout(_at);const t=e.results?.[0]?.[0]?.transcript||'';if(t){$('angeMsg').value=t;$('angeMsg').focus();}};
-      rec.onerror=e=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}if(e.error!=='aborted')toast('Micro indisponible.','bad');};
-      rec.onend=()=>{clearTimeout(_at);if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
+      this._rec=rec;
+      rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+      if(btn){btn.style.color='#f0a500';btn.textContent='⏹';}
+      toast('🎤 Parlez maintenant…','ok');
+      let _last='';
+      const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},10000);
+      rec.onresult=e=>{
+        let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+        _last=t;const ta=$('angeMsg');if(ta)ta.value=t;
+      };
+      rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
+      rec.onend=()=>{clearTimeout(_at);_reset();if(_last){const ta=$('angeMsg');if(ta){ta.value=_last;ta.focus();}}};
       rec.start();
-    }catch(e){if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}toast('Micro indisponible.','bad');}
+    }catch(e){_reset();toast('Micro indisponible.','bad');}
   },
   async send(){
     const msg=$('angeMsg').value.trim();
