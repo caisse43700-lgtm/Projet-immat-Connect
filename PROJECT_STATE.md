@@ -54,9 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Réponse citée (↩️ quoted reply) dans le fil de messages — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `566f495` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `messages.js` v24→v25, `messages.css`, `service-worker.js` v125→v126
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Réponse citée ↩️** : bouton ↩ sur chaque bulle reçue dans le thread. Tap → barre de preview violette (`#icQuotePreview`) s'affiche au-dessus du compositeur avec le texte original tronqué à 80 chars. Annulation via × ou fermeture du thread. À l'envoi (`reply()`), le texte est préfixé `> citation\n` — le renderer reconnaît les lignes `> ` et les affiche en `.ic-msg-quote` (bordure violette gauche, italique gris). Implémentation 100% client (pas de DB), compatible avec le filtre de recherche et le scroll. CSS : `.ic-reply-btn` opacity 0 → visible au hover/touch.
+
+Précédente feature terminée :
+
 **Mission : Fix critique — alignement version messages.js (SW cache v123→v124 mismatch) — TERMINÉE**
 **Date :** 2026-06-21
-**Commit :** (en cours)
+**Commit :** `eaf2a0d`
 **Fichiers modifiés :** `index.html` (messages.js?v=23→?v=24), `service-worker.js` v124→v125
 
 **Ce qui a été fait :**
@@ -1927,6 +1937,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Panel conducteurs proches enrichi (point fraîcheur ●, compteur + ↻ Actualiser, boutons 🚨 alerte + 📍 carte), push notification retry 3 tentatives backoff 1s/2s sur 5xx, migration rate limit DB (max 30 msg/min/user, RLS WITH CHECK). SW v111. |
 | 2026-06-21 | IA session | 6 features UX : item Messages non lus Activité, onboarding A2HS iOS, bouton Confiance menu contextuel, masquer appels journal, réponses rapides fil messages, filtre 📬 Non lus. SW v118→v124. Commits 3a5a390→595c884. |
 | 2026-06-21 | IA session | FIX CRITIQUE — mismatch version messages.js : index.html chargeait ?v=23 mais SW v124 ne cachait que ?v=24 → ancien SW servait vieux messages.js sans toggleUnreadOnly → TypeError 📬 + instabilité. Fix : index.html?v=24 + SW bumpe v125. |
+| 2026-06-21 | IA session | FEATURE — Réponse citée ↩️ dans le fil : bouton ↩ sur chaque bulle reçue, barre #icQuotePreview violette, préfixe "> citation\n" à l'envoi, rendu .ic-msg-quote (bordure violette, italique gris). messages.js v25, SW v126. Commit 566f495. |
 
 ---
 
