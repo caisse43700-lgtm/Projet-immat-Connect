@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Bouton Confiance dans le menu contextuel véhicule — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `0e88f38` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v120→v121
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — 🤝 Confiance dans le menu contextuel** : bouton secondaire sous les bulles d'action du menu contextuel véhicule. Visible uniquement pour les véhicules non-self. Vert "Marquer comme de confiance" / rouge "Révoquer la confiance" selon l'état ic_trust courant. Toggle appelle `ImmatMessages.setTrust()` avec fallback localStorage. Mise à jour immédiate du bouton après action.
+
+SW v120 → v121.
+
+---
+
 **Mission : Onboarding iOS A2HS + tip conditionnel Paramètres (S8-04) — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `f69b15e` sur `claude/immatconnect-pro-app-dEKGR`
