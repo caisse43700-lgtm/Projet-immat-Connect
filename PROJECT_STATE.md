@@ -9,10 +9,10 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-19
-Avancement             : ~50% du plan fonctionnel implémenté — EN PRODUCTION
+Date de mise à jour    : 2026-06-21
+Avancement             : ~52% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 14ca851 (poussé)
+Branche production     : main (GitHub Pages) — commit 5132815 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -54,17 +54,22 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : PR 2 — Ange UX responsive (C1 panels / P1 paysage / M1 dvh / M2 safe-area) — TERMINÉE**
+**Mission : PR 2 — Ange UX responsive + Fix nav cachée iOS — TERMINÉE ET VALIDÉE TERRAIN**
 **Date :** 2026-06-21
-**Commit :** (en attente push branche dev)
-**Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js` v130→v131
+**Commits :** `d2f1549` (ange-open class) · `5132815` (suppression auto-focus — fix final) sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `app.css`, `service-worker.js` v131→v138
 
-**Ce qui a été fait :**
-- **C1 (Critique)** : `AngeDialog.open()` ferme désormais la sheet et retire `.on` de tous les panels A/B avant d'afficher l'overlay Ange. Guard `try/catch` pour robustesse.
-- **P1 (Paysage)** : `#angePanel { left: calc(58px + env(safe-area-inset-left,0px)) }` dans le media query landscape — Ange ne couvre plus la nav latérale.
-- **M1 (iOS dvh)** : `max-height:80vh` → `max-height:min(80dvh, calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))` dans l'inline CSS `#angePanel`.
-- **M2 (safe-area)** : `padding-bottom:max(16px,env(safe-area-inset-bottom,8px))` ajouté — contenu Ange visible sur iPhone avec home indicator.
-- `service-worker.js` v130 → v131.
+**Ce qui a été fait (PR 2 initiale) :**
+- **C1** : `AngeDialog.open()` ferme la sheet et retire `.on` de tous les panels avant d'afficher Ange.
+- **P1 (Paysage)** : `#angePanel { left: calc(58px + env(safe-area-inset-left,0px)) }` — Ange ne couvre plus la nav latérale.
+- **M1 (iOS dvh)** : `max-height:80vh` → `max-height:min(80dvh, …safe-area)`.
+- **M2 (safe-area)** : `padding-bottom:max(16px,env(safe-area-inset-bottom,8px))`.
+
+**Fix complémentaire — nav cachée à l'ouverture d'Ange (validé terrain) :**
+- **Cause racine** : `AngeDialog.open()` appelait `setTimeout(()=>$('angeMsg')?.focus(),100)` — le focus automatique sur la textarea déclenchait le clavier iOS, réduisant le visual viewport. La `.bottom-nav` (`position:absolute` dans `#appScreen` `position:fixed`) restait ancrée au layout viewport et sortait de la zone visible. Ce n'était pas un `display:none` CSS mais un problème de viewport iOS.
+- **Hypothèses éliminées** : `keyboard-open` / `display:none` (testé, n'était pas la cause), z-index overlay couvrant la nav (géométriquement impossible avec `bottom:64px`), `closeSheet()` touchant la nav (non, ne touche que `#sheet`).
+- **Correction retenue** : suppression de la ligne `setTimeout(()=>$('angeMsg')?.focus(),100)` dans `AngeDialog.open()`. L'utilisateur tape manuellement dans le champ — comportement standard iOS.
+- SW v131 → v138.
 
 Précédente mission terminée :
 
@@ -1420,11 +1425,28 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-Phase 2 — Améliorations et stabilisation :
-  - Supprimer l'Edge Function get-turn-credentials du dashboard Supabase (S3-6, manuel)
-  - Tests de non-régression appels vocaux (scénarios 1→5 du checklist anti-régression)
-  - Sprint 8 : S7-NEARBY (conducteurs proches), delete_audit_log, Promise.allSettled() push
-  - B5 ANGE : amélioration des réponses si nécessaire
+PR 3 — Rotation / Orientation polish (portrait ↔ paysage)
+
+Objectif : stabiliser les transitions portrait ↔ paysage sans toucher au métier.
+
+Audit obligatoire avant code :
+  - Ouvrir Activité en portrait → tourner paysage : panel saute ? se ferme ? hauteur brutale ?
+  - Ouvrir Signaler en portrait → tourner paysage : même vérifications
+  - Ouvrir Messages en portrait → tourner paysage : scroll perdu ? draft effacé ? filtre actif ?
+  - Vérifier PWA iOS + Android
+
+Cibles potentielles (à confirmer par l'audit) :
+  - Transition height → auto brutale sur les panels
+  - Panels ouverts qui se ferment à la rotation
+  - État utilisateur perdu (scroll, draft, filtre actif)
+
+Périmètre autorisé :
+  - CSS transitions/animations uniquement si possible
+  - JS minimal si CSS insuffisant
+
+Ne pas toucher :
+  - Supabase, Messages métier, Appels, Ange IA, Stationnement, Notifications
+  - Aucune nouvelle fonctionnalité
 ```
 
 ---
@@ -1967,6 +1989,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | FEATURE — Réponse citée ↩️ dans le fil : bouton ↩ sur chaque bulle reçue, barre #icQuotePreview violette, préfixe "> citation\n" à l'envoi, rendu .ic-msg-quote (bordure violette, italique gris). messages.js v25, SW v126. Commit 566f495. |
 | 2026-06-21 | IA session | BUG FIX — Boutons panelAltet (Route/Véhicule/Aide/Stationné/X) non réactifs après PR 1 : :not(.mini) ajouté sur les 5 sélecteurs :has() portrait (app.css). Cause : App.closeSheet() laissait panelAltet.on=true → :has() écrasait height:0 (visible) mais pointer-events:none restait → tout le sheet non cliquable. CSS-only. SW v130. |
 | 2026-06-21 | IA session | PR 2 — Ange UX responsive : C1 AngeDialog.open() ferme panels A/B avant ouverture, P1 #angePanel left paysage +58px nav latérale, M1 max-height 80vh→min(80dvh,…safe-area), M2 padding-bottom max(16px,safe-area-bottom). SW v131. |
+| 2026-06-21 | IA session | Fix nav cachée Ange iOS — cause racine : auto-focus #angeMsg déclenchait le clavier iOS → visual viewport rétréci → .bottom-nav sortait de la zone visible. Correction : suppression setTimeout focus(). SW v138. Commits d2f1549 + 5132815. Validé terrain. |
+| 2026-06-21 | IA session | PR 3 démarrée — Rotation / Orientation polish. Audit en cours. |
 
 ---
 
