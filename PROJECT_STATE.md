@@ -54,6 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Modal "Conducteurs favoris" dans les Paramètres — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** (en cours)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v114→v115
+
+**Ce qui a été fait :**
+- **NOUVELLE FEATURE — Modal conducteurs favoris** : bouton "⭐ Favoris" dans les Paramètres (à côté de "🚫 Bloqués"). Ouvre un modal listant toutes les plaques dans `ic_conv_favorites`. Chaque entrée a : bouton 💬 (ouvre la messagerie) + bouton ☆ (retire des favoris via `removeFavModal()`, appelle `ImmatMessages.unfavoriteConv()` si disponible). État vide : "Aucun conducteur favori."
+
+SW v114 → v115.
+
+---
+
 **Mission : Statistiques d'appels dans les Paramètres — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
