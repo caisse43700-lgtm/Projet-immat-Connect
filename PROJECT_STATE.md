@@ -54,6 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Onboarding iOS A2HS + tip conditionnel Paramètres (S8-04) — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `f69b15e` sur `claude/immatconnect-pro-app-dEKGR`
+**Fichiers modifiés :** `index.html`, `service-worker.js` v119→v120
+
+**Ce qui a été fait :**
+- **S8-04 — Bloc iOS A2HS dans l'onboarding** : bloc vert conditionnel visible uniquement sur iPhone/iPad non standalone. Instructions claires : «Safari → Partager ⎙ → Sur l'écran d'accueil». Apparaît entre le bloc push et le bouton «C'est parti !».
+- **Tip Paramètres conditionnel** : `id=settingsA2HSTip` — masqué par défaut, affiché automatiquement via `App.panel('settings')` quand iOS + pas standalone. Plus de texte affiché sur Android ou desktop.
+- Détection : `/(iPhone|iPad|iPod)/.test(navigator.userAgent) && !window.navigator.standalone`.
+
+SW v119 → v120.
+
+---
+
 **Mission : Item "Messages non lus" dans le Résumé rapide Activité — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** `3a5a390` sur `claude/immatconnect-pro-app-dEKGR`
