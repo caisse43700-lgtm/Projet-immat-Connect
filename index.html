@@ -1078,7 +1078,6 @@ poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){
     };
     rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
     rec.onend=()=>{clearTimeout(_at);_reset();if(_last){$('gpsSearch').value=_last;this.searchGps();}};
-    $('gpsSearch').blur();
     rec.start();
   }catch(e){_reset();toast('Micro indisponible.','bad');}
 },
