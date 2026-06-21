@@ -1053,18 +1053,29 @@ setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.lo
 openGps(){this.panel('drive');this.openSheet();setTimeout(()=>$('gpsSearch')?.focus(),120)},async searchGps(){let q=$('gpsSearch').value.trim(),box=$('gpsResults');if(q.length<3)return;if(S._nominatimCtrl){try{S._nominatimCtrl.abort();}catch(e){}}S._nominatimCtrl=new AbortController();box.innerHTML='<div class="empty-msg">Recherche…</div>';try{let p=new URLSearchParams({format:'json',limit:'10',countrycodes:'fr',addressdetails:'1',q:q+' France'});if(S.myLat!==null&&S.myLng!==null){p.set('viewbox',(S.myLng-.35)+','+(S.myLat+.35)+','+(S.myLng+.35)+','+(S.myLat-.35));p.set('bounded','0')}let arr=await(await fetch('https://nominatim.openstreetmap.org/search?'+p,{signal:S._nominatimCtrl.signal})).json();S._nominatimCtrl=null;arr=(arr||[]).map(r=>{let lat=+r.lat,lon=+r.lon,dist=(S.myLat!==null&&S.myLng!==null)?km(S.myLat,S.myLng,lat,lon):999999;return{...r,dist}}).sort((a,b)=>a.dist-b.dist);box.innerHTML=arr.length?arr.map(r=>{let d=r.dist<1?Math.round(r.dist*1000)+' m':r.dist<999999?r.dist.toFixed(1)+' km':'';let n=String(r.display_name||'').split(',');return'<button type="button" data-lat="'+Number(r.lat)+'" data-lon="'+Number(r.lon)+'" data-name="'+esc(r.display_name)+'" onclick="App.pickDest(+this.dataset.lat,+this.dataset.lon,this.dataset.name)"><span>📍</span><span><b>'+esc(n[0]||r.display_name)+'</b><small>'+esc(n.slice(1,3).join(', '))+'</small></span><span>'+esc(d)+'</span></button>'}).join(''):'<div class="empty-msg">Aucun résultat.</div>'}catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="empty-msg">Recherche indisponible.</div>'}},
 poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){
   const btn=$('gpsVoiceBtn');
-  const _reset=()=>{this._voiceRec=null;if(btn){btn.textContent='🎙️';btn.style.opacity='';}};
+  const _reset=()=>{this._voiceRec=null;if(btn){btn.style.color='';btn.textContent='🎙️';}};
   if(this._voiceRec){try{this._voiceRec.stop();}catch(e){}  _reset();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){toast('Micro non disponible.','bad');$('gpsSearch').focus();return;}
+  if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
   try{
-    const rec=new SR();this._voiceRec=rec;
+    const rec=new SR();
+    this._voiceRec=rec;
     rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;
-    if(btn){btn.textContent='⏹';btn.style.opacity='0.7';}
+    if(btn){btn.style.color='#f0a500';btn.textContent='⏹';}
     toast("🎤 Dites l'adresse ou le lieu…",'ok');
     let _last='';
     const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},10000);
-    rec.onresult=e=>{let interimT='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){let best=e.results[i][0].transcript,bestC=-1;for(let j=0;j<e.results[i].length;j++){const c=e.results[i][j].confidence??0;if(c>bestC){bestC=c;best=e.results[i][j].transcript;}}_last+=best;}else interimT+=e.results[i][0].transcript;}const inp=$('gpsSearch');if(inp)inp.value=_last+interimT;};
+    rec.onresult=e=>{
+      let interimT='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal){
+          let best=e.results[i][0].transcript,bestC=-1;
+          for(let j=0;j<e.results[i].length;j++){const c=e.results[i][j].confidence??0;if(c>bestC){bestC=c;best=e.results[i][j].transcript;}}
+          _last+=best;
+        } else interimT+=e.results[i][0].transcript;
+      }
+      const inp=$('gpsSearch');if(inp)inp.value=_last+interimT;
+    };
     rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
     rec.onend=()=>{clearTimeout(_at);_reset();if(_last){$('gpsSearch').value=_last;this.searchGps();}};
     $('gpsSearch').blur();
