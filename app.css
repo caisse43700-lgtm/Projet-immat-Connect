@@ -32,6 +32,7 @@ button { border: 0; cursor: pointer; }
 /* ── ÉCRANS AUTH ── */
 .auth-screen { display: none; position: fixed; inset: 0; z-index: 9999; background: var(--bg); align-items: center; justify-content: center; padding: max(22px, var(--safe-top)) 18px max(22px, var(--safe-bottom)); overflow: auto; }
 .auth-screen.active { display: flex; }
+#sp { align-items: flex-start; }
 .app-card { width: 100%; max-width: 430px; background: linear-gradient(180deg, rgba(15,26,38,.98), rgba(10,18,28,.98)); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px; }
 .brand { text-align: center; font-size: clamp(34px,10vw,46px); font-weight: 950; letter-spacing: -1.5px; line-height: 1; margin-bottom: 12px; }
 .brand span { color: var(--green); }
