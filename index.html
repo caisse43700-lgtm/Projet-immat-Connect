@@ -3007,7 +3007,7 @@ App.renderCallJournal=async function(){
       else countEl.style.display='none';
     }
     function _fpill(val,label){var on=_f===val;return '<button type="button" aria-pressed="'+on+'" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
-    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button>'++(_hiddenCalls.length?'<button type="button" onclick="App.restoreHiddenCalls()" style="background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;padding:4px 6px" title="Restaurer les appels masqués">Restaurer ('+_hiddenCalls.length+')</button>':'')+"</span></div>"+
+    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button>'+(_hiddenCalls.length?'<button type="button" onclick="App.restoreHiddenCalls()" style="background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;padding:4px 6px" title="Restaurer les appels masqués">Restaurer ('+_hiddenCalls.length+')</button>':'')+"</span></div>"+
       '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+_fpill('fav','⭐ Favoris')+'</div>';
     if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">'+(_q?'Aucun appel pour «\xa0'+esc(App._callJournalSearch||'')+'\xa0».':'Aucun appel dans cette catégorie.')+'</div></div>';el.innerHTML=html;return;}
     var lastDay='';
@@ -3037,7 +3037,7 @@ App.renderCallJournal=async function(){
           '</div>'+
         '</div>'+
         '<div style="flex-shrink:0;text-align:right">'+
-          '<div style="font-size:11px;color:#64748b;margin-bottom:4px">'+timeStr(r.at)+'</div>'+
+          '<div style="font-size:11px;color:#64748b;margin-bottom:4px">'+timeStr(r.at)+'</div>';
           var hideBtn='<button type="button" onclick="App.hideCallEntry('+JSON.stringify(String(r.id))+')" style="background:none;border:none;color:#475569;padding:6px 4px;font-size:11px;cursor:pointer;min-height:36px" title="Masquer cet appel">✕</button>';
       html+='<div style="display:flex;gap:4px">'+rateBtn+favBtn+msgBtn+callBtn+hideBtn+'</div>'+
         '</div>'+
@@ -3746,7 +3746,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=23"></script>
+<script src="messages.js?v=24"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=3"></script>
 <script src="core/immat-kernel.js?v=1"></script>

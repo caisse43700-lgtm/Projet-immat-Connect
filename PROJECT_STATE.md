@@ -54,9 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Filtre "Non lus seulement" dans la liste des conversations — TERMINÉE**
+**Mission : Fix critique — alignement version messages.js (SW cache v123→v124 mismatch) — TERMINÉE**
 **Date :** 2026-06-21
 **Commit :** (en cours)
+**Fichiers modifiés :** `index.html` (messages.js?v=23→?v=24), `service-worker.js` v124→v125
+
+**Ce qui a été fait :**
+- **BUG FIX — Mismatch version messages.js** : après le déploiement de la feature 6 (filtre non-lus), `index.html` chargeait `messages.js?v=23` mais le SW v124 ne pré-cachait que `messages.js?v=24`. Quand l'ancien SW v123 était encore actif, il servait l'ancien `messages.js` (sans `toggleUnreadOnly`) depuis son cache → TypeError au clic sur 📬 → instabilité app. Fix : `index.html` aligne sur `?v=24` + SW bumpe en v125 pour forcer un refresh complet sur tous les appareils.
+
+Précédente feature terminée :
+
+**Mission : Filtre "Non lus seulement" dans la liste des conversations — TERMINÉE**
+**Date :** 2026-06-21
+**Commit :** `595c884` sur `claude/immatconnect-pro-app-dEKGR`
 **Fichiers modifiés :** `index.html`, `messages.js` v23→v24, `service-worker.js` v123→v124
 
 **Ce qui a été fait :**
@@ -1915,6 +1925,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-20 | IA session | Audit global — 6 bugs corrigés : BUG-001 PII user_name→owner_plate, BUG-003 GPS retry backoff (max 5 × max 30s), BUG-008 SW versioning badge.js+3 core sans ?v=, BUG-009 myMarker null-safe try/catch, BUG-012 deleteAccount purge ic_* RGPD, BUG-014 sb.auth.getUser() éliminé du callback GPS → S.uid direct. SW v109. |
 | 2026-06-20 | IA session | Audit global phase 2 — 6 bugs robustesse : BUG-002 race condition GPS callback (_locateCbRunning try/finally), BUG-004 subLocs channel leak (sauvegarde old ref avant null + removeChannel), BUG-006 loadOthers throttle 2s (_loadOthersAt), BUG-010 subscribeCommunityReports async + await removeChannel, BUG-011 double getUser() éliminé (syncCommunityAlerts + _handleReport → S.uid), BUG-015 js() XSS guillemets doubles (&quot;). SW v110. |
 | 2026-06-20 | IA session | Panel conducteurs proches enrichi (point fraîcheur ●, compteur + ↻ Actualiser, boutons 🚨 alerte + 📍 carte), push notification retry 3 tentatives backoff 1s/2s sur 5xx, migration rate limit DB (max 30 msg/min/user, RLS WITH CHECK). SW v111. |
+| 2026-06-21 | IA session | 6 features UX : item Messages non lus Activité, onboarding A2HS iOS, bouton Confiance menu contextuel, masquer appels journal, réponses rapides fil messages, filtre 📬 Non lus. SW v118→v124. Commits 3a5a390→595c884. |
+| 2026-06-21 | IA session | FIX CRITIQUE — mismatch version messages.js : index.html chargeait ?v=23 mais SW v124 ne cachait que ?v=24 → ancien SW servait vieux messages.js sans toggleUnreadOnly → TypeError 📬 + instabilité. Fix : index.html?v=24 + SW bumpe v125. |
 
 ---
 
