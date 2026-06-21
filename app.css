@@ -379,6 +379,7 @@ body.rotating .sheet { transition: none !important; }
   /* Fullscreen — Famille C : carte absente */
   #sheet:not(.mini):has(#panelSettings.on) {
     height: var(--sheet-h-full);
+    border-radius: 0;
   }
 }
 #sheetArrowOpen {
@@ -386,8 +387,9 @@ body.rotating .sheet { transition: none !important; }
 }
 .sheet-close {
   position: absolute;
-  top: 20px; right: 20px;
-  width: 36px; height: 36px;
+  top: max(calc(env(safe-area-inset-top, 0px) + 8px), 20px);
+  right: max(calc(env(safe-area-inset-right, 0px) + 8px), 20px);
+  width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(255,255,255,.08);
   color: var(--muted);
@@ -736,8 +738,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     max-height: none;
     border-radius: 0;
   }
-  /* Fullscreen en paysage — Famille C : top:0, carte absente */
-  #sheet:has(#panelSettings.on) { top: 0; }
+  /* Fullscreen en paysage — Famille C : top:0 left:0, carte absente */
+  #sheet:has(#panelSettings.on) { top: 0; left: 0; }
   .sheet.mini { transform: translateX(100%); }
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
