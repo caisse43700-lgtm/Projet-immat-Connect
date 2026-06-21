@@ -74,7 +74,9 @@ const State = {
   colorMap:{},
   _typingCh:null,
   _typingBcTimer:null,
-  _typingHideTimer:null
+  _typingHideTimer:null,
+  replyToId:null,
+  replyToText:null
 };
 
 async function getUser(){
@@ -846,16 +848,24 @@ async function markThreadRead(plate){
 function _formatMsg(text){
   if(!text) return '';
   const URL_RE = /https?:\/\/[^\s<>"]+/g;
-  let result = '', last = 0, m;
-  while((m = URL_RE.exec(text)) !== null){
-    result += esc(text.slice(last, m.index));
-    const url = m[0];
-    const display = url.length > 40 ? url.slice(0, 37) + '…' : url;
-    result += '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:#60a5fa;text-decoration:underline;word-break:break-all">' + esc(display) + '</a>';
-    last = m.index + url.length;
-  }
-  result += esc(text.slice(last));
-  return result;
+  const lines = text.split('\n');
+  const parts = lines.map(line => {
+    if(line.startsWith('> ')){
+      return '<span class="ic-msg-quote">' + esc(line.slice(2)) + '</span>';
+    }
+    let result = '', last = 0, m;
+    URL_RE.lastIndex = 0;
+    while((m = URL_RE.exec(line)) !== null){
+      result += esc(line.slice(last, m.index));
+      const url = m[0];
+      const display = url.length > 40 ? url.slice(0, 37) + '…' : url;
+      result += '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:#60a5fa;text-decoration:underline;word-break:break-all">' + esc(display) + '</a>';
+      last = m.index + url.length;
+    }
+    result += esc(line.slice(last));
+    return result;
+  });
+  return parts.join('<br>');
 }
 
 function _highlightHtml(html, query){
@@ -921,7 +931,11 @@ function _renderTimeline(body, messages, searchQuery){
       ? `<div class="ic-unread-sep"><span>${unreadCount} non lu${unreadCount>1?'s':''}</span></div>`
       : '');
     const timeStr = item._ts ? (typeof relTime==='function'?relTime(item._ts):new Date(item._ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) : '';
+    const _replyBtn = !item._sent
+      ? `<button class="ic-reply-btn" aria-label="Répondre à ce message" title="Répondre" onclick="ImmatMessages.setReplyTo('${esc(String(item.id))}',${JSON.stringify((item.message||'').slice(0,80))})">↩</button>`
+      : '';
     return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
+      ${_replyBtn}
       <div class="ic-bubble-text">${q ? _highlightHtml(_formatMsg(item.message||''), searchQuery) : _formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
@@ -1068,6 +1082,7 @@ function closeThread(){
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
   State.threadSearchQuery = '';
+  clearReplyTo();
   try{
     clearTimeout(State._typingHideTimer);
     clearTimeout(State._typingBcTimer);
@@ -1143,6 +1158,25 @@ function clearThreadSearch(){
   input?.focus();
 }
 
+function setReplyTo(id, text){
+  State.replyToId = id;
+  State.replyToText = text;
+  const preview = document.getElementById('icQuotePreview');
+  const quoteText = document.getElementById('icQuoteText');
+  if(preview && quoteText){
+    quoteText.textContent = text;
+    preview.style.display = 'flex';
+  }
+  document.getElementById('icReplyText')?.focus();
+}
+
+function clearReplyTo(){
+  State.replyToId = null;
+  State.replyToText = null;
+  const preview = document.getElementById('icQuotePreview');
+  if(preview) preview.style.display = 'none';
+}
+
 function toggleFavOnly(){
   State.favOnly = !State.favOnly;
   try{localStorage.setItem('ic_conv_fav_only', State.favOnly ? '1' : '0');}catch(e){}
@@ -1174,7 +1208,12 @@ async function sendNew(){
 
 async function reply(){
   if(!State.activePlate) return toast('Choisis une conversation.','bad');
-  const text = ($('icReplyText')?.value || '').trim();
+  let text = ($('icReplyText')?.value || '').trim();
+  if(State.replyToText){
+    const truncated = State.replyToText.length > 60 ? State.replyToText.slice(0,60)+'…' : State.replyToText;
+    text = '> ' + truncated + '\n' + text;
+    clearReplyTo();
+  }
   const btn = document.querySelector('#icThread .ic-send-btn');
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
@@ -2055,6 +2094,8 @@ window.ImmatMessages = {
   exportThread,
   toggleFavOnly,
   toggleUnreadOnly,
+  setReplyTo,
+  clearReplyTo,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;

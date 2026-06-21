@@ -409,6 +409,10 @@
         <button type="button" onclick="ImmatMessages.quick('5 minutes ⏱')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">5 min ⏱</button>
         <button type="button" onclick="ImmatMessages.quick('Je ne peux pas.')" style="flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#cbd5e1;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Je ne peux pas</button>
       </div>
+      <div id="icQuotePreview" style="display:none;padding:6px 10px;background:rgba(99,102,241,.13);border-left:3px solid #6366f1;margin:0 8px 4px;border-radius:0 6px 6px 0;align-items:center;gap:6px">
+        <span id="icQuoteText" style="flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#a5b4fc;font-style:italic"></span>
+        <button type="button" onclick="ImmatMessages.clearReplyTo()" aria-label="Annuler la réponse citée" style="background:none;border:none;color:#818cf8;cursor:pointer;font-size:16px;padding:0 2px;line-height:1;flex-shrink:0">×</button>
+      </div>
       <div class="ic-thread-composer">
         <button type="button" class="ic-icon-btn" title="Partager ma position GPS" onclick="ImmatMessages.sharePosition()" style="flex-shrink:0;font-size:16px;padding:4px 8px;opacity:.75">📍</button>
         <textarea id="icReplyText" placeholder="Message…"></textarea>
@@ -3746,7 +3750,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=24"></script>
+<script src="messages.js?v=25"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=3"></script>
 <script src="core/immat-kernel.js?v=1"></script>

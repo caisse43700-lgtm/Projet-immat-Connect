@@ -938,3 +938,12 @@
 body.appels-mode #icMsgList { display:none !important; }
 body.appels-mode #icMessagesPro .ic-conv-header { display:none !important; }
 body.appels-mode #icSearchBar { display:none !important; }
+
+/* Quoted message line inside bubble */
+.ic-msg-quote { display:block; border-left:3px solid rgba(99,102,241,.5); padding-left:6px; color:#94a3b8; font-style:italic; font-size:11px; margin-bottom:4px; line-height:1.4; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+
+/* Reply button on received bubbles */
+.ic-reply-btn { background:none; border:none; color:#64748b; cursor:pointer; font-size:13px; padding:2px 4px; opacity:0; transition:opacity .15s; align-self:flex-start; flex-shrink:0; border-radius:4px; }
+.ic-bubble.recv:hover .ic-reply-btn,
+.ic-bubble.recv:focus-within .ic-reply-btn { opacity:1; }
+@media (pointer:coarse) { .ic-reply-btn { opacity:.65; } }
