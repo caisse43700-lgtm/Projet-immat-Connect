@@ -347,7 +347,7 @@
 
     <!-- Journal d'appels -->
     <div id="icAppelsPane" style="display:none;overflow-y:auto;flex:1">
-      <div class="panel-header" style="padding:12px 16px"><div class="ph-title-group"><span class="ph-title">Journal d'appels</span></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
+      <div class="act-cat-hd"><button type="button" class="act-cat-back" onclick="App.closeSheet()">‹</button><div class="act-cat-hd-mid"><span class="act-cat-hd-icon">📞</span><div><div class="act-cat-hd-title">Journal d'appels</div><div class="act-cat-hd-sub">Historique de vos appels</div></div></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
       <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" aria-label="Rechercher dans le journal d'appels par plaque ou pseudo" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
       <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
       <div id="icCallLog"></div>
