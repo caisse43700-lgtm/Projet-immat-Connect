@@ -426,6 +426,12 @@ body.rotating .sheet { transition: none !important; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   margin-top: 1px;
 }
+.ph-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .ph-close {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
