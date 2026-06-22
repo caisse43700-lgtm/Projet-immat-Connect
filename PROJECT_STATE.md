@@ -9,10 +9,10 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-21
-Avancement             : ~52% du plan fonctionnel implémenté — EN PRODUCTION
+Date de mise à jour    : 2026-06-22
+Avancement             : ~53% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 5132815 (poussé)
+Branche production     : main (GitHub Pages) — commit cd2e814 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -54,9 +54,27 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Phase 2 Modales Settings — Unification headers A19→A23 — TERMINÉE ET VALIDÉE TERRAIN**
+**Date :** 2026-06-22
+**Commit :** `cd2e814` sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `app.css?v=17` (règle `.ph-actions`), `service-worker.js` v167→v168
+
+**Ce qui a été fait :**
+- **A19 — `#blocked`** : `<h2>` + bouton Fermer → `.panel-header` [Plaques bloquées][✕ closeBlocked()]
+- **A20 — `#recent`** : `<h2>` + boutons Vider/Fermer → `.panel-header` [Véhicules récents][`.ph-actions` Vider rouge][✕ closeRecent()]
+- **A21 — `#favoritesModal`** : `<h2>` + bouton Fermer → `.panel-header` [⭐ Conducteurs favoris][✕ closeFavoritesModal()]
+- **A22 — `#trustedModal`** : `<h2>` + bouton Fermer → `.panel-header` [🤝 Conducteurs de confiance][✕ closeTrustedModal()]
+- **A23 — `#legal`** : `.panel-header` [Confidentialité & CGU][✕ closeLegal()] inséré avant `.legal-tabs` dans `.legal-modal-card flex-column` ; bouton Fermer bas supprimé
+- CSS : règle `.ph-actions { display:flex; align-items:center; gap:6px; flex-shrink:0 }` ajoutée
+
+**Chantier migration headers UX : CLÔTURÉ DÉFINITIVEMENT.**
+- Phase 1 (5 panels #sheet) + Phase 2 (5 modales Settings + 5 sous-steps Signaler + 4 vues Messages) = 100% migré.
+
+Précédente mission terminée :
+
 **Mission : Phase 2 Signaler — Boutons ← + ✕ natifs dans les 5 sous-steps de #panelAltet — TERMINÉE**
 **Date :** 2026-06-21
-**Commit :** à pousser sur `claude/immatconnect-pro-app-dEKGR`
+**Commit :** `cd2e814` (inclus dans la suite, SW v151)
 **Fichiers modifiés :** `index.html`, `app.css?v=16`, `service-worker.js` v150→v151
 
 **Ce qui a été fait :**
@@ -1456,23 +1474,32 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-PRIORITÉ 3 — Phase 2 Modales Settings (après validation terrain Signaler)
+⚠️ RÈGLE STABILISATION (décision utilisateur 2026-06-22) :
+  Ne plus modifier Activité, Messages, Signaler, Options ou Profil conducteur
+  sans bug terrain reproductible documenté. Objectif : réduction du risque de régression.
 
-Périmètre : #panelAltet et ses 5 sous-vues (Route, Véhicule, Aide, Stationné, Véhicule-Stationné).
-Audit obligatoire avant code :
-  - Identifier chaque sub-view active (class .active ? display ? z-index ?)
-  - Vérifier que closeSheet() est disponible depuis chaque view
-  - Grep des classes de back-button existantes pour ne pas créer de conflit JS
-Règle : jamais deux X simultanés. Priorité : ← retour + ✕ fermeture panel.
+CHANTIER MIGRATION HEADERS UX : ✅ CLÔTURÉ DÉFINITIVEMENT (2026-06-22)
+  Phase 1 (5 panels) + Phase 2 (modales + signaler + messages) = 100% migré.
+  Ne pas rouvrir ce chantier.
 
-PRIORITÉ 3 (après Signaler) — Phase 2 Modales Settings
-  #blocked, #favoritesModal, #trustedModal, #recent, #legal
+─────────────────────────────────────────────────
 
-PRIORITÉ 4 (après Settings) — Dashboard Gardien
-  Ne pas toucher sauf bug reporté terrain.
+PRIORITÉ 1 — NOUVEAU CHANTIER : Correctifs micro Ange/GPS
+  Périmètre : reconnaissance vocale webkitSpeechRecognition sur iOS
+  Problèmes connus (non régressés, jamais parfaitement résolus) :
+    - Ange : qualité de reconnaissance (maxAlternatives:3, confidence, continuous:false)
+    - GPS : reconnaissance parfois mauvaise malgré continuous:true + blur()
+  Avant tout correctif :
+    - Documenter le bug exact avec une reproduction reproductible terrain
+    - Ne modifier qu'une variable à la fois
+    - Tester sur les deux iPhones BZ-652-LL ↔ BE-521-MM avant de fusionner
 
-PRIORITÉ 5 (post-UX) — PR 3 Rotation / Orientation polish
-  CSS transitions sur les transitions portrait ↔ paysage.
+PRIORITÉ 2 — AUDIT Dashboard Gardien (#gardienDashboard)
+  Audit ciblé uniquement : lire le code tel qu'il est, identifier ce qui ne
+  fonctionne pas ou est incomplet, sans modifier a priori.
+  Produire un rapport structuré : voyants, GVC, Diagnostic IA, Immatest,
+  état des 8 sections, bugs visuels/fonctionnels, propositions de corrections.
+  Ne corriger qu'après validation de l'audit par l'utilisateur.
 ```
 
 ---
@@ -2019,6 +2046,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | PR 3 démarrée — Rotation / Orientation polish. Audit en cours. |
 | 2026-06-21 | IA session | Phase 2 Messages — X natifs A11→A14 : .ph-close dans .ic-conv-header-acts, panel-header Journal d'appels, panel-header Nouveau message (← + 🗑 + ✕ en remplacement .ic-compose-hd), .ph-close dans .ic-thread-actions. :has(#panelMessages.on) .sheet-close. app.css v15, SW v150. |
 | 2026-06-21 | IA session | Phase 2 Signaler — panel-header [← titre ✕] sur les 5 sous-steps (Route/Véhicule/Messages-véhicule/Aide/Stationné). :has(#sigStep1.active)→:has(#panelAltet.on). sigStep3VehicleMsg conserve .sig-back-btn pour immat-test-engine:410. app.css v16, SW v151. |
+| 2026-06-22 | IA session | Phase 2 Modales Settings A19→A23 validées terrain — #blocked/#recent/#favoritesModal/#trustedModal/#legal migrés vers .panel-header + .ph-close. CSS .ph-actions ajouté. app.css v17, SW v168, APP_BUILD 2026-06-22. Commit cd2e814. |
+| 2026-06-22 | IA session | CLÔTURE chantier migration headers UX (100% : Phase 1 + Phase 2 complètes). Ouverture chantier micro Ange/GPS. Audit dashboard Gardien planifié. Règle stabilisation activée (ne plus modifier Activité/Messages/Signaler/Options/Profil sans bug reproductible). |
 
 ---
 
