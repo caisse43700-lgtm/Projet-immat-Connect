@@ -1297,7 +1297,9 @@ async function sendToPlate(plate,text,opts){
     to_plate:receiverPlate
   };
 
+  console.log('[DIAG-INSERT] messages insert context_type=',rich.context_type||'(absent)','to=',receiverPlate);
   let {error} = await client.from('messages').insert(rich);
+  if(error) console.warn('[DIAG-INSERT] rich error:',error.message,'→ fallback base, context_type=',base.context_type||'(absent)');
 
   if(error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema cache/i.test(String(error.message||''))){
     const r = await client.from('messages').insert(base);

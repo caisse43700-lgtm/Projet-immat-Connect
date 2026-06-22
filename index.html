@@ -1320,6 +1320,7 @@ async subMsgs(){
         const _isVehicleReport=m.context_type==='vehicle_report';
         const _isParkedReport=m.context_type==='parked_report';
         const _isParkedResponse=m.context_type==='parked_response';
+        console.log('[DIAG-FC] context_type=',JSON.stringify(m.context_type),'_isVehicleReport=',_isVehicleReport,'SW=',navigator.serviceWorker?.controller?.scriptURL||'none');
         const _isQr=['Bien reçu 👍',"J'arrive ! 🚗",'En route 🚘'].includes(_txt);
         const _archiveStation=(msgId)=>{let r=[];try{r=JSON.parse(localStorage.getItem('ic_station_replied')||'[]');}catch(e){}if(!r.includes(String(msgId)))r.push(String(msgId));try{localStorage.setItem('ic_station_replied',JSON.stringify(r.slice(-500)));}catch(e){}if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(String(msgId));try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}};
         let _qr;
@@ -1344,6 +1345,7 @@ async subMsgs(){
         const _stCleanLabel=_isParkedReport?String(_txt).replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').replace(/\.\s*Votre véhicule.*$/i,'').trim().slice(0,50):null;
         const _stGps=_isParkedReport?(()=>{const _gm=String(_txt).match(/\[GPS:([-\d.]+),([-\d.]+)\]/);return _gm?{lat:parseFloat(_gm[1]),lng:parseFloat(_gm[2])}:null;})():null;
         const _fcTitle=_isParkedReport?(_isUrgParked?'🚨 ':'')+(_stCleanLabel||'Signalement stationné'):_isParkedResponse?'🅿️ Signalement pris en compte':_isVehicleReport?'🚨 Signalement véhicule':'Message de '+_sndName;
+        console.log('[DIAG-FC] _fcTitle=',_fcTitle,'_fcBody=',_isVehicleReport?String(_txt).slice(0,80):String(_txt).slice(0,60));
         const _fcSub=_isParkedReport?'Signalé par '+_sndName+(_stGps?' · 📍':'')+( m.image_url?' · 📷':''): _isParkedResponse?'Par '+_sndName:''+_sndName;
         const _fcBody=_isParkedReport?'Votre véhicule nécessite votre attention.':_isParkedResponse?String(_txt).slice(0,80):_isVehicleReport?String(_txt).slice(0,80):String(_txt).slice(0,60);
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
@@ -1755,6 +1757,7 @@ App.vehicleAlertQuick=async function(label){
   let sent=false;
   try{
     if(window.ImmatMessages?.sendToPlate){
+      console.log('[DIAG-SEND] vehicleAlertQuick sendToPlate plate=',plate,'context_type=vehicle_report');
       const ok=await ImmatMessages.sendToPlate(plate,msg,{context_type:'vehicle_report'});
       if(ok===false){return;}// sendToPlate a déjà affiché l'erreur
       sent=true;
@@ -3803,7 +3806,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=25"></script>
+<script src="messages.js?v=26"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
