@@ -1615,7 +1615,7 @@ App.sigStepStation=function(){
   $('sigStep1')?.classList.remove('active');
   $('sigStep2Station')?.classList.add('active');
   this._stationPhotoReset?.();
-  setTimeout(()=>$('sigStationPlate')?.focus(),80);
+  requestAnimationFrame(()=>{const _sh=$('sheet')||document.querySelector('.sheet');if(_sh)_sh.scrollTop=0;});
 };
 // ── Réinitialise l'état photo stationné (appelé à chaque ouverture du panneau)
 App._stationPhotoReset=function(){
