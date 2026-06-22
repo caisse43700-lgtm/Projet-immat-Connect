@@ -54,7 +54,27 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
+**Mission : BUG FIX — Boutons Messages/Appels/Ange/✕ non réactifs après revert zones**
+**Date :** 2026-06-22
+**Commit branche :** en cours sur `claude/immatconnect-pro-app-dEKGR`
+**SW :** v197 → v199 · `ui.js?v=9` → `?v=10`
+
+- **Symptôme** : après le commit zones (c242d54) et son revert (00eb789), les boutons Messages, Appels, Ange (nav) et ✕ (fermeture panels) ne répondaient plus au tap.
+- **Cause identifiée** : `#navMessages`, `#navAppels`, `#navAnge`, `.ph-close` et `.sheet-close` n'ont aucun listener capture-phase dans `bindVisibleButtons()` de ui.js. Si un overlay ou un état SW altère les `onclick` attributes, ces boutons deviennent silencieux. Signaler et Activite fonctionnaient grâce aux listeners capture déjà présents dans `bindVisibleButtons()`.
+- **Correctif** : ajout de `installNavButtonHotfix()` dans ui.js — listener document-level capture-phase qui :
+  1. Détecte les clics sur `.ph-close`/`.sheet-close` via `e.target.closest()` → appelle `App.closeSheet()`
+  2. Détecte les clics sur `#navMessages`, `#navAppels`, `#navAnge` par bounding-box → appelle la fonction correspondante (fonctionne même si un overlay couvre le bouton)
+- SW bumpe v197→v199 (v198 sauté pour éviter confusion avec le commit zones) pour forcer un rechargement propre de ui.js sur tous les appareils.
+
+**Commits précédents sur la branche (non fusionnés) :**
+- `7d14ade` : garde `S.isGardien` dans `openGardienDashboard()`, `forceSyncAlerts()`, `setFeatureFlag()`
+- `6965a79` : Feature Flags V1 (Dashboard ↔ Paramètres)
+- `c242d54` : zones accidentogènes (cercles carte) — REVERT immédiat (cassait l'app)
+- `00eb789` : revert c242d54 — code identique à 7d14ade mais SW v197 → v198 → v197
+
+---
+
+**Mission précédente : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
 **Date :** 2026-06-22
 **Commit branche :** à venir sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
 **SW :** v175 → v176
@@ -1568,7 +1588,10 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Patch V1 Signalements implémenté — en attente "Fusionner" pour main.**
+**BUG FIX nav hotfix — en attente validation terrain (Messages/Appels/Ange/✕ réactifs).**
+SW v199 + ui.js?v=10 — pousser et tester sur iPhone.
+
+**Patch V1 Signalements implémenté (1ae7ebf) — toujours en attente "Fusionner" pour main.**
 Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
 
 Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
@@ -2236,6 +2259,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
 | 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
 | 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
+
+| 2026-06-22 | IA session | BUG FIX nav — boutons Messages/Appels/Ange/✕ non réactifs après revert zones. Ajout installNavButtonHotfix() dans ui.js : document-level capture listener par closest() (ph-close/sheet-close) + bounding-box (#navMessages/#navAppels/#navAnge). SW v197→v199, ui.js?v=10. |
 
 ---
 

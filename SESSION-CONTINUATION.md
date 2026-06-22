@@ -7,6 +7,35 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-22 — BUG FIX boutons nav non réactifs (après revert zones)
+
+### Symptôme
+Après les commits zones (c242d54) + revert (00eb789), les boutons Messages, Appels, Ange, et les boutons ✕ (ph-close/sheet-close) ne répondaient plus au tap sur iPhone. Signaler et Activite fonctionnaient.
+
+### Diagnostic
+- `bindVisibleButtons()` dans ui.js ajoute des listeners capture-phase à `#navSignaler` et `#navActivite`, mais PAS à `#navMessages`, `#navAppels`, `#navAnge`, `.ph-close`, `.sheet-close`.
+- Si les `onclick` attributes HTML ne se déclenchent pas (état SW altéré, overlay interceptant, ou autre), ces boutons deviennent silencieux.
+- Signaler/Activite "fonctionnaient" grâce à leurs listeners capture déjà présents — pas via l'onclick.
+
+### Correctif appliqué
+Ajout de `installNavButtonHotfix()` dans ui.js (appelé depuis `install()`):
+- Listener `document.addEventListener('click', fn, true)` (capture-phase, document level)
+- Pour `.ph-close`/`.sheet-close` : `e.target.closest()` → `App.closeSheet()`
+- Pour `#navMessages`/`#navAppels`/`#navAnge` : détection par **bounding-box** (fonctionne même si un overlay couvre le bouton, car le document-level listener voit TOUS les clics)
+- Flag `window.__ImmatNavBtnHotfixV1` pour idempotence (install() appelé à 300/900/1800/3500ms)
+
+### SW v199
+- v197 (post-revert) → v199 (v198 évité pour ne pas créer de confusion avec le commit zones)
+- `ui.js?v=9` → `?v=10` pour forcer le rechargement réseau du fichier corrigé
+
+### État après fix
+- Messages, Appels, Ange : nav + ouverture panel fonctionnels via hotfix
+- ✕ (tous les ph-close/sheet-close dans les panels) : fermeture via hotfix
+- Signaler, Activite : inchangés (capturés par bindVisibleButtons, toujours OK)
+- À tester terrain sur iPhone avant de fusionner avec main
+
+---
+
 ## SESSION 2026-06-14 — Fix panneau Activité : force .full + disable transition (PR #307)
 
 ### Historique des tentatives

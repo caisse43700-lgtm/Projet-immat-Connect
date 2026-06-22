@@ -292,7 +292,33 @@
     },700);
   }
 
-  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); installCriticalButtonHotfix(); patchApp(); closeMessagesBottomSheet(); if(!$('appScreen')?.classList.contains('active')) hideAngeFab(); installAuthOpenWatchdog(); recoverMap(); }
+  function installNavButtonHotfix(){
+    if(window.__ImmatNavBtnHotfixV1) return;
+    window.__ImmatNavBtnHotfixV1=true;
+    document.addEventListener('click',function(e){
+      // Boutons de fermeture (.ph-close, .sheet-close)
+      if(e.target && e.target.closest){
+        const cb=e.target.closest('.ph-close,.sheet-close');
+        if(cb){ try{window.App?.closeSheet?.();}catch(_){} return; }
+      }
+      // Boutons nav par bounding-box — fonctionne même si un overlay les recouvre
+      var hits=[
+        ['navMessages',function(){try{window.App?.navMessages?.();}catch(_){}}],
+        ['navAppels',  function(){try{window.App?.navAppels?.();}catch(_){}}],
+        ['navAnge',    function(){openAngePanel();}],
+      ];
+      for(var i=0;i<hits.length;i++){
+        var btn=document.getElementById(hits[i][0]);
+        if(!btn) continue;
+        var r=btn.getBoundingClientRect();
+        if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+          hits[i][1](); return;
+        }
+      }
+    },true);
+  }
+
+  function install(){ ensureAppFallbacks(); bindAuthButton(); bindVisibleButtons(); installCriticalButtonHotfix(); installNavButtonHotfix(); patchApp(); closeMessagesBottomSheet(); if(!$('appScreen')?.classList.contains('active')) hideAngeFab(); installAuthOpenWatchdog(); recoverMap(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
   [300,900,1800,3500].forEach(t=>setTimeout(install,t));
   window.UIManager={showAuth,submitAuth:loginDirect,ensureSupabase,recoverMap,locateDirect,openSheetPanel:setPanel,closeMessagesBottomSheet,getApp:exposeApp,forceOpenApp};
