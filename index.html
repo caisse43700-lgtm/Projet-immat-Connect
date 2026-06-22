@@ -1355,7 +1355,7 @@ async subMsgs(){
           ];
         }
         if(_isParkedReport||_isParkedResponse){try{const _rfp=window.ImmatMessages?.refresh?.();if(_rfp&&typeof _rfp.then==='function')_rfp.then(()=>{if(S._actCat==='station')this.renderStationFeed?.(S._actCatTab||(_isParkedReport?'recus':'envoyes'));this.updateActBadge?.();}).catch(()=>{});}catch(e){}}
-        this.showFloatingCard(_isVehicleReport?'🚨':_isParkedReport?(_isUrgParked?'🚨':'🅿️'):_isParkedResponse?'✅':'💬',_fcTitle,_fcSub+' — '+_fcBody,_isVehicleReport?'Voir le signalement':'Vu',_isVehicleReport?'':'→ Activité',_isVehicleReport&&pl?async()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);}:null,async()=>{
+        this.showFloatingCard(_isVehicleReport?'🚨':_isParkedReport?(_isUrgParked?'🚨':'🅿️'):_isParkedResponse?'✅':'💬',_fcTitle,_fcSub+' — '+_fcBody,_isVehicleReport?'Voir le signalement':'Vu',_isVehicleReport?null:'→ Activité',_isVehicleReport&&pl?async()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);}:null,async()=>{
           if(_isVehicleReport&&pl){
             this.navActivite?.();
             setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);
