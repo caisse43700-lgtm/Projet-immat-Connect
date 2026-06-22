@@ -1527,13 +1527,13 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 **Aucune mission en cours.**
 
 Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
+Fix modale abus validé terrain (2026-06-22).
+T1 gardien validé terrain (2026-06-22) : Dashboard Gardien + modale "Signaler un abus" fonctionnels.
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
 - NE PAS rouvrir le chantier A sauf bug terrain reproductible
-- NE PAS fusionner S6-TRUST (dee9537) — 6 conditions métier non satisfaites
-- Action résiduelle unique : T1 gardien — tester avec un vrai compte gardien
-  que la section 🚩 Signalements d'abus du Dashboard Gardien remonte bien les données
+- NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
 ```
 
 ---
@@ -2188,7 +2188,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Chantier A PR 2 — Dashboard Gardien UI : section 🚩 Signalements d'abus ajoutée dans openGardienDashboard() (div#gardienAbuseReports, async IIFE, sb.rpc get_abuse_reports_admin, rendu tableau 50 entrées + pills catégories + badges statut). Fusionné sur main (3200ebc). SW v172. Chantier A COMPLET : table+RLS+modale+RPC+fix42702+UI. |
 | 2026-06-22 | Utilisateur | CLÔTURE FORMELLE Chantier A — validation explicite. Règles : ne pas rouvrir sauf bug terrain, ne pas fusionner S6-TRUST. Action résiduelle : T1 gardien via app. |
 | 2026-06-22 | IA session | Fix bug terrain modale abus : classList.add('on') → classList.add('show') dans openAbuseReport/closeAbuseModal. SW v172→v173. Commit a578c60 sur main. |
-| 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. |
+| 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
+| 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
 
 ---
 
