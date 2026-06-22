@@ -54,7 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Chantier A — Fix 42702 RPC get_abuse_reports_admin() — FUSIONNÉ**
+**Mission : Chantier A — PR 2 Dashboard Gardien UI — Section Signalements d'abus — FUSIONNÉ**
+**Date :** 2026-06-22
+**Commit main :** `3200ebc`
+**Fichiers :** `index.html`, `service-worker.js` (v171→v172)
+
+- Placeholder `<div id="gardienAbuseReports">` ajouté dans `openGardienDashboard()` (avant "Actions gardien")
+- Async IIFE : appel `sb.rpc('get_abuse_reports_admin')`, rendu header (total/ouverts), pills catégories, tableau 50 entrées (date/plaque/motif/détails/plate_count/statut badge)
+- Gestion d'erreur : message "Accès réservé au rôle gardien" si non-gardien (pas de crash)
+- T1 à valider avec compte gardien réel dans l'app (Studio ne peut pas tester avec JWT gardien)
+- Chantier A complet : ✅ table + RLS + modale + RPC + fix 42702 + UI dashboard
+
+**Mission précédente : Chantier A — Fix 42702 RPC get_abuse_reports_admin() — FUSIONNÉ**
 **Date :** 2026-06-22
 **Commits main :** `59f4854` (RPC initiale) + `3d1bbe6` (fix 42702)
 **Fichier :** `supabase/migrations/20260622130000_abuse_reports_admin_rpc_fix.sql`
@@ -63,7 +74,6 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 - Fix : alias de table `FROM auth.users u WHERE u.id = auth.uid()`
 - T2 validé en Studio : `P0001: Accès refusé` (garde rôle fonctionnelle)
 - 42702 confirmé disparu sur T1/T2/T4/T5
-- T1 gardien et T4/T5 : à valider via l'app avec vrai JWT gardien (Studio ne supporte pas le JWT gardien)
 
 ---
 
@@ -1503,8 +1513,9 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-En attente CI : déploiement de `20260622130000_abuse_reports_admin_rpc_fix.sql` (commit `3d1bbe6`).
-Après CI vert → valider T1 gardien via l'app, puis lancer PR 2 Dashboard Gardien UI.
+Aucune mission en cours. Chantier A entièrement fusionné sur main (commits 59f4854 + 3d1bbe6 + 3200ebc).
+
+À valider après déploiement CI : T1 gardien via l'app avec un vrai JWT gardien (Dashboard Gardien → section 🚩 Signalements d'abus doit afficher les données).
 
 ---
 
@@ -2152,6 +2163,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Analyse métier S6-TRUST validée — décision : NE PAS FUSIONNER. Raison : is_disputed jamais mis à true (aucune UI, aucun workflow admin), trigger actif mais sans usage réel. 6 conditions documentées avant fusion future. PR A (4b7251c) conservée en local uniquement, hors origin/main. |
 
 | 2026-06-22 | IA session | Chantier A PR 1 — RPC get_abuse_reports_admin() fusionnée (59f4854). Bug 42702 découvert : WHERE id = auth.uid() ambigu en PL/pgSQL avec SECURITY DEFINER. Fix via alias u.id (3d1bbe6) fusionné sur main. T2 validé (P0001 Accès refusé). T1/T4/T5 à valider via app avec JWT gardien. |
+| 2026-06-22 | IA session | Chantier A PR 2 — Dashboard Gardien UI : section 🚩 Signalements d'abus ajoutée dans openGardienDashboard() (div#gardienAbuseReports, async IIFE, sb.rpc get_abuse_reports_admin, rendu tableau 50 entrées + pills catégories + badges statut). Fusionné sur main (3200ebc). SW v172. Chantier A COMPLET : table+RLS+modale+RPC+fix42702+UI. |
 
 ---
 
