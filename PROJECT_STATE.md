@@ -54,7 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix modale abus + Revert S6-TRUST — FUSIONNÉS**
+**Mission : V1 Signalements — FloatingCard véhicule + archivage Info utile + bouton Signaler abus**
+**Date :** 2026-06-22
+**Commit branche :** `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**SW :** v173 → v174
+
+- FloatingCard `vehicle_report` : titre "🚨 Signalement véhicule" (au lieu de "Message de X"), bouton unique "Voir le signalement" (deep-link Activité), suppression J'arrive/En route/Reçu
+- `actVmRate()` : archive le signalement dans `ic_vm_replied` après "Info utile" → passe en Archivés
+- `openAbuseReport(plate, category)` : paramètre optionnel `category` — auto-sélectionne le bouton dans la modale
+- `App._actAbuseReport(msgId, plate)` : helper qui mémorise `S._pendingAbuseSourceMsgId` et ouvre la modale avec FAUX_SIGNALEMENT pré-sélectionné
+- `submitAbuseReport()` : après submit réussi, archive le signalement source dans `ic_vm_replied` et rafraîchit `actOpenVehicleMsgGroup`
+- Bouton "🚩 Signaler un abus" (`.act-vmg-abuse-btn`) ajouté sous "👍 Info utile" dans `renderEnCours`
+- SW v173 → v174
+
+**Mission précédente : Fix modale abus + Revert S6-TRUST — FUSIONNÉS**
 **Date :** 2026-06-22
 **Commits main :** `a578c60` (fix modale) + `90577f4` (revert S6-TRUST)
 
@@ -1524,7 +1537,8 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Aucune mission en cours.**
+**Patch V1 Signalements implémenté — en attente "Fusionner" pour main.**
+Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
 
 Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
 Fix modale abus validé terrain (2026-06-22).
@@ -2190,6 +2204,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Fix bug terrain modale abus : classList.add('on') → classList.add('show') dans openAbuseReport/closeAbuseModal. SW v172→v173. Commit a578c60 sur main. |
 | 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
 | 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
+| 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
 
 ---
 
