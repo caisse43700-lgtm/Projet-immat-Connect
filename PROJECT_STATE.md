@@ -54,7 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix voiceInput() — garde instance + blur() + timeout 15s + concat trim — TERMINÉE ET VALIDÉE**
+**Mission : Chantier A — Fix 42702 RPC get_abuse_reports_admin() — FUSIONNÉ**
+**Date :** 2026-06-22
+**Commits main :** `59f4854` (RPC initiale) + `3d1bbe6` (fix 42702)
+**Fichier :** `supabase/migrations/20260622130000_abuse_reports_admin_rpc_fix.sql`
+
+- Bug : `WHERE id = auth.uid()` → `42702: column reference "id" is ambiguous` en PL/pgSQL
+- Fix : alias de table `FROM auth.users u WHERE u.id = auth.uid()`
+- T2 validé en Studio : `P0001: Accès refusé` (garde rôle fonctionnelle)
+- 42702 confirmé disparu sur T1/T2/T4/T5
+- T1 gardien et T4/T5 : à valider via l'app avec vrai JWT gardien (Studio ne supporte pas le JWT gardien)
+
+---
+
+**Mission précédente : Fix voiceInput() — garde instance + blur() + timeout 15s + concat trim — TERMINÉE ET VALIDÉE**
 **Date :** 2026-06-22
 **Commit :** `e0562fd` sur `main` (poussé)
 **Fichiers modifiés :** `index.html`, `service-worker.js` v168→v169
@@ -1490,7 +1503,8 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune.
+En attente CI : déploiement de `20260622130000_abuse_reports_admin_rpc_fix.sql` (commit `3d1bbe6`).
+Après CI vert → valider T1 gardien via l'app, puis lancer PR 2 Dashboard Gardien UI.
 
 ---
 
@@ -2136,6 +2150,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Fix voiceInput() : garde instance this._voiceInput (toggle stop), blur() avant start(), setTimeout 15s + clearTimeout onerror/onend, concat trim (pas de mots collés). Validé terrain 6 scénarios. SW v169. Commit e0562fd. Chantier micro CLÔTURÉ. |
 | 2026-06-22 | IA session | Modale abus + migration abuse_reports — PR C (290b696) : table abuse_reports + RLS (INSERT auth, pas de SELECT/UPDATE/DELETE). PR B (05b3d28→4c01d40) : #abuseModal HTML, CSS .abuse-*, submitAbuseReport() v2 (category/details séparés, sans created_at client, sans fallback silencieux). SW v171, app.css v19. |
 | 2026-06-22 | IA session | Analyse métier S6-TRUST validée — décision : NE PAS FUSIONNER. Raison : is_disputed jamais mis à true (aucune UI, aucun workflow admin), trigger actif mais sans usage réel. 6 conditions documentées avant fusion future. PR A (4b7251c) conservée en local uniquement, hors origin/main. |
+
+| 2026-06-22 | IA session | Chantier A PR 1 — RPC get_abuse_reports_admin() fusionnée (59f4854). Bug 42702 découvert : WHERE id = auth.uid() ambigu en PL/pgSQL avec SECURITY DEFINER. Fix via alias u.id (3d1bbe6) fusionné sur main. T2 validé (P0001 Accès refusé). T1/T4/T5 à valider via app avec JWT gardien. |
 
 ---
 
