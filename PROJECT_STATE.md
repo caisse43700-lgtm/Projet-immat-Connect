@@ -1497,6 +1497,42 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
+ÉTAT PROD 2026-06-22
+════════════════════
+✅ abuse_reports table + RLS (290b696)
+✅ Modale abus HTML + CSS + JS (4c01d40)
+⏳ S6-TRUST PR A (4b7251c) — EN ATTENTE, non fusionnée intentionnellement
+
+─────────────────────────────────────────────────
+PR A S6-TRUST — 6 CONDITIONS AVANT FUSION (décision 2026-06-22)
+─────────────────────────────────────────────────
+1. Qui peut contester un signalement ? (le destinataire uniquement ?)
+2. Depuis quel écran ? (Activité > Reçus ? thread véhicule ?)
+3. Qui valide la contestation ? (admin Studio ? Edge Function ? auto ?)
+4. Quel workflow technique ? (UPDATE par l'app ? par un admin ?)
+5. Comment éviter les abus de contestation ? (délai ? limite par user ?)
+6. Tests SQL : colonne + trigger + simulation UPDATE is_disputed=true
+
+─────────────────────────────────────────────────
+OPTIONS POUR LE PROCHAIN CHANTIER
+─────────────────────────────────────────────────
+
+OPTION A — Workflow contestation signalement
+  Flux complet : bouton Contester → UI → UPDATE is_disputed → trigger → score
+  Périmètre : index.html + RLS UPDATE policy (ou Edge Function)
+  Prérequis : fusionner S6-TRUST PR A d'abord
+
+OPTION B — Dashboard Gardien normalisation
+  Audit #gardienDashboard : voyants, GVC, Diagnostic IA, Immatest.
+  Corriger ce qui est cassé, sans feature nouvelle. Indépendant de S6-TRUST.
+
+OPTION C — Autre chantier UX
+  Ex : #nearbyPanel headers, ergonomie carte, profil conducteur.
+  Indépendant de S6-TRUST.
+
+─────────────────────────────────────────────────
+ANCIEN PLAN STABILISATION (archivé)
+─────────────────────────────────────────────────
 MODE STABILISATION ACTIF (décision utilisateur 2026-06-22)
 ═══════════════════════════════════════════════════════════
 
@@ -2098,6 +2134,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | CLÔTURE chantier migration headers UX (100% : Phase 1 + Phase 2 complètes). Ouverture chantier micro Ange/GPS. Audit dashboard Gardien planifié. Règle stabilisation activée (ne plus modifier Activité/Messages/Signaler/Options/Profil sans bug reproductible). |
 | 2026-06-22 | IA session | MODE STABILISATION activé. Plan 4 étapes : (1) tests terrain modales Settings, (2) validation micro Ange/GPS, (3) audit global navigation double-X/écrans-sans-sortie, (4) choix prochain chantier (Gardien OU modale abus). Zéro feature en attendant. |
 | 2026-06-22 | IA session | Fix voiceInput() : garde instance this._voiceInput (toggle stop), blur() avant start(), setTimeout 15s + clearTimeout onerror/onend, concat trim (pas de mots collés). Validé terrain 6 scénarios. SW v169. Commit e0562fd. Chantier micro CLÔTURÉ. |
+| 2026-06-22 | IA session | Modale abus + migration abuse_reports — PR C (290b696) : table abuse_reports + RLS (INSERT auth, pas de SELECT/UPDATE/DELETE). PR B (05b3d28→4c01d40) : #abuseModal HTML, CSS .abuse-*, submitAbuseReport() v2 (category/details séparés, sans created_at client, sans fallback silencieux). SW v171, app.css v19. |
+| 2026-06-22 | IA session | Analyse métier S6-TRUST validée — décision : NE PAS FUSIONNER. Raison : is_disputed jamais mis à true (aucune UI, aucun workflow admin), trigger actif mais sans usage réel. 6 conditions documentées avant fusion future. PR A (4b7251c) conservée en local uniquement, hors origin/main. |
 
 ---
 
