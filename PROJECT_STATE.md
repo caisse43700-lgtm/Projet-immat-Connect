@@ -54,6 +54,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Fix voiceInput() — garde instance + blur() + timeout 15s + concat trim — TERMINÉE ET VALIDÉE**
+**Date :** 2026-06-22
+**Commit :** `e0562fd` sur `main` (poussé)
+**Fichiers modifiés :** `index.html`, `service-worker.js` v168→v169
+
+**Ce qui a été fait :**
+- `this._voiceInput=rec` : instance stockée → 2e tap stoppe la reconnaissance (toggle)
+- `$(target).blur()` avant `rec.start()` : libère l'audio iOS (clavier virtuel)
+- `setTimeout(15000)` + `clearTimeout` dans `onerror` et `onend` : arrêt automatique garanti, aucun zombie
+- `_last = (_last + ' ' + best).trim()` : segments concaténés avec espace, pas de mots collés
+
+**Tests terrain validés :**
+- ✅ Message long → pas de mots collés
+- ✅ Plaque → normalisation OK
+- ✅ 1er clic → démarre
+- ✅ 2e clic → stoppe proprement
+- ✅ Timeout 15s → stop automatique
+- ✅ Refus micro iOS → toast erreur propre
+
+**Chantier micro Ange/GPS/voiceInput : CLÔTURÉ.**
+
+Précédente mission terminée :
+
 **Mission : Phase 2 Modales Settings — Unification headers A19→A23 — TERMINÉE ET VALIDÉE TERRAIN**
 **Date :** 2026-06-22
 **Commit :** `cd2e814` sur `main` (poussé)
@@ -2074,6 +2097,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Phase 2 Modales Settings A19→A23 validées terrain — #blocked/#recent/#favoritesModal/#trustedModal/#legal migrés vers .panel-header + .ph-close. CSS .ph-actions ajouté. app.css v17, SW v168, APP_BUILD 2026-06-22. Commit cd2e814. |
 | 2026-06-22 | IA session | CLÔTURE chantier migration headers UX (100% : Phase 1 + Phase 2 complètes). Ouverture chantier micro Ange/GPS. Audit dashboard Gardien planifié. Règle stabilisation activée (ne plus modifier Activité/Messages/Signaler/Options/Profil sans bug reproductible). |
 | 2026-06-22 | IA session | MODE STABILISATION activé. Plan 4 étapes : (1) tests terrain modales Settings, (2) validation micro Ange/GPS, (3) audit global navigation double-X/écrans-sans-sortie, (4) choix prochain chantier (Gardien OU modale abus). Zéro feature en attendant. |
+| 2026-06-22 | IA session | Fix voiceInput() : garde instance this._voiceInput (toggle stop), blur() avant start(), setTimeout 15s + clearTimeout onerror/onend, concat trim (pas de mots collés). Validé terrain 6 scénarios. SW v169. Commit e0562fd. Chantier micro CLÔTURÉ. |
 
 ---
 
