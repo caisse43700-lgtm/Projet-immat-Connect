@@ -1598,8 +1598,7 @@ App.sigStepVehicle=function(){
   $('sigStep2Vehicle')?.classList.add('active');
   const _pre=this.selectedVehiclePlate?.();
   if(_pre&&$('sigVehiclePlate')&&!$('sigVehiclePlate').value)$('sigVehiclePlate').value=fPlate(_pre);
-  const _sh=$('sheet')||document.querySelector('.sheet');if(_sh)_sh.scrollTop=0;
-  setTimeout(()=>$('sigVehiclePlate')?.focus({preventScroll:true}),80);
+  requestAnimationFrame(()=>{const _sh=$('sheet')||document.querySelector('.sheet');if(_sh)_sh.scrollTop=0;});
 };
 App.sigStepAide=function(){
   $('sigStep1')?.classList.remove('active');
