@@ -1474,32 +1474,57 @@ Aucune.
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-⚠️ RÈGLE STABILISATION (décision utilisateur 2026-06-22) :
-  Ne plus modifier Activité, Messages, Signaler, Options ou Profil conducteur
-  sans bug terrain reproductible documenté. Objectif : réduction du risque de régression.
+MODE STABILISATION ACTIF (décision utilisateur 2026-06-22)
+═══════════════════════════════════════════════════════════
 
-CHANTIER MIGRATION HEADERS UX : ✅ CLÔTURÉ DÉFINITIVEMENT (2026-06-22)
-  Phase 1 (5 panels) + Phase 2 (modales + signaler + messages) = 100% migré.
-  Ne pas rouvrir ce chantier.
+RÈGLE ABSOLUE :
+  Ne plus modifier aucun panel ou modal déjà validé sans bug terrain
+  reproductible documenté. Zéro feature, zéro refactor préventif.
 
 ─────────────────────────────────────────────────
+ÉTAPE 1 — Tests terrain modales Settings
+─────────────────────────────────────────────────
+  Ouvrir chacune des 5 modales sur les deux iPhones et vérifier :
+  □ #blocked     : header [Plaques bloquées][✕] visible, ✕ ferme la modale
+  □ #recent      : header [Véhicules récents][Vider][✕], bouton Vider fonctionnel
+  □ #favoritesModal : header [⭐ Conducteurs favoris][✕]
+  □ #trustedModal   : header [🤝 Conducteurs de confiance][✕]
+  □ #legal          : header [Confidentialité & CGU][✕], onglets Confidentialité/CGU OK
+  Critère GO : aucun double X, aucun bouton Fermer fantôme, tap zone ≥44px.
 
-PRIORITÉ 1 — NOUVEAU CHANTIER : Correctifs micro Ange/GPS
-  Périmètre : reconnaissance vocale webkitSpeechRecognition sur iOS
-  Problèmes connus (non régressés, jamais parfaitement résolus) :
-    - Ange : qualité de reconnaissance (maxAlternatives:3, confidence, continuous:false)
-    - GPS : reconnaissance parfois mauvaise malgré continuous:true + blur()
-  Avant tout correctif :
-    - Documenter le bug exact avec une reproduction reproductible terrain
-    - Ne modifier qu'une variable à la fois
-    - Tester sur les deux iPhones BZ-652-LL ↔ BE-521-MM avant de fusionner
+─────────────────────────────────────────────────
+ÉTAPE 2 — Validation finale micros (Ange + GPS)
+─────────────────────────────────────────────────
+  Tester sur les deux iPhones :
+  □ Ange 🎙️ : tap → micro s'active (⏹ orange), dictée transcrite dans #angeMsg
+  □ Ange 🎙️ : tap ⏹ → micro s'arrête, texte confirmé dans la textarea
+  □ GPS  🎙️ : tap → micro s'active, adresse dictée apparaît dans #gpsSearch
+  □ GPS  🎙️ : tap ⏹ → micro s'arrête, recherche lancée automatiquement
+  Si un bug est constaté → documenter reproduction exacte avant toute correction.
 
-PRIORITÉ 2 — AUDIT Dashboard Gardien (#gardienDashboard)
-  Audit ciblé uniquement : lire le code tel qu'il est, identifier ce qui ne
-  fonctionne pas ou est incomplet, sans modifier a priori.
-  Produire un rapport structuré : voyants, GVC, Diagnostic IA, Immatest,
-  état des 8 sections, bugs visuels/fonctionnels, propositions de corrections.
-  Ne corriger qu'après validation de l'audit par l'utilisateur.
+─────────────────────────────────────────────────
+ÉTAPE 3 — Audit global navigation
+─────────────────────────────────────────────────
+  Parcourir tous les panels, modales, sous-steps et overlays de l'app.
+  Vérifier pour chaque écran :
+  □ Pas de double X (deux ✕ visibles simultanément)
+  □ Pas d'écran sans sortie (trap focus sans bouton de fermeture accessible)
+  □ ← retour disponible partout où il y a une hiérarchie de navigation
+  Rapport : liste des anomalies avec localisation exacte (id HTML).
+  Ne corriger qu'après validation du rapport par l'utilisateur.
+
+─────────────────────────────────────────────────
+ÉTAPE 4 — Prochain chantier (après ÉTAPES 1-3 validées)
+─────────────────────────────────────────────────
+  Deux options à soumettre à l'utilisateur :
+
+  OPTION A — Dashboard Gardien normalisation
+    Audit #gardienDashboard : voyants, GVC, Diagnostic IA, Immatest.
+    Objectif : corriger ce qui est cassé ou incomplet, sans feature nouvelle.
+
+  OPTION B — Modale signalement abus (openAbuseReport)
+    Remplacer le prompt() natif par une modale HTML cohérente avec le design.
+    Périmètre : index.html uniquement, aucun changement backend.
 ```
 
 ---
@@ -2048,6 +2073,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-21 | IA session | Phase 2 Signaler — panel-header [← titre ✕] sur les 5 sous-steps (Route/Véhicule/Messages-véhicule/Aide/Stationné). :has(#sigStep1.active)→:has(#panelAltet.on). sigStep3VehicleMsg conserve .sig-back-btn pour immat-test-engine:410. app.css v16, SW v151. |
 | 2026-06-22 | IA session | Phase 2 Modales Settings A19→A23 validées terrain — #blocked/#recent/#favoritesModal/#trustedModal/#legal migrés vers .panel-header + .ph-close. CSS .ph-actions ajouté. app.css v17, SW v168, APP_BUILD 2026-06-22. Commit cd2e814. |
 | 2026-06-22 | IA session | CLÔTURE chantier migration headers UX (100% : Phase 1 + Phase 2 complètes). Ouverture chantier micro Ange/GPS. Audit dashboard Gardien planifié. Règle stabilisation activée (ne plus modifier Activité/Messages/Signaler/Options/Profil sans bug reproductible). |
+| 2026-06-22 | IA session | MODE STABILISATION activé. Plan 4 étapes : (1) tests terrain modales Settings, (2) validation micro Ange/GPS, (3) audit global navigation double-X/écrans-sans-sortie, (4) choix prochain chantier (Gardien OU modale abus). Zéro feature en attendant. |
 
 ---
 
