@@ -54,18 +54,49 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1 Signalements — FloatingCard véhicule + archivage Info utile + bouton Signaler abus**
+**Mission : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
 **Date :** 2026-06-22
-**Commit branche :** `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
-**SW :** v173 → v174
+**Commit branche :** à venir sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**SW :** v175 → v176
 
-- FloatingCard `vehicle_report` : titre "🚨 Signalement véhicule" (au lieu de "Message de X"), bouton unique "Voir le signalement" (deep-link Activité), suppression J'arrive/En route/Reçu
-- `actVmRate()` : archive le signalement dans `ic_vm_replied` après "Info utile" → passe en Archivés
-- `openAbuseReport(plate, category)` : paramètre optionnel `category` — auto-sélectionne le bouton dans la modale
-- `App._actAbuseReport(msgId, plate)` : helper qui mémorise `S._pendingAbuseSourceMsgId` et ouvre la modale avec FAUX_SIGNALEMENT pré-sélectionné
-- `submitAbuseReport()` : après submit réussi, archive le signalement source dans `ic_vm_replied` et rafraîchit `actOpenVehicleMsgGroup`
-- Bouton "🚩 Signaler un abus" (`.act-vmg-abuse-btn`) ajouté sous "👍 Info utile" dans `renderEnCours`
-- SW v173 → v174
+- `pl null` dans FloatingCard vehicle_report : cb1 redirige vers `navActivite()` + toast "Retrouvez ce signalement dans Activité > Véhicule." au lieu de bouton inactif silencieux
+- `_fcBody vehicle_report` : passage de `slice(0,60)` à `slice(0,80)` — texte signalement moins tronqué
+- `.act-vmg-abuse-btn` CSS ajouté dans `app.css` : fond transparent, bordure `rgba(200,60,60,.35)`, texte `#cc5555`, pleine largeur, gabarit identique à `.act-vmg-rate-btn`
+- SW v175 → v176
+
+**Décisions V1 verrouillées (analyse produit 2026-06-22) :**
+- (A) Archivage avant envoi réseau dans actVmReply : accepté V1 — dette V2 (archive conditionnelle après confirmation serveur)
+- (B) pl null : Option C — navActivite() + toast explicatif (implémenté dans ce commit)
+- (C) _fcBody vehicle_report : 80 chars (implémenté dans ce commit)
+- (D) trustDelta sans garde serveur : accepté V1 — validation UI (bouton remplacé) suffit
+- (E) CSS .act-vmg-abuse-btn : fond transparent, bordure rouge atténuée (implémenté dans ce commit)
+- (F) Perte localStorage après réinstallation : limitation V1 assumée — synchronisation Supabase par uid prévue V2
+
+**Règles inviolables rappelées :**
+- S6-TRUST hors périmètre V1 — ne pas fusionner, ne pas ajouter de migration confiance
+- Abus ne doit JAMAIS diminuer automatiquement la confiance
+- Dashboard Gardien : ne pas modifier tant que bugs terrain non résolus
+- Cycle V1 : FloatingCard → Activité → action → Archivés (ic_vm_replied localStorage uniquement)
+- Ne pas pousser sur main sans "Fusionner" explicite
+
+**États métier réels (documentation V2) :**
+Nouveau → Lu → Répondu / Résolu / Validé / Contesté → (Expiré manquant en V1)
+En V1 : Archivé englobe Répondu + Résolu + Validé + Contesté. Expiration automatique = dette V2.
+
+---
+
+**Mission précédente : V1 Signalements — FloatingCard véhicule + archivage Info utile + bouton Signaler abus**
+**Date :** 2026-06-22
+**Commit branche :** `1ae7ebf` / `c6d568e` / `d1bd1fd` sur `claude/immatconnect-pro-app-dEKGR`
+**SW :** v173 → v175
+
+- FloatingCard `vehicle_report` : titre "🚨 Signalement véhicule", bouton unique "Voir le signalement", suppression J'arrive/En route/Reçu
+- `actVmRate()` : archive dans `ic_vm_replied` après "Info utile" → passe en Archivés
+- `openAbuseReport(plate, category)` : paramètre optionnel `category` — auto-sélectionne bouton modale
+- `App._actAbuseReport(msgId, plate)` : helper pending state + ouverture modale FAUX_SIGNALEMENT
+- `submitAbuseReport()` : capture pending AVANT closeAbuseModal, archive après submit réussi
+- `closeAbuseModal()` : efface S._pendingAbuseSourceMsgId et S._pendingAbusePlate (fix pending state)
+- Bouton "🚩 Signaler un abus" dans renderEnCours
 
 **Mission précédente : Fix modale abus + Revert S6-TRUST — FUSIONNÉS**
 **Date :** 2026-06-22

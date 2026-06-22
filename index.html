@@ -1345,7 +1345,7 @@ async subMsgs(){
         const _stGps=_isParkedReport?(()=>{const _gm=String(_txt).match(/\[GPS:([-\d.]+),([-\d.]+)\]/);return _gm?{lat:parseFloat(_gm[1]),lng:parseFloat(_gm[2])}:null;})():null;
         const _fcTitle=_isParkedReport?(_isUrgParked?'🚨 ':'')+(_stCleanLabel||'Signalement stationné'):_isParkedResponse?'🅿️ Signalement pris en compte':_isVehicleReport?'🚨 Signalement véhicule':'Message de '+_sndName;
         const _fcSub=_isParkedReport?'Signalé par '+_sndName+(_stGps?' · 📍':'')+( m.image_url?' · 📷':''): _isParkedResponse?'Par '+_sndName:''+_sndName;
-        const _fcBody=_isParkedReport?'Votre véhicule nécessite votre attention.':_isParkedResponse?String(_txt).slice(0,80):String(_txt).slice(0,60);
+        const _fcBody=_isParkedReport?'Votre véhicule nécessite votre attention.':_isParkedResponse?String(_txt).slice(0,80):_isVehicleReport?String(_txt).slice(0,80):String(_txt).slice(0,60);
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
         if(_isParkedReport&&_stGps){
           _qr=[
@@ -1355,7 +1355,7 @@ async subMsgs(){
           ];
         }
         if(_isParkedReport||_isParkedResponse){try{const _rfp=window.ImmatMessages?.refresh?.();if(_rfp&&typeof _rfp.then==='function')_rfp.then(()=>{if(S._actCat==='station')this.renderStationFeed?.(S._actCatTab||(_isParkedReport?'recus':'envoyes'));this.updateActBadge?.();}).catch(()=>{});}catch(e){}}
-        this.showFloatingCard(_isVehicleReport?'🚨':_isParkedReport?(_isUrgParked?'🚨':'🅿️'):_isParkedResponse?'✅':'💬',_fcTitle,_fcSub+' — '+_fcBody,_isVehicleReport?'Voir le signalement':'Vu',_isVehicleReport?null:'→ Activité',_isVehicleReport&&pl?async()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);}:null,async()=>{
+        this.showFloatingCard(_isVehicleReport?'🚨':_isParkedReport?(_isUrgParked?'🚨':'🅿️'):_isParkedResponse?'✅':'💬',_fcTitle,_fcSub+' — '+_fcBody,_isVehicleReport?'Voir le signalement':'Vu',_isVehicleReport?null:'→ Activité',_isVehicleReport?async()=>{if(pl){this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);}else{this.navActivite?.();toast('Retrouvez ce signalement dans Activité > Véhicule.','ok');}}:null,async()=>{
           if(_isVehicleReport&&pl){
             this.navActivite?.();
             setTimeout(()=>{try{this.openActivityCat('vehicle');setTimeout(()=>{try{this.actOpenVehicleMsgGroup?.(pl);}catch(e){}},150);}catch(e){}},150);
