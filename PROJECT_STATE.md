@@ -54,7 +54,18 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Chantier A — PR 2 Dashboard Gardien UI — Section Signalements d'abus — FUSIONNÉ**
+**Mission : Fix modale abus + Revert S6-TRUST — FUSIONNÉS**
+**Date :** 2026-06-22
+**Commits main :** `a578c60` (fix modale) + `90577f4` (revert S6-TRUST)
+
+- Bug terrain : bouton "Signaler un abus" n'ouvrait pas la modale
+- Cause : `openAbuseReport()` ajoutait `.on` (convention panels) au lieu de `.show` (convention modales)
+- Fix : `.on` → `.show` dans `openAbuseReport()` et `closeAbuseModal()`. SW v172→v173.
+- Revert `90577f4` : suppression de `20260622100000_trust_auto_refresh.sql` (S6-TRUST) qui bloquait le CI
+  (commit `20c072d` apparu sur main ce matin — migration non appliquée à la DB — exit code 1)
+- CI repassé vert après le revert
+
+**Mission précédente : Chantier A — PR 2 Dashboard Gardien UI — Section Signalements d'abus — FUSIONNÉ**
 **Date :** 2026-06-22
 **Commit main :** `3200ebc`
 **Fichiers :** `index.html`, `service-worker.js` (v171→v172)
@@ -2176,6 +2187,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Chantier A PR 1 — RPC get_abuse_reports_admin() fusionnée (59f4854). Bug 42702 découvert : WHERE id = auth.uid() ambigu en PL/pgSQL avec SECURITY DEFINER. Fix via alias u.id (3d1bbe6) fusionné sur main. T2 validé (P0001 Accès refusé). T1/T4/T5 à valider via app avec JWT gardien. |
 | 2026-06-22 | IA session | Chantier A PR 2 — Dashboard Gardien UI : section 🚩 Signalements d'abus ajoutée dans openGardienDashboard() (div#gardienAbuseReports, async IIFE, sb.rpc get_abuse_reports_admin, rendu tableau 50 entrées + pills catégories + badges statut). Fusionné sur main (3200ebc). SW v172. Chantier A COMPLET : table+RLS+modale+RPC+fix42702+UI. |
 | 2026-06-22 | Utilisateur | CLÔTURE FORMELLE Chantier A — validation explicite. Règles : ne pas rouvrir sauf bug terrain, ne pas fusionner S6-TRUST. Action résiduelle : T1 gardien via app. |
+| 2026-06-22 | IA session | Fix bug terrain modale abus : classList.add('on') → classList.add('show') dans openAbuseReport/closeAbuseModal. SW v172→v173. Commit a578c60 sur main. |
+| 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. |
 
 ---
 
