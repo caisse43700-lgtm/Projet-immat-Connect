@@ -1513,20 +1513,31 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune mission en cours. Chantier A entièrement fusionné sur main (commits 59f4854 + 3d1bbe6 + 3200ebc).
+**Aucune mission en cours.**
 
-À valider après déploiement CI : T1 gardien via l'app avec un vrai JWT gardien (Dashboard Gardien → section 🚩 Signalements d'abus doit afficher les données).
+Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
+
+```
+RÈGLES ACTIVES (ne pas remettre en question) :
+- NE PAS rouvrir le chantier A sauf bug terrain reproductible
+- NE PAS fusionner S6-TRUST (dee9537) — 6 conditions métier non satisfaites
+- Action résiduelle unique : T1 gardien — tester avec un vrai compte gardien
+  que la section 🚩 Signalements d'abus du Dashboard Gardien remonte bien les données
+```
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-ÉTAT PROD 2026-06-22
-════════════════════
+ÉTAT PROD 2026-06-22 — CHANTIER A CLÔTURÉ
+════════════════════════════════════════════
 ✅ abuse_reports table + RLS (290b696)
 ✅ Modale abus HTML + CSS + JS (4c01d40)
-⏳ S6-TRUST PR A (4b7251c) — EN ATTENTE, non fusionnée intentionnellement
+✅ RPC get_abuse_reports_admin() (59f4854)
+✅ Fix 42702 alias u.id (3d1bbe6)
+✅ Section Signalements d'abus Dashboard Gardien (3200ebc)
+🚫 S6-TRUST (dee9537) — PARKING LOT PERMANENT — NE PAS FUSIONNER
 
 ─────────────────────────────────────────────────
 PR A S6-TRUST — 6 CONDITIONS AVANT FUSION (décision 2026-06-22)
@@ -2164,6 +2175,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | 2026-06-22 | IA session | Chantier A PR 1 — RPC get_abuse_reports_admin() fusionnée (59f4854). Bug 42702 découvert : WHERE id = auth.uid() ambigu en PL/pgSQL avec SECURITY DEFINER. Fix via alias u.id (3d1bbe6) fusionné sur main. T2 validé (P0001 Accès refusé). T1/T4/T5 à valider via app avec JWT gardien. |
 | 2026-06-22 | IA session | Chantier A PR 2 — Dashboard Gardien UI : section 🚩 Signalements d'abus ajoutée dans openGardienDashboard() (div#gardienAbuseReports, async IIFE, sb.rpc get_abuse_reports_admin, rendu tableau 50 entrées + pills catégories + badges statut). Fusionné sur main (3200ebc). SW v172. Chantier A COMPLET : table+RLS+modale+RPC+fix42702+UI. |
+| 2026-06-22 | Utilisateur | CLÔTURE FORMELLE Chantier A — validation explicite. Règles : ne pas rouvrir sauf bug terrain, ne pas fusionner S6-TRUST. Action résiduelle : T1 gardien via app. |
 
 ---
 
