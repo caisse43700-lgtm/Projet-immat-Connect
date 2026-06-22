@@ -54,7 +54,85 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix voiceInput() — garde instance + blur() + timeout 15s + concat trim — TERMINÉE ET VALIDÉE**
+**Mission : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
+**Date :** 2026-06-22
+**Commit branche :** à venir sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**SW :** v175 → v176
+
+- `pl null` dans FloatingCard vehicle_report : cb1 redirige vers `navActivite()` + toast "Retrouvez ce signalement dans Activité > Véhicule." au lieu de bouton inactif silencieux
+- `_fcBody vehicle_report` : passage de `slice(0,60)` à `slice(0,80)` — texte signalement moins tronqué
+- `.act-vmg-abuse-btn` CSS ajouté dans `app.css` : fond transparent, bordure `rgba(200,60,60,.35)`, texte `#cc5555`, pleine largeur, gabarit identique à `.act-vmg-rate-btn`
+- SW v175 → v176
+
+**Décisions V1 verrouillées (analyse produit 2026-06-22) :**
+- (A) Archivage avant envoi réseau dans actVmReply : accepté V1 — dette V2 (archive conditionnelle après confirmation serveur)
+- (B) pl null : Option C — navActivite() + toast explicatif (implémenté dans ce commit)
+- (C) _fcBody vehicle_report : 80 chars (implémenté dans ce commit)
+- (D) trustDelta sans garde serveur : accepté V1 — validation UI (bouton remplacé) suffit
+- (E) CSS .act-vmg-abuse-btn : fond transparent, bordure rouge atténuée (implémenté dans ce commit)
+- (F) Perte localStorage après réinstallation : limitation V1 assumée — synchronisation Supabase par uid prévue V2
+
+**Règles inviolables rappelées :**
+- S6-TRUST hors périmètre V1 — ne pas fusionner, ne pas ajouter de migration confiance
+- Abus ne doit JAMAIS diminuer automatiquement la confiance
+- Dashboard Gardien : ne pas modifier tant que bugs terrain non résolus
+- Cycle V1 : FloatingCard → Activité → action → Archivés (ic_vm_replied localStorage uniquement)
+- Ne pas pousser sur main sans "Fusionner" explicite
+
+**États métier réels (documentation V2) :**
+Nouveau → Lu → Répondu / Résolu / Validé / Contesté → (Expiré manquant en V1)
+En V1 : Archivé englobe Répondu + Résolu + Validé + Contesté. Expiration automatique = dette V2.
+
+---
+
+**Mission précédente : V1 Signalements — FloatingCard véhicule + archivage Info utile + bouton Signaler abus**
+**Date :** 2026-06-22
+**Commit branche :** `1ae7ebf` / `c6d568e` / `d1bd1fd` sur `claude/immatconnect-pro-app-dEKGR`
+**SW :** v173 → v175
+
+- FloatingCard `vehicle_report` : titre "🚨 Signalement véhicule", bouton unique "Voir le signalement", suppression J'arrive/En route/Reçu
+- `actVmRate()` : archive dans `ic_vm_replied` après "Info utile" → passe en Archivés
+- `openAbuseReport(plate, category)` : paramètre optionnel `category` — auto-sélectionne bouton modale
+- `App._actAbuseReport(msgId, plate)` : helper pending state + ouverture modale FAUX_SIGNALEMENT
+- `submitAbuseReport()` : capture pending AVANT closeAbuseModal, archive après submit réussi
+- `closeAbuseModal()` : efface S._pendingAbuseSourceMsgId et S._pendingAbusePlate (fix pending state)
+- Bouton "🚩 Signaler un abus" dans renderEnCours
+
+**Mission précédente : Fix modale abus + Revert S6-TRUST — FUSIONNÉS**
+**Date :** 2026-06-22
+**Commits main :** `a578c60` (fix modale) + `90577f4` (revert S6-TRUST)
+
+- Bug terrain : bouton "Signaler un abus" n'ouvrait pas la modale
+- Cause : `openAbuseReport()` ajoutait `.on` (convention panels) au lieu de `.show` (convention modales)
+- Fix : `.on` → `.show` dans `openAbuseReport()` et `closeAbuseModal()`. SW v172→v173.
+- Revert `90577f4` : suppression de `20260622100000_trust_auto_refresh.sql` (S6-TRUST) qui bloquait le CI
+  (commit `20c072d` apparu sur main ce matin — migration non appliquée à la DB — exit code 1)
+- CI repassé vert après le revert
+
+**Mission précédente : Chantier A — PR 2 Dashboard Gardien UI — Section Signalements d'abus — FUSIONNÉ**
+**Date :** 2026-06-22
+**Commit main :** `3200ebc`
+**Fichiers :** `index.html`, `service-worker.js` (v171→v172)
+
+- Placeholder `<div id="gardienAbuseReports">` ajouté dans `openGardienDashboard()` (avant "Actions gardien")
+- Async IIFE : appel `sb.rpc('get_abuse_reports_admin')`, rendu header (total/ouverts), pills catégories, tableau 50 entrées (date/plaque/motif/détails/plate_count/statut badge)
+- Gestion d'erreur : message "Accès réservé au rôle gardien" si non-gardien (pas de crash)
+- T1 à valider avec compte gardien réel dans l'app (Studio ne peut pas tester avec JWT gardien)
+- Chantier A complet : ✅ table + RLS + modale + RPC + fix 42702 + UI dashboard
+
+**Mission précédente : Chantier A — Fix 42702 RPC get_abuse_reports_admin() — FUSIONNÉ**
+**Date :** 2026-06-22
+**Commits main :** `59f4854` (RPC initiale) + `3d1bbe6` (fix 42702)
+**Fichier :** `supabase/migrations/20260622130000_abuse_reports_admin_rpc_fix.sql`
+
+- Bug : `WHERE id = auth.uid()` → `42702: column reference "id" is ambiguous` en PL/pgSQL
+- Fix : alias de table `FROM auth.users u WHERE u.id = auth.uid()`
+- T2 validé en Studio : `P0001: Accès refusé` (garde rôle fonctionnelle)
+- 42702 confirmé disparu sur T1/T2/T4/T5
+
+---
+
+**Mission précédente : Fix voiceInput() — garde instance + blur() + timeout 15s + concat trim — TERMINÉE ET VALIDÉE**
 **Date :** 2026-06-22
 **Commit :** `e0562fd` sur `main` (poussé)
 **Fichiers modifiés :** `index.html`, `service-worker.js` v168→v169
@@ -1490,18 +1568,32 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-Aucune.
+**Patch V1 Signalements implémenté — en attente "Fusionner" pour main.**
+Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
+
+Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
+Fix modale abus validé terrain (2026-06-22).
+T1 gardien validé terrain (2026-06-22) : Dashboard Gardien + modale "Signaler un abus" fonctionnels.
+
+```
+RÈGLES ACTIVES (ne pas remettre en question) :
+- NE PAS rouvrir le chantier A sauf bug terrain reproductible
+- NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
+```
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-ÉTAT PROD 2026-06-22
-════════════════════
+ÉTAT PROD 2026-06-22 — CHANTIER A CLÔTURÉ
+════════════════════════════════════════════
 ✅ abuse_reports table + RLS (290b696)
 ✅ Modale abus HTML + CSS + JS (4c01d40)
-⏳ S6-TRUST PR A (4b7251c) — EN ATTENTE, non fusionnée intentionnellement
+✅ RPC get_abuse_reports_admin() (59f4854)
+✅ Fix 42702 alias u.id (3d1bbe6)
+✅ Section Signalements d'abus Dashboard Gardien (3200ebc)
+🚫 S6-TRUST (dee9537) — PARKING LOT PERMANENT — NE PAS FUSIONNER
 
 ─────────────────────────────────────────────────
 PR A S6-TRUST — 6 CONDITIONS AVANT FUSION (décision 2026-06-22)
@@ -2136,6 +2228,14 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Fix voiceInput() : garde instance this._voiceInput (toggle stop), blur() avant start(), setTimeout 15s + clearTimeout onerror/onend, concat trim (pas de mots collés). Validé terrain 6 scénarios. SW v169. Commit e0562fd. Chantier micro CLÔTURÉ. |
 | 2026-06-22 | IA session | Modale abus + migration abuse_reports — PR C (290b696) : table abuse_reports + RLS (INSERT auth, pas de SELECT/UPDATE/DELETE). PR B (05b3d28→4c01d40) : #abuseModal HTML, CSS .abuse-*, submitAbuseReport() v2 (category/details séparés, sans created_at client, sans fallback silencieux). SW v171, app.css v19. |
 | 2026-06-22 | IA session | Analyse métier S6-TRUST validée — décision : NE PAS FUSIONNER. Raison : is_disputed jamais mis à true (aucune UI, aucun workflow admin), trigger actif mais sans usage réel. 6 conditions documentées avant fusion future. PR A (4b7251c) conservée en local uniquement, hors origin/main. |
+
+| 2026-06-22 | IA session | Chantier A PR 1 — RPC get_abuse_reports_admin() fusionnée (59f4854). Bug 42702 découvert : WHERE id = auth.uid() ambigu en PL/pgSQL avec SECURITY DEFINER. Fix via alias u.id (3d1bbe6) fusionné sur main. T2 validé (P0001 Accès refusé). T1/T4/T5 à valider via app avec JWT gardien. |
+| 2026-06-22 | IA session | Chantier A PR 2 — Dashboard Gardien UI : section 🚩 Signalements d'abus ajoutée dans openGardienDashboard() (div#gardienAbuseReports, async IIFE, sb.rpc get_abuse_reports_admin, rendu tableau 50 entrées + pills catégories + badges statut). Fusionné sur main (3200ebc). SW v172. Chantier A COMPLET : table+RLS+modale+RPC+fix42702+UI. |
+| 2026-06-22 | Utilisateur | CLÔTURE FORMELLE Chantier A — validation explicite. Règles : ne pas rouvrir sauf bug terrain, ne pas fusionner S6-TRUST. Action résiduelle : T1 gardien via app. |
+| 2026-06-22 | IA session | Fix bug terrain modale abus : classList.add('on') → classList.add('show') dans openAbuseReport/closeAbuseModal. SW v172→v173. Commit a578c60 sur main. |
+| 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
+| 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
+| 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
 
 ---
 

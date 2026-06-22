@@ -1003,6 +1003,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-vmg-rbtn:active { background: #334155; }
 .act-vmg-rate-btn { display: block; width: 100%; background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.25); border-radius: 10px; color: #4ade80; font-size: 13px; font-weight: 600; padding: 10px; cursor: pointer; text-align: center; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 .act-vmg-rate-btn:active { background: rgba(74,222,128,.18); }
+.act-vmg-abuse-btn { display: block; width: 100%; background: transparent; border: 1px solid rgba(200,60,60,.35); border-radius: 10px; color: #cc5555; font-size: 13px; font-weight: 600; padding: 10px; cursor: pointer; text-align: center; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+.act-vmg-abuse-btn:active { background: rgba(200,60,60,.08); }
 .act-vmg-rate-compact { padding: 7px 12px; font-size: 12px; margin: 4px 12px 10px; width: calc(100% - 24px); }
 .act-vmg-rated-lbl { font-size: 12px; color: #4ade80; padding: 4px 0 2px; }
 .act-vmg-contact { display: flex; gap: 8px; }
