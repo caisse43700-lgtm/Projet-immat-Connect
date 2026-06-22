@@ -490,6 +490,11 @@ body.rotating .sheet { transition: none !important; }
 .ic-conv-header-acts .ph-close,
 .ic-thread-actions .ph-close { margin-right: 0; }
 
+/* Messages panel : flex-column pour header hors shell + shell flex:1 */
+.msg-panel-flex { display: flex !important; flex-direction: column; }
+.msg-panel-hdr { flex: 0 0 auto; padding-bottom: 8px; }
+.msg-shell-flex { flex: 1 1 auto; min-height: 0; }
+
 /* ── PANELS ── */
 .panel { display: none; }
 .panel.on { display: block; }
