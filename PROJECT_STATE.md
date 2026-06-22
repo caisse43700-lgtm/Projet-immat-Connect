@@ -54,9 +54,22 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
+**Mission : A38 — Messages : header deux lignes hors shell (outer-header approach)**
 **Date :** 2026-06-22
-**Commit branche :** à venir sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**Commit branche :** `55ea313` sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**SW :** v200 → v201
+
+- Diagnostic confirmé : toute hauteur ajoutée à `.ic-conv-header` à l'intérieur du `ic-msg-shell` (`overflow:hidden`) clippait `icMsgList` à cause de la contrainte max-height du sheet CSS
+- Solution : en-tête `act-cat-hd` (`#icMsgPanelHdr`) placé **en dehors** du `ic-msg-shell`, au-dessus
+- `panelMessages` passe en `display:flex; flex-direction:column` (class `msg-panel-flex`)
+- Shell reçoit `flex:1 1 auto; min-height:0` (class `msg-shell-flex`) pour occuper l'espace restant
+- `ic-conv-header` interne masqué (`display:none`)
+- `messages.js` : show/hide `#icMsgPanelHdr` aux 3 points (openThread line ~1015, retour liste line ~433, closeThread line ~1085)
+- Résultat : header 💬 Messages / Conducteurs proches visible + liste messages intacte
+
+**Mission précédente : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
+**Date :** 2026-06-22
+**Commit branche :** sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
 **SW :** v175 → v176
 
 - `pl null` dans FloatingCard vehicle_report : cb1 redirige vers `navActivite()` + toast "Retrouvez ce signalement dans Activité > Véhicule." au lieu de bouton inactif silencieux
@@ -2236,6 +2249,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
 | 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
 | 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
+| 2026-06-22 | IA session | A24→A37 — Unification headers UX act-cat-hd : ‹ circulaire + emoji icon + titre gras + sous-titre muted + ✕. Tous les panels/modales/sous-steps migrés (Options, Profil, Confidentialité, Plaques bloquées, Journal d'appels, Activité, Incident route, Problème véhicule, Véhicule stationné, Demande d'aide, Signaler). Fix iOS scroll focus sigStepVehicle/sigStepStation (suppression focus() + scrollTop reset). SW v176→v200. |
+| 2026-06-22 | IA session | A38 — Messages header deux lignes hors shell (outer-header approach) : #icMsgPanelHdr (act-cat-hd) placé au-dessus du ic-msg-shell dans panelMessages (msg-panel-flex), shell en flex:1 (msg-shell-flex), inner ic-conv-header masqué, show/hide aux 3 points dans messages.js. SW v200→v201. Commit 55ea313 sur claude/immatconnect-pro-app-dEKGR. |
 
 ---
 
