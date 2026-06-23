@@ -758,7 +758,7 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
-    try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');if(S.isGardien)document.body.classList.add('is-gardien');}catch(e){S.isGardien=false;}
+    document.body.classList.remove('is-gardien');S.isGardien=false;try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');if(S.isGardien)document.body.classList.add('is-gardien');}catch(e){S.isGardien=false;}
     if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
 
     let p=null;
@@ -3708,6 +3708,10 @@ function showReputationToast(){
 
       if(window.S) S.uid = u.id;
 
+      // Réinitialise l'état gardien à chaque nouvelle session pour éviter la persistance inter-comptes
+      document.body.classList.remove('is-gardien');
+      if(window.S) S.isGardien = undefined;
+
       let prof = null;
       try{
         const p = await sb.rpc('get_my_profile');
@@ -3781,6 +3785,8 @@ function showReputationToast(){
     /* 7) Bouton pratique pour changer de compte proprement. */
     window.ImmatSwitchAccount = async function(){
       try{ await sb.auth.signOut(); }catch(e){}
+      document.body.classList.remove('is-gardien');
+      if(window.S) S.isGardien = undefined;
       ['ic_current_user_id','ic_current_profile_plate','ic_unread_msg_count','ic_last_state'].forEach(safeRemove);
       try{ sessionStorage.clear(); }catch(e){}
       try{ App.show('sa'); App.setMode('login'); }catch(e){}
