@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=33">
+  <link rel="stylesheet" href="app.css?v=34">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -778,12 +778,8 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
-    // Fallback immédiat depuis le JWT (sans RPC) — couvre le cas où get_my_role() est absent
-    {const _mr=u?.user_metadata?.role||u?.app_metadata?.role;if(_mr==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}
-    // DIAG: toast temporaire — à supprimer après validation terrain
-    setTimeout(function(){try{toast('DBG role: '+(u?.user_metadata?.role||'∅')+' / isG:'+S.isGardien,'ok');}catch(_){}},3000);
-    try{const {data:role}=await sb.rpc('get_my_role');if(role==='gardien'){if(!S.isGardien){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}else if(S.isGardien===undefined)S.isGardien=false;}catch(e){if(S.isGardien===undefined)S.isGardien=false;}
-    if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
+    document.body.classList.remove('is-gardien');S.isGardien=false;try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');if(S.isGardien)document.body.classList.add('is-gardien');}catch(e){S.isGardien=false;}
+    if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
 
     let p=null;
     try{
@@ -3738,6 +3734,8 @@ function showReputationToast(){
       if(!u){ try{ App.show('sw'); }catch(e){} return; }
 
       if(window.S) S.uid = u.id;
+      document.body.classList.remove('is-gardien');
+      if(window.S) S.isGardien = undefined;
 
       let prof = null;
       try{
@@ -3779,9 +3777,7 @@ function showReputationToast(){
       }catch(e){}
 
       if(prof && prof.owner_plate && prof.phone && prof.vehicle_color){
-        /* Détection gardien — même logique qu'afterAuth original (bypassed ici) */
-        {const _mr=u?.user_metadata?.role||u?.app_metadata?.role;if(_mr==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}
-        try{const {data:role}=await sb.rpc('get_my_role');if(role==='gardien'){if(!S.isGardien){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}else if(S.isGardien===undefined)S.isGardien=false;}catch(e){if(S.isGardien===undefined)S.isGardien=false;}
+        /* Rôle gardien — géré par openMap() via get_my_role() */
         return App.openMap(prof,u.email);
       }
 
@@ -3814,6 +3810,8 @@ function showReputationToast(){
 
     /* 7) Bouton pratique pour changer de compte proprement. */
     window.ImmatSwitchAccount = async function(){
+      document.body.classList.remove('is-gardien');
+      if(window.S) S.isGardien = undefined;
       try{ await sb.auth.signOut(); }catch(e){}
       ['ic_current_user_id','ic_current_profile_plate','ic_unread_msg_count','ic_last_state'].forEach(safeRemove);
       try{ sessionStorage.clear(); }catch(e){}

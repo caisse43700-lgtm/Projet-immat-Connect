@@ -433,6 +433,8 @@ function setMode(mode){
     const hdr = document.querySelector('#icMessagesPro .ic-conv-header');
     const sbar = $('icSearchBar');
     if(hdr) hdr.style.display = '';
+    const _outerHdr = document.getElementById('icMsgPanelHdr');
+    if(_outerHdr) _outerHdr.style.display = '';
     if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   }
 
@@ -1086,8 +1088,10 @@ async function openThread(plate){
   const listEl = $('icMsgList');
   const hdr    = document.querySelector('#icMessagesPro .ic-conv-header');
   const sbar   = $('icSearchBar');
+  const _outerHdr2 = document.getElementById('icMsgPanelHdr');
   if(listEl) listEl.style.display = 'none';
   if(hdr)    hdr.style.display    = 'none';
+  if(_outerHdr2) _outerHdr2.style.display = 'none';
   if(sbar)   sbar.style.display   = 'none';
   // icMsgList masqué → icMessagesPro s'effondre → icThread perd sa hauteur.
   // On force icMessagesPro à la hauteur du sheet pour que icThread.show (inset:0) puisse s'étirer.
@@ -1153,6 +1157,8 @@ function closeThread(){
   const _inAppels = ($('icAppelsPane')?.style.display || '') === 'block';
   if(listEl && !_inAppels) listEl.style.display = '';
   if(hdr    && !_inAppels) hdr.style.display    = '';
+  const _outerHdrC = document.getElementById('icMsgPanelHdr');
+  if(_outerHdrC && !_inAppels) _outerHdrC.style.display = '';
   if(sbar && localStorage.getItem('_icSearchOpen') === '1') sbar.style.display = '';
   State.activePlate = null;
   State.threadSearchQuery = '';

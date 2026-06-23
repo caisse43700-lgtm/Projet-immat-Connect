@@ -493,6 +493,11 @@ body.rotating .sheet { transition: none !important; }
 /* act-cat-hd : même espacement gauche et droite */
 .act-cat-hd .ph-close { margin-right: 0; }
 
+/* Messages panel : flex-column pour header hors shell + shell flex:1 */
+.msg-panel-flex { display: flex !important; flex-direction: column; }
+.msg-panel-hdr { flex: 0 0 auto; padding-bottom: 8px; }
+.msg-shell-flex { flex: 1 1 auto; min-height: 0; }
+
 /* ── PANELS ── */
 .panel { display: none; }
 .panel.on { display: block; }
@@ -1418,3 +1423,7 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
 #appScreen:has(.sheet.full) #mapCenterPin,
 #appScreen:has(#sheet .panel.on) #mapCenterPin,
 body.keyboard-open #mapCenterPin { display: none !important; }
+
+/* Boutons réservés au Gardien — masqués par défaut, visibles uniquement si body.is-gardien */
+.gardien-debug-tool { display: none !important; }
+body.is-gardien .gardien-debug-tool { display: inline-flex !important; }
