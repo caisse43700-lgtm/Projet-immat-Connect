@@ -54,7 +54,29 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Dashboard Gardien normalisation — 3 fixes appliqués**
+**Mission : Gardien role isolation — is-gardien bleed fix + merge main**
+**Date :** 2026-06-23
+**Commit :** `7f8f3e1` sur `main` (poussé) — app.css v34, SW v230
+
+### Ce qui a été fait
+
+Isolation complète du rôle gardien pour éviter que `body.is-gardien` / `S.isGardien` ne persistent d'un compte à l'autre ou entre sessions :
+
+1. **CSS** — `.gardien-debug-tool { display:none !important; }` ajouté dans app.css. Les boutons Dashboard + Sync alertes sont masqués par défaut via CSS (pas seulement via JS). `body.is-gardien .gardien-debug-tool { display:inline-flex !important; }` les révèle uniquement pour un gardien authentifié.
+
+2. **OBD afterAuth (early reset)** — Ajout de `document.body.classList.remove('is-gardien'); S.isGardien=undefined;` juste après `S.uid=u.id`, avant le chargement du profil. Garantit un état propre dès le début de la ré-authentification OBD.
+
+3. **OBD afterAuth (suppression du bloc stale)** — Suppression de 2 lignes contenant JWT fallback + `querySelectorAll('.gardien-debug-tool')`. Le rôle gardien est maintenant détecté uniquement par `openMap()` via `get_my_role()`.
+
+4. **ImmatSwitchAccount** — Ajout de `document.body.classList.remove('is-gardien'); S.isGardien=undefined;` en début de fonction, avant `signOut()`. Empêche le rôle du compte 1 de persister pour le compte 2 (pas de reload page).
+
+5. **afterAuth standard** (l.782, session précédente) — Reset + RPC propre, suppression du diagnostic toast temporaire.
+
+**Fusion sur main complète. Merge du branch `claude/immatconnect-pro-app-dEKGR` → `main` terminé.**
+
+---
+
+**Mission précédente : Dashboard Gardien normalisation — 3 fixes appliqués**
 **Date :** 2026-06-23
 **Fichiers :** `index.html`, `service-worker.js` v228
 
@@ -2280,6 +2302,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |
 | 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
 | 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |
 | 2026-06-23 | IA session | Audit pré-merge redesign Messages V3 validé — merge autorisé (patch purement visuel, messages.js intact). Chantier "Fiabilisation chaîne Messages" ouvert (6 points). PROJECT_STATE mis à jour. |
