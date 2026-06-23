@@ -348,10 +348,13 @@
     </div>
 
     <!-- Journal d'appels -->
-    <div id="icAppelsPane" style="display:none;overflow-y:auto;flex:1">
-      <div class="act-cat-hd"><button type="button" class="act-cat-back" onclick="App.closeSheet()">‹</button><div class="act-cat-hd-mid"><span class="act-cat-hd-icon">📞</span><div><div class="act-cat-hd-title">Journal d'appels</div><div class="act-cat-hd-sub">Historique de vos appels</div></div></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
-      <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" aria-label="Rechercher dans le journal d'appels par plaque ou pseudo" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
-      <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
+    <div id="icAppelsPane" style="display:none;flex:1">
+      <div id="callJournalStickyHdr" style="position:sticky;top:0;z-index:5;background:#0c1624;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div class="act-cat-hd"><button type="button" class="act-cat-back" onclick="App.closeSheet()">‹</button><div class="act-cat-hd-mid"><span class="act-cat-hd-icon">📞</span><div><div class="act-cat-hd-title">Journal d'appels</div><div class="act-cat-hd-sub">Historique de vos appels</div></div></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
+        <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" aria-label="Rechercher dans le journal d'appels par plaque ou pseudo" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
+        <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
+        <div id="callJournalTabsRow"></div>
+      </div>
       <div id="icCallLog"></div>
     </div>
 
@@ -3011,6 +3014,8 @@ App.renderCallJournal=async function(){
   try{
     var log=window.CallManager?.loadCallLog?await window.CallManager.loadCallLog(60):[];
     if(!log||!log.length){
+      var _te=document.getElementById('callJournalTabsRow');
+      if(_te)_te.innerHTML='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span></div>';
       el.innerHTML='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">Aucun appel récent.</div></div>';
       return;
     }
@@ -3074,9 +3079,12 @@ App.renderCallJournal=async function(){
       else countEl.style.display='none';
     }
     function _fpill(val,label){var on=_f===val;return '<button type="button" aria-pressed="'+on+'" onclick="App.setCallJournalFilter(\''+val+'\')" style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;background:'+(on?'#6366f1':'rgba(255,255,255,.08)')+';color:'+(on?'#fff':'#94a3b8')+';border:none;cursor:pointer">'+label+'</button>';}
-    var html='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button>'+(_hiddenCalls.length?'<button type="button" onclick="App.restoreHiddenCalls()" style="background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;padding:4px 6px" title="Restaurer les appels masqués">Restaurer ('+_hiddenCalls.length+')</button>':'')+"</span></div>"+
-      '<div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+_fpill('fav','⭐ Favoris')+'</div>';
-    if(!log.length){html+='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">'+(_q?'Aucun appel pour «\xa0'+esc(App._callJournalSearch||'')+'\xa0».':'Aucun appel dans cette catégorie.')+'</div></div>';el.innerHTML=html;return;}
+    // Header + filtres → sticky header (hors scroll)
+    var tabsEl=document.getElementById('callJournalTabsRow');
+    if(tabsEl)tabsEl.innerHTML='<div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#a5b4fc">JOURNAL D\'APPELS</span><span><button type="button" onclick="App.exportCallJournal()" title="Exporter le journal" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;padding:4px 8px">📤</button><button type="button" onclick="App.renderCallJournal()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:4px 8px">↻</button>'+(_hiddenCalls.length?'<button type="button" onclick="App.restoreHiddenCalls()" style="background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;padding:4px 6px" title="Restaurer les appels masqués">Restaurer ('+_hiddenCalls.length+')</button>':'')+'</span></div><div style="display:flex;gap:6px;padding:4px 16px 8px;overflow-x:auto;scrollbar-width:none">'+_fpill('all','Tous')+_fpill('missed','Manqués')+_fpill('out','Émis')+_fpill('in','Reçus')+_fpill('fav','⭐ Favoris')+'</div>';
+    // Entrées d'appels uniquement → zone scrollable
+    var html='';
+    if(!log.length){el.innerHTML='<div style="padding:32px 16px;text-align:center"><div style="font-size:32px;margin-bottom:8px">📵</div><div style="color:#64748b;font-size:13px">'+(_q?'Aucun appel pour «\xa0'+esc(App._callJournalSearch||'')+'\xa0».':'Aucun appel dans cette catégorie.')+'</div></div>';return;}
     var lastDay='';
     log.forEach(function(r){
       var cfg=statusCfg[r.status]||{label:r.status,color:'#64748b',icon:'📞'};
