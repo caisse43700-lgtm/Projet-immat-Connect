@@ -332,7 +332,6 @@ body.reduce-effects .speed.over { animation: none; }
   box-shadow: 0 -18px 55px rgba(0,0,0,.4);
   padding: 8px 14px 12px;
   overflow-y: auto;
-  overflow-x: hidden;
   touch-action: pan-y;
   transition: height .28s cubic-bezier(.22,1,.36,1), padding .28s cubic-bezier(.22,1,.36,1);
   will-change: height;
