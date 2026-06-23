@@ -3745,6 +3745,9 @@ function showReputationToast(){
       }catch(e){}
 
       if(prof && prof.owner_plate && prof.phone && prof.vehicle_color){
+        /* Détection gardien — même logique qu'afterAuth original (bypassed ici) */
+        {const _mr=u?.user_metadata?.role||u?.app_metadata?.role;if(_mr==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}
+        try{const {data:role}=await sb.rpc('get_my_role');if(role==='gardien'){if(!S.isGardien){S.isGardien=true;document.body.classList.add('is-gardien');document.querySelectorAll('.gardien-debug-tool').forEach(function(el){el.style.display='inline-flex';});}}else if(S.isGardien===undefined)S.isGardien=false;}catch(e){if(S.isGardien===undefined)S.isGardien=false;}
         return App.openMap(prof,u.email);
       }
 
@@ -4543,10 +4546,19 @@ window._forceSwUpdate = async function() {
   }
   function _openAppelsInline(){
     document.body.classList.add('appels-mode');
+    try{window.ImmatMessages&&window.ImmatMessages.closeThread&&window.ImmatMessages.closeThread();}catch(_){}
+    if(window.S)window.S._unseenMissedCalls=0;
     _panels('messages');_sheet(true);_navHighlight('navAppels');
     var ml=document.getElementById('icMsgList'),cp=document.getElementById('icAppelsPane');
-    if(ml)ml.style.display='none';if(cp)cp.style.display='';
+    if(ml)ml.style.display='none';if(cp)cp.style.display='block';
+    var _cl=document.getElementById('icCallLog');if(_cl)_cl.style.display='';
+    var _tbM2=document.getElementById('icTabMessages'),_tbA2=document.getElementById('icTabAppels');
+    if(_tbM2){_tbM2.style.color='#64748b';_tbM2.style.borderBottomColor='transparent';}
+    if(_tbA2){_tbA2.style.color='#e2e8f0';_tbA2.style.borderBottomColor='#2f7bff';}
+    var _hdr=document.querySelector('#icMessagesPro .ic-conv-header');if(_hdr)_hdr.style.display='none';
+    var _sbar=document.getElementById('icSearchBar');if(_sbar)_sbar.style.display='none';
     try{window.App&&window.App.renderCallJournal&&window.App.renderCallJournal();}catch(_){}
+    try{window.App&&window.App.updateActBadge&&window.App.updateActBadge();}catch(_){}
   }
   function _openAngeInline(){
     try{if(window.AngeDialog&&window.AngeDialog.open){window.AngeDialog.open();return;}}catch(ex){}
