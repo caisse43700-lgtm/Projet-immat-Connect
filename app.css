@@ -1267,3 +1267,7 @@ body.night .sig-cat-btn { background: rgba(255,255,255,.08); border-color: rgba(
 #appScreen:has(.sheet.full) #mapCenterPin,
 #appScreen:has(#sheet .panel.on) #mapCenterPin,
 body.keyboard-open #mapCenterPin { display: none !important; }
+
+/* Boutons réservés au Gardien — masqués par défaut, visibles uniquement si body.is-gardien */
+.gardien-debug-tool { display: none !important; }
+body.is-gardien .gardien-debug-tool { display: inline-flex !important; }
