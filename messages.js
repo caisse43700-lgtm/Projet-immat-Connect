@@ -1364,12 +1364,11 @@ async function sendToPlate(plate,text,opts){
     ...(_ctx.image_url    ? {image_url:_ctx.image_url}       : {})
   };
 
+  // from_plate/to_plate conservés en SELECT pour messages anciens en base (compat)
   const rich = {
     ...base,
     sender_plate:senderPlate,
-    receiver_plate:receiverPlate,
-    from_plate:senderPlate,
-    to_plate:receiverPlate
+    receiver_plate:receiverPlate
   };
 
   const {error} = await client.from('messages').insert(rich);
