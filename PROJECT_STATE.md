@@ -54,16 +54,27 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BUG FIX — Dashboard Gardien ouverture + CI preflight — VALIDÉ TERRAIN ✅**
+**Mission : UX Messages — Header fixe style act-cat-hd (💬 icon + flex cascade CSS)**
+**Date :** 2026-06-23
+**Commit :** `af8f577` sur branche `claude/immatconnect-pro-app-dEKGR`
+**SW :** v214 → v215
+
+### Ce qui a été fait
+
+**Vue 1 (liste conversations)** : `.ic-conv-header` adopte le style `act-cat-hd` avec icône 💬, titre "Messages" + sous-titre "Vos conversations". Flex cascade via `:has(#panelMessages.on)` (iOS 15.4+, sans body class) rend le header et la barre de recherche fixes pendant que la liste de conversations défile.
+
+**Vue 2 (thread)** : `.ic-thread-head` enrichi avec `act-cat-hd-mid` + icône 💬. Affiche pseudo + immatriculation + présence/confiance (déjà généré par `openThread()`). Bouton `.ic-back-btn` restyled en cercle via CSS (classe HTML conservée). Header + compositeur restent fixes.
+
+**Contraintes respectées** : tous les IDs JS (`icMsgList`, `icThreadTitle`, `icThreadSub`, `icCallBtn`…) et classes fonctionnelles conservés. Aucune modification JS. CSS pur : `flex:0 0 auto` (éléments fixes) + `flex:1 1 auto; overflow-y:auto` (zones scrollables). Aucun `position:absolute` ni calcul de hauteur.
+
+---
+
+**Mission précédente : BUG FIX — Dashboard Gardien ouverture + CI preflight — VALIDÉ TERRAIN ✅**
 **Date :** 2026-06-23
 **Commits main :** `35b60e4` (guard isGardien) + `0c4a3dd` (guillemets curly)
 **SW :** v206 → v208
 
-### Cause 1 — Dashboard ne s'ouvrait pas
-Guard `if(!S.isGardien)` bloquait quand `S.isGardien` était `undefined` (timing RPC) même si `body.is-gardien` CSS persistait. Fix : double fallback `S.isGardien===true || body.classList.contains('is-gardien')` + `App.closeSheet?.()` avant ouverture.
-
-### Cause 2 — CI preflight rouge
-5 guillemets typographiques `'` (U+2019) utilisés comme délimiteurs JS dans l'IIFE feature flags (HTML ligne 964) → `Invalid or unexpected token`. Fix : remplacement par apostrophes ASCII U+0027. `preflight-inline-js` passe vert : 8 scripts OK.
+Guard `if(!S.isGardien)` bloquait quand `S.isGardien` était `undefined` (timing RPC) même si `body.is-gardien` CSS persistait. Fix : double fallback `S.isGardien===true || body.classList.contains('is-gardien')`. CI preflight rouge : 5 guillemets typographiques U+2019 dans IIFE feature flags. Fix : remplacement par apostrophes ASCII U+0027. 8 scripts OK.
 
 ---
 
@@ -1621,21 +1632,21 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**En attente validation terrain (commit 40b3aff) :**
-- Boutons Messages/Appels/Ange/✕ — fix inline dans index.html (SW v200)
-- Dashboard Gardien — migration `get_my_role()` + fallback JWT dans afterAuth()
+**Mission Messages header fixe** (commit `af8f577`) — **en attente validation terrain**.
 
-**Patch V1 Signalements implémenté (1ae7ebf) — toujours en attente "Fusionner" pour main.**
-Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
-
-Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
-Fix modale abus validé terrain (2026-06-22).
-T1 gardien validé terrain (2026-06-22) : Dashboard Gardien + modale "Signaler un abus" fonctionnels.
+Tests à effectuer :
+- 0 conversation / 1 conversation / 30+ conversations → header reste fixe
+- Clic sur conversation → thread : pseudo + immatriculation visible dans header
+- Messages longs dans thread → scroll correct, compositeur reste en bas
+- Ouverture clavier iPhone → header ne disparaît pas
+- Retour thread → liste → header liste réapparaît
+- Journal d'appels depuis Messages → `appels-mode` inchangé
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
 - NE PAS rouvrir le chantier A sauf bug terrain reproductible
 - NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
+- NE PAS toucher messages.js logique métier (chargement, Realtime, favoris, recherche)
 ```
 
 ---
@@ -2297,6 +2308,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | BUG FIX nav — boutons Messages/Appels/Ange/✕ non réactifs après revert zones. Ajout installNavButtonHotfix() dans ui.js : document-level capture listener par closest() (ph-close/sheet-close) + bounding-box (#navMessages/#navAppels/#navAnge). SW v197→v199, ui.js?v=10. |
 | 2026-06-23 | IA session | BUG FIX nav (fix 3 final) + Dashboard Gardien manquant. Fix nav inline dans index.html (avant </body>) : hotfix exécuté à chaque chargement, indépendant SW/cache. Dashboard : migration 20260623100000_get_my_role_function.sql (crée get_my_role() SECURITY DEFINER) + fallback JWT dans afterAuth() (u.user_metadata.role / u.app_metadata.role avant RPC). SW v199→v200. Commit 40b3aff sur main. |
 | 2026-06-23 | IA session | BUG FIX Dashboard Gardien (CAUSE RACINE) + Appels complet. Cause racine Dashboard : override OBD afterAuth (ligne 3701) fast-path App.openMap() direct → bypass TOTAL détection gardien → S.isGardien jamais set → applyFeatureFlags() ne montre jamais les boutons. Fix : ajout JWT+RPC get_my_role() dans le fast-path OBD avant App.openMap(). Fix Appels : _openAppelsInline() aligné sur navAppels() — display='block', icCallLog reset, tabs couleurs, header/searchbar masqués, closeThread(), _unseenMissedCalls=0, updateActBadge(). SW v204→v205. Commit bdf6d42 sur main. |
+| 2026-06-23 | IA session | BUG FIX Dashboard Gardien timing + CI preflight. Fix timing : double fallback `S.isGardien===true \|\| body.classList.contains('is-gardien')`. CI : 5 guillemets typographiques U+2019 → ASCII U+0027 dans IIFE feature flags. SW v213→v214. Commits 35b60e4+0c4a3dd sur main. Validé terrain. |
+| 2026-06-23 | IA session | UX Messages — header fixe style act-cat-hd. Vue 1 (liste) : icône 💬 + "Messages / Vos conversations", flex cascade CSS via :has(#panelMessages.on) (iOS 15.4+). Vue 2 (thread) : icône 💬 + pseudo + immatriculation dans header fixe, compositeur fixe en bas. IC-back-btn restyled en cercle via CSS. Tous IDs JS conservés, aucun JS modifié. SW v214→v215. Commit af8f577. |
 
 ---
 
