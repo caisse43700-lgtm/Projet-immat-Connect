@@ -635,6 +635,24 @@
 .ic-thread-body::-webkit-scrollbar { width:4px; }
 .ic-thread-body::-webkit-scrollbar-thumb { background:#29415d; border-radius:10px; }
 
+/* ---- Load older ---- */
+.ic-older-sep {
+  text-align:center;
+  padding:6px 0 2px;
+  font-size:11px;
+  color:#64748b;
+}
+.ic-older-btn {
+  background:none;
+  border:1px solid #29415d;
+  color:#60a5fa;
+  border-radius:20px;
+  padding:5px 14px;
+  font-size:12px;
+  cursor:pointer;
+}
+.ic-older-btn:active { opacity:.7; }
+
 /* ---- Bubble (new layout) ---- */
 .ic-bubble {
   position:relative;
@@ -659,6 +677,15 @@
   border-bottom-left-radius:6px;
 }
 
+.ic-bubble-img {
+  display:block;
+  max-width:200px;
+  max-height:180px;
+  width:100%;
+  border-radius:8px 8px 0 0;
+  object-fit:cover;
+  cursor:pointer;
+}
 .ic-bubble-text {
   padding:9px 12px 4px;
   font-size:13px;

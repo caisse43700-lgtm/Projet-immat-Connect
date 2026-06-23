@@ -334,16 +334,16 @@ async function refresh(){
   const queries = [
     client.from('messages').select('*')
       .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
-      .order('created_at',{ascending:true})
+      .order('created_at',{ascending:false})
       .limit(300)
   ];
   if(mp){
     queries.push(
-      client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:true}).limit(300),
-      client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:true}).limit(300),
-      client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:true}).limit(300),
-      client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:true}).limit(300),
-      client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:true}).limit(300)
+      client.from('messages').select('*').eq('target_plate',mp).order('created_at',{ascending:false}).limit(300),
+      client.from('messages').select('*').eq('sender_plate',mp).order('created_at',{ascending:false}).limit(300),
+      client.from('messages').select('*').eq('receiver_plate',mp).order('created_at',{ascending:false}).limit(300),
+      client.from('messages').select('*').eq('from_plate',mp).order('created_at',{ascending:false}).limit(300),
+      client.from('messages').select('*').eq('to_plate',mp).order('created_at',{ascending:false}).limit(300)
     );
   }
   const results = await Promise.all(queries.map(async q=>{
@@ -916,8 +916,16 @@ function _renderTimeline(body, messages, searchQuery){
     ? allEvents.filter(e => !e._sent && !e.read_at).length
     : 0;
 
+  const _plate = State.activePlate;
+  const _noMore = _plate && State._threadNoMore?.[nPlate(_plate)];
+  const _olderBtn = _plate && !q
+    ? (_noMore
+        ? `<div class="ic-older-sep">Début de la conversation</div>`
+        : `<div class="ic-older-sep"><button class="ic-older-btn" onclick="ImmatMessages.loadOlderMessages(${JSON.stringify(_plate)})">Charger les messages plus anciens</button></div>`)
+    : '';
+
   let _prevDayKey = '';
-  body.innerHTML = allEvents.map((item, idx) => {
+  body.innerHTML = _olderBtn + allEvents.map((item, idx) => {
     let daySep = '';
     if(item._ts){
       const _d = new Date(item._ts);
@@ -934,8 +942,12 @@ function _renderTimeline(body, messages, searchQuery){
     const _replyBtn = !item._sent
       ? `<button class="ic-reply-btn" aria-label="Répondre à ce message" title="Répondre" onclick="ImmatMessages.setReplyTo('${esc(String(item.id))}',${JSON.stringify((item.message||'').slice(0,80))})">↩</button>`
       : '';
+    const _imgHtml = item.image_url
+      ? `<img src="${esc(item.image_url)}" class="ic-bubble-img" loading="lazy" alt="Photo jointe" onclick="ImmatMessages._viewImg(${JSON.stringify(item.image_url)})">`
+      : '';
     return sep + `<div class="ic-bubble ${item._sent?'sent':'recv'}">
       ${_replyBtn}
+      ${_imgHtml}
       <div class="ic-bubble-text">${q ? _highlightHtml(_formatMsg(item.message||''), searchQuery) : _formatMsg(item.message||'')}</div>
       <div class="ic-bubble-footer">
         <span class="ic-time">${esc(timeStr)}</span>
@@ -945,6 +957,68 @@ function _renderTimeline(body, messages, searchQuery){
       </div>
     </div>`;
   }).join('');
+}
+
+async function loadOlderMessages(plate){
+  const p = nPlate(plate);
+  const threadMsgs = State.messages.filter(m => nPlate(m._otherPlate) === p);
+  if(!threadMsgs.length) return;
+
+  const oldest = threadMsgs.reduce((a,b) => new Date(a.created_at) < new Date(b.created_at) ? a : b);
+  const before = oldest.created_at;
+
+  const client = sb();
+  const u = await getUser();
+  const mp = myPlate();
+  if(!client || !u) return;
+
+  const qs = [
+    client.from('messages').select('*')
+      .or(`sender_id.eq.${u.id},receiver_id.eq.${u.id}`)
+      .lt('created_at', before)
+      .order('created_at',{ascending:false})
+      .limit(50)
+  ];
+  if(mp){
+    qs.push(
+      client.from('messages').select('*').eq('target_plate',p).lt('created_at',before).order('created_at',{ascending:false}).limit(50),
+      client.from('messages').select('*').eq('sender_plate',mp).lt('created_at',before).order('created_at',{ascending:false}).limit(50),
+      client.from('messages').select('*').eq('receiver_plate',p).lt('created_at',before).order('created_at',{ascending:false}).limit(50)
+    );
+  }
+
+  const results = await Promise.all(qs.map(async q=>{
+    try{ const{data,error}=await q; if(!error&&Array.isArray(data)) return data; }catch(e){}
+    return [];
+  }));
+
+  const existingIds = new Set(State.messages.map(m=>String(m.id)));
+  const newMap = new Map();
+  results.flat().forEach(m=>{ if(m?.id&&!existingIds.has(String(m.id))) newMap.set(m.id,m); });
+
+  if(!newMap.size){
+    State._threadNoMore = State._threadNoMore||{};
+    State._threadNoMore[p] = true;
+    refreshThread();
+    return;
+  }
+
+  const newRaw = [...newMap.values()];
+  const profs = await profilesByIds(newRaw.flatMap(m=>[m.sender_id,m.receiver_id]));
+  State.messages = [...State.messages, ...normalizeRows(newRaw, profs)];
+  refreshThread();
+}
+
+function _viewImg(src){
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = 'Photo jointe';
+  img.style.cssText = 'max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 32px rgba(0,0,0,.6)';
+  ov.appendChild(img);
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
 }
 
 function _presenceLabel(plate){
@@ -2092,6 +2166,8 @@ window.ImmatMessages = {
   toggleUnreadOnly,
   setReplyTo,
   clearReplyTo,
+  _viewImg,
+  loadOlderMessages,
 };
 
 window.setUnreadMsgCount = window.setUnreadMsgCount || setBadge;
