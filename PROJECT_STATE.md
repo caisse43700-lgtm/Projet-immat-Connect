@@ -54,7 +54,31 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Audit pré-merge redesign Messages V3 — MERGE VALIDÉ**
+**Mission : Dashboard Gardien normalisation — 3 fixes appliqués**
+**Date :** 2026-06-23
+**Fichiers :** `index.html`, `service-worker.js` v228
+
+### Ce qui a été fait
+
+Audit complet du Dashboard Gardien (agent explore, 23 sections analysées). 3 corrections appliquées :
+
+1. **isGardien DOM fallback supprimé** (l.823) — `document.body.classList.contains('is-gardien')` retiré de la condition d'accès. La classe CSS peut persister d'une session précédente même si `S.isGardien` est false. Le seul check valide est `S.isGardien===true`.
+
+2. **Système Immunitaire — score réel** (runImmunityCheck) — toutes les entrées avaient `hasFlow:true, hasObs:true` en dur → score toujours 100% fictif. Remplacé par 6 checks de présence réels (`typeof window.L`, `typeof window.sb`, `typeof window.ImmatMessages`, `typeof window.ImmatBrain`, `typeof window.CallManager`, `!!window.S?.uid`) mappés à chaque feature.
+
+3. **Abus reports — message d'erreur distinctif** (l.1019) — le message "Accès réservé au rôle gardien" s'affichait pour toutes les erreurs RPC, y compris les erreurs réseau. Remplacé par une détection : `error.code==='PGRST301'` ou `permission denied` → message gardien ; sinon → "Erreur chargement : \<code\>".
+
+**Sections du Dashboard non touchées** (16/20 déjà fonctionnelles) : État du système, Violations, Événements bus, Timeline OBD, Calls Runtime, Runtime Data, Ange session, GuardianLoop, Scores fiabilité, Appels internes, Diagnostic IA, Intelligence synthétique, Immatest, Fonctionnalités/Paramètres, Sync alertes, Actualiser.
+
+---
+
+**Mission précédente : Chantier Fiabilisation chaîne Messages — 6/6 CLÔTURÉ**
+**Date :** 2026-06-23
+**Commits :** `805bc54` → `e8724a4`, messages.js v29, SW v227
+
+---
+
+**Mission précédente : Audit pré-merge redesign Messages V3 — MERGE VALIDÉ**
 **Date :** 2026-06-23
 **Commit :** `c0f33ee` (fix #icAppelsPane) — dernier commit avant validation
 
@@ -2256,6 +2280,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
+| 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |
 | 2026-06-23 | IA session | Audit pré-merge redesign Messages V3 validé — merge autorisé (patch purement visuel, messages.js intact). Chantier "Fiabilisation chaîne Messages" ouvert (6 points). PROJECT_STATE mis à jour. |
 | 2026-06-23 | IA session | Fix #icAppelsPane visible dans panel Activité (IMG_6303) — app.css v33, SW v224, commit c0f33ee |
 | 2026-06-23 | IA session | Fix #icMsgTabsRow visible dans Journal d'appels (IMG_6302) — app.css v32, SW v223, commit 271a376 |
