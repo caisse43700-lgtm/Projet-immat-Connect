@@ -1688,11 +1688,12 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 **Aucune mission en cours.**
 
+Chantier "Fiabilisation chaîne Messages" — CLÔTURÉ 2026-06-23 (commits 805bc54 → e8724a4)
+
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
 - NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
-- NE PAS toucher messages.js logique métier (chargement, Realtime, favoris, recherche)
-- NE PAS mélanger chantier Fiabilisation Messages avec redesign visuel V3
+- NE PAS toucher messages.js logique métier sauf chantier dédié explicitement validé
 ```
 
 ---
@@ -1704,14 +1705,14 @@ CHANTIER : FIABILISATION CHAÎNE MESSAGES
 Ouvert le 2026-06-23 — Séparé du redesign visuel V3
 ════════════════════════════════════════════════════
 
-AVANCEMENT
-──────────
-✅ POINT 2 — Fallback INSERT supprimé (commit 805bc54, messages.js v27)
-✅ POINT 3 — Guard receiverPlate ajouté avant INSERT (commit 805bc54)
+AVANCEMENT — CHANTIER TERMINÉ ✅
+──────────────────────────────
+✅ POINT 1 — Canonisation colonnes : from_plate/to_plate retirés de l'INSERT (commit e8724a4, v29)
+✅ POINT 2 — Fallback INSERT supprimé (commit 805bc54, v27)
+✅ POINT 3 — Guard receiverPlate avant INSERT (commit 805bc54)
 ✅ POINT 4 — Pagination : ORDER DESC + loadOlderMessages() + bouton (commit a77c63d, v28)
-✅ POINT 6 — Photos image_url affichées dans thread + lightbox (commit a77c63d)
-⏳ POINT 1 — Canonisation colonnes plaques (à faire)
-⏳ POINT 5 — Reset soft-delete / outil debug (à faire)
+✅ POINT 5 — Bouton "Restaurer messages masqués" dans Paramètres RGPD (commit e8724a4)
+✅ POINT 6 — Photos image_url dans thread + lightbox (commit a77c63d)
 
 CONTEXTE
 ────────
