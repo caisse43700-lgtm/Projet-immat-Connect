@@ -54,17 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BUG FIX — Boutons Messages/Appels/Ange/✕ non réactifs après revert zones**
-**Date :** 2026-06-22
-**Commit branche :** en cours sur `claude/immatconnect-pro-app-dEKGR`
-**SW :** v197 → v199 · `ui.js?v=9` → `?v=10`
+**Mission : BUG FIX — Nav inline + Dashboard Gardien manquant**
+**Date :** 2026-06-23
+**Commit main :** `40b3aff`
+**SW :** v199 → v200
 
-- **Symptôme** : après le commit zones (c242d54) et son revert (00eb789), les boutons Messages, Appels, Ange (nav) et ✕ (fermeture panels) ne répondaient plus au tap.
-- **Cause identifiée** : `#navMessages`, `#navAppels`, `#navAnge`, `.ph-close` et `.sheet-close` n'ont aucun listener capture-phase dans `bindVisibleButtons()` de ui.js. Si un overlay ou un état SW altère les `onclick` attributes, ces boutons deviennent silencieux. Signaler et Activite fonctionnaient grâce aux listeners capture déjà présents dans `bindVisibleButtons()`.
-- **Correctif** : ajout de `installNavButtonHotfix()` dans ui.js — listener document-level capture-phase qui :
-  1. Détecte les clics sur `.ph-close`/`.sheet-close` via `e.target.closest()` → appelle `App.closeSheet()`
-  2. Détecte les clics sur `#navMessages`, `#navAppels`, `#navAnge` par bounding-box → appelle la fonction correspondante (fonctionne même si un overlay couvre le bouton)
-- SW bumpe v197→v199 (v198 sauté pour éviter confusion avec le commit zones) pour forcer un rechargement propre de ui.js sur tous les appareils.
+### Boutons Messages/Appels/Ange/✕ (suite fix 3 — inline)
+- Fix 1 (b5dedc6) : `installNavButtonHotfix()` dans ui.js — pas vu (index.html chargeait toujours `ui.js?v=9`)
+- Fix 2 (02b1989) : `ui.js?v=9` → `?v=10` dans index.html — SW cache possiblement périmé
+- **Fix 3 (40b3aff)** : hotfix inline dans index.html juste avant `</body>` — indépendant de ui.js et du SW cache, exécuté à chaque chargement (index.html est toujours network-first avec `cache:'no-store'`).
+
+### Dashboard Gardien manquant
+- **Cause** : `get_my_role()` n'avait aucune migration SQL → fonction absente après tout `supabase db push` frais → `sb.rpc('get_my_role')` lève une erreur → catch → `S.isGardien=false` → classe `is-gardien` jamais ajoutée → bouton Dashboard masqué (CSS `display:none`)
+- **Fix 1** : migration `20260623100000_get_my_role_function.sql` — crée `get_my_role()` SECURITY DEFINER lisant `raw_user_meta_data->>'role'` et `raw_app_meta_data->>'role'` (`COALESCE`)
+- **Fix 2** : fallback JWT dans `afterAuth()` — lit `u.user_metadata.role` / `u.app_metadata.role` directement depuis la réponse `getUser()` (sans RPC), avant l'appel RPC ; résout le cas où la fonction est encore absente ou le JWT fraîchement émis
 
 **Commits précédents sur la branche (non fusionnés) :**
 - `7d14ade` : garde `S.isGardien` dans `openGardienDashboard()`, `forceSyncAlerts()`, `setFeatureFlag()`
@@ -1588,8 +1591,9 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**BUG FIX nav hotfix — en attente validation terrain (Messages/Appels/Ange/✕ réactifs).**
-SW v199 + ui.js?v=10 — pousser et tester sur iPhone.
+**En attente validation terrain (commit 40b3aff) :**
+- Boutons Messages/Appels/Ange/✕ — fix inline dans index.html (SW v200)
+- Dashboard Gardien — migration `get_my_role()` + fallback JWT dans afterAuth()
 
 **Patch V1 Signalements implémenté (1ae7ebf) — toujours en attente "Fusionner" pour main.**
 Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
@@ -2261,6 +2265,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
 
 | 2026-06-22 | IA session | BUG FIX nav — boutons Messages/Appels/Ange/✕ non réactifs après revert zones. Ajout installNavButtonHotfix() dans ui.js : document-level capture listener par closest() (ph-close/sheet-close) + bounding-box (#navMessages/#navAppels/#navAnge). SW v197→v199, ui.js?v=10. |
+| 2026-06-23 | IA session | BUG FIX nav (fix 3 final) + Dashboard Gardien manquant. Fix nav inline dans index.html (avant </body>) : hotfix exécuté à chaque chargement, indépendant SW/cache. Dashboard : migration 20260623100000_get_my_role_function.sql (crée get_my_role() SECURITY DEFINER) + fallback JWT dans afterAuth() (u.user_metadata.role / u.app_metadata.role avant RPC). SW v199→v200. Commit 40b3aff sur main. |
 
 ---
 
