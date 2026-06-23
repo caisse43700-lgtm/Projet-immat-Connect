@@ -54,7 +54,34 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Thread — Compositeur fixe en bas iOS (overflow:hidden + flex cascade)**
+**Mission : Audit pré-merge redesign Messages V3 — MERGE VALIDÉ**
+**Date :** 2026-06-23
+**Commit :** `c0f33ee` (fix #icAppelsPane) — dernier commit avant validation
+
+### Ce qui a été validé
+
+Audit complet en 6 points avant merge du redesign visuel Messages V3 :
+
+1. **overflow:hidden** — Aucun conteneur parent de #icMsgList bloqué. Les 5 occurrences sont soit des clips cosmétiques (border-radius), soit des parents flex avec min-height:0.
+2. **#icMsgList scroll** — Correctement configuré : `flex:1 1 auto + min-height:0 + overflow-y:auto`. Hauteur dynamique (flex). Scroll JS via scrollTop/scrollHeight/scrollIntoView. Aucune dépendance à une hauteur fixe.
+3. **Pagination** — AUCUNE pagination. 6 requêtes SELECT parallèles, chacune `.limit(300)` fixe. Pas de IntersectionObserver, pas de scroll-to-load.
+4. **Colonnes plaques INSERT/SELECT** — INSERT primaire : 5 colonnes (sender_plate, receiver_plate, from_plate, to_plate, target_plate). Fallback retire les 4 aliases mais conserve target_plate. SELECT : `select('*')`. Normalisation gère 4 variantes + fallback profiles.
+5. **Causes de disparition** — 9 filtres documentés : LIMIT 300, status=rejected, _otherPlate absent, ic_deleted_msgs, bloqué, context_type, archivé, favOnly, unreadOnly.
+6. **Redesign purement visuel** — Confirmé : messages.js = zéro modification. Seuls messages.css (nouveau fichier visuel) + app.css lignes 794-875 (flex cascade) touchés.
+
+**VERDICT : MERGE AUTORISÉ — patch purement visuel, aucune régression fonctionnelle.**
+
+---
+
+**Mission précédente : Fix #icAppelsPane visible dans panel Activité (IMG_6303)**
+**Date :** 2026-06-23
+**Commit :** `c0f33ee` — app.css v33, SW v224
+
+Ajout de `#icAppelsPane { display: none !important; }` avant la règle `body.appels-mode #icAppelsPane`. Le style inline `display:block` posé par `_openAppelsInline()` ne pouvait plus saigner dans le panel Activité. En appels-mode, la règle plus spécifique (0,2,1 > 0,1,0) l'emporte. ✓
+
+---
+
+**Mission précédente : Thread — Compositeur fixe en bas iOS (overflow:hidden + flex cascade)**
 **Date :** 2026-06-23
 **Commit :** `7de5370` sur `main` (poussé) — restore après incident agent `f4cda3c`
 **SW :** v220 → v221 · app.css v29 → v30
@@ -1659,24 +1686,99 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Aucune mission en cours.** En attente validation terrain du compositeur fixe en bas (thread).
-
-Tests suggérés sur iPhone :
-- Ouvrir un thread → composer reste fixe en bas, messages scrollent au milieu
-- Taper un long message → textarea grandit, composer reste en bas
-- Quick replies visibles et fixes au-dessus du composer
-- Clavier iOS ouvert → composer reste visible et fixe
+**Aucune mission en cours.**
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
-- NE PAS rouvrir le chantier A sauf bug terrain reproductible
 - NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
 - NE PAS toucher messages.js logique métier (chargement, Realtime, favoris, recherche)
+- NE PAS mélanger chantier Fiabilisation Messages avec redesign visuel V3
 ```
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
+
+```
+CHANTIER : FIABILISATION CHAÎNE MESSAGES
+Ouvert le 2026-06-23 — Séparé du redesign visuel V3
+════════════════════════════════════════════════════
+
+CONTEXTE
+────────
+Audit pré-merge a révélé 6 fragilités dans la chaîne envoi → stockage → réception.
+Le redesign V3 (app.css + messages.css) est purement visuel et safe à merger.
+Ces 6 points constituent un chantier technique distinct à traiter séparément.
+
+POINT 1 — Colonnes plaques redondantes
+  Problème :
+    sender_plate / receiver_plate / from_plate / to_plate / target_plate
+    créent une logique fragile et un fallback INSERT dangereux.
+  Objectif :
+    Définir une source canonique unique pour retrouver expéditeur/destinataire.
+    Supprimer l'ambiguïté entre les 5 colonnes.
+
+POINT 2 — Fallback INSERT dangereux
+  Problème :
+    Si INSERT rich échoue, le retry retire les colonnes legacy.
+    Résultat : message en base mais invisible dans certains SELECT.
+    Code incriminé (messages.js l.1302-1305) :
+    if(error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema cache/...){
+      const r = await client.from('messages').insert(base); // retry sans colonnes plaques
+    }
+  Objectif :
+    Supprimer ou sécuriser ce fallback.
+    Garantir que le message reste trouvable quel que soit le chemin d'insertion.
+
+POINT 3 — receiver_plate absent = destinataire aveugle
+  Problème :
+    Si receiver_plate n'est pas inséré, 3 des 6 requêtes SELECT du destinataire ratent.
+    Message existe en base mais invisible pour le destinataire.
+  Objectif :
+    Garantir qu'un message envoyé à une plaque soit toujours visible par le destinataire.
+    Ajouter une contrainte ou un guard côté INSERT.
+
+POINT 4 — LIMIT 300 sans pagination
+  Problème :
+    Pas de pagination. Dans un thread très actif, les messages anciens ne sont jamais chargés.
+    6 requêtes × 300 = 1800 avant dédup, mais les PLUS ANCIENS disparaissent.
+  Objectif :
+    Ajouter un mécanisme "Charger les messages plus anciens" (bouton ou scroll-to-top).
+    Implémenter une vraie pagination avec offset ou cursor (created_at).
+
+POINT 5 — Soft-delete local masque des messages existants
+  Problème :
+    ic_deleted_msgs (localStorage) peut masquer un message qui existe encore en base.
+    Si localStorage est vidé → message réapparaît (comportement surprenant pour l'utilisateur).
+    Limite : slice(-500) — les 501ᵉ et au-delà réapparaissent automatiquement.
+  Objectif :
+    Ajouter un outil debug ou une option "Réinitialiser messages masqués".
+    Documenter clairement le comportement (soft-delete = local only).
+
+POINT 6 — Photos image_url stockées mais non affichées
+  Problème :
+    Photos de signalements stationnés bien stockées dans Supabase Storage (bucket parked-photos).
+    image_url inséré en base mais jamais rendu dans le thread de messages.
+  Objectif :
+    Afficher image_url dans le thread quand disponible (miniature cliquable → lightbox).
+
+ORDRE D'EXÉCUTION RECOMMANDÉ
+────────────────────────────
+  1. POINT 2 — Fallback INSERT (risque le plus élevé, correctif chirurgical)
+  2. POINT 3 — receiver_plate (garantie de livraison)
+  3. POINT 1 — Canonisation colonnes (nettoyage architecture)
+  4. POINT 6 — Photos image_url (feature visible)
+  5. POINT 4 — Pagination (feature UX)
+  6. POINT 5 — Reset soft-delete (outillage debug)
+
+RÈGLE ABSOLUE
+─────────────
+  Ce chantier = modifications de messages.js logique métier uniquement.
+  NE PAS modifier messages.css ou le redesign visuel V3 dans ce chantier.
+  NE PAS mélanger les deux chantiers dans le même commit.
+```
+
+---
 
 ```
 ÉTAT PROD 2026-06-22 — CHANTIER A CLÔTURÉ
@@ -2158,6 +2260,10 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-23 | IA session | Audit pré-merge redesign Messages V3 validé — merge autorisé (patch purement visuel, messages.js intact). Chantier "Fiabilisation chaîne Messages" ouvert (6 points). PROJECT_STATE mis à jour. |
+| 2026-06-23 | IA session | Fix #icAppelsPane visible dans panel Activité (IMG_6303) — app.css v33, SW v224, commit c0f33ee |
+| 2026-06-23 | IA session | Fix #icMsgTabsRow visible dans Journal d'appels (IMG_6302) — app.css v32, SW v223, commit 271a376 |
+| 2026-06-23 | IA session | Fix compositeur thread masqué par nav iOS (thread fullscreen portrait) — app.css v31, SW v222 |
 | 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
 | 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
 | 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
