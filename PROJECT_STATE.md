@@ -54,20 +54,37 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BUG FIX — Nav inline + Dashboard Gardien manquant**
+**Mission : BUG FIX — Dashboard Gardien (racine OBD bypass) + Appels complet**
 **Date :** 2026-06-23
-**Commit main :** `40b3aff`
-**SW :** v199 → v200
+**Commit main :** `bdf6d42`
+**SW :** v204 → v205
+
+### Dashboard Gardien — CAUSE RACINE DÉFINITIVE IDENTIFIÉE ET CORRIGÉE
+- **Cause profonde** : l'override OBD `App.afterAuth` (ligne 3701) prend un fast-path direct `App.openMap()` quand le profil est complet, **sans jamais appeler `oldAfterAuth()`** → toute la détection gardien (JWT fallback ligne 761 + RPC `get_my_role()` ligne 764 + retry 1500ms ligne 765) était complètement bypassée → `S.isGardien` restait `undefined` jusqu'à l'appel asynchrone dans `openMap()` → `applyFeatureFlags()` voyait `S.isGardien !== true` → boutons Dashboard masqués.
+- **Fix (bdf6d42)** : ajout du bloc gardien dans le fast-path OBD (ligne 3748), avant `return App.openMap()` :
+  - JWT fallback : `u?.user_metadata?.role || u?.app_metadata?.role === 'gardien'` → `S.isGardien=true` + `body.is-gardien` + inline `display:inline-flex`
+  - RPC `get_my_role()` avec `await` : même logique, garde le résultat pour `openMap()`
+
+### Appels — `_openAppelsInline()` complété
+- **Cause** : la version précédente utilisait `display=''` au lieu de `'block'` pour `icAppelsPane`, et omettait plusieurs opérations de `App.navAppels()` original.
+- **Fix** : alignement complet avec `navAppels()` — `display='block'`, reset `icCallLog`, couleurs tabs `icTabMessages`/`icTabAppels`, masquage `ic-conv-header` et `icSearchBar`, `ImmatMessages.closeThread()`, `S._unseenMissedCalls=0`, `updateActBadge()`.
+
+---
+
+**Mission précédente : BUG FIX — Nav inline + Dashboard Gardien manquant**
+**Date :** 2026-06-23
+**Commits main :** `40b3aff` (migration get_my_role) + `d1b5061` (fix applyFeatureFlags) + `594d3d5` (nav highlights)
+**SW :** v199 → v204
 
 ### Boutons Messages/Appels/Ange/✕ (suite fix 3 — inline)
 - Fix 1 (b5dedc6) : `installNavButtonHotfix()` dans ui.js — pas vu (index.html chargeait toujours `ui.js?v=9`)
 - Fix 2 (02b1989) : `ui.js?v=9` → `?v=10` dans index.html — SW cache possiblement périmé
 - **Fix 3 (40b3aff)** : hotfix inline dans index.html juste avant `</body>` — indépendant de ui.js et du SW cache, exécuté à chaque chargement (index.html est toujours network-first avec `cache:'no-store'`).
 
-### Dashboard Gardien manquant
-- **Cause** : `get_my_role()` n'avait aucune migration SQL → fonction absente après tout `supabase db push` frais → `sb.rpc('get_my_role')` lève une erreur → catch → `S.isGardien=false` → classe `is-gardien` jamais ajoutée → bouton Dashboard masqué (CSS `display:none`)
-- **Fix 1** : migration `20260623100000_get_my_role_function.sql` — crée `get_my_role()` SECURITY DEFINER lisant `raw_user_meta_data->>'role'` et `raw_app_meta_data->>'role'` (`COALESCE`)
-- **Fix 2** : fallback JWT dans `afterAuth()` — lit `u.user_metadata.role` / `u.app_metadata.role` directement depuis la réponse `getUser()` (sans RPC), avant l'appel RPC ; résout le cas où la fonction est encore absente ou le JWT fraîchement émis
+### Dashboard Gardien — tentatives intermédiaires
+- **Fix migration** : `20260623100000_get_my_role_function.sql` — crée `get_my_role()` SECURITY DEFINER
+- **Fix applyFeatureFlags** : `S.isGardien===true` strict (jamais `display:none` inline)
+- **Résultat** : insuffisant car le fast-path OBD bypassait tout (voir mission courante)
 
 **Commits précédents sur la branche (non fusionnés) :**
 - `7d14ade` : garde `S.isGardien` dans `openGardienDashboard()`, `forceSyncAlerts()`, `setFeatureFlag()`
@@ -2266,6 +2283,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | 2026-06-22 | IA session | BUG FIX nav — boutons Messages/Appels/Ange/✕ non réactifs après revert zones. Ajout installNavButtonHotfix() dans ui.js : document-level capture listener par closest() (ph-close/sheet-close) + bounding-box (#navMessages/#navAppels/#navAnge). SW v197→v199, ui.js?v=10. |
 | 2026-06-23 | IA session | BUG FIX nav (fix 3 final) + Dashboard Gardien manquant. Fix nav inline dans index.html (avant </body>) : hotfix exécuté à chaque chargement, indépendant SW/cache. Dashboard : migration 20260623100000_get_my_role_function.sql (crée get_my_role() SECURITY DEFINER) + fallback JWT dans afterAuth() (u.user_metadata.role / u.app_metadata.role avant RPC). SW v199→v200. Commit 40b3aff sur main. |
+| 2026-06-23 | IA session | BUG FIX Dashboard Gardien (CAUSE RACINE) + Appels complet. Cause racine Dashboard : override OBD afterAuth (ligne 3701) fast-path App.openMap() direct → bypass TOTAL détection gardien → S.isGardien jamais set → applyFeatureFlags() ne montre jamais les boutons. Fix : ajout JWT+RPC get_my_role() dans le fast-path OBD avant App.openMap(). Fix Appels : _openAppelsInline() aligné sur navAppels() — display='block', icCallLog reset, tabs couleurs, header/searchbar masqués, closeThread(), _unseenMissedCalls=0, updateActBadge(). SW v204→v205. Commit bdf6d42 sur main. |
 
 ---
 
