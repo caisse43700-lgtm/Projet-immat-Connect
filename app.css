@@ -905,21 +905,18 @@ body.appels-mode #icCallLog {
 }
 .ic-msg-tabs-pills {
   display: flex;
-  gap: 0;
-  background: rgba(255,255,255,.06);
-  border-radius: 14px;
-  padding: 4px;
+  gap: 6px;
 }
 .ic-msg-pill {
   flex: 1;
   border: none;
-  border-radius: 11px;
+  border-radius: 999px;
   padding: 8px 6px;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  background: none;
+  background: rgba(255,255,255,.08);
   color: #94a3b8;
   display: flex;
   align-items: center;
