@@ -9,7 +9,7 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-22
+Date de mise à jour    : 2026-06-23
 Avancement             : ~53% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
 Branche production     : main (GitHub Pages) — commit cd2e814 (poussé)
@@ -54,7 +54,23 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : A38 — Messages : header deux lignes hors shell (outer-header approach)**
+**Mission : BUG FIX — Dashboard Gardien : `openGardienDashboard()` ne s'ouvrait pas**
+**Date :** 2026-06-23
+**Commit branche :** à venir (claude/immatconnect-pro-app-dEKGR)
+**SW :** v201 → v207
+
+### Cause racine
+`openGardienDashboard()` avait le guard `if(!S.isGardien)` à la ligne 803. Or `S.isGardien` pouvait rester `undefined` ou `false` après le chargement (timing RPC), tandis que `body.is-gardien` CSS class persistait depuis le login. Le bouton était **visible** grâce au CSS mais la **fonction retournait immédiatement** avant d'atteindre `el.style.display='block'`.
+
+### Fix appliqué
+- Remplacement `if(!S.isGardien)` → `const _isG=S.isGardien===true||document.body.classList.contains('is-gardien'); if(!_isG)` — double fallback : JS state OU CSS class
+- `App.closeSheet?.()` avant `el.style.display='block'` pour fermer le panel Settings avant d'ouvrir le dashboard
+- Suppression toast DBG (ligne 802) et DBG "el/body manquant" → messages propres
+- SW v201 → v207
+
+---
+
+**Mission précédente : A38 — Messages : header deux lignes hors shell (outer-header approach)**
 **Date :** 2026-06-22
 **Commit branche :** `55ea313` sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
 **SW :** v200 → v201
