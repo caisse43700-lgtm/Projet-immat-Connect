@@ -789,6 +789,41 @@ body.keyboard-open:not(.ange-open) .bottom-nav { display: none !important; }
 #appScreen:has(#sheet .panel.on) .speed { display: none; }
 body.keyboard-open .sheet { bottom: 0 !important; }
 
+/* ── APPELS MODE — header fixe + scroll sur les entrées ── */
+body.appels-mode #sheet {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.appels-mode #sheet #panelMessages {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.appels-mode #sheet .ic-msg-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.appels-mode #icAppelsPane {
+  flex: 1 !important;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.appels-mode #callJournalStickyHdr { flex-shrink: 0; }
+body.appels-mode #icCallLog {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ── MODE CONDUITE ── */
 body.driving .sheet { transform: translateY(100%); }
 body.driving .speed { border: 2px solid var(--green); }

@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=20">
+  <link rel="stylesheet" href="app.css?v=21">
   <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -349,7 +349,7 @@
 
     <!-- Journal d'appels -->
     <div id="icAppelsPane" style="display:none;flex:1">
-      <div id="callJournalStickyHdr" style="position:sticky;top:0;z-index:5;background:#0c1624;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div id="callJournalStickyHdr" style="background:#0c1624;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06)">
         <div class="act-cat-hd"><button type="button" class="act-cat-back" onclick="App.closeSheet()">‹</button><div class="act-cat-hd-mid"><span class="act-cat-hd-icon">📞</span><div><div class="act-cat-hd-title">Journal d'appels</div><div class="act-cat-hd-sub">Historique de vos appels</div></div></div><button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button></div>
         <input type="search" id="callJournalSearch" placeholder="Plaque ou pseudo…" aria-label="Rechercher dans le journal d'appels par plaque ou pseudo" oninput="App.setCallJournalSearch(this.value)" style="width:calc(100% - 32px);box-sizing:border-box;margin:8px 16px 0;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#e2e8f0;font-size:13px;outline:none">
         <div id="callJournalSearchCount" style="display:none;font-size:11px;color:#64748b;margin:4px 16px 0;padding-left:2px"></div>
