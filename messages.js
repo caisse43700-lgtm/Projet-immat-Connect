@@ -1278,6 +1278,7 @@ async function sendToPlate(plate,text,opts){
   if(target.id === u.id){ toast("Impossible de t'envoyer un message à toi-même.",'bad'); return false; }
 
   const receiverPlate = fPlate(target.owner_plate || plate);
+  if(!receiverPlate){ toast('Impossible d\'identifier le destinataire.','bad'); return false; }
 
   const base = {
     sender_id:u.id,
@@ -1297,12 +1298,7 @@ async function sendToPlate(plate,text,opts){
     to_plate:receiverPlate
   };
 
-  let {error} = await client.from('messages').insert(rich);
-
-  if(error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema cache/i.test(String(error.message||''))){
-    const r = await client.from('messages').insert(base);
-    error = r.error;
-  }
+  const {error} = await client.from('messages').insert(rich);
 
   if(error){
     console.error(error);
