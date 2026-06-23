@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-23
 Avancement             : ~53% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit cd2e814 (poussé)
+Branche production     : main (GitHub Pages) — commit 7de5370 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -54,38 +54,151 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BUG FIX — Dashboard Gardien : `openGardienDashboard()` ne s'ouvrait pas**
+**Mission : Dashboard Gardien normalisation — 3 fixes appliqués**
 **Date :** 2026-06-23
-**Commit branche :** à venir (claude/immatconnect-pro-app-dEKGR)
-**SW :** v201 → v207
+**Fichiers :** `index.html`, `service-worker.js` v228
 
-### Cause racine
-`openGardienDashboard()` avait le guard `if(!S.isGardien)` à la ligne 803. Or `S.isGardien` pouvait rester `undefined` ou `false` après le chargement (timing RPC), tandis que `body.is-gardien` CSS class persistait depuis le login. Le bouton était **visible** grâce au CSS mais la **fonction retournait immédiatement** avant d'atteindre `el.style.display='block'`.
+### Ce qui a été fait
 
-### Fix appliqué
-- Remplacement `if(!S.isGardien)` → `const _isG=S.isGardien===true||document.body.classList.contains('is-gardien'); if(!_isG)` — double fallback : JS state OU CSS class
-- `App.closeSheet?.()` avant `el.style.display='block'` pour fermer le panel Settings avant d'ouvrir le dashboard
-- Suppression toast DBG (ligne 802) et DBG "el/body manquant" → messages propres
-- SW v201 → v207
+Audit complet du Dashboard Gardien (agent explore, 23 sections analysées). 3 corrections appliquées :
+
+1. **isGardien DOM fallback supprimé** (l.823) — `document.body.classList.contains('is-gardien')` retiré de la condition d'accès. La classe CSS peut persister d'une session précédente même si `S.isGardien` est false. Le seul check valide est `S.isGardien===true`.
+
+2. **Système Immunitaire — score réel** (runImmunityCheck) — toutes les entrées avaient `hasFlow:true, hasObs:true` en dur → score toujours 100% fictif. Remplacé par 6 checks de présence réels (`typeof window.L`, `typeof window.sb`, `typeof window.ImmatMessages`, `typeof window.ImmatBrain`, `typeof window.CallManager`, `!!window.S?.uid`) mappés à chaque feature.
+
+3. **Abus reports — message d'erreur distinctif** (l.1019) — le message "Accès réservé au rôle gardien" s'affichait pour toutes les erreurs RPC, y compris les erreurs réseau. Remplacé par une détection : `error.code==='PGRST301'` ou `permission denied` → message gardien ; sinon → "Erreur chargement : \<code\>".
+
+**Sections du Dashboard non touchées** (16/20 déjà fonctionnelles) : État du système, Violations, Événements bus, Timeline OBD, Calls Runtime, Runtime Data, Ange session, GuardianLoop, Scores fiabilité, Appels internes, Diagnostic IA, Intelligence synthétique, Immatest, Fonctionnalités/Paramètres, Sync alertes, Actualiser.
 
 ---
 
-**Mission précédente : A38 — Messages : header deux lignes hors shell (outer-header approach)**
-**Date :** 2026-06-22
-**Commit branche :** `55ea313` sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
-**SW :** v200 → v201
+**Mission précédente : Chantier Fiabilisation chaîne Messages — 6/6 CLÔTURÉ**
+**Date :** 2026-06-23
+**Commits :** `805bc54` → `e8724a4`, messages.js v29, SW v227
 
-- Diagnostic confirmé : toute hauteur ajoutée à `.ic-conv-header` à l'intérieur du `ic-msg-shell` (`overflow:hidden`) clippait `icMsgList` à cause de la contrainte max-height du sheet CSS
-- Solution : en-tête `act-cat-hd` (`#icMsgPanelHdr`) placé **en dehors** du `ic-msg-shell`, au-dessus
-- `panelMessages` passe en `display:flex; flex-direction:column` (class `msg-panel-flex`)
-- Shell reçoit `flex:1 1 auto; min-height:0` (class `msg-shell-flex`) pour occuper l'espace restant
-- `ic-conv-header` interne masqué (`display:none`)
-- `messages.js` : show/hide `#icMsgPanelHdr` aux 3 points (openThread line ~1015, retour liste line ~433, closeThread line ~1085)
-- Résultat : header 💬 Messages / Conducteurs proches visible + liste messages intacte
+---
+
+**Mission précédente : Audit pré-merge redesign Messages V3 — MERGE VALIDÉ**
+**Date :** 2026-06-23
+**Commit :** `c0f33ee` (fix #icAppelsPane) — dernier commit avant validation
+
+### Ce qui a été validé
+
+Audit complet en 6 points avant merge du redesign visuel Messages V3 :
+
+1. **overflow:hidden** — Aucun conteneur parent de #icMsgList bloqué. Les 5 occurrences sont soit des clips cosmétiques (border-radius), soit des parents flex avec min-height:0.
+2. **#icMsgList scroll** — Correctement configuré : `flex:1 1 auto + min-height:0 + overflow-y:auto`. Hauteur dynamique (flex). Scroll JS via scrollTop/scrollHeight/scrollIntoView. Aucune dépendance à une hauteur fixe.
+3. **Pagination** — AUCUNE pagination. 6 requêtes SELECT parallèles, chacune `.limit(300)` fixe. Pas de IntersectionObserver, pas de scroll-to-load.
+4. **Colonnes plaques INSERT/SELECT** — INSERT primaire : 5 colonnes (sender_plate, receiver_plate, from_plate, to_plate, target_plate). Fallback retire les 4 aliases mais conserve target_plate. SELECT : `select('*')`. Normalisation gère 4 variantes + fallback profiles.
+5. **Causes de disparition** — 9 filtres documentés : LIMIT 300, status=rejected, _otherPlate absent, ic_deleted_msgs, bloqué, context_type, archivé, favOnly, unreadOnly.
+6. **Redesign purement visuel** — Confirmé : messages.js = zéro modification. Seuls messages.css (nouveau fichier visuel) + app.css lignes 794-875 (flex cascade) touchés.
+
+**VERDICT : MERGE AUTORISÉ — patch purement visuel, aucune régression fonctionnelle.**
+
+---
+
+**Mission précédente : Fix #icAppelsPane visible dans panel Activité (IMG_6303)**
+**Date :** 2026-06-23
+**Commit :** `c0f33ee` — app.css v33, SW v224
+
+Ajout de `#icAppelsPane { display: none !important; }` avant la règle `body.appels-mode #icAppelsPane`. Le style inline `display:block` posé par `_openAppelsInline()` ne pouvait plus saigner dans le panel Activité. En appels-mode, la règle plus spécifique (0,2,1 > 0,1,0) l'emporte. ✓
+
+---
+
+**Mission précédente : Thread — Compositeur fixe en bas iOS (overflow:hidden + flex cascade)**
+**Date :** 2026-06-23
+**Commit :** `7de5370` sur `main` (poussé) — restore après incident agent `f4cda3c`
+**SW :** v220 → v221 · app.css v29 → v30
+
+### Ce qui a été fait
+
+**Problème :** Sur iPhone, le compositeur de message (textarea + bouton Envoyer) défilait avec les messages au lieu de rester fixe en bas.
+
+**Cause racine :** `.ic-thread.show` (`messages.css`) utilise `position:absolute;inset:0` mais `overflow:visible` → les enfants flex ignoraient la contrainte de hauteur iOS → le body ne savait pas s'arrêter → le composer remontait avec le scroll.
+
+**Fix CSS — 5 règles `:has()` ajoutées dans `app.css` (~l.861) :**
+- `#sheet:has(#panelMessages.on) .ic-thread.show { overflow: hidden; }` — contraint la hauteur inset:0 sur iOS
+- `#sheet:has(#panelMessages.on) .ic-thread-head { flex: 0 0 auto; }` — header fixe en haut
+- `#sheet:has(#panelMessages.on) .ic-thread-body { -webkit-overflow-scrolling: touch; }` — scroll natif iOS
+- `#sheet:has(#panelMessages.on) #icTypingLabel { flex: 0 0 auto; }` — label typing fixe
+- `#sheet:has(#panelMessages.on) .ic-thread-composer { flex: 0 0 auto; }` — compositeur fixe en bas
+
+**`messages.css` non modifié. Aucun JS modifié. Tous IDs JS conservés.**
+
+**Incident agent :** Un agent background a poussé commit `f4cda3c` qui tronquait index.html à 1 ligne → écran blanc (IMG_6297). Restauré automatiquement par commit `7de5370`. CI vert sur `7de5370` (18 passed, 16 skipped). La failure vue dans CI (IMG_6299/IMG_6300) provenait du commit `f4cda3c` — déjà corrigé.
+
+**Pills filtres Messages** (commits bddcfdb/4862bf3/68a410a) : style pleine largeur + gap corrigé (segmenté iOS, SW v218→v220) — inclus dans cette session.
+
+---
+
+**Mission précédente : UX Messages — Header épuré + pills filtres style Journal d'appels (Option A)**
+**Date :** 2026-06-23
+**Commit :** `ae1dd82` sur `main`
+**SW :** v216 → v217 · app.css v25 → v26
+
+Vue 1 header épuré (#icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris). Style identique Journal d'appels. IDs JS conservés, aucun JS modifié.
+
+---
+
+**Mission précédente : UX Messages — Header fixe style act-cat-hd (💬 icon + flex cascade CSS)**
+**Date :** 2026-06-23
+**Commits :** `af8f577` (header fixe) + `6c1bd29` (troncature thread) + `b96b03a` (PROJECT_STATE)
+**SW :** v214 → v216
+
+---
+
+**Mission précédente : BUG FIX — Dashboard Gardien ouverture + CI preflight — VALIDÉ TERRAIN ✅**
+**Date :** 2026-06-23
+**Commits main :** `35b60e4` (guard isGardien) + `0c4a3dd` (guillemets curly)
+**SW :** v206 → v208
+
+Guard `if(!S.isGardien)` bloquait quand `S.isGardien` était `undefined` (timing RPC) même si `body.is-gardien` CSS persistait. Fix : double fallback `S.isGardien===true || body.classList.contains('is-gardien')`. CI preflight rouge : 5 guillemets typographiques U+2019 dans IIFE feature flags. Fix : remplacement par apostrophes ASCII U+0027. 8 scripts OK.
+
+---
+
+**Mission précédente : BUG FIX — Dashboard Gardien (racine OBD bypass) + Appels complet**
+**Date :** 2026-06-23
+**Commit main :** `bdf6d42`
+**SW :** v204 → v205
+
+### Dashboard Gardien — CAUSE RACINE DÉFINITIVE IDENTIFIÉE ET CORRIGÉE
+- **Cause profonde** : l'override OBD `App.afterAuth` (ligne 3701) prend un fast-path direct `App.openMap()` quand le profil est complet, **sans jamais appeler `oldAfterAuth()`** → toute la détection gardien (JWT fallback ligne 761 + RPC `get_my_role()` ligne 764 + retry 1500ms ligne 765) était complètement bypassée → `S.isGardien` restait `undefined` jusqu'à l'appel asynchrone dans `openMap()` → `applyFeatureFlags()` voyait `S.isGardien !== true` → boutons Dashboard masqués.
+- **Fix (bdf6d42)** : ajout du bloc gardien dans le fast-path OBD (ligne 3748), avant `return App.openMap()` :
+  - JWT fallback : `u?.user_metadata?.role || u?.app_metadata?.role === 'gardien'` → `S.isGardien=true` + `body.is-gardien` + inline `display:inline-flex`
+  - RPC `get_my_role()` avec `await` : même logique, garde le résultat pour `openMap()`
+
+### Appels — `_openAppelsInline()` complété
+- **Cause** : la version précédente utilisait `display=''` au lieu de `'block'` pour `icAppelsPane`, et omettait plusieurs opérations de `App.navAppels()` original.
+- **Fix** : alignement complet avec `navAppels()` — `display='block'`, reset `icCallLog`, couleurs tabs `icTabMessages`/`icTabAppels`, masquage `ic-conv-header` et `icSearchBar`, `ImmatMessages.closeThread()`, `S._unseenMissedCalls=0`, `updateActBadge()`.
+
+---
+
+**Mission précédente : BUG FIX — Nav inline + Dashboard Gardien manquant**
+**Date :** 2026-06-23
+**Commits main :** `40b3aff` (migration get_my_role) + `d1b5061` (fix applyFeatureFlags) + `594d3d5` (nav highlights)
+**SW :** v199 → v204
+
+### Boutons Messages/Appels/Ange/✕ (suite fix 3 — inline)
+- Fix 1 (b5dedc6) : `installNavButtonHotfix()` dans ui.js — pas vu (index.html chargeait toujours `ui.js?v=9`)
+- Fix 2 (02b1989) : `ui.js?v=9` → `?v=10` dans index.html — SW cache possiblement périmé
+- **Fix 3 (40b3aff)** : hotfix inline dans index.html juste avant `</body>` — indépendant de ui.js et du SW cache, exécuté à chaque chargement (index.html est toujours network-first avec `cache:'no-store'`).
+
+### Dashboard Gardien — tentatives intermédiaires
+- **Fix migration** : `20260623100000_get_my_role_function.sql` — crée `get_my_role()` SECURITY DEFINER
+- **Fix applyFeatureFlags** : `S.isGardien===true` strict (jamais `display:none` inline)
+- **Résultat** : insuffisant car le fast-path OBD bypassait tout (voir mission courante)
+
+**Commits précédents sur la branche (non fusionnés) :**
+- `7d14ade` : garde `S.isGardien` dans `openGardienDashboard()`, `forceSyncAlerts()`, `setFeatureFlag()`
+- `6965a79` : Feature Flags V1 (Dashboard ↔ Paramètres)
+- `c242d54` : zones accidentogènes (cercles carte) — REVERT immédiat (cassait l'app)
+- `00eb789` : revert c242d54 — code identique à 7d14ade mais SW v197 → v198 → v197
+
+---
 
 **Mission précédente : V1 Signalements — Patch final pré-merge (pl null, _fcBody 80c, CSS abus, SW v176)**
 **Date :** 2026-06-22
-**Commit branche :** sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
+**Commit branche :** à venir sur `claude/immatconnect-pro-app-dEKGR` (non fusionné main — attente "Fusionner")
 **SW :** v175 → v176
 
 - `pl null` dans FloatingCard vehicle_report : cb1 redirige vers `navActivite()` + toast "Retrouvez ce signalement dans Activité > Véhicule." au lieu de bouton inactif silencieux
@@ -1597,22 +1710,95 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Patch V1 Signalements implémenté — en attente "Fusionner" pour main.**
-Commit : `1ae7ebf` sur `claude/immatconnect-pro-app-dEKGR`
+**Aucune mission en cours.**
 
-Chantier A CLÔTURÉ DÉFINITIVEMENT le 2026-06-22 (validation utilisateur explicite).
-Fix modale abus validé terrain (2026-06-22).
-T1 gardien validé terrain (2026-06-22) : Dashboard Gardien + modale "Signaler un abus" fonctionnels.
+Chantier "Fiabilisation chaîne Messages" — CLÔTURÉ 2026-06-23 (commits 805bc54 → e8724a4)
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
-- NE PAS rouvrir le chantier A sauf bug terrain reproductible
 - NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
+- NE PAS toucher messages.js logique métier sauf chantier dédié explicitement validé
 ```
 
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
+
+```
+CHANTIER : FIABILISATION CHAÎNE MESSAGES
+Ouvert le 2026-06-23 — Séparé du redesign visuel V3
+════════════════════════════════════════════════════
+
+AVANCEMENT — CHANTIER TERMINÉ ✅
+──────────────────────────────
+✅ POINT 1 — Canonisation colonnes : from_plate/to_plate retirés de l'INSERT (commit e8724a4, v29)
+✅ POINT 2 — Fallback INSERT supprimé (commit 805bc54, v27)
+✅ POINT 3 — Guard receiverPlate avant INSERT (commit 805bc54)
+✅ POINT 4 — Pagination : ORDER DESC + loadOlderMessages() + bouton (commit a77c63d, v28)
+✅ POINT 5 — Bouton "Restaurer messages masqués" dans Paramètres RGPD (commit e8724a4)
+✅ POINT 6 — Photos image_url dans thread + lightbox (commit a77c63d)
+
+CONTEXTE
+────────
+Audit pré-merge a révélé 6 fragilités dans la chaîne envoi → stockage → réception.
+Le redesign V3 (app.css + messages.css) est purement visuel et safe à merger.
+Ces 6 points constituent un chantier technique distinct à traiter séparément.
+
+POINT 1 — Colonnes plaques redondantes  ⏳ À FAIRE
+  Problème :
+    sender_plate / receiver_plate / from_plate / to_plate / target_plate
+    créent une logique fragile. Le fallback (supprimé Point 2) masquait le problème.
+  Objectif :
+    Définir une source canonique unique pour retrouver expéditeur/destinataire.
+    Supprimer l'ambiguïté entre les 5 colonnes.
+
+POINT 2 — Fallback INSERT dangereux  ✅ FAIT (805bc54)
+  Fix : suppression du retry sans colonnes plaques. INSERT unique avec toutes les colonnes.
+  Guard receiverPlate ajouté avant INSERT (Point 3 couvert en même temps).
+
+POINT 3 — receiver_plate absent = destinataire aveugle  ✅ FAIT (805bc54)
+  Fix : guard explicite `if(!receiverPlate){ toast(...); return false; }` avant INSERT.
+
+POINT 4 — LIMIT 300 sans pagination  ✅ FAIT (a77c63d)
+  Fix :
+    - ORDER BY created_at DESC → les 300 messages les plus récents chargés en priorité
+    - loadOlderMessages(plate) : charge 50 messages antérieurs via cursor created_at
+    - Bouton "Charger les messages plus anciens" en haut du thread
+    - "Début de la conversation" quand plus rien à charger
+
+POINT 5 — Soft-delete local masque des messages existants  ⏳ À FAIRE
+  Problème :
+    ic_deleted_msgs (localStorage) peut masquer un message qui existe encore en base.
+    Si localStorage est vidé → message réapparaît (comportement surprenant pour l'utilisateur).
+    Limite : slice(-500) — les 501ᵉ et au-delà réapparaissent automatiquement.
+  Objectif :
+    Ajouter un outil debug ou une option "Réinitialiser messages masqués".
+    Documenter clairement le comportement (soft-delete = local only).
+
+POINT 6 — Photos image_url  ✅ FAIT (a77c63d)
+  Problème :
+    Photos de signalements stationnés bien stockées dans Supabase Storage (bucket parked-photos).
+    image_url inséré en base mais jamais rendu dans le thread de messages.
+  Objectif :
+    Afficher image_url dans le thread quand disponible (miniature cliquable → lightbox).
+
+ORDRE D'EXÉCUTION RECOMMANDÉ
+────────────────────────────
+  1. POINT 2 — Fallback INSERT (risque le plus élevé, correctif chirurgical)
+  2. POINT 3 — receiver_plate (garantie de livraison)
+  3. POINT 1 — Canonisation colonnes (nettoyage architecture)
+  4. POINT 6 — Photos image_url (feature visible)
+  5. POINT 4 — Pagination (feature UX)
+  6. POINT 5 — Reset soft-delete (outillage debug)
+
+RÈGLE ABSOLUE
+─────────────
+  Ce chantier = modifications de messages.js logique métier uniquement.
+  NE PAS modifier messages.css ou le redesign visuel V3 dans ce chantier.
+  NE PAS mélanger les deux chantiers dans le même commit.
+```
+
+---
 
 ```
 ÉTAT PROD 2026-06-22 — CHANTIER A CLÔTURÉ
@@ -2094,6 +2280,12 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
+| 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |
+| 2026-06-23 | IA session | Audit pré-merge redesign Messages V3 validé — merge autorisé (patch purement visuel, messages.js intact). Chantier "Fiabilisation chaîne Messages" ouvert (6 points). PROJECT_STATE mis à jour. |
+| 2026-06-23 | IA session | Fix #icAppelsPane visible dans panel Activité (IMG_6303) — app.css v33, SW v224, commit c0f33ee |
+| 2026-06-23 | IA session | Fix #icMsgTabsRow visible dans Journal d'appels (IMG_6302) — app.css v32, SW v223, commit 271a376 |
+| 2026-06-23 | IA session | Fix compositeur thread masqué par nav iOS (thread fullscreen portrait) — app.css v31, SW v222 |
 | 2026-06-13 | IA session | Création initiale — état post-audit d'exécution |
 | 2026-06-13 | IA session | Sprint 1 #01 terminé — bouton urgence 15/17/18 ajouté dans index.html |
 | 2026-06-13 | IA session | Sprint 1 #02 terminé — call-webrtc.js + get-turn-credentials supprimés |
@@ -2265,8 +2457,15 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-22 | IA session | Revert S6-TRUST (90577f4) : suppression 20260622100000_trust_auto_refresh.sql de main — migration non appliquée à la DB, bloquait CI (exit 1, "inserted before"). Pipeline débloqué. CI vert sur 90577f4 (5 jobs success). |
 | 2026-06-22 | Utilisateur | Validation terrain complète : fix modale abus ✅ (bouton Signaler ouvre la modale), T1 gardien ✅ (Dashboard Gardien section 🚩 Signalements d'abus remonte les données). Chantier A 100% terminé. |
 | 2026-06-22 | IA session | V1 Signalements — Patch 8 modifications index.html + SW v173→v174 (commit 1ae7ebf branche dev) : FloatingCard vehicle_report titre "🚨 Signalement véhicule" + bouton unique "Voir le signalement" (deep-link Activité), actVmRate() archive dans ic_vm_replied après Info utile, openAbuseReport(plate,category) paramètre optionnel, App._actAbuseReport() helper msgId+plate+FAUX_SIGNALEMENT présélectionné, submitAbuseReport() archive S._pendingAbuseSourceMsgId après submit réussi, bouton "🚩 Signaler un abus" dans renderEnCours. Attente "Fusionner". |
-| 2026-06-22 | IA session | A24→A37 — Unification headers UX act-cat-hd : ‹ circulaire + emoji icon + titre gras + sous-titre muted + ✕. Tous les panels/modales/sous-steps migrés (Options, Profil, Confidentialité, Plaques bloquées, Journal d'appels, Activité, Incident route, Problème véhicule, Véhicule stationné, Demande d'aide, Signaler). Fix iOS scroll focus sigStepVehicle/sigStepStation (suppression focus() + scrollTop reset). SW v176→v200. |
-| 2026-06-22 | IA session | A38 — Messages header deux lignes hors shell (outer-header approach) : #icMsgPanelHdr (act-cat-hd) placé au-dessus du ic-msg-shell dans panelMessages (msg-panel-flex), shell en flex:1 (msg-shell-flex), inner ic-conv-header masqué, show/hide aux 3 points dans messages.js. SW v200→v201. Commit 55ea313 sur claude/immatconnect-pro-app-dEKGR. |
+
+| 2026-06-22 | IA session | BUG FIX nav — boutons Messages/Appels/Ange/✕ non réactifs après revert zones. Ajout installNavButtonHotfix() dans ui.js : document-level capture listener par closest() (ph-close/sheet-close) + bounding-box (#navMessages/#navAppels/#navAnge). SW v197→v199, ui.js?v=10. |
+| 2026-06-23 | IA session | BUG FIX nav (fix 3 final) + Dashboard Gardien manquant. Fix nav inline dans index.html (avant </body>) : hotfix exécuté à chaque chargement, indépendant SW/cache. Dashboard : migration 20260623100000_get_my_role_function.sql (crée get_my_role() SECURITY DEFINER) + fallback JWT dans afterAuth() (u.user_metadata.role / u.app_metadata.role avant RPC). SW v199→v200. Commit 40b3aff sur main. |
+| 2026-06-23 | IA session | BUG FIX Dashboard Gardien (CAUSE RACINE) + Appels complet. Cause racine Dashboard : override OBD afterAuth (ligne 3701) fast-path App.openMap() direct → bypass TOTAL détection gardien → S.isGardien jamais set → applyFeatureFlags() ne montre jamais les boutons. Fix : ajout JWT+RPC get_my_role() dans le fast-path OBD avant App.openMap(). Fix Appels : _openAppelsInline() aligné sur navAppels() — display='block', icCallLog reset, tabs couleurs, header/searchbar masqués, closeThread(), _unseenMissedCalls=0, updateActBadge(). SW v204→v205. Commit bdf6d42 sur main. |
+| 2026-06-23 | IA session | BUG FIX Dashboard Gardien timing + CI preflight. Fix timing : double fallback `S.isGardien===true \|\| body.classList.contains('is-gardien')`. CI : 5 guillemets typographiques U+2019 → ASCII U+0027 dans IIFE feature flags. SW v213→v214. Commits 35b60e4+0c4a3dd sur main. Validé terrain. |
+| 2026-06-23 | IA session | UX Messages — header fixe style act-cat-hd. Vue 1 (liste) : icône 💬 + "Messages / Vos conversations", flex cascade CSS via :has(#panelMessages.on) (iOS 15.4+). Vue 2 (thread) : icône 💬 + pseudo + immatriculation dans header fixe, compositeur fixe en bas. IC-back-btn restyled en cercle via CSS. Tous IDs JS conservés, aucun JS modifié. SW v214→v215. Commit af8f577. |
+| 2026-06-23 | IA session | UX Messages — Option A : header épuré (‹ 💬 Messages ✕ seulement) + #icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris. Style identique Journal d'appels. IDs JS conservés, aucun JS modifié. SW v216→v217, app.css v25→v26. Commit ae1dd82 sur main. |
+| 2026-06-23 | IA session | Pills Messages style corrigé — pleine largeur + gap segmenté iOS (commits bddcfdb/4862bf3/68a410a, SW v218→v220, app.css v27→v29). PROJECT_STATE mis à jour (7804842). |
+| 2026-06-23 | IA session | FIX Thread iOS — compositeur fixe en bas : overflow:hidden + flex: 0 0 auto sur .ic-thread-head/.ic-thread-composer/#icTypingLabel via :has() (CSS only, messages.css/messages.js non touchés). SW v220→v221, app.css v29→v30. Commit b3bd7fb. INCIDENT AGENT : f4cda3c a tronqué index.html à 1 ligne (écran blanc). Restauré par 7de5370 — HEAD stable. CI vert (18 passed). |
 
 ---
 
