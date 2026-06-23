@@ -54,18 +54,32 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : UX Messages — Header fixe style act-cat-hd (💬 icon + flex cascade CSS)**
+**Mission : UX Messages — Header épuré + pills filtres style Journal d'appels (Option A)**
 **Date :** 2026-06-23
-**Commit :** `af8f577` sur branche `claude/immatconnect-pro-app-dEKGR`
-**SW :** v214 → v215
+**Commit :** `ae1dd82` sur `main` (en attente push — autorisation "pousse sur main" requise)
+**SW :** v216 → v217 · app.css v25 → v26
 
 ### Ce qui a été fait
 
-**Vue 1 (liste conversations)** : `.ic-conv-header` adopte le style `act-cat-hd` avec icône 💬, titre "Messages" + sous-titre "Vos conversations". Flex cascade via `:has(#panelMessages.on)` (iOS 15.4+, sans body class) rend le header et la barre de recherche fixes pendant que la liste de conversations défile.
+**Vue 1 header épuré** : `.ic-conv-header` ne contient plus que ‹ (act-cat-back) + 💬 Messages / Vos conversations + ✕. Tous les boutons d'action retirés du header.
 
-**Vue 2 (thread)** : `.ic-thread-head` enrichi avec `act-cat-hd-mid` + icône 💬. Affiche pseudo + immatriculation + présence/confiance (déjà généré par `openThread()`). Bouton `.ic-back-btn` restyled en cercle via CSS (classe HTML conservée). Header + compositeur restent fixes.
+**Nouvelle section `#icMsgTabsRow`** : insérée entre `#icSearchBar` et `#icMsgList`. Reproduit exactement la structure du Journal d'appels :
+- Titre "MESSAGES" (bleu #a5b4fc, uppercase) + icônes 🔍 (toggleSearch) + ✏️ (compose) à droite
+- Pills `.ic-msg-pill` : "Tous" | "📬 Non lus" (id=icUnreadOnlyBtn) | "⭐ Favoris" (id=icFavOnlyBtn)
+- Pills toggle : classe `.active` (posée par JS existant) ou `.on` (état initial Tous) → fond #6366f1
 
-**Contraintes respectées** : tous les IDs JS (`icMsgList`, `icThreadTitle`, `icThreadSub`, `icCallBtn`…) et classes fonctionnelles conservés. Aucune modification JS. CSS pur : `flex:0 0 auto` (éléments fixes) + `flex:1 1 auto; overflow-y:auto` (zones scrollables). Aucun `position:absolute` ni calcul de hauteur.
+**CSS** : `.ic-msg-tabs-row`, `.ic-msg-tabs-title-row`, `.ic-msg-tabs-label`, `.ic-msg-tabs-utils`, `.ic-msg-tabs-pills`, `.ic-msg-pill`, `.ic-msg-pill.on/.active`. `#sheet:has() #icMsgTabsRow { flex: 0 0 auto }`.
+
+**IDs JS conservés** : `icMarkAllReadBtn`, `icUnreadOnlyBtn`, `icFavOnlyBtn` avec mêmes `onclick`. `.ic-conv-header` classe conservée (référencée par `openThread()` / `closeThread()`). Aucune modification JS.
+
+**Vue 2 thread** : inchangée.
+
+---
+
+**Mission précédente : UX Messages — Header fixe style act-cat-hd (💬 icon + flex cascade CSS)**
+**Date :** 2026-06-23
+**Commits :** `af8f577` (header fixe) + `6c1bd29` (troncature thread) + `b96b03a` (PROJECT_STATE)
+**SW :** v214 → v216
 
 ---
 
@@ -2310,6 +2324,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-23 | IA session | BUG FIX Dashboard Gardien (CAUSE RACINE) + Appels complet. Cause racine Dashboard : override OBD afterAuth (ligne 3701) fast-path App.openMap() direct → bypass TOTAL détection gardien → S.isGardien jamais set → applyFeatureFlags() ne montre jamais les boutons. Fix : ajout JWT+RPC get_my_role() dans le fast-path OBD avant App.openMap(). Fix Appels : _openAppelsInline() aligné sur navAppels() — display='block', icCallLog reset, tabs couleurs, header/searchbar masqués, closeThread(), _unseenMissedCalls=0, updateActBadge(). SW v204→v205. Commit bdf6d42 sur main. |
 | 2026-06-23 | IA session | BUG FIX Dashboard Gardien timing + CI preflight. Fix timing : double fallback `S.isGardien===true \|\| body.classList.contains('is-gardien')`. CI : 5 guillemets typographiques U+2019 → ASCII U+0027 dans IIFE feature flags. SW v213→v214. Commits 35b60e4+0c4a3dd sur main. Validé terrain. |
 | 2026-06-23 | IA session | UX Messages — header fixe style act-cat-hd. Vue 1 (liste) : icône 💬 + "Messages / Vos conversations", flex cascade CSS via :has(#panelMessages.on) (iOS 15.4+). Vue 2 (thread) : icône 💬 + pseudo + immatriculation dans header fixe, compositeur fixe en bas. IC-back-btn restyled en cercle via CSS. Tous IDs JS conservés, aucun JS modifié. SW v214→v215. Commit af8f577. |
+| 2026-06-23 | IA session | UX Messages — Option A : header épuré (‹ 💬 Messages ✕ seulement) + #icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris. Style identique Journal d'appels. IDs JS conservés, aucun JS modifié. SW v216→v217, app.css v25→v26. Commit ae1dd82 sur main (push en attente autorisation "pousse sur main"). |
 
 ---
 
