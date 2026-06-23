@@ -800,21 +800,18 @@ body.appels-mode #sheet #panelMessages {
   min-height: 0;
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
 }
 body.appels-mode #sheet .ic-msg-shell {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 body.appels-mode #icAppelsPane {
   flex: 1 !important;
   min-height: 0;
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
 }
 body.appels-mode #callJournalStickyHdr { flex-shrink: 0; }
 body.appels-mode #icCallLog {
