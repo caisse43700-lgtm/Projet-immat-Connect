@@ -905,25 +905,27 @@ body.appels-mode #icCallLog {
 }
 .ic-msg-tabs-pills {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
+  gap: 0;
+  background: rgba(255,255,255,.06);
+  border-radius: 14px;
+  padding: 4px;
 }
-.ic-msg-tabs-pills::-webkit-scrollbar { display: none; }
 .ic-msg-pill {
+  flex: 1;
   border: none;
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 12px;
+  border-radius: 11px;
+  padding: 8px 6px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  background: rgba(255,255,255,.08);
+  background: none;
   color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   transition: background .15s, color .15s;
-  flex-shrink: 0;
 }
 .ic-msg-pill.on,
 .ic-msg-pill.active {
