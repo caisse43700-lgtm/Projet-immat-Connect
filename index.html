@@ -1533,6 +1533,10 @@ App.navMessages=function(){
   if(_tbA){_tbA.style.color='#64748b';_tbA.style.borderBottomColor='transparent';}
   try{window.ImmatMessages?.refresh?.();}catch(e){}
 };
+App.closeCallJournal=function(){
+  document.body.classList.remove('appels-mode');
+  const _cp=$('icAppelsPane');if(_cp)_cp.style.display='none';
+};
 App.navAppels=function(){
   document.body.classList.add('appels-mode');
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -1559,7 +1563,7 @@ App.navAppels=function(){
   setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='block'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
-  document.body.classList.remove('appels-mode');
+  this.closeCallJournal();
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navActivite')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
@@ -1569,7 +1573,7 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
-  document.body.classList.remove('appels-mode');
+  this.closeCallJournal();
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navMessages')?.classList.remove('on');
@@ -1994,6 +1998,7 @@ if(_umBadge){_umBadge.textContent=_ucN>99?'99+':String(_ucN);_umBadge.style.disp
 if(_umSub)_umSub.textContent=_ucN>0?_ucN+' message'+(_ucN>1?'s':'')+(_ucC>0?' de '+_ucC+' contact'+(_ucC>1?'s':''):'')+' non lu'+(_ucN>1?'s':''):'Aucun message non lu';
 };
 App.openActivityCat=function(cat){
+  this.closeCallJournal?.();
   S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
   this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
