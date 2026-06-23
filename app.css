@@ -882,7 +882,7 @@ body.appels-mode #icCallLog {
 }
 /* ── Messages — titre section + pills filtres ── */
 .ic-msg-tabs-row {
-  padding: 6px 4px 8px;
+  padding: 6px 0 8px;
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
 .ic-msg-tabs-title-row {
