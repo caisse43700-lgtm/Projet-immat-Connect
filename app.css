@@ -823,6 +823,55 @@ body.appels-mode #icCallLog {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── MESSAGES MODE — header fixe liste + thread ── */
+/* :has() supporté iOS 15.4+ — cascade flex pure, aucun position:absolute ni calcul hauteur */
+#sheet:has(#panelMessages.on) {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sheet:has(#panelMessages.on) #panelMessages {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+}
+#sheet:has(#panelMessages.on) .ic-msg-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Vue liste — header + search : fixes */
+#sheet:has(#panelMessages.on) .ic-conv-header {
+  flex: 0 0 auto;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+#sheet:has(#panelMessages.on) .ic-conv-header-acts { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) #icSearchBar          { flex: 0 0 auto; }
+/* Vue liste — conversations scrollables */
+#sheet:has(#panelMessages.on) #icMsgList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+/* Vue thread — éléments fixes bas */
+#sheet:has(#panelMessages.on) #icQuickReplies { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) #icQuotePreview { flex: 0 0 auto; }
+/* Thread head — bouton ‹ restyled en cercle (classe HTML ic-back-btn conservée) */
+.ic-thread-head .ic-back-btn {
+  width: 38px; height: 38px;
+  min-width: 44px; min-height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 22px; color: #00ffb3;
+}
+
 /* ── MODE CONDUITE ── */
 body.driving .sheet { transform: translateY(100%); }
 body.driving .speed { border: 2px solid var(--green); }
