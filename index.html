@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=25">
+  <link rel="stylesheet" href="app.css?v=26">
   <link rel="stylesheet" href="messages.css?v=5">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -328,14 +328,7 @@
           <div id="icMsgSubtitle" class="act-cat-hd-sub">Vos conversations</div>
         </div>
       </div>
-      <div class="ic-conv-header-acts">
-        <button type="button" id="icMarkAllReadBtn" class="ic-icon-btn" onclick="ImmatMessages.markAllRead?.()" title="Tout marquer comme lu" style="display:none;font-size:11px;padding:4px 8px;color:#60a5fa">✓✓ Tout lu</button>
-        <button type="button" id="icUnreadOnlyBtn" class="ic-icon-btn" onclick="ImmatMessages.toggleUnreadOnly()" title="Non lus seulement" aria-label="Afficher uniquement les conversations non lues" aria-pressed="false">📬</button>
-        <button type="button" id="icFavOnlyBtn" class="ic-icon-btn" onclick="ImmatMessages.toggleFavOnly()" title="Afficher uniquement les favoris" aria-label="Afficher uniquement les conversations favorites" aria-pressed="false">⭐</button>
-        <button type="button" class="ic-icon-btn" onclick="ImmatMessages.toggleSearch()" title="Rechercher">🔍</button>
-        <button type="button" class="ic-icon-btn" onclick="ImmatMessages.setMode('compose')" title="Nouveau message">✏️</button>
-        <button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button>
-      </div>
+      <button type="button" class="ph-close" onclick="App.closeSheet()" aria-label="Fermer">✕</button>
     </div>
 
     <!-- Barre de recherche -->
@@ -343,6 +336,22 @@
       <input id="icSearchInput" type="search" placeholder="Rechercher une plaque…" aria-label="Rechercher une conversation par plaque" oninput="ImmatMessages.filterConv(this.value)">
     </div>
 
+    <!-- Titre section + filtres -->
+    <div id="icMsgTabsRow" class="ic-msg-tabs-row">
+      <div class="ic-msg-tabs-title-row">
+        <span class="ic-msg-tabs-label">MESSAGES</span>
+        <div class="ic-msg-tabs-utils">
+          <button type="button" id="icMarkAllReadBtn" class="ic-icon-btn" onclick="ImmatMessages.markAllRead?.()" title="Tout marquer comme lu" style="display:none;font-size:11px;padding:4px 8px;color:#60a5fa">✓✓ Tout lu</button>
+          <button type="button" class="ic-icon-btn" onclick="ImmatMessages.toggleSearch()" title="Rechercher" aria-label="Rechercher dans les messages">🔍</button>
+          <button type="button" class="ic-icon-btn" onclick="ImmatMessages.setMode('compose')" title="Nouveau message" aria-label="Nouveau message">✏️</button>
+        </div>
+      </div>
+      <div class="ic-msg-tabs-pills">
+        <button type="button" id="icMsgTabTous" class="ic-msg-pill on" onclick="ImmatMessages.clearFilters?.()">Tous</button>
+        <button type="button" id="icUnreadOnlyBtn" class="ic-msg-pill" onclick="ImmatMessages.toggleUnreadOnly()" aria-label="Afficher uniquement les conversations non lues" aria-pressed="false">📬 Non lus</button>
+        <button type="button" id="icFavOnlyBtn" class="ic-msg-pill" onclick="ImmatMessages.toggleFavOnly()" aria-label="Afficher uniquement les conversations favorites" aria-pressed="false">⭐ Favoris</button>
+      </div>
+    </div>
 
     <!-- IDs requis par CI NAV01 (toBeAttached) — non affichés -->
     <span id="icTabMessages" style="display:none"></span>

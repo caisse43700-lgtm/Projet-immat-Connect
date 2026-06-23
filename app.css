@@ -843,14 +843,10 @@ body.appels-mode #icCallLog {
   flex-direction: column;
   overflow: hidden;
 }
-/* Vue liste — header + search : fixes */
-#sheet:has(#panelMessages.on) .ic-conv-header {
-  flex: 0 0 auto;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-#sheet:has(#panelMessages.on) .ic-conv-header-acts { flex: 0 0 auto; }
-#sheet:has(#panelMessages.on) #icSearchBar          { flex: 0 0 auto; }
+/* Vue liste — header + search + tabs : fixes */
+#sheet:has(#panelMessages.on) .ic-conv-header { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) #icSearchBar    { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) #icMsgTabsRow   { flex: 0 0 auto; }
 /* Vue liste — conversations scrollables */
 #sheet:has(#panelMessages.on) #icMsgList {
   flex: 1 1 auto;
@@ -883,6 +879,56 @@ body.appels-mode #icCallLog {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* ── Messages — titre section + pills filtres ── */
+.ic-msg-tabs-row {
+  padding: 6px 4px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.ic-msg-tabs-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ic-msg-tabs-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: #a5b4fc;
+  text-transform: uppercase;
+}
+.ic-msg-tabs-utils {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.ic-msg-tabs-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.ic-msg-tabs-pills::-webkit-scrollbar { display: none; }
+.ic-msg-pill {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgba(255,255,255,.08);
+  color: #94a3b8;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.ic-msg-pill.on,
+.ic-msg-pill.active {
+  background: #6366f1;
+  color: #fff;
 }
 
 /* ── MODE CONDUITE ── */
