@@ -1104,3 +1104,86 @@ ALTER TABLE public.reports
 
 **Reste à faire (non bloquant) :** validation terrain — créer un signalement, recharger l'app (ou se reconnecter), confirmer que sa position est toujours affichée sur la carte (alors qu'avant ce fix, elle disparaissait dès que le signalement n'était plus reçu via le broadcast Realtime en direct).
 
+---
+
+## SESSION 2026-06-23 — Thread compositeur fixe en bas iOS + incident agent
+
+### Contexte
+
+L'utilisateur a montré (IMG_6294/IMG_6295) que le compositeur de message (textarea + bouton Envoyer) défilait avec les messages sur iPhone au lieu de rester fixe en bas. Il voulait : header thread fixe en haut, messages scrollables, composer fixe en bas (IMG_6296 comme cible).
+
+### Analyse de la cause racine
+
+`.ic-thread.show` dans `messages.css` définit `position:absolute; inset:0; overflow:visible`. Le `inset:0` donne une hauteur contrainte, mais `overflow:visible` permet aux enfants flex de l'ignorer sur iOS. Résultat : le flex body (messages) ne sait pas où s'arrêter → le composer "flotte" avec le scroll au lieu de rester ancré en bas.
+
+Les éléments manquants de `flex: 0 0 auto` :
+- `.ic-thread-head` : aucun flex déclaré
+- `#icTypingLabel` : aucun flex déclaré
+- `.ic-thread-composer` : seulement `flex-shrink:0` (mais pas `flex: 0 0 auto`)
+
+### Fix appliqué
+
+5 règles CSS ajoutées dans `app.css` (~l.861) via sélecteur `:has()` (iOS 15.4+) :
+
+```css
+/* Thread — overflow:hidden contraint la hauteur iOS (inset:0) → composer reste fixe */
+#sheet:has(#panelMessages.on) .ic-thread.show     { overflow: hidden; }
+#sheet:has(#panelMessages.on) .ic-thread-head     { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) .ic-thread-body     { -webkit-overflow-scrolling: touch; }
+#sheet:has(#panelMessages.on) #icTypingLabel      { flex: 0 0 auto; }
+#sheet:has(#panelMessages.on) .ic-thread-composer { flex: 0 0 auto; }
+```
+
+**messages.css non modifié** (la règle `overflow:visible` reste, écrasée par `:has()` à spécificité supérieure).
+**messages.js non modifié.** Tous IDs JS conservés.
+
+Versions bumpées : `app.css?v=29 → ?v=30`, `service-worker.js CACHE_NAME v220 → v221`.
+
+Commit principal : `b3bd7fb` — poussé sur `main`.
+
+### Incident agent (critique)
+
+Un agent background (subagent) lancé pour synchroniser la branche de session a continué à tourner après que `b3bd7fb` était déjà poussé. Il a poussé :
+
+1. `7ae51f4` : retrait trailing newline dans `app.css` — **inoffensif**
+2. `f4cda3c` : **FATAL** — a poussé index.html tronqué à 1 ligne (`<!DOCTYPE html>`) via `mcp__github__push_files`. 4619 lignes supprimées → écran blanc sur l'app en production (IMG_6297). CI failure (E2E Diagnostics run 28049322375, exit 1).
+
+**Récupération :** L'agent lui-même a ensuite poussé le fichier complet dans le commit `7de5370`, restaurant index.html à 4624 lignes. L'app était indisponible ~2 minutes. L'utilisateur a rouvert l'app et confirmé qu'elle fonctionnait à nouveau (IMG_6298).
+
+**Pourquoi le SW n'a pas rendu le problème persistant :** Le handler `fetch` pour les navigations utilise `cache: 'no-store'` → index.html est toujours servi depuis le réseau, jamais depuis le cache SW. Dès que `7de5370` était déployé sur GitHub Pages, rouvrir l'app chargeait le bon index.html.
+
+### État CI après restauration
+
+- Run 28049322375 (commit f4cda3c) : **FAILED** — E2E smoke tests KO (app ne se chargeait pas)
+- Run 28049449868 (commit 7de5370) : **SUCCESS** — E2E Diagnostics ✅
+- Run 28049450435 (commit 7de5370) : **SUCCESS** — Tests E2E (Playwright) ✅, 18 passed, 16 skipped
+- Run 28049450533 (commit 7de5370) : **SUCCESS** — Déploiement GitHub Pages ✅
+- Run 28049451090 (commit 7de5370) : **SUCCESS** — Tests unitaires ✅
+
+HEAD actuel `7de5370` : CI entièrement vert.
+
+### Commits de cette session (ordre chronologique)
+
+| SHA | Description | Impact |
+|---|---|---|
+| 7804842 | docs: PROJECT_STATE update ae1dd82 | Documentation |
+| bddcfdb | style(messages): pills filtres pleine largeur | app.css v27, SW v218 |
+| 4862bf3 | style(messages): pills bord à bord | app.css v28, SW v219 |
+| 68a410a | fix(messages): pills séparées avec gap | app.css v29, SW v220 |
+| b3bd7fb | fix(thread): composer fixe en bas iOS | app.css v30, SW v221 |
+| 7ae51f4 | trailing newline removal (agent) | inoffensif |
+| f4cda3c | **ACCIDENT agent** — index.html tronqué | FATAL (corrigé) |
+| 7de5370 | fix: RESTORE index.html complet | HEAD stable |
+
+### Leçon retenue
+
+Ne jamais lancer d'agent background pour des opérations git/push quand la branche cible est `main` (production). Les agents background n'ont pas de visibilité sur l'état courant de la branche et peuvent écraser du travail valide.
+
+### État final
+
+- `app.css` : v30, 5 règles thread ajoutées ~l.861
+- `index.html` : 4624 lignes, `app.css?v=30` référencé, intact
+- `service-worker.js` : v221
+- Branche `main` HEAD : `7de5370`
+- CI : vert ✅
+

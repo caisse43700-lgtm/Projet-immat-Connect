@@ -12,7 +12,7 @@
 Date de mise à jour    : 2026-06-23
 Avancement             : ~53% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit cd2e814 (poussé)
+Branche production     : main (GitHub Pages) — commit 7de5370 (poussé)
 Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
@@ -54,25 +54,38 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : UX Messages — Header épuré + pills filtres style Journal d'appels (Option A)**
+**Mission : Thread — Compositeur fixe en bas iOS (overflow:hidden + flex cascade)**
 **Date :** 2026-06-23
-**Commit :** `ae1dd82` sur `main` (en attente push — autorisation "pousse sur main" requise)
-**SW :** v216 → v217 · app.css v25 → v26
+**Commit :** `7de5370` sur `main` (poussé) — restore après incident agent `f4cda3c`
+**SW :** v220 → v221 · app.css v29 → v30
 
 ### Ce qui a été fait
 
-**Vue 1 header épuré** : `.ic-conv-header` ne contient plus que ‹ (act-cat-back) + 💬 Messages / Vos conversations + ✕. Tous les boutons d'action retirés du header.
+**Problème :** Sur iPhone, le compositeur de message (textarea + bouton Envoyer) défilait avec les messages au lieu de rester fixe en bas.
 
-**Nouvelle section `#icMsgTabsRow`** : insérée entre `#icSearchBar` et `#icMsgList`. Reproduit exactement la structure du Journal d'appels :
-- Titre "MESSAGES" (bleu #a5b4fc, uppercase) + icônes 🔍 (toggleSearch) + ✏️ (compose) à droite
-- Pills `.ic-msg-pill` : "Tous" | "📬 Non lus" (id=icUnreadOnlyBtn) | "⭐ Favoris" (id=icFavOnlyBtn)
-- Pills toggle : classe `.active` (posée par JS existant) ou `.on` (état initial Tous) → fond #6366f1
+**Cause racine :** `.ic-thread.show` (`messages.css`) utilise `position:absolute;inset:0` mais `overflow:visible` → les enfants flex ignoraient la contrainte de hauteur iOS → le body ne savait pas s'arrêter → le composer remontait avec le scroll.
 
-**CSS** : `.ic-msg-tabs-row`, `.ic-msg-tabs-title-row`, `.ic-msg-tabs-label`, `.ic-msg-tabs-utils`, `.ic-msg-tabs-pills`, `.ic-msg-pill`, `.ic-msg-pill.on/.active`. `#sheet:has() #icMsgTabsRow { flex: 0 0 auto }`.
+**Fix CSS — 5 règles `:has()` ajoutées dans `app.css` (~l.861) :**
+- `#sheet:has(#panelMessages.on) .ic-thread.show { overflow: hidden; }` — contraint la hauteur inset:0 sur iOS
+- `#sheet:has(#panelMessages.on) .ic-thread-head { flex: 0 0 auto; }` — header fixe en haut
+- `#sheet:has(#panelMessages.on) .ic-thread-body { -webkit-overflow-scrolling: touch; }` — scroll natif iOS
+- `#sheet:has(#panelMessages.on) #icTypingLabel { flex: 0 0 auto; }` — label typing fixe
+- `#sheet:has(#panelMessages.on) .ic-thread-composer { flex: 0 0 auto; }` — compositeur fixe en bas
 
-**IDs JS conservés** : `icMarkAllReadBtn`, `icUnreadOnlyBtn`, `icFavOnlyBtn` avec mêmes `onclick`. `.ic-conv-header` classe conservée (référencée par `openThread()` / `closeThread()`). Aucune modification JS.
+**`messages.css` non modifié. Aucun JS modifié. Tous IDs JS conservés.**
 
-**Vue 2 thread** : inchangée.
+**Incident agent :** Un agent background a poussé commit `f4cda3c` qui tronquait index.html à 1 ligne → écran blanc (IMG_6297). Restauré automatiquement par commit `7de5370`. CI vert sur `7de5370` (18 passed, 16 skipped). La failure vue dans CI (IMG_6299/IMG_6300) provenait du commit `f4cda3c` — déjà corrigé.
+
+**Pills filtres Messages** (commits bddcfdb/4862bf3/68a410a) : style pleine largeur + gap corrigé (segmenté iOS, SW v218→v220) — inclus dans cette session.
+
+---
+
+**Mission précédente : UX Messages — Header épuré + pills filtres style Journal d'appels (Option A)**
+**Date :** 2026-06-23
+**Commit :** `ae1dd82` sur `main`
+**SW :** v216 → v217 · app.css v25 → v26
+
+Vue 1 header épuré (#icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris). Style identique Journal d'appels. IDs JS conservés, aucun JS modifié.
 
 ---
 
@@ -1646,15 +1659,13 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Mission Messages header fixe** (commit `af8f577`) — **en attente validation terrain**.
+**Aucune mission en cours.** En attente validation terrain du compositeur fixe en bas (thread).
 
-Tests à effectuer :
-- 0 conversation / 1 conversation / 30+ conversations → header reste fixe
-- Clic sur conversation → thread : pseudo + immatriculation visible dans header
-- Messages longs dans thread → scroll correct, compositeur reste en bas
-- Ouverture clavier iPhone → header ne disparaît pas
-- Retour thread → liste → header liste réapparaît
-- Journal d'appels depuis Messages → `appels-mode` inchangé
+Tests suggérés sur iPhone :
+- Ouvrir un thread → composer reste fixe en bas, messages scrollent au milieu
+- Taper un long message → textarea grandit, composer reste en bas
+- Quick replies visibles et fixes au-dessus du composer
+- Clavier iOS ouvert → composer reste visible et fixe
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
@@ -2324,7 +2335,9 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 | 2026-06-23 | IA session | BUG FIX Dashboard Gardien (CAUSE RACINE) + Appels complet. Cause racine Dashboard : override OBD afterAuth (ligne 3701) fast-path App.openMap() direct → bypass TOTAL détection gardien → S.isGardien jamais set → applyFeatureFlags() ne montre jamais les boutons. Fix : ajout JWT+RPC get_my_role() dans le fast-path OBD avant App.openMap(). Fix Appels : _openAppelsInline() aligné sur navAppels() — display='block', icCallLog reset, tabs couleurs, header/searchbar masqués, closeThread(), _unseenMissedCalls=0, updateActBadge(). SW v204→v205. Commit bdf6d42 sur main. |
 | 2026-06-23 | IA session | BUG FIX Dashboard Gardien timing + CI preflight. Fix timing : double fallback `S.isGardien===true \|\| body.classList.contains('is-gardien')`. CI : 5 guillemets typographiques U+2019 → ASCII U+0027 dans IIFE feature flags. SW v213→v214. Commits 35b60e4+0c4a3dd sur main. Validé terrain. |
 | 2026-06-23 | IA session | UX Messages — header fixe style act-cat-hd. Vue 1 (liste) : icône 💬 + "Messages / Vos conversations", flex cascade CSS via :has(#panelMessages.on) (iOS 15.4+). Vue 2 (thread) : icône 💬 + pseudo + immatriculation dans header fixe, compositeur fixe en bas. IC-back-btn restyled en cercle via CSS. Tous IDs JS conservés, aucun JS modifié. SW v214→v215. Commit af8f577. |
-| 2026-06-23 | IA session | UX Messages — Option A : header épuré (‹ 💬 Messages ✕ seulement) + #icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris. Style identique Journal d'appels. IDs JS conservés, aucun JS modifié. SW v216→v217, app.css v25→v26. Commit ae1dd82 sur main (push en attente autorisation "pousse sur main"). |
+| 2026-06-23 | IA session | UX Messages — Option A : header épuré (‹ 💬 Messages ✕ seulement) + #icMsgTabsRow avec titre MESSAGES + icônes 🔍✏️ + pills Tous/Non lus/Favoris. Style identique Journal d'appels. IDs JS conservés, aucun JS modifié. SW v216→v217, app.css v25→v26. Commit ae1dd82 sur main. |
+| 2026-06-23 | IA session | Pills Messages style corrigé — pleine largeur + gap segmenté iOS (commits bddcfdb/4862bf3/68a410a, SW v218→v220, app.css v27→v29). PROJECT_STATE mis à jour (7804842). |
+| 2026-06-23 | IA session | FIX Thread iOS — compositeur fixe en bas : overflow:hidden + flex: 0 0 auto sur .ic-thread-head/.ic-thread-composer/#icTypingLabel via :has() (CSS only, messages.css/messages.js non touchés). SW v220→v221, app.css v29→v30. Commit b3bd7fb. INCIDENT AGENT : f4cda3c a tronqué index.html à 1 ligne (écran blanc). Restauré par 7de5370 — HEAD stable. CI vert (18 passed). |
 
 ---
 
