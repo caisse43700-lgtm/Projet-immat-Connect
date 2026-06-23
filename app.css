@@ -490,6 +490,8 @@ body.rotating .sheet { transition: none !important; }
 /* Phase 2 Messages — ajustement margin des ph-close dans flex-row existants */
 .ic-conv-header-acts .ph-close,
 .ic-thread-actions .ph-close { margin-right: 0; }
+/* act-cat-hd : même espacement gauche et droite */
+.act-cat-hd .ph-close { margin-right: 0; }
 
 /* ── PANELS ── */
 .panel { display: none; }
