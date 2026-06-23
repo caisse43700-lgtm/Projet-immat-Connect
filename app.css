@@ -809,6 +809,7 @@ body.appels-mode #sheet .ic-msg-shell {
   display: flex;
   flex-direction: column;
 }
+#icAppelsPane { display: none !important; }
 body.appels-mode #icAppelsPane {
   flex: 1 !important;
   min-height: 0;
