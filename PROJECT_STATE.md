@@ -1704,49 +1704,44 @@ CHANTIER : FIABILISATION CHAÎNE MESSAGES
 Ouvert le 2026-06-23 — Séparé du redesign visuel V3
 ════════════════════════════════════════════════════
 
+AVANCEMENT
+──────────
+✅ POINT 2 — Fallback INSERT supprimé (commit 805bc54, messages.js v27)
+✅ POINT 3 — Guard receiverPlate ajouté avant INSERT (commit 805bc54)
+✅ POINT 4 — Pagination : ORDER DESC + loadOlderMessages() + bouton (commit a77c63d, v28)
+✅ POINT 6 — Photos image_url affichées dans thread + lightbox (commit a77c63d)
+⏳ POINT 1 — Canonisation colonnes plaques (à faire)
+⏳ POINT 5 — Reset soft-delete / outil debug (à faire)
+
 CONTEXTE
 ────────
 Audit pré-merge a révélé 6 fragilités dans la chaîne envoi → stockage → réception.
 Le redesign V3 (app.css + messages.css) est purement visuel et safe à merger.
 Ces 6 points constituent un chantier technique distinct à traiter séparément.
 
-POINT 1 — Colonnes plaques redondantes
+POINT 1 — Colonnes plaques redondantes  ⏳ À FAIRE
   Problème :
     sender_plate / receiver_plate / from_plate / to_plate / target_plate
-    créent une logique fragile et un fallback INSERT dangereux.
+    créent une logique fragile. Le fallback (supprimé Point 2) masquait le problème.
   Objectif :
     Définir une source canonique unique pour retrouver expéditeur/destinataire.
     Supprimer l'ambiguïté entre les 5 colonnes.
 
-POINT 2 — Fallback INSERT dangereux
-  Problème :
-    Si INSERT rich échoue, le retry retire les colonnes legacy.
-    Résultat : message en base mais invisible dans certains SELECT.
-    Code incriminé (messages.js l.1302-1305) :
-    if(error && /sender_plate|receiver_plate|from_plate|to_plate|column|schema cache/...){
-      const r = await client.from('messages').insert(base); // retry sans colonnes plaques
-    }
-  Objectif :
-    Supprimer ou sécuriser ce fallback.
-    Garantir que le message reste trouvable quel que soit le chemin d'insertion.
+POINT 2 — Fallback INSERT dangereux  ✅ FAIT (805bc54)
+  Fix : suppression du retry sans colonnes plaques. INSERT unique avec toutes les colonnes.
+  Guard receiverPlate ajouté avant INSERT (Point 3 couvert en même temps).
 
-POINT 3 — receiver_plate absent = destinataire aveugle
-  Problème :
-    Si receiver_plate n'est pas inséré, 3 des 6 requêtes SELECT du destinataire ratent.
-    Message existe en base mais invisible pour le destinataire.
-  Objectif :
-    Garantir qu'un message envoyé à une plaque soit toujours visible par le destinataire.
-    Ajouter une contrainte ou un guard côté INSERT.
+POINT 3 — receiver_plate absent = destinataire aveugle  ✅ FAIT (805bc54)
+  Fix : guard explicite `if(!receiverPlate){ toast(...); return false; }` avant INSERT.
 
-POINT 4 — LIMIT 300 sans pagination
-  Problème :
-    Pas de pagination. Dans un thread très actif, les messages anciens ne sont jamais chargés.
-    6 requêtes × 300 = 1800 avant dédup, mais les PLUS ANCIENS disparaissent.
-  Objectif :
-    Ajouter un mécanisme "Charger les messages plus anciens" (bouton ou scroll-to-top).
-    Implémenter une vraie pagination avec offset ou cursor (created_at).
+POINT 4 — LIMIT 300 sans pagination  ✅ FAIT (a77c63d)
+  Fix :
+    - ORDER BY created_at DESC → les 300 messages les plus récents chargés en priorité
+    - loadOlderMessages(plate) : charge 50 messages antérieurs via cursor created_at
+    - Bouton "Charger les messages plus anciens" en haut du thread
+    - "Début de la conversation" quand plus rien à charger
 
-POINT 5 — Soft-delete local masque des messages existants
+POINT 5 — Soft-delete local masque des messages existants  ⏳ À FAIRE
   Problème :
     ic_deleted_msgs (localStorage) peut masquer un message qui existe encore en base.
     Si localStorage est vidé → message réapparaît (comportement surprenant pour l'utilisateur).
@@ -1755,7 +1750,7 @@ POINT 5 — Soft-delete local masque des messages existants
     Ajouter un outil debug ou une option "Réinitialiser messages masqués".
     Documenter clairement le comportement (soft-delete = local only).
 
-POINT 6 — Photos image_url stockées mais non affichées
+POINT 6 — Photos image_url  ✅ FAIT (a77c63d)
   Problème :
     Photos de signalements stationnés bien stockées dans Supabase Storage (bucket parked-photos).
     image_url inséré en base mais jamais rendu dans le thread de messages.
