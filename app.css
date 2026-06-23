@@ -871,6 +871,19 @@ body.appels-mode #icCallLog {
   border: 1px solid rgba(255,255,255,.12);
   font-size: 22px; color: #00ffb3;
 }
+/* Thread header — troncature 1 ligne pour pseudo/plaque longs (iPhone 375px) */
+.ic-thread-head .ic-thread-title,
+.ic-thread-head .ic-thread-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Messages liste — troncature sous-titre act-cat-hd-sub */
+.ic-conv-header .act-cat-hd-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ── MODE CONDUITE ── */
 body.driving .sheet { transform: translateY(100%); }
