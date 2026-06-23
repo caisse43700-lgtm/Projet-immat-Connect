@@ -757,7 +757,9 @@ async afterAuth(){
     const u=ud?.user;
     if(!u){this.show('sw');return}
     S.uid=u.id;
-    try{const {data:role}=await sb.rpc('get_my_role');S.isGardien=(role==='gardien');if(S.isGardien)document.body.classList.add('is-gardien');}catch(e){S.isGardien=false;}
+    // Fallback immédiat depuis le JWT (sans RPC) — couvre le cas où get_my_role() est absent
+    {const _mr=u?.user_metadata?.role||u?.app_metadata?.role;if(_mr==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');}}
+    try{const {data:role}=await sb.rpc('get_my_role');if(role==='gardien'&&!S.isGardien){S.isGardien=true;document.body.classList.add('is-gardien');}else if(role!=='gardien'&&S.isGardien===undefined)S.isGardien=false;}catch(e){if(S.isGardien===undefined)S.isGardien=false;}
     if(!S.isGardien)setTimeout(async()=>{try{const {data:r}=await sb.rpc('get_my_role');if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');const fab=$('angeFab');if(fab&&S.profile)fab.style.display='flex';}}catch(e){}},1500);
 
     let p=null;
@@ -4521,6 +4523,36 @@ window._forceSwUpdate = async function() {
       if (b) b.style.display = 'block';
     }
   } catch(e) {}
+})();
+/* ── NAV HOTFIX INLINE v1 — toujours chargé depuis index.html (no-cache) ── */
+(function(){
+  if(window.__ImmatNavBtnHotfixV1)return; // déjà installé par ui.js?v=10
+  window.__ImmatNavBtnHotfixV1=true;
+  function _openAngeInline(){
+    try{if(window.AngeDialog&&window.AngeDialog.open){window.AngeDialog.open();return;}}catch(ex){}
+    var o=document.getElementById('angeOverlay'),p=document.getElementById('angePanel');
+    if(o){o.style.display='block';o.classList.add('show','active');}
+    if(p){p.style.display='flex';p.classList.add('show','active');}
+  }
+  document.addEventListener('click',function(e){
+    if(e.target&&e.target.closest){
+      var cb=e.target.closest('.ph-close,.sheet-close');
+      if(cb){try{window.App&&window.App.closeSheet&&window.App.closeSheet();}catch(_){}return;}
+    }
+    var hits=[
+      ['navMessages',function(){try{window.App&&window.App.navMessages&&window.App.navMessages();}catch(_){}}],
+      ['navAppels',  function(){try{window.App&&window.App.navAppels&&window.App.navAppels();}catch(_){}}],
+      ['navAnge',    _openAngeInline],
+    ];
+    for(var i=0;i<hits.length;i++){
+      var btn=document.getElementById(hits[i][0]);
+      if(!btn)continue;
+      var r=btn.getBoundingClientRect();
+      if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+        hits[i][1]();return;
+      }
+    }
+  },true);
 })();
 </script>
 </body>
