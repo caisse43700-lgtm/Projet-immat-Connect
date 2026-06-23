@@ -4532,9 +4532,10 @@ window._forceSwUpdate = async function() {
   window.__ImmatNavBtnHotfixV2=true;
   function _sheet(full){var s=document.getElementById('sheet');if(!s)return;s.classList.toggle('mini',!full);s.classList.toggle('full',!!full);}
   function _panels(active){['altet','drive','messages','settings','activite'].forEach(function(x){var pe=document.getElementById('panel'+x[0].toUpperCase()+x.slice(1));if(pe){pe.classList.toggle('on',x===active);pe.style.display='';}})}
+  function _navHighlight(active){['navSignaler','navMessages','navAppels','navActivite'].forEach(function(id){var b=document.getElementById(id);if(b)b.classList.toggle('on',id===active);});}
   function _openMessagesInline(){
     document.body.classList.remove('appels-mode');
-    _panels('messages');_sheet(true);
+    _panels('messages');_sheet(true);_navHighlight('navMessages');
     var ml=document.getElementById('icMsgList'),cp=document.getElementById('icAppelsPane');
     if(ml)ml.style.display='';if(cp)cp.style.display='none';
     var hdr=document.querySelector('#icMessagesPro .ic-conv-header');if(hdr)hdr.style.display='';
@@ -4542,7 +4543,7 @@ window._forceSwUpdate = async function() {
   }
   function _openAppelsInline(){
     document.body.classList.add('appels-mode');
-    _panels('messages');_sheet(true);
+    _panels('messages');_sheet(true);_navHighlight('navAppels');
     var ml=document.getElementById('icMsgList'),cp=document.getElementById('icAppelsPane');
     if(ml)ml.style.display='none';if(cp)cp.style.display='';
     try{window.App&&window.App.renderCallJournal&&window.App.renderCallJournal();}catch(_){}
