@@ -864,6 +864,12 @@ body.appels-mode #icCallLog {
 #sheet:has(#panelMessages.on) .ic-thread-body     { -webkit-overflow-scrolling: touch; }
 #sheet:has(#panelMessages.on) #icTypingLabel      { flex: 0 0 auto; }
 #sheet:has(#panelMessages.on) .ic-thread-composer { flex: 0 0 auto; }
+/* Thread plein écran — nav de bas masquée, composer au bord de l'écran (portrait) */
+@media (orientation:portrait) {
+  #appScreen:has(.ic-thread.show) .bottom-nav                             { display: none; }
+  #sheet:not(.mini):has(#panelMessages.on):has(.ic-thread.show)           { bottom: 0; height: calc(100dvh - var(--safe-top)); border-radius: 0; }
+  #sheet:has(#panelMessages.on):has(.ic-thread.show) .ic-thread-composer  { padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px); }
+}
 /* Thread head — bouton ‹ restyled en cercle (classe HTML ic-back-btn conservée) */
 .ic-thread-head .ic-back-btn {
   width: 38px; height: 38px;
