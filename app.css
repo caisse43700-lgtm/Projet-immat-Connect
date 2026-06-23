@@ -816,6 +816,7 @@ body.appels-mode #icAppelsPane {
   flex-direction: column;
 }
 body.appels-mode #callJournalStickyHdr { flex-shrink: 0; }
+body.appels-mode #icMsgTabsRow { display: none; }
 body.appels-mode #icCallLog {
   flex: 1;
   min-height: 0;
