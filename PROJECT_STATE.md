@@ -54,19 +54,16 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : BUG FIX — Dashboard Gardien : `openGardienDashboard()` ne s'ouvrait pas**
+**Mission : BUG FIX — Dashboard Gardien ouverture + CI preflight — VALIDÉ TERRAIN ✅**
 **Date :** 2026-06-23
-**Commit branche :** à venir (claude/immatconnect-pro-app-dEKGR)
-**SW :** v206 → v207
+**Commits main :** `35b60e4` (guard isGardien) + `0c4a3dd` (guillemets curly)
+**SW :** v206 → v208
 
-### Cause racine
-`openGardienDashboard()` avait le guard `if(!S.isGardien)` à la ligne 803. Or `S.isGardien` pouvait rester `undefined` ou `false` après le chargement (timing RPC), tandis que `body.is-gardien` CSS class persistait depuis le login. Le bouton était **visible** grâce au CSS mais la **fonction retournait immédiatement** avant d'atteindre `el.style.display='block'`.
+### Cause 1 — Dashboard ne s'ouvrait pas
+Guard `if(!S.isGardien)` bloquait quand `S.isGardien` était `undefined` (timing RPC) même si `body.is-gardien` CSS persistait. Fix : double fallback `S.isGardien===true || body.classList.contains('is-gardien')` + `App.closeSheet?.()` avant ouverture.
 
-### Fix appliqué
-- Remplacement `if(!S.isGardien)` → `const _isG=S.isGardien===true||document.body.classList.contains('is-gardien'); if(!_isG)` — double fallback : JS state OU CSS class
-- `App.closeSheet?.()` avant `el.style.display='block'` pour fermer le panel Settings avant d'ouvrir le dashboard
-- Suppression toast DBG (ligne 802) et DBG "el/body manquant" → messages propres
-- SW v206 → v207
+### Cause 2 — CI preflight rouge
+5 guillemets typographiques `'` (U+2019) utilisés comme délimiteurs JS dans l'IIFE feature flags (HTML ligne 964) → `Invalid or unexpected token`. Fix : remplacement par apostrophes ASCII U+0027. `preflight-inline-js` passe vert : 8 scripts OK.
 
 ---
 
