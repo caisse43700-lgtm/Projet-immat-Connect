@@ -4526,24 +4526,46 @@ window._forceSwUpdate = async function() {
     }
   } catch(e) {}
 })();
-/* ── NAV HOTFIX INLINE v1 — toujours chargé depuis index.html (no-cache) ── */
+/* ── NAV HOTFIX INLINE v2 — DOM direct, bypass App.nav*() ── */
 (function(){
-  if(window.__ImmatNavBtnHotfixV1)return; // déjà installé par ui.js?v=10
-  window.__ImmatNavBtnHotfixV1=true;
+  if(window.__ImmatNavBtnHotfixV2)return;
+  window.__ImmatNavBtnHotfixV2=true;
+  function _sheet(full){var s=document.getElementById('sheet');if(!s)return;s.classList.toggle('mini',!full);s.classList.toggle('full',!!full);}
+  function _panels(active){['altet','drive','messages','settings','activite'].forEach(function(x){var pe=document.getElementById('panel'+x[0].toUpperCase()+x.slice(1));if(pe){pe.classList.toggle('on',x===active);pe.style.display='';}})}
+  function _openMessagesInline(){
+    document.body.classList.remove('appels-mode');
+    _panels('messages');_sheet(true);
+    var ml=document.getElementById('icMsgList'),cp=document.getElementById('icAppelsPane');
+    if(ml)ml.style.display='';if(cp)cp.style.display='none';
+    var hdr=document.querySelector('#icMessagesPro .ic-conv-header');if(hdr)hdr.style.display='';
+    try{window.App&&window.App.loadMsgs&&window.App.loadMsgs();}catch(_){}
+  }
+  function _openAppelsInline(){
+    document.body.classList.add('appels-mode');
+    _panels('messages');_sheet(true);
+    var ml=document.getElementById('icMsgList'),cp=document.getElementById('icAppelsPane');
+    if(ml)ml.style.display='none';if(cp)cp.style.display='';
+    try{window.App&&window.App.renderCallJournal&&window.App.renderCallJournal();}catch(_){}
+  }
   function _openAngeInline(){
     try{if(window.AngeDialog&&window.AngeDialog.open){window.AngeDialog.open();return;}}catch(ex){}
     var o=document.getElementById('angeOverlay'),p=document.getElementById('angePanel');
     if(o){o.style.display='block';o.classList.add('show','active');}
     if(p){p.style.display='flex';p.classList.add('show','active');}
   }
+  function _closeInline(){
+    _sheet(false);
+    ['altet','drive','messages','settings','activite'].forEach(function(x){var pe=document.getElementById('panel'+x[0].toUpperCase()+x.slice(1));if(pe)pe.classList.remove('on');});
+    try{window.App&&window.App.closeSheet&&window.App.closeSheet();}catch(_){}
+  }
   document.addEventListener('click',function(e){
     if(e.target&&e.target.closest){
       var cb=e.target.closest('.ph-close,.sheet-close');
-      if(cb){try{window.App&&window.App.closeSheet&&window.App.closeSheet();}catch(_){}return;}
+      if(cb){_closeInline();return;}
     }
     var hits=[
-      ['navMessages',function(){try{window.App&&window.App.navMessages&&window.App.navMessages();}catch(_){}}],
-      ['navAppels',  function(){try{window.App&&window.App.navAppels&&window.App.navAppels();}catch(_){}}],
+      ['navMessages',_openMessagesInline],
+      ['navAppels',  _openAppelsInline],
       ['navAnge',    _openAngeInline],
     ];
     for(var i=0;i<hits.length;i++){
