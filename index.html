@@ -2175,7 +2175,7 @@ App.actOpenVehicleMsgGroup=function(plate){
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
         </div>
-        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Signaler un comportement abusif</button>
       </div>
     </div>`;
   };
@@ -2189,7 +2189,7 @@ App.actOpenVehicleMsgGroup=function(plate){
         ${isPending?`<div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">Vous avez indiqué que vous vérifieriez lorsque vous pourriez vous arrêter en sécurité.</div><div class="act-vmg-pending-reminder-cta">→ Donner mon constat</div></div>`:''}
         <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Qu'avez-vous constaté ?</div>
         <div class="act-vmg-verdict-wrap">
-          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Signalement confirmé<span class="act-vmg-vbtn-sub">Le problème existe — augmente la confiance du signaleur</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Signalement confirmé<span class="act-vmg-vbtn-sub">Le problème existe</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Problème disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-false" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','false')">❌ Faux signalement<span class="act-vmg-vbtn-sub">Ce signalement est incorrect</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-skip" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','skip')">⏭️ Je n'ai pas pu vérifier<span class="act-vmg-vbtn-sub">Véhicule reparti · impossible de s'arrêter · mauvaise visibilité</span></button>
@@ -2199,7 +2199,7 @@ App.actOpenVehicleMsgGroup=function(plate){
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
         </div>
-        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Signaler un comportement abusif</button>
       </div>
     </div>`;
   };
