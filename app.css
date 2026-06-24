@@ -833,6 +833,28 @@ body.appels-mode #icCallLog {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── ACTIVITÉ SOUS-PANNEAU MODE — sheet figé, feed scroll en interne ── */
+body.act-cat-open #sheet {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.act-cat-open #sheet #panelActivite {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.act-cat-open #actCatPanel {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+}
+body.act-cat-open .act-cat-feed {
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ── MESSAGES MODE — header fixe liste + thread ── */
 /* :has() supporté iOS 15.4+ — cascade flex pure, aucun position:absolute ni calcul hauteur */
 #sheet:has(#panelMessages.on) {
@@ -1113,7 +1135,7 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-resume-badge.orange { background: #ff8c00; }
 .act-resume-badge.green { background: var(--green); color: #06140f; }
 /* Sous-panneau catégorie */
-.act-cat-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #0c1624; }
+.act-cat-panel { display: none; flex-direction: column; min-height: 0; background: #0c1624; }
 .act-cat-hd { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; flex: 0 0 auto; }
 .act-cat-back { width: 38px; height: 38px; min-width: 44px; min-height: 44px; border-radius: 50%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); font-size: 22px; color: var(--text); cursor: pointer; display: grid; place-items: center; flex: 0 0 auto; line-height: 1; }
 .act-cat-hd-mid { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
