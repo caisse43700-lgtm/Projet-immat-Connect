@@ -1536,6 +1536,8 @@ App.navMessages=function(){
 App.closeCallJournal=function(){
   document.body.classList.remove('appels-mode');
   const _cp=$('icAppelsPane');if(_cp)_cp.style.display='none';
+  const _pm=document.getElementById('panelMessages');
+  if(_pm){_pm.classList.remove('on');_pm.style.display='none';}
 };
 App.navAppels=function(){
   document.body.classList.add('appels-mode');
