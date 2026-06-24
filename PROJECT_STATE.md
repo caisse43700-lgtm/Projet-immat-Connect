@@ -54,7 +54,25 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : 3 fixes UI — journal Stationné + garde CSS + Settings safe area**
+**Mission : Fix scroll bloqué dans Activité après retour depuis sous-panneau**
+**Date :** 2026-06-24
+**Commit :** PR #366 — app.css v38, SW v236
+
+### Ce qui a été fait
+
+**Bug** : après avoir ouvert Route/Véhicule/Aide/Stationné, impossible de scroller la vue principale Activité au retour (‹). Scroll complètement bloqué.
+
+**Cause** : `.act-cat-panel { display:flex }` en CSS par défaut → le sheet scrollait le contenu du sous-panneau (feed interne non contraint). `closeActivityCat()` ne remettait pas `scrollTop=0` → sheet bloqué sur iOS.
+
+**Fix** :
+- `body.act-cat-open` (même pattern que `body.appels-mode`) : sheet `overflow:hidden`, panelActivite + actCatPanel en flex — le feed scroll en interne, sheet immobile
+- `closeActivityCat()` retire la classe + `sheet.scrollTop=0` (sync + rAF)
+- `panel(p)` retire `act-cat-open` si on change de panneau
+- `.act-cat-panel` passe à `display:none` par défaut (élimine flash lors de `panel()`)
+
+---
+
+**Mission précédente : 3 fixes UI — journal Stationné + garde CSS + Settings safe area**
 **Date :** 2026-06-24
 **Commits :** PR #361 (v233) · PR #363 (v234) · PR #364 (v235) — app.css v37, SW v235
 
