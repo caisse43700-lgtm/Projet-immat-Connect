@@ -1146,6 +1146,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-tab-badge { min-width: 16px; height: 16px; border-radius: 999px; background: #2979ff; color: #fff; font-size: 9px; font-weight: 950; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
 /* Feed catégorie */
 .act-cat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+/* Vue groupe véhicule — block évite l'effondrement iOS des cartes flex avec overflow:hidden */
+#actAlertGroupFeed { display: block; overflow-y: auto; flex: 1; min-height: 0; gap: 0; }
 .act-empty-cat { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .act-cat-nouveau { padding: 24px 0; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .act-cat-nouveau-info { font-size: 14px; color: var(--muted); text-align: center; }
