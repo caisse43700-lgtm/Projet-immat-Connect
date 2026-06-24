@@ -54,7 +54,37 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Gardien role isolation — is-gardien bleed fix + merge main**
+**Mission : Refonte workflow signalements véhicule — machine 3 états + vocabulaire conducteur**
+**Date :** 2026-06-24
+**Commits :** `8bb2e94` → `17c4b4f` + vocabulaire sur `claude/immatconnect-pro-app-dEKGR` — app.css v35, SW v232
+
+### Ce qui a été fait
+
+Refonte complète du panel Activité > Reçus (signalements véhicule) : machine à 3 états localStorage-only, sans modification Supabase.
+
+**3 états :**
+- **NOUVEAUX** — signalements non lus, non pendants, non traités. Badge bleu NOUVEAU + badge temps 🟢🟡🔴. Un seul bouton "✓ Je vérifierai dès que je serai arrêté".
+- **EN COURS** — lus ou pendants, non traités. Bandeau "🕐 Vérification en attente" si `ic_vm_pending` (texte conducteur : "lorsque vous pourriez vous arrêter en sécurité" + CTA "→ Donner mon constat"). Boutons verdict : ✅ Signalement confirmé / ℹ️ Problème disparu / ❌ Faux signalement.
+- **TRAITÉS** — verdict enregistré ou `ic_vm_replied` (compat arrière). Affichage verdict + date + contact.
+
+**Règles métier :**
+- `actVmPending` : ajoute à `ic_vm_pending` + marque lu + envoie réponse automatique "Je vérifierai dès que je serai arrêté 👀".
+- `actVmVerdict('confirmed')` : `trustDelta(plate, +8)`. Autres verdicts : delta = 0 (modération manuelle pour faux signalement).
+- Bouton "Info utile" / `actVmRate` : supprimé du flow REÇUS — trustDelta porté uniquement par verdict Confirmé.
+- Compatibilité arrière : `ic_vm_replied` (ancien archivage) → apparaît en TRAITÉS sans verdict.
+
+**Validation ChatGPT (99%) :**
+- ✅ Workflow métier cohérent, états cohérents, score confiance cohérent, UX cohérente
+- ✅ Séparation réaction/verdict bonne, rappel "Donner mon constat" améliore l'expérience
+- ✅ "Faux signalement" ne baisse pas automatiquement la confiance (modération manuelle V1)
+- Polissage vocabulaire : "Je vérifierai dès que je serai arrêté" (contexte conducteur en mouvement)
+- Verdict : suffisamment mature pour merge main
+
+**Fichiers modifiés :** `index.html`, `app.css` (v35), `service-worker.js` (v232)
+
+---
+
+**Mission précédente : Gardien role isolation — is-gardien bleed fix + merge main**
 **Date :** 2026-06-23
 **Commit :** `7f8f3e1` sur `main` (poussé) — app.css v34, SW v230
 
@@ -1734,7 +1764,8 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 **Aucune mission en cours.**
 
-Chantier "Fiabilisation chaîne Messages" — CLÔTURÉ 2026-06-23 (commits 805bc54 → e8724a4)
+Refonte signalements véhicule — TERMINÉE 2026-06-24 (commits 8bb2e94 → 17c4b4f + vocabulaire).
+Prêt pour merge `claude/immatconnect-pro-app-dEKGR` → `main` sur validation utilisateur.
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
@@ -2302,6 +2333,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-24 | IA session | Refonte signalements véhicule — machine 3 états (NOUVEAUX/EN COURS/TRAITÉS), verdicts localStorage, trustDelta isolé à Confirmé (+8), vocabulaire conducteur "Je vérifierai dès que je serai arrêté". Validé ChatGPT 99%. app.css v35, SW v232. |
 | 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |
 | 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
 | 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |

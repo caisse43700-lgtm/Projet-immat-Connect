@@ -2159,7 +2159,7 @@ App.actOpenVehicleMsgGroup=function(plate){
     return`<div class="act-vmg-card act-vmg-encours act-vmg-new" onclick="App.actToggleVmCard(this)">
       <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<span class="act-mod-new-badge" style="margin-bottom:4px;display:inline-block;font-size:9px">NOUVEAU</span><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        <button type="button" class="act-vmg-pending-btn" onclick="event.stopPropagation();App.actVmPending('${mid}','${ep}')">✓ Je vérifierai dès que possible</button>
+        <button type="button" class="act-vmg-pending-btn" onclick="event.stopPropagation();App.actVmPending('${mid}','${ep}')">✓ Je vérifierai dès que je serai arrêté</button>
         <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
         <div class="act-vmg-contact">
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
@@ -2283,7 +2283,7 @@ App.actVmPending=async function(msgId,plate){
   try{localStorage.setItem('ic_vm_pending',JSON.stringify(pending.slice(-500)));}catch(e){}
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
-  try{await this.actVehicleReply(plate,'Je vérifierai ça dès que possible 👀');}catch(e){}
+  try{await this.actVehicleReply(plate,'Je vérifierai dès que je serai arrêté 👀');}catch(e){}
   this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
 };
 App.actVmVerdict=function(msgId,plate,type){
