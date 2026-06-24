@@ -54,21 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix scroll bloqué dans Activité après retour depuis sous-panneau**
+**Mission : Fix scroll Activité bloqué — sous-panneaux + journal d'appels**
 **Date :** 2026-06-24
-**Commit :** PR #366 — app.css v38, SW v236
+**Commits :** PR #366 (SW v236) · PR #368 (SW v237)
 
 ### Ce qui a été fait
 
-**Bug** : après avoir ouvert Route/Véhicule/Aide/Stationné, impossible de scroller la vue principale Activité au retour (‹). Scroll complètement bloqué.
+**Bug 1 — Sous-panneaux (Route/Véhicule/Aide/Stationné) → retour via ‹ → scroll bloqué** (PR #366)
+- Cause : `.act-cat-panel { display:flex }` par défaut + sheet scrollait le contenu du sous-panneau (feed non contraint). `closeActivityCat()` ne remettait pas `scrollTop=0`.
+- Fix : `body.act-cat-open` (même pattern que `body.appels-mode`) — sheet `overflow:hidden`, panelActivite + actCatPanel en flex — le feed scroll en interne. `closeActivityCat()` retire la classe + `scrollTop=0`. `panel(p)` retire la classe si changement de panneau. `.act-cat-panel` passe à `display:none` par défaut.
 
-**Cause** : `.act-cat-panel { display:flex }` en CSS par défaut → le sheet scrollait le contenu du sous-panneau (feed interne non contraint). `closeActivityCat()` ne remettait pas `scrollTop=0` → sheet bloqué sur iOS.
-
-**Fix** :
-- `body.act-cat-open` (même pattern que `body.appels-mode`) : sheet `overflow:hidden`, panelActivite + actCatPanel en flex — le feed scroll en interne, sheet immobile
-- `closeActivityCat()` retire la classe + `sheet.scrollTop=0` (sync + rAF)
-- `panel(p)` retire `act-cat-open` si on change de panneau
-- `.act-cat-panel` passe à `display:none` par défaut (élimine flash lors de `panel()`)
+**Bug 2 — Journal d'appels → Activité → scroll bloqué** (PR #368)
+- Cause : `body.appels-mode #sheet { overflow:hidden }` → iOS marque le sheet comme non-scrollable. `closeCallJournal()` retirait la classe mais ne forçait pas le reflow. De plus, la transition CSS height dure 280ms — les resets scrollTop (0/16/80/250ms) se font pendant la transition quand le contenu tient encore, et iOS peut restaurer le scroll après 280ms.
+- Fix : `closeCallJournal()` : `void offsetHeight` (force reflow synchrone iOS) + `scrollTop=0` après suppression de toutes les classes. `navActivite()` : reset supplémentaire à 320ms (post-transition CSS).
 
 ---
 
