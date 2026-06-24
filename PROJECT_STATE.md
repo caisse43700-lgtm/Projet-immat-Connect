@@ -54,19 +54,20 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix scroll Activité bloqué — sous-panneaux + journal d'appels**
+**Mission : Fix scroll Activité bloqué — cause racine overflow:hidden sur #sheet**
 **Date :** 2026-06-24
-**Commits :** PR #366 (SW v236) · PR #368 (SW v237)
+**Commits :** PR #366 (SW v236) · PR #368 (SW v237) · PR #370 (SW v238, app.css v39)
 
 ### Ce qui a été fait
 
 **Bug 1 — Sous-panneaux (Route/Véhicule/Aide/Stationné) → retour via ‹ → scroll bloqué** (PR #366)
 - Cause : `.act-cat-panel { display:flex }` par défaut + sheet scrollait le contenu du sous-panneau (feed non contraint). `closeActivityCat()` ne remettait pas `scrollTop=0`.
-- Fix : `body.act-cat-open` (même pattern que `body.appels-mode`) — sheet `overflow:hidden`, panelActivite + actCatPanel en flex — le feed scroll en interne. `closeActivityCat()` retire la classe + `scrollTop=0`. `panel(p)` retire la classe si changement de panneau. `.act-cat-panel` passe à `display:none` par défaut.
+- Fix : `body.act-cat-open` (même pattern que `body.appels-mode`) — panelActivite + actCatPanel en flex — le feed scroll en interne. `closeActivityCat()` retire la classe + `scrollTop=0`. `panel(p)` retire la classe si changement de panneau. `.act-cat-panel` passe à `display:none` par défaut.
 
-**Bug 2 — Journal d'appels → Activité → scroll bloqué** (PR #368)
-- Cause : `body.appels-mode #sheet { overflow:hidden }` → iOS marque le sheet comme non-scrollable. `closeCallJournal()` retirait la classe mais ne forçait pas le reflow. De plus, la transition CSS height dure 280ms — les resets scrollTop (0/16/80/250ms) se font pendant la transition quand le contenu tient encore, et iOS peut restaurer le scroll après 280ms.
-- Fix : `closeCallJournal()` : `void offsetHeight` (force reflow synchrone iOS) + `scrollTop=0` après suppression de toutes les classes. `navActivite()` : reset supplémentaire à 320ms (post-transition CSS).
+**Bug 2 — Journal d'appels → Activité → scroll bloqué** (PR #368 insuffisant, PR #370 fix définitif)
+- Cause racine : `body.appels-mode #sheet { overflow:hidden }`, `#sheet:has(#panelMessages.on) { overflow:hidden }`, `body.act-cat-open #sheet { overflow:hidden }` → iOS marque le scroll container comme **non-scrollable au niveau OS** (hit-test). Une fois marqué, aucun `void offsetHeight` ni `scrollTop=0` ne suffit à lever le verrou.
+- PR #368 (tentative) : `void offsetHeight` + reset 320ms → USER CONFIRME : toujours bloqué.
+- **PR #370 (fix définitif)** : suppression de `overflow:hidden` sur les 3 règles sheet-niveau. Le sheet reste `overflow-y:auto` en permanence. Les enfants (panelMessages, icAppelsPane, panelActivite, actCatPanel) utilisent déjà `flex:1 + min-height:0` pour se contraindre sans débordement. Aucune régression visuelle.
 
 ---
 
@@ -2354,6 +2355,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-24 | IA session | Fix scroll Activité bloqué après Appels — suppression overflow:hidden sur #sheet dans body.appels-mode, body.act-cat-open, #sheet:has(#panelMessages.on). app.css v39, SW v238, PR #370. |
 | 2026-06-24 | IA session | Fix journal fantôme persistant — closeCallJournal() retire .on de panelMessages (chemin OBD _panels('messages')). SW v233. PR #361. |
 | 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal v1) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
 | 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |
