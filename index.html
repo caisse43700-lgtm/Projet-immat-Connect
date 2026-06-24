@@ -2172,19 +2172,17 @@ App.actOpenVehicleMsgGroup=function(plate){
   const renderEnCours=(m)=>{
     const mid=e2(String(m.id));
     const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    const isRated=ratedIds.has(String(m.id));
     const isPending=pendingSet.has(String(m.id));
     return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
       <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
         ${isPending?`<div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">Vous avez indiqué que vous vérifieriez. Revenez confirmer le résultat lorsque vous serez arrêté.</div></div>`:''}
-        <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Vous avez pu vérifier ?</div>
+        <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Qu'avez-vous constaté ?</div>
         <div class="act-vmg-verdict-wrap">
-          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Confirmé<span class="act-vmg-vbtn-sub">Le problème existe, je m'en occupe</span></button>
-          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Signalement confirmé<span class="act-vmg-vbtn-sub">Le problème existe — augmente la confiance du signaleur</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Problème disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-false" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','false')">❌ Faux signalement<span class="act-vmg-vbtn-sub">Ce signalement est incorrect</span></button>
         </div>
-        ${!isRated?`<button type="button" class="act-vmg-rate-btn" style="margin-top:4px" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl" style="margin-top:4px">✓ Déjà noté utile</div>'}
         <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
         <div class="act-vmg-contact">
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
@@ -2296,7 +2294,7 @@ App.actVmVerdict=function(msgId,plate,type){
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   const labels={confirmed:'✅ Confirmé — merci pour votre retour',gone:'ℹ️ Disparu — signalement clos',false:'❌ Faux signalement enregistré'};
   toast(labels[type]||'Verdict enregistré','ok');
-  if(type==='confirmed'){try{if(typeof trustDelta==='function')trustDelta(plate,5);}catch(e){}}
+  if(type==='confirmed'){try{if(typeof trustDelta==='function')trustDelta(plate,8);}catch(e){}}
   this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
 };
 App.actVmCall=function(plate){try{window.CallManager?.contactByCall(nPlate(plate),'');}catch(e){}};
