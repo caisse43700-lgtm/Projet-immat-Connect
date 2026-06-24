@@ -54,13 +54,25 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix journal fantôme — closeCallJournal() retire .on de panelMessages**
+**Mission : 3 fixes UI — journal Stationné + garde CSS + Settings safe area**
 **Date :** 2026-06-24
-**Commit :** `767932c` (PR #361) — SW v232 → v233
+**Commits :** PR #361 (v233) · PR #363 (v234) · PR #364 (v235) — app.css v37, SW v235
 
 ### Ce qui a été fait
 
-**Bug persistant** : le chemin OBD `_openAppelsInline()` → `_panels('messages')` ajoutait `.on` à `panelMessages`. L'ancienne `closeCallJournal()` retirait `appels-mode` mais `.panel.on { display:block }` maintenait `panelMessages` visible. Fix : deux lignes ajoutées retirent `.on` et forcent `display:none` sur `panelMessages`. Couvre les deux chemins d'ouverture (navAppels via CSS appels-mode, et _openAppelsInline via classe .on).
+1. **Journal fantôme dans Stationné (closeCallJournal v2)** — `closeCallJournal()` ne retirait pas `.on` de `panelMessages`. Quand `_openAppelsInline()` (chemin OBD) l'ajoutait, `.panel.on { display:block }` maintenait le panel visible malgré la suppression d'`appels-mode`. Fix : deux lignes retirent `.on` et forcent `display:none` (PR #361, SW v233).
+
+2. **Garde CSS anti-journal dans Activité** — Cause racine identifiée : `App.panel()` efface tous les `style.display` inline, ouvrant une fenêtre où `body.appels-mode #sheet #panelMessages { display:flex !important }` peut s'appliquer. Fix CSS incassable : `#sheet:has(#panelActivite.on) #panelMessages { display:none !important }` — spécificité 0,2,2 > 0,2,1, couvre tous les chemins (PR #363, SW v234).
+
+3. **Panel Paramètres — carte visible en haut (safe area)** — En mode fullscreen Settings, `height: var(--sheet-h-full)` positionnait le haut du sheet à `safe-top`, laissant la carte visible dans la zone Dynamic Island/notch. Fix : `height: calc(100dvh - nav-h - safe-bottom)` + `padding-top: max(safe-top + 8px, 16px)` (PR #364, SW v235).
+
+---
+
+**Mission précédente : Fix journal fantôme v1 — closeCallJournal() + .on panelMessages**
+**Date :** 2026-06-24
+**Commit :** `767932c` (PR #361) — SW v232 → v233
+
+Fix initial de closeCallJournal() — voir mission courante pour v2 complète.
 
 ---
 
