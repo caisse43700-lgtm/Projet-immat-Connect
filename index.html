@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=34">
+  <link rel="stylesheet" href="app.css?v=35">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -2123,41 +2123,79 @@ App.actOpenVehicleMsgGroup=function(plate){
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const ep=e2(plate);
-  let repliedIds,ratedIds;
-  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(e){repliedIds=new Set();}
+  // ── État REÇUS : Nouveaux / En cours / Traités ────────────────────────────────
+  let verdicts,pendingSet,ratedIds,readIds,repliedIds;
+  try{verdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){verdicts={};}
+  try{pendingSet=new Set(JSON.parse(localStorage.getItem('ic_vm_pending')||'[]'));}catch(e){pendingSet=new Set();}
   try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_rated')||'[]'));}catch(e){ratedIds=new Set();}
-  const enCours=sorted.filter(m=>!repliedIds.has(String(m.id)));
-  const archived=sorted.filter(m=>repliedIds.has(String(m.id)));
+  try{readIds=new Set([...(S._readMsgIds||[]),...JSON.parse(localStorage.getItem('ic_read_msg_ids')||'[]')]);}catch(e){readIds=new Set();}
+  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(e){repliedIds=new Set();}
+  const isRead=m=>!!(m.read_at||readIds.has(String(m.id)));
+  const isTraite=m=>!!verdicts[String(m.id)]||repliedIds.has(String(m.id));
+  const nouveaux=sorted.filter(m=>!isTraite(m)&&!isRead(m)&&!pendingSet.has(String(m.id)));
+  const enCours=sorted.filter(m=>!isTraite(m)&&(isRead(m)||pendingSet.has(String(m.id))));
+  const traites=sorted.filter(m=>isTraite(m));
+  // Marquer les "nouveaux" comme lus dès l'ouverture (prochain affichage = En cours)
+  if(nouveaux.length){
+    if(!S._readMsgIds)S._readMsgIds=new Set();
+    nouveaux.forEach(m=>S._readMsgIds.add(String(m.id)));
+    try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+    this.updateActBadge?.();
+  }
+  // Badge temps : urgence visuelle selon l'âge du signalement
+  const timeBadge=ts=>{
+    if(!ts)return'';
+    const ago=(Date.now()-new Date(ts).getTime())/60000;
+    if(ago<5)return'<span class="act-vmg-tbadge act-vmg-tbadge-green">🟢 À l\'instant</span>';
+    if(ago<30)return'<span class="act-vmg-tbadge act-vmg-tbadge-yellow">🟡 Il y a ~'+Math.round(ago)+' min</span>';
+    return'<span class="act-vmg-tbadge act-vmg-tbadge-red">🔴 Signalé il y a +30 min</span>';
+  };
+  // Libellé et date du verdict pour TRAITÉS
+  const verdictLabel=m=>{const v=verdicts[String(m.id)];if(!v)return'✓ Traité';if(v.v==='confirmed')return'✅ Confirmé';if(v.v==='gone')return'ℹ️ Disparu';if(v.v==='false')return'❌ Faux signalement';return'✓ Traité';};
+  const verdictDate=m=>{const v=verdicts[String(m.id)];if(v&&v.ts){const d=new Date(v.ts);return'Traité le '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}return'';};
+  const renderNouveau=(m)=>{
+    const mid=e2(String(m.id));
+    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
+    return`<div class="act-vmg-card act-vmg-encours act-vmg-new" onclick="App.actToggleVmCard(this)">
+      <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<span class="act-mod-new-badge" style="margin-bottom:4px;display:inline-block;font-size:9px">NOUVEAU</span><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+      <div class="act-vmg-detail">
+        <button type="button" class="act-vmg-pending-btn" onclick="event.stopPropagation();App.actVmPending('${mid}','${ep}')">✓ Je vérifierai dès que possible</button>
+        <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
+        <div class="act-vmg-contact">
+          <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
+          <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
+        </div>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
+      </div>
+    </div>`;
+  };
   const renderEnCours=(m)=>{
     const mid=e2(String(m.id));
     const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
     const isRated=ratedIds.has(String(m.id));
     return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
-      <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+      <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        <div class="act-vmg-sec-lbl">Répondre</div>
-        <div class="act-vmg-replies">
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','merci')">Merci 👍</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','verifie')">Je vérifie 👀</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','arrete')">Je m'arrête ✓</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','regle')">Réglé ✅</button>
+        <div class="act-vmg-sec-lbl">Vous avez pu vérifier ?</div>
+        <div class="act-vmg-verdict-wrap">
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Confirmé<span class="act-vmg-vbtn-sub">Le problème existe, je m'en occupe</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-false" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','false')">❌ Faux signalement<span class="act-vmg-vbtn-sub">Ce signalement est incorrect</span></button>
         </div>
-        <div class="act-vmg-sec-lbl">Évaluer</div>
-        ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté utile</div>'}
-        <button type="button" class="act-vmg-abuse-btn" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
-        <div class="act-vmg-sec-lbl">Contacter</div>
+        ${!isRated?`<button type="button" class="act-vmg-rate-btn" style="margin-top:4px" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl" style="margin-top:4px">✓ Déjà noté utile</div>'}
+        <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
         <div class="act-vmg-contact">
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
         </div>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
       </div>
     </div>`;
   };
-  const renderArchived=(m)=>{
+  const renderTraite=(m)=>{
     const mid=e2(String(m.id));
-    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    const isRated=ratedIds.has(String(m.id));
-    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${ep}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-archived"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2((m.message||'').slice(0,90))}${(m.message||'').length>90?'…':''}</div></div><div class="act-vmg-time">${e2(time)}</div></div>${!isRated?`<button type="button" class="act-vmg-rate-btn act-vmg-rate-compact" onclick="App.actVmRate('${mid}','${ep}')">👍 Info utile</button>`:''}</div></div>`;
+    const vLabel=verdictLabel(m);const vDate=verdictDate(m);
+    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${ep}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-traite"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2((m.message||'').slice(0,90))}${(m.message||'').length>90?'…':''}</div></div></div><div style="padding:0 12px 12px"><div class="act-vmg-verdict-lbl">${vLabel}</div>${vDate?`<div class="act-vmg-verdict-date">${e2(vDate)}</div>`:''}<div class="act-vmg-contact act-vmg-contact-traite"><button type="button" class="act-vmg-cbtn" onclick="App.actOpenConv('${ep}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="App.actVmCall('${ep}')">📞 Appeler</button></div></div></div></div>`;
   };
   let html='';
   if(!isRecus){
@@ -2190,9 +2228,10 @@ App.actOpenVehicleMsgGroup=function(plate){
     }
     if(!sorted.length&&!sortedResponses.length){html='<div class="act-empty-cat">Aucun signalement envoyé à cette plaque.</div>';}
   } else {
-    if(enCours.length){html+=`<div class="act-vmg-sec-title">🔴 En cours (${enCours.length})</div>`+enCours.map(m=>renderEnCours(m)).join('');}
-    if(archived.length){html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Archivés (${archived.length})</div>`+archived.map(m=>renderArchived(m)).join('');}
-    if(!enCours.length&&!archived.length){html='<div class="act-empty-cat">Aucun signalement véhicule pour cette plaque.</div>';}
+    if(nouveaux.length){html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🔵 Nouveaux (${nouveaux.length})</div>`+nouveaux.map(m=>renderNouveau(m)).join('');}
+    if(enCours.length){html+=`<div class="act-vmg-sec-title${nouveaux.length?' act-vmg-sec-arch':''}">🔴 En cours (${enCours.length})</div>`+enCours.map(m=>renderEnCours(m)).join('');}
+    if(traites.length){html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Traités (${traites.length})</div>`+traites.map(m=>renderTraite(m)).join('');}
+    if(!nouveaux.length&&!enCours.length&&!traites.length){html='<div class="act-empty-cat">Aucun signalement véhicule pour cette plaque.</div>';}
   }
   gFeed.innerHTML=html;
   const SW=76;
@@ -2232,14 +2271,31 @@ App.actVmRate=function(msgId,plate){
   let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_vm_rated')||'[]');}catch(e){}
   if(!rated.includes(msgId))rated.push(msgId);
   try{localStorage.setItem('ic_vm_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
-  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_vm_replied')||'[]');}catch(e){}
-  if(!replied.includes(msgId))replied.push(msgId);
-  try{localStorage.setItem('ic_vm_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
   try{if(plate&&typeof trustDelta==='function')trustDelta(plate,8);}catch(e){}
   try{if(window.ImmatBus)window.ImmatBus.emit('VEHICLE_REPORT_RATED',{target:plate,msgId,_src:'actVmRate'});}catch(e){}
   try{window.InteractionEngine?.create?.({type:'VEHICLE_ALERT',initiator:plate,target:this.ownPlate?.(),payload:{rated:true,msgId},status:'rated'});}catch(e){}
   toast('👍 Info utile — score de confiance augmenté','ok');
   this.actOpenVehicleMsgGroup(plate);
+};
+App.actVmPending=async function(msgId,plate){
+  let pending=[];try{pending=JSON.parse(localStorage.getItem('ic_vm_pending')||'[]');}catch(e){}
+  if(!pending.includes(msgId))pending.push(msgId);
+  try{localStorage.setItem('ic_vm_pending',JSON.stringify(pending.slice(-500)));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  await this.actVehicleReply(plate,'Je vérifierai ça dès que possible 👀');
+  this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
+};
+App.actVmVerdict=function(msgId,plate,type){
+  let verdicts={};try{verdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
+  verdicts[msgId]={v:type,ts:Date.now()};
+  try{localStorage.setItem('ic_vm_verdicts',JSON.stringify(verdicts));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  const labels={confirmed:'✅ Confirmé — merci pour votre retour',gone:'ℹ️ Disparu — signalement clos',false:'❌ Faux signalement enregistré'};
+  toast(labels[type]||'Verdict enregistré','ok');
+  if(type==='confirmed'){try{if(typeof trustDelta==='function')trustDelta(plate,5);}catch(e){}}
+  this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
 };
 App.actVmCall=function(plate){try{window.CallManager?.contactByCall(nPlate(plate),'');}catch(e){}};
 App._actAbuseReport=function(msgId,plate){S._pendingAbuseSourceMsgId=msgId;S._pendingAbusePlate=plate;App.openAbuseReport(plate,'FAUX_SIGNALEMENT');};
