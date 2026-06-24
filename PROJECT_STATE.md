@@ -54,7 +54,31 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix scroll Activité bloqué — cause racine overflow:hidden sur #sheet**
+**Mission : 4 bugs UI — scroll Appels + legacy Signaler + HTML structure + vmg cards iOS**
+**Date :** 2026-06-24
+**Commits :** PR #370 (SW v238) · PR #371 (SW v239) · PR #372 (SW v240) · PR #373 (SW v241, app.css v40)
+
+### Ce qui a été fait
+
+**Bug 1 — Scroll Activité bloqué après Journal d'appels** (PR #370 — validé terrain ✅)
+- Cause racine : `overflow:hidden` sur `#sheet` dans 3 règles CSS → iOS marque le sheet non-scrollable au niveau OS.
+- Fix : suppression de `overflow:hidden` des 3 règles sheet-niveau (appels-mode, act-cat-open, panelMessages.on). Sheet toujours `overflow-y:auto`.
+
+**Bug 2 — Pills "Route / Aide / Véhicule / Urgent" visibles dans Signaler** (PR #371)
+- Cause : bloc HTML legacy `#alertsToolbar + #alertsList` dans `sigStep2Route`.
+- Fix : suppression du bloc legacy.
+
+**Bug 3 — Véhicule / Aide / Stationné vides dans Signaler** (PR #372)
+- Cause : suppression accidentelle du `</div>` de fermeture de `sigStep2Route` dans PR #371. Tous les steps suivants imbriqués à l'intérieur.
+- Fix : `</div>` restauré.
+
+**Bug 4 — Cartes EN COURS (tirets "-") et ARCHIVÉS (barres rouges) dans vue groupe véhicule** (PR #373 — validé terrain ✅)
+- Cause : `#actAlertGroupFeed` héritait `display:flex; flex-direction:column` de `.act-cat-feed`. iOS WebKit effondre les flex items avec `overflow:hidden` à hauteur 0. Seule la bordure gauche restait visible (tiret rouge), et le `.act-swipe-del` absolu (fond rouge) apparaissait.
+- Fix : `#actAlertGroupFeed { display:block }` — layout block normal, pas de flex height collapse.
+
+---
+
+**Mission précédente : Fix scroll Activité bloqué — cause racine overflow:hidden sur #sheet**
 **Date :** 2026-06-24
 **Commits :** PR #366 (SW v236) · PR #368 (SW v237) · PR #370 (SW v238, app.css v39)
 
@@ -2355,6 +2379,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-24 | IA session | 4 bugs UI : scroll Appels (PR#370) + legacy pills Signaler (PR#371) + </div> manquant sigStep2Route (PR#372) + cartes vmg iOS display:block (PR#373). app.css v40, SW v241. Tous validés terrain. |
 | 2026-06-24 | IA session | Fix scroll Activité bloqué après Appels — suppression overflow:hidden sur #sheet dans body.appels-mode, body.act-cat-open, #sheet:has(#panelMessages.on). app.css v39, SW v238, PR #370. |
 | 2026-06-24 | IA session | Fix journal fantôme persistant — closeCallJournal() retire .on de panelMessages (chemin OBD _panels('messages')). SW v233. PR #361. |
 | 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal v1) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
