@@ -1200,6 +1200,10 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-vmg-verdict-lbl { font-size: 13px; font-weight: 600; color: #cbd5e1; }
 .act-vmg-verdict-date { font-size: 11px; color: #475569; margin-top: 2px; }
 .act-vmg-contact-traite { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.05); }
+/* Bandeau rappel "Vérification en attente" (item pending dans EN COURS) */
+.act-vmg-pending-reminder { background: rgba(41,121,255,.08); border: 1px solid rgba(41,121,255,.2); border-radius: 8px; padding: 10px 12px; margin: 10px 0 4px; }
+.act-vmg-pending-reminder-title { font-size: 12px; font-weight: 700; color: #60a5fa; }
+.act-vmg-pending-reminder-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.4; }
 .act-mod-new-badge { background: #ff3b5c; color: #fff; font-size: 10px; font-weight: 950; border-radius: 6px; padding: 3px 9px; letter-spacing: 0.6px; }
 .act-mod-body { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 10px; }
 .act-mod-avatar { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; flex: 0 0 auto; }

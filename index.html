@@ -2173,10 +2173,12 @@ App.actOpenVehicleMsgGroup=function(plate){
     const mid=e2(String(m.id));
     const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
     const isRated=ratedIds.has(String(m.id));
+    const isPending=pendingSet.has(String(m.id));
     return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
       <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        <div class="act-vmg-sec-lbl">Vous avez pu vérifier ?</div>
+        ${isPending?`<div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">Vous avez indiqué que vous vérifieriez. Revenez confirmer le résultat lorsque vous serez arrêté.</div></div>`:''}
+        <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Vous avez pu vérifier ?</div>
         <div class="act-vmg-verdict-wrap">
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Confirmé<span class="act-vmg-vbtn-sub">Le problème existe, je m'en occupe</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
@@ -2283,7 +2285,7 @@ App.actVmPending=async function(msgId,plate){
   try{localStorage.setItem('ic_vm_pending',JSON.stringify(pending.slice(-500)));}catch(e){}
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
-  await this.actVehicleReply(plate,'Je vérifierai ça dès que possible 👀');
+  try{await this.actVehicleReply(plate,'Je vérifierai ça dès que possible 👀');}catch(e){}
   this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
 };
 App.actVmVerdict=function(msgId,plate,type){
