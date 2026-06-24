@@ -378,10 +378,11 @@ body.rotating .sheet { transition: none !important; }
   #sheet:not(.mini):has(#panelDrive.on) {
     height: min(var(--sheet-h-panel), calc(100dvh - var(--safe-top) - var(--nav-h) - var(--safe-bottom) - 12px));
   }
-  /* Fullscreen — Famille C : carte absente */
+  /* Fullscreen — Famille C : carte absente — sheet monte jusqu'à top:0 */
   #sheet:not(.mini):has(#panelSettings.on) {
-    height: var(--sheet-h-full);
+    height: calc(100dvh - var(--nav-h) - var(--safe-bottom));
     border-radius: 0;
+    padding-top: max(calc(var(--safe-top) + 8px), 16px);
   }
 }
 #sheetArrowOpen {
