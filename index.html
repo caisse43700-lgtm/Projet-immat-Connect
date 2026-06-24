@@ -1538,6 +1538,8 @@ App.closeCallJournal=function(){
   const _cp=$('icAppelsPane');if(_cp)_cp.style.display='none';
   const _pm=document.getElementById('panelMessages');
   if(_pm){_pm.classList.remove('on');_pm.style.display='none';}
+  // Force iOS à recalculer overflow après overflow:hidden → auto (sinon scroll reste bloqué)
+  const _sh=document.getElementById('sheet');if(_sh){void _sh.offsetHeight;_sh.scrollTop=0;}
 };
 App.navAppels=function(){
   document.body.classList.add('appels-mode');
@@ -1602,6 +1604,8 @@ App.navActivite=function(){
     requestAnimationFrame(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;const p=document.getElementById('panelActivite');if(p&&p.style.display==='block')p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}});
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;}catch(e){}},80);
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){s.scrollTop=0;}const p=document.getElementById('panelActivite');if(p)p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}},250);
+    // Reset post-transition CSS (transition height dure 280ms — iOS peut restaurer scrollTop après)
+    setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){void s.offsetHeight;s.scrollTop=0;}}catch(e){}},320);
   }catch(_){toast('ACT err:'+_,'bad');}
   this.renderActivityMain?.();
   try{S._actLoadingP=(window.ImmatMessages?.refresh?.())||null;if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){S._actLoadingP.then(()=>{S._actLoadingP=null;try{this.renderActivityFeed?.()}catch(e){}}).catch(()=>{S._actLoadingP=null;})}else{S._actLoadingP=null;}}catch(e){S._actLoadingP=null;}
