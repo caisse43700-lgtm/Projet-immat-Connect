@@ -801,7 +801,6 @@ body.keyboard-open .sheet { bottom: 0 !important; }
 body.appels-mode #sheet {
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
 }
 body.appels-mode #sheet #panelMessages {
   flex: 1;
@@ -837,7 +836,6 @@ body.appels-mode #icCallLog {
 body.act-cat-open #sheet {
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
 }
 body.act-cat-open #sheet #panelActivite {
   flex: 1;
@@ -860,7 +858,6 @@ body.act-cat-open .act-cat-feed {
 #sheet:has(#panelMessages.on) {
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
 }
 #sheet:has(#panelMessages.on) #panelMessages {
   flex: 1 1 auto;
