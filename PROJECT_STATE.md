@@ -9,13 +9,14 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-23
-Avancement             : ~53% du plan fonctionnel implémenté — EN PRODUCTION
+Date de mise à jour    : 2026-06-24
+Avancement             : ~55% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 7de5370 (poussé)
-Branche de travail     : claude/immatconnect-pro-app-dEKGR (sync avec main)
+Branche production     : main (GitHub Pages) — commit 9b07790 (SW v243)
+Branche de travail     : main (merge terminé — claude/immatconnect-pro-app-dEKGR fusionné)
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
+Phase produit          : TERRAIN — observer les usages, ne plus toucher au workflow
 ```
 
 ### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
@@ -1804,15 +1805,16 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 ## 3. MISSION EN COURS
 
-**Aucune mission en cours.**
+**Aucune mission en cours — PHASE TERRAIN.**
 
-Refonte signalements véhicule — TERMINÉE 2026-06-24 (commits 8bb2e94 → 17c4b4f + vocabulaire).
-Prêt pour merge `claude/immatconnect-pro-app-dEKGR` → `main` sur validation utilisateur.
+Merge `claude/immatconnect-pro-app-dEKGR` → `main` TERMINÉ 2026-06-24 (commit 9b07790, SW v243).
+V1 signalements véhicule en production. Recommandation ChatGPT : ne plus toucher au workflow pendant quelques semaines.
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
 - NE PAS fusionner S6-TRUST (revert 90577f4 — 6 conditions métier non satisfaites)
 - NE PAS toucher messages.js logique métier sauf chantier dédié explicitement validé
+- NE PAS toucher le workflow signalements véhicule — observer d'abord les usages terrain
 ```
 
 ---
@@ -1820,7 +1822,23 @@ RÈGLES ACTIVES (ne pas remettre en question) :
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
 ```
-CHANTIER : FIABILISATION CHAÎNE MESSAGES
+PHASE TERRAIN — OBSERVATION (priorité absolue)
+════════════════════════════════════════════════════
+NE PAS toucher le workflow signalements véhicule avant au moins 2 semaines.
+
+Indicateurs à observer (ChatGPT recommande) :
+  1. Taux de signalements qui reçoivent une réponse
+  2. % qui passent NOUVEAUX → EN COURS → TRAITÉS
+  3. Fréquence "Je vérifierai dès que je serai arrêté"
+  4. Répartition des 4 verdicts (confirmé / disparu / faux / pas pu vérifier)
+  5. Délai moyen avant clôture d'un signalement
+
+Ces données valent plus que tout nouvel audit théorique.
+
+Ensuite (si usage observé) : itérer en V2 guidé par les vrais comportements.
+════════════════════════════════════════════════════
+
+CHANTIER SUIVANT SI NÉCESSAIRE : FIABILISATION CHAÎNE MESSAGES
 Ouvert le 2026-06-23 — Séparé du redesign visuel V3
 ════════════════════════════════════════════════════
 
