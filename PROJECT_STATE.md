@@ -54,9 +54,19 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : 3 bugs UI corrigés — Journal d'appels overlay + barre nav thread**
+**Mission : Fix journal fantôme — closeCallJournal() retire .on de panelMessages**
 **Date :** 2026-06-24
-**Commits :** `f35ee07` (closeCallJournal) · `daa2f7c` (nav always visible) — app.css v35, SW v232
+**Commit :** `767932c` (PR #361) — SW v232 → v233
+
+### Ce qui a été fait
+
+**Bug persistant** : le chemin OBD `_openAppelsInline()` → `_panels('messages')` ajoutait `.on` à `panelMessages`. L'ancienne `closeCallJournal()` retirait `appels-mode` mais `.panel.on { display:block }` maintenait `panelMessages` visible. Fix : deux lignes ajoutées retirent `.on` et forcent `display:none` sur `panelMessages`. Couvre les deux chemins d'ouverture (navAppels via CSS appels-mode, et _openAppelsInline via classe .on).
+
+---
+
+**Mission précédente : 3 bugs UI corrigés — Journal d'appels overlay + barre nav thread**
+**Date :** 2026-06-24
+**Commits :** `f35ee07` (closeCallJournal v1) · `daa2f7c` (nav always visible) — app.css v35, SW v232
 
 ### Ce qui a été fait
 
@@ -2316,7 +2326,8 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
-| 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
+| 2026-06-24 | IA session | Fix journal fantôme persistant — closeCallJournal() retire .on de panelMessages (chemin OBD _panels('messages')). SW v233. PR #361. |
+| 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal v1) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
 | 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |
 | 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
 | 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |
