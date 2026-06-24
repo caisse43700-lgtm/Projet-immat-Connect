@@ -54,7 +54,21 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Gardien role isolation — is-gardien bleed fix + merge main**
+**Mission : 3 bugs UI corrigés — Journal d'appels overlay + barre nav thread**
+**Date :** 2026-06-24
+**Commits :** `f35ee07` (closeCallJournal) · `daa2f7c` (nav always visible) — app.css v35, SW v232
+
+### Ce qui a été fait
+
+1. **Journal d'appels reste affiché au-dessus des autres panels** — Création de `App.closeCallJournal()` (retire `body.appels-mode` + `icAppelsPane.style.display='none'`). Appelée depuis `navActivite()`, `navSignaler()` et `openActivityCat()`. Cause principale : `openActivityCat()` pouvait être appelée directement (via badge/alerte) sans passer par `navActivite()`, laissant le journal visible.
+
+2. **Barre de navigation disparaît à l'ouverture d'un thread et ne réapparaît pas** — Suppression de la règle CSS `#appScreen:has(.ic-thread.show) .bottom-nav { display:none }`. Le sheet s'étend maintenant jusqu'au bord supérieur de la nav (`bottom: calc(var(--nav-h) + var(--safe-bottom)); height: var(--sheet-h-full)`) au lieu de descendre à `bottom:0`. La barre Signaler/Messages/Ange/Appels/Activité reste toujours visible. ✅ Validé terrain.
+
+3. **Gardien role isolation** (session précédente, merge finalisé) — SW v230→v231→v232.
+
+---
+
+**Mission précédente : Gardien role isolation — is-gardien bleed fix + merge main**
 **Date :** 2026-06-23
 **Commit :** `7f8f3e1` sur `main` (poussé) — app.css v34, SW v230
 
@@ -2302,6 +2316,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
 | 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |
 | 2026-06-23 | IA session | Dashboard Gardien normalisation — 3 fixes : isGardien DOM fallback supprimé, Système Immunitaire score réel (6 checks module), abus reports message erreur distinctif. SW v228. |
 | 2026-06-23 | IA session | Chantier Fiabilisation chaîne Messages 6/6 CLÔTURÉ — commits 805bc54→e8724a4, messages.js v29, SW v227. |
