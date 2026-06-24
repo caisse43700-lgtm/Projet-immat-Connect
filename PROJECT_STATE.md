@@ -54,27 +54,46 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : 4 bugs UI — scroll Appels + legacy Signaler + HTML structure + vmg cards iOS**
+**Mission : Merge refonte signalements véhicule → main**
 **Date :** 2026-06-24
-**Commits :** PR #370 (SW v238) · PR #371 (SW v239) · PR #372 (SW v240) · PR #373 (SW v241, app.css v40)
+**Commit :** merge `claude/immatconnect-pro-app-dEKGR` → `main` — SW v243
 
 ### Ce qui a été fait
 
+Fusion de la branche `claude/immatconnect-pro-app-dEKGR` dans `main`. Résolution des conflits avec stratégie : garder les fixes iOS de main (closeCallJournal iOS scroll, act-cat-open) + garder la machine 3-états de la branche (verdicts/pendingSet, timeBadge, renderNouveau/renderEnCours/renderTraite). SW bumped v242→v243.
+
+---
+
+**Mission précédente (main) : 4 bugs UI — scroll Appels + legacy Signaler + HTML structure + vmg cards iOS**
+**Date :** 2026-06-24
+**Commits :** PR #370 (SW v238) · PR #371 (SW v239) · PR #372 (SW v240) · PR #373 (SW v241, app.css v40)
+
 **Bug 1 — Scroll Activité bloqué après Journal d'appels** (PR #370 — validé terrain ✅)
-- Cause racine : `overflow:hidden` sur `#sheet` dans 3 règles CSS → iOS marque le sheet non-scrollable au niveau OS.
-- Fix : suppression de `overflow:hidden` des 3 règles sheet-niveau (appels-mode, act-cat-open, panelMessages.on). Sheet toujours `overflow-y:auto`.
+- Fix : suppression de `overflow:hidden` des 3 règles sheet-niveau. Sheet toujours `overflow-y:auto`.
 
 **Bug 2 — Pills "Route / Aide / Véhicule / Urgent" visibles dans Signaler** (PR #371)
-- Cause : bloc HTML legacy `#alertsToolbar + #alertsList` dans `sigStep2Route`.
-- Fix : suppression du bloc legacy.
+- Fix : suppression du bloc legacy `#alertsToolbar + #alertsList` dans `sigStep2Route`.
 
 **Bug 3 — Véhicule / Aide / Stationné vides dans Signaler** (PR #372)
-- Cause : suppression accidentelle du `</div>` de fermeture de `sigStep2Route` dans PR #371. Tous les steps suivants imbriqués à l'intérieur.
-- Fix : `</div>` restauré.
+- Fix : `</div>` de fermeture de `sigStep2Route` restauré.
 
 **Bug 4 — Cartes EN COURS (tirets "-") et ARCHIVÉS (barres rouges) dans vue groupe véhicule** (PR #373 — validé terrain ✅)
-- Cause : `#actAlertGroupFeed` héritait `display:flex; flex-direction:column` de `.act-cat-feed`. iOS WebKit effondre les flex items avec `overflow:hidden` à hauteur 0. Seule la bordure gauche restait visible (tiret rouge), et le `.act-swipe-del` absolu (fond rouge) apparaissait.
 - Fix : `#actAlertGroupFeed { display:block }` — layout block normal, pas de flex height collapse.
+
+---
+
+**Mission précédente (branche) : Refonte workflow signalements véhicule — machine 3 états + vocabulaire conducteur**
+**Date :** 2026-06-24
+**Commits :** `8bb2e94` → `17c4b4f` + vocabulaire sur `claude/immatconnect-pro-app-dEKGR` — app.css v35, SW v232
+
+Refonte complète du panel Activité > Reçus (signalements véhicule) : machine à 3 états localStorage-only, sans modification Supabase.
+
+**3 états :**
+- **NOUVEAUX** — signalements non lus, non pendants, non traités. Badge bleu NOUVEAU + badge temps 🟢🟡🔴. Un seul bouton "✓ Je vérifierai dès que je serai arrêté".
+- **EN COURS** — lus ou pendants, non traités. Bandeau "🕐 Vérification en attente" si `ic_vm_pending`. Boutons verdict : ✅ Confirmé / ℹ️ Disparu / ❌ Faux / ⏭️ Je n'ai pas pu vérifier.
+- **TRAITÉS** — verdict enregistré ou `ic_vm_replied` (compat arrière). Affichage verdict + date + contact.
+
+**Règles métier :** `actVmVerdict('confirmed')` → `trustDelta(+8)`. Autres verdicts : delta = 0. GPS filter dans `_formatMsg()`. Bloc urgence SAMU/Police/Pompiers dans Stationné. Validation ChatGPT 99%.
 
 ---
 
@@ -82,16 +101,8 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 **Date :** 2026-06-24
 **Commits :** PR #366 (SW v236) · PR #368 (SW v237) · PR #370 (SW v238, app.css v39)
 
-### Ce qui a été fait
-
-**Bug 1 — Sous-panneaux (Route/Véhicule/Aide/Stationné) → retour via ‹ → scroll bloqué** (PR #366)
-- Cause : `.act-cat-panel { display:flex }` par défaut + sheet scrollait le contenu du sous-panneau (feed non contraint). `closeActivityCat()` ne remettait pas `scrollTop=0`.
-- Fix : `body.act-cat-open` (même pattern que `body.appels-mode`) — panelActivite + actCatPanel en flex — le feed scroll en interne. `closeActivityCat()` retire la classe + `scrollTop=0`. `panel(p)` retire la classe si changement de panneau. `.act-cat-panel` passe à `display:none` par défaut.
-
-**Bug 2 — Journal d'appels → Activité → scroll bloqué** (PR #368 insuffisant, PR #370 fix définitif)
-- Cause racine : `body.appels-mode #sheet { overflow:hidden }`, `#sheet:has(#panelMessages.on) { overflow:hidden }`, `body.act-cat-open #sheet { overflow:hidden }` → iOS marque le scroll container comme **non-scrollable au niveau OS** (hit-test). Une fois marqué, aucun `void offsetHeight` ni `scrollTop=0` ne suffit à lever le verrou.
-- PR #368 (tentative) : `void offsetHeight` + reset 320ms → USER CONFIRME : toujours bloqué.
-- **PR #370 (fix définitif)** : suppression de `overflow:hidden` sur les 3 règles sheet-niveau. Le sheet reste `overflow-y:auto` en permanence. Les enfants (panelMessages, icAppelsPane, panelActivite, actCatPanel) utilisent déjà `flex:1 + min-height:0` pour se contraindre sans débordement. Aucune régression visuelle.
+**Bug 1 — Sous-panneaux → retour via ‹ → scroll bloqué** (PR #366) — Fix : `body.act-cat-open` pattern.
+**Bug 2 — Journal d'appels → Activité → scroll bloqué** — PR #370 fix définitif : suppression `overflow:hidden` 3 règles sheet-niveau.
 
 ---
 
@@ -99,21 +110,9 @@ Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-M
 **Date :** 2026-06-24
 **Commits :** PR #361 (v233) · PR #363 (v234) · PR #364 (v235) — app.css v37, SW v235
 
-### Ce qui a été fait
-
-1. **Journal fantôme dans Stationné (closeCallJournal v2)** — `closeCallJournal()` ne retirait pas `.on` de `panelMessages`. Quand `_openAppelsInline()` (chemin OBD) l'ajoutait, `.panel.on { display:block }` maintenait le panel visible malgré la suppression d'`appels-mode`. Fix : deux lignes retirent `.on` et forcent `display:none` (PR #361, SW v233).
-
-2. **Garde CSS anti-journal dans Activité** — Cause racine identifiée : `App.panel()` efface tous les `style.display` inline, ouvrant une fenêtre où `body.appels-mode #sheet #panelMessages { display:flex !important }` peut s'appliquer. Fix CSS incassable : `#sheet:has(#panelActivite.on) #panelMessages { display:none !important }` — spécificité 0,2,2 > 0,2,1, couvre tous les chemins (PR #363, SW v234).
-
-3. **Panel Paramètres — carte visible en haut (safe area)** — En mode fullscreen Settings, `height: var(--sheet-h-full)` positionnait le haut du sheet à `safe-top`, laissant la carte visible dans la zone Dynamic Island/notch. Fix : `height: calc(100dvh - nav-h - safe-bottom)` + `padding-top: max(safe-top + 8px, 16px)` (PR #364, SW v235).
-
----
-
-**Mission précédente : Fix journal fantôme v1 — closeCallJournal() + .on panelMessages**
-**Date :** 2026-06-24
-**Commit :** `767932c` (PR #361) — SW v232 → v233
-
-Fix initial de closeCallJournal() — voir mission courante pour v2 complète.
+1. Journal fantôme dans Stationné (closeCallJournal v2) — deux lignes retirent `.on` et forcent `display:none`.
+2. Garde CSS anti-journal — `#sheet:has(#panelActivite.on) #panelMessages { display:none !important }`.
+3. Panel Paramètres safe area — `height: calc(100dvh - nav-h - safe-bottom)`.
 
 ---
 
@@ -121,13 +120,9 @@ Fix initial de closeCallJournal() — voir mission courante pour v2 complète.
 **Date :** 2026-06-24
 **Commits :** `f35ee07` (closeCallJournal v1) · `daa2f7c` (nav always visible) — app.css v35, SW v232
 
-### Ce qui a été fait
-
-1. **Journal d'appels reste affiché au-dessus des autres panels** — Création de `App.closeCallJournal()` (retire `body.appels-mode` + `icAppelsPane.style.display='none'`). Appelée depuis `navActivite()`, `navSignaler()` et `openActivityCat()`. Cause principale : `openActivityCat()` pouvait être appelée directement (via badge/alerte) sans passer par `navActivite()`, laissant le journal visible.
-
-2. **Barre de navigation disparaît à l'ouverture d'un thread et ne réapparaît pas** — Suppression de la règle CSS `#appScreen:has(.ic-thread.show) .bottom-nav { display:none }`. Le sheet s'étend maintenant jusqu'au bord supérieur de la nav (`bottom: calc(var(--nav-h) + var(--safe-bottom)); height: var(--sheet-h-full)`) au lieu de descendre à `bottom:0`. La barre Signaler/Messages/Ange/Appels/Activité reste toujours visible. ✅ Validé terrain.
-
-3. **Gardien role isolation** (session précédente, merge finalisé) — SW v230→v231→v232.
+1. Journal d'appels reste affiché — création `App.closeCallJournal()`.
+2. Barre de navigation disparaît à l'ouverture d'un thread — suppression règle CSS `display:none`.
+3. Gardien role isolation (session précédente, merge finalisé) — SW v230→v231→v232.
 
 ---
 
@@ -1811,7 +1806,8 @@ Revérifié après exécution : la requête de vérification retourne maintenant
 
 **Aucune mission en cours.**
 
-Chantier "Fiabilisation chaîne Messages" — CLÔTURÉ 2026-06-23 (commits 805bc54 → e8724a4)
+Refonte signalements véhicule — TERMINÉE 2026-06-24 (commits 8bb2e94 → 17c4b4f + vocabulaire).
+Prêt pour merge `claude/immatconnect-pro-app-dEKGR` → `main` sur validation utilisateur.
 
 ```
 RÈGLES ACTIVES (ne pas remettre en question) :
@@ -2379,8 +2375,10 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-24 | IA session | Merge refonte signalements véhicule → main. Machine 3 états (NOUVEAUX/EN COURS/TRAITÉS) + fixes iOS (closeCallJournal, act-cat-open). SW v243. |
 | 2026-06-24 | IA session | 4 bugs UI : scroll Appels (PR#370) + legacy pills Signaler (PR#371) + </div> manquant sigStep2Route (PR#372) + cartes vmg iOS display:block (PR#373). app.css v40, SW v241. Tous validés terrain. |
 | 2026-06-24 | IA session | Fix scroll Activité bloqué après Appels — suppression overflow:hidden sur #sheet dans body.appels-mode, body.act-cat-open, #sheet:has(#panelMessages.on). app.css v39, SW v238, PR #370. |
+| 2026-06-24 | IA session | Refonte signalements véhicule — machine 3 états (NOUVEAUX/EN COURS/TRAITÉS), verdicts localStorage, trustDelta isolé à Confirmé (+8), vocabulaire conducteur "Je vérifierai dès que je serai arrêté". Validé ChatGPT 99%. app.css v35, SW v232. |
 | 2026-06-24 | IA session | Fix journal fantôme persistant — closeCallJournal() retire .on de panelMessages (chemin OBD _panels('messages')). SW v233. PR #361. |
 | 2026-06-24 | IA session | Journal d'appels overlay (App.closeCallJournal v1) + barre nav toujours visible quand thread ouvert (suppression display:none CSS). app.css v35, SW v232. Validé terrain. |
 | 2026-06-23 | IA session | Gardien role isolation — CSS .gardien-debug-tool masqué par défaut, reset is-gardien dans OBD afterAuth + ImmatSwitchAccount + afterAuth standard. Merge main 7f8f3e1, app.css v34, SW v230. |

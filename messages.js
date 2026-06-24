@@ -849,6 +849,7 @@ async function markThreadRead(plate){
 // ── Timeline unifiée (messages + appels) ────────────────────────
 function _formatMsg(text){
   if(!text) return '';
+  text = text.replace(/\[GPS:[-\d.,\s]+\]/g, '').trim();
   const URL_RE = /https?:\/\/[^\s<>"]+/g;
   const lines = text.split('\n');
   const parts = lines.map(line => {

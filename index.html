@@ -102,7 +102,7 @@
         <div class="act-cat-icon-wrap">🚘</div>
         <span class="act-cat-badge" id="catBadgeVehicle" style="display:none">0</span>
         <div class="act-cat-name">Véhicule</div>
-        <div class="act-cat-subdesc">Conducteurs</div>
+        <div class="act-cat-subdesc">Mon véhicule</div>
       </button>
       <button type="button" class="act-cat-card cat-aide" onclick="App.openActivityCat('aide')">
         <div class="act-cat-icon-wrap">🆘</div>
@@ -269,6 +269,15 @@
       <label class="label" for="sigStationPlate">Plaque du véhicule concerné</label>
       <input id="sigStationPlate" class="plate-input" placeholder="AB-123-CD" maxlength="9" autocomplete="off">
     </div>
+    <div style="margin-bottom:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);border-radius:12px;padding:10px 12px">
+      <div style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;letter-spacing:.5px">🚨 URGENCE VITALE — APPELEZ D'ABORD LES SECOURS</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <a href="tel:15" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">15</span><span style="font-size:10px;margin-top:3px">SAMU</span></a>
+        <a href="tel:17" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">17</span><span style="font-size:10px;margin-top:3px">Police</span></a>
+        <a href="tel:18" style="display:flex;flex-direction:column;align-items:center;background:#ef4444;color:#fff;border-radius:10px;padding:8px 4px;text-decoration:none;font-weight:700;min-height:44px;justify-content:center"><span style="font-size:18px;line-height:1">18</span><span style="font-size:10px;margin-top:3px">Pompiers</span></a>
+      </div>
+      <div style="font-size:10px;color:rgba(239,68,68,.8);margin-top:6px;text-align:center">Enfant ou animal dans le véhicule · fumée · accident grave</div>
+    </div>
     <div id="stationTypeGrid" class="alert-grid">
       <button class="alert-card medium" onclick="App.stationSelectType('porte')"><span class="icon">🚪</span><span>Porte mal fermée</span></button>
       <button class="alert-card medium" onclick="App.stationSelectType('feux')"><span class="icon">💡</span><span>Feux allumés</span></button>
@@ -299,12 +308,6 @@
       <button type="button" id="stationSendBtn" class="act-btn primary" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px" onclick="App.stationSendWithPhoto()">
         Envoyer le signalement →
       </button>
-    </div>
-    <div style="margin-top:10px;background:rgba(239,68,68,.10);border:1.5px solid rgba(239,68,68,.4);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:11px;color:#ef4444;font-weight:600;flex:1">🚨 Vie en danger → appelez les secours</span>
-      <a href="tel:15" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">15</a>
-      <a href="tel:17" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">17</a>
-      <a href="tel:18" style="background:#ef4444;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px;text-decoration:none;min-height:32px;display:flex;align-items:center">18</a>
     </div>
   </div>
 
@@ -1327,7 +1330,7 @@ msgHtml(m,my){
   const feedback=!sent&&String(m.message||'').startsWith('⚠️')?'<div><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'utile\')">Info utile</button><button type="button" class="tiny-btn tiny-ok" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'regle\')">Déjà réglé</button><button type="button" class="tiny-btn tiny-no" onclick="App.signalFeedback(\''+js(m.id)+'\',\''+js(m.sender_id)+'\',\''+js(p)+'\',\'faux\')">Faux signalement</button></div>':'';
   return'<div class="msg-bubble '+(sent?'msg-sent':'msg-recv')+'"><div class="msg-lbl">'+esc(title)+' · '+(status==='pending'?'en attente':'accepté')+'</div><div>'+esc(m.message)+'</div>'+acts+feedback+rep+'<div><button type="button" class="tiny-btn tiny-no" onclick="App.deleteMessage(\''+js(m.id)+'\')">Supprimer</button><button type="button" class="tiny-btn tiny-no" onclick="App.blockPlate(\''+js(p)+'\')">Bloquer</button></div><div class="msg-time">'+esc(time)+'</div></div>';
 },
-signalFeedback:async function(id,sender,plate,kind){let delta=0,label='Merci';if(kind==='utile'){delta=8;label='✅ Info utile'}else if(kind==='regle'){delta=3;label='👌 Déjà réglé'}else if(kind==='faux'){delta=-12;label='❌ Faux signalement'}const score=trustDelta(plate,delta);try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&sender)await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:sender,target_plate:plate,message:label+' — note confiance actuelle : '+score+'%',status:'accepted'})}catch(e){}toast(label+' · confiance '+score+'%','ok');this.loadMsgs()},
+signalFeedback:async function(id,sender,plate,kind){let delta=0,label='Merci';if(kind==='utile'){delta=8;label='✅ Info utile'}else if(kind==='regle'){delta=3;label='👌 Déjà réglé'}else if(kind==='faux'){delta=0;label='❌ Faux signalement'}const score=trustDelta(plate,delta);try{let{data:ud}=await sb.auth.getUser();if(ud?.user&&sender)await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:sender,target_plate:plate,message:label+' — note confiance actuelle : '+score+'%',status:'accepted'})}catch(e){}toast(label+' · confiance '+score+'%','ok');this.loadMsgs()},
 async accept(id,sender,plate){let{data:ud}=await sb.auth.getUser(),u=ud.user;await sb.from('messages').update({status:'accepted'}).eq('id',id).eq('receiver_id',u.id);await sb.from('messages').insert({sender_id:u.id,receiver_id:sender,target_plate:plate,message:'Votre demande de contact a été acceptée.',status:'accepted'});this.loadMsgs()},async reject(id){let{data:ud}=await sb.auth.getUser();await sb.from('messages').update({status:'rejected'}).eq('id',id).eq('receiver_id',ud.user.id);this.loadMsgs()},async reply(receiver,plate,ta){let text=$(ta).value.trim();if(!text)return;let{data:ud}=await sb.auth.getUser();await sb.from('messages').insert({sender_id:ud.user.id,receiver_id:receiver,target_plate:plate,message:text,status:'accepted'});$(ta).value='';this.loadMsgs()},async deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;if(window.ImmatMessages?.deleteMessage){await ImmatMessages.deleteMessage(id);}else{let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}if(!d.includes(String(id)))d.push(String(id));try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}toast('Message supprimé.','ok');this.loadMsgs();}},
 async deleteConv(){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if(!confirm('Supprimer cette conversation ?'))return;if(window.ImmatMessages?.deleteThread){await ImmatMessages.deleteThread(S.conv)}else{const msgs=(S._actMessages||[]).filter(m=>m._otherPlate===S.conv||m._displayPlate===S.conv||m._convPlate===S.conv);let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}msgs.forEach(m=>{if(!d.includes(String(m.id)))d.push(String(m.id))});try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)))}catch(e){}}S.conv='all';toast('Conversation supprimée.','ok');this.renderActivityFeed?.();this.updateActBadge?.();},markRead(){setUnreadMsgCount(0);toast('Conversation marquée comme lue.','ok')},quickReply(t){if(!S.conv||S.conv==='all')return toast('Choisis une conversation.','bad');if($('icComposePlate'))$('icComposePlate').value=fPlate(S.conv);this.panel('messages');setTimeout(()=>{try{window.ImmatMessages?.setMode?.('compose');if($('icComposeText')){$('icComposeText').value=t;$('icComposeText').focus()}}catch(e){}},120)},
 async subMsgs(){
@@ -1364,7 +1367,8 @@ async subMsgs(){
         } else if(_isParkedResponse){
           _qr=[];
         } else if(_isVehicleReport){
-          _qr=[];
+          const _vmId=String(m.id);const _vmPl=pl||'';
+          _qr=_vmPl?[{label:'🕐 Je vérifierai',bg:'rgba(41,121,255,.1)',color:'#60a5fa',cb:async()=>{try{App.actVmPending(_vmId,_vmPl);}catch(e){}}}]:[];
         } else {
           _qr=_isQr?[]:[
             {label:'✓ Reçu',  bg:'rgba(255,255,255,.07)',color:'#e2e8f0',cb:()=>{try{window.ImmatMessages?.sendToPlate(pl,'Bien reçu 👍');}catch(e){}this.updateActBadge?.();}},
@@ -2129,76 +2133,80 @@ App.actOpenVehicleMsgGroup=function(plate){
   gFeed.style.display='';
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const ep=e2(plate);
-  let repliedIds,ratedIds,readIds;
-  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(e){repliedIds=new Set();}
+  // ── État REÇUS : Nouveaux / En cours / Traités ────────────────────────────────
+  let verdicts,pendingSet,ratedIds,readIds,repliedIds;
+  try{verdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){verdicts={};}
+  try{pendingSet=new Set(JSON.parse(localStorage.getItem('ic_vm_pending')||'[]'));}catch(e){pendingSet=new Set();}
   try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_rated')||'[]'));}catch(e){ratedIds=new Set();}
   try{readIds=new Set([...(S._readMsgIds||[]),...JSON.parse(localStorage.getItem('ic_read_msg_ids')||'[]')]);}catch(e){readIds=new Set();}
+  try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(e){repliedIds=new Set();}
   const isRead=m=>!!(m.read_at||readIds.has(String(m.id)));
-  const nouveaux=sorted.filter(m=>!repliedIds.has(String(m.id))&&!isRead(m));
-  const enCours=sorted.filter(m=>!repliedIds.has(String(m.id))&&isRead(m));
-  const archived=sorted.filter(m=>repliedIds.has(String(m.id)));
-  // Marquer les "nouveau" comme lus dès l'ouverture (prochain affichage = En cours)
+  const isTraite=m=>!!verdicts[String(m.id)]||repliedIds.has(String(m.id));
+  const nouveaux=sorted.filter(m=>!isTraite(m)&&!isRead(m)&&!pendingSet.has(String(m.id)));
+  const enCours=sorted.filter(m=>!isTraite(m)&&(isRead(m)||pendingSet.has(String(m.id))));
+  const traites=sorted.filter(m=>isTraite(m));
+  // Marquer les "nouveaux" comme lus dès l'ouverture (prochain affichage = En cours)
   if(nouveaux.length){
     if(!S._readMsgIds)S._readMsgIds=new Set();
     nouveaux.forEach(m=>S._readMsgIds.add(String(m.id)));
     try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
     this.updateActBadge?.();
   }
+  // Badge temps : urgence visuelle selon l'âge du signalement
+  const timeBadge=ts=>{
+    if(!ts)return'';
+    const ago=(Date.now()-new Date(ts).getTime())/60000;
+    if(ago<5)return'<span class="act-vmg-tbadge act-vmg-tbadge-green">🟢 À l\'instant</span>';
+    if(ago<30)return'<span class="act-vmg-tbadge act-vmg-tbadge-yellow">🟡 Il y a ~'+Math.round(ago)+' min</span>';
+    return'<span class="act-vmg-tbadge act-vmg-tbadge-red">🔴 Signalé il y a +30 min</span>';
+  };
+  // Libellé et date du verdict pour TRAITÉS
+  const verdictLabel=m=>{const v=verdicts[String(m.id)];if(!v)return'✓ Traité';if(v.v==='confirmed')return'✅ Confirmé';if(v.v==='gone')return'ℹ️ Disparu';if(v.v==='false')return'❌ Faux signalement';return'✓ Traité';};
+  const verdictDate=m=>{const v=verdicts[String(m.id)];if(v&&v.ts){const d=new Date(v.ts);return'Traité le '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}return'';};
   const renderNouveau=(m)=>{
     const mid=e2(String(m.id));
     const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    const isRated=ratedIds.has(String(m.id));
     return`<div class="act-vmg-card act-vmg-encours act-vmg-new" onclick="App.actToggleVmCard(this)">
-      <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info"><span class="act-mod-new-badge" style="margin-bottom:4px;display:inline-block;font-size:9px">NOUVEAU</span><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+      <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<span class="act-mod-new-badge" style="margin-bottom:4px;display:inline-block;font-size:9px">NOUVEAU</span><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        <div class="act-vmg-sec-lbl">Répondre</div>
-        <div class="act-vmg-replies">
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','merci')">Merci 👍</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','verifie')">Je vérifie 👀</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','arrete')">Je m'arrête ✓</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','regle')">Réglé ✅</button>
-        </div>
-        <div class="act-vmg-sec-lbl">Évaluer</div>
-        ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté utile</div>'}
-        <button type="button" class="act-vmg-abuse-btn" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
-        <div class="act-vmg-sec-lbl">Contacter</div>
+        <button type="button" class="act-vmg-pending-btn" onclick="event.stopPropagation();App.actVmPending('${mid}','${ep}')">✓ Je vérifierai dès que je serai arrêté</button>
+        <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
         <div class="act-vmg-contact">
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
         </div>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
       </div>
     </div>`;
   };
   const renderEnCours=(m)=>{
     const mid=e2(String(m.id));
     const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    const isRated=ratedIds.has(String(m.id));
+    const isPending=pendingSet.has(String(m.id));
     return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
-      <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
+      <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        <div class="act-vmg-sec-lbl">Répondre</div>
-        <div class="act-vmg-replies">
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','merci')">Merci 👍</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','verifie')">Je vérifie 👀</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','arrete')">Je m'arrête ✓</button>
-          <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.actVmReply('${mid}','${ep}','regle')">Réglé ✅</button>
+        ${isPending?`<div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">Vous avez indiqué que vous vérifieriez lorsque vous pourriez vous arrêter en sécurité.</div><div class="act-vmg-pending-reminder-cta">→ Donner mon constat</div></div>`:''}
+        <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Qu'avez-vous constaté ?</div>
+        <div class="act-vmg-verdict-wrap">
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Signalement confirmé<span class="act-vmg-vbtn-sub">Le problème existe — augmente la confiance du signaleur</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Problème disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-false" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','false')">❌ Faux signalement<span class="act-vmg-vbtn-sub">Ce signalement est incorrect</span></button>
+          <button type="button" class="act-vmg-vbtn act-vmg-vbtn-skip" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','skip')">⏭️ Je n'ai pas pu vérifier<span class="act-vmg-vbtn-sub">Véhicule reparti · impossible de s'arrêter · mauvaise visibilité</span></button>
         </div>
-        <div class="act-vmg-sec-lbl">Évaluer</div>
-        ${!isRated?`<button type="button" class="act-vmg-rate-btn" onclick="event.stopPropagation();App.actVmRate('${mid}','${ep}')">👍 Info utile — augmente le score de confiance</button>`:'<div class="act-vmg-rated-lbl">✓ Déjà noté utile</div>'}
-        <button type="button" class="act-vmg-abuse-btn" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
-        <div class="act-vmg-sec-lbl">Contacter</div>
+        <div class="act-vmg-sec-lbl" style="margin-top:12px">Contacter</div>
         <div class="act-vmg-contact">
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
           <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
         </div>
+        <button type="button" class="act-vmg-abuse-btn" style="margin-top:8px" onclick="event.stopPropagation();App._actAbuseReport('${mid}','${ep}')">🚩 Faux signalement / abus</button>
       </div>
     </div>`;
   };
-  const renderArchived=(m)=>{
+  const renderTraite=(m)=>{
     const mid=e2(String(m.id));
-    const time=m.created_at?relTime(new Date(m.created_at).getTime()):'';
-    const isRated=ratedIds.has(String(m.id));
-    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${ep}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-archived"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2((m.message||'').slice(0,90))}${(m.message||'').length>90?'…':''}</div></div><div class="act-vmg-time">${e2(time)}</div></div>${!isRated?`<button type="button" class="act-vmg-rate-btn act-vmg-rate-compact" onclick="App.actVmRate('${mid}','${ep}')">👍 Info utile</button>`:''}</div></div>`;
+    const vLabel=verdictLabel(m);const vDate=verdictDate(m);
+    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actDeleteVehicleMsg('${mid}','${ep}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-traite"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2((m.message||'').slice(0,90))}${(m.message||'').length>90?'…':''}</div></div></div><div style="padding:0 12px 12px"><div class="act-vmg-verdict-lbl">${vLabel}</div>${vDate?`<div class="act-vmg-verdict-date">${e2(vDate)}</div>`:''}<div class="act-vmg-sec-lbl" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:#475569">Recontacter si besoin</div><div class="act-vmg-contact act-vmg-contact-traite"><button type="button" class="act-vmg-cbtn" onclick="App.actOpenConv('${ep}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="App.actVmCall('${ep}')">📞 Appeler</button></div></div></div></div>`;
   };
   let html='';
   if(!isRecus){
@@ -2231,10 +2239,10 @@ App.actOpenVehicleMsgGroup=function(plate){
     }
     if(!sorted.length&&!sortedResponses.length){html='<div class="act-empty-cat">Aucun signalement envoyé à cette plaque.</div>';}
   } else {
-    if(nouveaux.length){html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🔵 Nouveau (${nouveaux.length})</div>`+nouveaux.map(m=>renderNouveau(m)).join('');}
-    if(enCours.length){html+=`<div class="act-vmg-sec-title${nouveaux.length?' act-vmg-sec-arch':''}" style="${nouveaux.length?'':''}">🔴 En cours (${enCours.length})</div>`+enCours.map(m=>renderEnCours(m)).join('');}
-    if(archived.length){html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Archivés (${archived.length})</div>`+archived.map(m=>renderArchived(m)).join('');}
-    if(!nouveaux.length&&!enCours.length&&!archived.length){html='<div class="act-empty-cat">Aucun signalement véhicule pour cette plaque.</div>';}
+    if(nouveaux.length){html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🔵 Nouveaux (${nouveaux.length})</div>`+nouveaux.map(m=>renderNouveau(m)).join('');}
+    if(enCours.length){html+=`<div class="act-vmg-sec-title${nouveaux.length?' act-vmg-sec-arch':''}">🔴 En cours (${enCours.length})</div>`+enCours.map(m=>renderEnCours(m)).join('');}
+    if(traites.length){html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Traités (${traites.length})</div>`+traites.map(m=>renderTraite(m)).join('');}
+    if(!nouveaux.length&&!enCours.length&&!traites.length){html='<div class="act-empty-cat">Aucun signalement véhicule pour cette plaque.</div>';}
   }
   gFeed.innerHTML=html;
   const SW=76;
@@ -2274,14 +2282,36 @@ App.actVmRate=function(msgId,plate){
   let rated=[];try{rated=JSON.parse(localStorage.getItem('ic_vm_rated')||'[]');}catch(e){}
   if(!rated.includes(msgId))rated.push(msgId);
   try{localStorage.setItem('ic_vm_rated',JSON.stringify(rated.slice(-500)));}catch(e){}
-  let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_vm_replied')||'[]');}catch(e){}
-  if(!replied.includes(msgId))replied.push(msgId);
-  try{localStorage.setItem('ic_vm_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
   try{if(plate&&typeof trustDelta==='function')trustDelta(plate,8);}catch(e){}
   try{if(window.ImmatBus)window.ImmatBus.emit('VEHICLE_REPORT_RATED',{target:plate,msgId,_src:'actVmRate'});}catch(e){}
   try{window.InteractionEngine?.create?.({type:'VEHICLE_ALERT',initiator:plate,target:this.ownPlate?.(),payload:{rated:true,msgId},status:'rated'});}catch(e){}
   toast('👍 Info utile — score de confiance augmenté','ok');
   this.actOpenVehicleMsgGroup(plate);
+};
+App.actVmPending=async function(msgId,plate){
+  let pending=[];try{pending=JSON.parse(localStorage.getItem('ic_vm_pending')||'[]');}catch(e){}
+  if(!pending.includes(msgId))pending.push(msgId);
+  try{localStorage.setItem('ic_vm_pending',JSON.stringify(pending.slice(-500)));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  try{await this.actVehicleReply(plate,'Je vérifierai dès que je serai arrêté 👀');}catch(e){}
+  toast('🕐 Vous vérifierez dès que vous pourrez vous arrêter en sécurité.','ok');
+  this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
+};
+App.actVmVerdict=function(msgId,plate,type){
+  let verdicts={};try{verdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
+  if(verdicts[msgId])return toast('Constat déjà enregistré.','ok');
+  verdicts[msgId]={v:type,ts:Date.now()};
+  try{localStorage.setItem('ic_vm_verdicts',JSON.stringify(verdicts));}catch(e){}
+  if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
+  try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
+  const labels={confirmed:'✅ Confirmé — merci pour votre retour',gone:'ℹ️ Disparu — signalement clos',false:'❌ Faux signalement enregistré',skip:'⏭️ Clôturé — vous n\'avez pas pu vérifier'};
+  toast(labels[type]||'Verdict enregistré','ok');
+  if(type==='confirmed'){
+    let _rated=[];try{_rated=JSON.parse(localStorage.getItem('ic_vm_rated')||'[]');}catch(e){}
+    if(!_rated.includes(msgId)){try{if(typeof trustDelta==='function')trustDelta(plate,8);}catch(e){}}
+  }
+  this.actOpenVehicleMsgGroup(plate);this.updateActBadge?.();
 };
 App.actVmCall=function(plate){try{window.CallManager?.contactByCall(nPlate(plate),'');}catch(e){}};
 App._actAbuseReport=function(msgId,plate){S._pendingAbuseSourceMsgId=msgId;S._pendingAbusePlate=plate;App.openAbuseReport(plate,'FAUX_SIGNALEMENT');};
@@ -2387,7 +2417,7 @@ App.renderAideFeed=function(){
   }
   // ── Archivés ─────────────────────────────────────────────────────────────────
   if(archived.length){
-    html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Archivés (${archived.length})</div>`;
+    html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Traités (${archived.length})</div>`;
     html+=archived.map(a=>{
       const senderPlate=e2(fPlate(a.from_plate||a.sender_plate||a.reporter_plate||''));
       const reason=String(a.reason||a.label||'Demande d\'aide').replace(/^\[ASSISTANCE\]\s*/,'').slice(0,80);
@@ -3897,7 +3927,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=29"></script>
+<script src="messages.js?v=30"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>

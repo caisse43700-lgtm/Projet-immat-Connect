@@ -7,6 +7,62 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-24 — Refonte workflow signalements véhicule (machine 3 états)
+
+### Contexte
+Remplacement de l'ancien flux linéaire (REÇUS → bouton Info utile → ARCHIVÉS) par une machine à 3 états localStorage-only, sans modification Supabase.
+
+### Architecture implémentée
+
+**Stockage localStorage :**
+- `ic_vm_pending` (Set<msgId>) — conducteur a dit "je vérifierai" mais n'a pas encore donné de verdict
+- `ic_vm_verdicts` ({msgId: {v, ts}}) — verdict donné : 'confirmed' / 'gone' / 'false'
+- `ic_vm_replied` (compat arrière) — anciens archivés, lus comme TRAITÉS sans verdict
+- `ic_read_msg_ids` / `S._readMsgIds` — messages lus (état EN COURS si non traité)
+
+**Règles de classement :**
+- `isTraite(m)` : `verdicts[id]` OU `repliedIds.has(id)`
+- `enCours` : non traité ET (lu OU pending)
+- `nouveaux` : non traité ET non lu ET non pending
+
+**Fonctions ajoutées :**
+- `App.actVmPending(msgId, plate)` : → ic_vm_pending + marque lu + envoie "Je vérifierai dès que je serai arrêté 👀" + refresh
+- `App.actVmVerdict(msgId, plate, type)` : → ic_vm_verdicts + trustDelta(+8 si confirmed) + toast + refresh
+
+**CSS ajouté dans app.css v35 :**
+- `.act-vmg-tbadge*` — badges temps 🟢🟡🔴
+- `.act-vmg-pending-btn` — bouton "Je vérifierai dès que je serai arrêté"
+- `.act-vmg-verdict-wrap`, `.act-vmg-vbtn*` — boutons verdict 3 couleurs
+- `.act-vmg-pending-reminder*` — bandeau "Vérification en attente" avec texte conducteur
+- `.act-vmg-traite`, `.act-vmg-verdict-lbl`, `.act-vmg-verdict-date` — carte TRAITÉS
+
+### Décisions métier verrouillées
+- trustDelta **uniquement** sur verdict 'confirmed' (+8). Autres verdicts : delta = 0.
+- "Faux signalement" : enregistré mais ne baisse PAS automatiquement la confiance (modération manuelle V1 — décision ChatGPT 99%).
+- Bouton "Info utile" / `actVmRate` **supprimé** du flow REÇUS (ancienne confusion réaction/verdict).
+- `actVmRate` conservé dans le code mais n'est plus appelé dans le flow véhicule.
+
+### Vocabulaire final (validé ChatGPT)
+- Bouton : "✓ Je vérifierai dès que je serai arrêté" (conducteur en mouvement, précis)
+- Réponse auto envoyée : "Je vérifierai dès que je serai arrêté 👀"
+- Bandeau sub : "Vous avez indiqué que vous vérifieriez lorsque vous pourriez vous arrêter en sécurité."
+- CTA bandeau : "→ Donner mon constat"
+
+### État des commits (branche claude/immatconnect-pro-app-dEKGR)
+- `8bb2e94` — feat: refonte gestion signalements véhicule — 3 états + verdicts + badge temps
+- `0325f17` — fix: bandeau rappel "Vérification en attente" + try/catch défensif actVmPending
+- `8808642` — fix: supprime bouton "Info utile" de EN COURS — trustDelta porté uniquement par verdict Confirmé
+- `17c4b4f` — ux: bandeau pending — texte conducteur + lien "Donner mon constat"
+- + vocabulaire "Je vérifierai dès que je serai arrêté" (commit courant)
+
+### Prêt pour merge main
+ChatGPT verdict 99% — architecture cohérente. Merge sur validation utilisateur.
+
+### Régression : ENVOYÉS inchangé
+Le tab Envoyés + section "Réponses reçues" n'ont pas été modifiés. Aucune régression possible.
+
+---
+
 ## SESSION 2026-06-22 — BUG FIX boutons nav non réactifs (après revert zones)
 
 ### Symptôme

@@ -1200,6 +1200,37 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-swipe-wrap .act-vmg-card { margin-bottom: 0; transition: transform .22s ease; }
 .act-swipe-del { position: absolute; right: 0; top: 0; bottom: 0; width: 76px; background: #ef4444; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-size: 20px; cursor: pointer; border-radius: 0 12px 12px 0; }
 .act-swipe-del span { font-size: 11px; font-weight: 700; margin-top: 2px; }
+/* Indicateur temporel (badge âge du signalement) */
+.act-vmg-tbadge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-bottom: 5px; }
+.act-vmg-tbadge-green { background: rgba(34,197,94,.15); color: #22c55e; }
+.act-vmg-tbadge-yellow { background: rgba(234,179,8,.15); color: #eab308; }
+.act-vmg-tbadge-red { background: rgba(239,68,68,.15); color: #ef4444; }
+/* Bouton Je vérifierai */
+.act-vmg-pending-btn { display: block; width: 100%; background: rgba(41,121,255,.1); border: 1px solid rgba(41,121,255,.35); border-radius: 10px; color: #60a5fa; font-size: 13px; font-weight: 600; padding: 12px; cursor: pointer; text-align: center; box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin-top: 10px; }
+.act-vmg-pending-btn:active { background: rgba(41,121,255,.2); }
+/* Boutons verdict (EN COURS → TRAITÉS) */
+.act-vmg-verdict-wrap { display: flex; flex-direction: column; gap: 7px; margin: 6px 0; }
+.act-vmg-vbtn { display: flex; flex-direction: column; width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; background: transparent; box-sizing: border-box; }
+.act-vmg-vbtn-confirm { border-color: rgba(34,197,94,.35); color: #4ade80; }
+.act-vmg-vbtn-confirm:active { background: rgba(34,197,94,.12); }
+.act-vmg-vbtn-gone { border-color: rgba(148,163,184,.3); color: #94a3b8; }
+.act-vmg-vbtn-gone:active { background: rgba(148,163,184,.08); }
+.act-vmg-vbtn-false { border-color: rgba(239,68,68,.3); color: #f87171; }
+.act-vmg-vbtn-false:active { background: rgba(239,68,68,.08); }
+.act-vmg-vbtn-skip { border-color: rgba(100,116,139,.25); color: #64748b; }
+.act-vmg-vbtn-skip:active { background: rgba(100,116,139,.06); }
+.act-vmg-vbtn-sub { font-size: 10px; font-weight: 400; opacity: .65; margin-top: 2px; }
+/* Carte TRAITÉS */
+.act-vmg-new { border-left-color: #2979ff; }
+.act-vmg-traite { background: #080f1a; border-left: 3px solid #1e293b; }
+.act-vmg-verdict-lbl { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+.act-vmg-verdict-date { font-size: 11px; color: #475569; margin-top: 2px; }
+.act-vmg-contact-traite { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.05); }
+/* Bandeau rappel "Vérification en attente" (item pending dans EN COURS) */
+.act-vmg-pending-reminder { background: rgba(41,121,255,.08); border: 1px solid rgba(41,121,255,.2); border-radius: 8px; padding: 10px 12px; margin: 10px 0 4px; }
+.act-vmg-pending-reminder-title { font-size: 12px; font-weight: 700; color: #60a5fa; }
+.act-vmg-pending-reminder-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.4; }
+.act-vmg-pending-reminder-cta { font-size: 12px; font-weight: 700; color: #60a5fa; margin-top: 8px; }
 .act-mod-new-badge { background: #ff3b5c; color: #fff; font-size: 10px; font-weight: 950; border-radius: 6px; padding: 3px 9px; letter-spacing: 0.6px; }
 .act-mod-body { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 10px; }
 .act-mod-avatar { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; flex: 0 0 auto; }
