@@ -814,6 +814,8 @@ body.appels-mode #sheet .ic-msg-shell {
   display: flex;
   flex-direction: column;
 }
+/* Garde CSS — panelMessages interdit quand panelActivite est actif, même si appels-mode traîne */
+#sheet:has(#panelActivite.on) #panelMessages { display: none !important; }
 #icAppelsPane { display: none !important; }
 body.appels-mode #icAppelsPane {
   flex: 1 !important;
