@@ -1912,6 +1912,37 @@ Toute modification du module Activité devra être justifiée par **au moins un*
 
 **Aucune modification ne sera proposée** parce qu'elle paraît théoriquement meilleure, parce qu'un autre produit fait différemment, ou parce qu'une idée émerge en session.
 
+### Principes de préservation du module Activité
+
+**P1 — Préserver la simplicité**
+Toute évolution future devra réduire la charge cognitive ou apporter une valeur utilisateur démontrée. Aucune fonctionnalité supplémentaire ne sera ajoutée uniquement parce qu'elle est techniquement possible.
+
+**P2 — Une information = une seule fonction**
+Chaque élément visible conserve un rôle unique.
+- Badge = attire l'attention.
+- Statut = indique une action restante.
+- Compteur = décrit un historique.
+- Verdict = clôture un traitement.
+Ces rôles ne devront jamais être mélangés.
+
+**P3 — Une action = une conséquence visible**
+Chaque action effectuée par un conducteur produit un changement immédiatement visible.
+Exemples : ouverture → badge disparaît · "Je vérifierai" → chip ⏳ apparaît · verdict → passage dans TRAITÉS · réponse reçue → badge 📩 identifiable.
+Aucune action utilisateur ne doit sembler "ne rien faire".
+
+**P4 — Aucun badge sans élément identifiable**
+Tout badge affiché dans l'interface doit toujours permettre à l'utilisateur d'identifier immédiatement l'élément qui l'a déclenché. Aucun badge ne peut exister si l'élément correspondant n'est pas visible ou retrouvable naturellement.
+
+**P5 — Le conducteur ne doit jamais avoir à mémoriser une tâche**
+L'application porte la mémoire. Le conducteur ne doit pas avoir à se souvenir d'un signalement en attente, d'un verdict à donner, ou d'une réponse reçue. L'interface doit toujours afficher l'état réel.
+
+**P6 — Le terrain décide**
+Toute remise en cause du module Activité devra être motivée par un bug reproductible, plusieurs retours utilisateurs convergents, ou une métrique hors seuil. Aucune évolution ne sera décidée uniquement sur une intuition ou une préférence de conception.
+
+### Validation finale
+
+Le module Activité est considéré comme stabilisé. Les prochaines décisions concerneront désormais l'usage réel du produit et non plus sa conception théorique.
+
 ---
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
