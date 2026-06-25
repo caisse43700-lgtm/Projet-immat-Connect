@@ -1163,6 +1163,8 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
 .act-mod-card.act-mod-group { cursor: pointer; transition: background 0.15s; }
 .act-mod-card.act-mod-group:active { background: rgba(255,255,255,.10); }
 .act-mod-count-badge { background: #2979ff; color: #fff; font-size: 11px; font-weight: 700; border-radius: 12px; padding: 2px 8px; min-width: 22px; text-align: center; margin-top: 4px; }
+.act-mod-status-chip { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 20px; padding: 2px 8px; margin-top: 4px; }
+.act-mod-chip-pending { background: rgba(245,158,11,.15); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
 .act-mod-badge-row { display: flex; align-items: center; margin-bottom: 9px; }
 .act-section-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 10px 4px 4px; color: #64748b; }
 /* ── Vehicle message group (En cours / Archivé) ── */

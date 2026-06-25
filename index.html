@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=41">
+  <link rel="stylesheet" href="app.css?v=42">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -2793,6 +2793,8 @@ App.renderCategoryFeed=function(cat,tab){
   if(cat==='all'||cat==='vehicle'){
     const vmRaw=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report');
     const vmFiltered=isRecus?vmRaw.filter(m=>m._received===true):vmRaw.filter(m=>!m._received);
+    let _vmVerdicts={};try{_vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(_){}
+    let _vmReplied=new Set();try{_vmReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(_){}
     const vmMap={};
     vmFiltered.forEach(m=>{
       const k=m._otherPlate||'?';
@@ -2812,7 +2814,8 @@ App.renderCategoryFeed=function(cat,tab){
       });
       const _hasAlert=dupIdx>=0;
       if(_hasAlert)items.splice(dupIdx,1);
-      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread,_hasAlert});
+      const hasEnCours=isRecus&&sorted.some(m=>(m.read_at||S._readMsgIds?.has(String(m.id)))&&!_vmVerdicts[String(m.id)]&&!_vmReplied.has(String(m.id)));
+      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread,_hasAlert,hasEnCours});
     });
   }
   items.sort((a,b)=>b.at-a.at);
@@ -2878,11 +2881,11 @@ App._actModCard=function(item,cat){
           <div class="act-mod-plate">${e(item.plate)}</div>
           <div class="act-mod-desc">${e((lastMsg?.message||'').slice(0,60))}</div>
           <div class="act-mod-loc">💬 ${cnt} message${cnt>1?'s':''}</div>
+          ${!hasNew&&item.hasEnCours?'<div class="act-mod-status-chip act-mod-chip-pending">⏳ Vérification en attente</div>':''}
         </div>
         <div class="act-mod-meta">
           <div class="act-mod-time">${e(time)}</div>
           ${hasNew?'<div class="act-mod-status-dot"></div>':''}
-          <div class="act-mod-count-badge">${cnt}</div>
         </div>
       </div>
     </div>`;

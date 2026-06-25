@@ -55,7 +55,36 @@ Phase produit          : TERRAIN — observer les usages, ne plus toucher au wor
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Merge refonte signalements véhicule → main**
+**Mission : Correction UX — badge bleu supprimé + chip ⏳ Vérification en attente dans liste EN COURS**
+**Date :** 2026-06-25
+**SW :** v244 → v245 · app.css v41 → v42
+
+### Ce qui a été fait
+
+Deux corrections UX pures (zéro logique métier modifiée) validées après revue produit finale :
+
+1. **Suppression badge bleu `act-mod-count-badge`** sur les cartes vehicleMsgGroup.
+   Badge = total messages (compteur d'historique), visuellement identique à un indicateur d'action — ambigu.
+   Supprimé du renderer HTML uniquement. La règle CSS `.act-mod-count-badge` reste (alertGroup l'utilise encore).
+
+2. **Chip `⏳ Vérification en attente`** dans la liste Activité > Véhicule.
+   - Affiché quand : EN COURS (lu, sans verdict), badge rouge absent.
+   - Disparaît : dès qu'un verdict est enregistré dans `ic_vm_verdicts` (re-render automatique).
+   - Jamais en même temps que badge rouge NOUVEAU (`!hasNew`).
+   - Jamais sur carte TRAITÉE (`hasEnCours=false` si tous verdicts donnés).
+   - Ne touche pas : alertGroup, logique métier, Messages, buildThreads, trustDelta.
+   - `hasEnCours` calculé à la construction item via 2 reads localStorage (`ic_vm_verdicts`, `ic_vm_replied`) + `S._readMsgIds`.
+   - Style : pill amber `rgba(245,158,11,.15)` / `#f59e0b`.
+
+### Fichiers modifiés
+
+- `index.html` : L.2793 (2 vars localStorage) + L.2815 (hasEnCours item) + L.2880 (chip HTML) + L.2885 (badge bleu supprimé) + L.21 (app.css?v=42)
+- `app.css` : 2 règles après L.1165 (`.act-mod-status-chip` + `.act-mod-chip-pending`)
+- `service-worker.js` : CACHE_NAME v244 → v245
+
+---
+
+**Mission précédente : Merge refonte signalements véhicule → main**
 **Date :** 2026-06-24
 **Commit :** merge `claude/immatconnect-pro-app-dEKGR` → `main` — SW v243
 
