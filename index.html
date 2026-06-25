@@ -2795,6 +2795,9 @@ App.renderCategoryFeed=function(cat,tab){
     const vmFiltered=isRecus?vmRaw.filter(m=>m._received===true):vmRaw.filter(m=>!m._received);
     let _vmVerdicts={};try{_vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(_){}
     let _vmReplied=new Set();try{_vmReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]'));}catch(_){}
+    // Réponses reçues (vehicle_response) — pour signaler les nouvelles réponses dans l'onglet Envoyés
+    const _vmRespUnread=!isRecus?(S._actMessages||[]).filter(m=>m.context_type==='vehicle_response'&&m._received===true&&!m.read_at&&!(S._readMsgIds?.has(String(m.id)))):[];
+    const _vmRespPlates=new Set(_vmRespUnread.map(m=>m._otherPlate||'?'));
     const vmMap={};
     vmFiltered.forEach(m=>{
       const k=m._otherPlate||'?';
@@ -2815,7 +2818,8 @@ App.renderCategoryFeed=function(cat,tab){
       const _hasAlert=dupIdx>=0;
       if(_hasAlert)items.splice(dupIdx,1);
       const hasEnCours=isRecus&&sorted.some(m=>(m.read_at||S._readMsgIds?.has(String(m.id)))&&!_vmVerdicts[String(m.id)]&&!_vmReplied.has(String(m.id)));
-      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread,_hasAlert,hasEnCours});
+      const hasUnreadResponse=!isRecus&&_vmRespPlates.has(g.plate);
+      items.push({kind:'vehicleMsgGroup',plate:g.plate,msgs:sorted,at:g.lastAt,unread:g.unread,_hasAlert,hasEnCours,hasUnreadResponse});
     });
   }
   items.sort((a,b)=>b.at-a.at);
@@ -2870,11 +2874,13 @@ App._actModCard=function(item,cat){
   }
   if(item.kind==='vehicleMsgGroup'){
     const hasNew=item.unread>0;
+    const hasResp=!!item.hasUnreadResponse;
     const cnt=item.msgs.length;
     const lastMsg=item.msgs[0];
     const time=item.at?relTime(item.at):'';
-    return `<div class="act-mod-card act-mod-group${hasNew?' act-mod-unread':''}" onclick="this.classList.remove('act-mod-unread');this.querySelector('.act-mod-badge-row')?.remove();this.querySelector('.act-mod-status-dot')?.remove();App.actOpenVehicleMsgGroup('${e(item.plate)}')">
+    return `<div class="act-mod-card act-mod-group${hasNew||hasResp?' act-mod-unread':''}" onclick="this.classList.remove('act-mod-unread');this.querySelector('.act-mod-badge-row')?.remove();this.querySelector('.act-mod-status-dot')?.remove();App.actOpenVehicleMsgGroup('${e(item.plate)}')">
       ${hasNew?`<div class="act-mod-badge-row"><span class="act-mod-new-badge">${item.unread} NOUVEAU${item.unread>1?'X':''}</span></div>`:''}
+      ${!hasNew&&hasResp?'<div class="act-mod-badge-row"><span class="act-mod-new-badge" style="background:#22c55e">📩 RÉPONSE</span></div>':''}
       <div class="act-mod-body">
         <div class="act-mod-avatar act-av-vehicle">🚨</div>
         <div class="act-mod-info">
@@ -2885,7 +2891,7 @@ App._actModCard=function(item,cat){
         </div>
         <div class="act-mod-meta">
           <div class="act-mod-time">${e(time)}</div>
-          ${hasNew?'<div class="act-mod-status-dot"></div>':''}
+          ${hasNew||hasResp?'<div class="act-mod-status-dot"></div>':''}
         </div>
       </div>
     </div>`;

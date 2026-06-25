@@ -9,14 +9,15 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-24
+Date de mise à jour    : 2026-06-25
 Avancement             : ~55% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
 Branche production     : main (GitHub Pages) — commit 9b07790 (SW v243)
-Branche de travail     : main (merge terminé — claude/immatconnect-pro-app-dEKGR fusionné)
+Branche de travail     : local/merge-to-main (2 commits non poussés — attente "Fusionner")
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : TERRAIN — observer les usages, ne plus toucher au workflow
+SW local               : v246 · app.css v42 (non déployé tant que "Fusionner" non donné)
 ```
 
 ### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
@@ -55,32 +56,53 @@ Phase produit          : TERRAIN — observer les usages, ne plus toucher au wor
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Correction UX — badge bleu supprimé + chip ⏳ Vérification en attente dans liste EN COURS**
+**Mission : Fix invariant badge — badge `📩 RÉPONSE` sur cartes Envoyés (vehicle_response CAS B)**
 **Date :** 2026-06-25
-**SW :** v244 → v245 · app.css v41 → v42
+**Commit :** à venir (non encore commité)
+**SW :** v245 → v246
 
 ### Ce qui a été fait
 
-Deux corrections UX pures (zéro logique métier modifiée) validées après revue produit finale :
+Invariant fondamental corrigé : _Chaque badge doit permettre d'identifier immédiatement l'élément qui l'a déclenché et disparaître une fois la nouveauté consultée._
 
-1. **Suppression badge bleu `act-mod-count-badge`** sur les cartes vehicleMsgGroup.
-   Badge = total messages (compteur d'historique), visuellement identique à un indicateur d'action — ambigu.
-   Supprimé du renderer HTML uniquement. La règle CSS `.act-mod-count-badge` reste (alertGroup l'utilise encore).
+**Diagnostic CAS B confirmé dans le code :**
+- `catBadgeVehicle` = `vmResponseUnread` (unread vehicle_response) → badge Activité s'allume.
+- Onglet Envoyés : aucune carte vehicleMsgGroup n'avait d'indicateur visuel → badge non trouvable → invariant violé.
 
-2. **Chip `⏳ Vérification en attente`** dans la liste Activité > Véhicule.
-   - Affiché quand : EN COURS (lu, sans verdict), badge rouge absent.
-   - Disparaît : dès qu'un verdict est enregistré dans `ic_vm_verdicts` (re-render automatique).
-   - Jamais en même temps que badge rouge NOUVEAU (`!hasNew`).
-   - Jamais sur carte TRAITÉE (`hasEnCours=false` si tous verdicts donnés).
-   - Ne touche pas : alertGroup, logique métier, Messages, buildThreads, trustDelta.
-   - `hasEnCours` calculé à la construction item via 2 reads localStorage (`ic_vm_verdicts`, `ic_vm_replied`) + `S._readMsgIds`.
-   - Style : pill amber `rgba(245,158,11,.15)` / `#f59e0b`.
+**Fix — 3 zones index.html :**
+
+1. **Construction item** (renderCategoryFeed) — ajout 2 variables :
+   ```js
+   const _vmRespUnread = !isRecus ? (S._actMessages||[]).filter(m =>
+     m.context_type==='vehicle_response' && m._received===true
+     && !m.read_at && !(S._readMsgIds?.has(String(m.id)))) : [];
+   const _vmRespPlates = new Set(_vmRespUnread.map(m => m._otherPlate||'?'));
+   ```
+2. **Push item** — ajout propriété `hasUnreadResponse`:
+   ```js
+   const hasUnreadResponse = !isRecus && _vmRespPlates.has(g.plate);
+   items.push({...hasEnCours, hasUnreadResponse});
+   ```
+3. **Renderer `_actModCard`** — 3 modifications :
+   - `const hasResp = !!item.hasUnreadResponse;`
+   - Classe `act-mod-unread` quand `hasNew || hasResp`
+   - Badge vert `📩 RÉPONSE` si `!hasNew && hasResp`
+   - Status dot si `hasNew || hasResp`
+
+**Auto-clear déjà en place** : `actOpenVehicleMsgGroup` Envoyés auto-marque les vehicle_response lus → `updateActBadge()` → badge décrémente → `hasUnreadResponse=false` au re-render.
 
 ### Fichiers modifiés
 
-- `index.html` : L.2793 (2 vars localStorage) + L.2815 (hasEnCours item) + L.2880 (chip HTML) + L.2885 (badge bleu supprimé) + L.21 (app.css?v=42)
-- `app.css` : 2 règles après L.1165 (`.act-mod-status-chip` + `.act-mod-chip-pending`)
-- `service-worker.js` : CACHE_NAME v244 → v245
+- `index.html` : 3 zones (construction + push item + renderer vehicleMsgGroup)
+- `service-worker.js` : CACHE_NAME v245 → v246
+
+---
+
+**Mission précédente : Correction UX — badge bleu supprimé + chip ⏳ Vérification en attente dans liste EN COURS**
+**Date :** 2026-06-25
+**SW :** v244 → v245 · app.css v41 → v42
+
+Deux corrections UX pures : (1) badge bleu `act-mod-count-badge` retiré du HTML renderer vehicleMsgGroup (badge = compteur historique, pas indicateur d'action, CSS conservé pour alertGroup) ; (2) chip `⏳ Vérification en attente` ajouté sur cartes EN COURS (lu + sans verdict, jamais avec badge NOUVEAU). Style amber `.act-mod-chip-pending`. `hasEnCours` calculé via localStorage `ic_vm_verdicts` + `ic_vm_replied` + `S._readMsgIds`.
 
 ---
 
@@ -1845,6 +1867,50 @@ RÈGLES ACTIVES (ne pas remettre en question) :
 - NE PAS toucher messages.js logique métier sauf chantier dédié explicitement validé
 - NE PAS toucher le workflow signalements véhicule — observer d'abord les usages terrain
 ```
+
+---
+
+## 3b. GEL OFFICIEL — MODULE ACTIVITÉ
+**Date de gel : 2026-06-25**
+
+Le module Activité est officiellement gelé pour la V1.
+Six revues complètes ont validé : workflow, états, badges, statuts, verdicts, navigation, cohérence transversale, charge cognitive, cohérence dans le temps.
+
+### Définition du succès V1
+
+| # | Critère | Seuil cible | Seuil d'alerte |
+|---|---|---|---|
+| S1 | Compréhension spontanée du workflow | Aucun retour "je ne comprends pas les états" | > 2 retours identiques sur 30j |
+| S2 | Taux de verdict dans les 48h | > 70 % des signalements reçus | < 40 % |
+| S3 | Taux retour après "Je vérifierai" | > 50 % → verdict même session ou suivante | < 30 % |
+| S4 | Absence de confusion badge | Aucun retour badge inexpliqué (hors vehicle_response) | > 15 % des retours |
+| S5 | Qualité des verdicts | > 35 % "confirmé" | < 20 % (signalements abusifs) |
+| S6 | Fidélité après premier signalement | Retour dans les 14 jours | < 30 % fidélité |
+
+### Points ouverts classifiés — V1.1 uniquement
+
+| Point | Classification | Déclencheur V1.1 |
+|---|---|---|
+| vehicle_response dans Activité (pas Messages) | Choix assumé V1 | S4 + > 20 % cherchent dans Messages |
+| timeBadge ">30 min" inexact après 24h | Choix assumé V1 | NOUVEAUX anciens récurrents en terrain |
+| Densité TRAITÉS long terme | Choix assumé V1 | > 50 items chez utilisateurs actifs |
+| Latence chip après verdict iOS | Dette technique mineure | Plainte utilisateur reproductible |
+| ic_read_msg_ids limite 500 | Dette technique existante | Régression constatée terrain |
+| Absence feedback expéditeur | Choix assumé V1 | S6 < seuil |
+| EN COURS indéfini sans verdict | Choix assumé V1 | S3 < 30 % |
+| Date exacte verdict TRAITÉS | Cosmétique | Nettoyage V1.1 opportuniste |
+| Boutons contact dans TRAITÉS | Faible valeur | Nettoyage V1.1 opportuniste |
+
+### Conditions de réouverture
+
+Toute modification du module Activité devra être justifiée par **au moins un** :
+
+- **C1** — Bug reproductible sur appareil cible
+- **C2** — Même friction signalée par ≥ 3 utilisateurs indépendants sur 30 jours
+- **C3** — Métrique terrain hors seuil d'alerte après 4 semaines de données
+- **C4** — Évolution prévue V1.1 déclenchée par C1, C2 ou C3
+
+**Aucune modification ne sera proposée** parce qu'elle paraît théoriquement meilleure, parce qu'un autre produit fait différemment, ou parce qu'une idée émerge en session.
 
 ---
 
