@@ -2009,7 +2009,7 @@ App.renderActivityMain=function(){
   const _mc=S._unseenMissedCalls||0;const _mi=document.getElementById('resumeMissedItem');const _mb=document.getElementById('resumeMissedBadge');const _ms=document.getElementById('resumeMissedSub');if(_mi)_mi.style.display=_mc>0?'flex':'none';if(_mb){_mb.textContent=_mc>99?'99+':String(_mc);_mb.style.display=_mc>0?'flex':'none';}if(_ms)_ms.textContent=_mc>0?_mc+' appel'+(_mc>1?'s':'')+' manqué'+(_mc>1?'s':''):'Aucun appel manqué';const _mine=(S.alerts||[]).filter(a=>(a._mine||a._own)&&a.status!=='gone'&&a.status!=='resolved'&&(now-Number(a.at||0)<(typeof ttlFor==='function'?ttlFor(a.type):3600000)));const _mn=_mine.length;const _mineItem=document.getElementById('resumeMineItem');const _mineBadge=document.getElementById('resumeMineBadge');const _mineSub=document.getElementById('resumeMineSub');if(_mineItem)_mineItem.style.display=_mn>0?'flex':'none';if(_mineBadge){_mineBadge.textContent=_mn>99?'99+':String(_mn);_mineBadge.style.display=_mn>0?'flex':'none';}if(_mineSub)_mineSub.textContent=_mn>0?_mn+' signalement'+(_mn>1?'s':'')+' en cours':'Aucun signalement actif';
 const _deleted2=[];try{JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').forEach(x=>_deleted2.push(String(x)));}catch(e){}
 const _rIds2=S._readMsgIds;
-const _unreadConv=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!m.context_type&&!_deleted2.includes(String(m.id))&&(!_rIds2||!_rIds2.has(String(m.id))));
+const _unreadConv=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&(!m.context_type||m.context_type==='vehicle_response')&&!_deleted2.includes(String(m.id))&&(!_rIds2||!_rIds2.has(String(m.id))));
 const _ucN=_unreadConv.length;
 const _ucC=new Set(_unreadConv.map(m=>m._otherPlate||m._convPlate).filter(Boolean)).size;
 const _umItem=document.getElementById('resumeUnreadMsgsItem');
@@ -4085,7 +4085,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=31"></script>
+<script src="messages.js?v=32"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>

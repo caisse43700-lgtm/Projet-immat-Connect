@@ -895,7 +895,8 @@ function _dayLabel(d){
 
 function _renderTimeline(body, messages, searchQuery){
   const q = (searchQuery||'').trim().toUpperCase();
-  const freeMessages = (messages||[]).filter(m => !m.context_type);
+  // vehicle_response affiché dans le fil (réponse à un signalement = message normal)
+  const freeMessages = (messages||[]).filter(m => !m.context_type || m.context_type==='vehicle_response');
   const filteredMessages = q ? freeMessages.filter(m => (m.message||'').toUpperCase().includes(q)) : freeMessages;
   const countEl = document.getElementById('icThreadSearchCount');
   if(countEl){
