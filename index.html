@@ -2042,7 +2042,7 @@ if(_umSub)_umSub.textContent=_ucN>0?_ucN+' message'+(_ucN>1?'s':'')+(_ucC>0?' de
 App.openActivityCat=function(cat){
   document.body.classList.add('act-cat-open');
   this.closeCallJournal?.();
-  S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
+  S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';S._actGroupOpen=false;
   // Véhicule : si la seule nouveauté est une réponse reçue (Envoyés) et aucun signalement reçu non lu → ouvrir Envoyés
   if(cat==='vehicle'){try{const _r=S._readMsgIds;const _ms=(S._actMessages||[]);const _u=_ms.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_r||!_r.has(String(m.id)))).length;const _ru=_ms.filter(m=>m.context_type==='vehicle_response'&&m._received&&!m.read_at&&(!_r||!_r.has(String(m.id)))).length;if(_u===0&&_ru>0)S._actCatTab='envoyes';}catch(e){}}
   this._renderTypeFilterBar(cat);
@@ -2064,7 +2064,7 @@ App.openActivityCat=function(cat){
     if(match&&isNearby(a)){a.status='seen';_changed=true;}
   });
   if(_changed&&typeof saveAlerts==='function')saveAlerts();
-  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,S._actCatTab||'recus');if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
+  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{if(!S._actGroupOpen)this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{if(!S._actGroupOpen)this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,S._actCatTab||'recus');if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{if(!S._actGroupOpen)this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
   try{this.updateActBadge?.()}catch(e){};
 };
 App.closeActivityCat=function(){
@@ -2130,7 +2130,11 @@ App.todoGoto=function(cat,plate){
   const np=document.getElementById('actNewPanel');if(np)np.style.display='none';
   if(cat==='vehicle'){
     this.openActivityCat('vehicle');
-    if(plate&&plate!=='?')setTimeout(()=>{try{this.actOpenVehicleMsgGroup(plate);}catch(e){}},160);
+    // Forcer l'onglet Reçus : les cartes des vues transversales sont des signalements REÇUS
+    // (sinon le basculement auto vers Envoyés ouvrirait la réponse "Je vérifierai" au lieu du signalement)
+    if(window.S)S._actCatTab='recus';
+    document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
+    if(plate&&plate!=='?')setTimeout(()=>{try{if(window.S)S._actCatTab='recus';this.actOpenVehicleMsgGroup(plate);}catch(e){}},160);
   }else if(cat==='station'){
     this.openActivityCat('station');
     if(window.S)S._actCatTab='recus';
@@ -2368,7 +2372,7 @@ App.renderDoneFeed=function(){
   });
 };
 App.actOpenAlertGroup=function(plate){
-  S._actAlertGroupPlate=plate;
+  S._actAlertGroupPlate=plate;S._actGroupOpen=true;
   const now=Date.now();
   const cat=S._actCat||'all';const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
   const activeAlerts=(S.alerts||[]).filter(a=>{if(a.status==='gone'||a.status==='resolved')return false;const ts=a.at!=null&&Number(a.at)!==0?Number(a.at):null;if(ts===null)return false;return now-ts<(typeof ttlFor==='function'?ttlFor(a.type):3600000);});
@@ -2397,7 +2401,7 @@ App.actOpenAlertGroup=function(plate){
 };
 App.closeAlertGroup=function(){
   S._actAlertGroupPlate=null;
-  S._actVehicleMsgGroupPlate=null;
+  S._actVehicleMsgGroupPlate=null;S._actGroupOpen=false;
   const cat=S._actCat||'vehicle';
   const catMeta={vehicle:{title:'Véhicule',sub:'Prévenir un conducteur'},route:{title:'Route',sub:'Incidents & trafic'},aide:{title:'Assistance',sub:"Demander de l'aide"},station:{title:'Stationné',sub:'Véhicules signalés'},all:{title:'Activité',sub:'Tous les signalements'}};
   const {title,sub}=catMeta[cat]||catMeta['all'];
@@ -2435,7 +2439,7 @@ App.actMarkVehicleMsg=function(id,plate){
 };
 App._vmReplies={merci:'Bien reçu, merci ! 👍',verifie:'Je vérifie ça de suite 👀',arrete:"Je m'arrête pour vérifier ✓",regle:"C'est réglé, merci ! ✅"};
 App.actOpenVehicleMsgGroup=function(plate){
-  S._actVehicleMsgGroupPlate=plate;
+  S._actVehicleMsgGroupPlate=plate;S._actGroupOpen=true;
   const tab=S._actCatTab||'recus';const isRecus=tab==='recus';
   const vmMsgs=(S._actMessages||[]).filter(m=>m.context_type==='vehicle_report'&&m._otherPlate===plate&&(isRecus?m._received===true:!m._received));
   // En Envoyés : récupère aussi les réponses reçues du conducteur alerté
@@ -3038,7 +3042,7 @@ App.actDeleteVehicleMsg=async function(msgId,plate){
 };
 
 App.actCatTab=function(tab){
-  S._actCatTab=tab;
+  S._actCatTab=tab;S._actGroupOpen=false;
   S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
   document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   this._renderTypeFilterBar(S._actCat||'all');
