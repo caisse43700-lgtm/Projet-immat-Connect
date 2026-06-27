@@ -1341,7 +1341,7 @@ renderConv(rows){
   if(!bar)return;
   bar.innerHTML='<button type="button" class="conv-chip '+(S.conv==='all'?'on':'')+'" onclick="App.setConv(\'all\')">Toutes</button>'+ps.map(p=>'<button type="button" class="conv-chip '+(S.conv===p?'on':'')+'" onclick="App.setConv(\''+js(p)+'\')">🚗 '+esc(p)+'</button>').join('');
 },
-async setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;await this.loadMsgs();if(p&&p!=='all'){try{window.ImmatMessages?.openThread?.(p)}catch(e){}}},
+async setConv(p){S.conv=p;if(p!=='all'&&$('iTarget'))$('iTarget').value=p;await this.loadMsgs();if(p&&p!=='all'){try{window.ImmatMessages?.openThread?.(p)}catch(e){}try{this.clearMsgNavUnread?.(p)}catch(e){}}},
 msgHtml(m,my){
   const sent=!!m._sent;
   const p=sent?m._receiverPlate:m._senderPlate;
@@ -1450,7 +1450,7 @@ async subMsgs(){
       try{const _rp=window.ImmatMessages?.refresh?.();if(_rp&&typeof _rp.then==='function')_rp.then(()=>{try{this.updateActBadge?.();}catch(_){}});else this.updateActBadge?.();}catch(e){this.updateActBadge?.();}
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
-},notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){const _p=lastNotif;this.navMessages?.();setTimeout(()=>{try{window.ImmatMessages?.openThread?.(_p);}catch(e){try{this.setConv(_p);}catch(_){}}},350);}},
+},notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){const _p=lastNotif;this.navMessages?.();setTimeout(()=>{try{window.ImmatMessages?.openThread?.(_p);}catch(e){try{this.setConv(_p);}catch(_){}}try{this.clearMsgNavUnread?.(_p);}catch(_){}},350);}},
 async subLocs(){if(!sb)return;if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if($('appScreen').classList.contains('active')){clearTimeout(S._locDebounce);S._locDebounce=setTimeout(()=>this.loadOthers(),2000);}}).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime locs KO',err);setTimeout(()=>{const _old=S.chLoc;S.chLoc=null;try{if(_old)sb.removeChannel(_old);}catch(_){}this.subLocs?.()},5000)}})},addCommunityAlert(raw,opts={}){const alert=normalizeAlert(raw);const saved=upsertAlert(alert);if(!saved)return null;syncDerivedAlertUI();if(opts.notify&&isNearby(saved)&&_notifPref(saved.group)){const meta=cat(saved.type);notifyAlert(meta.icon+' '+meta.label,saved.reason,saved.level,saved.group);try{this.showFloatingCard(meta.icon,'Incident '+meta.label,(nPlate(saved.plate)||'Conducteur proche')+(saved.reason?' · '+saved.reason:''),'Vu',saved.group==='assist'?'✋ J\'aide':'🗺 Voir',()=>this.actConfirmAlert(saved.id,'seen'),saved.group==='assist'?()=>{this.actHelpReply?.(saved.id,'arrivant');}:()=>{App.actViewOnMap?.(saved.id);},saved.level)}catch(e){}}return saved},
 addCommunityAlertMarker(a){if(!S.map||a.lat==null||a.lng==null)return;const mkey=a.key||a.id;if(S.alertMarkersById[mkey])return;let _mLat=a.lat,_mLng=a.lng;{const _J=0.00012;if(Object.values(S.alertMarkersById).some(m=>{const ll=m.getLatLng?.();return ll&&Math.abs(ll.lat-_mLat)<_J&&Math.abs(ll.lng-_mLng)<_J;})){const _ang=Math.random()*2*Math.PI;_mLat+=Math.cos(_ang)*_J*0.8;_mLng+=Math.sin(_ang)*_J*0.8;}}const meta=cat(a.type),color=a.level==='urgent'?'#ff2d55':a.level==='important'?'#ff9500':'#10161d';const marker=L.marker([_mLat,_mLng],{icon:L.divIcon({html:'<div class="road-pin" style="background:'+color+';padding:6px;border-radius:12px">'+meta.icon+'</div>',iconSize:[38,38],iconAnchor:[19,19],className:''})});marker._alertGroup=a.group||'route';marker.bindPopup('<b>'+esc(meta.icon+' '+(a.label||meta.label))+'</b><br><small>'+esc(a.reason||'Signalement')+'</small><br><button type="button" onclick="App.dismissAlert(\''+js(a.key||a.id)+'\')">Retirer</button>');const _mf=S.mapAlertFilter||'all';if(_mf==='all'||_mf===marker._alertGroup)marker.addTo(S.map);S.alertMarkersById[mkey]=marker},
 setMapAlertFilter(f){S.mapAlertFilter=f||'all';Object.values(S.alertMarkersById).forEach(mkr=>{const g=mkr._alertGroup||'route';if(f==='all'||f===g){if(!S.map.hasLayer(mkr))mkr.addTo(S.map);}else{if(S.map.hasLayer(mkr))S.map.removeLayer(mkr);}});document.querySelectorAll('.map-filter-pill').forEach(btn=>{const on=btn.dataset.f===f;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on);});},
@@ -3799,6 +3799,35 @@ App.fcAction=function(n){
   if(typeof cb==='function') cb();
   this.hideFloatingCard();
 };
+// Vide le registre pastille pour une conversation lue (appelé à l'ouverture d'un fil)
+App.clearMsgNavUnread=function(plate){
+  try{
+    if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}
+    if(plate){const ids=new Set((S._actMessages||[]).filter(m=>m._otherPlate===plate).map(m=>String(m.id)));[...S._navUnreadIds].forEach(id=>{if(ids.has(id))S._navUnreadIds.delete(id);});}
+    else S._navUnreadIds.clear();
+    localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...S._navUnreadIds].slice(-200)));
+    const nb=document.getElementById('msgNavBadge');const n=S._navUnreadIds.size;if(nb){nb.textContent=n>99?'99+':String(n);nb.style.display=n>0?'flex':'none';}
+  }catch(e){}
+};
+// GARDIEN pastille Messages : ré-affiche la pastille dès qu'un code (même un messages.js obsolète
+// servi par le SW) tente de la masquer alors que le registre temps réel contient des non-lus.
+// index.html est toujours servi du réseau → ce gardien est garanti à jour et a le dernier mot.
+(function(){
+  function _arm(){
+    const nb=document.getElementById('msgNavBadge');if(!nb)return false;
+    let _busy=false;
+    const enforce=()=>{
+      if(_busy)return;
+      try{
+        const S2=window.S||{};const n=(S2._navUnreadIds&&S2._navUnreadIds.size)||0;
+        if(n>0){const cur=parseInt(nb.textContent,10)||0;if(nb.style.display==='none'||cur<n){_busy=true;nb.textContent=n>99?'99+':String(n);nb.style.display='flex';_busy=false;}}
+      }catch(e){_busy=false;}
+    };
+    try{new MutationObserver(enforce).observe(nb,{attributes:true,childList:true,characterData:true,subtree:true});}catch(e){}
+    return true;
+  }
+  if(!_arm()){let _t=setInterval(()=>{if(_arm())clearInterval(_t);},500);setTimeout(()=>clearInterval(_t),8000);}
+})();
 
 window.App=App;
 if(sb)sb.auth.onAuthStateChange((e,s)=>{if(e==='PASSWORD_RECOVERY')return App.show('sr');if(e==='SIGNED_IN'&&s)setTimeout(()=>App.afterAuth(),0);if(e==='SIGNED_OUT'){
