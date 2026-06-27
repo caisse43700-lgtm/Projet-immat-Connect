@@ -403,7 +403,8 @@ function buildThreads(){
   try{ deletedIds = JSON.parse(localStorage.getItem('ic_deleted_msgs') || '[]').map(String); }catch(e){}
 
   const groups = {};
-  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && !m.context_type).forEach(m=>{
+  // vehicle_response inclus dans les fils Messages (réponse à un signalement = message normal).
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && (!m.context_type || m.context_type==='vehicle_response')).forEach(m=>{
     const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);

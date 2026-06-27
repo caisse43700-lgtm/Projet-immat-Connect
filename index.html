@@ -1986,10 +1986,10 @@ App.renderActivityMain=function(){
   const vmUnread=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const vmResponseUnread=msgs.filter(m=>m.context_type==='vehicle_response'&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const bRoute=activeAlerts.filter(a=>a.group==='route'&&a.status!=='seen'&&a.status!=='present').length;
-  // Badge Véhicule : compté UNIQUEMENT via les messages (source de vérité). Les alertes
-  // véhicule broadcast sont redondantes avec le message vehicle_report → exclues pour ne pas
-  // compter deux fois le même signalement.
-  const bVehicle=vmUnread+vmResponseUnread;
+  // Badge Véhicule : uniquement les signalements reçus (vehicle_report). Les réponses
+  // (vehicle_response) sont désormais comptées dans Messages, pas ici. Les alertes broadcast
+  // sont redondantes avec le message → exclues.
+  const bVehicle=vmUnread;
   const bAide=activeAlerts.filter(a=>a.group==='assist').length;
   const bStation=msgs.filter(m=>(m.context_type==='parked_report'||m.context_type==='parked_response')&&m._received&&!m.read_at&&(!_rIds||!_rIds.has(String(m.id)))).length;
   const setBadge=(id,n)=>{const el=document.getElementById(id);if(!el)return;el.textContent=n>99?'99+':String(n);el.style.display=n>0?'flex':'none';};
@@ -3473,11 +3473,11 @@ App.updateActBadge=function(){
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
     const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
-    // unreadMsgs = messages libres uniquement (alimente le badge nav Messages)
+    // unreadMsgs = messages libres + réponses véhicule (vehicle_response) — alimentent le badge nav Messages
     const unreadMsgs=_unreadAll.filter(m=>!m.context_type).length;
-    // unreadCtx = signalements véhicule/stationné non lus — comptés dans le badge nav Activité
-    // (avant ils transitaient par l'alerte broadcast ; depuis sa suppression, on les compte ici directement)
-    const unreadCtx=_unreadAll.filter(m=>m.context_type==='vehicle_report'||m.context_type==='vehicle_response'||m.context_type==='parked_report'||m.context_type==='parked_response').length;
+    const unreadVehResp=_unreadAll.filter(m=>m.context_type==='vehicle_response').length;
+    // unreadCtx = signalements véhicule/stationné non lus — comptés dans le badge nav Activité (PAS les réponses : elles vont dans Messages)
+    const unreadCtx=_unreadAll.filter(m=>m.context_type==='vehicle_report'||m.context_type==='parked_report'||m.context_type==='parked_response').length;
     const unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
@@ -3493,7 +3493,8 @@ App.updateActBadge=function(){
     const total=unreadAlerts+unreadMsgs+unreadCtx;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     const msgBadge=$('msgNavBadge');
-    if(msgBadge){msgBadge.textContent=unreadMsgs>99?'99+':String(unreadMsgs);msgBadge.style.display=unreadMsgs>0?'flex':'none';}
+    const _msgTot=unreadMsgs+unreadVehResp;
+    if(msgBadge){msgBadge.textContent=_msgTot>99?'99+':String(_msgTot);msgBadge.style.display=_msgTot>0?'flex':'none';}
     const callBadge=$('callNavBadge');
     const missedCount=(typeof S!=='undefined'&&S._unseenMissedCalls)||0;
     if(callBadge){callBadge.textContent=missedCount>99?'99+':String(missedCount);callBadge.style.display=missedCount>0?'flex':'none';}
@@ -4084,7 +4085,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=30"></script>
+<script src="messages.js?v=31"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
