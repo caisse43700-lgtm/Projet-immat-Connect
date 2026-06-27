@@ -3469,8 +3469,11 @@ App.updateActBadge=function(){
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
     const _rIds=S._readMsgIds;const _unreadAll=(S._actMessages||[]).filter(m=>m._received&&!m.read_at&&!deleted.includes(String(m.id))&&(!_rIds||!_rIds.has(String(m.id))));
-    // vehicle_report/vehicle_response/parked_report/parked_response exclus du badge nav : comptés dans leur catégorie dédiée
+    // unreadMsgs = messages libres uniquement (alimente le badge nav Messages)
     const unreadMsgs=_unreadAll.filter(m=>!m.context_type).length;
+    // unreadCtx = signalements véhicule/stationné non lus — comptés dans le badge nav Activité
+    // (avant ils transitaient par l'alerte broadcast ; depuis sa suppression, on les compte ici directement)
+    const unreadCtx=_unreadAll.filter(m=>m.context_type==='vehicle_report'||m.context_type==='vehicle_response'||m.context_type==='parked_report'||m.context_type==='parked_response').length;
     const unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
@@ -3483,7 +3486,7 @@ App.updateActBadge=function(){
     }).length;
     try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
-    const total=unreadAlerts+unreadMsgs;
+    const total=unreadAlerts+unreadMsgs+unreadCtx;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     const msgBadge=$('msgNavBadge');
     if(msgBadge){msgBadge.textContent=unreadMsgs>99?'99+':String(unreadMsgs);msgBadge.style.display=unreadMsgs>0?'flex':'none';}
