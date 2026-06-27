@@ -2205,10 +2205,24 @@ App.closeDoneView=function(){
   const s=document.getElementById('sheet');if(s)s.scrollTop=0;
   this.renderActivityMain?.();
 };
+App.doneDelete=function(kind,key){
+  let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
+  if(kind==='veh'){
+    const t=this._computeDone();
+    t.veh.filter(m=>(m._otherPlate||'?')===key).forEach(m=>{if(!d.includes(String(m.id)))d.push(String(m.id));});
+  }else if(kind==='st'){
+    if(!d.includes(String(key)))d.push(String(key));
+  }else if(kind==='sos'){
+    try{this.dismissAlert?.(key,{silent:true});}catch(e){}
+  }
+  try{localStorage.setItem('ic_deleted_msgs',JSON.stringify(d.slice(-500)));}catch(e){}
+  this.renderDoneFeed();this.updateActBadge?.();
+};
 App.renderDoneFeed=function(){
   const feed=document.getElementById('actDoneFeed');if(!feed)return;
   const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const _clean=s=>String(s||'').replace(/\[GPS:[^\]]*\]/g,'').replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').trim();
+  const _wrap=(delCall,inner)=>`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="event.stopPropagation();${delCall}">🗑️<br><span>Suppr.</span></div>${inner}</div>`;
   const t=this._computeDone();
   if(t.total===0){feed.innerHTML='<div class="act-empty">Aucun signalement traité pour le moment.</div>';return;}
   let html='';
@@ -2221,9 +2235,9 @@ App.renderDoneFeed=function(){
       const last=arr.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))[0];
       const desc=e2(_clean(last&&last.message).slice(0,60));
       const cnt=arr.length;
-      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('vehicle','${e2(pl)}')">
+      return _wrap(`App.doneDelete('veh','${e2(pl)}')`,`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('vehicle','${e2(pl)}')">
         <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#22c55e"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))}</div><div class="act-vmg-desc">${desc}</div></div><div class="act-vmg-time">✅ ${cnt}</div></div>
-      </div>`;
+      </div>`);
     }).join('');
   }
   if(t.st.length){
@@ -2231,9 +2245,9 @@ App.renderDoneFeed=function(){
     html+=t.st.map(m=>{
       const pl=m._otherPlate||m.sender_plate||m.from_plate||'';
       const label=e2(_clean(m.message).slice(0,60));
-      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('station','${e2(pl)}')">
+      return _wrap(`App.doneDelete('st','${e2(String(m.id))}')`,`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('station','${e2(pl)}')">
         <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#22c55e"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur proche'}</div><div class="act-vmg-desc">${label}</div></div><div class="act-vmg-time">✅</div></div>
-      </div>`;
+      </div>`);
     }).join('');
   }
   if(t.sos.length){
@@ -2241,12 +2255,19 @@ App.renderDoneFeed=function(){
     html+=t.sos.map(a=>{
       const pl=a.plate||a.from_plate||a.sender_plate||'';
       const reason=e2(String(a.reason||a.label||'').replace(/^\[ASSISTANCE\]\s*/i,'').slice(0,60));
-      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('aide','${e2(pl)}')">
+      return _wrap(`App.doneDelete('sos','${e2(String(a.id))}')`,`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#22c55e;cursor:pointer" onclick="App.todoGoto('aide','${e2(pl)}')">
         <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#22c55e"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur'}</div><div class="act-vmg-desc">${reason}</div></div><div class="act-vmg-time">✅</div></div>
-      </div>`;
+      </div>`);
     }).join('');
   }
   feed.innerHTML=html;
+  // Swipe gauche → révèle Supprimer (caché par défaut)
+  feed.querySelectorAll('.act-swipe-wrap').forEach(wrap=>{
+    let sx=0,dragging=false;const inner=wrap.querySelector('.act-vmg-card');
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dragging=true;},{passive:true});
+    wrap.addEventListener('touchmove',e=>{if(!dragging)return;const dx=e.touches[0].clientX-sx;if(dx<-10&&inner)inner.style.transform='translateX('+Math.max(dx,-76)+'px)';},{passive:true});
+    wrap.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;const dx=e.changedTouches[0].clientX-sx;if(inner){inner.style.transition='transform .2s';inner.style.transform=dx<-40?'translateX(-76px)':'';}});
+  });
 };
 App.actOpenAlertGroup=function(plate){
   S._actAlertGroupPlate=plate;
