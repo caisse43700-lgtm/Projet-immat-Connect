@@ -2244,7 +2244,12 @@ App.actOpenVehicleMsgGroup=function(plate){
   const sortedResponses=vmResponses.slice().sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():0)-(a.created_at?new Date(a.created_at).getTime():0));
   const titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(titleEl)titleEl.textContent=plate;
-  const _subLabel=isRecus?(sorted.length+' signalement'+(sorted.length>1?'s':'')):(sorted.length+' envoyé'+(sorted.length>1?'s':'')+(sortedResponses.length>0?' · '+sortedResponses.length+' réponse'+(sortedResponses.length>1?'s':''):''));
+  // Header Reçus : ne compte que les signalements ACTIFS (non traités). Les traités restent
+  // visibles dans la section TRAITÉS mais ne gonflent plus le compteur du titre.
+  let _vmgVerdicts={};try{_vmgVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(_){}
+  let _vmgReplied=new Set();try{_vmgReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').map(String));}catch(_){}
+  const _activeCount=sorted.filter(m=>!(_vmgVerdicts[String(m.id)]||_vmgReplied.has(String(m.id)))).length;
+  const _subLabel=isRecus?(_activeCount>0?(_activeCount+' signalement'+(_activeCount>1?'s':'')):(sorted.length+' traité'+(sorted.length>1?'s':''))):(sorted.length+' envoyé'+(sorted.length>1?'s':'')+(sortedResponses.length>0?' · '+sortedResponses.length+' réponse'+(sortedResponses.length>1?'s':''):''));
   if(subEl)subEl.textContent=_subLabel;
   const backBtn=document.querySelector('#actCatPanel .act-cat-back');
   if(backBtn){backBtn.setAttribute('onclick','App.closeAlertGroup()');}
