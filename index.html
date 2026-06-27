@@ -2055,13 +2055,19 @@ App._computeTodo=function(){
   const S2=window.S||{};
   const msgs=(S2._actMessages||[]);
   let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String);}catch(e){}
-  // Dédup doublons exacts (même plaque + même texte) — garde le plus récent. Évite qu'un
-  // double-envoi ou un doublon historique ne gonfle le compteur "À traiter".
+  // Dédup STRICTE : ne fusionne QUE les vrais doublons quasi-simultanés (même plaque + même
+  // texte à moins de 2 min = double-insertion / double-tap). Deux signalements identiques
+  // envoyés à des moments différents restent affichés tous les deux (vrais signalements distincts).
   const _dedupExact=(arr)=>{
     const sorted=arr.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-    const seen=new Set(),out=[];
-    sorted.forEach(m=>{const k=(m._otherPlate||'?')+'|'+String(m.message||'').trim();if(seen.has(k))return;seen.add(k);out.push(m);});
-    return out;
+    const kept=[];
+    sorted.forEach(m=>{
+      const k=(m._otherPlate||'?')+'|'+String(m.message||'').trim();
+      const t=new Date(m.created_at||0).getTime();
+      const dup=kept.some(x=>((x._otherPlate||'?')+'|'+String(x.message||'').trim())===k&&Math.abs(new Date(x.created_at||0).getTime()-t)<120000);
+      if(!dup)kept.push(m);
+    });
+    return kept;
   };
   // 🚨 Véhicule : vehicle_report reçu, sans verdict et non répondu (= en attente d'un constat)
   let vmVerdicts={};try{vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
