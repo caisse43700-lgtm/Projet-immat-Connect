@@ -1356,11 +1356,12 @@ async subMsgs(){
       const pl=nPlate(m.sender_plate||m.from_plate||profs[m.sender_id]?.owner_plate||'');
       const _sndPseudo=profs[m.sender_id]?.pseudo;
       const _sndName=(pl||'inconnu')+(_sndPseudo&&_sndPseudo!=='Conducteur'?' · '+_sndPseudo:'');
-      this.notif(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message',_sndName,pl||null);
+      const _isVehResp=m.context_type==='vehicle_response';
+      this.notif(_isVehResp?'📩 Réponse à votre signalement':(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message'),_isVehResp?((pl||'Un conducteur')+' a consulté votre signalement'):_sndName,pl||null);
       const _txt=String(m.message||'');let _ic003=false;
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
       if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(_sndName||'Le conducteur')+' a vu votre signalement','ok');}
-      if(!_ic003&&!_txt.includes('note confiance actuelle')){try{
+      if(!_ic003&&!_txt.includes('note confiance actuelle')&&!_isVehResp){try{
         const _isVehicleReport=m.context_type==='vehicle_report';
         const _isVehicleResponse=m.context_type==='vehicle_response';
         const _isParkedReport=m.context_type==='parked_report';
