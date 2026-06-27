@@ -1375,6 +1375,10 @@ async subMsgs(){
       const _sndPseudo=profs[m.sender_id]?.pseudo;
       const _sndName=(pl||'inconnu')+(_sndPseudo&&_sndPseudo!=='Conducteur'?' · '+_sndPseudo:'');
       const _isVehResp=m.context_type==='vehicle_response';
+      // Pastille Messages : incrément IMMÉDIAT depuis la payload temps réel (indépendant du re-SELECT
+      // refresh() et d'un messages.js éventuellement obsolète servi par le SW — index.html est toujours
+      // servi du réseau, donc ce code est garanti à jour). Couvre messages libres + réponses véhicule.
+      if(!m.context_type||_isVehResp){try{const _nb=document.getElementById('msgNavBadge');const _cur=_nb?(parseInt(_nb.textContent,10)||0):0;const _n=Math.max(1,_cur+1);if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display='flex';}if(window.S)S.unreadMsgCount=_n;}catch(e){}}
       this.notif(_isVehResp?('📩 Réponse de '+(pl||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message'),_isVehResp?(String(m.message||'').slice(0,60)||'a lu votre signalement'):_sndName,pl||null);
       const _txt=String(m.message||'');let _ic003=false;
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
@@ -3702,9 +3706,11 @@ App.updateActBadge=function(){
     // unreadMsgs = messages libres + réponses véhicule (vehicle_response) — alimentent le badge nav Messages
     const unreadMsgs=_unreadAll.filter(m=>!m.context_type).length;
     const unreadVehResp=_unreadAll.filter(m=>m.context_type==='vehicle_response').length;
+    // Pastille Messages écrite TÔT (avant le calcul des alertes qui pourrait throw et avorter la fonction)
+    try{const _mb0=$('msgNavBadge');const _mt0=unreadMsgs+unreadVehResp;if(_mb0){_mb0.textContent=_mt0>99?'99+':String(_mt0);_mb0.style.display=_mt0>0?'flex':'none';}}catch(_){}
     // unreadCtx = signalements véhicule/stationné non lus — comptés dans le badge nav Activité (PAS les réponses : elles vont dans Messages)
     const unreadCtx=_unreadAll.filter(m=>m.context_type==='vehicle_report'||m.context_type==='parked_report'||m.context_type==='parked_response').length;
-    const unreadAlerts=(S.alerts||[]).filter(a=>{
+    let unreadAlerts=0;try{unreadAlerts=(S.alerts||[]).filter(a=>{
       if(a._mine||a._own) return false; // mes propres signalements ne comptent pas
       const st=a.status;
       if(st==='seen'||st==='gone'||st==='resolved'||st==='present') return false;
@@ -3713,7 +3719,7 @@ App.updateActBadge=function(){
       const age=now-ts;
       const ttl=typeof ttlFor==='function'?ttlFor(a.type):3600000;
       return age<ttl&&isNearby(a);
-    }).length;
+    }).length;}catch(_){unreadAlerts=0;}
     try{window.ImmatOrganism?.observe?.('BADGE_RECOMPUTED',{alerts:unreadAlerts,msgs:unreadMsgs,_src:'ImmatConnect/updateActBadge'})}catch(e){}
     const badge=$('actBadge');
     const total=unreadAlerts+unreadMsgs+unreadCtx;
