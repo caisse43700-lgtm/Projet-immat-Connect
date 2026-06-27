@@ -2136,7 +2136,11 @@ App.openVehicleSignalement=function(plate){
     this.openActivityCat('vehicle');
     if(window.S)S._actCatTab='recus'; // Reçus forcé (jamais Envoyés) → ouvre le signalement, pas la réponse
     document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
-    if(plate&&plate!=='?')setTimeout(()=>{try{if(window.S)S._actCatTab='recus';this.actOpenVehicleMsgGroup(plate);}catch(e){}},160);
+    if(plate&&plate!=='?')setTimeout(()=>{try{
+      if(window.S)S._actCatTab='recus';this.actOpenVehicleMsgGroup(plate);
+      // Déplie automatiquement la 1re carte → le détail + actions ("Je vérifierai"/verdict) s'ouvrent directement
+      setTimeout(()=>{try{const f=document.getElementById('actAlertGroupFeed');const first=f&&f.querySelector('.act-vmg-encours');if(first&&!first.classList.contains('open')){first.classList.add('open');const mid=first.dataset&&first.dataset.msgid;if(mid&&this.actToggleVmCard){/* déjà ouvert via classe */}first.scrollIntoView&&first.scrollIntoView({block:'nearest'});}}catch(e){}},140);
+    }catch(e){}},160);
     else toast('Retrouvez ce signalement dans Activité > Véhicule.','ok');
   }catch(e){}};
   const pa=document.getElementById('panelActivite');
