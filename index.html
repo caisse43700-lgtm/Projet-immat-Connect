@@ -2017,6 +2017,8 @@ App.openActivityCat=function(cat){
   document.body.classList.add('act-cat-open');
   this.closeCallJournal?.();
   S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';
+  // Véhicule : si la seule nouveauté est une réponse reçue (Envoyés) et aucun signalement reçu non lu → ouvrir Envoyés
+  if(cat==='vehicle'){try{const _r=S._readMsgIds;const _ms=(S._actMessages||[]);const _u=_ms.filter(m=>m.context_type==='vehicle_report'&&m._received&&!m.read_at&&(!_r||!_r.has(String(m.id)))).length;const _ru=_ms.filter(m=>m.context_type==='vehicle_response'&&m._received&&!m.read_at&&(!_r||!_r.has(String(m.id)))).length;if(_u===0&&_ru>0)S._actCatTab='envoyes';}catch(e){}}
   this._renderTypeFilterBar(cat);
   const main=document.getElementById('actMain'),panel=document.getElementById('actCatPanel');
   if(main)main.style.display='none';if(panel)panel.style.display='flex';
@@ -2024,7 +2026,7 @@ App.openActivityCat=function(cat){
   const m=meta[cat]||meta.all;
   const iconEl=document.getElementById('actCatIcon'),titleEl=document.getElementById('actCatTitle'),subEl=document.getElementById('actCatSub');
   if(iconEl)iconEl.textContent=m.icon;if(titleEl)titleEl.textContent=m.title;if(subEl)subEl.textContent=m.sub;
-  document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
+  document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===(S._actCatTab||'recus')));
   const tabN=document.querySelector('.act-cat-tab[data-tab="nouveau"]');if(tabN)tabN.style.display=(cat==='all'||cat==='station')?'none':'';
   // Marquer les alertes de cette catégorie comme vues avant le rendu
   const _now=Date.now();let _changed=false;
@@ -2036,7 +2038,7 @@ App.openActivityCat=function(cat){
     if(match&&isNearby(a)){a.status='seen';_changed=true;}
   });
   if(_changed&&typeof saveAlerts==='function')saveAlerts();
-  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,'recus');if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
+  if(S._actLoadingP&&typeof S._actLoadingP.then==='function'){const feed=document.getElementById('actCatFeed');if(feed)feed.innerHTML='<div class="act-empty">Chargement…</div>';S._actLoadingP.then(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');}).catch(()=>{this.renderCategoryFeed(cat,S._actCatTab||'recus');});}else{this.renderCategoryFeed(cat,S._actCatTab||'recus');if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderCategoryFeed(S._actCat||cat,S._actCatTab||'recus');this.updateActBadge?.()}catch(e){}});}catch(e){}}}
   try{this.updateActBadge?.()}catch(e){};
 };
 App.closeActivityCat=function(){
