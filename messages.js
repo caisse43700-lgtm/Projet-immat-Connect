@@ -824,6 +824,8 @@ async function markAllRead(){
     unread.forEach(m=>{ m.read_at = now; });
     try{if(!window.S._readMsgIds)window.S._readMsgIds=new Set();ids.forEach(id=>window.S._readMsgIds.add(String(id)));const _arr=[...window.S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}
   }catch(e){}
+  // Vide le registre pastille temps réel (tout est lu)
+  try{if(window.S&&window.S._navUnreadIds){window.S._navUnreadIds.clear();localStorage.setItem('ic_nav_unread_ids','[]');}}catch(_){}
   buildThreads();
   setBadge(0);
   render();

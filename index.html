@@ -678,7 +678,7 @@ function badgeFmt(n){n=Number(n)||0;return n>99?'99+':String(n)}
 function relTime(ts){if(!ts)return'';const d=new Date(Number(ts));if(isNaN(d.getTime()))return'';const now=Date.now(),diff=now-d.getTime();if(diff<60000)return'à l\'instant';if(diff<3600000)return'il y a '+Math.floor(diff/60000)+' min';const today=new Date();today.setHours(0,0,0,0);const yest=new Date(today);yest.setDate(today.getDate()-1);const dDay=new Date(d);dDay.setHours(0,0,0,0);const hm=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(dDay.getTime()===today.getTime())return hm;if(dDay.getTime()===yest.getTime())return'hier '+hm;if(diff<7*86400000)return d.toLocaleDateString('fr-FR',{weekday:'short'})+' '+hm;return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+hm;}
 function _fuzzyPos(lat,lng){if(get('ic_approx_geo','0')!=='1')return{lat,lng};const r=()=>(Math.random()-.5)*0.0036;return{lat:lat+r(),lng:lng+r()};}
 function pendingSignalCount(){try{return (S.alerts||[]).filter(a=>(a.group==='vehicle'||a.type==='vehicule')&&a.status!=='seen').length}catch(e){return 0}}
-function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};try{App.updateCommunityStatus()}catch(e){};try{App.updateActBadge?.()}catch(e){}}
+function setUnreadMsgCount(n){S.unreadMsgCount=Math.max(0,Number(n)||0);try{localStorage.setItem('ic_unread_msg_count',String(S.unreadMsgCount))}catch(e){};if(S.unreadMsgCount===0){try{if(S._navUnreadIds){S._navUnreadIds.clear();localStorage.setItem('ic_nav_unread_ids','[]');}}catch(_){}}try{App.updateCommunityStatus()}catch(e){};try{App.updateActBadge?.()}catch(e){}}
 function trustDelta(plate,delta){
   plate=nPlate(plate);
   if(!plate)return 50;
@@ -4352,7 +4352,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=36"></script>
+<script src="messages.js?v=37"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
