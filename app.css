@@ -870,7 +870,30 @@ body.act-todo-open #actTodoPanel {
   display: flex !important;
 }
 body.act-todo-open #actMain,
-body.act-todo-open #actCatPanel {
+body.act-todo-open #actCatPanel,
+body.act-todo-open #actDonePanel {
+  display: none !important;
+}
+/* Vue TRAITÉS — même cascade flex dédiée */
+body.act-done-open #sheet {
+  display: flex !important;
+  flex-direction: column;
+}
+body.act-done-open #sheet #panelActivite {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.act-done-open #actDonePanel {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+}
+body.act-done-open #actMain,
+body.act-done-open #actCatPanel,
+body.act-done-open #actTodoPanel {
   display: none !important;
 }
 
