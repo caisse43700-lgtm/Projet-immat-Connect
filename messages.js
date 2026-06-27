@@ -1191,7 +1191,11 @@ function refreshThread(){
   if(!box || !body || !box.classList.contains('show')) return;
   const t = State.threads.find(x => x.plate === State.activePlate);
   if(!t) return;
-  if(t.unread > 0) markThreadRead(State.activePlate).catch(()=>{});
+  // Ne marquer "lu" QUE si la messagerie est réellement ouverte au premier plan.
+  // (Sinon, l'état du fil "collant" — #icThread.show non nettoyé en quittant — marquait lu
+  //  chaque message reçu en arrière-plan → la pastille disparaissait toute seule.)
+  let _msgPanelOpen=false;try{_msgPanelOpen=!!document.getElementById('panelMessages')?.classList.contains('on')&&!document.getElementById('sheet')?.classList.contains('mini');}catch(_){}
+  if(t.unread > 0 && _msgPanelOpen) markThreadRead(State.activePlate).catch(()=>{});
   // Rafraîchit l'indicateur de présence dans le sous-titre
   try{
     const sub = $('icThreadSub');
