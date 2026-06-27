@@ -852,6 +852,27 @@ body.act-cat-open #actCatPanel {
 body.act-cat-open .act-cat-feed {
   -webkit-overflow-scrolling: touch;
 }
+/* Vue À TRAITER — classe body dédiée : même cascade flex que actCatPanel, sans réafficher actCatPanel (qui a un display:flex !important sous act-cat-open) */
+body.act-todo-open #sheet {
+  display: flex !important;
+  flex-direction: column;
+}
+body.act-todo-open #sheet #panelActivite {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.act-todo-open #actTodoPanel {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+}
+body.act-todo-open #actMain,
+body.act-todo-open #actCatPanel {
+  display: none !important;
+}
 
 /* ── MESSAGES MODE — header fixe liste + thread ── */
 /* :has() supporté iOS 15.4+ — cascade flex pure, aucun position:absolute ni calcul hauteur */
