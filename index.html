@@ -2055,27 +2055,15 @@ App._computeTodo=function(){
   const S2=window.S||{};
   const msgs=(S2._actMessages||[]);
   let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String);}catch(e){}
-  // Dédup STRICTE : ne fusionne QUE les vrais doublons quasi-simultanés (même plaque + même
-  // texte à moins de 2 min = double-insertion / double-tap). Deux signalements identiques
-  // envoyés à des moments différents restent affichés tous les deux (vrais signalements distincts).
-  const _dedupExact=(arr)=>{
-    const sorted=arr.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-    const kept=[];
-    sorted.forEach(m=>{
-      const k=(m._otherPlate||'?')+'|'+String(m.message||'').trim();
-      const t=new Date(m.created_at||0).getTime();
-      const dup=kept.some(x=>((x._otherPlate||'?')+'|'+String(x.message||'').trim())===k&&Math.abs(new Date(x.created_at||0).getTime()-t)<120000);
-      if(!dup)kept.push(m);
-    });
-    return kept;
-  };
+  // Pas de déduplication ici : le compteur "À traiter" doit refléter EXACTEMENT la carte
+  // (qui ne déduplique pas). Chaque signalement non traité compte pour un.
   // 🚨 Véhicule : vehicle_report reçu, sans verdict et non répondu (= en attente d'un constat)
   let vmVerdicts={};try{vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
   let vmReplied=new Set();try{vmReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').map(String));}catch(e){}
-  const veh=_dedupExact(msgs.filter(m=>m.context_type==='vehicle_report'&&m._received===true&&!deleted.includes(String(m.id))&&!vmVerdicts[String(m.id)]&&!vmReplied.has(String(m.id))));
+  const veh=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received===true&&!deleted.includes(String(m.id))&&!vmVerdicts[String(m.id)]&&!vmReplied.has(String(m.id)));
   // 🅿️ Stationnement : parked_report reçu, non répondu
   let stReplied=new Set();try{stReplied=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]').map(String));}catch(e){}
-  const st=_dedupExact(msgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!deleted.includes(String(m.id))&&!stReplied.has(String(m.id))));
+  const st=msgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!deleted.includes(String(m.id))&&!stReplied.has(String(m.id)));
   // 🆘 SOS / Aide : demande d'assistance d'un autre, active et nearby, non répondue
   let hpReplied=new Set();try{hpReplied=new Set(JSON.parse(localStorage.getItem('ic_help_replied')||'[]').map(String));}catch(e){}
   const sos=(S2.alerts||[]).filter(a=>{
