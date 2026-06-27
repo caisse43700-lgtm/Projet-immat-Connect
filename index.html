@@ -1441,6 +1441,9 @@ async subMsgs(){
           }
         },null,_qr,_fcDedupKey);
       }catch(e){}}
+      // Rafraîchit _actMessages + badge nav à chaque message reçu (sinon la pastille Messages
+      // de la page d'accueil ne s'allume pas à l'arrivée d'un message libre)
+      try{const _rp=window.ImmatMessages?.refresh?.();if(_rp&&typeof _rp.then==='function')_rp.then(()=>{try{this.updateActBadge?.();}catch(_){}});else this.updateActBadge?.();}catch(e){this.updateActBadge?.();}
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
 },notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){this.setConv(lastNotif);this.panel('messages')}},
