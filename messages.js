@@ -48,7 +48,7 @@ function setBadge(n){
     // Pilote DIRECTEMENT la pastille de l'icône Messages (page d'accueil) — source autoritaire
     // (buildThreads compte les non-lus à chaque refresh), fiable quel que soit le timing.
     const nb = document.getElementById('msgNavBadge');
-    if(nb){ nb.textContent = n > 99 ? '99+' : String(n); nb.style.display = n > 0 ? 'flex' : 'none'; }
+    if(nb){ const _navN=(window.S&&window.S._navUnreadIds&&window.S._navUnreadIds.size)||0; const eff=Math.max(n,_navN); nb.textContent = eff > 99 ? '99+' : String(eff); nb.style.display = eff > 0 ? 'flex' : 'none'; }
   }catch(e){}
 }
 
@@ -843,6 +843,8 @@ async function markThreadRead(plate){
       unread.forEach(m=>{ m.read_at = now; });
       // Persister dans S._readMsgIds pour survie aux rechargements
       try{if(!window.S._readMsgIds)window.S._readMsgIds=new Set();ids.forEach(id=>window.S._readMsgIds.add(String(id)));const _arr=[...window.S._readMsgIds].slice(-500);localStorage.setItem('ic_read_msg_ids',JSON.stringify(_arr));}catch(_){}
+      // Vide ces ids du registre pastille temps réel (la conversation est lue → pastille à jour)
+      try{if(window.S._navUnreadIds&&window.S._navUnreadIds.size){ids.forEach(id=>window.S._navUnreadIds.delete(String(id)));localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...window.S._navUnreadIds].slice(-200)));}}catch(_){}
     }catch(e){}
   }
 

@@ -1378,7 +1378,7 @@ async subMsgs(){
       // Pastille Messages : incrément IMMÉDIAT depuis la payload temps réel (indépendant du re-SELECT
       // refresh() et d'un messages.js éventuellement obsolète servi par le SW — index.html est toujours
       // servi du réseau, donc ce code est garanti à jour). Couvre messages libres + réponses véhicule.
-      if(!m.context_type||_isVehResp){try{const _nb=document.getElementById('msgNavBadge');const _cur=_nb?(parseInt(_nb.textContent,10)||0):0;const _n=Math.max(1,_cur+1);if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display='flex';}if(window.S)S.unreadMsgCount=_n;}catch(e){}}
+      if(!m.context_type||_isVehResp){try{if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}S._navUnreadIds.add(String(m.id));try{localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...S._navUnreadIds].slice(-200)));}catch(_){}const _nb=document.getElementById('msgNavBadge');const _n=S._navUnreadIds.size;if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display=_n>0?'flex':'none';}}catch(e){}}
       this.notif(_isVehResp?('📩 Réponse de '+(pl||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message'),_isVehResp?(String(m.message||'').slice(0,60)||'a lu votre signalement'):_sndName,pl||null);
       const _txt=String(m.message||'');let _ic003=false;
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
@@ -3699,6 +3699,8 @@ App.shareAlert=function(alertId){
 };
 App.updateActBadge=function(){
   try{
+    // Registre pastille Messages temps réel — chargé depuis localStorage (survit aux rechargements)
+    if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}
     const now=Date.now();
     let deleted=[];
     try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]')}catch(e){}
@@ -3707,7 +3709,8 @@ App.updateActBadge=function(){
     const unreadMsgs=_unreadAll.filter(m=>!m.context_type).length;
     const unreadVehResp=_unreadAll.filter(m=>m.context_type==='vehicle_response').length;
     // Pastille Messages écrite TÔT (avant le calcul des alertes qui pourrait throw et avorter la fonction)
-    try{const _mb0=$('msgNavBadge');const _mt0=unreadMsgs+unreadVehResp;if(_mb0){_mb0.textContent=_mt0>99?'99+':String(_mt0);_mb0.style.display=_mt0>0?'flex':'none';}}catch(_){}
+    // = max(calcul depuis _actMessages, registre temps réel) → ne retombe pas à 0 si le re-SELECT a raté le message
+    try{const _navN=(S._navUnreadIds&&S._navUnreadIds.size)||0;const _mb0=$('msgNavBadge');const _mt0=Math.max(unreadMsgs+unreadVehResp,_navN);if(_mb0){_mb0.textContent=_mt0>99?'99+':String(_mt0);_mb0.style.display=_mt0>0?'flex':'none';}}catch(_){}
     // unreadCtx = signalements véhicule/stationné non lus — comptés dans le badge nav Activité (PAS les réponses : elles vont dans Messages)
     const unreadCtx=_unreadAll.filter(m=>m.context_type==='vehicle_report'||m.context_type==='parked_report'||m.context_type==='parked_response').length;
     let unreadAlerts=0;try{unreadAlerts=(S.alerts||[]).filter(a=>{
@@ -3725,7 +3728,8 @@ App.updateActBadge=function(){
     const total=unreadAlerts+unreadMsgs+unreadCtx;
     if(badge){badge.textContent=total>99?'99+':String(total);badge.style.display=total>0?'flex':'none';}
     const msgBadge=$('msgNavBadge');
-    const _msgTot=unreadMsgs+unreadVehResp;
+    const _navN2=(S._navUnreadIds&&S._navUnreadIds.size)||0;
+    const _msgTot=Math.max(unreadMsgs+unreadVehResp,_navN2);
     if(msgBadge){msgBadge.textContent=_msgTot>99?'99+':String(_msgTot);msgBadge.style.display=_msgTot>0?'flex':'none';}
     const callBadge=$('callNavBadge');
     const missedCount=(typeof S!=='undefined'&&S._unseenMissedCalls)||0;
@@ -4317,7 +4321,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=35"></script>
+<script src="messages.js?v=36"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
