@@ -45,6 +45,10 @@ function setBadge(n){
     if(window.S) window.S.unreadMsgCount = n;
     const btn = document.getElementById('icMarkAllReadBtn');
     if(btn) btn.style.display = n > 0 ? '' : 'none';
+    // Pilote DIRECTEMENT la pastille de l'icône Messages (page d'accueil) — source autoritaire
+    // (buildThreads compte les non-lus à chaque refresh), fiable quel que soit le timing.
+    const nb = document.getElementById('msgNavBadge');
+    if(nb){ nb.textContent = n > 99 ? '99+' : String(n); nb.style.display = n > 0 ? 'flex' : 'none'; }
   }catch(e){}
 }
 
