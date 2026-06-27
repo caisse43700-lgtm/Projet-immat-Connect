@@ -697,6 +697,7 @@ function render(){
     // Icône de type
     const _ct = last.context_type || '';
     const _typeIcon = _ct === 'vehicle_report' ? '🚨 ' :
+      _ct === 'vehicle_response' ? '📩 ' :
       _ct === 'parked_report' ? '🅿️ ' :
       _ct === 'parked_response' ? '🚗 ' :
       (last.message||'').includes('google.com/maps') ? '📍 ' : '';
