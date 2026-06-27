@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=45">
+  <link rel="stylesheet" href="app.css?v=46">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -2138,8 +2138,8 @@ App.openVehicleSignalement=function(plate){
     document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
     if(plate&&plate!=='?')setTimeout(()=>{try{
       if(window.S)S._actCatTab='recus';this.actOpenVehicleMsgGroup(plate);
-      // Déplie automatiquement la 1re carte → le détail + actions ("Je vérifierai"/verdict) s'ouvrent directement
-      setTimeout(()=>{try{const f=document.getElementById('actAlertGroupFeed');const first=f&&f.querySelector('.act-vmg-encours');if(first&&!first.classList.contains('open')){first.classList.add('open');const mid=first.dataset&&first.dataset.msgid;if(mid&&this.actToggleVmCard){/* déjà ouvert via classe */}first.scrollIntoView&&first.scrollIntoView({block:'nearest'});}}catch(e){}},140);
+      // D'abord la carte FERMÉE est visible (~0,8 s), PUIS elle se déplie en direct (animation CSS)
+      setTimeout(()=>{try{const f=document.getElementById('actAlertGroupFeed');const first=f&&f.querySelector('.act-vmg-encours');if(first&&!first.classList.contains('open')){first.scrollIntoView&&first.scrollIntoView({block:'nearest'});first.classList.add('open');}}catch(e){}},800);
     }catch(e){}},160);
     else toast('Retrouvez ce signalement dans Activité > Véhicule.','ok');
   }catch(e){}};
