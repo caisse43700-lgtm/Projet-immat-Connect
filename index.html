@@ -120,7 +120,7 @@
     <div class="act-resume-hd"><span>Résumé rapide</span><button type="button" class="act-voir-tout" onclick="App.openActivityCat('all')">Voir tout ›</button></div>
     <div class="act-resume-list">
       <div class="act-resume-item"><div class="act-resume-ico neu">✉️</div><div class="act-resume-info"><div class="act-resume-name">Nouveaux</div><div class="act-resume-detail" id="resumeNewSub">Aucune alerte non lue</div></div><span class="act-resume-badge" id="resumeNewBadge" style="display:none">0</span></div>
-      <div class="act-resume-item"><div class="act-resume-ico enc">⏳</div><div class="act-resume-info"><div class="act-resume-name">En cours</div><div class="act-resume-detail" id="resumeEncSub">Aucune action en attente</div></div><span class="act-resume-badge orange" id="resumeEncBadge" style="display:none;cursor:pointer" onclick="App.clearSeenAlerts()">0</span></div>
+      <div class="act-resume-item" id="resumeEncItem" style="cursor:pointer" onclick="App.openTodoView()" role="button"><div class="act-resume-ico enc">⏳</div><div class="act-resume-info"><div class="act-resume-name">À traiter</div><div class="act-resume-detail" id="resumeEncSub">Aucune action en attente</div></div><span class="act-resume-badge orange" id="resumeEncBadge" style="display:none">0</span></div>
       <div class="act-resume-item"><div class="act-resume-ico ok">✅</div><div class="act-resume-info"><div class="act-resume-name">Traités</div><div class="act-resume-detail">Historique consulté</div></div><span class="act-resume-badge green">✓</span></div>
       <div class="act-resume-item" id="resumeMissedItem" style="display:none;cursor:pointer" onclick="App.navAppels();setTimeout(()=>{App.setCallJournalFilter('missed');},300)" role="button"><div class="act-resume-ico" style="background:rgba(239,68,68,.15);color:#ef4444">📵</div><div class="act-resume-info"><div class="act-resume-name">Appels manqués</div><div class="act-resume-detail" id="resumeMissedSub">Aucun appel manqué</div></div><span class="act-resume-badge" id="resumeMissedBadge" style="display:none">0</span></div>
       <div class="act-resume-item" id="resumeMineItem" style="display:none;cursor:pointer" onclick="App.navActivite();setTimeout(()=>{App.openActivityCat('all');setTimeout(()=>{App.actCatTab('envoyes');},80);},350)" role="button"><div class="act-resume-ico" style="background:rgba(99,102,241,.15);color:#818cf8">📤</div><div class="act-resume-info"><div class="act-resume-name">Mes signalements</div><div class="act-resume-detail" id="resumeMineSub">Aucun signalement actif</div></div><span class="act-resume-badge" id="resumeMineBadge" style="display:none">0</span></div>
@@ -149,6 +149,15 @@
     <div id="actCatFeed" class="act-cat-feed"></div>
     <div id="actAlertGroupFeed" class="act-cat-feed" style="display:none"></div>
     <div class="act-status-bar" id="actStatusBar" style="display:none"><span id="actStatusText"></span><button type="button" onclick="App.markAllCatRead()">Tout marquer lu</button></div>
+  </div>
+  <!-- Sous-panneau À TRAITER (vue transversale par catégorie) -->
+  <div id="actTodoPanel" class="act-cat-panel" style="display:none">
+    <div class="act-cat-hd">
+      <button type="button" class="act-cat-back" onclick="App.closeTodoView()">‹</button>
+      <div class="act-cat-hd-mid"><span class="act-cat-hd-icon">⏳</span><div><div class="act-cat-hd-title">À traiter</div><div class="act-cat-hd-sub">Signalements nécessitant une action</div></div></div>
+      <button type="button" class="ph-close" onclick="App.closeSheet()">✕</button>
+    </div>
+    <div id="actTodoFeed" class="act-cat-feed"></div>
   </div>
 </div>
 <div id="panelAltet" class="panel">
@@ -1595,8 +1604,8 @@ App.navActivite=function(){
     // 2. Afficher panelActivite
     const _pa=document.getElementById('panelActivite');
     if(_pa){_pa.classList.add('on');_pa.style.display='block';}
-    const _m=document.getElementById('actMain');const _cp=document.getElementById('actCatPanel');
-    if(_m){_m.style.display='flex';}if(_cp){_cp.style.display='none';}
+    const _m=document.getElementById('actMain');const _cp=document.getElementById('actCatPanel');const _tp=document.getElementById('actTodoPanel');
+    if(_m){_m.style.display='flex';}if(_cp){_cp.style.display='none';}if(_tp){_tp.style.display='none';}
     // 3. Reset scrollTop APRÈS le DOM (iOS Safari restaure le scroll après reflow sinon)
     const _sh=document.getElementById('sheet');
     if(_sh){_sh.scrollTop=0;}
@@ -1982,12 +1991,12 @@ App.renderActivityMain=function(){
   // vehicle_report exclus : déjà comptés via l'alerte communautaire correspondante
   const unreadMsgsList=msgs.filter(m=>m._received&&!m.read_at&&m.context_type!=='vehicle_report'&&m.context_type!=='vehicle_response'&&(!_rIds||!_rIds.has(String(m.id))));
   const unread=unreadAlerts.length+unreadMsgsList.length;
-  const enCoursAlerts=activeAlerts.filter(a=>a.status==='seen'||a.status==='present');
-  const enCours=enCoursAlerts.length;
+  const _todo=(typeof this._computeTodo==='function')?this._computeTodo():{veh:[],st:[],sos:[],total:0};
+  const enCours=_todo.total;
   const newSubEl=document.getElementById('resumeNewSub'),encSubEl=document.getElementById('resumeEncSub');
   const newBadgeEl=document.getElementById('resumeNewBadge'),encBadgeEl=document.getElementById('resumeEncBadge');
   if(newSubEl){if(unread>0){const parts=[];unreadAlerts.slice(0,2).forEach(a=>{const lbl=String(a.label||a.reason||a.type||'Alerte').replace(/^\[.*?\]\s*/,'').slice(0,22);parts.push(lbl);});unreadMsgsList.slice(0,2).forEach(m=>{const lbl='Msg '+String(m._otherPlate||'').slice(0,9);parts.push(lbl);});newSubEl.textContent=parts.slice(0,3).join(' · ')+(unread>3?' …':'');}else{newSubEl.textContent='Aucune alerte non lue';}}
-  if(encSubEl){if(enCours>0){const labels=enCoursAlerts.slice(0,3).map(a=>a.label||a.reason||a.type||'Alerte').map(s=>String(s).replace(/^\[.*?\]\s*/,'').slice(0,25));encSubEl.textContent=labels.join(' · ')+(enCours>3?' …':'');}else{encSubEl.textContent='Aucune action en attente';}}
+  if(encSubEl){if(enCours>0){const parts=[];if(_todo.veh.length)parts.push('🚨 '+_todo.veh.length);if(_todo.st.length)parts.push('🅿️ '+_todo.st.length);if(_todo.sos.length)parts.push('🆘 '+_todo.sos.length);encSubEl.textContent=parts.join(' · ')+' à traiter';}else{encSubEl.textContent='Aucune action en attente';}}
   if(newBadgeEl){newBadgeEl.textContent=unread>99?'99+':String(unread);newBadgeEl.style.display=unread>0?'flex':'none';}
   if(encBadgeEl){encBadgeEl.textContent=enCours>99?'99+':String(enCours);encBadgeEl.style.display=enCours>0?'flex':'none';}
   const _mc=S._unseenMissedCalls||0;const _mi=document.getElementById('resumeMissedItem');const _mb=document.getElementById('resumeMissedBadge');const _ms=document.getElementById('resumeMissedSub');if(_mi)_mi.style.display=_mc>0?'flex':'none';if(_mb){_mb.textContent=_mc>99?'99+':String(_mc);_mb.style.display=_mc>0?'flex':'none';}if(_ms)_ms.textContent=_mc>0?_mc+' appel'+(_mc>1?'s':'')+' manqué'+(_mc>1?'s':''):'Aucun appel manqué';const _mine=(S.alerts||[]).filter(a=>(a._mine||a._own)&&a.status!=='gone'&&a.status!=='resolved'&&(now-Number(a.at||0)<(typeof ttlFor==='function'?ttlFor(a.type):3600000)));const _mn=_mine.length;const _mineItem=document.getElementById('resumeMineItem');const _mineBadge=document.getElementById('resumeMineBadge');const _mineSub=document.getElementById('resumeMineSub');if(_mineItem)_mineItem.style.display=_mn>0?'flex':'none';if(_mineBadge){_mineBadge.textContent=_mn>99?'99+':String(_mn);_mineBadge.style.display=_mn>0?'flex':'none';}if(_mineSub)_mineSub.textContent=_mn>0?_mn+' signalement'+(_mn>1?'s':'')+' en cours':'Aucun signalement actif';
@@ -2037,6 +2046,111 @@ App.closeActivityCat=function(){
   const s=document.getElementById('sheet');if(s){s.scrollTop=0;}
   requestAnimationFrame(()=>{try{const sh=document.getElementById('sheet');if(sh)sh.scrollTop=0;}catch(e){}});
   this.renderActivityMain?.();
+};
+// ── Vue "À TRAITER" transversale (V1.1) — agrège les éléments nécessitant une action par catégorie ──
+// Lecture seule des mêmes clés localStorage que les workflows existants. Ne modifie aucune donnée.
+App._computeTodo=function(){
+  const now=Date.now();
+  const S2=window.S||{};
+  const msgs=(S2._actMessages||[]);
+  let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String);}catch(e){}
+  // 🚨 Véhicule : vehicle_report reçu, sans verdict et non répondu (= en attente d'un constat)
+  let vmVerdicts={};try{vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
+  let vmReplied=new Set();try{vmReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').map(String));}catch(e){}
+  const veh=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received===true&&!deleted.includes(String(m.id))&&!vmVerdicts[String(m.id)]&&!vmReplied.has(String(m.id)));
+  // 🅿️ Stationnement : parked_report reçu, non répondu
+  let stReplied=new Set();try{stReplied=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]').map(String));}catch(e){}
+  const st=msgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!deleted.includes(String(m.id))&&!stReplied.has(String(m.id)));
+  // 🆘 SOS / Aide : demande d'assistance d'un autre, active et nearby, non répondue
+  let hpReplied=new Set();try{hpReplied=new Set(JSON.parse(localStorage.getItem('ic_help_replied')||'[]').map(String));}catch(e){}
+  const sos=(S2.alerts||[]).filter(a=>{
+    if(a._mine||a._own)return false;
+    if(a.group!=='assist')return false;
+    if(a.status==='gone'||a.status==='resolved')return false;
+    const ts=a.at!=null?Number(a.at):null;if(ts===null)return false;
+    if(now-ts>=(typeof ttlFor==='function'?ttlFor(a.type):3600000))return false;
+    if(typeof isNearby==='function'&&!isNearby(a))return false;
+    return !hpReplied.has(String(a.id));
+  });
+  return {veh,st,sos,total:veh.length+st.length+sos.length};
+};
+App.openTodoView=function(){
+  document.body.classList.add('act-cat-open');
+  this.closeCallJournal?.();
+  const main=document.getElementById('actMain'),cp=document.getElementById('actCatPanel'),todo=document.getElementById('actTodoPanel');
+  if(main)main.style.display='none';if(cp)cp.style.display='none';if(todo)todo.style.display='flex';
+  const s=document.getElementById('sheet');if(s)s.scrollTop=0;
+  this.renderTodoFeed();
+  // Re-render après rafraîchissement messages (les vehicle_report/parked_report arrivent en async)
+  if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderTodoFeed();}catch(e){}});}catch(e){}}
+};
+App.closeTodoView=function(){
+  document.body.classList.remove('act-cat-open');
+  const main=document.getElementById('actMain'),todo=document.getElementById('actTodoPanel');
+  if(todo)todo.style.display='none';if(main)main.style.display='';
+  const s=document.getElementById('sheet');if(s)s.scrollTop=0;
+  this.renderActivityMain?.();
+};
+App.todoGoto=function(cat,plate){
+  document.body.classList.remove('act-cat-open');
+  const todo=document.getElementById('actTodoPanel');if(todo)todo.style.display='none';
+  if(cat==='vehicle'){
+    this.openActivityCat('vehicle');
+    if(plate&&plate!=='?')setTimeout(()=>{try{this.actOpenVehicleMsgGroup(plate);}catch(e){}},160);
+  }else if(cat==='station'){
+    this.openActivityCat('station');
+    if(window.S)S._actCatTab='recus';
+    setTimeout(()=>{try{this.renderStationFeed('recus');}catch(e){}},160);
+  }else if(cat==='aide'){
+    this.openActivityCat('aide');
+  }
+};
+App.renderTodoFeed=function(){
+  const feed=document.getElementById('actTodoFeed');if(!feed)return;
+  const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const _clean=s=>String(s||'').replace(/\[GPS:[^\]]*\]/g,'').replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').trim();
+  const t=this._computeTodo();
+  if(t.total===0){feed.innerHTML='<div class="act-empty">✅ Rien à traiter — tout est à jour.</div>';return;}
+  let html='';
+  // 🚨 Véhicule — groupé par plaque
+  if(t.veh.length){
+    const byPlate={};
+    t.veh.forEach(m=>{const k=m._otherPlate||'?';(byPlate[k]=byPlate[k]||[]).push(m);});
+    html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🚨 Véhicule (${t.veh.length})</div>`;
+    html+=Object.keys(byPlate).map(pl=>{
+      const arr=byPlate[pl];
+      const last=arr.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))[0];
+      const desc=e2(_clean(last&&last.message).slice(0,60));
+      const cnt=arr.length;
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#2979ff;cursor:pointer" onclick="App.todoGoto('vehicle','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))}</div><div class="act-vmg-desc">${desc}</div></div><div class="act-vmg-time">${cnt>1?cnt+' signal.':'›'}</div></div>
+      </div>`;
+    }).join('');
+  }
+  // 🅿️ Stationnement
+  if(t.st.length){
+    html+=`<div class="act-vmg-sec-title" style="color:#14b8a6">🅿️ Stationnement (${t.st.length})</div>`;
+    html+=t.st.map(m=>{
+      const pl=m._otherPlate||m.sender_plate||m.from_plate||'';
+      const urgent=/^🅿️\s*URGENT/i.test(String(m.message||''));
+      const label=e2(_clean(m.message).slice(0,60));
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#14b8a6;cursor:pointer" onclick="App.todoGoto('station','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#14b8a6"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur proche'}</div><div class="act-vmg-desc">${urgent?'🚨 ':''}${label}</div></div><div class="act-vmg-time">›</div></div>
+      </div>`;
+    }).join('');
+  }
+  // 🆘 SOS / Aide
+  if(t.sos.length){
+    html+=`<div class="act-vmg-sec-title" style="color:#f97316">🆘 SOS / Aide (${t.sos.length})</div>`;
+    html+=t.sos.map(a=>{
+      const pl=a.plate||a.from_plate||a.sender_plate||'';
+      const reason=e2(String(a.reason||a.label||'').replace(/^\[ASSISTANCE\]\s*/i,'').slice(0,60));
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#f97316;cursor:pointer" onclick="App.todoGoto('aide','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur'}</div><div class="act-vmg-desc">${reason}</div></div><div class="act-vmg-time">›</div></div>
+      </div>`;
+    }).join('');
+  }
+  feed.innerHTML=html;
 };
 App.actOpenAlertGroup=function(plate){
   S._actAlertGroupPlate=plate;

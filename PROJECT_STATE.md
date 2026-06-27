@@ -13,11 +13,11 @@ Date de mise à jour    : 2026-06-25
 Avancement             : ~55% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
 Branche production     : main (GitHub Pages) — commit 9b07790 (SW v243)
-Branche de travail     : local/merge-to-main (2 commits non poussés — attente "Fusionner")
+Branche de travail     : local/merge-to-main (synchro origin/main après chaque "Fusionner")
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : TERRAIN — observer les usages, ne plus toucher au workflow
-SW local               : v246 · app.css v42 (non déployé tant que "Fusionner" non donné)
+SW local               : v247 · app.css v42 (V1.1 : vue "À traiter" transversale)
 ```
 
 ### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
@@ -56,9 +56,44 @@ SW local               : v246 · app.css v42 (non déployé tant que "Fusionner"
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Fix invariant badge — badge `📩 RÉPONSE` sur cartes Envoyés (vehicle_response CAS B)**
+**Mission : V1.1 — Vue "À traiter" transversale (clic sur "En cours" → liste par catégorie)**
+**Date :** 2026-06-27
+**Commit :** à venir
+**SW :** v246 → v247
+
+### Ce qui a été fait
+
+Nouvelle vue dédiée demandée par le propriétaire produit (réouverture V1.1 du module gelé).
+La ligne "En cours" de l'écran Activité devient **"À traiter"** et est cliquable.
+
+**Au clic → nouvel écran `actTodoPanel`** qui liste UNIQUEMENT les éléments nécessitant une
+action, groupés par catégorie :
+- 🚨 **Véhicule** — `vehicle_report` reçu, sans verdict, non répondu (groupé par plaque)
+- 🅿️ **Stationnement** — `parked_report` reçu, non répondu (`ic_station_replied`)
+- 🆘 **SOS / Aide** — assistance d'un autre, active+nearby, non répondue (`ic_help_replied`)
+
+Route exclue (pas de verdict à donner). Clic sur un item → ouvre la catégorie + l'élément
+(`todoGoto` → `openActivityCat` + `actOpenVehicleMsgGroup` / `renderStationFeed`).
+
+**Implémentation 100% additive :**
+- `App._computeTodo()` — lecture seule des mêmes clés localStorage que les workflows existants
+  (`ic_vm_verdicts`, `ic_vm_replied`, `ic_station_replied`, `ic_help_replied`, `ic_deleted_msgs`).
+  Ne modifie aucune donnée.
+- `App.openTodoView()` / `closeTodoView()` / `renderTodoFeed()` / `todoGoto()` — nouvelles fonctions.
+- Compteur "À traiter" (`resumeEncBadge`) repointé sur `_computeTodo().total` (avant : alertes vues).
+- Aucune fonction métier modifiée (verdicts, trustDelta, buildThreads, messages.js intacts).
+- Réutilise les classes CSS existantes (app.css inchangé, reste en v42).
+
+### Fichiers modifiés
+
+- `index.html` : ligne "À traiter" cliquable + panneau `actTodoPanel` + 5 fonctions JS + reset navActivite + compteur repointé
+- `service-worker.js` : CACHE_NAME v246 → v247
+
+---
+
+**Mission précédente : Fix invariant badge — badge `📩 RÉPONSE` sur cartes Envoyés (vehicle_response CAS B)**
 **Date :** 2026-06-25
-**Commit :** à venir (non encore commité)
+**Commit :** 1fa1d3b
 **SW :** v245 → v246
 
 ### Ce qui a été fait
