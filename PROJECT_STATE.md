@@ -9,15 +9,15 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-25
+Date de mise à jour    : 2026-06-27
 Avancement             : ~55% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
-Branche production     : main (GitHub Pages) — commit 9b07790 (SW v243)
+Branche production     : main (GitHub Pages)
 Branche de travail     : local/merge-to-main (synchro origin/main après chaque "Fusionner")
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
-Phase produit          : TERRAIN — observer les usages, ne plus toucher au workflow
-SW local               : v247 · app.css v42 (V1.1 : vue "À traiter" transversale)
+Phase produit          : V1.1 ACTIVITÉ — itérations UX en cours (vues transversales)
+SW                     : v266 · app.css v45 · messages.js v34
 ```
 
 ### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
@@ -56,9 +56,60 @@ SW local               : v247 · app.css v42 (V1.1 : vue "À traiter" transversa
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1.1 — Vue "À traiter" transversale (clic sur "En cours" → liste par catégorie)**
+**Mission : V1.1 ACTIVITÉ — 3 vues transversales + réponses véhicule dans Messages**
 **Date :** 2026-06-27
-**Commit :** à venir
+**Versions :** SW v246 → v266 · app.css v42 → v45 · messages.js v30 → v34
+
+### Vue d'ensemble de la session (longue série d'itérations UX, toutes fusionnées)
+
+**A. Trois vues transversales sur l'accueil Activité** (lignes du "Résumé rapide" rendues
+cliquables, chacune ouvre un sous-panneau dédié regroupant par catégorie 🚨 Véhicule /
+🅿️ Stationnement / 🆘 SOS) :
+- ✉️ **Nouveaux** → `openNewView` / `_computeNew` / `renderNewFeed` (panneau `actNewPanel`,
+  classe body `act-new-open`). Compte les signalements reçus NON LUS et non traités.
+- ⏳ **À traiter** → `openTodoView` / `_computeTodo` / `renderTodoFeed` (`actTodoPanel`,
+  `act-todo-open`). Compte les signalements reçus non traités (verdict/réponse manquant).
+- ✅ **Traités** → `openDoneView` / `_computeDone` / `renderDoneFeed` (`actDonePanel`,
+  `act-done-open`). Historique des traités. **Swipe gauche → Supprimer** (`doneDelete`,
+  soft-delete `ic_deleted_msgs`).
+- Navigation : `todoGoto(cat,plate)` ferme la vue et ouvre la catégorie + l'élément.
+- Compteurs accueil (`resumeNewBadge`/`resumeEncBadge`) alignés sur `_computeNew`/`_computeTodo`
+  pour éviter tout mismatch badge↔vue.
+
+**B. Réponses véhicule (`vehicle_response`) déplacées de Activité vers MESSAGES** (inversion
+règle V1, validée par le propriétaire) :
+- `messages.js buildThreads` + `_renderTimeline` : incluent `vehicle_response` → visibles
+  dans le fil Messages + icône 📩 dans la liste des conversations.
+- Badge nav **Messages** = messages libres + `vehicle_response` ; badge nav **Activité** et
+  badge catégorie **Véhicule** ne comptent plus les réponses (plus de double-comptage).
+- Réception d'une réponse : notif "📩 Réponse de <plaque>", PAS de FloatingCard, PAS de boutons
+  J'arrive/Reçu/En route. `markThreadRead` vide la pastille à l'ouverture du fil.
+
+**C. Corrections badges/cartes véhicule :**
+- Badge catégorie Véhicule : suppression de l'alerte broadcast redondante (`addCommunityAlert`
+  retirée du handler `vehicle_alert`) → ne comptait plus 2 pour 1 signalement.
+- Badge nav Activité : compte directement véhicule/stationné via les messages (`unreadCtx`).
+- Header carte véhicule : compte uniquement les signalements ACTIFS (non traités).
+- FloatingCard véhicule (broadcast + message) : bouton unique "Voir le signalement" + garde-fou
+  anti-doublon (`_fcRecentlyShown` / `dedupKey`) → 1 seule carte même si les 2 chemins se déclenchent.
+- Dédup "À traiter" supprimée (masquait des signalements légitimes de même texte).
+
+### Invariants respectés
+- Aucune logique métier modifiée : workflow 3 états, verdicts, trustDelta, buildThreads (sauf
+  ajout vehicle_response), envoi messages — intacts. Tout est additif / lecture seule.
+- Signalements (`vehicle_report`) : 100% inchangés (Activité, badges, À traiter, workflow).
+
+### Fichiers
+- `index.html` : 3 vues transversales + badges + FloatingCard + libellés
+- `messages.js` v34 : vehicle_response dans Messages (buildThreads, _renderTimeline, push, icône)
+- `app.css` v45 : `act-todo-open` / `act-done-open` / `act-new-open`
+- `service-worker.js` v266
+
+---
+
+**Mission précédente : V1.1 — Vue "À traiter" transversale (clic sur "En cours" → liste par catégorie)**
+**Date :** 2026-06-27
+**Commit :** e419813
 **SW :** v246 → v247
 
 ### Ce qui a été fait

@@ -871,7 +871,8 @@ body.act-todo-open #actTodoPanel {
 }
 body.act-todo-open #actMain,
 body.act-todo-open #actCatPanel,
-body.act-todo-open #actDonePanel {
+body.act-todo-open #actDonePanel,
+body.act-todo-open #actNewPanel {
   display: none !important;
 }
 /* Vue TRAITÉS — même cascade flex dédiée */
@@ -893,7 +894,31 @@ body.act-done-open #actDonePanel {
 }
 body.act-done-open #actMain,
 body.act-done-open #actCatPanel,
-body.act-done-open #actTodoPanel {
+body.act-done-open #actTodoPanel,
+body.act-done-open #actNewPanel {
+  display: none !important;
+}
+/* Vue NOUVEAUX — même cascade flex dédiée */
+body.act-new-open #sheet {
+  display: flex !important;
+  flex-direction: column;
+}
+body.act-new-open #sheet #panelActivite {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.act-new-open #actNewPanel {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+}
+body.act-new-open #actMain,
+body.act-new-open #actCatPanel,
+body.act-new-open #actTodoPanel,
+body.act-new-open #actDonePanel {
   display: none !important;
 }
 

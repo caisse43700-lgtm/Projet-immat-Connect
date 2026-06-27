@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=44">
+  <link rel="stylesheet" href="app.css?v=45">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -119,7 +119,7 @@
     </div>
     <div class="act-resume-hd"><span>Résumé rapide</span><button type="button" class="act-voir-tout" onclick="App.openActivityCat('all')">Voir tout ›</button></div>
     <div class="act-resume-list">
-      <div class="act-resume-item"><div class="act-resume-ico neu">✉️</div><div class="act-resume-info"><div class="act-resume-name">Nouveaux</div><div class="act-resume-detail" id="resumeNewSub">Aucune alerte non lue</div></div><span class="act-resume-badge" id="resumeNewBadge" style="display:none">0</span></div>
+      <div class="act-resume-item" id="resumeNewItem" style="cursor:pointer" onclick="App.openNewView()" role="button"><div class="act-resume-ico neu">✉️</div><div class="act-resume-info"><div class="act-resume-name">Nouveaux</div><div class="act-resume-detail" id="resumeNewSub">Aucun nouveau signalement</div></div><span class="act-resume-badge" id="resumeNewBadge" style="display:none">0</span></div>
       <div class="act-resume-item" id="resumeEncItem" style="cursor:pointer" onclick="App.openTodoView()" role="button"><div class="act-resume-ico enc">⏳</div><div class="act-resume-info"><div class="act-resume-name">À traiter</div><div class="act-resume-detail" id="resumeEncSub">Aucune action en attente</div></div><span class="act-resume-badge orange" id="resumeEncBadge" style="display:none">0</span></div>
       <div class="act-resume-item" id="resumeDoneItem" style="cursor:pointer" onclick="App.openDoneView()" role="button"><div class="act-resume-ico ok">✅</div><div class="act-resume-info"><div class="act-resume-name">Traités</div><div class="act-resume-detail" id="resumeDoneSub">Voir l'historique</div></div><span class="act-resume-badge green">✓</span></div>
       <div class="act-resume-item" id="resumeMissedItem" style="display:none;cursor:pointer" onclick="App.navAppels();setTimeout(()=>{App.setCallJournalFilter('missed');},300)" role="button"><div class="act-resume-ico" style="background:rgba(239,68,68,.15);color:#ef4444">📵</div><div class="act-resume-info"><div class="act-resume-name">Appels manqués</div><div class="act-resume-detail" id="resumeMissedSub">Aucun appel manqué</div></div><span class="act-resume-badge" id="resumeMissedBadge" style="display:none">0</span></div>
@@ -158,6 +158,15 @@
       <button type="button" class="ph-close" onclick="App.closeSheet()">✕</button>
     </div>
     <div id="actTodoFeed" class="act-cat-feed"></div>
+  </div>
+  <!-- Sous-panneau NOUVEAUX (vue transversale par catégorie) -->
+  <div id="actNewPanel" class="act-cat-panel" style="display:none">
+    <div class="act-cat-hd">
+      <button type="button" class="act-cat-back" onclick="App.closeNewView()">‹</button>
+      <div class="act-cat-hd-mid"><span class="act-cat-hd-icon">✉️</span><div><div class="act-cat-hd-title">Nouveaux</div><div class="act-cat-hd-sub">Signalements non encore consultés</div></div></div>
+      <button type="button" class="ph-close" onclick="App.closeSheet()">✕</button>
+    </div>
+    <div id="actNewFeed" class="act-cat-feed"></div>
   </div>
   <!-- Sous-panneau TRAITÉS (vue transversale par catégorie) -->
   <div id="actDonePanel" class="act-cat-panel" style="display:none">
@@ -1522,7 +1531,7 @@ try{window.InteractionEngine?.create?.({type:'ROAD_ALERT',initiator:this.ownPlat
 try{if(window.ImmatBus)window.ImmatBus.emit('ROAD_CREATED',{plate:this.ownPlate?.(),type,lat:rLat,lng:rLng,_src:'ImmatConnect/roadReport'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('roadReport: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('✅ Signalement envoyé aux conducteurs proches.','ok');notifyAlert(meta.icon+' Signalement',meta.label,meta.level)},async assist(type){if(S._reporting)return;S._reporting=true;if(S.myLat===null){S._reporting=false;return toast('Active le GPS pour signaler ta position.','bad');}const meta=cat(type);const _al=this.addCommunityAlert({type,label:meta.label,reason:'[ASSISTANCE] '+meta.label,plate:'ASSISTANCE',lat:S.myLat,lng:S.myLng,level:meta.level,group:'assist',_mine:true},{notify:false});const _dbId=await this.saveReportRemote({plate:'ASSISTANCE',reason:'[ASSISTANCE] '+meta.label,latitude:S.myLat,longitude:S.myLng,created_at:new Date().toISOString(),category:'help',urgency_level:meta.level==='urgent'?'high':meta.level==='important'?'medium':'low'});this._getWeather(S.myLat,S.myLng).then(wc=>{if(wc&&_dbId&&sb)sb.from('reports').update({weather_condition:wc}).eq('id',_dbId).then(()=>{});}).catch(()=>{});S._reporting=false;try{window.ImmatOrganism?.observe?.('HELP_CREATED',{type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/assist'})}catch(e){}
 try{if(window.ImmatBus)window.ImmatBus.emit('HELP_CREATED',{plate:this.ownPlate?.(),type,lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/assist'})}catch(e){}
 try{window.InteractionEngine?.create?.({type:'HELP',initiator:this.ownPlate?.(),context_id:_dbId??null,payload:{assistType:type,lat:S.myLat,lng:S.myLng},status:'active'})}catch(e){}if(_al&&_dbId)_al.remoteId=String(_dbId);else if(_al&&!_dbId)console.warn('assist: remoteId non retourné (RLS SELECT?), fallback postgres_changes');this.closeOverlay('reportPanel');toast('🆘 Demande d\'aide envoyée aux conducteurs proches.','ok');if(type==='incendie'){setTimeout(()=>toast('🔥 Appelez le 18 (Pompiers) en PRIORITÉ !','bad'),800);}notifyAlert(meta.icon+' Aide demandée',meta.label,meta.level)},openAssist(){this.openReport()},
-openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini');s.classList.add('full');S.sheetSnap='full';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';['altet','drive','messages','settings','activite'].forEach(x=>{const _pe=$('panel'+x[0].toUpperCase()+x.slice(1));if(_pe){_pe.classList.toggle('on',x===p);_pe.style.display='';}$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock();}if(p==='settings')this.applyFeatureFlags?.(); },
+openSheet(){const s=$('sheet');if(!s)return;s.classList.remove('mini');s.classList.add('full');S.sheetSnap='full';try{S.map?.invalidateSize()}catch(e){}},closeSheet(){const s=$('sheet');if(!s)return;s.classList.add('mini');s.classList.remove('full');S.sheetSnap='mini';try{S.map?.invalidateSize()}catch(e){}},toggleSheet(){const s=$('sheet');if(!s)return;s.classList.contains('mini')?this.openSheet():this.closeSheet()},sheetFull(){const s=$('sheet');if(!s)return;s.classList.toggle('full');s.classList.remove('mini');try{S.map?.invalidateSize()}catch(e){}},initSheetDrag(){const sheet=$('sheet'),handle=document.querySelector('.handle');if(!sheet||sheet.dataset.dragReady==='1')return;sheet.dataset.dragReady='1';let startY=0,currentY=0,dragging=false;const start=e=>{const y=e.touches?e.touches[0].clientY:e.clientY;dragging=true;startY=y;currentY=y;sheet.classList.add('dragging')};const move=e=>{if(!dragging)return;const y=e.touches?e.touches[0].clientY:e.clientY;currentY=y;const dy=y-startY;if(dy>0)sheet.style.transform='translateY('+Math.min(dy,window.innerHeight-94)+'px)'};const end=()=>{if(!dragging)return;dragging=false;sheet.classList.remove('dragging');sheet.style.transform='';const dy=currentY-startY;if(dy>90)this.closeSheet();else if(dy<-60)this.sheetFull();else this.openSheet()};(handle||sheet).addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)},panel(p){document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');clearTimeout(S._tapFabTimer);if($('fabSignalHere'))$('fabSignalHere').style.display='none';['altet','drive','messages','settings','activite'].forEach(x=>{const _pe=$('panel'+x[0].toUpperCase()+x.slice(1));if(_pe){_pe.classList.toggle('on',x===p);_pe.style.display='';}$('tab'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('on',x===p)});this.openSheet();if(p==='messages')this.loadMsgs();if(p==='altet'){this.renderAlerts();this.renderMyAlertsBlock();}if(p==='settings')this.applyFeatureFlags?.(); },
 openBlocked(){$('blockedList').innerHTML=S.blocked.length?S.blocked.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><button type="button" onclick="App.unblockPlate(\''+js(p)+'\')">Débloquer</button></div>').join(''):'<div class="empty-msg">Aucune plaque bloquée.</div>';$('blocked').classList.add('show')},closeBlocked(){$('blocked').classList.remove('show')},blockPlate(p,level='BLOCK_ALL'){p=nPlate(p);if(!p||!confirm('Bloquer '+p+' ?'))return;if(!['BLOCK_MESSAGES','BLOCK_CALLS','BLOCK_ALL'].includes(level))level='BLOCK_ALL';if(!S.blocked.includes(p))S.blocked.push(p);if(S.blocked.length>500)S.blocked=S.blocked.slice(-500);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');lvls[p]=level;localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}try{if(sb&&S.uid)sb.from('user_blocks').upsert({user_id:S.uid,blocked_plate:p,level},{onConflict:'user_id,blocked_plate'}).then(({error})=>{if(error)console.warn('blockPlate DB',error);})}catch(e){}try{window.ImmatOrganism?.observe?.('BLOCK_APPLIED',{plate:p,level,_src:'ImmatConnect/blockPlate'})}catch(e){}try{window.InteractionEngine?.create?.({type:'BLOCK',initiator:fPlate(S.profile?.owner_plate||''),target:fPlate(p),payload:{plate:p,level},status:'resolved'})}catch(e){}this.loadMsgs();this.loadOthers()},unblockPlate(p){p=nPlate(p);S.blocked=S.blocked.filter(x=>x!==p);safeSet('ic_blocked',S.blocked);try{const lvls=JSON.parse(localStorage.getItem('ic_block_levels')||'{}');delete lvls[p];localStorage.setItem('ic_block_levels',JSON.stringify(lvls))}catch(e){}try{if(sb&&S.uid)sb.from('user_blocks').delete().eq('user_id',S.uid).eq('blocked_plate',p).then(({error})=>{if(error)console.warn('unblockPlate DB',error);})}catch(e){}this.openBlocked()},openRecent(){$('recentList').innerHTML=S.recent.length?S.recent.map(r=>'<div class="list-item"><span>'+dot(r.color)+' <b>'+esc(r.plate)+'</b>'+(r.pseudo&&r.pseudo!=='Conducteur'?' · '+esc(r.pseudo):'')+' <br><small>'+(r.dist?(Math.round(r.dist*1000/100)*100)+' m':'dist. inconnue')+(r.at?' · '+esc(relTime(r.at)):'')+'</small></span><div style="display:flex;gap:4px"><button type="button" onclick="App.pickPlate(\''+js(r.plate)+'\');App.closeRecent()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Message">💬</button><button type="button" onclick="window.CallManager?.contactByCall(\''+js(r.plate)+'\',\'\');App.closeRecent()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Appel">📞</button></div></div>').join(''):'<div class="empty-msg">Aucun véhicule récent.</div>';$('recent').classList.add('show')},closeRecent(){$('recent').classList.remove('show')},openFavoritesModal(){const favs=[];try{const raw=localStorage.getItem('ic_conv_favorites');if(raw)favs.push(...JSON.parse(raw));}catch(e){}const el=$('favoritesList');if(!el)return;el.innerHTML=favs.length?favs.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><div style="display:flex;gap:4px"><button type="button" onclick="App.pickPlate(\''+js(p)+'\'\');App.closeFavoritesModal()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Message">💬</button><button type="button" onclick="App.removeFavModal(\''+js(p)+'\')" style="background:rgba(239,68,68,.1);border:none;border-radius:8px;color:#ef4444;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Retirer des favoris">☆</button></div></div>').join(''):'<div class="empty-msg">Aucun conducteur favori.</div>';$('favoritesModal').classList.add('show');},closeFavoritesModal(){$('favoritesModal').classList.remove('show');},openTrustedModal(){const trustMap=jget('ic_trust',{});const trusted=Object.keys(trustMap).filter(p=>trustMap[p]==='TRUSTED');const el=$('trustedList');if(!el)return;el.innerHTML=trusted.length?trusted.map(p=>'<div class="list-item"><b>'+esc(p)+'</b><div style="display:flex;gap:4px"><button type="button" onclick="App.pickPlate(\''+js(p)+'\'\');App.closeTrustedModal()" style="background:#1e3a5f;border:none;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Message">💬</button><button type="button" onclick="App.removeTrustedModal(\''+js(p)+'\')" style="background:rgba(239,68,68,.1);border:none;border-radius:8px;color:#ef4444;padding:6px 10px;font-size:14px;cursor:pointer;min-height:36px" title="Révoquer confiance">✕</button></div></div>').join(''):'<div class="empty-msg">Aucun conducteur de confiance.</div>';$('trustedModal').classList.add('show');},closeTrustedModal(){$('trustedModal').classList.remove('show');},removeTrustedModal(plate){try{if(window.ImmatMessages?.setTrust)window.ImmatMessages.setTrust(plate,'NONE');else{const m=jget('ic_trust',{});delete m[nPlate(plate)];safeSet('ic_trust',m);}}catch(e){}this.openTrustedModal();},removeFavModal(plate){try{if(window.ImmatMessages?.unfavoriteConv)window.ImmatMessages.unfavoriteConv(plate);else{let favs=[];try{favs=JSON.parse(localStorage.getItem('ic_conv_favorites')||'[]');}catch(e){}const i=favs.indexOf(nPlate(plate));if(i>=0)favs.splice(i,1);try{localStorage.setItem('ic_conv_favorites',JSON.stringify(favs));}catch(e){}}}catch(e){}this.openFavoritesModal();},clearRecent(){if(!S.recent.length)return toast('Aucun véhicule récent.','bad');S.recent=[];safeSet('ic_recent_vehicles',S.recent);this.openRecent();},openLegal(){$('legal').classList.add('show');this.legalTab('privacy');},closeLegal(){$('legal').classList.remove('show')},legalTab(t){$('legalPrivacy').style.display=t==='privacy'?'':'none';$('legalCgu').style.display=t==='cgu'?'':'none';document.querySelectorAll('.legal-tab').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes(t)));},openDrawer(){$('drawer').classList.add('show')},closeDrawer(){$('drawer').classList.remove('show')},closeOverlay(id){$(id)?.classList.remove('show');if(id==='reportPanel')this.clearSignalHereContext?.();},closeAllOverlays(){['reportPanel','nearbyPanel'].forEach(id=>this.closeOverlay(id))},
 voiceInput(target,mode){const _reset=()=>{this._voiceInput=null;};if(this._voiceInput){try{this._voiceInput.stop();}catch(e){}_reset();return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Vocal indisponible.','bad');$(target)?.focus();return;}try{const rec=new SR();this._voiceInput=rec;rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;toast(mode==='plate'?'🎤 Dicte la plaque…':'🎤 Dicte le message…','ok');let _last='';const _at=setTimeout(()=>{try{rec.stop();}catch(e){}},15000);rec.onresult=e=>{let interimT='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){let best=e.results[i][0].transcript,bestC=-1;for(let j=0;j<e.results[i].length;j++){const c=e.results[i][j].confidence??0;if(c>bestC){bestC=c;best=e.results[i][j].transcript;}}_last=(_last+' '+best).trim();}else interimT+=e.results[i][0].transcript;}const v=_last||interimT;$(target).value=mode==='plate'?this.normalizeSpokenPlate(v):v;};rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};rec.onend=()=>{clearTimeout(_at);_reset();if(_last&&mode==='plate'){const el=$(target);if(el)el.value=this.normalizeSpokenPlate(_last);}};$(target).blur();rec.start();}catch(e){_reset();toast('Vocal indisponible.','bad');}},normalizeSpokenPlate(txt){let s=String(txt||'').toUpperCase().replace(/\bTIRET\b|\bTRAIT\b/g,'-').replace(/\bZERO\b|\bZÉRO\b/g,'0').replace(/\bUN\b|\bUNE\b/g,'1').replace(/\bDEUX\b/g,'2').replace(/\bTROIS\b/g,'3').replace(/\bQUATRE\b/g,'4').replace(/\bCINQ\b/g,'5').replace(/\bSIX\b/g,'6').replace(/\bSEPT\b/g,'7').replace(/\bHUIT\b/g,'8').replace(/\bNEUF\b/g,'9').replace(/[^A-Z0-9-]/g,'');return fPlate(s)},voicePlate(){this.voiceInput('icComposePlate','plate')},voiceMsg(){this.voiceInput('icComposeText','message')},
 startSosHold(ev){ev?.preventDefault?.();$('longSos')?.classList.add('holding');S.sosTimer=setTimeout(()=>{$('longSos')?.classList.remove('holding');this.sos()},3000);toast('Maintiens 3 secondes pour SOS.','ok')},cancelSosHold(){if(S.sosTimer)clearTimeout(S.sosTimer);S.sosTimer=null;$('longSos')?.classList.remove('holding')},sos(){const _sosLast=Number(localStorage.getItem('ic_sos_last')||0);const _sosCd=15*60*1000;if(Date.now()-_sosLast<_sosCd&&_sosLast>0){const rem=Math.ceil((_sosCd-(Date.now()-_sosLast))/60000);return toast('⏳ Signalement SOS : patientez encore '+rem+' min avant un nouveau SOS.','bad');}localStorage.setItem('ic_sos_last',String(Date.now()));try{window.ImmatOrganism?.observe?.('SOS_TRIGGERED',{lat:S.myLat,lng:S.myLng,_src:'ImmatConnect/sos'})}catch(e){}if(S.myLat!==null)this.assist('panne');if(confirm('Appeler le 112 uniquement en vraie urgence ?')&&confirm('Confirmation finale : appeler le 112 ?'))location.href='tel:112'},
@@ -1618,8 +1627,8 @@ App.navActivite=function(){
     // 2. Afficher panelActivite
     const _pa=document.getElementById('panelActivite');
     if(_pa){_pa.classList.add('on');_pa.style.display='block';}
-    const _m=document.getElementById('actMain');const _cp=document.getElementById('actCatPanel');const _tp=document.getElementById('actTodoPanel');const _dp=document.getElementById('actDonePanel');
-    if(_m){_m.style.display='flex';}if(_cp){_cp.style.display='none';}if(_tp){_tp.style.display='none';}if(_dp){_dp.style.display='none';}
+    const _m=document.getElementById('actMain');const _cp=document.getElementById('actCatPanel');const _tp=document.getElementById('actTodoPanel');const _dp=document.getElementById('actDonePanel');const _npn=document.getElementById('actNewPanel');
+    if(_m){_m.style.display='flex';}if(_cp){_cp.style.display='none';}if(_tp){_tp.style.display='none';}if(_dp){_dp.style.display='none';}if(_npn){_npn.style.display='none';}
     // 3. Reset scrollTop APRÈS le DOM (iOS Safari restaure le scroll après reflow sinon)
     const _sh=document.getElementById('sheet');
     if(_sh){_sh.scrollTop=0;}
@@ -2009,11 +2018,13 @@ App.renderActivityMain=function(){
   const unread=unreadAlerts.length+unreadMsgsList.length;
   const _todo=(typeof this._computeTodo==='function')?this._computeTodo():{veh:[],st:[],sos:[],total:0};
   const enCours=_todo.total;
+  const _new=(typeof this._computeNew==='function')?this._computeNew():{veh:[],st:[],sos:[],total:0};
+  const newTotal=_new.total;
   const newSubEl=document.getElementById('resumeNewSub'),encSubEl=document.getElementById('resumeEncSub');
   const newBadgeEl=document.getElementById('resumeNewBadge'),encBadgeEl=document.getElementById('resumeEncBadge');
-  if(newSubEl){if(unread>0){const parts=[];unreadAlerts.slice(0,2).forEach(a=>{const lbl=String(a.label||a.reason||a.type||'Alerte').replace(/^\[.*?\]\s*/,'').slice(0,22);parts.push(lbl);});unreadMsgsList.slice(0,2).forEach(m=>{const lbl='Msg '+String(m._otherPlate||'').slice(0,9);parts.push(lbl);});newSubEl.textContent=parts.slice(0,3).join(' · ')+(unread>3?' …':'');}else{newSubEl.textContent='Aucune alerte non lue';}}
+  if(newSubEl){if(newTotal>0){const parts=[];if(_new.veh.length)parts.push('🚨 '+_new.veh.length);if(_new.st.length)parts.push('🅿️ '+_new.st.length);if(_new.sos.length)parts.push('🆘 '+_new.sos.length);newSubEl.textContent=parts.join(' · ')+' nouveau'+(newTotal>1?'x':'');}else{newSubEl.textContent='Aucun nouveau signalement';}}
   if(encSubEl){if(enCours>0){const parts=[];if(_todo.veh.length)parts.push('🚨 '+_todo.veh.length);if(_todo.st.length)parts.push('🅿️ '+_todo.st.length);if(_todo.sos.length)parts.push('🆘 '+_todo.sos.length);encSubEl.textContent=parts.join(' · ')+' à traiter';}else{encSubEl.textContent='Aucune action en attente';}}
-  if(newBadgeEl){newBadgeEl.textContent=unread>99?'99+':String(unread);newBadgeEl.style.display=unread>0?'flex':'none';}
+  if(newBadgeEl){newBadgeEl.textContent=newTotal>99?'99+':String(newTotal);newBadgeEl.style.display=newTotal>0?'flex':'none';}
   if(encBadgeEl){encBadgeEl.textContent=enCours>99?'99+':String(enCours);encBadgeEl.style.display=enCours>0?'flex':'none';}
   const _mc=S._unseenMissedCalls||0;const _mi=document.getElementById('resumeMissedItem');const _mb=document.getElementById('resumeMissedBadge');const _ms=document.getElementById('resumeMissedSub');if(_mi)_mi.style.display=_mc>0?'flex':'none';if(_mb){_mb.textContent=_mc>99?'99+':String(_mc);_mb.style.display=_mc>0?'flex':'none';}if(_ms)_ms.textContent=_mc>0?_mc+' appel'+(_mc>1?'s':'')+' manqué'+(_mc>1?'s':''):'Aucun appel manqué';const _mine=(S.alerts||[]).filter(a=>(a._mine||a._own)&&a.status!=='gone'&&a.status!=='resolved'&&(now-Number(a.at||0)<(typeof ttlFor==='function'?ttlFor(a.type):3600000)));const _mn=_mine.length;const _mineItem=document.getElementById('resumeMineItem');const _mineBadge=document.getElementById('resumeMineBadge');const _mineSub=document.getElementById('resumeMineSub');if(_mineItem)_mineItem.style.display=_mn>0?'flex':'none';if(_mineBadge){_mineBadge.textContent=_mn>99?'99+':String(_mn);_mineBadge.style.display=_mn>0?'flex':'none';}if(_mineSub)_mineSub.textContent=_mn>0?_mn+' signalement'+(_mn>1?'s':'')+' en cours':'Aucun signalement actif';
 const _deleted2=[];try{JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').forEach(x=>_deleted2.push(String(x)));}catch(e){}
@@ -2113,9 +2124,10 @@ App.closeTodoView=function(){
   this.renderActivityMain?.();
 };
 App.todoGoto=function(cat,plate){
-  document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');
+  document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
   const todo=document.getElementById('actTodoPanel');if(todo)todo.style.display='none';
   const done=document.getElementById('actDonePanel');if(done)done.style.display='none';
+  const np=document.getElementById('actNewPanel');if(np)np.style.display='none';
   if(cat==='vehicle'){
     this.openActivityCat('vehicle');
     if(plate&&plate!=='?')setTimeout(()=>{try{this.actOpenVehicleMsgGroup(plate);}catch(e){}},160);
@@ -2204,6 +2216,92 @@ App.closeDoneView=function(){
   if(done)done.style.display='none';if(main)main.style.display='';
   const s=document.getElementById('sheet');if(s)s.scrollTop=0;
   this.renderActivityMain?.();
+};
+// ── Vue "NOUVEAUX" transversale — signalements non encore consultés, par catégorie ──
+App._computeNew=function(){
+  const now=Date.now();
+  const S2=window.S||{};
+  const msgs=(S2._actMessages||[]);
+  const _r=S2._readMsgIds;
+  let deleted=[];try{deleted=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]').map(String);}catch(e){}
+  let vmVerdicts={};try{vmVerdicts=JSON.parse(localStorage.getItem('ic_vm_verdicts')||'{}');}catch(e){}
+  let vmReplied=new Set();try{vmReplied=new Set(JSON.parse(localStorage.getItem('ic_vm_replied')||'[]').map(String));}catch(e){}
+  let vmPending=new Set();try{vmPending=new Set(JSON.parse(localStorage.getItem('ic_vm_pending')||'[]').map(String));}catch(e){}
+  const veh=msgs.filter(m=>m.context_type==='vehicle_report'&&m._received===true&&!deleted.includes(String(m.id))&&!m.read_at&&!(_r&&_r.has(String(m.id)))&&!vmVerdicts[String(m.id)]&&!vmReplied.has(String(m.id))&&!vmPending.has(String(m.id)));
+  let stReplied=new Set();try{stReplied=new Set(JSON.parse(localStorage.getItem('ic_station_replied')||'[]').map(String));}catch(e){}
+  const st=msgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!deleted.includes(String(m.id))&&!m.read_at&&!(_r&&_r.has(String(m.id)))&&!stReplied.has(String(m.id)));
+  let hpReplied=new Set();try{hpReplied=new Set(JSON.parse(localStorage.getItem('ic_help_replied')||'[]').map(String));}catch(e){}
+  const sos=(S2.alerts||[]).filter(a=>{
+    if(a._mine||a._own)return false;
+    if(a.group!=='assist')return false;
+    if(a.status==='gone'||a.status==='resolved'||a.status==='seen'||a.status==='present')return false;
+    const ts=a.at!=null?Number(a.at):null;if(ts===null)return false;
+    if(now-ts>=(typeof ttlFor==='function'?ttlFor(a.type):3600000))return false;
+    if(typeof isNearby==='function'&&!isNearby(a))return false;
+    return !hpReplied.has(String(a.id));
+  });
+  return {veh,st,sos,total:veh.length+st.length+sos.length};
+};
+App.openNewView=function(){
+  document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');
+  document.body.classList.add('act-new-open');
+  this.closeCallJournal?.();
+  const main=document.getElementById('actMain'),np=document.getElementById('actNewPanel');
+  if(main)main.style.display='none';if(np)np.style.display='flex';
+  const s=document.getElementById('sheet');if(s)s.scrollTop=0;
+  this.renderNewFeed();
+  if(window.ImmatMessages?.refresh){try{const p=window.ImmatMessages.refresh();if(p&&typeof p.then==='function')p.then(()=>{try{this.renderNewFeed();}catch(e){}});}catch(e){}}
+};
+App.closeNewView=function(){
+  document.body.classList.remove('act-new-open');
+  const main=document.getElementById('actMain'),np=document.getElementById('actNewPanel');
+  if(np)np.style.display='none';if(main)main.style.display='';
+  const s=document.getElementById('sheet');if(s)s.scrollTop=0;
+  this.renderActivityMain?.();
+};
+App.renderNewFeed=function(){
+  const feed=document.getElementById('actNewFeed');if(!feed)return;
+  const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const _clean=s=>String(s||'').replace(/\[GPS:[^\]]*\]/g,'').replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').trim();
+  const t=this._computeNew();
+  if(t.total===0){feed.innerHTML='<div class="act-empty">Aucun nouveau signalement.</div>';return;}
+  let html='';
+  if(t.veh.length){
+    const byPlate={};
+    t.veh.forEach(m=>{const k=m._otherPlate||'?';(byPlate[k]=byPlate[k]||[]).push(m);});
+    html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🚨 Véhicule (${t.veh.length})</div>`;
+    html+=Object.keys(byPlate).map(pl=>{
+      const arr=byPlate[pl];
+      const last=arr.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))[0];
+      const desc=e2(_clean(last&&last.message).slice(0,60));
+      const cnt=arr.length;
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#2979ff;cursor:pointer" onclick="App.todoGoto('vehicle','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#2979ff"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))}</div><div class="act-vmg-desc">${desc}</div></div><div class="act-vmg-time">${cnt>1?cnt+' nouv.':'›'}</div></div>
+      </div>`;
+    }).join('');
+  }
+  if(t.st.length){
+    html+=`<div class="act-vmg-sec-title" style="color:#14b8a6">🅿️ Stationnement (${t.st.length})</div>`;
+    html+=t.st.map(m=>{
+      const pl=m._otherPlate||m.sender_plate||m.from_plate||'';
+      const urgent=/^🅿️\s*URGENT/i.test(String(m.message||''));
+      const label=e2(_clean(m.message).slice(0,60));
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#14b8a6;cursor:pointer" onclick="App.todoGoto('station','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#14b8a6"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur proche'}</div><div class="act-vmg-desc">${urgent?'🚨 ':''}${label}</div></div><div class="act-vmg-time">›</div></div>
+      </div>`;
+    }).join('');
+  }
+  if(t.sos.length){
+    html+=`<div class="act-vmg-sec-title" style="color:#f97316">🆘 SOS / Aide (${t.sos.length})</div>`;
+    html+=t.sos.map(a=>{
+      const pl=a.plate||a.from_plate||a.sender_plate||'';
+      const reason=e2(String(a.reason||a.label||'').replace(/^\[ASSISTANCE\]\s*/i,'').slice(0,60));
+      return `<div class="act-vmg-card act-vmg-encours" style="border-left-color:#f97316;cursor:pointer" onclick="App.todoGoto('aide','${e2(pl)}')">
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(fPlate(pl))||'Conducteur'}</div><div class="act-vmg-desc">${reason}</div></div><div class="act-vmg-time">›</div></div>
+      </div>`;
+    }).join('');
+  }
+  feed.innerHTML=html;
 };
 App.doneDelete=function(kind,key){
   let d=[];try{d=JSON.parse(localStorage.getItem('ic_deleted_msgs')||'[]');}catch(e){}
