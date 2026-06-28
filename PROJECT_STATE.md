@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v315 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v316 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Ange : VRAIE cause de "ne ferme pas au bouton" = le panneau (z3002) recouvre le haut du cercle → l'onclick inline ne se déclenche pas. Fix : retrait onclick inline + 1 seul listener document détectant le bouton par bbox (marche recouvert). SW v316. Commit 57a24ad. |
 | 2026-06-28 | IA session | Ange : détection « ouvert » robuste (body.ange-open OU #angePanel visible OU #angeOverlay visible) → fermeture garantie au re-clic du bouton. SW v315. Commit 798f72e. |
 | 2026-06-28 | IA session | Ange : toggle propre à HANDLER UNIQUE (onclick inline App._angeToggle) — retiré des 2 hotfixes document ui.js (navAnge + #angeFab) + verrou v313 supprimé (bloquait l'ouverture). Plus de double-déclenchement / course. ui.js v15, SW v314. Commit bd31810. |
 | 2026-06-28 | IA session | Ange fermeture INFAILLIBLE : un handler non marqué rouvrait après fermeture → fermeture forcée dans _angeToggle (display:none panel/overlay + retrait ange-open) + verrou App.__angeJustClosed bloquant AngeDialog.open() <450ms. SW v313. Commit 781b386. |

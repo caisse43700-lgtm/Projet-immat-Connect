@@ -145,6 +145,15 @@ ouvrir/fermer. SOLUTION : un seul handler par bouton = l'onclick inline `App._an
   (sélecteur réduit à `.sig-cat-btn`). `openAngePanel` devient inutilisé (laissé en place, inoffensif).
 ui.js v14→v15, SW v313→v314. Commit bd31810.
 
+### Ange "ne ferme qu'avec la croix" — VRAIE cause enfin
+Le panneau `#angePanel` (z-index 3002) recouvre le HAUT du cercle du bouton nav Ange quand il est
+ouvert → taper la partie visible du cercle atterrit sur le panneau, pas sur le bouton → l'onclick
+inline ne se déclenche jamais (seule la croix, dans le panneau, ferme). Fix définitif : retrait de
+TOUS les onclick inline Ange (navAnge, #angeFab, #angeOverlay) + UN SEUL listener document
+(`window.__angeClickBound`) qui détecte le tap sur navAnge par sa bounding-box (fonctionne même
+recouvert), + #angeFab via closest, + #angeOverlay (fond) par target.id → un seul `_angeToggle`
+par tap, zéro course. SW v315→v316 (intermédiaire v315 = détection isOpen renforcée). Commit 57a24ad.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
