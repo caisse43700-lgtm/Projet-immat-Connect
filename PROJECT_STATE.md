@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v347 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v348 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,9 +62,26 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Aide V1 #1 — réafficher les demandes d'aide sur la carte**
+**Mission : Aide V1 #7 — push proximité (notifier les conducteurs proches à la création)**
 **Date :** 2026-06-28
-**Commit :** `be60f3a` (PR #384 fusionnée) · **Versions :** SW v346 → v347
+**Commit :** `c3c238f` (PR #386 fusionnée) · **Versions :** SW v347 → v348
+**Déploiement :** Edge Function `notify-help-request` déployée via `deploy-edge-functions.yml` (push `main`).
+
+### Ce qui a été fait
+- **Edge Function `notify-help-request`** (`supabase/functions/notify-help-request/index.ts`) :
+  - **Sécurité** : seul le demandeur peut notifier *sa* demande (`demandeur_id == auth.uid`).
+  - **Idempotence** : marqueur `help_events 'proximity_notified'` (`client_event_id = requestId`, `UNIQUE(actor_id,client_event_id)`) → une seule vague de push par demande.
+  - **Ciblage géo serveur** : bounding-box + Haversine sur `user_locations` (positions < 30 min), rayon **10 km** (entraide) / **15 km** (urgence), exclut le demandeur.
+  - **Confidentialité** : push avec **type uniquement** (jamais position précise ni plaque). Nettoyage des abonnements expirés (410/404).
+- **Client** : `App.AideV1.notifyNearby(requestId)` (fire-and-forget) dans `assist()` après `create` ; clic push `help` → `App.openHelpSignalement` (Activité>Aide, carte dépliée).
+- **CI** : étape `Deploy notify-help-request` ajoutée au workflow.
+
+⚠️ **Prérequis** : les conducteurs doivent avoir **activé les notifications** (abonnement `push_subscriptions`) pour recevoir l'alerte. Le module Aide est désormais **fonctionnellement complet** (création → carte → réponse → coordination → push proximité).
+
+---
+
+### Mission précédente — Aide V1 #1 — réafficher les demandes d'aide sur la carte
+**Date :** 2026-06-28 · **Commit :** `be60f3a` (PR #384) · **Versions :** SW v346 → v347
 **Contexte :** régression depuis la bascule Lot B (le chokepoint `assist` supprimait les marqueurs legacy sans les remplacer). La carte n'affichait plus aucune demande d'aide.
 
 ### Ce qui a été fait
@@ -2754,6 +2771,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Aide V1 #7 push proximité : Edge Function notify-help-request (ciblage géo bounding-box+Haversine sur user_locations <30min, rayon 10/15km, idempotence via help_events 'proximity_notified' client_event_id=requestId, sécurité demandeur, type uniquement). Client App.AideV1.notifyNearby() dans assist(), clic push help → openHelpSignalement. Étape CI deploy ajoutée. SW v348. Commit c3c238f (PR #386). |
 | 2026-06-28 | IA session | Aide V1 #1 carte : App.AideV1.syncMapMarkers() réaffiche les demandes d'aide sur la carte Leaflet (mes demandes précises pin bleu + demandes proches approx pin orange/rouge, 🆘 par type, popup → openHelpSignalement). Hooks loadOthers()/assist()/subscribeRealtime. Disparition à la clôture (nearby ne renvoie plus + myRequests filtre 'ouverte'). Régression depuis bascule Lot B corrigée. SW v347. Commit be60f3a (PR #384). |
 | 2026-06-28 | IA session | Aide V1 Lot B (bascule client event-driven) : assist()→create_help_request, chokepoint addCommunityAlert(assist)→null, renderAideFeedV1 (rendu serveur), Realtime « le mien », sélecteur multi-helpers. Backend Lot A (help_v1) validé en base (3 voyants). Séparation Activité/Messages/Appels. SW v341. (local, bascule unique en attente de Fusionner) |
 | 2026-06-28 | IA session | S6-TRUST V1 RÉOUVERT (périmètre réduit) : journal append-only report_feedback (migration 20260628140000) + RPC submit/get + confirmation véhicule « ✅ Confirmé par le conducteur » côté signaleur. Invariants INV-TRUST-001/002/003. ADR docs/ADR-S6-TRUST-V1.md. SW v340. vehicle_trust_scores parqué, driver_ratings intact. (local, attente Fusionner) |
