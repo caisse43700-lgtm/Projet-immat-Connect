@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v306 · app.css v58 · messages.js v38 · calls.js v22 · audio-manager.js v9 · ui.js v13
+SW                     : v307 · app.css v58 · messages.js v38 · calls.js v22 · audio-manager.js v9 · ui.js v13
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Nav : Ange se ferme au re-clic (overlay routé vers _angeToggle(event) → le hotfix ne rouvre plus) + page Activité ne saute plus à l'ouverture (scrollIntoView retirés de navActivite). SW v307. Commit 68c671f. |
 | 2026-06-28 | IA session | Paysage Réglages : plein écran jusqu'en bas (top:0+bottom:0+height:auto, .sheet.full plafonnait à 78dvh) + en-tête non coupé (padding-top 18px) + grabber .handle masqué (barre parasite). app.css v58, SW v306. Commit e5b52c8. |
 | 2026-06-28 | IA session | Toggle nav fiabilisé via variable d'état contrôlée App._navView (posée par navX, effacée par closeSheet) — la détection par état .on des panneaux était désynchronisée (9908aa7). Paysage : panneau Réglages ne passe plus sous le rail de nav (left=58px+safe-left, texte n'est plus coupé à gauche) (fc28306). app.css v57, SW v305. |
 | 2026-06-28 | IA session | Nav toggle fiabilisé via marquage de l'event (ev.__navHandled) : le timer 320ms échouait si closeSheet>délai → le hotfix rouvrait la vue (seul Signaler fermait). Désormais 1 décision/tap → Messages/Appels/Activité/Ange se referment au re-clic. ui.js v13, SW v303. Commit b2d39c7. |

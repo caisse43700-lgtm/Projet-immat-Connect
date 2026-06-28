@@ -74,6 +74,16 @@ La carte réapparaissait sous Réglages car `.sheet.full { height: min(78dvh,...
 `max(safe-top+12, 18px)` (en-tête « Options » non coupé) + `.handle` masqué en plein écran Réglages
 (la barre parasite du haut = le grabber). app.css v57→v58, SW v305→v306. Commit e5b52c8.
 
+### Ange ne se fermait pas au re-clic + Activité sautait
+- Ange : le fond `#angeOverlay` (onclick `AngeDialog.close()`) fermait, puis le hotfix document
+  `installNavButtonHotfix` (clic non marqué via ev.__navHandled) rappelait `_angeToggle` qui voyait
+  Ange fermé → le ROUVRAIT. Fix : `#angeOverlay onclick="App._angeToggle(event)"` → marque l'event
+  → le hotfix bail. (navAnge est sous l'overlay quand Ange ouvert, d'où la course.)
+- Activité « saute » : `navActivite` appelait `scrollIntoView({block:'start'})` (rAF + 250ms) pour
+  contrer la restauration de scroll iOS, mais ça scrolle le conteneur de façon visible. Retirés ;
+  les `scrollTop=0` (rAF/80/250/320ms) conservés.
+SW v306→v307 (marqueur ; fixes dans index.html servi réseau-frais). Commit 68c671f.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
