@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v340 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v341 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,6 +62,22 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Aide V1 — bascule client event-driven (Lot B) sur backend help_* (Lot A)**
+**Date :** 2026-06-28
+**Commit :** (local, bascule unique — en attente de « Fusionner ») · **Versions :** SW v340 → v341
+**Backend :** migration `20260628150000_help_v1.sql` **appliquée + validée en base** (3 voyants verts : tables/RPC OK, comportement create→propose→confirm→resolue prouvé, cron `*/2`).
+
+### Ce qui a été fait
+- **Lot A (serveur, sur main, PR #377)** : event-driven pragmatique — `help_events` append-only (vérité) + projections `help_requests`/`help_engagements` + `help_config` + RPC `SECURITY DEFINER` (create/propose/retract/confirm/cancel, nearby/precise/detail) + `process_help_timeouts` (cron). Validé en base.
+- **Lot B (client, bascule atomique)** :
+  - `assist()` → `AideV1.create` (RPC, `client_event_id`) ; plus de `reports('help')` ni d'alerte `S.alerts` assist.
+  - **Chokepoint** : `addCommunityAlert` → `null` si `group==='assist'` (neutralise carte flottante + marqueur + vieux feed + badge legacy, sans toucher Route/Véhicule).
+  - `renderCategoryFeed('aide')` → `renderAideFeedV1` (rendu re-dérivé serveur) ; `openActivityCat('aide')` → `subscribeRealtime` « le mien » ; sélecteur « Qui vous a aidé ? » multi-helpers (plaques résolues) ; parsing « J'arrive » neutralisé.
+- **Séparation stricte** : Activité = métier · Messages = conversation · Appels = vocal. Aucun double affichage.
+
+---
+
+### Mission précédente — S6-TRUST V1 — Confirmation de signalement véhicule (réouverture périmètre réduit)
 **Mission : S6-TRUST V1 — Confirmation de signalement véhicule (réouverture périmètre réduit)**
 **Date :** 2026-06-28
 **Commit :** (local, en attente de « Fusionner ») · **Versions :** SW v339 → v340 · migration `20260628140000_report_feedback.sql`
@@ -2721,6 +2737,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Aide V1 Lot B (bascule client event-driven) : assist()→create_help_request, chokepoint addCommunityAlert(assist)→null, renderAideFeedV1 (rendu serveur), Realtime « le mien », sélecteur multi-helpers. Backend Lot A (help_v1) validé en base (3 voyants). Séparation Activité/Messages/Appels. SW v341. (local, bascule unique en attente de Fusionner) |
 | 2026-06-28 | IA session | S6-TRUST V1 RÉOUVERT (périmètre réduit) : journal append-only report_feedback (migration 20260628140000) + RPC submit/get + confirmation véhicule « ✅ Confirmé par le conducteur » côté signaleur. Invariants INV-TRUST-001/002/003. ADR docs/ADR-S6-TRUST-V1.md. SW v340. vehicle_trust_scores parqué, driver_ratings intact. (local, attente Fusionner) |
 | 2026-06-28 | IA session | Activité : sous-panneau en pleine hauteur en portrait (act-cat/todo/done/new-open → #sheet 100dvh, comme Réglages) — la carte Aide dépliée n'est plus tronquée en bas. app.css v61, SW v337. Commit 5d4ce12. |
 | 2026-06-28 | IA session | Aide : carte dépliée amenée en haut du panneau (scrollTo) pour afficher tout le détail (Annuler/Je suis aidé n'étaient plus tronqués). Contenu vérifié complet. SW v336. Commit 6d62153. |

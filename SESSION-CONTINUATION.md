@@ -7,6 +7,51 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Aide V1 : refonte event-driven (Lot A serveur + Lot B bascule client)
+
+### Contexte
+Refonte complète du module Aide après revue d'architecture métier+technique (modèle de référence,
+ADR, addenda, séparation Activité/Messages/Appels). Décision : event-driven PRAGMATIQUE
+(help_events = vérité append-only ; help_requests/help_engagements = projections écrites dans la
+MÊME transaction que l'événement via RPC ; Realtime = optimisation ; rien de métier en localStorage).
+
+### Lot A — serveur (sur main, PR #377, migration 20260628150000_help_v1.sql)
+- 4 tables : help_events (append-only, trigger no-mutate + REVOKE, UNIQUE(actor_id,client_event_id)),
+  help_requests + help_engagements (projections, demandeur_id dénormalisé pour Realtime), help_config.
+- RPC SECURITY DEFINER (client_event_id OBLIGATOIRE, événement+projection atomiques, gardes d'état,
+  retours jsonb) : create_help_request, propose_help, retract_help, confirm_help_received (helper
+  désigné DOIT être proposee), cancel_help_request.
+- RPC lecture : get_nearby_requests (position serveur du caller via user_locations.id, rayon max 10km,
+  coords arrondies ~1km, exclut miennes/terminales), get_request_precise_location (sur_place engagé),
+  get_help_request_detail (resolved_helper_id masqué aux tiers).
+- process_help_timeouts (cron */2, FOR UPDATE SKIP LOCKED, confirmation_requested dédup via journal,
+  fallback config absente = pas d'expiration). pas de FK help_events.request_id (journal immortel).
+- VALIDÉ EN BASE le 28/06 : 3 voyants verts (tables/RPC OK ; create→propose→confirm→resolue prouvé
+  via diagnostic ; cron */2). NB : Supabase SQL Editor n'affiche pas les NOTICE → tests via table de
+  résultats. user_locations a la colonne `id` (= auth.uid), pas user_id.
+
+### Lot B — bascule client (un seul commit)
+- assist() → AideV1.create (namespace App.AideV1 = couche RPC : create/propose/retract/confirm/cancel
+  + nearby/detail/precise + subscribeRealtime/unsubscribeRealtime ; client_event_id via crypto.randomUUID).
+- CHOKEPOINT : addCommunityAlert retourne null si group==='assist' → neutralise d'un coup carte
+  flottante + marqueur + S.alerts assist + vieux feed + badge legacy, SANS toucher Route/Véhicule.
+- renderAideFeedV1 (rendu re-dérivé du serveur via les RPC) ; renderCategoryFeed('aide')→renderAideFeedV1 ;
+  openActivityCat('aide')→subscribeRealtime ; closeActivityCat→unsubscribe.
+- aideConfirmUI/aidePick : sélecteur « Qui vous a aidé ? » si >1 helper (plaques résolues via profilesByIds).
+- parsing texte « J'arrive » (subMsgs ~l.1391) LAISSÉ mais neutralisé (plus d'alerte S.alerts assist à
+  matcher ; _ic003 en aval non touché). help_response/thank_helper supprimés du flux (séparation Messages).
+- Séparation : Activité=métier, Messages=conversation (boutons 💬/📞 = navigation), Appels=vocal.
+
+### Limites V1 (à suivre)
+- Vues transversales À traiter/Nouveaux/Traités + todoGoto('aide') ne montrent plus d'Aide (lisaient
+  S.alerts assist, désormais vide). Pastille Activité Aide non alimentée (push proximité serveur = à faire ;
+  un compteur dérivé pourra être ajouté). Rate-limit get_nearby_requests = dette (passerelle).
+
+### Versions
+SW v340 → v341. Bascule en UN commit ; déploiement uniquement sur « Fusionner » (migration prod déjà OK).
+
+---
+
 ## SESSION 2026-06-28 — S6-TRUST V1 : confirmation de signalement véhicule
 
 ### Contexte
