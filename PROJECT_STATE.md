@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v302 · app.css v56 · messages.js v38 · calls.js v22 · audio-manager.js v9 · ui.js v12
+SW                     : v303 · app.css v56 · messages.js v38 · calls.js v22 · audio-manager.js v9 · ui.js v13
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Nav toggle fiabilisé via marquage de l'event (ev.__navHandled) : le timer 320ms échouait si closeSheet>délai → le hotfix rouvrait la vue (seul Signaler fermait). Désormais 1 décision/tap → Messages/Appels/Activité/Ange se referment au re-clic. ui.js v13, SW v303. Commit b2d39c7. |
 | 2026-06-28 | IA session | Paysage : compactage du contenu profond Réglages (sections/lignes calls.css/messages.css) (5515533). Nav toggle fiabilisé : détection de la vue ouverte d'après le panneau réel (pas le .on des boutons) → re-clic referme Messages/Appels/Activité aussi + toggle Ange (_angeToggle). ui.js v12, app.css v56, SW v302. Commit 8cd3052. |
 | 2026-06-28 | IA session | Nav : un seul bouton vert à la fois (ui.js setPanel nettoie tous les boutons + mapping corrigé) + 1 tap ouvre / 1 tap referme via App._navToggle (anti-rebond 280ms contournant le double-binding ui.js) + le vert disparaît à la fermeture (closeSheet). ui.js v11, SW v300. Commit cda2927. |
 | 2026-06-28 | IA session | Paysage : en-tête Réglages plus coupé en haut (padding-top sécurisé en plein écran paysage) + boutons réglages resserrés (10853a6). Boutons flottants masqués quand la fenêtre Conducteurs proches (.overlay.show) est ouverte (e0bacb4). app.css v55, SW v299. |

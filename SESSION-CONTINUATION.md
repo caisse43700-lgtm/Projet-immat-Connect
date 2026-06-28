@@ -42,6 +42,16 @@ depuis l'onclick inline navAnge et le hotfix ui.js. ui.js v11→v12, SW v301→v
 + Compactage paysage du contenu profond Réglages (.settings-section/row, calls.css/messages.css)
   app.css v56. Commit 5515533.
 
+### Correctif toggle (3e itération) — seul Signaler fermait
+Cause racine : anti-rebond par TIMER (320ms). Sur le tap de fermeture, 2 handlers tirent ; le 1er
+ferme (closeSheet + S.map.invalidateSize() potentiellement lent) ; si >320ms, le 2e (hotfix
+document ui.js) n'est plus débouncé, voit la sheet déjà fermée → ROUVRE. Signaler échappait car
+bindVisibleButtons fait stopPropagation (le hotfix ne tire pas pour lui). Fix robuste : tous les
+handlers (onclick inline, capture bindVisibleButtons, hotfix document) reçoivent LE MÊME objet
+event → marquage `ev.__navHandled` → une seule décision par tap quel que soit le timing. `event`
+passé partout (inline `App._navToggle('x',event)`, ui.js fns reçoivent et propagent `e`).
+ui.js v12→v13, SW v302→v303. Commit b2d39c7.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
