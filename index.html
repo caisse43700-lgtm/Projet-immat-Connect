@@ -2876,11 +2876,18 @@ App.actHelpReply=async function(alertId,key){
   const _replies={'arrivant':"J'arrive ! 🚗",'aide':"Je peux vous aider 🙋",'guide':"Je peux vous guider 🧭"};
   const a=(S.alerts||[]).find(x=>String(x.id)===String(alertId));
   let requesterPlate=nPlate(a?.from_plate||a?.sender_plate||a?.reporter_plate||a?.plate||'');
-  // Repli robuste : si la plaque manque/placeholder, la retrouver via le reporter_id du report
-  if((!requesterPlate||requesterPlate==='ASSISTANCE') && a?.reporter_id && sb){
-    try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',a.reporter_id).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
+  const _needLookup=()=>!requesterPlate||requesterPlate==='ASSISTANCE';
+  // Repli 1 : reporter_id déjà sur l'alerte
+  let _rid=a?.reporter_id||null;
+  // Repli 2 : pas de reporter_id → le récupérer en base via l'id du signalement (remoteId)
+  if(_needLookup() && !_rid && (a?.remoteId||a?.id) && sb){
+    try{const{data:_rep}=await sb.from('public_reports').select('reporter_id').eq('id',a.remoteId||a.id).maybeSingle();if(_rep?.reporter_id)_rid=_rep.reporter_id;}catch(e){}
   }
-  if(!requesterPlate||requesterPlate==='ASSISTANCE'){toast('Impossible — a='+(!!a)+' pl='+(a?.plate||'∅')+' sp='+(a?.sender_plate||'∅')+' rid='+(a?.reporter_id?'oui':'non'),'bad');return;}
+  // Repli 3 : reporter_id → plaque via profiles
+  if(_needLookup() && _rid && sb){
+    try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',_rid).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
+  }
+  if(_needLookup()){toast('Impossible — a='+(!!a)+' pl='+(a?.plate||'∅')+' rid='+(_rid?'oui':'non'),'bad');return;}
   const msg=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
