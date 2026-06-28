@@ -67,6 +67,13 @@ tronqué : 'Vos demandes'→'s demandes', 'Communication'→'ON'). Fix : `#sheet
 `left: calc(58px + env(safe-area-inset-left,0px))` en paysage (commence après le rail). app.css
 v56→v57, SW v304→v305. Commit fc28306.
 
+### Réglages paysage : plein écran jusqu'en bas + en-tête coupé
+La carte réapparaissait sous Réglages car `.sheet.full { height: min(78dvh,...) }` (spécificité
+0,2,0) plafonnait la hauteur. Fix : `#sheet:has(#panelSettings.on)` (spécificité id) →
+`top:0; bottom:0; height:auto; max-height:none` → plein écran. + padding-top porté à
+`max(safe-top+12, 18px)` (en-tête « Options » non coupé) + `.handle` masqué en plein écran Réglages
+(la barre parasite du haut = le grabber). app.css v57→v58, SW v305→v306. Commit e5b52c8.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
