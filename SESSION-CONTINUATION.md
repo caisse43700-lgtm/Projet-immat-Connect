@@ -94,6 +94,17 @@ de classes redéfinies ailleurs doivent avoir une spécificité supérieure. Fix
 (1,1,0) sur toutes ces règles → elles passent devant quel que soit l'ordre. Cartes catégories +
 emoji encore réduits (icon 18px, padding 7px). app.css v58→v59, SW v307→v308. Commit 8009029.
 
+### Panneau Messages : filtres radio + compactage
+- Filtres pills (Tous/Non lus/Favoris) : `clearFilters` n'existait PAS (HTML appelait
+  `ImmatMessages.clearFilters?.()`) donc « Tous » ne faisait rien et gardait `.on` du HTML ;
+  toggleUnreadOnly/toggleFavOnly ajoutaient `.active` indépendamment → les 3 pouvaient être
+  actifs. Fix : `_syncMsgPills()` (radio, un seul .on/.active selon State), `clearFilters()`
+  (ajouté + exporté), exclusivité mutuelle dans les toggles (l'un désactive l'autre),
+  normalisation `if(unreadOnly&&favOnly)favOnly=false` dans render. messages.js v38→v39.
+- Compactage paysage Messages : `#sheet .ic-search-bar/.ic-msg-tabs-row/.ic-msg-pill` (les
+  classes Messages n'étaient pas couvertes par le compactage act-*). app.css v59→v60.
+SW v308→v309. Commit 0351a8a.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby

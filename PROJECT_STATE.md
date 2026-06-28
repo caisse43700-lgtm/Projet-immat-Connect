@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v308 · app.css v59 · messages.js v38 · calls.js v22 · audio-manager.js v9 · ui.js v13
+SW                     : v309 · app.css v60 · messages.js v39 · calls.js v22 · audio-manager.js v9 · ui.js v13
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Messages : filtres Tous/Non lus/Favoris = radio (un seul actif ; clearFilters ajouté+exporté, exclusivité, _syncMsgPills) — avant les 3 pouvaient être actifs. + compactage paysage du panneau Messages (#sheet .ic-msg-pill/.ic-search-bar/.ic-msg-tabs-row). messages.js v39, app.css v60, SW v309. Commit 0351a8a. |
 | 2026-06-28 | IA session | Paysage : compactage des panneaux ENFIN effectif — il était écrasé car les défs de base des classes sont plus bas dans le CSS (ou calls.css/messages.css chargés après), même spécificité → dernière gagne. Fix : préfixe #sheet (id) sur toutes les règles + cartes catégories/emoji réduits. app.css v59, SW v308. Commit 8009029. |
 | 2026-06-28 | IA session | Nav : Ange se ferme au re-clic (overlay routé vers _angeToggle(event) → le hotfix ne rouvre plus) + page Activité ne saute plus à l'ouverture (scrollIntoView retirés de navActivite). SW v307. Commit 68c671f. |
 | 2026-06-28 | IA session | Paysage Réglages : plein écran jusqu'en bas (top:0+bottom:0+height:auto, .sheet.full plafonnait à 78dvh) + en-tête non coupé (padding-top 18px) + grabber .handle masqué (barre parasite). app.css v58, SW v306. Commit e5b52c8. |
