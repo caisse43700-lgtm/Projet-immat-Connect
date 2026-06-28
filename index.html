@@ -1590,6 +1590,7 @@ App._angeToggle=function(ev){
 };
 App.navMessages=function(){
   App._navView='messages';
+  try{window.ImmatMessages?.closeThread?.();}catch(e){} // toujours rouvrir sur la LISTE, pas la conversation
   document.body.classList.remove('appels-mode');
   document.getElementById('navSignaler')?.classList.remove('on');
   document.getElementById('navActivite')?.classList.remove('on');
