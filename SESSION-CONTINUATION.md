@@ -173,6 +173,18 @@ hits), #angeFab (closest), #angeOverlay (target.id, ferme). Mon handler v316
 (`window.__angeClickBound`) SUPPRIMÉ. Tous les onclick inline Ange déjà retirés. ui.js hotfixes ne
 touchent plus Ange. → un seul chemin, toggle net. SW v318→v319. Commit 529cea3.
 
+### Ange — CAUSE RACINE RÉELLE (enfin, prouvée par diagnostic)
+Diag toast v321 au tap : `ao=false tg=function pd=none od=none` → Ange fermé, `App._angeToggle`
+existe, mais l'appel n'ouvre rien. CAUSE : `AngeDialog` est déclaré `const AngeDialog={...}` (ligne
+4622) → un const/let top-level de `<script>` n'est PAS une propriété de `window`. Or `_angeToggle`
+appelle `window.AngeDialog?.open?.()` / `?.close?.()` → `window.AngeDialog` === undefined → no-op.
+La croix fonctionnait car son onclick est `AngeDialog.close()` (nom nu, résolu dans le scope du
+script). Tant qu'existait le fallback `_openAngeInline` (open DOM manuel), Ange s'ouvrait quand même
+mais ne se fermait jamais ; après son retrait (v319), plus rien n'ouvrait. FIX : `window.AngeDialog
+= AngeDialog;` juste après la définition (ligne 4805). SW v319→v322 (v320/v321 = diagnostics).
+Commit 11fd87a. LEÇON : tout code cross-script qui fait `window.X` exige que X soit explicitement
+exposé sur window (les const/let ne le sont pas).
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
