@@ -1380,16 +1380,17 @@ async subMsgs(){
       const _sndPseudo=profs[m.sender_id]?.pseudo;
       const _sndName=(pl||'inconnu')+(_sndPseudo&&_sndPseudo!=='Conducteur'?' · '+_sndPseudo:'');
       const _isVehResp=m.context_type==='vehicle_response';
+      const _isHelpResp=m.context_type==='help_response';
       // Pastille Messages : incrément IMMÉDIAT depuis la payload temps réel (indépendant du re-SELECT
       // refresh() et d'un messages.js éventuellement obsolète servi par le SW — index.html est toujours
       // servi du réseau, donc ce code est garanti à jour). Couvre messages libres + réponses véhicule.
-      if(!m.context_type||_isVehResp){try{if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}S._navUnreadIds.add(String(m.id));try{localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...S._navUnreadIds].slice(-200)));}catch(_){}const _nb=document.getElementById('msgNavBadge');const _n=S._navUnreadIds.size;if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display=_n>0?'flex':'none';}}catch(e){}}
+      if(!m.context_type||_isVehResp||_isHelpResp){try{if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}S._navUnreadIds.add(String(m.id));try{localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...S._navUnreadIds].slice(-200)));}catch(_){}const _nb=document.getElementById('msgNavBadge');const _n=S._navUnreadIds.size;if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display=_n>0?'flex':'none';}}catch(e){}}
       const _msgPrev=String(m.message||'').slice(0,60);
-      this.notif(_isVehResp?('📩 Réponse de '+(fPlate(pl)||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':('💬 '+(fPlate(pl)||'Un conducteur')+' vous a écrit')),_isVehResp?(_msgPrev||'a lu votre signalement'):(m.status==='pending'?_sndName:_msgPrev),pl||null);
+      this.notif(_isHelpResp?('🆘 '+(fPlate(pl)||'Un conducteur')+' a répondu à votre demande d\'aide'):_isVehResp?('📩 Réponse de '+(fPlate(pl)||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':('💬 '+(fPlate(pl)||'Un conducteur')+' vous a écrit')),_isHelpResp?(_msgPrev||'Aide en route'):_isVehResp?(_msgPrev||'a lu votre signalement'):(m.status==='pending'?_sndName:_msgPrev),pl||null);
       const _txt=String(m.message||'');let _ic003=false;
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
       if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(_sndName||'Le conducteur')+' a vu votre signalement','ok');}
-      if(!_ic003&&!_txt.includes('note confiance actuelle')&&!_isVehResp){try{
+      if(!_ic003&&!_txt.includes('note confiance actuelle')&&!_isVehResp&&!_isHelpResp){try{
         const _isVehicleReport=m.context_type==='vehicle_report';
         const _isVehicleResponse=m.context_type==='vehicle_response';
         const _isParkedReport=m.context_type==='parked_report';
@@ -2891,7 +2892,8 @@ App.actHelpReply=async function(alertId,key){
     try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',_rid).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
   }
   if(_needLookup()){toast('Impossible d\'identifier le demandeur.','bad');return;}
-  const msg=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
+  const _reply=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
+  const msg='🆘 A répondu à votre demande d\'aide : '+_reply;
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
   try{localStorage.setItem('ic_help_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
@@ -4417,7 +4419,7 @@ function showReputationToast(){
 <script src="core/global-verification-center.js?v=8"></script>
 <script src="core/mobile-autotest.js?v=3"></script>
 <script src="badge.js"></script>
-<script src="messages.js?v=39"></script>
+<script src="messages.js?v=40"></script>
 <script src="core/messages-runtime-diagnostics.js?v=1"></script>
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>

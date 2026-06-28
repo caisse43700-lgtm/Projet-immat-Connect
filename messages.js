@@ -408,7 +408,7 @@ function buildThreads(){
 
   const groups = {};
   // vehicle_response inclus dans les fils Messages (réponse à un signalement = message normal).
-  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && (!m.context_type || m.context_type==='vehicle_response')).forEach(m=>{
+  State.messages.filter(m => !deletedIds.includes(String(m.id)) && m._otherPlate && (!m.context_type || m.context_type==='vehicle_response' || m.context_type==='help_response')).forEach(m=>{
     const p = m._otherPlate;
     groups[p] = groups[p] || [];
     groups[p].push(m);
@@ -698,6 +698,7 @@ function render(){
     // Icône de type
     const _ct = last.context_type || '';
     const _typeIcon = _ct === 'vehicle_report' ? '🚨 ' :
+      _ct === 'help_response' ? '🆘 ' :
       _ct === 'vehicle_response' ? '📩 ' :
       _ct === 'parked_report' ? '🅿️ ' :
       _ct === 'parked_response' ? '🚗 ' :
@@ -902,7 +903,7 @@ function _dayLabel(d){
 function _renderTimeline(body, messages, searchQuery){
   const q = (searchQuery||'').trim().toUpperCase();
   // vehicle_response affiché dans le fil (réponse à un signalement = message normal)
-  const freeMessages = (messages||[]).filter(m => !m.context_type || m.context_type==='vehicle_response');
+  const freeMessages = (messages||[]).filter(m => !m.context_type || m.context_type==='vehicle_response' || m.context_type==='help_response');
   const filteredMessages = q ? freeMessages.filter(m => (m.message||'').toUpperCase().includes(q)) : freeMessages;
   const countEl = document.getElementById('icThreadSearchCount');
   if(countEl){
