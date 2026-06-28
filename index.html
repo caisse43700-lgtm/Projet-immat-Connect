@@ -3065,8 +3065,8 @@ App.renderAideFeedV1=async function(){
   // Ma demande (demandeur) — état métier uniquement (la conversation va dans Messages)
   myReqs.filter(r=>r.status==='ouverte').forEach(r=>{
     const engs=engMine.filter(e=>e.request_id===r.id&&e.status==='proposee');
-    const surPlace=engs.some(e=>e.mode==='sur_place');
-    const title=engs.length?(surPlace?'Un conducteur vient vous aider':'Un conducteur vous guide'):'Demande ouverte';
+    const surPlace=engs.some(e=>e.mode==='sur_place');const hasGuide=engs.some(e=>e.mode==='distance');
+    const title=engs.length?(surPlace?'Un conducteur vient vous aider':hasGuide?'Un conducteur vous guide':'Un conducteur vous répond'):'Demande ouverte';
     const who=engs.map(e=>_hp[e.helper_id]).filter(Boolean);
     const sub=engs.length?(who.length?who.join(', '):(engs.length+' conducteur'+(engs.length>1?'s':'')+' répond'+(engs.length>1?'ent':''))):'En attente d\'un conducteur à proximité…';
     const isOld=r.created_at&&(Date.now()-new Date(r.created_at).getTime())>10*60*1000;
@@ -3088,7 +3088,7 @@ App.renderAideFeedV1=async function(){
     html+=`<div class="act-vmg-sec-title" style="color:#f97316">✋ J'ai proposé mon aide (${myProp.length})</div>`;
     myProp.forEach(e=>{
       html+=`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#f97316" onclick="App.actToggleVmCard(this)">
-        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">Demande ${e2(e.mode==='distance'?'(guidage)':'(sur place)')}</div><div class="act-vmg-desc">Aide proposée — en attente</div></div></div>
+        <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">Demande ${e2(e.mode==='distance'?'(guidage)':e.mode==='contact'?'(renseignement)':'(sur place)')}</div><div class="act-vmg-desc">${e.mode==='contact'?'Renseignement proposé':'Aide proposée'} — en attente</div></div></div>
         <div class="act-vmg-detail">
           ${e.mode==='sur_place'?`<button type="button" class="act-vmg-cbtn" style="width:100%;margin-bottom:8px;background:rgba(16,185,129,.12);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="event.stopPropagation();App.aideNavigate('${e2(e.request_id)}')">📍 Naviguer vers le conducteur</button>`:''}
           ${_dp[e.demandeur_id]?`<div class="act-vmg-sec-lbl">Contacter le conducteur (Messages)</div><div class="act-vmg-contact"><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${e2(_dp[e.demandeur_id])}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${e2(_dp[e.demandeur_id])}')">📞 Appeler</button></div>`:''}
@@ -3114,6 +3114,7 @@ App.renderAideFeedV1=async function(){
             ${isPerdu
               ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','distance','Je peux vous guider 🧭')">Je vous guide 🧭</button>`
               :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','sur_place','J\\'arrive ! 🚗')">Je viens vous aider 🚗</button>`}
+            <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','contact','Comment puis-je vous aider ?')">💬 Comment puis-je aider ?</button>
           </div>
           <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#94a3b8;border-color:rgba(148,163,184,.3)" onclick="event.stopPropagation();App.aideDismiss('${e2(n.request_id)}')">Pas pour moi</button>
         </div></div>`;
