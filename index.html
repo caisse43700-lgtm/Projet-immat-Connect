@@ -2880,14 +2880,17 @@ App.actHelpReply=async function(alertId,key){
   // Repli 1 : reporter_id déjà sur l'alerte
   let _rid=a?.reporter_id||null;
   // Repli 2 : pas de reporter_id → le récupérer en base via l'id du signalement (remoteId)
-  if(_needLookup() && !_rid && (a?.remoteId||a?.id) && sb){
-    try{const{data:_rep}=await sb.from('public_reports').select('reporter_id').eq('id',a.remoteId||a.id).maybeSingle();if(_rep?.reporter_id)_rid=_rep.reporter_id;}catch(e){}
+  var _ridFrom='';
+  const _repId=a?.remoteId||(a?.id&&/^\d+$/.test(String(a.id))?a.id:null);
+  if(_needLookup() && !_rid && _repId && sb){
+    try{const{data:_rep}=await sb.from('public_reports').select('reporter_id').eq('id',_repId).maybeSingle();if(_rep?.reporter_id){_rid=_rep.reporter_id;_ridFrom='pub';}}catch(e){}
+    if(!_rid){try{const{data:_r2}=await sb.from('reports').select('reporter_id').eq('id',_repId).maybeSingle();if(_r2?.reporter_id){_rid=_r2.reporter_id;_ridFrom='rep';}}catch(e){}}
   }
   // Repli 3 : reporter_id → plaque via profiles
   if(_needLookup() && _rid && sb){
     try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',_rid).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
   }
-  if(_needLookup()){toast('Impossible — a='+(!!a)+' pl='+(a?.plate||'∅')+' rid='+(_rid?'oui':'non'),'bad');return;}
+  if(_needLookup()){toast('Impossible — pl='+(a?.plate||'∅')+' rmid='+(_repId||'∅')+' rid='+(_rid?_ridFrom:'non'),'bad');return;}
   const msg=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
