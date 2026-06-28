@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <link rel="stylesheet" href="app.css?v=52">
+  <link rel="stylesheet" href="app.css?v=53">
   <link rel="stylesheet" href="messages.css?v=6">
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
@@ -4529,8 +4529,12 @@ const ImmatestUI = {
 #angeOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:3001;background:rgba(0,0,0,.55)}
 #angePanel{display:none;position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 6px);left:0;right:0;z-index:3002;background:#0f0f1a;border-top:2px solid #7c6af7;border-radius:20px 20px 0 0;padding:16px;padding-bottom:0;max-height:min(80dvh,calc(100dvh - env(safe-area-inset-top,0px) - 64px - env(safe-area-inset-bottom,0px) - 6px));overflow-y:auto;flex-direction:column;gap:12px}
 @media(orientation:landscape) and (max-height:560px){
-  #angePanel{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
+  /* compactage lisible : police gardée, paddings/hauteur réduits */
+  #angePanel{bottom:0;left:calc(58px + env(safe-area-inset-left,0px));padding:10px;gap:8px}
   #angeOverlay{bottom:0;left:calc(58px + env(safe-area-inset-left,0px))}
+  #angeInputArea{gap:8px;padding-bottom:8px}
+  #angeMsg{height:54px}
+  #angeSubmit{padding:11px;min-height:42px}
 }
 #angeHeader{display:flex;justify-content:space-between;align-items:center;color:#c4b5fd;font-weight:700;font-size:15px}
 #angeHeader button{background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px}

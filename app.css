@@ -1120,6 +1120,37 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     right: calc(10px + env(safe-area-inset-right,0px));
     bottom: calc(env(safe-area-inset-bottom,0px) + 10px);
   }
+
+  /* ── VRAI RESPONSIVE PAYSAGE (pas un zoom) ──
+     Principe : garder les POLICES LISIBLES (glance en conduite), réduire surtout les
+     MARGES/PADDINGS (le vrai gaspillage), EXPLOITER LA LARGEUR (colonnes), et
+     CONSERVER LES CIBLES TACTILES (≥40px). */
+  .sheet { top: 20dvh; padding: 6px 16px 10px; } /* plus de hauteur, moins de padding */
+  /* En-têtes de panneau : titre légèrement réduit (reste lisible), espacement resserré */
+  .act-cat-hd { padding-bottom: 8px; }
+  .act-cat-hd-title { font-size: 16px; }
+  .act-cat-hd-sub { font-size: 11px; }
+  .act-cat-hd-icon { font-size: 22px; }
+  /* Barre de recherche : police gardée, marge réduite */
+  .act-search-bar { margin-bottom: 8px; }
+  .act-search-bar input { padding: 8px 14px; }
+  /* Cartes catégories (Activité) : 4 colonnes (cf. règle plus haut) = largeur exploitée,
+     padding réduit, police de carte conservée */
+  .act-categories { gap: 8px; margin-bottom: 12px; }
+  .act-cat-card { padding: 11px 8px; }
+  /* Onglets (Tous / Non lus / Favoris) : police gardée, padding resserré */
+  .act-cat-tabs { margin-bottom: 8px; }
+  .act-cat-tab { padding: 7px 5px; }
+  /* Signaler : 2 colonnes pour exploiter la largeur au lieu d'une longue liste verticale */
+  .sig-cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sig-cat-btn { padding: 12px 14px; }
+  .sig-step-title { font-size: 15px; margin-bottom: 8px; }
+  /* Réglages : la grille de raccourcis est déjà 2 colonnes ; on resserre l'espacement */
+  .panel-settings-grid { margin-bottom: 6px; }
+  /* Dashboard Gardien : padding réduit (police conservée) */
+  #gardienDashboardBody { padding: 10px 14px; }
+  /* Les écrans d'appel (#callOverlay, popup entrant, modales) sont des cartes à
+     largeur fixe centrées → déjà OK en paysage, rien à changer. */
 }
 
 @media (max-width: 380px) {
