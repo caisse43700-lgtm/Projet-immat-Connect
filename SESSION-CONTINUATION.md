@@ -7,6 +7,36 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Responsive paysage des panneaux (contenu trop gros)
+
+### Problème
+En paysage, le contenu des panneaux (Activité, Messages, Signaler, Ange, Réglages, Dashboard)
+gardait les tailles portrait → surdimensionné sur la faible hauteur (~430px CSS), peu d'éléments
+visibles, illisible. Captures IMG_6485-6488.
+
+### Itération d'approche
+1. D'abord compactage par élément (en-têtes, recherche, cartes, onglets) — partiel.
+2. Puis zoom uniforme `#sheet .panel { zoom:0.84 }` + `#angePanel` + `#gardienDashboardBody`
+   pour couvrir TOUT d'un coup (étape 2 Signaler, listes catégories, fil Messages, réglages).
+   Avantage : cohérent partout. Inconvénients (signalés à l'utilisateur) : rapetisse le texte
+   (moins lisible en conduite), n'exploite pas la largeur paysage, effets de bord iOS (tap<44px,
+   flou, sticky/hit-test).
+3. CHOIX FINAL (utilisateur a validé la « vraie mise en page ») : abandon du zoom →
+   responsive paysage propre : **polices conservées lisibles** (titre 18→16), **marges/paddings
+   réduits** (le vrai gaspillage), **largeur exploitée** (Signaler `.sig-cat-grid` 1→2 colonnes,
+   catégories Activité 4 col déjà, réglages 2 col déjà), **cibles tactiles ≥40px**,
+   `.sheet top 30→20dvh` + padding réduit, `#gardienDashboardBody` padding réduit. Ange : paddings
+   réduits, police gardée. Écrans d'appel = cartes à largeur fixe centrées → déjà OK, intouchés.
+
+### Couverture
+Tous les `.panel` de `#sheet` (Messages, Appels=journal in panelMessages, Paramètres, Activité
++#actCatPanel, Signaler toutes .sig-step, GPS), #angePanel, #gardienDashboardBody.
+
+### Versions
+app.css v52→v53, SW v296→v297. Commit 0fb812b, poussé sur main. À affiner sur captures terrain.
+
+---
+
 ## SESSION 2026-06-28 — Sonnerie démarrage (grâce) + FAB paysage alignés au compteur
 
 ### Sonnerie fantôme au démarrage — qui revenait

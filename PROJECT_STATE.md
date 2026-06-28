@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v296 · app.css v52 · messages.js v38 · calls.js v22 · audio-manager.js v9
+SW                     : v297 · app.css v53 · messages.js v38 · calls.js v22 · audio-manager.js v9
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Responsive paysage : remplacement du zoom uniforme par une vraie mise en page (polices lisibles conservées, marges/paddings réduits, Signaler en 2 colonnes, cibles tactiles ≥40px) sur tous les panneaux + Dashboard + Ange. app.css v53, SW v297. Commit 0fb812b. À affiner sur captures. |
 | 2026-06-28 | IA session | Appels : fenêtre de grâce 4s au démarrage/foreground contre la sonnerie fantôme (le garde created_at<12s ne suffisait pas). Paysage : FAB en rangée horizontale bas-droite alignée avec le compteur (compteur bottom:16px, FAB bottom:18px). calls.js v22, app.css v52, SW v296. Commit 75a5be0. |
 | 2026-06-28 | IA session | UI : FAB/compteur ne disparaissent plus après fermeture d'un panneau (fix `:has(#sheet:not(.mini) .panel.on)` — `.panel.on` restait après closeSheet). + Paysage : FAB en rangée horizontale bas-droite collée au bord, bannières/floating card hors du rail. app.css v50, SW v294. Commit 8352b64. |
 | 2026-06-28 | IA session | UI : bannières notif/toast (zone à risque, signalements, messages) ne chevauchent plus la puce plaque en haut à gauche — descendues de safe-top+26px à +62px (+142px en pile). app.css v49, SW v293. Commit 860e44b. |
