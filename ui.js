@@ -183,8 +183,9 @@
 
   function setPanel(name){
     closeFloating();
-    const map={altet:'navSignaler',messages:'navActivite',activite:'navActivite',drive:'navMap',map:'navMap'};
-    ['navMap','navSignaler','navActivite'].forEach(id=>$(id)?.classList.toggle('on',map[name]===id));
+    const map={altet:'navSignaler',messages:'navMessages',activite:'navActivite',drive:'navMap',map:'navMap'};
+    // Nettoyer TOUS les boutons de nav (sinon navMessages/navAppels gardent un état vert collé → deux verts)
+    ['navMap','navSignaler','navMessages','navActivite','navAppels'].forEach(id=>$(id)?.classList.toggle('on',map[name]===id));
     [['altet','Altet'],['drive','Drive'],['messages','Messages'],['settings','Settings'],['activite','Activite']].forEach(([k,id])=>{
       const active=k===name; $('panel'+id)?.classList.toggle('on',active); $('tab'+id)?.classList.toggle('on',active);
     });
@@ -248,7 +249,7 @@
     const actions=[
       ['#welcomeLoginBtn',()=>showAuth('login')],['#welcomeSignupBtn',()=>showAuth('signup')],
       ['.profile-chip',()=>{ensureAppFallbacks(); try{window.App.openDrawer();}catch(e){fallbackOpenDrawer();}}],
-      ['#navMap',()=>{setPanel('map');recoverMap();}],['#navSignaler',()=>{setPanel('altet');try{window.App?.openReport?.();}catch(e){}}],['#navActivite',()=>{setPanel('activite');try{window.App?.renderActivityFeed?.();window.App?.updateActBadge?.();}catch(e){}}],
+      ['#navMap',()=>{setPanel('map');recoverMap();}],['#navSignaler',()=>{try{window.App?._navToggle?.('signaler');}catch(e){setPanel('altet');}}],['#navActivite',()=>{try{window.App?._navToggle?.('activite');}catch(e){setPanel('activite');}}],
       ['button[title="Recentrer"]',()=>{try{window.App?.recenter?.();}catch(e){locateDirect();}}],
       ['button[title="Conducteurs proches"]',()=>{ensureAppFallbacks(); try{window.App?.openNearby?.();}catch(e){fallbackOpenNearby();}}],
       ['button[title="Vue"]',()=>{try{window.App?.cycleView?.();}catch(e){} recoverMap();}],
@@ -303,8 +304,8 @@
       }
       // Boutons nav par bounding-box — fonctionne même si un overlay les recouvre
       var hits=[
-        ['navMessages',function(){try{window.App?.navMessages?.();}catch(_){}}],
-        ['navAppels',  function(){try{window.App?.navAppels?.();}catch(_){}}],
+        ['navMessages',function(){try{window.App?._navToggle?.('messages');}catch(_){}}],
+        ['navAppels',  function(){try{window.App?._navToggle?.('appels');}catch(_){}}],
         ['navAnge',    function(){openAngePanel();}],
       ];
       for(var i=0;i<hits.length;i++){
