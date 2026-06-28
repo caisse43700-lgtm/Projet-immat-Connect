@@ -1588,7 +1588,17 @@ App._angeToggle=function(ev){
   // Fallback display si la classe manque.
   var isOpen=document.body.classList.contains('ange-open');
   if(!isOpen){var p=document.getElementById('angePanel');isOpen=!!(p&&getComputedStyle(p).display!=='none');}
-  try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
+  if(isOpen){
+    // Fermeture FORCÉE + verrou anti-réouverture : un autre handler (non marqué) pourrait
+    // rappeler open() juste après → on bloque toute réouverture pendant 450ms.
+    App.__angeJustClosed=Date.now();
+    try{ window.AngeDialog?.close?.(); }catch(e){}
+    var _p=document.getElementById('angePanel'); if(_p)_p.style.display='none';
+    var _o=document.getElementById('angeOverlay'); if(_o)_o.style.display='none';
+    document.body.classList.remove('ange-open');
+    return;
+  }
+  try{ window.AngeDialog?.open?.(); }catch(e){}
 };
 App.navMessages=function(){
   App._navView='messages';
@@ -4627,6 +4637,8 @@ const AngeDialog={
     else{el.textContent='';el.style.color='#555';}
   },
   open(){
+    // Verrou : si on vient de fermer (re-clic sur le bouton), ne pas rouvrir aussitôt
+    try{if(window.App&&App.__angeJustClosed&&Date.now()-App.__angeJustClosed<450)return;}catch(_){}
     try{if(window.App?.closeSheet)window.App.closeSheet();['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});}catch(_){}
     document.body.classList.add('ange-open');
     $('angePanel').style.display='flex';
