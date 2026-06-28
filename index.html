@@ -3105,8 +3105,7 @@ App.renderAideFeedV1=async function(){
           <div class="act-vmg-replies">
             ${isPerdu
               ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','distance').then(()=>App.renderAideFeedV1())">Je vous guide 🧭</button>`
-              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','sur_place').then(()=>App.renderAideFeedV1())">Je viens vous aider 🚗</button>
-                 <button type="button" class="act-vmg-rbtn" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','distance').then(()=>App.renderAideFeedV1())">Je vous guide 🧭</button>`}
+              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','sur_place').then(()=>App.renderAideFeedV1())">Je viens vous aider 🚗</button>`}
           </div>
         </div></div>`;
     });
