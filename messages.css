@@ -188,6 +188,7 @@
 /* ---- Mail list ---- */
 .ic-mail-list {
   display:grid;
+  align-content:start; /* sinon les lignes s'étirent et le contenu se centre (conversations "au milieu") */
   gap:6px;
   max-height:58vh;
   overflow:auto;
