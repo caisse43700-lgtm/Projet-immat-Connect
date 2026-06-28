@@ -1588,6 +1588,8 @@ App._angeToggle=function(ev){
   var isOpen=document.body.classList.contains('ange-open')
     || !!(p && getComputedStyle(p).display!=='none')
     || !!(o && getComputedStyle(o).display!=='none');
+  // DIAGNOSTIC TEMPORAIRE — à retirer une fois Ange réglé
+  try{ if(typeof toast==='function') toast('Ange: '+(isOpen?'FERME (était ouvert)':'OUVRE (était fermé)'),'ok'); }catch(_){}
   try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
 // GESTIONNAIRE UNIQUE des interactions Ange (au lieu d'onclick inline qui ne marchent pas
