@@ -1381,7 +1381,8 @@ async subMsgs(){
       // refresh() et d'un messages.js éventuellement obsolète servi par le SW — index.html est toujours
       // servi du réseau, donc ce code est garanti à jour). Couvre messages libres + réponses véhicule.
       if(!m.context_type||_isVehResp){try{if(!S._navUnreadIds){try{S._navUnreadIds=new Set(JSON.parse(localStorage.getItem('ic_nav_unread_ids')||'[]'));}catch(_){S._navUnreadIds=new Set();}}S._navUnreadIds.add(String(m.id));try{localStorage.setItem('ic_nav_unread_ids',JSON.stringify([...S._navUnreadIds].slice(-200)));}catch(_){}const _nb=document.getElementById('msgNavBadge');const _n=S._navUnreadIds.size;if(_nb){_nb.textContent=_n>99?'99+':String(_n);_nb.style.display=_n>0?'flex':'none';}}catch(e){}}
-      this.notif(_isVehResp?('📩 Réponse de '+(pl||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':'💬 Nouveau message'),_isVehResp?(String(m.message||'').slice(0,60)||'a lu votre signalement'):_sndName,pl||null);
+      const _msgPrev=String(m.message||'').slice(0,60);
+      this.notif(_isVehResp?('📩 Réponse de '+(fPlate(pl)||'un conducteur')):(m.status==='pending'?'📩 Nouvelle demande':('💬 '+(fPlate(pl)||'Un conducteur')+' vous a écrit')),_isVehResp?(_msgPrev||'a lu votre signalement'):(m.status==='pending'?_sndName:_msgPrev),pl||null);
       const _txt=String(m.message||'');let _ic003=false;
       if(_txt.startsWith("J'arrive")||_txt.startsWith("J'arrive")||_txt.startsWith("Je peux vous aider")){const _myAssist=(S.alerts||[]).find(a=>(a._own||a._mine)&&a.group==='assist'&&a.status!=='resolved'&&a.status!=='gone');if(_myAssist){_myAssist.status='helper_coming';_myAssist._helperPlate=pl;saveAlerts();schedFeed();_ic003=true;try{this.showFloatingCard('✋','Aide en route',_sndName+' vient vous aider','OK','→ Activité',()=>{},()=>{this.navActivite?.();setTimeout(()=>{try{this.openActivityCat('aide');}catch(e){}},150);},'urgent')}catch(e){}}}
       if(_txt.includes('note confiance actuelle')){const _myVeh=(S.alerts||[]).find(a=>(a._own||a._mine)&&(a.group==='vehicle'||a.type==='vehicule'));if(_myVeh){_myVeh.status='seen_by_driver';saveAlerts();}toast('✓ '+(_sndName||'Le conducteur')+' a vu votre signalement','ok');}
@@ -1417,7 +1418,7 @@ async subMsgs(){
         const _isUrgParked=/^🅿️\s*URGENT/i.test(_txt);
         const _stCleanLabel=_isParkedReport?String(_txt).replace(/^🅿️\s*/,'').replace(/^URGENT\s*:\s*/i,'').replace(/\.\s*Votre véhicule.*$/i,'').trim().slice(0,50):null;
         const _stGps=_isParkedReport?(()=>{const _gm=String(_txt).match(/\[GPS:([-\d.]+),([-\d.]+)\]/);return _gm?{lat:parseFloat(_gm[1]),lng:parseFloat(_gm[2])}:null;})():null;
-        const _fcTitle=_isParkedReport?(_isUrgParked?'🚨 ':'')+(_stCleanLabel||'Signalement stationné'):_isParkedResponse?'🅿️ Signalement pris en compte':_isVehicleReport?'🚨 Signalement véhicule':_isVehicleResponse?'📩 Réponse à votre signalement':'Message de '+_sndName;
+        const _fcTitle=_isParkedReport?(_isUrgParked?'🚨 ':'')+(_stCleanLabel||'Signalement stationné'):_isParkedResponse?'🅿️ Signalement pris en compte':_isVehicleReport?'🚨 Signalement véhicule':_isVehicleResponse?'📩 Réponse à votre signalement':((fPlate(pl)||'Un conducteur')+' vous a écrit');
         const _fcSub=_isParkedReport?'Signalé par '+_sndName+(_stGps?' · 📍':'')+( m.image_url?' · 📷':''): _isParkedResponse?'Par '+_sndName:''+_sndName;
         const _fcBody=_isParkedReport?'Votre véhicule nécessite votre attention.':_isParkedResponse?String(_txt).slice(0,80):(_isVehicleReport||_isVehicleResponse)?String(_txt).slice(0,80):String(_txt).slice(0,60);
         // Bouton rapide "📍 Carte" si GPS disponible dans la notification
