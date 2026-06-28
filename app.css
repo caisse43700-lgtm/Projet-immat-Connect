@@ -1084,10 +1084,18 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     max-height: none;
     border-radius: 0;
   }
-  /* Fullscreen en paysage — Famille C : top:0, carte absente. left APRÈS le rail de
-     nav (sinon le contenu passe sous le rail et le texte est coupé à gauche).
-     padding-top sécurisé (sinon l'en-tête est coincé sous la barre d'état → barre parasite) */
-  #sheet:has(#panelSettings.on) { top: 0; left: calc(58px + env(safe-area-inset-left,0px)); padding-top: max(calc(var(--safe-top) + 8px), 14px); }
+  /* Fullscreen en paysage — Famille C : Réglages plein écran, du haut JUSQU'EN BAS.
+     - left APRÈS le rail de nav (sinon texte coupé à gauche)
+     - top:0 + bottom:0 + height:auto (sinon .sheet.full plafonne à 78dvh → la carte
+       réapparaît en bas)
+     - padding-top sécurisé (sinon en-tête sous la barre d'état) */
+  #sheet:has(#panelSettings.on) {
+    top: 0; bottom: 0; height: auto; max-height: none;
+    left: calc(58px + env(safe-area-inset-left,0px));
+    padding-top: max(calc(var(--safe-top) + 12px), 18px);
+  }
+  /* grabber inutile en plein écran → évite la "barre parasite" en haut */
+  #sheet:has(#panelSettings.on) .handle { display: none; }
   .sheet.mini { transform: translateX(100%); }
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
