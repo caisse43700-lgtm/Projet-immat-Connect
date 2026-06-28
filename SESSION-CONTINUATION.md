@@ -335,6 +335,16 @@ Suite (v326) — "toujours impossible" : cas d'une demande créée par un tel pa
 version du demandeur. SW v325→v326. Commit 98ac545. Le broadcast new_report transporte déjà
 reporter_id (saveReportRemote._bcast).
 
+Suite (v327→v329) — diagnostic intégré au toast d'erreur a montré `a=true pl=ASSISTANCE rid=non`
+= demande créée par un tel pas-en-v325 (placeholder) ET alerte sans reporter_id (cache d'avant
+v326). Fix final (v329, actHelpReply) : cascade reporter_id sur l'alerte → sinon
+`public_reports.select('reporter_id').eq('id', a.remoteId||a.id)` → sinon échec ; puis
+`profiles.select('owner_plate').eq('id', reporter_id)`. Comme `saveReportRemote` insère reporter_id
+en base (branche T1, toujours), même les anciennes demandes ASSISTANCE sont récupérables tant que
+le report existe (fenêtre 3h). Diag restant allégé dans l'erreur (`Impossible — a=.. pl=.. rid=..`),
+à retirer une fois confirmé. SW v326→v329 (v327/v328 = itérations diag). Commits 7d65e93, dcc7d99,
+729f823.
+
 ---
 
 ## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive
