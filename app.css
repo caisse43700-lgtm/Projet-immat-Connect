@@ -771,6 +771,9 @@ body.rotating .sheet { transition: none !important; }
   transition: .28s cubic-bezier(.34,1.56,.64,1);
 }
 .toast.show, .notif.show { transform: none; opacity: 1; }
+/* Si la notif (message reçu) ET le toast s'affichent en même temps, empiler le toast SOUS
+   la notif au lieu de se chevaucher (notif précède toast dans le DOM → sélecteur ~ valide) */
+.notif.show ~ .toast.show { top: calc(var(--safe-top) + 92px); }
 .toast { background: rgba(12,22,36,.97); color: var(--text); border: 1px solid rgba(255,255,255,.12); }
 .toast.bad { color: var(--red); }
 .toast.ok { color: var(--green); }
