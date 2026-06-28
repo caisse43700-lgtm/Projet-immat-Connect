@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
+
+### En-tête Réglages coupé en haut (« barre parasite »)
+Le panneau Réglages passe `top:0` (plein écran) en paysage via `#sheet:has(#panelSettings.on)`
+(app.css ~1086). Mais la règle plein écran avec `padding-top: max(safe-top+8,16px)` (l.382-386)
+n'existe qu'en `@media (orientation:portrait)`. En paysage, le `.sheet` avait `padding:6px...` →
+en-tête coincé sous la barre d'état (apparaît comme une barre parasite). Fix : ajout
+`padding-top: max(calc(var(--safe-top) + 8px), 14px)` sur `#sheet:has(#panelSettings.on)` dans le
+bloc paysage + boutons `.settings-btn` resserrés (padding 12→9, grid gap 8→6). Commit 10853a6.
+
+### Boutons flottants par-dessus la fenêtre « Conducteurs proches »
+`#nearbyPanel` est une `.overlay` (affichée via `.show`), PAS un panneau de `#sheet`. La règle de
+masquage des FAB ne couvrait que `.sheet.full` et `#sheet:not(.mini) .panel.on` → les FAB
+flottaient par-dessus la liste Nearby. Fix : ajout de `#appScreen:has(.overlay.show) .fab-stack`
+(et `.speed`) à la règle de masquage (app.css ~800). S'applique en portrait + paysage. Commit e0bacb4.
+
+### Versions
+app.css v53→v55, SW v297→v299. Poussés sur main.
+
+---
+
 ## SESSION 2026-06-28 — Responsive paysage des panneaux (contenu trop gros)
 
 ### Problème
