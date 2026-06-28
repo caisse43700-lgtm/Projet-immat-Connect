@@ -3059,6 +3059,8 @@ App.renderAideFeedV1=async function(){
   try{[myReqs,engMine,myEng,nearby]=await Promise.all([this.AideV1.myRequests(),this.AideV1.engagementsMine(),this.AideV1.myEngagements(),this.AideV1.nearby()]);}catch(_){}
   // Résout les plaques des helpers engagés (pour l'affichage demandeur + le sélecteur "Qui vous a aidé ?")
   let _hp={};try{const _ids=[...new Set(engMine.filter(e=>e.status==='proposee').map(e=>e.helper_id))];if(_ids.length&&typeof profilesByIds==='function'){const _pr=await profilesByIds(_ids);Object.keys(_pr||{}).forEach(k=>{_hp[k]=fPlate((_pr[k]||{}).owner_plate||'')||'';});}}catch(_){}
+  // Plaques des demandeurs des demandes que J'AIDE (pour contacter via Messages/Appels après engagement)
+  let _dp={};try{const _ids2=[...new Set((myEng||[]).filter(e=>e.status==='proposee').map(e=>e.demandeur_id))];if(_ids2.length&&typeof profilesByIds==='function'){const _pr2=await profilesByIds(_ids2);Object.keys(_pr2||{}).forEach(k=>{_dp[k]=fPlate((_pr2[k]||{}).owner_plate||'')||'';});}}catch(_){}
   let html='';
   // Ma demande (demandeur) — état métier uniquement (la conversation va dans Messages)
   myReqs.filter(r=>r.status==='ouverte').forEach(r=>{
@@ -3076,6 +3078,7 @@ App.renderAideFeedV1=async function(){
       <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#9ca3af;animation:none"></div><div class="act-vmg-info"><div class="act-vmg-plate" style="color:#9ca3af">Ma demande · ${e2(lbl[r.type]||r.type)}</div><div class="act-vmg-desc">${e2(title)} — ${e2(sub)}</div></div></div>
       <div class="act-vmg-detail">
         ${isOld&&!engs.length?`<div class="act-vmg-sec-lbl" style="color:#f97316">Aucun conducteur pour l'instant — alternatives :</div><div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"><a href="tel:112" onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:8px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#ef4444;font-size:12px;font-weight:600;text-decoration:none">📞 112 — Secours européen</a><a href="tel:3040" onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:8px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#3b82f6;font-size:12px;font-weight:600;text-decoration:none">🚗 3040 — Assistance auto</a></div>`:''}
+        ${engs.length?'<div class="act-vmg-sec-lbl">Contacter (conversation dans Messages)</div>'+engs.map(e=>{const hp=_hp[e.helper_id]||'';return hp?`<div class="act-vmg-contact"><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${e2(hp)}')">💬 ${e2(hp)}</button><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${e2(hp)}')">📞 Appeler</button></div>`:'';}).join(''):''}
         ${actions}
       </div></div>`;
   });
@@ -3087,7 +3090,8 @@ App.renderAideFeedV1=async function(){
       html+=`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#f97316" onclick="App.actToggleVmCard(this)">
         <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">Demande ${e2(e.mode==='distance'?'(guidage)':'(sur place)')}</div><div class="act-vmg-desc">Aide proposée — en attente</div></div></div>
         <div class="act-vmg-detail">
-          <button type="button" class="act-vmg-cbtn" style="width:100%;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.AideV1.retract('${e2(e.request_id)}').then(()=>App.renderAideFeedV1())">Je me retire</button>
+          ${_dp[e.demandeur_id]?`<div class="act-vmg-sec-lbl">Contacter le conducteur (Messages)</div><div class="act-vmg-contact"><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${e2(_dp[e.demandeur_id])}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${e2(_dp[e.demandeur_id])}')">📞 Appeler</button></div>`:''}
+          <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.AideV1.retract('${e2(e.request_id)}').then(()=>App.renderAideFeedV1())">Je me retire</button>
         </div></div>`;
     });
   }
@@ -3104,8 +3108,8 @@ App.renderAideFeedV1=async function(){
           <div class="act-vmg-sec-lbl">Répondre</div>
           <div class="act-vmg-replies">
             ${isPerdu
-              ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','distance').then(()=>App.renderAideFeedV1())">Je vous guide 🧭</button>`
-              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','sur_place').then(()=>App.renderAideFeedV1())">Je viens vous aider 🚗</button>`}
+              ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','distance','Je peux vous guider 🧭')">Je vous guide 🧭</button>`
+              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','sur_place','J\\'arrive ! 🚗')">Je viens vous aider 🚗</button>`}
           </div>
         </div></div>`;
     });
@@ -3122,6 +3126,20 @@ App.aideConfirmUI=async function(requestId){
 App.aidePick=async function(requestId,helperId){
   await this.AideV1.confirm(requestId,helperId||null);
   S._aidePick=null;try{this.renderAideFeedV1();}catch(_){}
+};
+// Helper répond : 1) enregistre l'engagement (état métier → Activité) ;
+// 2) envoie le texte prédéfini au demandeur comme MESSAGE normal → boîte Messages de l'accueil + pastille.
+App.aidePropose=async function(requestId,mode,text){
+  await this.AideV1.propose(requestId,mode);
+  try{
+    const eng=(await this.AideV1.myEngagements()).find(e=>String(e.request_id)===String(requestId));
+    if(eng&&eng.demandeur_id&&typeof profilesByIds==='function'){
+      const pr=await profilesByIds([eng.demandeur_id]);
+      const plate=fPlate(((pr&&pr[eng.demandeur_id])||{}).owner_plate||'');
+      if(plate&&window.ImmatMessages?.sendToPlate)await window.ImmatMessages.sendToPlate(plate,text,{});
+    }
+  }catch(_){}
+  try{this.renderAideFeedV1();}catch(_){}
 };
 // ── Lot B-3 : Realtime "le mien" (filtres d'égalité, seuls supportés par Supabase). INERTE (non appelé tant que B-4). ──
 // Re-fetch à l'ouverture = renderAideFeedV1 (qui interroge le serveur). Push proximité = tâche SERVEUR
