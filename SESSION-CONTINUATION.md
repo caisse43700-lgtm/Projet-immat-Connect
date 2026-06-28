@@ -345,6 +345,14 @@ le report existe (fenêtre 3h). Diag restant allégé dans l'erreur (`Impossible
 à retirer une fois confirmé. SW v326→v329 (v327/v328 = itérations diag). Commits 7d65e93, dcc7d99,
 729f823.
 
+Suite (v331/v332) — réponse pas reçue dans la boîte Messages + formulation : `help_response`
+était exclu des fils Messages → demandeur ne voyait jamais la réponse. Fix : ajout de
+`m.context_type==='help_response'` dans buildThreads (messages.js ~411) ET _renderTimeline (~905)
++ icône 🆘 (conv list ~701). `actHelpReply` : msg = "🆘 A répondu à votre demande d'aide : <réponse>".
+subMsgs (index.html) : `_isHelpResp` ajouté → incrémente pastille Messages + notif "🆘 [plaque] a
+répondu à votre demande d'aide" + exclu de la carte flottante message-libre. Diag retiré (v331,
+message d'erreur propre). messages.js v39→v40, SW v330→v332. Commits bf81d52, 6e544e1.
+
 ---
 
 ## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive

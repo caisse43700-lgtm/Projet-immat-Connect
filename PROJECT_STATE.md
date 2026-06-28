@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v330 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15 · (diag aide actHelpReply en cours)
+SW                     : v332 · app.css v60 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Aide : réponse (help_response) maintenant visible dans la boîte Messages (était exclu de buildThreads l.411 + timeline l.905) + icône 🆘 + texte "🆘 A répondu à votre demande d'aide : …" + pastille/notif à la réception. Diag retiré (v331). messages.js v40, SW v332. Commits bf81d52 + 6e544e1. |
 | 2026-06-28 | IA session | Aide : diag a=true pl=ASSISTANCE rid=non → ancienne demande sans plaque/reporter_id sur l'alerte. Fix v329 : actHelpReply récupère reporter_id via public_reports.eq('id',remoteId) puis profiles.owner_plate (salvage même anciennes demandes, le reporter_id étant en base via insert T1). Diag v327/v328 allégé dans l'erreur. SW v329. Commit 729f823. |
 | 2026-06-28 | IA session | Aide : répondre à une demande d'aide ("Impossible d'identifier le demandeur"). v325 : assist() stocke owner_plate (au lieu de placeholder 'ASSISTANCE'). v326 : repli robuste via reporter_id (lookup profiles.owner_plate) si plaque manque → marche même si demandeur sur vieille version. reporter_id/sender_plate transmis à la réception + gardés par normalizeAlert. SW v326. Commits 7882fc7 + 98ac545. |
 | 2026-06-28 | IA session | Signaler : numéros d'urgence 15/17/18 en bas + compacts sur les 3 étapes (Véhicule 992c7d1/v323, puis Aide + Stationné 1591962/v324). |
