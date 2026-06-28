@@ -210,13 +210,9 @@
     if(window.__ImmatCriticalButtonHotfixV1) return;
     window.__ImmatCriticalButtonHotfixV1=true;
     document.addEventListener('click',e=>{
-      const el=e.target && e.target.closest && e.target.closest('#angeFab,.sig-cat-btn');
+      const el=e.target && e.target.closest && e.target.closest('.sig-cat-btn');
       if(!el) return;
-      if(el.id==='angeFab'){
-        e.preventDefault(); e.stopPropagation();
-        try{ window.App?._angeToggle?.(e); }catch(_){ openAngePanel(); } // bascule (ouvrir/fermer)
-        return;
-      }
+      // #angeFab géré par son onclick inline (App._angeToggle) — retiré d'ici (évitait un doublon).
       if(el.classList.contains('cat-route')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepRoute?.(); }catch(err){} openSignalStep('sigStep2Route'); }
       else if(el.classList.contains('cat-vehicle')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepVehicle?.(); }catch(err){} openSignalStep('sigStep2Vehicle'); }
       else if(el.classList.contains('cat-aide')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepAide?.(); }catch(err){} openSignalStep('sigStep2Aide'); }
@@ -306,7 +302,8 @@
       var hits=[
         ['navMessages',function(ev){try{window.App?._navToggle?.('messages',ev);}catch(_){}}],
         ['navAppels',  function(ev){try{window.App?._navToggle?.('appels',ev);}catch(_){}}],
-        ['navAnge',    function(ev){try{window.App?._angeToggle?.(ev);}catch(_){openAngePanel();}}],
+        // navAnge retiré : géré uniquement par son onclick inline (App._angeToggle) → 1 seul
+        // handler, plus de course ouvrir/fermer.
       ];
       for(var i=0;i<hits.length;i++){
         var btn=document.getElementById(hits[i][0]);

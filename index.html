@@ -1582,23 +1582,10 @@ App._navToggle=function(key,ev){
 };
 // Ange : même logique de bascule (1 tap ouvre / 1 tap referme), avec anti-rebond
 App._angeToggle=function(ev){
-  if(ev){ if(ev.__navHandled) return; ev.__navHandled=true; }
-  else { var now=Date.now(); if(this.__navTapKey==='ange' && now-(this.__navTapTime||0)<320) return; this.__navTapKey='ange'; this.__navTapTime=now; }
-  // Signal d'ouverture fiable : classe body.ange-open (posée par open, retirée par close).
-  // Fallback display si la classe manque.
+  // Un seul handler par tap (anti-double via la classe d'ouverture, pas de verrou temporel).
   var isOpen=document.body.classList.contains('ange-open');
   if(!isOpen){var p=document.getElementById('angePanel');isOpen=!!(p&&getComputedStyle(p).display!=='none');}
-  if(isOpen){
-    // Fermeture FORCÉE + verrou anti-réouverture : un autre handler (non marqué) pourrait
-    // rappeler open() juste après → on bloque toute réouverture pendant 450ms.
-    App.__angeJustClosed=Date.now();
-    try{ window.AngeDialog?.close?.(); }catch(e){}
-    var _p=document.getElementById('angePanel'); if(_p)_p.style.display='none';
-    var _o=document.getElementById('angeOverlay'); if(_o)_o.style.display='none';
-    document.body.classList.remove('ange-open');
-    return;
-  }
-  try{ window.AngeDialog?.open?.(); }catch(e){}
+  try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
 App.navMessages=function(){
   App._navView='messages';
@@ -4490,7 +4477,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="ui.js?v=14"></script>
+<script src="ui.js?v=15"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
@@ -4637,8 +4624,6 @@ const AngeDialog={
     else{el.textContent='';el.style.color='#555';}
   },
   open(){
-    // Verrou : si on vient de fermer (re-clic sur le bouton), ne pas rouvrir aussitôt
-    try{if(window.App&&App.__angeJustClosed&&Date.now()-App.__angeJustClosed<450)return;}catch(_){}
     try{if(window.App?.closeSheet)window.App.closeSheet();['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});}catch(_){}
     document.body.classList.add('ange-open');
     $('angePanel').style.display='flex';
