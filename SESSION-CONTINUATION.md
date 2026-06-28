@@ -127,6 +127,13 @@ auto de la grille s'étirent et leur contenu se centre verticalement → "AUJOUR
 flottent au milieu de leur ligne. Fix : `align-content:start` sur `.ic-mail-list` → lignes packées
 en haut. messages.css v6→v7, SW v311→v312. Commit 5514a7c.
 
+### Ange fermeture infaillible (le cercle ne fermait toujours pas en v312)
+Un handler non couvert par le marquage d'event rouvrait Ange juste après la fermeture. Au lieu de
+le traquer : (1) fermeture FORCÉE dans `_angeToggle` (close + `#angePanel`/`#angeOverlay`
+display:none + retrait `body.ange-open`) ; (2) verrou `App.__angeJustClosed` → `AngeDialog.open()`
+ignore toute réouverture <450ms après une fermeture. Robuste quel que soit le handler fautif.
+SW v312→v313 (fix dans index.html réseau-frais). Commit 781b386.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
