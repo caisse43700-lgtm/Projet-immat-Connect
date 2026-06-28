@@ -154,6 +154,16 @@ TOUS les onclick inline Ange (navAnge, #angeFab, #angeOverlay) + UN SEUL listene
 recouvert), + #angeFab via closest, + #angeOverlay (fond) par target.id → un seul `_angeToggle`
 par tap, zéro course. SW v315→v316 (intermédiaire v315 = détection isOpen renforcée). Commit 57a24ad.
 
+### Ange — LE coupable final (trouvé par diagnostic toast)
+Toast diag (v317) au tap : affichait "FERME (était ouvert)" → mon handler fermait BIEN, mais Ange
+restait ouvert → un autre handler ROUVRAIT. Coupable = un 4e système de nav de secours (IIFE en
+bas d'index.html, ligne ~5179, listener `click` en CAPTURE) avec hits `['navAnge',_openAngeInline]`
+où `_openAngeInline` ouvre TOUJOURS Ange. Fix : retrait de l'entrée navAnge de ce handler → seul
+`App._angeToggle` (via le listener bbox v316) gère Ange. Diag toast retiré. SW v317(diag)→v318.
+Commit fd9272f. LEÇON : l'app a ~4 systèmes de gestion des clics nav (onclick inline, ui.js
+bindVisibleButtons, ui.js installNavButtonHotfix, IIFE de secours index.html) — toute modif d'un
+bouton nav doit les vérifier TOUS.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
