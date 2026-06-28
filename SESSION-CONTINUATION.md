@@ -105,6 +105,14 @@ emoji encore réduits (icon 18px, padding 7px). app.css v58→v59, SW v307→v30
   classes Messages n'étaient pas couvertes par le compactage act-*). app.css v59→v60.
 SW v308→v309. Commit 0351a8a.
 
+### Réouverture toujours sur la page 1
+Demande : à la réouverture d'une fonctionnalité, repartir de la première page (pas la sous-vue où
+on a fermé). État : Signaler déjà OK (closeSheet→navSignaler→sigBack→_sigReset→étape 1), Activité
+déjà OK (navActivite→actMain + panel() retire les body classes act-*). Manquant = Messages :
+`navMessages` ne fermait pas le thread ouvert → on retombait sur la conversation. Fix : ajout
+`window.ImmatMessages?.closeThread?.()` au début de navMessages → rouvre sur la liste. SW v309→v310.
+Commit fe11cb3 (fix dans index.html servi réseau-frais).
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
