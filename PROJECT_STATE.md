@@ -9,15 +9,21 @@
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
-Date de mise à jour    : 2026-06-27
+Date de mise à jour    : 2026-06-28
 Avancement             : ~55% du plan fonctionnel implémenté — EN PRODUCTION
 Production             : https://caisse43700-lgtm.github.io/Projet-immat-Connect/
 Branche production     : main (GitHub Pages)
 Branche de travail     : local/merge-to-main (synchro origin/main après chaque "Fusionner")
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
-Phase produit          : V1.1 ACTIVITÉ — itérations UX en cours (vues transversales)
-SW                     : v266 · app.css v45 · messages.js v34
+Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
+SW                     : v288 · app.css v46 · messages.js v38
+
+⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
+vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
+mais le SW/les .js peuvent rester périmés. Pour forcer : Dashboard → 🔄 MAJ, vérifier CACHE_NAME ;
+si bloqué, réinstaller la PWA (supprimer/re-ajouter à l'écran d'accueil). Toujours faire confirmer
+le CACHE_NAME avant de conclure qu'un bug persiste.
 ```
 
 ### Ce qui fonctionne en production (validé terrain + déployé 2026-06-18)
@@ -56,7 +62,49 @@ SW                     : v266 · app.css v45 · messages.js v34
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1.1 ACTIVITÉ — 3 vues transversales + réponses véhicule dans Messages**
+**Mission : V1.1 — Fiabilisation pastille Messages + UX notifications/cartes**
+**Date :** 2026-06-28
+**Versions :** SW v266 → v288 · app.css v45 → v46 · messages.js v34 → v38
+
+### Ce qui a été fait (suite directe de la mission v246→v266)
+
+**Pastille Messages (icône page d'accueil) — enfin fiable :**
+- Registre temps réel `S._navUnreadIds` (Set persistant localStorage `ic_nav_unread_ids`) :
+  alimenté à la réception (subMsgs), source autoritaire indépendante du re-SELECT.
+- Badge nav Messages = `max(calcul _actMessages, taille registre)` dans updateActBadge ET setBadge.
+- **Gardien MutationObserver** sur #msgNavBadge (index.html, toujours frais) : ré-affiche la
+  pastille si un code (même messages.js périmé en cache) tente de la masquer alors que le registre>0.
+- Vidage du registre à la lecture : markThreadRead (par plaque), clearMsgNavUnread (setConv/notif),
+  markAllRead + setUnreadMsgCount(0) (vident tout).
+- **CAUSE RACINE de la disparition** : refreshThread() (messages.js) marquait un message reçu LU
+  automatiquement même en arrière-plan, car #icThread.show et State.activePlate restent "collants"
+  (jamais nettoyés par closeSheet/panel/nav). Fix : ne marquer lu que si panelMessages.on && sheet non mini.
+
+**UX notifications / cartes :**
+- Message reçu → notif "💬 [plaque] vous a écrit" + aperçu (au lieu de "Nouveau message").
+- Réponse véhicule → notif "📩 Réponse de [plaque]".
+- Carte signalement reçu (FloatingCard) → UNIQUEMENT "Voir le signalement" (plus de "Je vérifierai").
+- Carte EN COURS → bloc "🕐 Vérification en attente / Donner mon constat" TOUJOURS affiché (uniforme).
+- "Voir le signalement" → point d'entrée unique `openVehicleSignalement(plate)` (force onglet Reçus,
+  normalise la plaque via fPlate, anti-race S._actGroupOpen, déplie la 1re carte après ~0,8 s avec animation).
+- Durées messages verts (haut) : notif 6,5 s (clearTimeout → pleine durée), signalements 5,5 s
+  (notifyAlert → toast param durée) ; confirmations brèves 3,2 s.
+- CACHE_NAME affiché à l'ouverture du Dashboard Gardien (plus de "—").
+
+### Invariants / faux bugs écartés
+- **Détection véhicules ("0 conducteur")** : NON lié au code (loadOthers/locate/user_locations jamais
+  modifiés de la session — vérifié par diff). Causes réelles : (1) deux téléphones sur le MÊME compte
+  (l'app exclut volontairement son propre id, loadOthers ligne ~1199), (2) fenêtre fraîcheur 5 min
+  (CFG.staleMinutes) → position figée si app en arrière-plan.
+- Aucune logique métier touchée (verdicts, trustDelta, buildThreads sauf inclusion vehicle_response,
+  loadOthers/appels intacts).
+
+### Fichiers
+- index.html · messages.js v38 · app.css v46 · service-worker.js v288
+
+---
+
+**Mission précédente : V1.1 ACTIVITÉ — 3 vues transversales + réponses véhicule dans Messages**
 **Date :** 2026-06-27
 **Versions :** SW v246 → v266 · app.css v42 → v45 · messages.js v30 → v34
 
