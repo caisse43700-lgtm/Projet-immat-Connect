@@ -1084,9 +1084,10 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     max-height: none;
     border-radius: 0;
   }
-  /* Fullscreen en paysage — Famille C : top:0 left:0, carte absente.
+  /* Fullscreen en paysage — Famille C : top:0, carte absente. left APRÈS le rail de
+     nav (sinon le contenu passe sous le rail et le texte est coupé à gauche).
      padding-top sécurisé (sinon l'en-tête est coincé sous la barre d'état → barre parasite) */
-  #sheet:has(#panelSettings.on) { top: 0; left: 0; padding-top: max(calc(var(--safe-top) + 8px), 14px); }
+  #sheet:has(#panelSettings.on) { top: 0; left: calc(58px + env(safe-area-inset-left,0px)); padding-top: max(calc(var(--safe-top) + 8px), 14px); }
   .sheet.mini { transform: translateX(100%); }
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
