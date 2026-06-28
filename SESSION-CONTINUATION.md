@@ -32,6 +32,16 @@ inchangées et sont appelées par _navToggle.
 ### Versions
 ui.js v10→v11, SW v299→v300. Commit cda2927, poussé sur main. À vérifier terrain (zone délicate).
 
+### Correctif toggle (suite) — re-clic ne fermait que Signaler
+Bug : la détection « vue ouverte » dans `_navToggle` se basait sur `btn.classList.contains('on')`
+(état vert), désynchronisé par setPanel/MutationObserver/etc. → seul Signaler fermait. Fix :
+détection d'après le PANNEAU réellement affiché (`#panelAltet`→signaler, `#panelActivite`→activite,
+`#panelMessages`+`appels-mode`→appels/messages) avec sheet non mini. Anti-rebond 280→320ms.
+Ange : ajout `App._angeToggle()` (1 tap ouvre / 1 tap referme via AngeDialog.open/close), routé
+depuis l'onclick inline navAnge et le hotfix ui.js. ui.js v11→v12, SW v301→v302. Commit 8cd3052.
++ Compactage paysage du contenu profond Réglages (.settings-section/row, calls.css/messages.css)
+  app.css v56. Commit 5515533.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
