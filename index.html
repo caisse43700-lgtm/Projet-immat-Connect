@@ -2890,7 +2890,7 @@ App.actHelpReply=async function(alertId,key){
   if(_needLookup() && _rid && sb){
     try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',_rid).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
   }
-  if(_needLookup()){toast('Impossible — pl='+(a?.plate||'∅')+' rmid='+(_repId||'∅')+' rid='+(_rid?_ridFrom:'non'),'bad');return;}
+  if(_needLookup()){toast('Impossible d\'identifier le demandeur.','bad');return;}
   const msg=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
