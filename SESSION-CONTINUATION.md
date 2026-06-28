@@ -7,6 +7,36 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Aide V1 #1 : marqueurs carte des demandes d'aide (SW v347, PR #384)
+
+### Problème
+Depuis la bascule Lot B, le chokepoint `addCommunityAlert(group==='assist')→null` neutralisait
+les marqueurs legacy des demandes d'aide **sans les remplacer** → plus aucune demande sur la carte.
+
+### Fix — `App.AideV1.syncMapMarkers()` (index.html, après `unsubscribeRealtime`)
+- Source de vérité serveur : `Promise.all([this.nearby(), this.myRequests()])`.
+  - `nearby()` (get_nearby_requests) → `approx_lat/approx_lng` (~1km), exclut mes demandes → pin **orange** (rouge si `incendie`).
+  - `myRequests()` filtré `status==='ouverte'` → `lat/lng` **précis** (les miennes) → pin **bleu**.
+- Marqueurs `L.divIcon` `road-pin` + icône par type (🔧⛽🔋🛠️🔥🧭, défaut 🆘), `zIndexOffset:2600`.
+- Index `S._aideMapMarkers` (request_id → marker) : retrait des obsolètes, `setLatLng` si déjà présent, sinon ajout.
+- Anti-course `S._aideMapSeq` (un sync plus récent invalide le précédent avant mutation DOM).
+- Popup « Voir dans Activité » → `App.openHelpSignalement(request_id)` (ouvre Activité>Aide>Reçus, déplie la carte `data-aid` correspondante ; pour mes demandes, repli sur la 1re carte « Ma demande »).
+- **Disparition à la clôture** : `resolue/annulee/expiree` → `nearby` ne renvoie plus + `myRequests` filtre `ouverte` → marqueur retiré au sync suivant. Seul le demandeur clôture.
+
+### Hooks de rafraîchissement
+- `loadOthers()` (fin) : refresh carte périodique / Realtime user_locations / changement de rayon.
+- `assist()` : `syncMapMarkers()` juste après `create` réussi (ma demande visible immédiatement).
+- `subscribeRealtime` `reRender` : MAJ live (changements help_requests/help_engagements « le mien »).
+
+### Vérif
+- 8 scripts inline contrôlés via `new Function` → 0 erreur. SW v346→v347.
+
+### Reste à faire
+- ⚠️ Migration `20260628160000_help_mode_contact.sql` (mode `contact`) **non appliquée en base** → « Comment puis-je aider ? » échoue silencieusement tant qu'elle n'est pas exécutée.
+- #7 **push proximité** (lot serveur différé) : notifier les helpers proches à la création d'une demande (Edge Function ciblant via user_locations) — plus gros manque fonctionnel restant.
+
+---
+
 ## SESSION 2026-06-28 — Aide V1 : refonte event-driven (Lot A serveur + Lot B bascule client)
 
 ### Contexte
