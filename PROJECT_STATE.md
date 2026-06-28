@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v325 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v326 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,7 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
-| 2026-06-28 | IA session | Aide : répondre à une demande d'aide marchait pas ("Impossible d'identifier le demandeur") — assist() stockait plate:'ASSISTANCE' (placeholder) au lieu de la vraie plaque. Fix : stocke owner_plate du demandeur (plate+sender_plate), actHelpReply lit a.plate → message arrive dans l'inbox du demandeur. SW v325. Commit 7882fc7. |
+| 2026-06-28 | IA session | Aide : répondre à une demande d'aide ("Impossible d'identifier le demandeur"). v325 : assist() stocke owner_plate (au lieu de placeholder 'ASSISTANCE'). v326 : repli robuste via reporter_id (lookup profiles.owner_plate) si plaque manque → marche même si demandeur sur vieille version. reporter_id/sender_plate transmis à la réception + gardés par normalizeAlert. SW v326. Commits 7882fc7 + 98ac545. |
 | 2026-06-28 | IA session | Signaler : numéros d'urgence 15/17/18 en bas + compacts sur les 3 étapes (Véhicule 992c7d1/v323, puis Aide + Stationné 1591962/v324). |
 | 2026-06-28 | IA session | Ange CAUSE RACINE (prouvée par diag ao=false tg=function pd=none od=none) : AngeDialog est un `const` NON attaché à window → _angeToggle appelait window.AngeDialog.open()/close() = undefined = no-op (la croix marchait via AngeDialog.close sans window). Fix : window.AngeDialog=AngeDialog. SW v322. Commit 11fd87a. |
 | 2026-06-28 | IA session | Ange : consolidation finale — UN SEUL gestionnaire (IIFE secours capture, fiable même bouton recouvert) en toggle pour navAnge(bbox)+#angeFab+#angeOverlay ; handler v316 supprimé. Fin des 4 systèmes concurrents. SW v319. Commit 529cea3. |

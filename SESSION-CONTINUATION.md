@@ -327,6 +327,14 @@ aussi `a.plate` (et garde le garde `==='ASSISTANCE'`). → `sendToPlate(requeste
 livre le message dans la boîte de réception du demandeur. Les usages `[ASSISTANCE]` restants ne
 concernent que le `reason` (strip d'affichage), pas la plaque. SW v324→v325. Commit 7882fc7.
 
+Suite (v326) — "toujours impossible" : cas d'une demande créée par un tel pas encore en v325
+(plate='ASSISTANCE'). Repli robuste : récupérer la plaque via `reporter_id`. `_handleReport` +
+`syncCommunityAlerts` transmettent désormais `reporter_id` + `sender_plate` à addCommunityAlert ;
+`normalizeAlert` les conserve ; `actHelpReply` (async) fait `sb.from('profiles').select('owner_plate')
+.eq('id',a.reporter_id)` en repli si plaque manquante/placeholder. Marche quelle que soit la
+version du demandeur. SW v325→v326. Commit 98ac545. Le broadcast new_report transporte déjà
+reporter_id (saveReportRemote._bcast).
+
 ---
 
 ## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive
