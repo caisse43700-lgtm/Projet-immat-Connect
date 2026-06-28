@@ -57,12 +57,28 @@
     return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
   }
 
-  // Sonnerie téléphone classique : bitonalité 440+480 Hz, 1.5s ON / 3.5s OFF (loop 5s)
+  // Sonnerie entrante DISTINCTIVE : motif mélodique ascendant (si-mi-sol aigu)
+  // joué deux fois, puis silence — cycle de 5s, loopé. Volontairement différent
+  // de la tonalité de retour sortante (440 Hz pur) et du bip message (880/1100).
+  var _RING_NOTES = [
+    [0.00, 0.18,  988], // B5
+    [0.20, 0.38, 1319], // E6
+    [0.40, 0.72, 1568], // G6
+    [0.85, 1.03,  988], // reprise
+    [1.05, 1.23, 1319],
+    [1.25, 1.60, 1568],
+  ];
   function _ringSample(t) {
-    var ph = t % 5;
-    if (ph >= 1.5) return 0;
-    var env = Math.min(1, ph / 0.01, (1.5 - ph) / 0.01); // anti-clic 10ms
-    return env * 0.40 * (Math.sin(2 * Math.PI * 440 * ph) + Math.sin(2 * Math.PI * 480 * ph)) / 2;
+    var ph = t % 5; // cycle de 5s : ~1.6s de motif, puis silence
+    for (var i = 0; i < _RING_NOTES.length; i++) {
+      var s = _RING_NOTES[i][0], e = _RING_NOTES[i][1], f = _RING_NOTES[i][2];
+      if (ph >= s && ph < e) {
+        var local = ph - s, dur = e - s;
+        var env = Math.min(1, local / 0.01, (dur - local) / 0.03); // anti-clic
+        return env * 0.42 * Math.sin(2 * Math.PI * f * local);
+      }
+    }
+    return 0;
   }
 
   // Tonalité de retour d'appel (côté appelant) : 440 Hz pur, 1.5s ON / 3.5s OFF
