@@ -2138,6 +2138,9 @@ App.closeTodoView=function(){
 // cartes Nouveaux/À traiter/Traités). Garantit le même comportement partout : ouvre Activité >
 // Véhicule > Reçus + le groupe de la plaque → marque lu → décrémente le badge.
 App.openVehicleSignalement=function(plate){
+  // Normalise le format de plaque (les cartes utilisent fPlate "AB-123-CD" ; certains chemins
+  // passaient la version normalisée "AB123CD" → actOpenVehicleMsgGroup ne trouvait rien → n'ouvrait pas)
+  try{plate=fPlate(plate)||plate;}catch(_){}
   document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
   ['actTodoPanel','actDonePanel','actNewPanel'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const _go=()=>{try{
