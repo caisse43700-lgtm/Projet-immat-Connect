@@ -1151,6 +1151,14 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   /* Réglages : grille déjà 2 colonnes ; on resserre l'espacement et les boutons */
   .panel-settings-grid { margin-bottom: 6px; gap: 6px; }
   .settings-btn { padding: 9px 8px; }
+  /* Réglages — contenu profond (sections/lignes/toggles, def. dans calls.css/messages.css) :
+     on resserre marges et paddings (police gardée) pour voir plus d'options en paysage */
+  .settings-section { margin-top: 10px; }
+  .settings-section-title { margin-bottom: 6px; }
+  .settings-row { padding: 9px 12px; gap: 10px; }
+  .settings-row-sub { max-width: none; }
+  .settings-call-levels, .settings-presence-grid { padding: 4px 0 2px; }
+  .call-level-btn, .presence-btn { min-height: 34px; }
   /* Dashboard Gardien : padding réduit (police conservée) */
   #gardienDashboardBody { padding: 10px 14px; }
   /* Les écrans d'appel (#callOverlay, popup entrant, modales) sont des cartes à
