@@ -5171,7 +5171,7 @@ window._forceSwUpdate = async function() {
       ['navAppels',  _openAppelsInline],
       // navAnge → bascule (ouvrir/fermer). UNIQUE handler du bouton Ange, en capture, fiable
       // même si le panneau recouvre le bouton.
-      ['navAnge',    function(){try{var _ao=document.body.classList.contains('ange-open');var _dlg=!!window.AngeDialog;if(typeof toast==='function')toast('navAnge HIT · ange-open='+_ao+' · dlg='+_dlg,'ok');}catch(_){}try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){}}],
+      ['navAnge',    function(){try{var _ap=document.getElementById('angePanel'),_ov=document.getElementById('angeOverlay');var _msg='ao='+document.body.classList.contains('ange-open')+' tg='+(typeof (window.App&&App._angeToggle))+' pd='+(_ap?getComputedStyle(_ap).display:'?')+' od='+(_ov?getComputedStyle(_ov).display:'?');if(typeof toast==='function')toast(_msg,'ok');}catch(_){}try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){}}],
     ];
     for(var i=0;i<hits.length;i++){
       var btn=document.getElementById(hits[i][0]);
