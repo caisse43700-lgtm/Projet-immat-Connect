@@ -4800,6 +4800,9 @@ const AngeDialog={
     }
   }
 };
+// AngeDialog est un `const` (pas attaché à window). _angeToggle l'appelle via window.AngeDialog
+// → il faut l'exposer, sinon open()/close() sont des no-op (cause du bug "ne s'ouvre/ferme pas").
+try{ window.AngeDialog = AngeDialog; }catch(_){}
 
 // ── AngePredictor — P1 : Ange pré-calcule pendant les moments calmes ─────────
 // Toutes les 2 min, si focus NOMINAL + conducteur inactif 90s + pas de cache :
@@ -5171,7 +5174,7 @@ window._forceSwUpdate = async function() {
       ['navAppels',  _openAppelsInline],
       // navAnge → bascule (ouvrir/fermer). UNIQUE handler du bouton Ange, en capture, fiable
       // même si le panneau recouvre le bouton.
-      ['navAnge',    function(){try{var _ap=document.getElementById('angePanel'),_ov=document.getElementById('angeOverlay');var _msg='ao='+document.body.classList.contains('ange-open')+' tg='+(typeof (window.App&&App._angeToggle))+' pd='+(_ap?getComputedStyle(_ap).display:'?')+' od='+(_ov?getComputedStyle(_ov).display:'?');if(typeof toast==='function')toast(_msg,'ok');}catch(_){}try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){}}],
+      ['navAnge',    function(){try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){}}],
     ];
     for(var i=0;i<hits.length;i++){
       var btn=document.getElementById(hits[i][0]);
