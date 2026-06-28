@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v292 · app.css v48 · messages.js v38 · calls.js v21 · audio-manager.js v9
+SW                     : v293 · app.css v49 · messages.js v38 · calls.js v21 · audio-manager.js v9
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | UI : bannières notif/toast (zone à risque, signalements, messages) ne chevauchent plus la puce plaque en haut à gauche — descendues de safe-top+26px à +62px (+142px en pile). app.css v49, SW v293. Commit 860e44b. |
 | 2026-06-28 | IA session | Audio appels : suppression du bip/sonnerie fantôme au login (garde anti-rejeu `created_at<12s` sur le handler INSERT entrant) + sonnerie entrante distinctive (motif mélodique ascendant si-mi-sol). calls.js v21, audio-manager.js v9, SW v292. Commits 8cc3afa + 4aeff4e. |
 | 2026-06-24 | IA session | Merge refonte signalements véhicule → main. Machine 3 états (NOUVEAUX/EN COURS/TRAITÉS) + fixes iOS (closeCallJournal, act-cat-open). SW v243. |
 | 2026-06-24 | IA session | 4 bugs UI : scroll Appels (PR#370) + legacy pills Signaler (PR#371) + </div> manquant sigStep2Route (PR#372) + cartes vmg iOS display:block (PR#373). app.css v40, SW v241. Tous validés terrain. |

@@ -7,6 +7,29 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — UI : bannières notif/toast chevauchaient la puce plaque
+
+### Problème
+Les bannières du haut (« zone à risque » = `toast(...,'bad')`, signalements, messages verts `notif`)
+se superposaient à la `.top-bar` (`.profile-chip` affichant l'immatriculation `#tbPlate`, qui ouvre
+le menu/paramètres via `openDrawer`).
+
+### Cause
+`.top-bar` : `top: calc(var(--safe-top) + 10px)`, hauteur de la puce ~41px → occupe jusqu'à ~+51px.
+`.toast, .notif` : `top: calc(var(--safe-top) + 26px)` → recouvrait la puce.
+
+### Fix (app.css)
+- `.toast, .notif` : `+26px` → `+62px` (sous la puce).
+- `.notif.show ~ .toast.show` (toast empilé sous la notif verte) : `+106px` → `+142px`.
+- app.css v48→v49, SW v292→v293. Commit 860e44b, poussé sur main (`66343df..860e44b`).
+
+### Note
+Le correctif « bip message au login » (garde created_at<12s) a été **abandonné** : l'utilisateur
+veut garder le bip des messages (il s'agit du comportement normal, pas d'un bug). Seul le bip
+d'appel fantôme restait à corriger (déjà fait). Aucun changement messages.js au final.
+
+---
+
 ## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive
 
 ### Problème signalé
