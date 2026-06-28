@@ -84,6 +84,16 @@ La carte réapparaissait sous Réglages car `.sheet.full { height: min(78dvh,...
   les `scrollTop=0` (rAF/80/250/320ms) conservés.
 SW v306→v307 (marqueur ; fixes dans index.html servi réseau-frais). Commit 68c671f.
 
+### "C'est gros" persistait — CAUSE RACINE CSS (spécificité/ordre source)
+Toutes les règles de compactage paysage (`.act-cat-hd*`, `.act-search-bar`, `.act-cat-card` +
+enfants, `.act-cat-tab`, `.sig-*`, `.settings-*`) étaient ÉCRASÉES : les définitions de base de ces
+classes sont situées PLUS BAS dans app.css (lignes ~1196/1234/1255) ou dans calls.css/messages.css
+(chargés après app.css) → à spécificité égale (0,1,0), la dernière déclaration gagne. Donc le
+media-query landscape (placé avant ces défs) ne s'appliquait pas. LEÇON : les overrides responsive
+de classes redéfinies ailleurs doivent avoir une spécificité supérieure. Fix : préfixe `#sheet `
+(1,1,0) sur toutes ces règles → elles passent devant quel que soit l'ordre. Cartes catégories +
+emoji encore réduits (icon 18px, padding 7px). app.css v58→v59, SW v307→v308. Commit 8009029.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
