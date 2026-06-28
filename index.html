@@ -1404,8 +1404,9 @@ async subMsgs(){
         } else if(_isParkedResponse){
           _qr=[];
         } else if(_isVehicleReport){
-          const _vmId=String(m.id);const _vmPl=pl||'';
-          _qr=_vmPl?[{label:'🕐 Je vérifierai',bg:'rgba(41,121,255,.1)',color:'#60a5fa',cb:async()=>{try{App.actVmPending(_vmId,_vmPl);}catch(e){}}}]:[];
+          // Uniquement "Voir le signalement" sur la carte — pas de bouton "Je vérifierai"
+          // (le constat se donne dans le signalement, de façon cohérente partout)
+          _qr=[];
         } else if(_isVehicleResponse){
           _qr=[];
         } else {
