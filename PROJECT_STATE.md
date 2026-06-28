@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v334 · app.css v60 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v335 · app.css v60 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Aide : suppression par glissement gauche des demandes reçues (.act-swipe-wrap/.act-swipe-del → actHelpDismiss, handlers dans renderAideFeed). SW v335. Commit ff286f3. |
 | 2026-06-28 | IA session | Aide : carte dépliée défilée en vue (actToggleVmCard) — le détail n'était plus tronqué en bas. SW v334. Commit db197b3. |
 | 2026-06-28 | IA session | Aide : bouton "🗑 Supprimer cette demande" sur les demandes reçues (renderAideFeed) — App.actHelpDismiss → ic_help_dismissed (masquage local), filtré au rendu. SW v333. Commit 5b2fb77. |
 | 2026-06-28 | IA session | Aide : réponse (help_response) maintenant visible dans la boîte Messages (était exclu de buildThreads l.411 + timeline l.905) + icône 🆘 + texte "🆘 A répondu à votre demande d'aide : …" + pastille/notif à la réception. Diag retiré (v331). messages.js v40, SW v332. Commits bf81d52 + 6e544e1. |
