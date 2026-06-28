@@ -798,8 +798,10 @@ body.keyboard-open:not(.ange-open) .bottom-nav { display: none !important; }
    closeSheet() remet .mini mais ne retire pas .panel.on → sans :not(.mini) le
    sélecteur continuait de matcher après fermeture et les boutons disparaissaient. */
 #appScreen:has(.sheet.full) .fab-stack,
+#appScreen:has(.overlay.show) .fab-stack,
 #appScreen:has(#sheet:not(.mini) .panel.on) .fab-stack { display: none; }
 #appScreen:has(.sheet.full) .speed,
+#appScreen:has(.overlay.show) .speed,
 #appScreen:has(#sheet:not(.mini) .panel.on) .speed { display: none; }
 body.keyboard-open .sheet { bottom: 0 !important; }
 
