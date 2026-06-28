@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v336 · app.css v60 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v337 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,6 +62,28 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : Activité — sous-panneau pleine hauteur en portrait (carte Aide non tronquée)**
+**Date :** 2026-06-28
+**Commit :** `5d4ce12` — poussé sur main (`2d1855b..5d4ce12`)
+**Versions :** app.css v60 → v61 · SW v336 → v337
+
+### Ce qui a été fait
+
+- **Carte Aide dépliée tronquée en bas (portrait)** : sur un sous-panneau Activité de hauteur
+  partielle (Famille B), la carte « Ma demande en attente » / une demande reçue dépliée dépassait
+  la zone visible et son bas (alternatives + « Annuler » / « Je suis aidé » / « 🗑 Supprimer »)
+  restait coupé, malgré le scroll-to-top du commit précédent (`6d62153`).
+- **Fix (`app.css`)** : nouveau bloc `@media (orientation:portrait)` — quand un sous-panneau
+  Activité est ouvert (`body.act-cat-open` / `act-todo-open` / `act-done-open` / `act-new-open`),
+  le `#sheet:not(.mini)` passe en **pleine hauteur** `calc(100dvh - var(--nav-h) - var(--safe-bottom))`
+  (comme Réglages, Famille C), `border-radius:0`, `padding-top` safe-area. `!important` sur la
+  hauteur pour battre la spécificité de la règle Famille B `#sheet:not(.mini):has(#panelActivite.on)`.
+  Le feed (`flex:1; overflow-y:auto`) remplit alors tout l'écran et scrolle en interne → la carte
+  dépliée s'affiche entièrement.
+
+---
+
+### Mission précédente — Audio appels — bip fantôme au login supprimé + sonnerie entrante distinctive
 **Mission : Audio appels — bip fantôme au login supprimé + sonnerie entrante distinctive**
 **Date :** 2026-06-28
 **Commits :** `8cc3afa` (fix login) + `4aeff4e` (sonnerie) — poussés sur main (`944b8bc..4aeff4e`)
@@ -2675,6 +2697,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Activité : sous-panneau en pleine hauteur en portrait (act-cat/todo/done/new-open → #sheet 100dvh, comme Réglages) — la carte Aide dépliée n'est plus tronquée en bas. app.css v61, SW v337. Commit 5d4ce12. |
 | 2026-06-28 | IA session | Aide : carte dépliée amenée en haut du panneau (scrollTo) pour afficher tout le détail (Annuler/Je suis aidé n'étaient plus tronqués). Contenu vérifié complet. SW v336. Commit 6d62153. |
 | 2026-06-28 | IA session | Aide : suppression par glissement gauche des demandes reçues (.act-swipe-wrap/.act-swipe-del → actHelpDismiss, handlers dans renderAideFeed). SW v335. Commit ff286f3. |
 | 2026-06-28 | IA session | Aide : carte dépliée défilée en vue (actToggleVmCard) — le détail n'était plus tronqué en bas. SW v334. Commit db197b3. |

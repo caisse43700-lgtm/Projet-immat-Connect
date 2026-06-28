@@ -7,6 +7,36 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Activité : sous-panneau pleine hauteur en portrait (carte Aide non tronquée)
+
+### Symptôme
+Dans Activité > Aide, déplier une demande (reçue ou « Ma demande en attente ») laissait le bas
+de la carte coupé : les boutons d'action (« Annuler » / « Je suis aidé » / « 🗑 Supprimer ») et
+les alternatives n'apparaissaient pas. Le commit précédent `6d62153` (scroll-to-top de la carte
+via `actToggleVmCard`) ne suffisait pas.
+
+### Cause
+En portrait, le `#sheet` quand `panelActivite.on` prend la hauteur **Famille B** (partielle) :
+`#sheet:not(.mini):has(#panelActivite.on) { height: min(var(--sheet-h-panel), …) }` (app.css l.376).
+Le sous-panneau de catégorie hérite donc d'une hauteur limitée ; même avec le feed en
+`overflow-y:auto`, la carte dépliée (`.act-vmg-encours.open .act-vmg-detail { max-height:1500px }`)
+dépassait la fenêtre visible et son bas restait inatteignable confortablement.
+
+### Fix (app.css v61)
+Nouveau bloc `@media (orientation:portrait)` : quand un sous-panneau Activité est ouvert
+(`body.act-cat-open` / `act-todo-open` / `act-done-open` / `act-new-open`), le `#sheet:not(.mini)`
+passe en **pleine hauteur** comme Réglages (Famille C) :
+`height: calc(100dvh - var(--nav-h) - var(--safe-bottom)) !important; border-radius:0; padding-top:max(safe-top+8,16)`.
+`!important` sur `height` indispensable : la règle Famille B a une spécificité supérieure
+(2 ids + 2 classes via `#sheet … :has(#panelActivite.on)`) à celle du nouveau sélecteur
+(1 id + 2 classes + body). Le feed (`.act-cat-feed { flex:1; overflow-y:auto; min-height:0 }`)
+remplit alors tout l'écran → carte dépliée entièrement visible/scrollable.
+
+### Versions
+app.css v60 → v61 · SW v336 → v337. Commit `5d4ce12` (poussé main `2d1855b..5d4ce12`).
+
+---
+
 ## SESSION 2026-06-28 — Nav : un seul vert + toggle 1 tap ouvre / 1 tap referme
 
 ### Bug deux boutons verts
