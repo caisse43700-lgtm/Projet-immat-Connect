@@ -2875,14 +2875,12 @@ App.renderAideCallSection=function(){
 App.actHelpReply=async function(alertId,key){
   const _replies={'arrivant':"J'arrive ! 🚗",'aide':"Je peux vous aider 🙋",'guide':"Je peux vous guider 🧭"};
   const a=(S.alerts||[]).find(x=>String(x.id)===String(alertId));
-  // DIAGNOSTIC TEMPORAIRE — à retirer
-  try{if(typeof toast==='function')toast('a='+(!!a)+' pl='+(a?.plate||'∅')+' sp='+(a?.sender_plate||'∅')+' rid='+(a?.reporter_id?'oui':'non'),'ok');}catch(_){}
   let requesterPlate=nPlate(a?.from_plate||a?.sender_plate||a?.reporter_plate||a?.plate||'');
   // Repli robuste : si la plaque manque/placeholder, la retrouver via le reporter_id du report
   if((!requesterPlate||requesterPlate==='ASSISTANCE') && a?.reporter_id && sb){
     try{const{data:_pr}=await sb.from('profiles').select('owner_plate').eq('id',a.reporter_id).maybeSingle();if(_pr?.owner_plate)requesterPlate=nPlate(_pr.owner_plate);}catch(e){}
   }
-  if(!requesterPlate||requesterPlate==='ASSISTANCE'){toast('Impossible d\'identifier le demandeur.','bad');return;}
+  if(!requesterPlate||requesterPlate==='ASSISTANCE'){toast('Impossible — a='+(!!a)+' pl='+(a?.plate||'∅')+' sp='+(a?.sender_plate||'∅')+' rid='+(a?.reporter_id?'oui':'non'),'bad');return;}
   const msg=_replies[key]||(App._helpReplies&&App._helpReplies[key])||key||"J'arrive ! 🚗";
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
