@@ -52,6 +52,21 @@ event → marquage `ev.__navHandled` → une seule décision par tap quel que so
 passé partout (inline `App._navToggle('x',event)`, ui.js fns reçoivent et propagent `e`).
 ui.js v12→v13, SW v302→v303. Commit b2d39c7.
 
+### Correctif toggle (4e — la bonne) — détection par variable d'état contrôlée
+Le marquage d'event (b2d39c7) n'a pas suffi : le re-clic ne fermait toujours que Signaler. Cause
+réelle = la DÉTECTION de la vue ouverte (basée sur l'état .on des panneaux) était désynchronisée
+→ `cur != key` pour Messages/Appels/Activité → _navToggle ré-ouvrait au lieu de fermer (rien ne
+bouge à l'écran). Fix : variable d'état `App._navView` que NOUS contrôlons, posée au début de
+chaque navX (navSignaler='signaler', navMessages='messages', navAppels='appels', navActivite=
+'activite'), effacée par closeSheet. `_navToggle`: `cur = sheet non mini ? App._navView : null`.
+Indépendant des .on. Commit 9908aa7. SW v303→v304 (marqueur).
+
+### Réglages paysage coupé à gauche
+Le plein écran Réglages mettait `left:0` → le contenu passait SOUS le rail de nav gauche (texte
+tronqué : 'Vos demandes'→'s demandes', 'Communication'→'ON'). Fix : `#sheet:has(#panelSettings.on)`
+`left: calc(58px + env(safe-area-inset-left,0px))` en paysage (commence après le rail). app.css
+v56→v57, SW v304→v305. Commit fc28306.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
