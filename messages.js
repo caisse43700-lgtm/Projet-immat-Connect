@@ -616,12 +616,12 @@ function render(){
   const archived = getArchived();
   threads = threads.filter(t => !archived.includes(nPlate(t.plate)));
 
+  // Filtres mutuellement exclusifs (radio) : un seul pill actif à la fois
+  if(State.unreadOnly && State.favOnly) State.favOnly = false; // normalisation
+  _syncMsgPills();
   // Favoris en tête (F-FAVORITES)
   const favBtn = $('icFavOnlyBtn');
-  if(favBtn){
-    favBtn.classList.toggle('active', State.favOnly);
-    favBtn.setAttribute('aria-pressed', State.favOnly ? 'true' : 'false');
-  }
+  if(favBtn) favBtn.setAttribute('aria-pressed', State.favOnly ? 'true' : 'false');
   const favs = getFavorites();
   if(State.favOnly){
     threads = threads.filter(t => favs.includes(nPlate(t.plate)));
@@ -634,10 +634,7 @@ function render(){
 
   // Filtre non-lus (F-UNREAD)
   const _uoBtn = $('icUnreadOnlyBtn');
-  if(_uoBtn){
-    _uoBtn.classList.toggle('active', State.unreadOnly);
-    _uoBtn.setAttribute('aria-pressed', State.unreadOnly ? 'true' : 'false');
-  }
+  if(_uoBtn) _uoBtn.setAttribute('aria-pressed', State.unreadOnly ? 'true' : 'false');
   if(State.unreadOnly){
     threads = threads.filter(t => !!(t.unread || isManualUnread(t.plate)));
   }
@@ -1273,20 +1270,29 @@ function clearReplyTo(){
   if(preview) preview.style.display = 'none';
 }
 
+// Pills de filtre Messages = radio : exactement UN actif (Tous / Non lus / Favoris)
+function _syncMsgPills(){
+  const set=(id,on)=>{const el=$(id);if(!el)return;el.classList.toggle('on',!!on);el.classList.toggle('active',!!on);};
+  set('icUnreadOnlyBtn', State.unreadOnly);
+  set('icFavOnlyBtn', State.favOnly && !State.unreadOnly);
+  set('icMsgTabTous', !State.unreadOnly && !State.favOnly);
+}
+function _persistFilters(){
+  try{localStorage.setItem('ic_conv_fav_only', State.favOnly?'1':'0');localStorage.setItem('ic_conv_unread_only', State.unreadOnly?'1':'0');}catch(e){}
+}
+function clearFilters(){
+  State.unreadOnly = false; State.favOnly = false;
+  _persistFilters(); _syncMsgPills(); render();
+}
 function toggleFavOnly(){
   State.favOnly = !State.favOnly;
-  try{localStorage.setItem('ic_conv_fav_only', State.favOnly ? '1' : '0');}catch(e){}
-  const btn = $('icFavOnlyBtn');
-  if(btn) btn.classList.toggle('active', State.favOnly);
-  render();
+  if(State.favOnly) State.unreadOnly = false; // exclusif
+  _persistFilters(); _syncMsgPills(); render();
 }
-
 function toggleUnreadOnly(){
   State.unreadOnly = !State.unreadOnly;
-  try{localStorage.setItem('ic_conv_unread_only', State.unreadOnly ? '1' : '0');}catch(e){}
-  const btn = $('icUnreadOnlyBtn');
-  if(btn) btn.classList.toggle('active', State.unreadOnly);
-  render();
+  if(State.unreadOnly) State.favOnly = false; // exclusif
+  _persistFilters(); _syncMsgPills(); render();
 }
 
 async function sendNew(){
@@ -2185,6 +2191,7 @@ window.ImmatMessages = {
   exportThread,
   toggleFavOnly,
   toggleUnreadOnly,
+  clearFilters,
   setReplyTo,
   clearReplyTo,
   _viewImg,

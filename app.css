@@ -1160,6 +1160,12 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   /* Onglets (Tous / Non lus / Favoris) */
   #sheet .act-cat-tabs { margin-bottom: 6px; }
   #sheet .act-cat-tab { padding: 6px 4px; font-size: 12px; }
+  /* Messages : recherche, ligne d'onglets et pills (Tous/Non lus/Favoris) compactés */
+  #sheet .ic-search-bar { margin: 4px 0 6px; }
+  #sheet .ic-search-bar input { padding: 6px 12px; font-size: 13px; }
+  #sheet .ic-msg-tabs-row { margin-bottom: 4px; gap: 4px; }
+  #sheet .ic-msg-tabs-pills { gap: 5px; }
+  #sheet .ic-msg-pill { padding: 6px 6px; font-size: 12px; }
   /* Signaler : 2 colonnes + cartes resserrées */
   #sheet .sig-cat-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
   #sheet .sig-cat-btn { padding: 10px 12px; }
