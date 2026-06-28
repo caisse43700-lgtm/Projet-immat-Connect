@@ -2822,7 +2822,7 @@ App.renderAideFeed=function(){
       const isPerdu=a.type==='perdu';
       const hasGps=a.lat!=null&&a.lng!=null;
       const mapsUrl=hasGps?'https://maps.google.com/?q='+Number(a.lat).toFixed(6)+','+Number(a.lng).toFixed(6):'';
-      return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
+      return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
         <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${senderPlate||'Conducteur proche'}</div><div class="act-vmg-desc">${e2(reason)}</div></div><div class="act-vmg-time">${distStr?e2(distStr)+' · ':''}<span>${e2(time)}</span></div></div>
         <div class="act-vmg-detail">
           ${hasGps&&!isPerdu?`<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;color:#10b981;font-size:12px;font-weight:600;text-decoration:none;margin-bottom:8px" onclick="event.stopPropagation()">📍 Naviguer vers le conducteur</a>`:''}
@@ -2841,7 +2841,7 @@ App.renderAideFeed=function(){
           </div>
           <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑 Supprimer cette demande</button>
         </div>
-      </div>`;
+      </div></div>`;
     }).join('');
   }
   // ── Archivés ─────────────────────────────────────────────────────────────────
@@ -2855,6 +2855,13 @@ App.renderAideFeed=function(){
     }).join('');
   }
   feed.innerHTML=html||'<div class="act-empty-cat">Aucune demande d\'aide à proximité.</div>';
+  // Glissement gauche → révéler "Suppr." sur les demandes reçues
+  feed.querySelectorAll('.act-swipe-wrap').forEach(wrap=>{
+    let sx=0,dragging=false;const inner=wrap.querySelector('.act-vmg-card');
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dragging=true;},{passive:true});
+    wrap.addEventListener('touchmove',e=>{if(!dragging)return;const dx=e.touches[0].clientX-sx;if(dx<-10&&inner)inner.style.transform='translateX('+Math.max(dx,-76)+'px)';},{passive:true});
+    wrap.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;const dx=e.changedTouches[0].clientX-sx;if(inner){inner.style.transition='transform .2s';inner.style.transform=dx<-40?'translateX(-76px)':'';}});
+  });
 };
 App.actHelpDismiss=function(alertId){
   let dis=[];try{dis=JSON.parse(localStorage.getItem('ic_help_dismissed')||'[]');}catch(e){}
