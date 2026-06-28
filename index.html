@@ -1582,9 +1582,12 @@ App._navToggle=function(key,ev){
 };
 // Ange : même logique de bascule (1 tap ouvre / 1 tap referme), avec anti-rebond
 App._angeToggle=function(ev){
-  // Un seul handler par tap (anti-double via la classe d'ouverture, pas de verrou temporel).
-  var isOpen=document.body.classList.contains('ange-open');
-  if(!isOpen){var p=document.getElementById('angePanel');isOpen=!!(p&&getComputedStyle(p).display!=='none');}
+  // Détection « Ange ouvert » robuste : classe body.ange-open OU panneau visible OU fond visible.
+  var p=document.getElementById('angePanel');
+  var o=document.getElementById('angeOverlay');
+  var isOpen=document.body.classList.contains('ange-open')
+    || !!(p && getComputedStyle(p).display!=='none')
+    || !!(o && getComputedStyle(o).display!=='none');
   try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
 App.navMessages=function(){
