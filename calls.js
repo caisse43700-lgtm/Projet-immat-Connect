@@ -422,7 +422,12 @@ const CallManager = (function () {
           try { _sb.from('call_requests').update({status:'expired'}).eq('id', r.id).eq('status','pending'); } catch(e) {}
           return;
         }
-        _showIncomingPopup(r);
+        // Ne sonner que pour un appel réellement frais. Une demande déjà ancienne
+        // (rejeu Realtime, demande résiduelle en DB au moment du login) s'affiche
+        // sans tonalité — supprime le « bip / sonnerie » fantôme à la connexion
+        // sans jamais étouffer un véritable appel entrant.
+        var _stale = r.created_at && (Date.now() - new Date(r.created_at).getTime() > 12000);
+        _showIncomingPopup(r, _stale ? { skipAudio: true } : undefined);
       })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'requester_id=eq.' + uid,
