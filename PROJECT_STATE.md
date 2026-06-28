@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v329 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v330 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15 · (diag aide actHelpReply en cours)
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
