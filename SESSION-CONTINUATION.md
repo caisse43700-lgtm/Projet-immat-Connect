@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Sonnerie démarrage (grâce) + FAB paysage alignés au compteur
+
+### Sonnerie fantôme au démarrage — qui revenait
+Le garde `created_at < 12s` (commit 8cc3afa) ne suffisait pas : `created_at` peut être absent du
+payload Realtime `p.new` ou mal parsé (timezone) → `_stale` faux → la tonalité repassait.
+Fix robuste (calls.js) : fenêtre de grâce `_suppressIncomingAudioUntil = Date.now() + 4000`,
+posée dans `init()` et dans le handler `visibilitychange` (retour au premier plan). Dans le
+handler INSERT : `var _grace = Date.now() < _suppressIncomingAudioUntil;` →
+`_showIncomingPopup(r, (_stale || _grace) ? {skipAudio:true} : undefined)`. La popup s'affiche,
+sans son, sur les 4 premières secondes après ouverture/foreground. Un vrai appel pendant
+l'usage normal sonne toujours. calls.js v21→v22.
+
+### FAB paysage — disposition finale validée
+Après itérations (colonne collée droite → grille 2×2 → rangée horizontale → colonne espacée),
+choix final utilisateur : **rangée HORIZONTALE en bas à droite**, collée au bord (`right:12px`
+sans safe-inset), **alignée avec le compteur de vitesse** (bas-gauche). Pour aligner les centres :
+compteur `.speed` remonté `bottom: 10→16px` (hauteur 56 → centre 44), `.fab-stack`
+`flex-direction:row; bottom:18px` (hauteur 52 → centre 44). app.css v50→v52, SW v294→v296.
+Commit 75a5be0.
+
+---
+
 ## SESSION 2026-06-28 — UI : responsive paysage + bug FAB qui disparaissent
 
 ### Bug FAB/compteur qui disparaissent (portrait ET paysage) — le plus gênant
