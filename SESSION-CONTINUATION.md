@@ -7,6 +7,60 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive
+
+### Problème signalé
+« Le téléphone bip ou fait comme un appel téléphonique dès que je me connecte, ça ne le fait pas
+tout le temps. » L'utilisateur veut garder la sonnerie pour les vrais appels (entrants ET quand
+il appelle), supprimer uniquement le déclenchement parasite au démarrage.
+
+### Diagnostic
+Chemin de la sonnerie entrante :
+`_showIncomingPopup(req)` → `_emitCallEvent('CALL_RECEIVED', {skipAudio})` → ImmatBus →
+`call-notification-runtime.js:onIncomingPending` ET `call-screen.js:showIncoming` →
+`AudioManager.playIncomingRingtone` (440+480 Hz, loopé).
+
+- Les chemins de récupération au login passent déjà `skipAudio:true` :
+  `_recoverIncomingPendingCalls` (calls.js:129) et `_recoverPendingRequest` →
+  `_showSentBanner(...,true)` (calls.js:103). Silencieux. ✓
+- **Seul le handler Realtime `INSERT`** (calls.js:425) appelait `_showIncomingPopup(r)` SANS
+  `skipAudio` et SANS garde d'ancienneté. Avec 2 iPhones de test laissant des `call_requests`
+  en statut `pending` en base, un INSERT (ou rejeu Realtime au moment de l'abonnement) tombait
+  pile au login → sonnerie pour une demande non fraîche. D'où l'intermittence (dépend du
+  résidu en base + timing d'abonnement).
+- Le son sortant (quand l'utilisateur appelle) passe par `CALL_INITIATED` → `playOutgoingTone`
+  (440 Hz), chemin distinct, non touché.
+
+### Fix appliqué
+`calls.js` handler INSERT — ne sonner que pour un appel réellement frais :
+```js
+var _stale = r.created_at && (Date.now() - new Date(r.created_at).getTime() > 12000);
+_showIncomingPopup(r, _stale ? { skipAudio: true } : undefined);
+```
+La popup s'affiche toujours visuellement ; seul le son est supprimé pour une demande ancienne.
+N'étouffe jamais un vrai appel entrant (created_at ≈ now). Préféré à une fenêtre de silence au
+login (qui aurait pu masquer un vrai appel arrivant juste après la connexion).
+
+### Sonnerie entrante distinctive
+`core/audio-manager.js` — `_ringSample` réécrit : table de notes `_RING_NOTES` (B5 988 / E6 1319 /
+G6 1568 Hz), motif ascendant joué 2× par cycle de 5 s, enveloppe anti-clic. Remplace la
+bitonalité 440+480 Hz. Boucle (`loop=true`) inchangée → sonne jusqu'à accepter / refuser /
+annulation appelant / expiration (~30 s, via `expires_at` serveur + `_onMissed` → stopCallAudio).
+Plusieurs propositions générées et envoyées à l'utilisateur (carillon, ding-dong, marimba, options
+« conduite » médium-aigu) ; choix final = la toute première (motif ascendant si-mi-sol).
+
+### Versions
+calls.js v20→v21, audio-manager.js v8→v9, SW v290→v292 (index.html + service-worker.js bumpés).
+
+### État
+Poussé sur main (`944b8bc..4aeff4e`), déploiement GitHub Pages déclenché. Commits 8cc3afa + 4aeff4e.
+
+### Règle de session active
+« Ne pas pousser sur main sans "Fusionner" explicite » — l'utilisateur tape "Fusionner" pour
+autoriser chaque déploiement.
+
+---
+
 ## SESSION 2026-06-24 — Refonte workflow signalements véhicule (machine 3 états)
 
 ### Contexte

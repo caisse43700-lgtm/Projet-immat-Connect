@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v288 · app.css v46 · messages.js v38
+SW                     : v292 · app.css v48 · messages.js v38 · calls.js v21 · audio-manager.js v9
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,8 +62,30 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : V1.1 — Fiabilisation pastille Messages + UX notifications/cartes**
+**Mission : Audio appels — bip fantôme au login supprimé + sonnerie entrante distinctive**
 **Date :** 2026-06-28
+**Commits :** `8cc3afa` (fix login) + `4aeff4e` (sonnerie) — poussés sur main (`944b8bc..4aeff4e`)
+**Versions :** calls.js v20 → v21 · audio-manager.js v8 → v9 · SW v290 → v292
+
+### Ce qui a été fait
+
+- **Bip/sonnerie fantôme à la connexion supprimé** (`calls.js`) : le handler Realtime `INSERT`
+  des appels entrants sonnait sans `skipAudio`, y compris pour une `call_request` résiduelle
+  ou rejouée au moment du login (fréquent avec les 2 iPhones de test laissant des `pending`
+  en base). Garde ajouté : on ne sonne QUE si `created_at < 12 s` (appel réellement frais) ;
+  sinon la popup s'affiche en silence. **N'étouffe jamais un vrai appel entrant** (quel que
+  soit le timing), contrairement à une fenêtre de silence globale au login. Les chemins de
+  récupération (`_recoverIncomingPendingCalls`, `_recoverPendingRequest`) passaient déjà `skipAudio:true`.
+- **Sonnerie entrante distinctive** (`core/audio-manager.js`) : `_ringSample` remplacé — au lieu
+  de la bitonalité 440+480 Hz, motif mélodique ascendant si–mi–sol (B5/E6/G6, ~988→1568 Hz)
+  joué 2×/cycle de 5 s, loopé. Clairement différent de la tonalité de retour sortante (440 Hz)
+  et du bip message (880/1100). Choisi par l'utilisateur après écoute de plusieurs propositions
+  (registre médium-aigu retenu pour rester audible en conduite). Boucle inchangée : sonne jusqu'à
+  accepter / refuser / annulation appelant / expiration (~30 s).
+
+---
+
+### Mission précédente — V1.1 — Fiabilisation pastille Messages + UX notifications/cartes
 **Versions :** SW v266 → v288 · app.css v45 → v46 · messages.js v34 → v38
 
 ### Ce qui a été fait (suite directe de la mission v246→v266)
@@ -2653,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Audio appels : suppression du bip/sonnerie fantôme au login (garde anti-rejeu `created_at<12s` sur le handler INSERT entrant) + sonnerie entrante distinctive (motif mélodique ascendant si-mi-sol). calls.js v21, audio-manager.js v9, SW v292. Commits 8cc3afa + 4aeff4e. |
 | 2026-06-24 | IA session | Merge refonte signalements véhicule → main. Machine 3 états (NOUVEAUX/EN COURS/TRAITÉS) + fixes iOS (closeCallJournal, act-cat-open). SW v243. |
 | 2026-06-24 | IA session | 4 bugs UI : scroll Appels (PR#370) + legacy pills Signaler (PR#371) + </div> manquant sigStep2Route (PR#372) + cartes vmg iOS display:block (PR#373). app.css v40, SW v241. Tous validés terrain. |
 | 2026-06-24 | IA session | Fix scroll Activité bloqué après Appels — suppression overflow:hidden sur #sheet dans body.appels-mode, body.act-cat-open, #sheet:has(#panelMessages.on). app.css v39, SW v238, PR #370. |
