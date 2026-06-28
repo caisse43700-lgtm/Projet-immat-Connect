@@ -214,7 +214,7 @@
       if(!el) return;
       if(el.id==='angeFab'){
         e.preventDefault(); e.stopPropagation();
-        openAngePanel();
+        try{ window.App?._angeToggle?.(e); }catch(_){ openAngePanel(); } // bascule (ouvrir/fermer)
         return;
       }
       if(el.classList.contains('cat-route')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepRoute?.(); }catch(err){} openSignalStep('sigStep2Route'); }

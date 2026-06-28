@@ -1584,8 +1584,10 @@ App._navToggle=function(key,ev){
 App._angeToggle=function(ev){
   if(ev){ if(ev.__navHandled) return; ev.__navHandled=true; }
   else { var now=Date.now(); if(this.__navTapKey==='ange' && now-(this.__navTapTime||0)<320) return; this.__navTapKey='ange'; this.__navTapTime=now; }
-  var p=document.getElementById('angePanel');
-  var isOpen=!!(p && getComputedStyle(p).display!=='none');
+  // Signal d'ouverture fiable : classe body.ange-open (posée par open, retirée par close).
+  // Fallback display si la classe manque.
+  var isOpen=document.body.classList.contains('ange-open');
+  if(!isOpen){var p=document.getElementById('angePanel');isOpen=!!(p&&getComputedStyle(p).display!=='none');}
   try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
 App.navMessages=function(){
@@ -4478,7 +4480,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="ui.js?v=13"></script>
+<script src="ui.js?v=14"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
@@ -4594,7 +4596,7 @@ const ImmatestUI = {
 #angeSpin .ange-ring{width:28px;height:28px;border:3px solid #2d2b55;border-top-color:#7c6af7;border-radius:50%;animation:ange-rotate .75s linear infinite;margin:0 auto 8px}
 </style>
 
-<button id="angeFab" onclick="AngeDialog.open()" title="L'Ange">✦</button>
+<button id="angeFab" onclick="App._angeToggle(event)" title="L'Ange">✦</button>
 <div id="angeOverlay" onclick="App._angeToggle(event)"></div>
 <div id="angePanel">
   <div id="angeHeader">
