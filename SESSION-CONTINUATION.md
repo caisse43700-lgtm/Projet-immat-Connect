@@ -7,6 +7,36 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Aide V1 #7 : push proximité (SW v348, PR #386)
+
+### Objectif
+Notifier les conducteurs proches dès la création d'une demande (app fermée incluse). Dernier gros
+manque : un helper ne voyait la demande qu'en ouvrant l'app/la carte.
+
+### Edge Function `supabase/functions/notify-help-request/index.ts`
+- Auth appelant via client anon + `Authorization` → `getUser()` ; **doit être le demandeur** de la demande.
+- Service role (bypass RLS) pour lire `help_requests` / `user_locations` / `push_subscriptions`.
+- Garde : demande existe, `status='ouverte'`, `lat/lng` non nuls, `demandeur_id == user.id`.
+- **Idempotence** : INSERT `help_events {type:'proximity_notified', client_event_id: requestId, actor_id: demandeur_id}` ; si `23505` (unique) → `noop reason=already_notified`. INSERT autorisé (trigger append-only ne bloque que UPDATE/DELETE ; service role a les privilèges).
+- **Ciblage** : bounding-box (`dLat=r/111`, `dLng=r/(111·cos lat)`, garde-fou cos≥0.2) + `updated_at >= now-30min` + `neq demandeur` + `limit 500`, puis raffinage Haversine ≤ rayon. Rayon = `famille==='urgence' ? 15 : 10` km.
+- Push VAPID (réutilise `sendWithRetry` : retry 5xx, abandon 4xx) ; payload `{title:'🆘 Demande d'aide à proximité', body:'… (Type) près de vous', data:{type:'help',requestId}, tag:'help-'+requestId}`. Suppression abonnements 410/404.
+- Réponse `{sent, failed, targets}`.
+
+### Client (index.html)
+- `App.AideV1.notifyNearby(requestId)` = `sb.functions.invoke('notify-help-request',{body:{requestId}})` fire-and-forget (try/catch — n'échoue jamais la demande). Appelé dans `assist()` juste après `subscribeRealtime`/`syncMapMarkers`.
+- Handler `navigator.serviceWorker message` : `PUSH_NOTIFICATION_CLICKED` + `data.type==='help'` → `App.openHelpSignalement(requestId)` (sinon `openActivityCat('aide')`).
+
+### Déploiement
+- `deploy-edge-functions.yml` : étape `Deploy notify-help-request` ajoutée (déclenche sur push `main`, paths `supabase/functions/**`). Le workflow fait aussi `supabase db push` → applique les migrations en attente (dont `20260628160000_help_mode_contact.sql`).
+- SW v347 → v348.
+
+### Vérif & limites
+- 8 scripts inline OK ; Edge Function équilibrée (parseur code-only ()/{}/[] = 0).
+- ⚠️ Dépend de `push_subscriptions` (utilisateurs ayant activé les notifs) et de positions `user_locations` fraîches (<30 min).
+- Pas de test automatisé de la fonction (réseau supabase bloqué dans l'env IA) — à valider sur 2 iPhones.
+
+---
+
 ## SESSION 2026-06-28 — Aide V1 #1 : marqueurs carte des demandes d'aide (SW v347, PR #384)
 
 ### Problème
