@@ -2682,15 +2682,15 @@ App.actToggleVmCard=function(el){
       try{this.updateActBadge?.();}catch(e){}
     }
   }
-  // Si la carte vient d'être dépliée et que son bas dépasse la zone visible, faire défiler
-  // juste assez pour la révéler entièrement (sinon le détail est tronqué).
+  // À l'ouverture : amener la carte dépliée en haut du panneau pour afficher TOUT son détail
+  // (sinon, sur un panneau de hauteur partielle, le bas — boutons Annuler etc. — est tronqué).
   if(el.classList.contains('open')){
     setTimeout(()=>{try{
       const fc=el.closest('.act-cat-feed')||el.closest('#actCatFeed')||el.closest('#actAlertGroupFeed')||el.parentElement;
       if(!fc)return;
       const r=el.getBoundingClientRect(),fr=fc.getBoundingClientRect();
-      if(r.bottom>fr.bottom) fc.scrollTop += (r.bottom-fr.bottom)+14;
-      else if(r.top<fr.top) fc.scrollTop -= (fr.top-r.top)+14;
+      // amener le haut de la carte près du haut du feed (laisse la hauteur max pour le détail)
+      fc.scrollTo({top:fc.scrollTop+(r.top-fr.top)-6,behavior:'smooth'});
     }catch(_){}},430);
   }
 };
