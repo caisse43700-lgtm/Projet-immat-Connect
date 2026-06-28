@@ -1459,7 +1459,7 @@ async subMsgs(){
     }
   }).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime msgs KO',err);setTimeout(()=>{S.chMsg=null;this.subMsgs?.()},5000)}});
 },notif(t,s,p){lastNotif=p;let n=$('notif');n.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';n.classList.add('show');clearTimeout(notifTimer);notifTimer=setTimeout(()=>n.classList.remove('show'),6500);try{if('Notification'in window&&Notification.permission==='granted')new Notification(t,{body:s})}catch(e){}},openNotifConversation(){if(lastNotif){const _p=lastNotif;this.navMessages?.();setTimeout(()=>{try{window.ImmatMessages?.openThread?.(_p);}catch(e){try{this.setConv(_p);}catch(_){}}try{this.clearMsgNavUnread?.(_p);}catch(_){}},350);}},
-async subLocs(){if(!sb)return;if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if($('appScreen').classList.contains('active')){clearTimeout(S._locDebounce);S._locDebounce=setTimeout(()=>this.loadOthers(),2000);}}).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime locs KO',err);setTimeout(()=>{const _old=S.chLoc;S.chLoc=null;try{if(_old)sb.removeChannel(_old);}catch(_){}this.subLocs?.()},5000)}})},addCommunityAlert(raw,opts={}){const alert=normalizeAlert(raw);const saved=upsertAlert(alert);if(!saved)return null;syncDerivedAlertUI();if(opts.notify&&isNearby(saved)&&_notifPref(saved.group)){const meta=cat(saved.type);notifyAlert(meta.icon+' '+meta.label,saved.reason,saved.level,saved.group);try{this.showFloatingCard(meta.icon,'Incident '+meta.label,(nPlate(saved.plate)||'Conducteur proche')+(saved.reason?' · '+saved.reason:''),'Vu',saved.group==='assist'?'✋ J\'aide':'🗺 Voir',()=>this.actConfirmAlert(saved.id,'seen'),saved.group==='assist'?()=>{this.actHelpReply?.(saved.id,'arrivant');}:()=>{App.actViewOnMap?.(saved.id);},saved.level)}catch(e){}}return saved},
+async subLocs(){if(!sb)return;if(S.chLoc)await sb.removeChannel(S.chLoc);S.chLoc=sb.channel('ic_loc').on('postgres_changes',{event:'*',schema:'public',table:'user_locations'},()=>{if($('appScreen').classList.contains('active')){clearTimeout(S._locDebounce);S._locDebounce=setTimeout(()=>this.loadOthers(),2000);}}).subscribe((status,err)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){console.warn('Realtime locs KO',err);setTimeout(()=>{const _old=S.chLoc;S.chLoc=null;try{if(_old)sb.removeChannel(_old);}catch(_){}this.subLocs?.()},5000)}})},addCommunityAlert(raw,opts={}){const alert=normalizeAlert(raw);const saved=upsertAlert(alert);if(!saved)return null;syncDerivedAlertUI();if(opts.notify&&isNearby(saved)&&_notifPref(saved.group)){const meta=cat(saved.type);notifyAlert(meta.icon+' '+meta.label,saved.reason,saved.level,saved.group);try{const _isAssist=saved.group==='assist';this.showFloatingCard(meta.icon,'Incident '+meta.label,(nPlate(saved.plate)||'Conducteur proche')+(saved.reason?' · '+saved.reason:''),_isAssist?'Voir le signalement':'Vu',_isAssist?null:'🗺 Voir',_isAssist?()=>{this.openHelpSignalement?.(saved.id);}:()=>this.actConfirmAlert(saved.id,'seen'),_isAssist?null:()=>{App.actViewOnMap?.(saved.id);},saved.level)}catch(e){}}return saved},
 addCommunityAlertMarker(a){if(!S.map||a.lat==null||a.lng==null)return;const mkey=a.key||a.id;if(S.alertMarkersById[mkey])return;let _mLat=a.lat,_mLng=a.lng;{const _J=0.00012;if(Object.values(S.alertMarkersById).some(m=>{const ll=m.getLatLng?.();return ll&&Math.abs(ll.lat-_mLat)<_J&&Math.abs(ll.lng-_mLng)<_J;})){const _ang=Math.random()*2*Math.PI;_mLat+=Math.cos(_ang)*_J*0.8;_mLng+=Math.sin(_ang)*_J*0.8;}}const meta=cat(a.type),color=a.level==='urgent'?'#ff2d55':a.level==='important'?'#ff9500':'#10161d';const marker=L.marker([_mLat,_mLng],{icon:L.divIcon({html:'<div class="road-pin" style="background:'+color+';padding:6px;border-radius:12px">'+meta.icon+'</div>',iconSize:[38,38],iconAnchor:[19,19],className:''})});marker._alertGroup=a.group||'route';marker.bindPopup('<b>'+esc(meta.icon+' '+(a.label||meta.label))+'</b><br><small>'+esc(a.reason||'Signalement')+'</small><br><button type="button" onclick="App.dismissAlert(\''+js(a.key||a.id)+'\')">Retirer</button>');const _mf=S.mapAlertFilter||'all';if(_mf==='all'||_mf===marker._alertGroup)marker.addTo(S.map);S.alertMarkersById[mkey]=marker},
 setMapAlertFilter(f){S.mapAlertFilter=f||'all';Object.values(S.alertMarkersById).forEach(mkr=>{const g=mkr._alertGroup||'route';if(f==='all'||f===g){if(!S.map.hasLayer(mkr))mkr.addTo(S.map);}else{if(S.map.hasLayer(mkr))S.map.removeLayer(mkr);}});document.querySelectorAll('.map-filter-pill').forEach(btn=>{const on=btn.dataset.f===f;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on);});},
 cleanupAlerts(){const before=S.alerts.length;(S.alerts||[]).filter(a=>a.group==='assist'&&(a._mine||a._own)&&a.status!=='helper_coming'&&Date.now()-(Number(a.at)||Date.now())>=ttlFor(a.type)).forEach(a=>{const _altTxt=a.type==='incendie'?' Appelez le 18 (Pompiers).':a.type==='blessure'||a.type==='malaise'?' Appelez le 15 (SAMU) ou 112.':(a.type==='perdu'||a.type==='panne')?' Appelez le 3040 (assistance).':'';notifyAlert('Aide non répondue','Votre demande de '+a.label+' a expiré sans répondant.'+_altTxt,'urgent')});(S.alerts||[]).filter(a=>a.group==='route'&&(a._mine||a._own)&&Date.now()-(Number(a.at)||Date.now())>=ttlFor(a.type)).forEach(a=>{notifyAlert('Signalement expiré',a.label?'Votre signalement «'+a.label+'» a expiré automatiquement.':'Votre signalement route a expiré.','ok');});S.alerts=S.alerts.filter(a=>Date.now()-(Number(a.at)||Date.now())<ttlFor(a.type));Object.keys(S.alertMarkersById).forEach(id=>{if(!S.alerts.some(a=>a.id===id||a.key===id)){try{S.map?.removeLayer(S.alertMarkersById[id])}catch(e){}delete S.alertMarkersById[id]}});if(before!==S.alerts.length){saveAlerts();this.renderAlerts()}this.updateCommunityStatus()},syncAlertMarkers(){if(!S.map)return;(S.alerts||[]).forEach(a=>{if(a.lat!=null&&a.lng!=null&&!S.alertMarkersById[a.key||a.id])this.addCommunityAlertMarker(a);});},setAlertFilter(f){S.alertFilter=f||'all';set('ic_alert_filter',S.alertFilter);this.renderAlerts()},openAlerts(){this.panel('altet');this.syncCommunityAlerts();this.renderAlerts()},
@@ -2205,6 +2205,27 @@ App.openVehicleSignalement=function(plate){
   if(pa&&pa.classList.contains('on')&&pa.style.display!=='none')_go();
   else{this.navActivite?.();setTimeout(_go,150);}
 };
+// Point d'entrée UNIQUE pour ouvrir une demande d'aide REÇUE (carte flottante "Voir le signalement").
+// Même logique que openVehicleSignalement : ouvre Activité > Aide > Reçus puis déplie la carte ciblée.
+App.openHelpSignalement=function(alertId){
+  document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
+  ['actTodoPanel','actDonePanel','actNewPanel'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const _go=()=>{try{
+    this.openActivityCat('aide');
+    if(window.S)S._actCatTab='recus';
+    document.querySelectorAll('.act-cat-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab==='recus'));
+    setTimeout(()=>{try{
+      const f=document.getElementById('actCatFeed');
+      const cards=f?[...f.querySelectorAll('.act-vmg-encours')]:[];
+      const card=cards.find(c=>c.dataset.aid===String(alertId))||cards[0];
+      if(card){if(!card.classList.contains('open'))this.actToggleVmCard(card);}
+      else toast('Retrouvez cette demande dans Activité > Aide.','ok');
+    }catch(e){}},420);
+  }catch(e){}};
+  const pa=document.getElementById('panelActivite');
+  if(pa&&pa.classList.contains('on')&&pa.style.display!=='none')_go();
+  else{this.navActivite?.();setTimeout(_go,150);}
+};
 App.todoGoto=function(cat,plate){
   document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
   const todo=document.getElementById('actTodoPanel');if(todo)todo.style.display='none';
@@ -2633,12 +2654,13 @@ App.actOpenVehicleMsgGroup=function(plate){
         return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)" style="border-left-color:#64748b">
           <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#64748b"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2((m.message||'').slice(0,80))}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
           <div class="act-vmg-detail">
+            <div class="act-vmg-confirm-ok" data-confirm-id="${mid}" style="display:none;margin-bottom:8px;font-size:12px;font-weight:700;color:#22c55e">✅ Confirmé par le conducteur</div>
             <div class="act-vmg-sec-lbl">Contacter</div>
             <div class="act-vmg-contact">
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
             </div>
-            <div style="font-size:11px;color:var(--muted,#888);margin-top:6px">Signalement envoyé — en attente de réponse du conducteur</div>
+            <div data-pending-id="${mid}" style="font-size:11px;color:var(--muted,#888);margin-top:6px">Signalement envoyé — en attente de réponse du conducteur</div>
           </div>
         </div>`;
       }).join('');
@@ -2667,6 +2689,23 @@ App.actOpenVehicleMsgGroup=function(plate){
     wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
     wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(dx<-40){card.style.transform=`translateX(-${SW}px)`;}else if(dx>20){card.style.transform='';}},{passive:true});
   });
+  // S6-TRUST V1 : côté signaleur (Envoyés), révèle "✅ Confirmé par le conducteur"
+  // pour les signalements véhicule confirmés. Comptage seul, dégradation silencieuse.
+  if(!isRecus){
+    try{
+      const _ids=(sorted||[]).map(m=>String(m.id)).filter(Boolean);
+      if(_ids.length&&typeof sb!=='undefined'&&sb){
+        sb.rpc('get_report_confirmations',{p_subject_ids:_ids}).then(({data})=>{
+          (data||[]).forEach(r=>{
+            if(!(r&&Number(r.confirmed_count)>0))return;
+            const sid=String(r.subject_id);
+            const ok=gFeed.querySelector('.act-vmg-confirm-ok[data-confirm-id="'+sid+'"]');if(ok)ok.style.display='';
+            const pend=gFeed.querySelector('[data-pending-id="'+sid+'"]');if(pend)pend.style.display='none';
+          });
+        }).catch(()=>{});
+      }
+    }catch(_){}
+  }
 };
 App.actToggleVmCard=function(el){
   const feed=el.closest('#actAlertGroupFeed');
@@ -2679,6 +2718,18 @@ App.actToggleVmCard=function(el){
       S._readMsgIds.add(msgId);
       try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
       el.querySelector('.act-vmg-dot')?.remove();
+      try{this.updateActBadge?.();}catch(e){}
+    }
+  }
+  // Aide : carte demande d'aide dépliée → marquer lue (transition Nouveau → En cours), comme véhicule
+  const aid=el.dataset?.aid;
+  if(aid&&el.classList.contains('open')){
+    let read=[];try{read=JSON.parse(localStorage.getItem('ic_help_read')||'[]');}catch(_){}
+    if(!read.includes(String(aid))){
+      read.push(String(aid));
+      try{localStorage.setItem('ic_help_read',JSON.stringify(read.slice(-500)));}catch(_){}
+      el.querySelector('.act-vmg-dot')?.remove();
+      el.querySelector('.act-mod-new-badge')?.remove();
       try{this.updateActBadge?.();}catch(e){}
     }
   }
@@ -2729,6 +2780,8 @@ App.actVmVerdict=function(msgId,plate,type){
   if(verdicts[msgId])return toast('Constat déjà enregistré.','ok');
   verdicts[msgId]={v:type,ts:Date.now()};
   try{localStorage.setItem('ic_vm_verdicts',JSON.stringify(verdicts));}catch(e){}
+  // S6-TRUST V1 : persiste le verdict côté serveur (fire-and-forget, non bloquant, offline-safe)
+  try{const _vmap={confirmed:'confirme',false:'faux',gone:'disparu'};const _vv=_vmap[type];if(_vv&&typeof sb!=='undefined'&&sb)sb.rpc('submit_report_feedback',{p_subject_type:'vehicle',p_subject_id:String(msgId),p_verdict:_vv}).then(()=>{}).catch(()=>{});}catch(_){}
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   const labels={confirmed:'✅ Confirmé — merci pour votre retour',gone:'ℹ️ Disparu — signalement clos',false:'❌ Faux signalement enregistré',skip:'⏭️ Clôturé — vous n\'avez pas pu vérifier'};
@@ -2759,11 +2812,18 @@ App.renderAideFeed=function(){
     const ts=a.at!=null?Number(a.at):null;if(ts===null)return false;
     return now-ts<(typeof ttlFor==='function'?ttlFor(a.type):3600000)&&(typeof isNearby==='function'?isNearby(a):true);
   });
-  const enCours=othersAlerts.filter(a=>!repliedIds.has(String(a.id)));
+  // États REÇUS (côté helper) : Nouvelles / En cours / Traités — même principe métier que Véhicule
+  let readHelpIds;try{readHelpIds=new Set(JSON.parse(localStorage.getItem('ic_help_read')||'[]'));}catch(e){readHelpIds=new Set();}
+  let replyMeta;try{replyMeta=JSON.parse(localStorage.getItem('ic_help_reply_meta')||'{}');}catch(e){replyMeta={};}
+  const received=othersAlerts.filter(a=>!repliedIds.has(String(a.id)));
+  const nouveaux=received.filter(a=>!readHelpIds.has(String(a.id)));
+  const enCours=received.filter(a=>readHelpIds.has(String(a.id)));
   const archived=othersAlerts.filter(a=>repliedIds.has(String(a.id)));
   const myActive=allAlerts.filter(a=>(a._mine||a._own)&&a.group==='assist'&&a.status!=='gone'&&a.status!=='resolved');
   const helperComing=myActive.filter(a=>a.status==='helper_coming'&&a._helperPlate);
   const myWaiting=myActive.filter(a=>a.status!=='helper_coming');
+  // Badge temps (urgence visuelle selon l'âge) — identique au module Véhicule
+  const timeBadge=ts=>{if(!ts)return'';const ago=(now-Number(ts))/60000;if(ago<5)return'<span class="act-vmg-tbadge act-vmg-tbadge-green">🟢 À l\'instant</span>';if(ago<30)return'<span class="act-vmg-tbadge act-vmg-tbadge-yellow">🟡 Il y a ~'+Math.round(ago)+' min</span>';return'<span class="act-vmg-tbadge act-vmg-tbadge-red">🔴 Demande il y a +30 min</span>';};
   let html='';
   // ── Aide en route (côté demandeur) ───────────────────────────────────────────
   if(helperComing.length){
@@ -2809,21 +2869,19 @@ App.renderAideFeed=function(){
       </div>`;
     }).join('');
   }
-  // ── Demandes proches (côté helper) ───────────────────────────────────────────
-  if(enCours.length){
-    html+=`<div class="act-vmg-sec-title">🆘 Demandes d'aide à proximité (${enCours.length})</div>`;
-    html+=enCours.map(a=>{
-      const aid=e2(String(a.id));
-      const senderPlate=e2(fPlate(a.from_plate||a.sender_plate||a.reporter_plate||''));
-      const reason=String(a.reason||a.label||'Demande d\'aide').replace(/^\[ASSISTANCE\]\s*/,'').slice(0,80);
-      const time=a.at?relTime(Number(a.at)):'';
-      const d=typeof distanceOf==='function'?distanceOf(a):null;
-      const distStr=d==null?'':(d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km');
-      const isPerdu=a.type==='perdu';
-      const hasGps=a.lat!=null&&a.lng!=null;
-      const mapsUrl=hasGps?'https://maps.google.com/?q='+Number(a.lat).toFixed(6)+','+Number(a.lng).toFixed(6):'';
-      return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
-        <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${senderPlate||'Conducteur proche'}</div><div class="act-vmg-desc">${e2(reason)}</div></div><div class="act-vmg-time">${distStr?e2(distStr)+' · ':''}<span>${e2(time)}</span></div></div>
+  // ── Demandes reçues (côté helper) : Nouvelles / En cours — même carte, badge NOUVEAU selon l'état ──
+  const renderHelpCard=(a,isNew)=>{
+    const aid=e2(String(a.id));
+    const senderPlate=e2(fPlate(a.from_plate||a.sender_plate||a.reporter_plate||''));
+    const reason=String(a.reason||a.label||'Demande d\'aide').replace(/^\[ASSISTANCE\]\s*/,'').slice(0,80);
+    const time=a.at?relTime(Number(a.at)):'';
+    const d=typeof distanceOf==='function'?distanceOf(a):null;
+    const distStr=d==null?'':(d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km');
+    const isPerdu=a.type==='perdu';
+    const hasGps=a.lat!=null&&a.lng!=null;
+    const mapsUrl=hasGps?'https://maps.google.com/?q='+Number(a.lat).toFixed(6)+','+Number(a.lng).toFixed(6):'';
+    return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-encours${isNew?' act-vmg-new':''}" data-aid="${aid}" onclick="App.actToggleVmCard(this)">
+        <div class="act-vmg-hd"><div class="act-vmg-dot"${isNew?' style="background:#2979ff"':''}></div><div class="act-vmg-info">${timeBadge(a.at)}${isNew?'<span class="act-mod-new-badge" style="margin-bottom:4px;display:inline-block;font-size:9px">NOUVEAU</span>':''}<div class="act-vmg-plate">${senderPlate||'Conducteur proche'}</div><div class="act-vmg-desc">${e2(reason)}</div></div><div class="act-vmg-time">${distStr?e2(distStr)+' · ':''}<span>${e2(time)}</span></div></div>
         <div class="act-vmg-detail">
           ${hasGps&&!isPerdu?`<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;color:#10b981;font-size:12px;font-weight:600;text-decoration:none;margin-bottom:8px" onclick="event.stopPropagation()">📍 Naviguer vers le conducteur</a>`:''}
           <div class="act-vmg-sec-lbl">Répondre</div>
@@ -2842,17 +2900,28 @@ App.renderAideFeed=function(){
           <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑 Supprimer cette demande</button>
         </div>
       </div></div>`;
-    }).join('');
-  }
-  // ── Archivés ─────────────────────────────────────────────────────────────────
+  };
+  if(nouveaux.length){html+=`<div class="act-vmg-sec-title" style="color:#2979ff">🔵 Nouvelles demandes (${nouveaux.length})</div>`+nouveaux.map(a=>renderHelpCard(a,true)).join('');}
+  if(enCours.length){html+=`<div class="act-vmg-sec-title${nouveaux.length?' act-vmg-sec-arch':''}">🆘 Demandes en cours (${enCours.length})</div>`+enCours.map(a=>renderHelpCard(a,false)).join('');}
+  // ── Traités (côté helper) : demandes auxquelles j'ai répondu — libellé + date de la réponse ──
   if(archived.length){
+    const _replyLbl=k=>k==='arrivant'?"✋ Vous avez répondu : J'arrive":k==='aide'?'🙋 Vous avez proposé votre aide':k==='guide'?'🧭 Vous avez proposé un guidage':'✓ Répondu';
     html+=`<div class="act-vmg-sec-title act-vmg-sec-arch">Traités (${archived.length})</div>`;
     html+=archived.map(a=>{
+      const aid=e2(String(a.id));
       const senderPlate=e2(fPlate(a.from_plate||a.sender_plate||a.reporter_plate||''));
-      const reason=String(a.reason||a.label||'Demande d\'aide').replace(/^\[ASSISTANCE\]\s*/,'').slice(0,80);
-      const time=a.at?relTime(Number(a.at)):'';
-      return`<div class="act-vmg-card act-vmg-archived"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${senderPlate||'Conducteur proche'}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2(reason)}</div></div><div class="act-vmg-time">${e2(time)}</div></div></div>`;
+      const reason=String(a.reason||a.label||'Demande d\'aide').replace(/^\[ASSISTANCE\]\s*/,'').slice(0,90);
+      const meta=replyMeta[String(a.id)]||{};
+      const lbl=_replyLbl(meta.r);
+      const rdate=meta.ts?('Répondu le '+new Date(meta.ts).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' à '+new Date(meta.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})):'';
+      return`<div class="act-swipe-wrap"><div class="act-swipe-del" onclick="App.actHelpDismiss('${aid}')">🗑️<br><span>Suppr.</span></div><div class="act-vmg-card act-vmg-traite"><div class="act-vmg-hd"><div class="act-vmg-info"><div class="act-vmg-plate act-vmg-plate-arch">${senderPlate||'Conducteur proche'}</div><div class="act-vmg-desc act-vmg-desc-arch">${e2(reason)}</div></div><div class="act-vmg-time">${e2(a.at?relTime(Number(a.at)):'')}</div></div><div style="padding:0 12px 12px"><div class="act-vmg-verdict-lbl">${lbl}</div>${rdate?`<div class="act-vmg-verdict-date">${e2(rdate)}</div>`:''}<div class="act-vmg-sec-lbl" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:#475569">Recontacter si besoin</div><div class="act-vmg-contact act-vmg-contact-traite"><button type="button" class="act-vmg-cbtn" onclick="App.actOpenConv('${senderPlate}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="App.actVmCall('${senderPlate}')">📞 Appeler</button></div></div></div></div>`;
     }).join('');
+  }
+  // Marquer les "nouvelles" comme lues après rendu → prochaine ouverture = En cours (parité Véhicule)
+  if(nouveaux.length){
+    let _r=[];try{_r=JSON.parse(localStorage.getItem('ic_help_read')||'[]');}catch(e){}
+    nouveaux.forEach(a=>{if(!_r.includes(String(a.id)))_r.push(String(a.id));});
+    try{localStorage.setItem('ic_help_read',JSON.stringify(_r.slice(-500)));}catch(e){}
   }
   feed.innerHTML=html||'<div class="act-empty-cat">Aucune demande d\'aide à proximité.</div>';
   // Glissement gauche → révéler "Suppr." sur les demandes reçues
@@ -2926,6 +2995,8 @@ App.actHelpReply=async function(alertId,key){
   let replied=[];try{replied=JSON.parse(localStorage.getItem('ic_help_replied')||'[]');}catch(e){}
   if(!replied.includes(String(alertId)))replied.push(String(alertId));
   try{localStorage.setItem('ic_help_replied',JSON.stringify(replied.slice(-500)));}catch(e){}
+  // Mémorise le type de réponse + l'horodatage pour l'affichage "Traités" (parité Véhicule verdicts)
+  try{let _meta={};try{_meta=JSON.parse(localStorage.getItem('ic_help_reply_meta')||'{}');}catch(e){}_meta[String(alertId)]={r:key,ts:Date.now()};localStorage.setItem('ic_help_reply_meta',JSON.stringify(_meta));}catch(e){}
   if(window.ImmatMessages?.sendToPlate){
     try{await window.ImmatMessages.sendToPlate(requesterPlate,msg,{context_type:'help_response',suppressToast:true});}catch(e){}
   }

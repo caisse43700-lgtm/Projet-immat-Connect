@@ -7,6 +7,55 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — S6-TRUST V1 : confirmation de signalement véhicule
+
+### Contexte
+S6-TRUST avait été construit le 13/06 (vehicle_trust_scores par plaque + refresh_vehicle_trust)
+puis PARQUÉ le 22/06 (demi-formule « contesté » jamais alimentée, is_disputed mort). Revue
+d'architecture complète menée cette session → modèle refait proprement, réouverture V1 à
+périmètre réduit. ADR : `docs/ADR-S6-TRUST-V1.md`.
+
+### Modèle validé
+- Séparer crédibilité PAR-SIGNALEMENT (primaire) et réputation PAR-PERSONNE (différée V1.1).
+- Journal append-only = source de vérité unique ; corroboration > vote ; ⭐ axe séparé ;
+  anonymat préservé (INV-COM-015).
+- Stockage unifié, SENS interprété par domaine (jamais de score fusionné).
+- Invariants : INV-TRUST-001 (sens par subject_type), INV-TRUST-002 (pas de réputation
+  visible), INV-TRUST-003 (enrichir, jamais redéfinir).
+
+### V1 livré (périmètre Véhicule uniquement)
+- **Migration `supabase/migrations/20260628140000_report_feedback.sql`** (additive, idempotente) :
+  - table `report_feedback(id, subject_type∈{vehicle,route,aide}, subject_id text, voter_id uuid→auth.users,
+    verdict text, created_at)` + `UNIQUE(subject_type,subject_id,voter_id)` + index (subject_type,subject_id).
+  - RLS **deny-all** (aucun accès client direct).
+  - RPC `submit_report_feedback(subject_type,subject_id,verdict)` SECURITY DEFINER : voter_id=auth.uid(),
+    vocabulaire vehicle∈{confirme,faux,disparu}, **anti auto-vote** (résout messages.sender_id via id::text,
+    rejette si = appelant), upsert. Route/aide → EXCEPTION (non branchés en V1).
+  - RPC `get_report_confirmations(subject_ids text[])` SECURITY DEFINER : renvoie {subject_id, confirmed_count}
+    pour verdict='confirme' uniquement. Aucune identité.
+  - Auto-test structurel (objets présents, unique présente, get vide sur id inconnu) + tests fonctionnels
+    documentés en commentaire (auth requise → harnais 2 appareils).
+- **Client (index.html)** :
+  - `App.actVmVerdict` : après le verdict local, appel **fire-and-forget** `sb.rpc('submit_report_feedback',
+    {p_subject_type:'vehicle', p_subject_id:String(msgId), p_verdict: {confirmed:'confirme',false:'faux',gone:'disparu'}[type]})`.
+    Non bloquant, try/catch, offline-safe. Comportement local inchangé.
+  - `App.actOpenVehicleMsgGroup` branche **Envoyés** (`!isRecus`) : carte enrichie d'un badge masqué
+    `.act-vmg-confirm-ok[data-confirm-id=mid]` + ligne `[data-pending-id=mid]`. Après `gFeed.innerHTML`,
+    appel `get_report_confirmations` sur les ids envoyés → révèle « ✅ Confirmé par le conducteur » et
+    masque « en attente » pour les confirmés. Dégradation silencieuse.
+
+### Points techniques clés
+- **subject_id = messages.id** : vérifié, un signalement véhicule = UNE ligne `messages` insérée une fois
+  (messages.js:1403), lue par expéditeur ET destinataire (même id). _received est un drapeau client.
+  Donc l'écriture (verdict du destinataire) et la lecture (Envoyés de l'expéditeur) partagent la même clé.
+- Anti auto-vote via `messages.id::text = subject_id` (robuste quel que soit le type d'id).
+- **NON touché** : vehicle_trust_scores (parqué), driver_ratings (⭐). Pas de second cache.
+
+### Versions
+SW v339 → v340. (local, en attente de « Fusionner » ; PR S6-TRUST à créer au déploiement.)
+
+---
+
 ## SESSION 2026-06-28 — Activité : sous-panneau pleine hauteur en portrait (carte Aide non tronquée)
 
 ### Symptôme
