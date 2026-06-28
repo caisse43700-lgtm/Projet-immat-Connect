@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v337 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v340 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,6 +62,25 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
+**Mission : S6-TRUST V1 — Confirmation de signalement véhicule (réouverture périmètre réduit)**
+**Date :** 2026-06-28
+**Commit :** (local, en attente de « Fusionner ») · **Versions :** SW v339 → v340 · migration `20260628140000_report_feedback.sql`
+**ADR :** `docs/ADR-S6-TRUST-V1.md`
+
+### Ce qui a été fait
+
+- **Réouverture de S6-TRUST** (parqué le 2026-06-22) sur un **périmètre V1 strictement réduit**, après revue d'architecture complète.
+- **Modèle validé** : crédibilité PAR-SIGNALEMENT (primaire) vs réputation PAR-PERSONNE (différée) ; journal append-only = source de vérité ; corroboration > vote ; ⭐ axe séparé ; anonymat préservé.
+- **3 invariants** créés : **INV-TRUST-001** (stockage unifié, sens interprété par `subject_type`, jamais de score fusionné), **INV-TRUST-002** (aucune réputation/score visible — seulement le résultat d'un événement), **INV-TRUST-003** (enrichir, jamais redéfinir un message existant).
+- **V1 livré (périmètre Véhicule uniquement)** :
+  - Migration `report_feedback` (journal append-only polymorphe vehicle/route/aide ; seul `vehicle` actif) + RLS deny-all + RPC `submit_report_feedback` (anti auto-vote, vocabulaire validé, upsert) + RPC `get_report_confirmations` (comptage seul, aucune identité) + auto-test structurel.
+  - Client : `actVmVerdict` persiste le verdict côté serveur (fire-and-forget) ; onglet **Envoyés** affiche « ✅ Confirmé par le conducteur » si confirmé (lecture comptage, dégradation silencieuse).
+- **Non touché** : `vehicle_trust_scores` (reste parqué), `driver_ratings` (⭐, axe séparé).
+- **Hors V1** : réputation par-personne, Wilson, Route, Aide, affichage négatif/« contesté », anti-Sybil avancé.
+
+---
+
+### Mission précédente — Activité — sous-panneau pleine hauteur en portrait (carte Aide non tronquée)
 **Mission : Activité — sous-panneau pleine hauteur en portrait (carte Aide non tronquée)**
 **Date :** 2026-06-28
 **Commit :** `5d4ce12` — poussé sur main (`2d1855b..5d4ce12`)
@@ -2225,7 +2244,12 @@ RÈGLE ABSOLUE
 ✅ RPC get_abuse_reports_admin() (59f4854)
 ✅ Fix 42702 alias u.id (3d1bbe6)
 ✅ Section Signalements d'abus Dashboard Gardien (3200ebc)
-🚫 S6-TRUST (dee9537) — PARKING LOT PERMANENT — NE PAS FUSIONNER
+🔓 S6-TRUST — RÉOUVERT le 2026-06-28 en V1 PÉRIMÈTRE RÉDUIT (≠ ancienne PR A `dee9537`).
+   La V1 actuelle = journal `report_feedback` + confirmation véhicule « ✅ Confirmé par le
+   conducteur » (cf. `docs/ADR-S6-TRUST-V1.md`, invariants INV-TRUST-001/002/003).
+   L'ancienne approche `is_disputed` / auto-refresh ci-dessous reste ABANDONNÉE (remplacée
+   par le journal append-only ; les 6 conditions ci-dessous sont caduques pour la V1).
+🚫 S6-TRUST (dee9537) — ancienne PR A — NE PAS FUSIONNER (approche is_disputed abandonnée)
 
 ─────────────────────────────────────────────────
 PR A S6-TRUST — 6 CONDITIONS AVANT FUSION (décision 2026-06-22)
@@ -2697,6 +2721,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | S6-TRUST V1 RÉOUVERT (périmètre réduit) : journal append-only report_feedback (migration 20260628140000) + RPC submit/get + confirmation véhicule « ✅ Confirmé par le conducteur » côté signaleur. Invariants INV-TRUST-001/002/003. ADR docs/ADR-S6-TRUST-V1.md. SW v340. vehicle_trust_scores parqué, driver_ratings intact. (local, attente Fusionner) |
 | 2026-06-28 | IA session | Activité : sous-panneau en pleine hauteur en portrait (act-cat/todo/done/new-open → #sheet 100dvh, comme Réglages) — la carte Aide dépliée n'est plus tronquée en bas. app.css v61, SW v337. Commit 5d4ce12. |
 | 2026-06-28 | IA session | Aide : carte dépliée amenée en haut du panneau (scrollTo) pour afficher tout le détail (Annuler/Je suis aidé n'étaient plus tronqués). Contenu vérifié complet. SW v336. Commit 6d62153. |
 | 2026-06-28 | IA session | Aide : suppression par glissement gauche des demandes reçues (.act-swipe-wrap/.act-swipe-del → actHelpDismiss, handlers dans renderAideFeed). SW v335. Commit ff286f3. |

@@ -2654,12 +2654,13 @@ App.actOpenVehicleMsgGroup=function(plate){
         return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)" style="border-left-color:#64748b">
           <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#64748b"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2((m.message||'').slice(0,80))}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
           <div class="act-vmg-detail">
+            <div class="act-vmg-confirm-ok" data-confirm-id="${mid}" style="display:none;margin-bottom:8px;font-size:12px;font-weight:700;color:#22c55e">✅ Confirmé par le conducteur</div>
             <div class="act-vmg-sec-lbl">Contacter</div>
             <div class="act-vmg-contact">
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${ep}')">💬 Message</button>
               <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${ep}')">📞 Appeler</button>
             </div>
-            <div style="font-size:11px;color:var(--muted,#888);margin-top:6px">Signalement envoyé — en attente de réponse du conducteur</div>
+            <div data-pending-id="${mid}" style="font-size:11px;color:var(--muted,#888);margin-top:6px">Signalement envoyé — en attente de réponse du conducteur</div>
           </div>
         </div>`;
       }).join('');
@@ -2688,6 +2689,23 @@ App.actOpenVehicleMsgGroup=function(plate){
     wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
     wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(dx<-40){card.style.transform=`translateX(-${SW}px)`;}else if(dx>20){card.style.transform='';}},{passive:true});
   });
+  // S6-TRUST V1 : côté signaleur (Envoyés), révèle "✅ Confirmé par le conducteur"
+  // pour les signalements véhicule confirmés. Comptage seul, dégradation silencieuse.
+  if(!isRecus){
+    try{
+      const _ids=(sorted||[]).map(m=>String(m.id)).filter(Boolean);
+      if(_ids.length&&typeof sb!=='undefined'&&sb){
+        sb.rpc('get_report_confirmations',{p_subject_ids:_ids}).then(({data})=>{
+          (data||[]).forEach(r=>{
+            if(!(r&&Number(r.confirmed_count)>0))return;
+            const sid=String(r.subject_id);
+            const ok=gFeed.querySelector('.act-vmg-confirm-ok[data-confirm-id="'+sid+'"]');if(ok)ok.style.display='';
+            const pend=gFeed.querySelector('[data-pending-id="'+sid+'"]');if(pend)pend.style.display='none';
+          });
+        }).catch(()=>{});
+      }
+    }catch(_){}
+  }
 };
 App.actToggleVmCard=function(el){
   const feed=el.closest('#actAlertGroupFeed');
@@ -2762,6 +2780,8 @@ App.actVmVerdict=function(msgId,plate,type){
   if(verdicts[msgId])return toast('Constat déjà enregistré.','ok');
   verdicts[msgId]={v:type,ts:Date.now()};
   try{localStorage.setItem('ic_vm_verdicts',JSON.stringify(verdicts));}catch(e){}
+  // S6-TRUST V1 : persiste le verdict côté serveur (fire-and-forget, non bloquant, offline-safe)
+  try{const _vmap={confirmed:'confirme',false:'faux',gone:'disparu'};const _vv=_vmap[type];if(_vv&&typeof sb!=='undefined'&&sb)sb.rpc('submit_report_feedback',{p_subject_type:'vehicle',p_subject_id:String(msgId),p_verdict:_vv}).then(()=>{}).catch(()=>{});}catch(_){}
   if(!S._readMsgIds)S._readMsgIds=new Set();S._readMsgIds.add(msgId);
   try{localStorage.setItem('ic_read_msg_ids',JSON.stringify([...S._readMsgIds].slice(-500)));}catch(_){}
   const labels={confirmed:'✅ Confirmé — merci pour votre retour',gone:'ℹ️ Disparu — signalement clos',false:'❌ Faux signalement enregistré',skip:'⏭️ Clôturé — vous n\'avez pas pu vérifier'};
