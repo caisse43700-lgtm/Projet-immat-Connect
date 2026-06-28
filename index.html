@@ -3090,27 +3090,32 @@ App.renderAideFeedV1=async function(){
       html+=`<div class="act-vmg-card act-vmg-encours" style="border-left-color:#f97316" onclick="App.actToggleVmCard(this)">
         <div class="act-vmg-hd"><div class="act-vmg-dot" style="background:#f97316"></div><div class="act-vmg-info"><div class="act-vmg-plate">Demande ${e2(e.mode==='distance'?'(guidage)':'(sur place)')}</div><div class="act-vmg-desc">Aide proposée — en attente</div></div></div>
         <div class="act-vmg-detail">
+          ${e.mode==='sur_place'?`<button type="button" class="act-vmg-cbtn" style="width:100%;margin-bottom:8px;background:rgba(16,185,129,.12);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="event.stopPropagation();App.aideNavigate('${e2(e.request_id)}')">📍 Naviguer vers le conducteur</button>`:''}
           ${_dp[e.demandeur_id]?`<div class="act-vmg-sec-lbl">Contacter le conducteur (Messages)</div><div class="act-vmg-contact"><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${e2(_dp[e.demandeur_id])}')">💬 Message</button><button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${e2(_dp[e.demandeur_id])}')">📞 Appeler</button></div>`:''}
-          <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.AideV1.retract('${e2(e.request_id)}').then(()=>App.renderAideFeedV1())">Je me retire</button>
+          <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.aideRetract('${e2(e.request_id)}')">Je me retire</button>
         </div></div>`;
     });
   }
-  // Demandes proches (helper) — hors celles où je suis déjà engagé
+  // Demandes proches (helper) — hors celles où je suis déjà engagé / masquées localement
   const engagedIds=new Set(myProp.map(e=>e.request_id));
-  const recus=nearby.filter(n=>!engagedIds.has(n.request_id));
+  let _aideDism=new Set();try{_aideDism=new Set(JSON.parse(localStorage.getItem('ic_aide_dismissed_v1')||'[]').map(String));}catch(_){}
+  const recus=nearby.filter(n=>!engagedIds.has(n.request_id)&&!_aideDism.has(String(n.request_id)));
   if(recus.length){
     html+=`<div class="act-vmg-sec-title">🆘 Demandes d'aide à proximité (${recus.length})</div>`;
     recus.forEach(n=>{
       const isPerdu=n.type==='perdu';
+      const _dejà=n.helper_count>0?(n.helper_count>1?'✋ '+n.helper_count+' conducteurs interviennent déjà':'✋ Un conducteur intervient déjà'):'';
       html+=`<div class="act-vmg-card act-vmg-encours" data-aid="${e2(n.request_id)}" onclick="App.actToggleVmCard(this)">
-        <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(lbl[n.type]||n.type||'Demande')}</div><div class="act-vmg-desc">Conducteur proche${n.helper_count>0?' · '+n.helper_count+' aident déjà':''}</div></div><div class="act-vmg-time">${e2(n.distance_band||'')}</div></div>
+        <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info"><div class="act-vmg-plate">${e2(lbl[n.type]||n.type||'Demande')}</div><div class="act-vmg-desc">${_dejà||'Conducteur proche'}</div></div><div class="act-vmg-time">${e2(n.distance_band||'')}</div></div>
         <div class="act-vmg-detail">
+          ${_dejà?`<div class="act-vmg-sec-lbl" style="color:#f97316">${_dejà} — vous pouvez venir en renfort.</div>`:''}
           <div class="act-vmg-sec-lbl">Répondre</div>
           <div class="act-vmg-replies">
             ${isPerdu
               ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','distance','Je peux vous guider 🧭')">Je vous guide 🧭</button>`
               :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','sur_place','J\\'arrive ! 🚗')">Je viens vous aider 🚗</button>`}
           </div>
+          <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#94a3b8;border-color:rgba(148,163,184,.3)" onclick="event.stopPropagation();App.aideDismiss('${e2(n.request_id)}')">Pas pour moi</button>
         </div></div>`;
     });
   }
@@ -3126,6 +3131,30 @@ App.aideConfirmUI=async function(requestId){
 App.aidePick=async function(requestId,helperId){
   await this.AideV1.confirm(requestId,helperId||null);
   S._aidePick=null;try{this.renderAideFeedV1();}catch(_){}
+};
+// #5 Helper masque une demande qui ne le concerne pas (local, silencieux — demandeur non notifié).
+App.aideDismiss=function(requestId){
+  let d=[];try{d=JSON.parse(localStorage.getItem('ic_aide_dismissed_v1')||'[]');}catch(_){}
+  if(!d.includes(String(requestId)))d.push(String(requestId));
+  try{localStorage.setItem('ic_aide_dismissed_v1',JSON.stringify(d.slice(-500)));}catch(_){}
+  try{this.renderAideFeedV1();}catch(_){}
+  try{if(typeof toast==='function')toast('Demande masquée.','ok');}catch(_){}
+};
+// #3 Helper engagé sur place : ouvre la navigation vers la position précise (réservée sur_place côté serveur).
+App.aideNavigate=async function(requestId){
+  try{const loc=await this.AideV1.precise(requestId);
+    if(loc&&loc.lat!=null&&loc.lng!=null){window.open('https://maps.google.com/?q='+Number(loc.lat).toFixed(6)+','+Number(loc.lng).toFixed(6),'_blank','noopener');}
+    else{toast('Position non disponible (engagez-vous « Je viens » d\'abord).','bad');}
+  }catch(_){toast('Position non disponible.','bad');}
+};
+// #6 Helper se retire : retrait (état) + message au demandeur (Messages) pour qu'il sache.
+App.aideRetract=async function(requestId){
+  let plate='';
+  try{const eng=(await this.AideV1.myEngagements()).find(e=>String(e.request_id)===String(requestId));
+    if(eng&&eng.demandeur_id&&typeof profilesByIds==='function'){const pr=await profilesByIds([eng.demandeur_id]);plate=fPlate(((pr&&pr[eng.demandeur_id])||{}).owner_plate||'');}}catch(_){}
+  await this.AideV1.retract(requestId);
+  try{if(plate&&window.ImmatMessages?.sendToPlate)await window.ImmatMessages.sendToPlate(plate,'Je ne peux finalement plus venir — désolé. 🙏',{});}catch(_){}
+  try{this.renderAideFeedV1();}catch(_){}
 };
 // Helper répond : 1) enregistre l'engagement (état métier → Activité) ;
 // 2) envoie le texte prédéfini au demandeur comme MESSAGE normal → boîte Messages de l'accueil + pastille.
