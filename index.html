@@ -3108,8 +3108,8 @@ App.renderAideFeedV1=async function(){
           <div class="act-vmg-sec-lbl">Répondre</div>
           <div class="act-vmg-replies">
             ${isPerdu
-              ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','distance').then(()=>App.renderAideFeedV1())">Je vous guide 🧭</button>`
-              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.AideV1.propose('${e2(n.request_id)}','sur_place').then(()=>App.renderAideFeedV1())">Je viens vous aider 🚗</button>`}
+              ?`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','distance','Je peux vous guider 🧭')">Je vous guide 🧭</button>`
+              :`<button type="button" class="act-vmg-rbtn act-vmg-rbtn-help" onclick="event.stopPropagation();App.aidePropose('${e2(n.request_id)}','sur_place','J\\'arrive ! 🚗')">Je viens vous aider 🚗</button>`}
           </div>
         </div></div>`;
     });
@@ -3126,6 +3126,20 @@ App.aideConfirmUI=async function(requestId){
 App.aidePick=async function(requestId,helperId){
   await this.AideV1.confirm(requestId,helperId||null);
   S._aidePick=null;try{this.renderAideFeedV1();}catch(_){}
+};
+// Helper répond : 1) enregistre l'engagement (état métier → Activité) ;
+// 2) envoie le texte prédéfini au demandeur comme MESSAGE normal → boîte Messages de l'accueil + pastille.
+App.aidePropose=async function(requestId,mode,text){
+  await this.AideV1.propose(requestId,mode);
+  try{
+    const eng=(await this.AideV1.myEngagements()).find(e=>String(e.request_id)===String(requestId));
+    if(eng&&eng.demandeur_id&&typeof profilesByIds==='function'){
+      const pr=await profilesByIds([eng.demandeur_id]);
+      const plate=fPlate(((pr&&pr[eng.demandeur_id])||{}).owner_plate||'');
+      if(plate&&window.ImmatMessages?.sendToPlate)await window.ImmatMessages.sendToPlate(plate,text,{});
+    }
+  }catch(_){}
+  try{this.renderAideFeedV1();}catch(_){}
 };
 // ── Lot B-3 : Realtime "le mien" (filtres d'égalité, seuls supportés par Supabase). INERTE (non appelé tant que B-4). ──
 // Re-fetch à l'ouverture = renderAideFeedV1 (qui interroge le serveur). Push proximité = tâche SERVEUR
