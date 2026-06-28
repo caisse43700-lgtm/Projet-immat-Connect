@@ -1088,19 +1088,17 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
   .act-main { padding-bottom: 16px; }
-  .speed { left: calc(58px + env(safe-area-inset-left,0px) + 8px); bottom: 10px; width: 56px; height: 56px; }
-  /* Boutons flottants : rangée HORIZONTALE en bas à droite. En paysage l'écran est
-     large et bas → une rangée exploite la largeur au lieu de grimper au milieu, reste
-     dans la zone basse (pouce), et le côté droit est conservé. Les boutons se masquent
-     quand un panneau s'ouvre, donc aucun conflit avec le bas. On NE met PAS
-     env(safe-area-inset-right) (sinon repoussés de ~60px par l'encoche côté droit).
-     Décalée au-dessus de l'attribution Leaflet (bottom +22px). */
+  /* Compteur remonté un poil (16px) pour s'aligner avec la rangée de boutons */
+  .speed { left: calc(58px + env(safe-area-inset-left,0px) + 8px); bottom: 16px; width: 56px; height: 56px; }
+  /* Boutons flottants : rangée HORIZONTALE en bas à droite, collée au bord (right:12px
+     sans safe-inset). Alignée avec le compteur de vitesse (bas-gauche) : centres à 44px
+     du bas → fab 52px à bottom:18px, compteur 56px à bottom:16px. */
   .fab-stack {
     flex-direction: row;
     align-items: center;
     left: auto;
     right: 12px;
-    bottom: calc(env(safe-area-inset-bottom,0px) + 22px);
+    bottom: 18px;
     gap: 10px;
   }
   .overlay { left: calc(58px + env(safe-area-inset-left,0px) + 10px); bottom: 10px; }

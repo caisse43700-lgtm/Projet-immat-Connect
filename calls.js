@@ -27,6 +27,11 @@ const CallManager = (function () {
   let _visibilityBound = false;
   const _missedCallIds = new Set();
   const _seenIncomingCallIds = new Set();
+  // Fenêtre de grâce après ouverture/retour app : on n'émet pas la sonnerie d'appel
+  // entrant pendant ces quelques secondes (évite le « bip/sonnerie » fantôme au démarrage
+  // dû à une demande résiduelle ou rejouée par Realtime au moment de l'abonnement).
+  // La popup s'affiche quand même ; seul le son est supprimé sur cette fenêtre.
+  let _suppressIncomingAudioUntil = 0;
   const _missedTimers = new Map(); // requestId → timerHandle — annulé dans acceptCall()
   let _signalChannel = null;    // canal Supabase broadcast pour signaler raccroché
   let _signalRequestId = null;  // requestId de l'appel en cours
@@ -46,6 +51,7 @@ const CallManager = (function () {
     _sb = sb;
     _uid = uid;
     _myPlate = String(myPlate || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    _suppressIncomingAudioUntil = Date.now() + 4000; // grâce au démarrage
     subscribeIncomingCalls(uid);
     _recoverPendingRequest();
     _recoverIncomingPendingCalls();
@@ -65,6 +71,7 @@ const CallManager = (function () {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
+          _suppressIncomingAudioUntil = Date.now() + 4000; // grâce au retour au premier plan
           _recoverPendingRequest();
           _recoverIncomingPendingCalls();
           _checkOngoingIncomingCall(); // Bug #1: si A a annulé pendant que B était en background
@@ -422,12 +429,14 @@ const CallManager = (function () {
           try { _sb.from('call_requests').update({status:'expired'}).eq('id', r.id).eq('status','pending'); } catch(e) {}
           return;
         }
-        // Ne sonner que pour un appel réellement frais. Une demande déjà ancienne
-        // (rejeu Realtime, demande résiduelle en DB au moment du login) s'affiche
-        // sans tonalité — supprime le « bip / sonnerie » fantôme à la connexion
-        // sans jamais étouffer un véritable appel entrant.
+        // Ne sonner que pour un appel réellement frais ET hors fenêtre de grâce démarrage.
+        // - _stale : demande déjà ancienne (rejeu Realtime / résiduelle en DB).
+        // - _grace : on vient d'ouvrir / revenir dans l'app (sonnerie fantôme au démarrage).
+        // Dans les deux cas la popup s'affiche, mais sans tonalité. Un vrai appel entrant
+        // pendant l'usage normal sonne toujours.
         var _stale = r.created_at && (Date.now() - new Date(r.created_at).getTime() > 12000);
-        _showIncomingPopup(r, _stale ? { skipAudio: true } : undefined);
+        var _grace = Date.now() < _suppressIncomingAudioUntil;
+        _showIncomingPopup(r, (_stale || _grace) ? { skipAudio: true } : undefined);
       })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'call_requests', filter: 'requester_id=eq.' + uid,
