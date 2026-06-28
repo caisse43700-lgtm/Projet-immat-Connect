@@ -249,7 +249,7 @@
     const actions=[
       ['#welcomeLoginBtn',()=>showAuth('login')],['#welcomeSignupBtn',()=>showAuth('signup')],
       ['.profile-chip',()=>{ensureAppFallbacks(); try{window.App.openDrawer();}catch(e){fallbackOpenDrawer();}}],
-      ['#navMap',()=>{setPanel('map');recoverMap();}],['#navSignaler',()=>{try{window.App?._navToggle?.('signaler');}catch(e){setPanel('altet');}}],['#navActivite',()=>{try{window.App?._navToggle?.('activite');}catch(e){setPanel('activite');}}],
+      ['#navMap',()=>{setPanel('map');recoverMap();}],['#navSignaler',(e)=>{try{window.App?._navToggle?.('signaler',e);}catch(_){setPanel('altet');}}],['#navActivite',(e)=>{try{window.App?._navToggle?.('activite',e);}catch(_){setPanel('activite');}}],
       ['button[title="Recentrer"]',()=>{try{window.App?.recenter?.();}catch(e){locateDirect();}}],
       ['button[title="Conducteurs proches"]',()=>{ensureAppFallbacks(); try{window.App?.openNearby?.();}catch(e){fallbackOpenNearby();}}],
       ['button[title="Vue"]',()=>{try{window.App?.cycleView?.();}catch(e){} recoverMap();}],
@@ -304,16 +304,16 @@
       }
       // Boutons nav par bounding-box — fonctionne même si un overlay les recouvre
       var hits=[
-        ['navMessages',function(){try{window.App?._navToggle?.('messages');}catch(_){}}],
-        ['navAppels',  function(){try{window.App?._navToggle?.('appels');}catch(_){}}],
-        ['navAnge',    function(){try{window.App?._angeToggle?.();}catch(_){openAngePanel();}}],
+        ['navMessages',function(ev){try{window.App?._navToggle?.('messages',ev);}catch(_){}}],
+        ['navAppels',  function(ev){try{window.App?._navToggle?.('appels',ev);}catch(_){}}],
+        ['navAnge',    function(ev){try{window.App?._angeToggle?.(ev);}catch(_){openAngePanel();}}],
       ];
       for(var i=0;i<hits.length;i++){
         var btn=document.getElementById(hits[i][0]);
         if(!btn) continue;
         var r=btn.getBoundingClientRect();
         if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-          hits[i][1](); return;
+          hits[i][1](e); return;
         }
       }
     },true);

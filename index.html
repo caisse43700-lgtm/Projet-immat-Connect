@@ -478,25 +478,25 @@
 </div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn" id="navSignaler" onclick="App._navToggle('signaler')">
+  <button class="nav-btn" id="navSignaler" onclick="App._navToggle('signaler',event)">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     <span>Signaler</span>
   </button>
-  <button class="nav-btn" id="navMessages" onclick="App._navToggle('messages')">
+  <button class="nav-btn" id="navMessages" onclick="App._navToggle('messages',event)">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     <span>Messages</span>
     <span id="msgNavBadge" class="nav-badge" style="display:none">0</span>
   </button>
-  <button class="nav-btn nav-btn-ange" id="navAnge" onclick="App._angeToggle()">
+  <button class="nav-btn nav-btn-ange" id="navAnge" onclick="App._angeToggle(event)">
     <span class="ange-circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg></span>
     <span class="ange-lbl">Ange</span>
   </button>
-  <button class="nav-btn" id="navAppels" onclick="App._navToggle('appels')">
+  <button class="nav-btn" id="navAppels" onclick="App._navToggle('appels',event)">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6.29 6.29l1.14-.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
     <span>Appels</span>
     <span id="callNavBadge" class="nav-badge" style="display:none">0</span>
   </button>
-  <button class="nav-btn" id="navActivite" onclick="App._navToggle('activite')">
+  <button class="nav-btn" id="navActivite" onclick="App._navToggle('activite',event)">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     <span>Activité</span>
     <span id="actBadge" class="nav-badge" style="display:none">0</span>
@@ -1561,10 +1561,13 @@ App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.cla
 // Anti-rebond : ui.js double les clics (bindVisibleButtons capture + hotfix document
 // + onclick inline) → sans garde, un tap = ouvrir+fermer. On ignore les appels
 // dupliqués d'un même tap (<280ms) pour ne décider qu'une fois.
-App._navToggle=function(key){
-  var now=Date.now();
-  if(this.__navTapKey===key && now-(this.__navTapTime||0)<320) return;
-  this.__navTapKey=key; this.__navTapTime=now;
+App._navToggle=function(key,ev){
+  // Anti-double-déclenchement FIABLE : tous les handlers (onclick inline, capture ui.js,
+  // hotfix document) reçoivent LE MÊME objet event → on le marque pour ne décider qu'une
+  // seule fois par tap (le timer seul échouait si closeSheet prenait >320ms et le 2e
+  // handler rouvrait la vue).
+  if(ev){ if(ev.__navHandled) return; ev.__navHandled=true; }
+  else { var now=Date.now(); if(this.__navTapKey===key && now-(this.__navTapTime||0)<320) return; this.__navTapKey=key; this.__navTapTime=now; }
   // Détection fiable de la vue ouverte d'après le PANNEAU réellement affiché
   // (pas l'état vert .on des boutons, qui peut être désynchronisé par d'autres codes).
   var sheet=document.getElementById('sheet');
@@ -1584,10 +1587,9 @@ App._navToggle=function(key){
   else if(key==='activite') this.navActivite();
 };
 // Ange : même logique de bascule (1 tap ouvre / 1 tap referme), avec anti-rebond
-App._angeToggle=function(){
-  var now=Date.now();
-  if(this.__navTapKey==='ange' && now-(this.__navTapTime||0)<320) return;
-  this.__navTapKey='ange'; this.__navTapTime=now;
+App._angeToggle=function(ev){
+  if(ev){ if(ev.__navHandled) return; ev.__navHandled=true; }
+  else { var now=Date.now(); if(this.__navTapKey==='ange' && now-(this.__navTapTime||0)<320) return; this.__navTapKey='ange'; this.__navTapTime=now; }
   var p=document.getElementById('angePanel');
   var isOpen=!!(p && getComputedStyle(p).display!=='none');
   try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
@@ -4477,7 +4479,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="ui.js?v=12"></script>
+<script src="ui.js?v=13"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
