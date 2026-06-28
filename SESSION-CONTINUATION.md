@@ -7,6 +7,33 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — Nav : un seul vert + toggle 1 tap ouvre / 1 tap referme
+
+### Bug deux boutons verts
+ui.js `setPanel(name)` (gestionnaire concurrent, appelé par App.panel patché l.269) ne gérait que
+`['navMap','navSignaler','navActivite']` et mappait `messages:'navActivite'` → navMessages/navAppels
+gardaient un état `.on` (vert) collé → deux verts. Fix : `setPanel` nettoie TOUS les boutons
+(`navMap,navSignaler,navMessages,navActivite,navAppels`) et map corrigé (`messages:'navMessages'`).
+`closeSheet()` (index.html) retire `.on` de tous les `.nav-btn` + `appels-mode` → le vert disparaît
+à la fermeture. navAppels réaffirme `navAppels.on` après `panel('messages')` (sinon setPanel met
+navMessages en vert car Appels réutilise le panel messages).
+
+### Toggle 1 tap ouvre / 1 tap referme
+PIÈGE : ui.js double les clics nav — `bindVisibleButtons` (capture+stopPropagation sur
+navSignaler/navActivite/navMap) + `installNavButtonHotfix` (listener document pour navMessages/
+navAppels/navAnge) + `onclick` inline. Un toggle naïf dans navX → ouvre+ferme sur un seul tap.
+Solution : point d'entrée UNIQUE `App._navToggle(key)` avec ANTI-REBOND (280ms) : ignore les appels
+dupliqués d'un même tap, ne décide qu'une fois (btn.on && sheet non mini → closeSheet, sinon
+navX open). Tous les chemins routés vers _navToggle : onclick inline (`App._navToggle('signaler')`
+etc.), ui.js bindVisibleButtons (navSignaler/navActivite → _navToggle), hotfix (navMessages/
+navAppels → _navToggle). Les open impls (App.navSignaler/navMessages/navAppels/navActivite) restent
+inchangées et sont appelées par _navToggle.
+
+### Versions
+ui.js v10→v11, SW v299→v300. Commit cda2927, poussé sur main. À vérifier terrain (zone délicate).
+
+---
+
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
 
 ### En-tête Réglages coupé en haut (« barre parasite »)
