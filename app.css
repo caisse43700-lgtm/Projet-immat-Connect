@@ -794,10 +794,13 @@ body.night #map { filter: brightness(.7) contrast(1.1) saturate(.8); }
 body.keyboard-open .fab-stack,
 body.keyboard-open .speed,
 body.keyboard-open:not(.ange-open) .bottom-nav { display: none !important; }
+/* Masquer FAB/compteur UNIQUEMENT quand la sheet est réellement ouverte.
+   closeSheet() remet .mini mais ne retire pas .panel.on → sans :not(.mini) le
+   sélecteur continuait de matcher après fermeture et les boutons disparaissaient. */
 #appScreen:has(.sheet.full) .fab-stack,
-#appScreen:has(#sheet .panel.on) .fab-stack { display: none; }
+#appScreen:has(#sheet:not(.mini) .panel.on) .fab-stack { display: none; }
 #appScreen:has(.sheet.full) .speed,
-#appScreen:has(#sheet .panel.on) .speed { display: none; }
+#appScreen:has(#sheet:not(.mini) .panel.on) .speed { display: none; }
 body.keyboard-open .sheet { bottom: 0 !important; }
 
 /* ── APPELS MODE — header fixe + scroll sur les entrées ── */
@@ -1086,7 +1089,20 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .act-main-hd { margin-bottom: 8px; }
   .act-main { padding-bottom: 16px; }
   .speed { left: calc(58px + env(safe-area-inset-left,0px) + 8px); bottom: 10px; width: 56px; height: 56px; }
-  .fab-stack { right: calc(10px + env(safe-area-inset-right,0px)); bottom: 10px; }
+  /* Boutons flottants : rangée HORIZONTALE en bas à droite. En paysage l'écran est
+     large et bas → une rangée exploite la largeur au lieu de grimper au milieu, reste
+     dans la zone basse (pouce), et le côté droit est conservé. Les boutons se masquent
+     quand un panneau s'ouvre, donc aucun conflit avec le bas. On NE met PAS
+     env(safe-area-inset-right) (sinon repoussés de ~60px par l'encoche côté droit).
+     Décalée au-dessus de l'attribution Leaflet (bottom +22px). */
+  .fab-stack {
+    flex-direction: row;
+    align-items: center;
+    left: auto;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom,0px) + 22px);
+    gap: 10px;
+  }
   .overlay { left: calc(58px + env(safe-area-inset-left,0px) + 10px); bottom: 10px; }
   .inst { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
   .front-car-banner { left: calc(58px + env(safe-area-inset-left,0px) + 10px); }
@@ -1094,6 +1110,18 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   /* Dashboard header — 1 ligne en paysage */
   #gardienHeaderRight { width: auto; flex: 1; order: 2; }
   #gardienCloseBtn { order: 3; }
+  /* Bannières & floating card : décalées à droite du rail de nav (sinon par-dessus) */
+  .toast, .notif {
+    left: calc(58px + env(safe-area-inset-left,0px) + 10px);
+    right: calc(10px + env(safe-area-inset-right,0px));
+    top: calc(var(--safe-top) + 56px);
+  }
+  .notif.show ~ .toast.show { top: calc(var(--safe-top) + 124px); }
+  .floating-card {
+    left: calc(58px + env(safe-area-inset-left,0px) + 10px);
+    right: calc(10px + env(safe-area-inset-right,0px));
+    bottom: calc(env(safe-area-inset-bottom,0px) + 10px);
+  }
 }
 
 @media (max-width: 380px) {
