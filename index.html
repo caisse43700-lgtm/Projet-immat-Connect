@@ -1682,9 +1682,9 @@ App.navActivite=function(){
     const _sh=document.getElementById('sheet');
     if(_sh){_sh.scrollTop=0;}
     // 4. Resets différés + scrollIntoView — iOS Safari peut restaurer le scroll après le premier paint
-    requestAnimationFrame(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;const p=document.getElementById('panelActivite');if(p&&p.style.display==='block')p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}});
+    requestAnimationFrame(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;}catch(e){}});
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s)s.scrollTop=0;}catch(e){}},80);
-    setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){s.scrollTop=0;}const p=document.getElementById('panelActivite');if(p)p.scrollIntoView({behavior:'instant',block:'start'});}catch(e){}},250);
+    setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){s.scrollTop=0;}}catch(e){}},250);
     // Reset post-transition CSS (transition height dure 280ms — iOS peut restaurer scrollTop après)
     setTimeout(()=>{try{const s=document.getElementById('sheet');if(s){void s.offsetHeight;s.scrollTop=0;}}catch(e){}},320);
   }catch(_){toast('ACT err:'+_,'bad');}
@@ -4594,7 +4594,7 @@ const ImmatestUI = {
 </style>
 
 <button id="angeFab" onclick="AngeDialog.open()" title="L'Ange">✦</button>
-<div id="angeOverlay" onclick="AngeDialog.close()"></div>
+<div id="angeOverlay" onclick="App._angeToggle(event)"></div>
 <div id="angePanel">
   <div id="angeHeader">
     <span>✦ L'Ange</span>
