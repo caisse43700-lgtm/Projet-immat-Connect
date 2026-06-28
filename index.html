@@ -2737,12 +2737,14 @@ App.renderAideFeed=function(){
   let repliedIds,ratedIds;
   try{repliedIds=new Set(JSON.parse(localStorage.getItem('ic_help_replied')||'[]'));}catch(e){repliedIds=new Set();}
   try{ratedIds=new Set(JSON.parse(localStorage.getItem('ic_help_rated')||'[]'));}catch(e){ratedIds=new Set();}
+  let dismissedIds;try{dismissedIds=new Set(JSON.parse(localStorage.getItem('ic_help_dismissed')||'[]'));}catch(e){dismissedIds=new Set();}
   const now=Date.now();
   const allAlerts=S.alerts||[];
   const othersAlerts=allAlerts.filter(a=>{
     if(a._mine||a._own)return false;
     if(a.group!=='assist')return false;
     if(a.status==='gone'||a.status==='resolved')return false;
+    if(dismissedIds.has(String(a.id)))return false;
     const ts=a.at!=null?Number(a.at):null;if(ts===null)return false;
     return now-ts<(typeof ttlFor==='function'?ttlFor(a.type):3600000)&&(typeof isNearby==='function'?isNearby(a):true);
   });
@@ -2826,6 +2828,7 @@ App.renderAideFeed=function(){
             <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actOpenConv('${senderPlate}')">💬 Message</button>
             <button type="button" class="act-vmg-cbtn" onclick="event.stopPropagation();App.actVmCall('${senderPlate}')">📞 Appeler</button>
           </div>
+          <button type="button" class="act-vmg-cbtn" style="width:100%;margin-top:8px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="event.stopPropagation();App.actHelpDismiss('${aid}')">🗑 Supprimer cette demande</button>
         </div>
       </div>`;
     }).join('');
@@ -2841,6 +2844,14 @@ App.renderAideFeed=function(){
     }).join('');
   }
   feed.innerHTML=html||'<div class="act-empty-cat">Aucune demande d\'aide à proximité.</div>';
+};
+App.actHelpDismiss=function(alertId){
+  let dis=[];try{dis=JSON.parse(localStorage.getItem('ic_help_dismissed')||'[]');}catch(e){}
+  if(!dis.includes(String(alertId)))dis.push(String(alertId));
+  try{localStorage.setItem('ic_help_dismissed',JSON.stringify(dis.slice(-500)));}catch(e){}
+  try{this.renderAideFeed?.();}catch(e){}
+  try{this.updateActBadge?.();}catch(e){}
+  try{if(typeof toast==='function')toast('Demande supprimée.','ok');}catch(e){}
 };
 App.renderAideCallSection=function(){
   const el=document.getElementById('sigAideNearbySection');if(!el)return;
