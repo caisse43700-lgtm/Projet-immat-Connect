@@ -134,6 +134,17 @@ display:none + retrait `body.ange-open`) ; (2) verrou `App.__angeJustClosed` →
 ignore toute réouverture <450ms après une fermeture. Robuste quel que soit le handler fautif.
 SW v312→v313 (fix dans index.html réseau-frais). Commit 781b386.
 
+### Ange — solution finale : HANDLER UNIQUE (v313 verrou cassait l'ouverture)
+Le verrou v313 (`__angeJustClosed` 450ms) empêchait l'ouverture. Cause de fond des deux bugs
+(ne ferme pas / ne s'ouvre plus) = double/triple déclenchement par tap : onclick inline +
+`installNavButtonHotfix` (navAnge bbox) + `installCriticalButtonHotfix` (#angeFab) → courses
+ouvrir/fermer. SOLUTION : un seul handler par bouton = l'onclick inline `App._angeToggle`.
+- `_angeToggle` = toggle pur : `body.ange-open` ? close : open (fallback display). Pas de verrou.
+- `AngeDialog.open` : verrou retiré.
+- ui.js : `navAnge` retiré de installNavButtonHotfix ; `#angeFab` retiré de installCriticalButtonHotfix
+  (sélecteur réduit à `.sig-cat-btn`). `openAngePanel` devient inutilisé (laissé en place, inoffensif).
+ui.js v14→v15, SW v313→v314. Commit bd31810.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
