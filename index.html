@@ -2551,8 +2551,8 @@ App.actOpenVehicleMsgGroup=function(plate){
     return`<div class="act-vmg-card act-vmg-encours" onclick="App.actToggleVmCard(this)">
       <div class="act-vmg-hd"><div class="act-vmg-dot"></div><div class="act-vmg-info">${timeBadge(m.created_at)}<div class="act-vmg-plate">${e2(m._otherPlate||plate)}</div><div class="act-vmg-desc">${e2(m.message||'')}</div></div><div class="act-vmg-time">${e2(time)}</div></div>
       <div class="act-vmg-detail">
-        ${isPending?`<div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">Vous avez indiqué que vous vérifieriez lorsque vous pourriez vous arrêter en sécurité.</div><div class="act-vmg-pending-reminder-cta">→ Donner mon constat</div></div>`:''}
-        <div class="act-vmg-sec-lbl"${isPending?'':' style="margin-top:10px"'}>Qu'avez-vous constaté ?</div>
+        <div class="act-vmg-pending-reminder"><div class="act-vmg-pending-reminder-title">🕐 Vérification en attente</div><div class="act-vmg-pending-reminder-sub">${isPending?'Vous avez indiqué que vous vérifieriez lorsque vous pourriez vous arrêter en sécurité.':'Vérifiez le véhicule signalé dès que possible, puis donnez votre constat ci-dessous.'}</div><div class="act-vmg-pending-reminder-cta">→ Donner mon constat</div></div>
+        <div class="act-vmg-sec-lbl">Qu'avez-vous constaté ?</div>
         <div class="act-vmg-verdict-wrap">
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-confirm" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','confirmed')">✅ Signalement confirmé<span class="act-vmg-vbtn-sub">Le problème existe</span></button>
           <button type="button" class="act-vmg-vbtn act-vmg-vbtn-gone" onclick="event.stopPropagation();App.actVmVerdict('${mid}','${ep}','gone')">ℹ️ Problème disparu<span class="act-vmg-vbtn-sub">Je n'ai rien constaté</span></button>
