@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v310 · app.css v60 · messages.js v39 · calls.js v22 · audio-manager.js v9 · ui.js v13
+SW                     : v312 · app.css v60 · messages.js v39 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v14
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2675,6 +2675,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-28 | IA session | Messages "au milieu" RÉSOLU : .ic-mail-list est display:grid, align-content valait stretch → lignes étirées + contenu centré quand peu de conversations. Fix align-content:start (messages.css v7). + Ange fermeture robuste (toggle sur #angeFab, détection body.ange-open ; ui.js v14). SW v312. Commits 2232642 + 5514a7c. |
 | 2026-06-28 | IA session | Nav : Messages rouvre toujours sur la LISTE (navMessages ferme la conversation ouverte via closeThread). Signaler (sigBack→_sigReset) et Activité (actMain) se réinitialisaient déjà. SW v310. Commit fe11cb3. |
 | 2026-06-28 | IA session | Messages : filtres Tous/Non lus/Favoris = radio (un seul actif ; clearFilters ajouté+exporté, exclusivité, _syncMsgPills) — avant les 3 pouvaient être actifs. + compactage paysage du panneau Messages (#sheet .ic-msg-pill/.ic-search-bar/.ic-msg-tabs-row). messages.js v39, app.css v60, SW v309. Commit 0351a8a. |
 | 2026-06-28 | IA session | Paysage : compactage des panneaux ENFIN effectif — il était écrasé car les défs de base des classes sont plus bas dans le CSS (ou calls.css/messages.css chargés après), même spécificité → dernière gagne. Fix : préfixe #sheet (id) sur toutes les règles + cartes catégories/emoji réduits. app.css v59, SW v308. Commit 8009029. |

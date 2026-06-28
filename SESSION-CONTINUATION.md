@@ -113,6 +113,20 @@ déjà OK (navActivite→actMain + panel() retire les body classes act-*). Manqu
 `window.ImmatMessages?.closeThread?.()` au début de navMessages → rouvre sur la liste. SW v309→v310.
 Commit fe11cb3 (fix dans index.html servi réseau-frais).
 
+### Ange fermeture robuste (suite — persistait en v310)
+`#angeFab` (bouton flottant ✦) était `AngeDialog.open()` + hotfix `openAngePanel` → toujours ouvrir,
+jamais fermer si c'est ce bouton qui est tapé. Fix : `#angeFab onclick="App._angeToggle(event)"` +
+`installCriticalButtonHotfix` #angeFab → `_angeToggle` + `_angeToggle` détecte l'ouverture via
+`document.body.classList.contains('ange-open')` (fiable) au lieu de getComputedStyle. ui.js v13→v14,
+SW v310→v311. Commit 2232642.
+
+### Messages "au milieu" — CAUSE RACINE (rien à voir avec le thread)
+`.ic-mail-list` (#icMsgList) est `display:grid`. Quand le conteneur (flex:1, grandi) est plus haut
+que le contenu (peu de conversations), `align-content` vaut `stretch` par défaut → les lignes
+auto de la grille s'étirent et leur contenu se centre verticalement → "AUJOURD'HUI" et la carte
+flottent au milieu de leur ligne. Fix : `align-content:start` sur `.ic-mail-list` → lignes packées
+en haut. messages.css v6→v7, SW v311→v312. Commit 5514a7c.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
