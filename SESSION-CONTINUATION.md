@@ -7,6 +7,38 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-28 — UI : responsive paysage + bug FAB qui disparaissent
+
+### Bug FAB/compteur qui disparaissent (portrait ET paysage) — le plus gênant
+Symptôme : après ouverture puis fermeture d'un panneau, les boutons flottants (`.fab-stack`)
+et le compteur de vitesse (`.speed`) restaient masqués sur la carte.
+Cause : masquage CSS via `#appScreen:has(#sheet .panel.on) .fab-stack { display:none }`.
+`closeSheet()` (index.html ~1545) remet la sheet en `.mini` et retire `.full`, **mais ne retire
+pas `.on`** du panneau interne (seul `panel()` le togglait). Le `:has(#sheet .panel.on)`
+continuait donc de matcher après fermeture → boutons cachés.
+Fix (app.css ~797-800) : `:has(#sheet:not(.mini) .panel.on)` → on ne masque que quand la sheet
+est réellement ouverte. `.sheet.full` couvrait déjà l'ouverture ; le `.panel.on` résiduel en mini
+ne masque plus rien.
+
+### Responsive paysage
+La nav devient un rail vertical à gauche (58px + safe-left) via `@media (orientation:landscape)
+and (max-height:560px)`. Compléments ajoutés :
+- `.fab-stack` : pile verticale (4×52 ~238px) remontait au milieu, et `env(safe-area-inset-right)`
+  la repoussait du bord (~60px à cause de l'encoche côté droit en paysage). Itérations successives
+  (pile collée droite → grille 2×2 → **rangée horizontale**). Choix final = rangée HORIZONTALE
+  bas-droite (`flex-direction:row`, `right:12px` sans safe-inset, `bottom: safe-bottom+22px` pour
+  passer au-dessus de l'attribution Leaflet). Exploite la largeur du paysage, reste en zone basse.
+  Les FAB se masquent quand un panneau s'ouvre → pas de conflit avec le bas.
+- `.toast/.notif` et `.floating-card` : restaient en `left:12/16px` → passaient par-dessus le rail.
+  Décalées à droite du rail (`left: calc(58px + safe-left + 10px)`, `right: 10px + safe-right`),
+  floating card ré-ancrée en bas (la nav n'est plus en bas en paysage).
+
+### Versions
+app.css v48→v50, SW v292→v294. Commits 860e44b (puce plaque), 8352b64 (paysage + bug FAB).
+Poussés sur main.
+
+---
+
 ## SESSION 2026-06-28 — UI : bannières notif/toast chevauchaient la puce plaque
 
 ### Problème
