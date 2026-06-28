@@ -315,6 +315,20 @@ d'appel fantôme restait à corriger (déjà fait). Aucun changement messages.js
 
 ---
 
+## SESSION 2026-06-28 — Aide : réponse au demandeur impossible (plaque placeholder)
+
+Bug : répondre à une demande d'aide via un message pré-rédigé → "Impossible d'identifier le
+demandeur", message non envoyé. Cause : `assist(type)` (index.html ~1545) créait l'alerte + le
+report avec `plate:'ASSISTANCE'` (placeholder), jamais la vraie plaque. Côté aidant,
+`actHelpReply` cherchait `from_plate||sender_plate||reporter_plate` (tous vides) → échec. Fix :
+`assist()` stocke la plaque réelle du demandeur (`S.profile.owner_plate || fPlate(ownPlate())`)
+dans `plate` ET `sender_plate` (alerte locale + saveReportRemote). `actHelpReply` lit désormais
+aussi `a.plate` (et garde le garde `==='ASSISTANCE'`). → `sendToPlate(requesterPlate, msg)`
+livre le message dans la boîte de réception du demandeur. Les usages `[ASSISTANCE]` restants ne
+concernent que le `reason` (strip d'affichage), pas la plaque. SW v324→v325. Commit 7882fc7.
+
+---
+
 ## SESSION 2026-06-28 — Audio appels : bip fantôme au login + sonnerie entrante distinctive
 
 ### Problème signalé
