@@ -929,6 +929,19 @@ body.act-new-open #actTodoPanel,
 body.act-new-open #actDonePanel {
   display: none !important;
 }
+/* Sous-panneau Activité (catégorie / à traiter / traités / nouveaux) ouvert :
+   pleine hauteur en portrait — le feed scroll en interne et la carte dépliée
+   (alternatives + « Annuler » / « Je suis aidé » / « 🗑 Supprimer ») n'est plus tronquée. */
+@media (orientation:portrait) {
+  body.act-cat-open  #sheet:not(.mini),
+  body.act-todo-open #sheet:not(.mini),
+  body.act-done-open #sheet:not(.mini),
+  body.act-new-open  #sheet:not(.mini) {
+    height: calc(100dvh - var(--nav-h) - var(--safe-bottom)) !important;
+    border-radius: 0;
+    padding-top: max(calc(var(--safe-top) + 8px), 16px);
+  }
+}
 
 /* ── MESSAGES MODE — header fixe liste + thread ── */
 /* :has() supporté iOS 15.4+ — cascade flex pure, aucun position:absolute ni calcul hauteur */
