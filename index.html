@@ -487,7 +487,7 @@
     <span>Messages</span>
     <span id="msgNavBadge" class="nav-badge" style="display:none">0</span>
   </button>
-  <button class="nav-btn nav-btn-ange" id="navAnge" onclick="AngeDialog.open()">
+  <button class="nav-btn nav-btn-ange" id="navAnge" onclick="App._angeToggle()">
     <span class="ange-circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg></span>
     <span class="ange-lbl">Ange</span>
   </button>
@@ -1563,17 +1563,34 @@ App.sigTab=function(name){document.querySelectorAll('.sig-tab').forEach(b=>b.cla
 // dupliqués d'un même tap (<280ms) pour ne décider qu'une fois.
 App._navToggle=function(key){
   var now=Date.now();
-  if(this.__navTapKey===key && now-(this.__navTapTime||0)<280) return;
+  if(this.__navTapKey===key && now-(this.__navTapTime||0)<320) return;
   this.__navTapKey=key; this.__navTapTime=now;
-  var ids={signaler:'navSignaler',messages:'navMessages',appels:'navAppels',activite:'navActivite'};
-  var btn=document.getElementById(ids[key]||'');
+  // Détection fiable de la vue ouverte d'après le PANNEAU réellement affiché
+  // (pas l'état vert .on des boutons, qui peut être désynchronisé par d'autres codes).
   var sheet=document.getElementById('sheet');
-  var isOpen=!!(btn&&btn.classList.contains('on')&&sheet&&!sheet.classList.contains('mini'));
-  if(isOpen){ this.closeSheet(); return; } // déjà ouvert → on referme
+  var open=!!(sheet && !sheet.classList.contains('mini'));
+  var appels=document.body.classList.contains('appels-mode');
+  var P=function(id){var e=document.getElementById(id);return !!(e && e.classList.contains('on'));};
+  var cur=null;
+  if(open){
+    if(P('panelAltet')) cur='signaler';
+    else if(P('panelActivite')) cur='activite';
+    else if(P('panelMessages')) cur=appels?'appels':'messages';
+  }
+  if(cur===key){ this.closeSheet(); return; } // re-clic sur la vue ouverte → on referme
   if(key==='signaler') this.navSignaler();
   else if(key==='messages') this.navMessages();
   else if(key==='appels') this.navAppels();
   else if(key==='activite') this.navActivite();
+};
+// Ange : même logique de bascule (1 tap ouvre / 1 tap referme), avec anti-rebond
+App._angeToggle=function(){
+  var now=Date.now();
+  if(this.__navTapKey==='ange' && now-(this.__navTapTime||0)<320) return;
+  this.__navTapKey='ange'; this.__navTapTime=now;
+  var p=document.getElementById('angePanel');
+  var isOpen=!!(p && getComputedStyle(p).display!=='none');
+  try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
 App.navMessages=function(){
   document.body.classList.remove('appels-mode');
@@ -4460,7 +4477,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="ui.js?v=11"></script>
+<script src="ui.js?v=12"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">

@@ -306,7 +306,7 @@
       var hits=[
         ['navMessages',function(){try{window.App?._navToggle?.('messages');}catch(_){}}],
         ['navAppels',  function(){try{window.App?._navToggle?.('appels');}catch(_){}}],
-        ['navAnge',    function(){openAngePanel();}],
+        ['navAnge',    function(){try{window.App?._angeToggle?.();}catch(_){openAngePanel();}}],
       ];
       for(var i=0;i<hits.length;i++){
         var btn=document.getElementById(hits[i][0]);
