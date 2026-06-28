@@ -164,6 +164,15 @@ Commit fd9272f. LEÇON : l'app a ~4 systèmes de gestion des clics nav (onclick 
 bindVisibleButtons, ui.js installNavButtonHotfix, IIFE de secours index.html) — toute modif d'un
 bouton nav doit les vérifier TOUS.
 
+### Ange — consolidation FINALE (v318 = ne s'ouvrait plus → v319)
+Après retrait de navAnge du handler de secours (v318), mon handler v316 et le reste se marchaient
+encore dessus → Ange ne s'ouvrait plus. Décision : UN SEUL gestionnaire pour Ange = le listener
+de secours IIFE (bas index.html, `addEventListener('click',...,true)` capture, fiable même si le
+panneau recouvre le bouton). Il appelle `App._angeToggle` pour : navAnge (via bbox dans son loop
+hits), #angeFab (closest), #angeOverlay (target.id, ferme). Mon handler v316
+(`window.__angeClickBound`) SUPPRIMÉ. Tous les onclick inline Ange déjà retirés. ui.js hotfixes ne
+touchent plus Ange. → un seul chemin, toggle net. SW v318→v319. Commit 529cea3.
+
 ---
 
 ## SESSION 2026-06-28 — Paysage : en-tête Réglages coupé + FAB par-dessus fenêtre Nearby
