@@ -1590,25 +1590,8 @@ App._angeToggle=function(ev){
     || !!(o && getComputedStyle(o).display!=='none');
   try{ if(isOpen) window.AngeDialog?.close?.(); else window.AngeDialog?.open?.(); }catch(e){}
 };
-// GESTIONNAIRE UNIQUE des interactions Ange (au lieu d'onclick inline qui ne marchent pas
-// quand le panneau recouvre le bouton). Détection par position (bbox) → marche même recouvert.
-// Un seul listener → un seul _angeToggle par tap → aucune course ouvrir/fermer.
-if(!window.__angeClickBound){
-  window.__angeClickBound=true;
-  document.addEventListener('click',function(e){
-    try{
-      var na=document.getElementById('navAnge');
-      if(na){var r=na.getBoundingClientRect();
-        if(r.width&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-          App._angeToggle(); return;
-        }
-      }
-      var t=e.target;
-      if(t&&t.closest&&t.closest('#angeFab')){ App._angeToggle(); return; }
-      if(t&&t.id==='angeOverlay'){ App._angeToggle(); return; } // tap sur le fond → fermer
-    }catch(_){}
-  },false);
-}
+// NB : toutes les interactions Ange (bouton nav, ✦ flottant, fond) sont gérées par l'UNIQUE
+// listener de secours en bas d'index.html (IIFE, capture) → App._angeToggle. Pas d'autre handler.
 App.navMessages=function(){
   App._navView='messages';
   try{window.ImmatMessages?.closeThread?.();}catch(e){} // toujours rouvrir sur la LISTE, pas la conversation
@@ -5178,12 +5161,17 @@ window._forceSwUpdate = async function() {
     if(e.target&&e.target.closest){
       var cb=e.target.closest('.ph-close,.sheet-close');
       if(cb){_closeInline();return;}
+      // Ange : ✦ flottant → bascule
+      if(e.target.closest('#angeFab')){ try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){} return; }
     }
+    // Ange : tap sur le fond → bascule (ferme)
+    if(e.target&&e.target.id==='angeOverlay'){ try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){} return; }
     var hits=[
       ['navMessages',_openMessagesInline],
       ['navAppels',  _openAppelsInline],
-      // navAnge retiré : géré par App._angeToggle (sinon ce handler de secours rouvrait Ange
-      // juste après la fermeture → impossible de fermer).
+      // navAnge → bascule (ouvrir/fermer). UNIQUE handler du bouton Ange, en capture, fiable
+      // même si le panneau recouvre le bouton.
+      ['navAnge',    function(){try{window.App&&App._angeToggle&&App._angeToggle();}catch(_){}}],
     ];
     for(var i=0;i<hits.length;i++){
       var btn=document.getElementById(hits[i][0]);
