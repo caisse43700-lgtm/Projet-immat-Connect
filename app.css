@@ -1082,8 +1082,9 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
     max-height: none;
     border-radius: 0;
   }
-  /* Fullscreen en paysage — Famille C : top:0 left:0, carte absente */
-  #sheet:has(#panelSettings.on) { top: 0; left: 0; }
+  /* Fullscreen en paysage — Famille C : top:0 left:0, carte absente.
+     padding-top sécurisé (sinon l'en-tête est coincé sous la barre d'état → barre parasite) */
+  #sheet:has(#panelSettings.on) { top: 0; left: 0; padding-top: max(calc(var(--safe-top) + 8px), 14px); }
   .sheet.mini { transform: translateX(100%); }
   .act-categories { grid-template-columns: repeat(4,1fr); }
   .act-main-hd { margin-bottom: 8px; }
@@ -1145,8 +1146,9 @@ body.reduce-effects .bottom-nav { backdrop-filter: none; background: rgba(7,16,2
   .sig-cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .sig-cat-btn { padding: 12px 14px; }
   .sig-step-title { font-size: 15px; margin-bottom: 8px; }
-  /* Réglages : la grille de raccourcis est déjà 2 colonnes ; on resserre l'espacement */
-  .panel-settings-grid { margin-bottom: 6px; }
+  /* Réglages : grille déjà 2 colonnes ; on resserre l'espacement et les boutons */
+  .panel-settings-grid { margin-bottom: 6px; gap: 6px; }
+  .settings-btn { padding: 9px 8px; }
   /* Dashboard Gardien : padding réduit (police conservée) */
   #gardienDashboardBody { padding: 10px 14px; }
   /* Les écrans d'appel (#callOverlay, popup entrant, modales) sont des cartes à
