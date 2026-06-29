@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v357 · app.css v61 · narrator.js v4 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v358 · app.css v61 · narrator.js v4 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-29 | IA session | Fix zones (modèle 2 niveaux demandé par PO) : Dashboard = capacité/disponibilité (montre/cache la section Réglages + gate runtime) ; Réglages = interrupteur réel (préférence ic_zones_accidentogenes) qui NE se cache plus lui-même. Runtime _checkRiskZones = capacité ET préférence. checkbox Réglages reflète la préférence (défaut ON). Réactiver dans Dashboard → section + zones reviennent ; désactiver Dashboard → tout disparaît ; désactiver Réglages → zones off mais section reste. (Annule la conflation single-switch pour zones ; ange reste single-switch.) SW v358. (local/merge-to-main) |
 | 2026-06-29 | IA session | Fix pastilles Aide (manquantes depuis bascule Lot B) : nouveau compteur serveur App.AideV1.refreshBadge (débouncé) → S._aideBadgeCount = demandes proches à aider (nearby hors engagées/masquées) + helpers proposés sur mes demandes. Alimente la catégorie Aide (catBadgeAide) ET le total nav (actBadge). Abonnement Realtime Aide gardé GLOBAL (subscribe à openMap, plus d'unsubscribe en quittant Activité) → demandeur notifié partout. refreshBadge appelé : openMap, loadOthers, reRender Realtime, openActivityCat. SW v357. (local/merge-to-main) |
 | 2026-06-29 | IA session | Dashboard V2 — kill-switches « UN SEUL interrupteur » (UX pro) : pour ange_proactive/ange_monologue/zones, suppression du double-gate (capacité ET préférence). Source UNIQUE = le flag ic_feature_flags. Le toggle Réglages écrit le MÊME flag (App._setLocalFlag, device-local), les checkboxes le reflètent (openMap + applyFeatureFlags), le runtime ne lit que lui (narrator _whisper, _shouldThink, _checkRiskZones). Clés legacy ic_ange_proactive/ic_ange_monologue/ic_zones_accidentogenes retirées. Réactiver d'un côté suffit et se reflète partout. Zones immédiat à l'activation (recheck GPS). narrator v3→v4, SW v355. (local/merge-to-main) |
 | 2026-06-29 | IA session | Dashboard V2 — ÉTAPE 4 (1ers kill-switches runtime, modules non-critiques) : OFF coupe RÉELLEMENT. CK-ANGE-PROACTIF (gate dans narrator.js _whisper → plus de bulles ✦), CK-ANGE-MONOLOGUE (gate AngeMonologue._shouldThink → plus de monologue), CK-ZONES (gate App._checkRiskZones → pas de chargement/affichage/alerte zones). Chaque gate = capacité (isFeatureEnabled flag) ET préférence (ic_*). Aide + modules critiques NON touchés. narrator.js v2→v3 (bump cache obligatoire). SW v354. (local/merge-to-main) |
