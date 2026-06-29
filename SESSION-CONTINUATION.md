@@ -7,6 +7,25 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 11) — Modèle 2 niveaux UNIFORME (Ange aligné sur zones)
+
+Demande PO : « le même modèle pour toutes les fonctionnalités qui apparaissent dans Réglages et
+qu'on peut activer/désactiver depuis le Dashboard ». Audit : seul Ange était encore single-switch ;
+les autres (alertes route/véhicule, demandes d'aide, auto-statut) étaient déjà en 2 niveaux
+(applyFeatureFlags cache la ligne selon la capacité-flag ; le toggle Réglages écrit une préférence).
+Conversion Ange (proactif + monologue) en 2 niveaux :
+- toggleAngeProactive/Monologue → écrivent la PRÉFÉRENCE ic_ange_proactive/ic_ange_monologue (plus le flag).
+- narrator _whisper : gate = isFeatureEnabled('ange_proactive') ET ic_ange_proactive!=='0'.
+- AngeMonologue._shouldThink : gate = isFeatureEnabled('ange_monologue') ET ic_ange_monologue!=='0'.
+- checkboxes (openMap + applyFeatureFlags) reflètent la préférence (défaut '1' = ON).
+- section sflagAngeSection visible selon capacité (fg(ange_proactive)||fg(ange_monologue)) — inchangé.
+- Dashboard toggle (gdFeaturesBlock) écrit toujours la capacité (flag).
+Résultat : Dashboard OFF → section + Ange disparaissent ; Dashboard ON → reviennent (pref ON par
+défaut) ; Réglages OFF → Ange off mais section reste. _setLocalFlag devenu inerte (laissé, inoffensif).
+narrator v4→v5, SW v358→v359.
+
+---
+
 ## SESSION 2026-06-29 (suite 10) — Zones : modèle 2 niveaux (capacité Dashboard / préférence Réglages)
 
 Retour PO : désactiver les zones dans Réglages cachait la section (single-switch précédent), donc
