@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 2) — Dashboard V2 : Spec registre complétée (0 code)
+
+Après une passe « challenge avant implémentation » (20 questions du PO), la Spec a été enrichie
+pour être implémentable sans rediscuter l'architecture :
+- Champs registre ajoutés : owner (oblig), riskLevel low|medium|critical (oblig), dependsOn[],
+  deprecatedAt, removedAt. Refus explicite de tout champ logique (enabledIf/callback) → INV-DASH-008.
+- §2.2 owner/riskLevel/dependsOn des 7 entrées (copilote_monologue dependsOn copilote_proactif).
+- §3 modules cœur : appels & messages = riskLevel critical (fail-open, câblage manuel).
+- Nouvelles sections : 7 Fallback (cache-first, défaut sûr par riskLevel, pas de faux vert),
+  8 Sécurité (écriture account/fleet serveur only, client jamais fleet, RPC à rôle),
+  9 Audit (feature_audit_log qui/quand/old/new/reason, réversible),
+  10 Dépendances (dependsOn = donnée ; résolution dans le moteur ; préf notif masquée si module OFF ;
+  graphe acyclique), 11 Observabilité (valeur effective + origine + override + dernier changement),
+  12 Tests (4 tests gate stable : registre/kill-switch/runtime/UI), 13 Rappels invariants +
+  exclusion Aide (génération étape 4 exclut aide + riskLevel critical du câblage auto).
+- Renumérotation : §14 « ce que le registre génère », §15 « limites ».
+Risques identifiés et neutralisés dans la spec : auto-câblage kill-switch sur Aide/modules cœur
+(→ exclusion explicite), scope account/fleet affiché avant serveur (→ device en attendant),
+dépendances non modélisées (→ dependsOn). 0 code, 0 migration.
+
+---
+
 ## SESSION 2026-06-29 (suite) — Dashboard V2 : règles actées + Spec registre (0 code)
 
 ### Méthode validée par le PO

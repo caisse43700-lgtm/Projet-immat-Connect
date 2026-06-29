@@ -3,7 +3,7 @@
 
 **Statut :** Spécification (2026-06-29). Découle de `docs/ADR-DASHBOARD-V2.md` (D22, figé).
 **Périmètre :** définir la structure du registre, lister les fonctionnalités, établir le mapping complet flags → registre, et fixer pour chaque fonctionnalité `key / label / group / stage / scope / default / killSwitch`.
-**Contrainte :** respecte INV-DASH-001 à 009. En particulier :
+**Contrainte :** respecte INV-DASH-001 à 011 + les 20 points de vigilance de l'ADR. En particulier :
 - **INV-DASH-008** — le registre est 100 % déclaratif (données seules, aucune logique).
 - **INV-DASH-009** — une fonctionnalité = un seul chokepoint runtime officiel.
 
@@ -17,31 +17,42 @@ Chaque fonctionnalité est **une entrée déclarative** :
 
 ```
 Feature {
-  key:            string  // identifiant stable, snake_case, immuable (clé de migration)
-  label:          string  // libellé affiché (FR)
-  group:          Group   // regroupement UI
-  stage:          Stage   // cycle de vie
-  scope:          Scope   // portée d'activation
-  default:        boolean // valeur si jamais réglé explicitement
-  killSwitch:     string  // RÉFÉRENCE du chokepoint runtime officiel (id "CK-…"), pas du code
-  description:    string  // OBLIGATOIRE — description courte (point de vigilance #9)
-  behaviorWhenOff:string  // OBLIGATOIRE — comportement attendu si OFF (point de vigilance #9)
-  replaces:       string  // optionnel — ancien flag remplacé (traçabilité migration)
-  since:          string  // optionnel — version/date d'introduction
+  key:            string    // identifiant stable, snake_case, immuable (clé de migration)
+  label:          string    // libellé affiché (FR)
+  group:          Group     // regroupement UI
+  stage:          Stage     // cycle de vie
+  scope:          Scope     // portée d'activation
+  default:        boolean   // valeur si jamais réglé explicitement
+  killSwitch:     string    // RÉFÉRENCE du chokepoint runtime officiel (id "CK-…"), pas du code
+  description:    string    // OBLIGATOIRE — description courte
+  behaviorWhenOff:string    // OBLIGATOIRE — comportement attendu si OFF
+  owner:          string    // OBLIGATOIRE — responsable de la fonctionnalité (#17)
+  riskLevel:      RiskLevel  // OBLIGATOIRE — low | medium | critical (pilote le défaut sûr #12 + gel #10/#18)
+  dependsOn:      string[]  // optionnel — clés des features dont celle-ci dépend (#15)
+  deprecatedAt:   string    // optionnel — date de dépréciation (#13)
+  removedAt:      string    // optionnel — date de retrait / tombstone (#13)
+  replaces:       string    // optionnel — ancien flag remplacé (traçabilité migration #12)
+  since:          string    // optionnel — version/date d'introduction
 }
 ```
 
-Champs **obligatoires** (point de vigilance #9) : `key`, `label`, `group`, `stage`, `scope`, `default`, `killSwitch`, `description`, `behaviorWhenOff`.
+Champs **obligatoires** : `key`, `label`, `group`, `stage`, `scope`, `default`, `killSwitch`, `description`, `behaviorWhenOff`, `owner`, `riskLevel`.
 
-Règle INV-DASH-008 : aucune valeur de champ n'est une fonction. `killSwitch` est un **identifiant** (`"CK-AIDE"`), résolu ailleurs vers le vrai point runtime — le registre ne contient pas le contrôle lui-même.
+**Champs retenus volontairement** (apportent une vraie valeur, sans complexifier) : `owner` (#17), `riskLevel` (#12), `dependsOn` (#15), `deprecatedAt`/`removedAt` (#13).
+**Champs explicitement REFUSÉS** (réintroduiraient de la logique → violent INV-DASH-008) : toute condition, callback, expression, `enabledIf`, fonction. Le registre **décrit**, il ne **décide** pas.
+
+Règle INV-DASH-008 : aucune valeur de champ n'est une fonction. `killSwitch` est un **identifiant** (`"CK-AIDE"`), résolu ailleurs vers le vrai point runtime — le registre ne contient pas le contrôle lui-même. `dependsOn` est de la **donnée** ; sa résolution (masquer une préférence dépendante) vit dans le moteur de rendu, **jamais dans le registre**.
 
 ### 1.1 Énumérations
 
 ```
-Stage = alpha | beta | stable | deprecated | removed
-Scope = device | account | fleet
-Group = Carte | Signalements | Assistance | Communication | Présence | IA | Sécurité
+Stage     = alpha | beta | stable | deprecated | removed
+Scope     = device | account | fleet
+Group     = Carte | Signalements | Assistance | Communication | Présence | IA | Sécurité
+RiskLevel = low | medium | critical
 ```
+
+`RiskLevel` pilote le **défaut sûr** en cas de repli (§ Fallback) et marque les **modules cœur** non câblables sans précaution (§ Sécurité / exclusion Aide).
 
 ### 1.2 Résolution de l'état (définie ici, implémentée étape 2-4)
 
@@ -100,6 +111,20 @@ Ces 7 entrées correspondent aux flags-modules actuels. Elles sont prêtes à in
 
 > ⚠️ **`aide` gelé (point de vigilance #10)** : l'entrée existe pour documentation, mais `CK-AIDE` **n'est pas câblé** dans le runtime Aide pendant la refonte Dashboard. (Factuellement, Lot B Aide est en production ; on ne touche pas son runtime ici.)
 
+### 2.2 `owner` + `riskLevel` + `dependsOn` des 7 entrées (champs obligatoires)
+
+| key | owner | riskLevel | dependsOn |
+|---|---|---|---|
+| `aide` | Produit / Aide | medium | — |
+| `signalement_route` | Produit / Signalements | medium | — |
+| `signalement_vehicule` | Produit / Signalements | medium | — |
+| `zones_accidentogenes` | Produit / Carte | low | — |
+| `auto_status` | Produit / Présence | low | — |
+| `copilote_proactif` | Produit / IA | medium | — |
+| `copilote_monologue` | Produit / IA | low | `copilote_proactif` *(le monologue n'a de sens que si l'analyse proactive est active)* |
+
+> `owner` est ici une **équipe/domaine** (un seul propriétaire produit aujourd'hui) ; il sera affiné si l'équipe grandit. Aucune entrée n'est `critical` à ce stade — les modules cœur `critical` arrivent en §3.
+
 Notes de décision (à confirmer au moment de l'implémentation, sans rouvrir l'ADR) :
 - `zones_accidentogenes` : `default:false` (conforme à l'actuel `FEATURE_FLAGS`), donc `stage:beta` (opt-in) plutôt que stable.
 - Ange (`copilote_*`) : proposés en `beta` (IA, maturité produit) bien qu'aujourd'hui ON par défaut. `monologue` reste `device` (confort personnel) ; `proactif` passe `account` (comportement du compte).
@@ -111,14 +136,14 @@ Notes de décision (à confirmer au moment de l'implémentation, sans rouvrir l'
 
 Ces modules existent dans le code mais **n'ont pas de flag actuel**. Ils rejoindront le registre aux étapes suivantes (un chokepoint officiel devra être défini pour chacun). Listés ici pour la complétude (« lister toutes les fonctionnalités »), **non gouvernés tant que non intégrés**.
 
-| key | label | group | stage proposé | scope (cible) | default | killSwitch (à créer) |
-|---|---|---|---|---|---|---|
-| `signalement_stationne` | Signalements stationné | Signalements | stable | account | true | CK-STATION |
-| `appels` | Appels vocaux | Communication | stable | account | true | CK-APPELS |
-| `trust` | Fiabilité conducteurs | Sécurité | stable | account | true | CK-TRUST |
-| `messages` | Messagerie | Communication | stable | account | true | CK-MESSAGES |
+| key | label | group | stage proposé | scope (cible) | default | riskLevel | killSwitch (à créer) |
+|---|---|---|---|---|---|---|---|
+| `signalement_stationne` | Signalements stationné | Signalements | stable | account | true | medium | CK-STATION |
+| `appels` | Appels vocaux | Communication | stable | account | true | **critical** | CK-APPELS |
+| `trust` | Fiabilité conducteurs | Sécurité | stable | account | true | medium | CK-TRUST |
+| `messages` | Messagerie | Communication | stable | account | true | **critical** | CK-MESSAGES |
 
-> Prudence : `appels`, `messages` et `trust` sont des modules cœur. Les passer OFF a un impact majeur ; leur intégration au registre se fera avec un `default:true` et une vigilance particulière sur le chokepoint (ne jamais casser un flux validé terrain — cf. D17 appels stables).
+> Prudence : `appels` et `messages` sont `riskLevel:critical` ; `trust`/`stationné` sont `medium`. Les passer OFF a un impact majeur ; leur intégration au registre se fera avec `default:true`, défaut **fail-open** (§ Fallback) et un câblage de chokepoint **manuel et prudent** — jamais d'auto-câblage (ne jamais casser un flux validé terrain — cf. D17 appels stables).
 
 ---
 
@@ -182,7 +207,120 @@ Pour chaque fonctionnalité, **un seul** chokepoint runtime officiel = source de
 
 ---
 
-## 7. Ce que le registre génère (rappel INV-DASH-004)
+## 7. Fallback — registre serveur indisponible (#11, #12, #15)
+
+Comportement **déterministe**, jamais d'activation aléatoire.
+
+Ordre de résolution (rappel §1.2) :
+
+```
+1. cache local de la dernière valeur serveur connue (scope account/fleet)
+2. sinon → default du registre
+```
+
+Règles :
+
+- **Cache-first** : si le serveur est injoignable, on **conserve** la dernière valeur connue. Le serveur KO ne **flippe jamais** un module `ON` en `OFF`.
+- **Défaut sûr par `riskLevel`** (si aucune valeur connue) :
+  - `critical` (appels, messages) → **fail-open** : reste `ON` (l'app continue de fonctionner) ;
+  - `medium` → conserve `default` du registre ;
+  - `low` / expérimental / `fleet` sensible → **fail-closed** : reste `OFF` (pas d'activation fantôme).
+- **Aucun faux vert** (INV-DASH-007) : si la source serveur est injoignable, l'onglet Santé signale une **anomalie 🟠**, jamais un statut rassurant.
+- **Performance** (#14) : la résolution lit un **cache mémoire** ; le serveur est interrogé au démarrage + invalidation ciblée à la modification, **jamais à chaque rendu**.
+
+---
+
+## 8. Sécurité — droits par scope (#10, #18)
+
+| Scope | Lecture | Écriture | Contrôle |
+|---|---|---|---|
+| `device` | client | client (local) | aucun privilège requis |
+| `account` | client | **serveur uniquement** (RPC) | rôle = propriétaire du compte |
+| `fleet` | client (reflète l'état) | **serveur uniquement** (RPC) | rôle Gardien/admin, **jamais** le client |
+
+Règles :
+
+- **Le client ne peut JAMAIS activer une fonctionnalité `fleet`.** Toute écriture `account`/`fleet` passe par une **RPC `SECURITY DEFINER`** qui valide le rôle (RLS + `get_my_role`).
+- Les **onglets Développeur** ne sont accessibles qu'au rôle Développeur ; un utilisateur normal ne voit ni ne modifie les outils dev.
+- Une feature sensible ne peut **pas** être activée sans autorisation serveur (pas de bascule purement client pour `account`/`fleet`).
+
+---
+
+## 9. Audit — traçabilité des changements account / fleet (#9, #17)
+
+- Scope `device` → **non audité** (réglage local propre à l'appareil).
+- Scope `account` / `fleet` → **journal serveur obligatoire** : `feature_audit_log` (schéma défini à l'étape 5, ici figé comme exigence) :
+
+```
+feature_audit_log {
+  id, feature_key, scope, actor_id,
+  old_value, new_value, reason?, changed_at
+}
+```
+
+- **Réversibilité** : toute valeur précédente est restaurable depuis le journal.
+- Renseigne « qui / quand / ancienne valeur / nouvelle valeur / raison éventuelle » (#9).
+
+---
+
+## 10. Dépendances entre fonctionnalités (#15)
+
+- Une dépendance se déclare **uniquement** via le champ `dependsOn` (donnée — INV-DASH-008).
+- **Comportement quand une dépendance est OFF** : la feature dépendante est traitée comme **indisponible** (et donc OFF) tant que toutes ses dépendances ne sont pas ON. La **résolution** de cette règle vit dans le moteur de rendu/runtime, **pas** dans le registre.
+- **Cohérence UI** : si un module est OFF, **sa préférence de notification associée est masquée** dans Paramètres (ex. `Notifs route` masquée si `signalement_route` OFF). C'est l'application concrète d'INV-DASH-005 (sens unique capacité → préférence) via `dependsOn`.
+- Exemple registre : `copilote_monologue.dependsOn = ['copilote_proactif']` → le monologue est indisponible si l'analyse proactive est OFF.
+- Pas de cycles : `dependsOn` doit former un graphe acyclique (vérifié par le `test registre`).
+
+---
+
+## 11. Observabilité — comprendre l'état réel (#8, #13)
+
+Le mode Développeur affiche, pour chaque fonctionnalité, **bien plus** qu'un ON/OFF :
+
+- `default` du registre, `stage`, `scope` ;
+- **valeur effective** (résultat de la résolution §1.2 / §7) ;
+- **origine de la décision** : `default` / cache / `device` / `account` / `fleet` ;
+- **override éventuel** (quel scope a gagné) ;
+- **dernier changement** (horodatage ; pour account/fleet : depuis `feature_audit_log`) ;
+- **raison de l'arrêt** si OFF (référence `behaviorWhenOff`) et **dépendance OFF** éventuelle.
+
+Objectif : un développeur diagnostique en quelques secondes **pourquoi** un module ne démarre pas (OFF par défaut ? par override ? par dépendance ? par repli serveur ?).
+
+---
+
+## 12. Tests — minimums par fonctionnalité et par kill-switch (#16, #19)
+
+Gate de passage à `stable` : les 4 tests existent et passent.
+
+| Test | Vérifie |
+|---|---|
+| **registre** | entrée valide, champs obligatoires renseignés, `key` unique, `dependsOn` acyclique |
+| **kill-switch** | OFF ⇒ **aucune** création de données, **aucun** abonnement Realtime, **aucune** notification, **aucun** rendu carte/bandeau, **aucun** traitement interne |
+| **runtime** | ON ⇒ le module démarre via **son** chokepoint officiel (un seul) |
+| **UI** | ON ⇒ contrôles visibles ; OFF ⇒ contrôles **et** préférences dépendantes masqués |
+
+Interdit : passer `stable` sans ces 4 tests. Une feature `critical` exige en plus une revue manuelle du chokepoint (non-régression des flux validés terrain).
+
+---
+
+## 13. Rappels d'invariants & exclusion Aide V1
+
+Rappels non négociables (repris de l'ADR, opposables à l'implémentation) :
+
+- **Registre 100 % déclaratif** (INV-DASH-008) : métadonnées seules, **jamais** de logique métier. `killSwitch`/`dependsOn` sont des références/données, leur résolution vit dans le moteur.
+- **Un seul chokepoint runtime officiel par fonctionnalité** (INV-DASH-009) : source de vérité unique ; les masquages UI ne sont que cosmétiques.
+- **Pas de dépendance circulaire entre couches** (INV-DASH-011) : le Dashboard **lit** la gouvernance et **consulte** les modules ; les modules ne dépendent **jamais** du Dashboard. Le Dashboard n'est pas une bibliothèque métier.
+
+**Exclusion Aide V1 (gel — #18) :**
+
+- La refonte Dashboard **ne modifie aucun runtime d'Aide** (`assist`, `subscribeRealtime`, `syncMapMarkers`, `notifyNearby`, `renderAideFeedV1`).
+- L'entrée `aide` et `CK-AIDE` sont **documentées mais non câblées**.
+- La génération automatique (étape 4) **exclut explicitement** `aide` **et toute entrée `riskLevel:critical`** du câblage automatique : leur kill-switch se câble manuellement, plus tard, sur « Go » explicite.
+- *(Rappel factuel : Lot B Aide est en production ; « gel » = on ne touche pas son runtime pendant la refonte Dashboard.)*
+
+---
+
+## 14. Ce que le registre génère (rappel INV-DASH-004)
 
 À partir des entrées ci-dessus, l'implémentation (étapes 2-3) dérive automatiquement :
 
@@ -195,9 +333,9 @@ Ajouter une fonctionnalité = **ajouter une entrée**. Aucune autre édition.
 
 ---
 
-## 8. Limites explicites de cette spec
+## 15. Limites explicites de cette spec
 
-- Ne définit **pas** le format de stockage serveur `feature_config` (étape 5).
+- Ne définit **pas** le **schéma complet** du stockage serveur `feature_config` ni l'implémentation de `feature_audit_log` (étape 5 — seules les **exigences** sont figées ici).
 - Ne définit **pas** l'agrégateur Santé ni le banc Dev (diagnostics — étape 6).
-- Les `stage` et `scope` proposés sont des recommandations ; ils peuvent être ajustés à l'implémentation **sans rouvrir l'ADR** tant que les invariants INV-DASH-001 à 009 sont respectés.
-- Aucune décision d'architecture nouvelle : cette spec applique l'ADR figé.
+- Les `stage`, `scope`, `owner` et `riskLevel` proposés sont des recommandations ; ils peuvent être ajustés à l'implémentation **sans rouvrir l'ADR** tant que les invariants INV-DASH-001 à 011 sont respectés.
+- Aucune décision d'architecture nouvelle : cette spec applique l'ADR figé. **Aucun code, aucune migration, aucun refactoring, aucune modification du comportement actuel.**
