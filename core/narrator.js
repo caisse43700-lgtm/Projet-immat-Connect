@@ -266,11 +266,10 @@ const Narrator = (function () {
   }
 
   function _whisper(msg) {
-    // CK-ANGE-PROACTIF (Dashboard V2 étape 4) : capacité (flag) + préférence.
+    // CK-ANGE-PROACTIF (Dashboard V2) : source unique = flag ange_proactive.
     // OFF → aucune bulle proactive « ✦ ».
     try {
       if (window.isFeatureEnabled && !window.isFeatureEnabled('ange_proactive')) return;
-      if (localStorage.getItem('ic_ange_proactive') === '0') return;
     } catch (_) {}
     const now = Date.now();
     if (now - _lastWhisperAt < WHISPER_COOL) return;

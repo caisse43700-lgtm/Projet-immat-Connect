@@ -7,6 +7,24 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 7) — Dashboard V2 : kill-switches « un seul interrupteur » (UX pro)
+
+Retour PO : « réactiver ne marche pas » → cause = double-gate (capacité ET préférence) = 2 switches
+à aligner. Demande : « un truc pro » = un seul interrupteur. Refonte des gates ange/zones :
+- **Source UNIQUE = le flag `ic_feature_flags[key]`** (lu par `isFeatureEnabled`). Plus de clé `ic_*`.
+- Runtime gate flag-only : narrator `_whisper` (ange_proactive), `AngeMonologue._shouldThink`
+  (ange_monologue), `App._checkRiskZones` (zones_accidentogenes).
+- Toggle Réglages écrit le MÊME flag via `App._setLocalFlag(key,val)` (device-local, sans gate gardien,
+  + applyFeatureFlags) → Dashboard et Réglages pilotent le même switch.
+- Checkboxes Réglages reflètent le flag : openMap (ange) + applyFeatureFlags (zones+ange, via fg()).
+- toggleZonesAccidentogenes : effet immédiat (ON → _checkRiskZones si position ; OFF → vide overlay).
+- Clés legacy supprimées : ic_ange_proactive / ic_ange_monologue / ic_zones_accidentogenes (0 occurrence).
+- Défauts (via FEATURE_FLAGS) : ange_proactive/monologue = ON, zones = OFF (beta).
+- Note : les bulles « ✦ » restent ÉVÉNEMENTIELLES (réactiver n'en montre pas une instantanément ;
+  elle apparaît au prochain déclencheur). narrator v3→v4, SW v354→v355.
+
+---
+
 ## SESSION 2026-06-29 (suite 6) — Dashboard V2 ÉTAPE 4 : 1ers kill-switches runtime (zones + ange)
 
 Premiers kill-switches : OFF coupe RÉELLEMENT le module au chokepoint (modules non-critiques only).
