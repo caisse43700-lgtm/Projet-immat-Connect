@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 5) — Dashboard V2 ÉTAPE 3 : onglet Fonctionnalités généré depuis le registre
+
+Migration ADR étape 3 : générer l'UI Fonctionnalités depuis le registre (sans kill-switch — étape 4).
+- `App.gdFeaturesBlock()` remplace le tableau `_flags` codé en dur (12 entrées) par les 7 features du
+  registre. Affichage enrichi : icône (map UI), label, stage (couleur), scope, risk, marqueur gelé,
+  dépendances. Toggle ON/OFF → `setFeatureFlag(f.replaces||f.key, !on)` (écrit le flag legacy) +
+  openGardienDashboard. État lu via FeatureRegistry.resolve().key. **Activation INCHANGÉE** vs avant.
+- Dépendance `copilote_monologue → copilote_proactif` (registre dependsOn) : si proactif OFF, le
+  monologue est rendu **INDISPO** (bouton désactivé + « nécessite copilote_proactif »). Contenu au
+  Dashboard ; aucun changement de runtime ni de Paramètres.
+- Reclassement effectif : les 5 préférences (sons, voix_gps, reduce_effects, messages_notif,
+  appels_notif) NE figurent plus dans la grille Gardien ; elles restent réglables dans Paramètres
+  (boutons sons/voix/effets + toggles notifs). setFeatureFlag/isFeatureEnabled/applyFeatureFlags
+  inchangés (le bloc est juste généré autrement). Edge : un Gardien ayant jadis mis messages_notif/
+  appels_notif=false ne peut plus les rebasculer depuis le Dashboard (défaut=ON → sans impact réel).
+- Honnêteté : note « OFF → module réellement inactif » (fausse) remplacée par « effet runtime
+  complet = étape 4 » (point de vigilance #8 / INV-DASH-007).
+- Remplacement du gros IIFE codé en dur par `${App.gdFeaturesBlock?App.gdFeaturesBlock():''}`.
+  8 scripts inline OK ; ancien `const _flags=[` supprimé. SW v351→v352.
+
+---
+
 ## SESSION 2026-06-29 (suite 4) — Dashboard V2 ÉTAPE 2 : registre en parallèle (lecture seule)
 
 Migration ADR étape 2 : introduire le registre EN PARALLÈLE sans débrancher l'ancien.

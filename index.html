@@ -1053,7 +1053,7 @@ openGardienDashboard(){
         <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px" id="gardienIntelGrid"></div>
       </div>
       ${App.gdRegistryPreview?App.gdRegistryPreview():''}
-      <div data-gd="features" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-top:12px">${(()=>{const _flags=[{key:'zones_accidentogenes',label:'Zones accidentog\xe8nes',icon:'⚠️'},{key:'sons',label:'Sons',icon:'🔔'},{key:'voix_gps',label:'Voix GPS',icon:'🔊'},{key:'alertes_route',label:'Alertes route',icon:'🛣'},{key:'alertes_vehicule',label:'Alertes v\xe9hicule',icon:'🚗'},{key:'demandes_aide',label:"Demandes d'aide",icon:'🆘'},{key:'messages_notif',label:'Notifs messages',icon:'💬'},{key:'appels_notif',label:'Notifs appels',icon:'📞'},{key:'ange_proactive',label:'Analyses proactives Ange',icon:'🧠'},{key:'ange_monologue',label:'Monologue Ange',icon:'🎤'},{key:'auto_status',label:'Auto-statut conduite',icon:'🚦'},{key:'reduce_effects',label:'R\xe9duction des effets',icon:'⚡'}];const _rows=_flags.map(f=>{const on=window.isFeatureEnabled?window.isFeatureEnabled(f.key):true;const bg=on?'#14532d':'#3b0f0f';const col=on?'#4ade80':'#f87171';return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px">'+f.icon+'</span><span style="color:#e2e8f0;font-size:13px">'+esc(f.label)+'</span></div><button onclick="App.setFeatureFlag(\''+f.key+'\','+(!on)+');App.openGardienDashboard()" style="background:'+bg+';color:'+col+';border:1px solid '+col+';border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:700;min-width:80px">'+(on?'ACTIV\xc9 ✅':'D\xc9SACT. 🔴')+'</button></div>';}).join('');return'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#a3e635">⚙️ Fonctionnalit\xe9s / Param\xe8tres</b><span style="font-size:10px;color:#555">V1 · local device</span></div><div style="font-size:10px;color:#555;margin-bottom:10px">OFF → module r\xe9ellement inactif sur cet appareil.</div>'+_rows;})()}</div></div>`;
+      <div data-gd="features" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-top:12px">${App.gdFeaturesBlock?App.gdFeaturesBlock():''}</div></div>`;
     // Remplir la grille intelligence
     try{
       const S=window.S||{};
@@ -1112,6 +1112,32 @@ gdRegistryPreview(){
     }).join('');
     return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635;font-size:11px">🗂 Registre (aperçu lecture seule · parallèle)</b><span style="color:#555;font-size:10px">'+window.FeatureRegistry.list().length+' features</span></div><div style="font-size:10px;color:#555;margin-bottom:8px">Étape 2 : registre introduit en parallèle. N\'agit pas encore sur le runtime (kill-switch = étape 4).</div>'+rows+'</div>';
   }catch(_){return'';}
+},
+// Dashboard V2 — étape 3 : onglet Fonctionnalités GÉNÉRÉ depuis le registre.
+// Activation INCHANGÉE : le toggle écrit sur le flag legacy (replaces), lu par isFeatureEnabled.
+// PAS de kill-switch runtime (étape 4). Préférences (sons/voix/effets/notifs) → Paramètres uniquement.
+gdFeaturesBlock(){
+  try{
+    if(!window.FeatureRegistry)return'';
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤'};
+    const stgCol={alpha:'#f87171',beta:'#fb923c',stable:'#4ade80',deprecated:'#94a3b8',removed:'#555'};
+    const reg=window.FeatureRegistry.list();
+    const rows=reg.map(f=>{
+      const on=window.FeatureRegistry.resolve(f.key).value;
+      const legacy=f.replaces||f.key;
+      const depOff=(f.dependsOn||[]).filter(k=>!window.FeatureRegistry.isEnabled(k));
+      const blocked=depOff.length>0;
+      const bg=blocked?'#1a1a2e':(on?'#14532d':'#3b0f0f');
+      const col=blocked?'#64748b':(on?'#4ade80':'#f87171');
+      const sc=stgCol[f.stage]||'#94a3b8';
+      const btn=blocked
+        ?'<button type="button" disabled style="background:#1a1a2e;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;min-width:80px;opacity:.7">INDISPO.</button>'
+        :'<button type="button" onclick="App.setFeatureFlag(\''+legacy+'\','+(!on)+');App.openGardienDashboard()" style="background:'+bg+';color:'+col+';border:1px solid '+col+';border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:700;min-width:80px">'+(on?'ACTIVÉ ✅':'DÉSACT. 🔴')+'</button>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a2e;gap:8px"><div style="min-width:0"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px">'+(icons[f.key]||'🔧')+'</span><span style="color:#e2e8f0;font-size:13px">'+e2(f.label)+'</span>'+(f.frozen?'<span style="color:#fbbf24;font-size:10px">· gelé</span>':'')+'</div><div style="color:#475569;font-size:10px;margin-top:2px;margin-left:23px"><span style="color:'+sc+'">'+e2(f.stage)+'</span> · '+e2(f.scope)+' · risk:'+e2(f.riskLevel)+(blocked?' · nécessite '+e2(depOff.join(',')):'')+'</div></div>'+btn+'</div>';
+    }).join('');
+    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#a3e635">⚙️ Fonctionnalités</b><span style="font-size:10px;color:#555">V2 · registre · '+reg.length+'</span></div><div style="font-size:10px;color:#555;margin-bottom:10px">Généré depuis le registre. Activation via flag (pont legacy) ; effet runtime complet = étape 4. Préférences (sons, voix, effets, notifs) → Paramètres.</div>'+rows;
+  }catch(_){return'<div style="color:#e57373;font-size:12px">Registre indisponible.</div>';}
 },
 runImmunityCheck(){
   const out=$('gardienImmunityResult');
