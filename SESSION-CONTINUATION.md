@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 9) — Fix pastilles Aide (nav + catégorie)
+
+Bug PO : aucune pastille sur Activité ni sur la catégorie Aide. Cause : `bAide` se calculait depuis
+`S.alerts` group 'assist' (neutralisé par la bascule Lot B) → toujours 0 ; le flux Aide V1 (serveur)
+ne nourrissait pas le compteur.
+Fix :
+- `App.AideV1.refreshBadge()` (débouncé 400ms) → `_doRefreshBadge()` : fetch nearby + engagementsMine
+  + myEngagements ; `S._aideBadgeCount` = (nearby hors engagées/masquées) + (engagements 'proposee'
+  sur mes demandes). Compteur LIVE (pas de seen-tracking) — se vide quand les items se résolvent/
+  sont masqués/engagés.
+- `renderActivityMain` : `bAide = S._aideBadgeCount||0` (catBadgeAide).
+- `updateActBadge` : total nav `actBadge` += `S._aideBadgeCount`.
+- Abonnement Realtime Aide rendu GLOBAL : subscribe à openMap ; closeActivityCat n'unsubscribe plus ;
+  openActivityCat subscribe toujours (plus de `else unsubscribe`). → le demandeur voit la pastille
+  « un helper a proposé » partout, pas seulement dans l'onglet Aide.
+- refreshBadge appelé : openMap (startup), loadOthers (fin, refresh carte périodique), reRender
+  Realtime, openActivityCat. SW v356→v357.
+Note : compteur live (n'attend pas le « vu »). Si besoin plus tard : seen-tracking pour clear-on-view.
+
+---
+
 ## SESSION 2026-06-29 (suite 8) — Fix Aide : marqueur carte non retiré à l'annulation
 
 Bug PO : « Je n'ai plus besoin » (cancel) retire bien la carte dans Activité mais le 🆘 reste sur
