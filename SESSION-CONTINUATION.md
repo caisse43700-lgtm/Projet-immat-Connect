@@ -7,6 +7,24 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 10) — Zones : modèle 2 niveaux (capacité Dashboard / préférence Réglages)
+
+Retour PO : désactiver les zones dans Réglages cachait la section (single-switch précédent), donc
+impossible de rallumer depuis Réglages ; le PO veut : Dashboard = maître de disponibilité,
+Réglages = interrupteur réel. Modèle voulu = capacité/préférence (INV-DASH-005).
+Fix (annule la conflation single-switch UNIQUEMENT pour zones ; ange reste single-switch) :
+- `toggleZonesAccidentogenes(on)` → écrit la PRÉFÉRENCE `ic_zones_accidentogenes` (plus le flag) ;
+  effet immédiat (ON→_checkRiskZones, OFF→vide overlay) ; ne cache PAS la section.
+- `applyFeatureFlags` : `sflagZonesSection` visible selon la CAPACITÉ (flag, inchangé) ; checkbox
+  Réglages reflète la PRÉFÉRENCE `ic_zones_accidentogenes` (défaut '1').
+- Dashboard toggle (gdFeaturesBlock) : écrit la CAPACITÉ (flag) → montre/cache la section.
+- Runtime `_checkRiskZones` : `_zOn = isFeatureEnabled('zones_accidentogenes') && ic_zones_accidentogenes==='1'`.
+Comportement obtenu (conforme demande PO) : réactiver Dashboard → section + zones reviennent
+(pref défaut ON) ; désactiver Dashboard → section + zones disparaissent ; désactiver Réglages →
+zones off mais section reste (rallumable). SW v357→v358.
+
+---
+
 ## SESSION 2026-06-29 (suite 9) — Fix pastilles Aide (nav + catégorie)
 
 Bug PO : aucune pastille sur Activité ni sur la catégorie Aide. Cause : `bAide` se calculait depuis
