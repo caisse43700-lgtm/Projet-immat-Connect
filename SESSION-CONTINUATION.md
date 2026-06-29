@@ -7,6 +7,57 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 12) — Dashboard V2 ÉTAPE 5 : gouvernance flotte + lignes Ange individuelles
+
+Demande PO : « désactiver dans le Dashboard doit disparaître POUR LES UTILISATEURS » (pas seulement
+l'appareil Gardien). Les flags étaient device-only (ic_feature_flags). → Étape 5 : portée FLOTTE.
+
+Migration `supabase/migrations/20260629120000_feature_config.sql` :
+- table feature_config(key PK, enabled, updated_by, updated_at) ; RLS : SELECT pour tous, AUCUNE
+  policy write (INV-DASH-018) ; RPC set_feature_flag_fleet(p_key,p_enabled) SECURITY DEFINER,
+  réservée get_my_role()='gardien' ; GRANT EXECUTE authenticated ; auto-test DO. Auto-appliquée par
+  la CI (deploy-edge-functions.yml fait db push sur changement migrations/**).
+
+Client (résolution à 3 couches : FLOTTE → device → défaut ; sûr par défaut) :
+- `isFeatureEnabled(k)` : couche fleet prioritaire (S._fleetFlags || window._fleetFlagsCache) puis
+  ic_feature_flags puis FEATURE_FLAGS. Cache `ic_fleet_flags` lu sync au boot (avant S).
+- `FeatureRegistry.resolve` : même couche fleet (origine 'fleet(serveur)').
+- `App.loadFleetFlags()` : SELECT feature_config → S._fleetFlags + cache + applyFeatureFlags +
+  updateActBadge. Appelé à openMap.
+- `setFeatureFlag(key,val)` (toggle Dashboard, gardien) : maj optimiste S._fleetFlags + cache +
+  RPC set_feature_flag_fleet → s'applique à TOUS. Toast « pour tous les conducteurs ».
+- Sûr par défaut : table vide / RPC absente → fleet vide → retombe sur device/défaut (comportement
+  actuel). Pas de régression avant que le Gardien ne gouverne une clé.
+
+Lignes Ange individuelles (PART A) : applyFeatureFlags masque chaque settings-row Ange via
+closest('.settings-row') selon sa capacité (fg('ange_proactive') / fg('ange_monologue')) ; la section
+reste si au moins une capacité ON.
+
+Modèle final : Dashboard = capacité (fleet → gouverne tous) ; Réglages = préférence (device, perso).
+Effectif = capacité(fleet/device/défaut) ET préférence. SW v359→v360.
+NB : _setLocalFlag devenu inerte (laissé). Audit complet (history) = différé (updated_by/at suffit V1).
+
+---
+
+## SESSION 2026-06-29 (suite 11) — Modèle 2 niveaux UNIFORME (Ange aligné sur zones)
+
+Demande PO : « le même modèle pour toutes les fonctionnalités qui apparaissent dans Réglages et
+qu'on peut activer/désactiver depuis le Dashboard ». Audit : seul Ange était encore single-switch ;
+les autres (alertes route/véhicule, demandes d'aide, auto-statut) étaient déjà en 2 niveaux
+(applyFeatureFlags cache la ligne selon la capacité-flag ; le toggle Réglages écrit une préférence).
+Conversion Ange (proactif + monologue) en 2 niveaux :
+- toggleAngeProactive/Monologue → écrivent la PRÉFÉRENCE ic_ange_proactive/ic_ange_monologue (plus le flag).
+- narrator _whisper : gate = isFeatureEnabled('ange_proactive') ET ic_ange_proactive!=='0'.
+- AngeMonologue._shouldThink : gate = isFeatureEnabled('ange_monologue') ET ic_ange_monologue!=='0'.
+- checkboxes (openMap + applyFeatureFlags) reflètent la préférence (défaut '1' = ON).
+- section sflagAngeSection visible selon capacité (fg(ange_proactive)||fg(ange_monologue)) — inchangé.
+- Dashboard toggle (gdFeaturesBlock) écrit toujours la capacité (flag).
+Résultat : Dashboard OFF → section + Ange disparaissent ; Dashboard ON → reviennent (pref ON par
+défaut) ; Réglages OFF → Ange off mais section reste. _setLocalFlag devenu inerte (laissé, inoffensif).
+narrator v4→v5, SW v358→v359.
+
+---
+
 ## SESSION 2026-06-29 (suite 10) — Zones : modèle 2 niveaux (capacité Dashboard / préférence Réglages)
 
 Retour PO : désactiver les zones dans Réglages cachait la section (single-switch précédent), donc
