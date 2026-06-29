@@ -2375,13 +2375,18 @@ RÈGLE ABSOLUE :
 ─────────────────────────────────────────────────
   Deux options à soumettre à l'utilisateur :
 
-  OPTION A — Dashboard Gardien normalisation
+  OPTION A — Dashboard Gardien normalisation  ⏳ DISPONIBLE
     Audit #gardienDashboard : voyants, GVC, Diagnostic IA, Immatest.
     Objectif : corriger ce qui est cassé ou incomplet, sans feature nouvelle.
 
-  OPTION B — Modale signalement abus (openAbuseReport)
-    Remplacer le prompt() natif par une modale HTML cohérente avec le design.
-    Périmètre : index.html uniquement, aucun changement backend.
+  OPTION B — Modale signalement abus (openAbuseReport)  ✅ DÉJÀ FAIT
+    La modale HTML #abuseModal existe (openAbuseReport/selectAbuseCategory/
+    submitAbuseReport → table abuse_reports). Plus aucun prompt() natif. Rien à faire.
+
+NOTE DE RÉALITÉ (2026-06-28) : le module AIDE est COMPLET (backend Lot A + bascule
+Lot B + #1 carte + #4 contact + #7 push proximité, SW v348). Le chantier MESSAGES
+(6 points) est marqué terminé. OPTION B est faite. Les seules pistes de dev restantes :
+OPTION A (Dashboard Gardien) ou la phase d'OBSERVATION terrain recommandée.
 ```
 
 ---
