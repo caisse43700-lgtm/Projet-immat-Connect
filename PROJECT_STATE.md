@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v349 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v350 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-29 | IA session | Dashboard V2 — ÉTAPE 2 (registre en parallèle) : window.FEATURE_REGISTRY (7 entrées déclaratives, INV-DASH-008) + window.FeatureRegistry (list/get/resolve/isEnabled, lecture seule, device-only via pont 'replaces' vers flag legacy) + aperçu lecture seule App.gdRegistryPreview dans l'onglet Développeur. NE remplace PAS isFeatureEnabled/FEATURE_FLAGS (source live intacte) ; aucun kill-switch branché, aucune génération de Dashboard depuis le registre, aucune écriture, aucun impact runtime/Aide. SW v350. (local/merge-to-main) |
 | 2026-06-29 | IA session | Dashboard V2 — ÉTAPE 1 (réorg visuelle, 0 logique) : Dashboard Gardien réorganisé en 4 onglets (🟢 Santé / 🛡 Modération / 🎛 Fonctionnalités / 🔧 Développeur) via attributs data-gd + CSS + App.gdTab (onglet actif persistant S._gdTab). Aucun nœud déplacé, aucun handler/flag/runtime touché, aucun impact Aide. Santé par défaut → 1re vue allégée (dumps runtime/OBD repliés dans Dev). SW v349. (local/merge-to-main) |
 | 2026-06-29 | IA session | Dashboard V2 : 20 points de vigilance opposables ajoutés à l'ADR §13 (registre déclaratif, migration progressive, ne pas casser Paramètres, kill-switch runtime, source unique, scope, Santé avant suppression diagnostics, pas de faux vert, doc obligatoire, Aide gelé, pas de dépendance circulaire, compat ascendante, observabilité, perf, tolérance erreurs, évolutivité, audit, sécurité, tests, doc=complétude). Spec mise à jour : résolution d'état avec repli serveur + sécurité écriture scopes, observabilité Dev, définition du « terminé » (4 tests avant stable). 0 code. |
 | 2026-06-29 | IA session | Dashboard V2 : ADR complété (INV-DASH-008 registre 100% déclaratif, INV-DASH-009 un seul chokepoint runtime officiel) + livrable étape 1 de la migration = `docs/SPEC-DASHBOARD-REGISTRY.md` (structure du registre, énumérations stage/scope/group, résolution d'état, 7 entrées initiales flaggées + 4 modules à intégrer, préférences hors registre, mapping complet 12 flags→cible, chokepoints officiels CK-*). Documentation seule, 0 code applicatif. Ordre retenu : Spec registre → Étape 1 (4 onglets) → Étape 2 (registre en parallèle). |

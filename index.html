@@ -670,6 +670,33 @@ const jget=(k,f)=>{try{let v=localStorage.getItem(k);return v?JSON.parse(v):f}ca
 const FEATURE_FLAGS={zones_accidentogenes:false,sons:true,voix_gps:true,reduce_effects:true,alertes_route:true,alertes_vehicule:true,demandes_aide:true,messages_notif:true,appels_notif:true,ange_proactive:true,ange_monologue:true,auto_status:true};
 function isFeatureEnabled(k){try{const f=JSON.parse(localStorage.getItem('ic_feature_flags')||'{}');if(k in f)return!!f[k];return k in FEATURE_FLAGS?FEATURE_FLAGS[k]:true;}catch(e){return k in FEATURE_FLAGS?FEATURE_FLAGS[k]:true;}}
 window.isFeatureEnabled=isFeatureEnabled;
+// ── Dashboard V2 — ÉTAPE 2 : REGISTRE déclaratif introduit EN PARALLÈLE (réf docs/SPEC-DASHBOARD-REGISTRY.md).
+// 100 % données (INV-DASH-008). Lecture seule. NE remplace PAS isFeatureEnabled()/FEATURE_FLAGS (source live).
+// Aucun kill-switch branché (étape 4), aucune génération de Dashboard depuis le registre (étape 3),
+// aucune écriture, aucun impact runtime/Aide. Résolution device-only via pont "replaces" vers le flag legacy.
+const FEATURE_REGISTRY=[
+  {key:'aide',label:"Demandes d'aide",group:'Assistance',stage:'stable',scope:'account',default:true,killSwitch:'CK-AIDE',owner:'Produit / Aide',riskLevel:'medium',dependsOn:[],replaces:'demandes_aide',frozen:true,description:"Demander/proposer de l'aide entre conducteurs proches",behaviorWhenOff:"Aucune demande créée/reçue, pas de marqueur carte, pas de push proximité, feed Aide vide."},
+  {key:'signalement_route',label:'Signalements route',group:'Signalements',stage:'stable',scope:'account',default:true,killSwitch:'CK-ROUTE',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],replaces:'alertes_route',description:'Signaler un incident de circulation',behaviorWhenOff:'Aucun signalement route créé/affiché, pas de notif route'},
+  {key:'signalement_vehicule',label:'Signalements véhicule',group:'Signalements',stage:'stable',scope:'account',default:true,killSwitch:'CK-VEHICULE',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],replaces:'alertes_vehicule',description:"Prévenir un conducteur d'un problème sur son véhicule",behaviorWhenOff:'Aucun envoi/réception de signalement véhicule, pas de notif'},
+  {key:'zones_accidentogenes',label:'Zones accidentogènes',group:'Carte',stage:'beta',scope:'account',default:false,killSwitch:'CK-ZONES',owner:'Produit / Carte',riskLevel:'low',dependsOn:[],replaces:'zones_accidentogenes',description:'Afficher zones à risque + alertes préventives',behaviorWhenOff:'Couche zones masquée, aucune alerte préventive émise'},
+  {key:'auto_status',label:'Auto-statut conduite',group:'Présence',stage:'stable',scope:'device',default:true,killSwitch:'CK-AUTOSTATUS',owner:'Produit / Présence',riskLevel:'low',dependsOn:[],replaces:'auto_status',description:'Passer en présence conduite au-delà de 20 km/h',behaviorWhenOff:'La présence ne change jamais automatiquement'},
+  {key:'copilote_proactif',label:'Ange — analyses proactives',group:'IA',stage:'beta',scope:'account',default:true,killSwitch:'CK-ANGE-PROACTIF',owner:'Produit / IA',riskLevel:'medium',dependsOn:[],replaces:'ange_proactive',description:'Ange surveille le trajet et intervient spontanément',behaviorWhenOff:'Aucune analyse proactive déclenchée'},
+  {key:'copilote_monologue',label:'Ange — monologue conduite',group:'IA',stage:'beta',scope:'device',default:true,killSwitch:'CK-ANGE-MONOLOGUE',owner:'Produit / IA',riskLevel:'low',dependsOn:['copilote_proactif'],replaces:'ange_monologue',description:'Ange pense à voix haute en conduite',behaviorWhenOff:'Aucune prise de parole spontanée en conduite'}
+];
+window.FEATURE_REGISTRY=FEATURE_REGISTRY;
+window.FeatureRegistry={
+  list(){return FEATURE_REGISTRY.slice();},
+  get(key){return FEATURE_REGISTRY.find(f=>f.key===key)||null;},
+  // Résolution PARALLÈLE lecture seule (device-only en étape 2) : pont vers le flag legacy via "replaces".
+  // Reflète exactement l'état actuel ; n'altère jamais l'état ; serveur (account/fleet) = étape 5.
+  resolve(key){const e=this.get(key);if(!e)return{value:false,origin:'unknown',scope:null};
+    let store={};try{store=JSON.parse(localStorage.getItem('ic_feature_flags')||'{}');}catch(_){}
+    const legacy=e.replaces||e.key;
+    if(legacy in store)return{value:!!store[legacy],origin:'override(device)',scope:e.scope};
+    return{value:!!e.default,origin:'default',scope:e.scope};
+  },
+  isEnabled(key){return this.resolve(key).value;}
+};
 const safeSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const ALERTS_STORAGE_VERSION=1;
 (function(){const v=Number(get('ic_storage_ver','0'));if(v<ALERTS_STORAGE_VERSION){try{const old=jget('ic_alerts',[]);safeSet('ic_alerts',old.filter(a=>a&&a.group));set('ic_storage_ver',String(ALERTS_STORAGE_VERSION));console.info('Storage migré v'+ALERTS_STORAGE_VERSION)}catch(e){}}})();
@@ -1025,6 +1052,7 @@ openGardienDashboard(){
         <b style="color:#94a3b8;font-size:11px">📊 État intelligence synthétique</b>
         <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px" id="gardienIntelGrid"></div>
       </div>
+      ${App.gdRegistryPreview?App.gdRegistryPreview():''}
       <div data-gd="features" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-top:12px">${(()=>{const _flags=[{key:'zones_accidentogenes',label:'Zones accidentog\xe8nes',icon:'⚠️'},{key:'sons',label:'Sons',icon:'🔔'},{key:'voix_gps',label:'Voix GPS',icon:'🔊'},{key:'alertes_route',label:'Alertes route',icon:'🛣'},{key:'alertes_vehicule',label:'Alertes v\xe9hicule',icon:'🚗'},{key:'demandes_aide',label:"Demandes d'aide",icon:'🆘'},{key:'messages_notif',label:'Notifs messages',icon:'💬'},{key:'appels_notif',label:'Notifs appels',icon:'📞'},{key:'ange_proactive',label:'Analyses proactives Ange',icon:'🧠'},{key:'ange_monologue',label:'Monologue Ange',icon:'🎤'},{key:'auto_status',label:'Auto-statut conduite',icon:'🚦'},{key:'reduce_effects',label:'R\xe9duction des effets',icon:'⚡'}];const _rows=_flags.map(f=>{const on=window.isFeatureEnabled?window.isFeatureEnabled(f.key):true;const bg=on?'#14532d':'#3b0f0f';const col=on?'#4ade80':'#f87171';return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px">'+f.icon+'</span><span style="color:#e2e8f0;font-size:13px">'+esc(f.label)+'</span></div><button onclick="App.setFeatureFlag(\''+f.key+'\','+(!on)+');App.openGardienDashboard()" style="background:'+bg+';color:'+col+';border:1px solid '+col+';border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:700;min-width:80px">'+(on?'ACTIV\xc9 ✅':'D\xc9SACT. 🔴')+'</button></div>';}).join('');return'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#a3e635">⚙️ Fonctionnalit\xe9s / Param\xe8tres</b><span style="font-size:10px;color:#555">V1 · local device</span></div><div style="font-size:10px;color:#555;margin-bottom:10px">OFF → module r\xe9ellement inactif sur cet appareil.</div>'+_rows;})()}</div></div>`;
     // Remplir la grille intelligence
     try{
@@ -1065,6 +1093,26 @@ openGardienDashboard(){
   }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
 },
 gdTab(name){try{const b=document.getElementById('gardienDashboardBody');if(!b)return;if(window.S)S._gdTab=name;const h=b.querySelector('#gdHost');if(h)h.setAttribute('data-gd-active',name);b.querySelectorAll('.gd-tab').forEach(x=>x.classList.toggle('on',x.getAttribute('data-gd')===name));}catch(_){}},
+// Dashboard V2 — étape 2 : aperçu LECTURE SEULE du registre (parallèle). N'agit pas sur le runtime.
+gdRegistryPreview(){
+  try{
+    if(!window.FeatureRegistry)return'';
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const stgCol={alpha:'#f87171',beta:'#fb923c',stable:'#4ade80',deprecated:'#94a3b8',removed:'#555'};
+    const rows=window.FeatureRegistry.list().map(f=>{
+      const r=window.FeatureRegistry.resolve(f.key);
+      const col=r.value?'#4ade80':'#f87171';
+      const sc=stgCol[f.stage]||'#94a3b8';
+      const dep=(f.dependsOn&&f.dependsOn.length)?(' · dépend: '+e2(f.dependsOn.join(','))):'';
+      return '<div style="border-bottom:1px solid #1a1a2e;padding:6px 0;font-size:11px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#e2e8f0;font-weight:600">'+e2(f.label)+'</span><span style="color:'+col+';font-weight:700">'+(r.value?'ON':'OFF')+'</span></div>'
+        +'<div style="color:#64748b;margin-top:2px">'+e2(f.key)+' · '+e2(f.group)+' · <span style="color:'+sc+'">'+e2(f.stage)+'</span> · '+e2(f.scope)+' · risk:'+e2(f.riskLevel)+' · '+e2(f.killSwitch)+(f.frozen?' · <span style="color:#fbbf24">gelé</span>':'')+'</div>'
+        +'<div style="color:#475569;margin-top:1px">origine: '+e2(r.origin)+dep+'</div>'
+        +'</div>';
+    }).join('');
+    return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635;font-size:11px">🗂 Registre (aperçu lecture seule · parallèle)</b><span style="color:#555;font-size:10px">'+window.FeatureRegistry.list().length+' features</span></div><div style="font-size:10px;color:#555;margin-bottom:8px">Étape 2 : registre introduit en parallèle. N\'agit pas encore sur le runtime (kill-switch = étape 4).</div>'+rows+'</div>';
+  }catch(_){return'';}
+},
 runImmunityCheck(){
   const out=$('gardienImmunityResult');
   if(!out)return;
