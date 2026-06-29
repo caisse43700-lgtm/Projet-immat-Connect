@@ -913,8 +913,8 @@ openGardienDashboard(){
         #gdHost[data-gd-active="moderation"]>[data-gd~="moderation"]{display:block}
         #gdHost[data-gd-active="features"]>[data-gd~="features"]{display:block}
         #gdHost[data-gd-active="dev"]>[data-gd~="dev"]{display:block}
-        .gd-tabs{display:flex;gap:4px;background:#06090f;padding:2px 0 10px;margin-bottom:4px;flex-wrap:wrap}
-        .gd-tab{flex:1;min-width:80px;background:transparent;color:#64748b;border:1px solid #1e293b;border-radius:8px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer}
+        .gd-tabs{display:flex;gap:4px;background:#06090f;margin:0 -16px 4px;padding:6px 16px 10px;flex-wrap:wrap;position:sticky;top:0;z-index:1}
+        .gd-tab{flex:1 1 auto;min-width:84px;white-space:nowrap;background:transparent;color:#64748b;border:1px solid #1e293b;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:700;cursor:pointer}
         .gd-tab.on{background:#1e3a5f;color:#e2e8f0;border-color:#38bdf8}
       </style>
       <div class="gd-tabs">
@@ -1054,6 +1054,8 @@ openGardienDashboard(){
       </div>
       ${App.gdRegistryPreview?App.gdRegistryPreview():''}
       <div data-gd="features" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-top:12px">${App.gdFeaturesBlock?App.gdFeaturesBlock():''}</div></div>`;
+    // Onglets collants positionnés sous le header (hauteur dynamique)
+    try{const _hdr=document.getElementById('gardienDashboardHeader');const _tabs=body.querySelector('.gd-tabs');if(_hdr&&_tabs){const _apply=()=>{try{_tabs.style.top=(_hdr.offsetHeight||0)+'px';}catch(_){}};_apply();if(window.requestAnimationFrame)requestAnimationFrame(_apply);setTimeout(_apply,120);}}catch(_){}
     // Remplir la grille intelligence
     try{
       const S=window.S||{};
