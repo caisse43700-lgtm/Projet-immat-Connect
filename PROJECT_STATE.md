@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v348 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v349 · app.css v61 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2375,13 +2375,18 @@ RÈGLE ABSOLUE :
 ─────────────────────────────────────────────────
   Deux options à soumettre à l'utilisateur :
 
-  OPTION A — Dashboard Gardien normalisation
+  OPTION A — Dashboard Gardien normalisation  ⏳ DISPONIBLE
     Audit #gardienDashboard : voyants, GVC, Diagnostic IA, Immatest.
     Objectif : corriger ce qui est cassé ou incomplet, sans feature nouvelle.
 
-  OPTION B — Modale signalement abus (openAbuseReport)
-    Remplacer le prompt() natif par une modale HTML cohérente avec le design.
-    Périmètre : index.html uniquement, aucun changement backend.
+  OPTION B — Modale signalement abus (openAbuseReport)  ✅ DÉJÀ FAIT
+    La modale HTML #abuseModal existe (openAbuseReport/selectAbuseCategory/
+    submitAbuseReport → table abuse_reports). Plus aucun prompt() natif. Rien à faire.
+
+NOTE DE RÉALITÉ (2026-06-28) : le module AIDE est COMPLET (backend Lot A + bascule
+Lot B + #1 carte + #4 contact + #7 push proximité, SW v348). Le chantier MESSAGES
+(6 points) est marqué terminé. OPTION B est faite. Les seules pistes de dev restantes :
+OPTION A (Dashboard Gardien) ou la phase d'OBSERVATION terrain recommandée.
 ```
 
 ---
@@ -2519,6 +2524,8 @@ RÈGLE ABSOLUE :
 | **`docs/PRODUCT_ARCHITECTURE_V2.md`** | Roadmap architecture produit V2 — 17 sections — 8 modules (Véhicule, Stationnement, Maintenance, Assistance, Communauté, Monétisation, Professionnels, IA/ANGE) — matrice compatibilité, angles morts, dettes futures, tables réservées, EF réservées, invariants V2, arbre de décision GO/NO-GO | Avant tout sprint V2 ou décision d'architecture future |
 | **`docs/BETA_READINESS_AUDIT.md`** | Audit d'exploitation bêta — 10 sections — 20 fonctionnalités codées non testées, 10 pires catastrophes + procédures de reprise, métriques 30j, checklist opérationnelle J1→J7, commandes SQL de diagnostic | AVANT toute session de déploiement terrain |
 | **`docs/TECHNICAL_AUDIT_AND_ROADMAP.md`** | Audit du code réel + état d'avancement par module (% code, % actif) + 17 écarts vision/réalité + roadmap Sprint 8→13 + Sprint 8 détaillé (objectifs, tâches, risques, durée) + 8 angles morts thématiques | Avant tout sprint et décision d'architecture |
+| **`docs/ADR-DASHBOARD-V2.md`** | ADR figé — refonte Dashboard Gardien en écran de gouvernance + registre data-driven unique (9 invariants INV-DASH, portée device/account/fleet, cycle de vie, migration 6 étapes) | Avant tout travail sur le Dashboard, les Feature Flags ou les diagnostics |
+| **`docs/SPEC-DASHBOARD-REGISTRY.md`** | Spec du registre (structure déclarative, énumérations, 7 entrées initiales + 4 modules à intégrer, mapping 12 flags→cible, chokepoints CK-*) — réf d'implémentation de l'étape 2 | Avant d'implémenter le registre (étapes 2-4) |
 | **`CLAUDE.md`** | Instructions pour les IA (point d'entrée) | Lu automatiquement par Claude Code |
 
 **Hiérarchie de vérité :**
@@ -2559,6 +2566,7 @@ Ces décisions ont été prises, validées et ne doivent pas être rediscutées 
 | D19 | **localStorage futur** : MAX_BLOCKED=500, TTL interactions+notifications=90 jours. Pas de travail Sprint 8. | Sprint 9 | 2026-06-13 |
 | D20 | **immat-brain-dialog dégradation gracieuse** : si EF échoue → afficher "Le conseiller est momentanément indisponible. Les autres fonctionnalités restent opérationnelles." Jamais écran vide ni stack trace. | Sprint 8 | 2026-06-13 |
 | D21 | **Ordre Sprint 8** : 1.Déploiement migrations → 2.Validation terrain → 3.S7-NEARBY → 4.delete_audit_log → 5.Promise.allSettled() push → 6.Dégradation Claude → 7.Audit prod. S7-PROFILE et S7-PHOTO bloqués jusqu'à validation terrain complète. | Roadmap | 2026-06-13 |
+| D22 | **Dashboard Gardien V2** (voir `docs/ADR-DASHBOARD-V2.md`) : Dashboard = écran de gouvernance 4 onglets (Santé/Modération/Fonctionnalités/Développeur) ; **registre data-driven = unique source de vérité** ; INV-DASH-001 une seule source d'activation, INV-DASH-002 kill-switch réel au chokepoint runtime (OFF arrête vraiment le module), INV-DASH-003 fonctionnalité≠préférence (sons/voix/effets/notifs = Paramètres only), INV-DASH-006 vérité serveur > cache local, INV-DASH-007 pas de faux vert. Portée device/account/fleet. Cycle alpha→beta→stable→deprecated→removed. Migration non destructive en 6 étapes. **ADR figé — implémentation non commencée.** | Archi Dashboard | 2026-06-29 |
 
 ---
 
@@ -2771,6 +2779,10 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-29 | IA session | Dashboard V2 — ÉTAPE 1 (réorg visuelle, 0 logique) : Dashboard Gardien réorganisé en 4 onglets (🟢 Santé / 🛡 Modération / 🎛 Fonctionnalités / 🔧 Développeur) via attributs data-gd + CSS + App.gdTab (onglet actif persistant S._gdTab). Aucun nœud déplacé, aucun handler/flag/runtime touché, aucun impact Aide. Santé par défaut → 1re vue allégée (dumps runtime/OBD repliés dans Dev). SW v349. (local/merge-to-main) |
+| 2026-06-29 | IA session | Dashboard V2 : 20 points de vigilance opposables ajoutés à l'ADR §13 (registre déclaratif, migration progressive, ne pas casser Paramètres, kill-switch runtime, source unique, scope, Santé avant suppression diagnostics, pas de faux vert, doc obligatoire, Aide gelé, pas de dépendance circulaire, compat ascendante, observabilité, perf, tolérance erreurs, évolutivité, audit, sécurité, tests, doc=complétude). Spec mise à jour : résolution d'état avec repli serveur + sécurité écriture scopes, observabilité Dev, définition du « terminé » (4 tests avant stable). 0 code. |
+| 2026-06-29 | IA session | Dashboard V2 : ADR complété (INV-DASH-008 registre 100% déclaratif, INV-DASH-009 un seul chokepoint runtime officiel) + livrable étape 1 de la migration = `docs/SPEC-DASHBOARD-REGISTRY.md` (structure du registre, énumérations stage/scope/group, résolution d'état, 7 entrées initiales flaggées + 4 modules à intégrer, préférences hors registre, mapping complet 12 flags→cible, chokepoints officiels CK-*). Documentation seule, 0 code applicatif. Ordre retenu : Spec registre → Étape 1 (4 onglets) → Étape 2 (registre en parallèle). |
+| 2026-06-29 | IA session | Revue d'architecture Dashboard Gardien → ADR figé `docs/ADR-DASHBOARD-V2.md` (D22). Dashboard = gouvernance 4 onglets ; registre data-driven = source de vérité unique ; invariants kill-switch réel / fonctionnalité≠préférence / une seule source d'activation / vérité serveur ; portée device/account/fleet ; cycle alpha→…→removed ; fusion des 8 diagnostics en 1 agrégateur Santé + 1 banc Dev ; migration non destructive 6 étapes. Décisions validées, implémentation non commencée. (Aucun code applicatif modifié.) |
 | 2026-06-28 | IA session | Aide V1 #7 push proximité : Edge Function notify-help-request (ciblage géo bounding-box+Haversine sur user_locations <30min, rayon 10/15km, idempotence via help_events 'proximity_notified' client_event_id=requestId, sécurité demandeur, type uniquement). Client App.AideV1.notifyNearby() dans assist(), clic push help → openHelpSignalement. Étape CI deploy ajoutée. SW v348. Commit c3c238f (PR #386). |
 | 2026-06-28 | IA session | Aide V1 #1 carte : App.AideV1.syncMapMarkers() réaffiche les demandes d'aide sur la carte Leaflet (mes demandes précises pin bleu + demandes proches approx pin orange/rouge, 🆘 par type, popup → openHelpSignalement). Hooks loadOthers()/assist()/subscribeRealtime. Disparition à la clôture (nearby ne renvoie plus + myRequests filtre 'ouverte'). Régression depuis bascule Lot B corrigée. SW v347. Commit be60f3a (PR #384). |
 | 2026-06-28 | IA session | Aide V1 Lot B (bascule client event-driven) : assist()→create_help_request, chokepoint addCommunityAlert(assist)→null, renderAideFeedV1 (rendu serveur), Realtime « le mien », sélecteur multi-helpers. Backend Lot A (help_v1) validé en base (3 voyants). Séparation Activité/Messages/Appels. SW v341. (local, bascule unique en attente de Fusionner) |

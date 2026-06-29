@@ -7,6 +7,124 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 3) — Dashboard V2 ÉTAPE 1 : réorganisation visuelle en 4 onglets
+
+Première étape de la migration ADR (réorg UI uniquement). Approche **présentationnelle pure** :
+ni déplacement de nœud, ni reordering du template, ni changement de logique.
+
+- `openGardienDashboard` : ajout d'une barre `.gd-tabs` (4 boutons) + `<style>` scopé + conteneur
+  `#gdHost[data-gd-active]`. Chaque bloc reçoit un attribut `data-gd="sante|moderation|features|dev"`
+  sur son `<div>` externe (y compris les blocs construits en variables : guardianHtml=moderation ;
+  timeline/calls/runtime/messages=dev). Visibilité par CSS `#gdHost[data-gd-active=X]>[data-gd~=X]`.
+- Répartition : Santé = organisme, état système, violations, événements bus, Ange session, scores
+  fiabilité, Diagnostic IA ; Modération = GuardianLoop + abus ; Fonctionnalités = appels internes +
+  feature flags ; Développeur = Timeline OBD, Calls/Runtime/Messages runtime, Actions gardien,
+  immunité, intelligence (8 voyants).
+- `App.gdTab(name)` : bascule `data-gd-active` + classe `.on` des onglets ; persiste `S._gdTab`
+  (les nombreux boutons qui rappellent openGardienDashboard ne renvoient plus brutalement en Santé).
+- Les fills post-rendu (gardienIntelGrid, gardienDiagLiveStream + recurrence, gardienAbuseReports,
+  dashCacheName) ciblent par id → insensibles à l'onglet. recDiv inséré avant le stream reste dans
+  le bloc Santé. Aucun handler/flag modifié.
+- Contraintes respectées : HTML/CSS + 1 petite fonction UI ; aucun runtime, aucun feature flag,
+  aucun kill-switch branché, aucun registre exécuté, aucun impact Aide V1, comportement inchangé
+  hors organisation visuelle. 8 scripts inline OK ; 23 data-gd cohérents. SW v348→v349.
+
+---
+
+## SESSION 2026-06-29 (suite 2) — Dashboard V2 : Spec registre complétée (0 code)
+
+Après une passe « challenge avant implémentation » (20 questions du PO), la Spec a été enrichie
+pour être implémentable sans rediscuter l'architecture :
+- Champs registre ajoutés : owner (oblig), riskLevel low|medium|critical (oblig), dependsOn[],
+  deprecatedAt, removedAt. Refus explicite de tout champ logique (enabledIf/callback) → INV-DASH-008.
+- §2.2 owner/riskLevel/dependsOn des 7 entrées (copilote_monologue dependsOn copilote_proactif).
+- §3 modules cœur : appels & messages = riskLevel critical (fail-open, câblage manuel).
+- Nouvelles sections : 7 Fallback (cache-first, défaut sûr par riskLevel, pas de faux vert),
+  8 Sécurité (écriture account/fleet serveur only, client jamais fleet, RPC à rôle),
+  9 Audit (feature_audit_log qui/quand/old/new/reason, réversible),
+  10 Dépendances (dependsOn = donnée ; résolution dans le moteur ; préf notif masquée si module OFF ;
+  graphe acyclique), 11 Observabilité (valeur effective + origine + override + dernier changement),
+  12 Tests (4 tests gate stable : registre/kill-switch/runtime/UI), 13 Rappels invariants +
+  exclusion Aide (génération étape 4 exclut aide + riskLevel critical du câblage auto).
+- Renumérotation : §14 « ce que le registre génère », §15 « limites ».
+Risques identifiés et neutralisés dans la spec : auto-câblage kill-switch sur Aide/modules cœur
+(→ exclusion explicite), scope account/fleet affiché avant serveur (→ device en attendant),
+dépendances non modélisées (→ dependsOn). 0 code, 0 migration.
+
+---
+
+## SESSION 2026-06-29 (suite) — Dashboard V2 : règles actées + Spec registre (0 code)
+
+### Méthode validée par le PO
+ADR figée. Ordre d'exécution retenu : 1) Spec registre (doc) → 2) Étape 1 (4 onglets UI, aucune
+logique modifiée) → 3) Étape 2 (registre en parallèle des flags, sans débrancher l'ancien).
+Kill-switches / gouvernance serveur / nettoyage diagnostics = étapes suivantes (ADR §11).
+
+### 2 règles supplémentaires actées → ajoutées à l'ADR
+- INV-DASH-008 : registre 100 % déclaratif (données seules, jamais de logique ; killSwitch = référence).
+- INV-DASH-009 : un seul chokepoint runtime officiel par fonctionnalité (= source de vérité ;
+  les autres vérifications ne sont que des optimisations d'interface).
+
+### Livrable : docs/SPEC-DASHBOARD-REGISTRY.md
+- Structure Feature {key,label,group,stage,scope,default,killSwitch,description?,replaces?,since?}.
+- Énumérations : stage(alpha|beta|stable|deprecated|removed), scope(device|account|fleet),
+  group(Carte|Signalements|Assistance|Communication|Présence|IA|Sécurité).
+- Résolution d'état : 1 seule fonction de lecture (future isFeatureEnabled) = stockage selon scope
+  → sinon default. Le chokepoint officiel l'appelle ; les masquages UI sont cosmétiques.
+- 7 entrées initiales (flags-modules actuels) : aide, signalement_route, signalement_vehicule,
+  zones_accidentogenes(beta,default false), auto_status(device), copilote_proactif(beta),
+  copilote_monologue(beta,device). + 4 modules à intégrer plus tard (signalement_stationne,
+  appels, trust, messages — chokepoints à créer, prudence flux validés terrain).
+- Préférences HORS registre (Paramètres only) : sons, voix_gps, reduce_effects, battery_save,
+  approx_geo, radius, notifs (ic_notif_prefs : messages/calls/route/vehicle/help), présence/DND/call_level.
+- Mapping complet 12 flags actuels → cible (7 registre, 5 Paramètres).
+- Chokepoints officiels CK-AIDE/CK-ROUTE/CK-VEHICULE/CK-ZONES/CK-AUTOSTATUS/CK-ANGE-PROACTIF/
+  CK-ANGE-MONOLOGUE (porte d'activation unique par module ; effets en cascade = cosmétiques).
+- Limites explicites : ne définit pas feature_config serveur (étape 5) ni l'agrégateur Santé (étape 6).
+
+### État
+Spec figée, **0 code applicatif**. Prochaine étape sur validation : Étape 1 (ranger en 4 onglets).
+
+---
+
+## SESSION 2026-06-29 — Revue d'architecture Dashboard Gardien → ADR-DASHBOARD-V2 (figé, 0 code)
+
+### Démarche
+Revue produit multi-rôles (PM/UX/archi/front/back/QA/cohérence) demandée par le PO. Cartographie
+réelle préalable via 4 agents d'exploration (UI Dashboard, Feature Flags bout-en-bout, Paramètres+
+recoupements, 8 moteurs de diagnostic). Aucune supposition : tout fondé sur le code.
+
+### Constats clés (factuels)
+- Dashboard = 6 rôles mélangés (dev/supervision/test/modération/flags/raccourcis), pas d'identité.
+- **Feature Flags = théâtre** : un flag OFF ne fait que `display:none` sur une ligne de Paramètres
+  + `return` anticipé ; le runtime des modules CONTINUE (aide/route/véhicule créés+affichés+reçus).
+  Flags 100 % locaux (`ic_feature_flags`) → n'affectent jamais la flotte.
+- 12 flags confondent 3 natures : modules / préférences (sons,voix,effets) / canaux notif.
+- 8 moteurs diagnostic redondants ; `ORGANISM_COHERENCE 100% OPTIMAL` codé en dur (faux vert).
+
+### Décisions figées → `docs/ADR-DASHBOARD-V2.md` (D22 dans PROJECT_STATE)
+7 invariants : INV-DASH-001 une seule source d'activation (Dashboard→registre→runtime) ;
+INV-DASH-002 kill-switch réel au chokepoint runtime (OFF arrête création/Realtime/notif/UI/traitements) ;
+INV-DASH-003 fonctionnalité≠préférence ; INV-DASH-004 registre = source de vérité unique ;
+INV-DASH-005 dépendance sens unique capacité→préférence ; INV-DASH-006 vérité serveur > cache ;
+INV-DASH-007 pas de faux vert (🟢/🟠/🔴 réels).
++ Dashboard 4 onglets (Santé/Modération/Fonctionnalités/Développeur), 3 niveaux d'accès,
+registre {key,label,group,stage,scope,default,killSwitch}, portée device/account/fleet,
+cycle alpha→beta→stable→deprecated→removed (tombstone), fusion 8 diagnostics → 1 agrégateur Santé
++ 1 banc Dev, reclassement explicite des 12 flags actuels, chokepoints kill-switch par module
+(aide=assist()/subscribeRealtime/syncMapMarkers/notifyNearby, route=roadReport(), etc.).
+
+### Migration non destructive (6 étapes)
+1 ranger en onglets → 2 registre en parallèle → 3 générer Dashboard+Paramètres depuis registre
+(sortir sons/voix/effets) → 4 kill-switches runtime → 5 portées serveur (`feature_config`) →
+6 supprimer diagnostics redondants.
+
+### État
+ADR figé, **implémentation non commencée** (le PO valide la direction avant tout code).
+Prochaine action possible : étape 1 (ranger en onglets) OU spec détaillée du registre (étape 2).
+
+---
+
 ## SESSION 2026-06-28 — Aide V1 #7 : push proximité (SW v348, PR #386)
 
 ### Objectif
