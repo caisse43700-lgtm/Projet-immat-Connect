@@ -48,11 +48,27 @@ Group = Carte | Signalements | Assistance | Communication | Présence | IA | Sé
 L'état effectif d'une fonctionnalité se résout par **une seule** fonction de lecture (future `isFeatureEnabled(key)`), dans cet ordre :
 
 ```
-1. valeur stockée selon scope  (device → localStorage ; account/fleet → serveur feature_config)
-2. sinon → default du registre
+1. valeur stockée selon scope  (device → localStorage ; account/fleet → serveur feature_config, mis en cache)
+2. sinon, repli serveur indisponible → dernière valeur connue en cache (point de vigilance #15)
+3. sinon → default du registre
 ```
 
-Cette fonction est l'**unique** porte de lecture. Le chokebox officiel (`killSwitch`) l'appelle ; les masquages UI l'appellent aussi mais **à titre cosmétique seulement** (INV-DASH-009).
+- **Déterministe, jamais aléatoire** (#15). Aucun rendu ne déclenche de requête serveur (#14) : le serveur est lu au démarrage puis mis en cache, invalidation ciblée à la modification.
+- **Sécurité (#18)** : la lecture client peut refléter `fleet`/`account`, mais **l'écriture** de ces scopes est validée **côté serveur** (RLS + rôle). Le client n'active jamais une fonctionnalité `fleet` ; seul `device` est écrit localement.
+- Cette fonction est l'**unique** porte de lecture. Le chokepoint officiel (`killSwitch`) l'appelle ; les masquages UI l'appellent aussi mais **à titre cosmétique seulement** (INV-DASH-009).
+
+### 1.3 Observabilité (point de vigilance #13)
+
+Le mode Développeur doit afficher, pour chaque fonctionnalité, **plus** qu'un ON/OFF :
+
+- état déclaré dans le registre (`default`, `stage`, `scope`) ;
+- **valeur réellement appliquée** (résultat de §1.2) ;
+- **origine de la décision** (registre `default` / cache / `device` / `account` / `fleet`) ;
+- raison de l'arrêt si OFF (référence `behaviorWhenOff`).
+
+### 1.4 Définition du « terminé » (points de vigilance #19 et #20)
+
+Une fonctionnalité ne peut passer `stable` que si elle fournit : **test registre**, **test kill-switch**, **test runtime**, **test UI**. Elle est considérée **incomplète** tant que : l'entrée registre n'est pas renseignée (champs obligatoires §1), le `killSwitch` n'est pas déclaré, et la documentation n'est pas à jour.
 
 ---
 
