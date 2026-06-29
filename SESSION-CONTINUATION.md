@@ -7,6 +7,18 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 8) — Fix Aide : marqueur carte non retiré à l'annulation
+
+Bug PO : « Je n'ai plus besoin » (cancel) retire bien la carte dans Activité mais le 🆘 reste sur
+la carte. Cause : le handler cancel re-render le feed (renderAideFeedV1) mais n'appelait pas
+syncMapMarkers ; le Realtime n'était pas fiable selon le contexte.
+Fix : ajout de `this.AideV1?.syncMapMarkers?.()` à la FIN de renderAideFeedV1 → tout re-render du feed
+(annulation, résolution, retrait, propose, dismiss) resynchronise les marqueurs ; la demande passée
+en 'annulee'/'resolue' sort de myRequests(ouverte)+nearby → marqueur retiré. SW v355→v356.
+(NB : fix Aide direct demandé par le PO, distinct de la refonte Dashboard.)
+
+---
+
 ## SESSION 2026-06-29 (suite 7) — Dashboard V2 : kill-switches « un seul interrupteur » (UX pro)
 
 Retour PO : « réactiver ne marche pas » → cause = double-gate (capacité ET préférence) = 2 switches

@@ -3217,6 +3217,8 @@ App.renderAideFeedV1=async function(){
     });
   }
   feed.innerHTML=html||'<div class="act-empty-cat">Aucune demande d\'aide à proximité.</div>';
+  // Resynchronise les marqueurs carte à chaque rendu du feed (annulation/résolution → le 🆘 disparaît).
+  try{this.AideV1?.syncMapMarkers?.();}catch(_){}
 };
 // Confirmation côté demandeur : désigne le helper (B-4 ajoutera le sélecteur si plusieurs). INERTE.
 App.aideConfirmUI=async function(requestId){
