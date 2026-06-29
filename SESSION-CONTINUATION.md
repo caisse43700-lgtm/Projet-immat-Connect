@@ -7,6 +7,25 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 4) — Dashboard V2 ÉTAPE 2 : registre en parallèle (lecture seule)
+
+Migration ADR étape 2 : introduire le registre EN PARALLÈLE sans débrancher l'ancien.
+- `window.FEATURE_REGISTRY` = 7 entrées 100 % déclaratives (aide[frozen], signalement_route,
+  signalement_vehicule, zones_accidentogenes, auto_status, copilote_proactif, copilote_monologue),
+  chacune avec key/label/group/stage/scope/default/killSwitch/owner/riskLevel/dependsOn/replaces/
+  description/behaviorWhenOff. Données seules (INV-DASH-008).
+- `window.FeatureRegistry` = API lecture seule : list(), get(key), resolve(key) → {value,origin,scope},
+  isEnabled(key). Résolution device-only via pont `replaces` vers le flag legacy dans ic_feature_flags
+  → reflète exactement l'état actuel. N'écrit jamais, ne remplace pas isFeatureEnabled()/FEATURE_FLAGS
+  (source live inchangée). Serveur account/fleet = étape 5.
+- `App.gdRegistryPreview()` : bloc LECTURE SEULE dans l'onglet Développeur (data-gd="dev") listant
+  chaque feature + état résolu (ON/OFF) + origine + stage/scope/risk/killSwitch + gel Aide + dépendances.
+- Garanties : aucun kill-switch branché (étape 4), aucune génération de Dashboard/Paramètres depuis le
+  registre (étape 3), aucune écriture, aucun impact runtime, aucun impact Aide V1. Le bloc flags actuel
+  et tous les handlers restent intacts. 8 scripts inline OK. SW v349→v350.
+
+---
+
 ## SESSION 2026-06-29 (suite 3) — Dashboard V2 ÉTAPE 1 : réorganisation visuelle en 4 onglets
 
 Première étape de la migration ADR (réorg UI uniquement). Approche **présentationnelle pure** :
