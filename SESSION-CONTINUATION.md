@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 6) — Dashboard V2 ÉTAPE 4 : 1ers kill-switches runtime (zones + ange)
+
+Premiers kill-switches : OFF coupe RÉELLEMENT le module au chokepoint (modules non-critiques only).
+Chaque gate = capacité (isFeatureEnabled(flag legacy)) ET préférence (ic_*).
+
+- **CK-ANGE-PROACTIF** — `core/narrator.js` `_whisper()` : early-return si `!isFeatureEnabled('ange_proactive')`
+  ou `ic_ange_proactive==='0'`. → plus aucune bulle proactive « ✦ ». narrator.js v2→v3 (script tag
+  index.html + STATIC_CACHE SW bumpés — OBLIGATOIRE car narrator.js est caché).
+- **CK-ANGE-MONOLOGUE** — `AngeMonologue._shouldThink()` (index.html) : return false si
+  `!isFeatureEnabled('ange_monologue')` ou `ic_ange_monologue==='0'`. → plus d'appels monologue.
+- **CK-ZONES** — `App._checkRiskZones()` (index.html, chokepoint unique : charge get_risk_zones +
+  _renderRiskOverlay + toast/speak + emit RISK_ZONE_APPROACHED) : si `!isFeatureEnabled('zones_accidentogenes')`
+  ou `ic_zones_accidentogenes!=='1'` → `S.riskZones=[]`, `_renderRiskOverlay()` (efface la couche), return.
+  ⚠️ Avant étape 4 : `_checkRiskZones` n'avait AUCUN gate → zones toujours affichées (bug remonté par PO).
+  Effet zones : se vide à la prochaine actualisation GPS. Zones désormais OFF par défaut (flag default
+  false + pref default '0', beta opt-in) — pour les voir : Dashboard capability ON + Réglages « activer les zones ».
+- Aide (gelé) et modules `critical` (appels/messages) NON touchés.
+- 8 scripts inline OK ; narrator.js OK. SW v353→v354.
+
+---
+
 ## SESSION 2026-06-29 (suite 5) — Dashboard V2 ÉTAPE 3 : onglet Fonctionnalités généré depuis le registre
 
 Migration ADR étape 3 : générer l'UI Fonctionnalités depuis le registre (sans kill-switch — étape 4).
