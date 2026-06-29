@@ -7,6 +7,40 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite) — Dashboard V2 : règles actées + Spec registre (0 code)
+
+### Méthode validée par le PO
+ADR figée. Ordre d'exécution retenu : 1) Spec registre (doc) → 2) Étape 1 (4 onglets UI, aucune
+logique modifiée) → 3) Étape 2 (registre en parallèle des flags, sans débrancher l'ancien).
+Kill-switches / gouvernance serveur / nettoyage diagnostics = étapes suivantes (ADR §11).
+
+### 2 règles supplémentaires actées → ajoutées à l'ADR
+- INV-DASH-008 : registre 100 % déclaratif (données seules, jamais de logique ; killSwitch = référence).
+- INV-DASH-009 : un seul chokepoint runtime officiel par fonctionnalité (= source de vérité ;
+  les autres vérifications ne sont que des optimisations d'interface).
+
+### Livrable : docs/SPEC-DASHBOARD-REGISTRY.md
+- Structure Feature {key,label,group,stage,scope,default,killSwitch,description?,replaces?,since?}.
+- Énumérations : stage(alpha|beta|stable|deprecated|removed), scope(device|account|fleet),
+  group(Carte|Signalements|Assistance|Communication|Présence|IA|Sécurité).
+- Résolution d'état : 1 seule fonction de lecture (future isFeatureEnabled) = stockage selon scope
+  → sinon default. Le chokepoint officiel l'appelle ; les masquages UI sont cosmétiques.
+- 7 entrées initiales (flags-modules actuels) : aide, signalement_route, signalement_vehicule,
+  zones_accidentogenes(beta,default false), auto_status(device), copilote_proactif(beta),
+  copilote_monologue(beta,device). + 4 modules à intégrer plus tard (signalement_stationne,
+  appels, trust, messages — chokepoints à créer, prudence flux validés terrain).
+- Préférences HORS registre (Paramètres only) : sons, voix_gps, reduce_effects, battery_save,
+  approx_geo, radius, notifs (ic_notif_prefs : messages/calls/route/vehicle/help), présence/DND/call_level.
+- Mapping complet 12 flags actuels → cible (7 registre, 5 Paramètres).
+- Chokepoints officiels CK-AIDE/CK-ROUTE/CK-VEHICULE/CK-ZONES/CK-AUTOSTATUS/CK-ANGE-PROACTIF/
+  CK-ANGE-MONOLOGUE (porte d'activation unique par module ; effets en cascade = cosmétiques).
+- Limites explicites : ne définit pas feature_config serveur (étape 5) ni l'agrégateur Santé (étape 6).
+
+### État
+Spec figée, **0 code applicatif**. Prochaine étape sur validation : Étape 1 (ranger en 4 onglets).
+
+---
+
 ## SESSION 2026-06-29 — Revue d'architecture Dashboard Gardien → ADR-DASHBOARD-V2 (figé, 0 code)
 
 ### Démarche

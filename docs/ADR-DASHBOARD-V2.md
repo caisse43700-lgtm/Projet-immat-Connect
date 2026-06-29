@@ -122,6 +122,14 @@ Le Dashboard affiche uniquement :
 
 avec des anomalies réellement détectées.
 
+### INV-DASH-008 — Registre 100 % déclaratif
+
+Le registre décrit les fonctionnalités (métadonnées) mais ne contient **jamais** de logique métier. Aucune fonction, condition ou effet de bord dans le registre : uniquement des données (`key`, `label`, `group`, `stage`, `scope`, `default`, `killSwitch`, descriptif). `killSwitch` est une **référence** vers un chokepoint, pas du code.
+
+### INV-DASH-009 — Un seul chokepoint runtime officiel par fonctionnalité
+
+Chaque fonctionnalité possède **un seul** chokepoint runtime officiel, qui est la source de vérité de son activation. Toute autre vérification éventuelle (masquage de bouton, garde d'affichage) n'est qu'une **optimisation d'interface** et ne constitue jamais la source de vérité. Couper le chokepoint officiel = couper réellement la fonctionnalité (INV-DASH-002).
+
 ## 4. Registre cible
 
 Chaque fonctionnalité est décrite par une entrée unique :
