@@ -7,6 +7,30 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 (suite 3) — Dashboard V2 ÉTAPE 1 : réorganisation visuelle en 4 onglets
+
+Première étape de la migration ADR (réorg UI uniquement). Approche **présentationnelle pure** :
+ni déplacement de nœud, ni reordering du template, ni changement de logique.
+
+- `openGardienDashboard` : ajout d'une barre `.gd-tabs` (4 boutons) + `<style>` scopé + conteneur
+  `#gdHost[data-gd-active]`. Chaque bloc reçoit un attribut `data-gd="sante|moderation|features|dev"`
+  sur son `<div>` externe (y compris les blocs construits en variables : guardianHtml=moderation ;
+  timeline/calls/runtime/messages=dev). Visibilité par CSS `#gdHost[data-gd-active=X]>[data-gd~=X]`.
+- Répartition : Santé = organisme, état système, violations, événements bus, Ange session, scores
+  fiabilité, Diagnostic IA ; Modération = GuardianLoop + abus ; Fonctionnalités = appels internes +
+  feature flags ; Développeur = Timeline OBD, Calls/Runtime/Messages runtime, Actions gardien,
+  immunité, intelligence (8 voyants).
+- `App.gdTab(name)` : bascule `data-gd-active` + classe `.on` des onglets ; persiste `S._gdTab`
+  (les nombreux boutons qui rappellent openGardienDashboard ne renvoient plus brutalement en Santé).
+- Les fills post-rendu (gardienIntelGrid, gardienDiagLiveStream + recurrence, gardienAbuseReports,
+  dashCacheName) ciblent par id → insensibles à l'onglet. recDiv inséré avant le stream reste dans
+  le bloc Santé. Aucun handler/flag modifié.
+- Contraintes respectées : HTML/CSS + 1 petite fonction UI ; aucun runtime, aucun feature flag,
+  aucun kill-switch branché, aucun registre exécuté, aucun impact Aide V1, comportement inchangé
+  hors organisation visuelle. 8 scripts inline OK ; 23 data-gd cohérents. SW v348→v349.
+
+---
+
 ## SESSION 2026-06-29 (suite 2) — Dashboard V2 : Spec registre complétée (0 code)
 
 Après une passe « challenge avant implémentation » (20 questions du PO), la Spec a été enrichie
