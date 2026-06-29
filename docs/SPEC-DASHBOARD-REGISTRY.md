@@ -17,18 +17,21 @@ Chaque fonctionnalité est **une entrée déclarative** :
 
 ```
 Feature {
-  key:         string    // identifiant stable, snake_case, immuable (clé de migration)
-  label:       string    // libellé affiché (FR)
-  group:       Group      // regroupement UI
-  stage:       Stage      // cycle de vie
-  scope:       Scope      // portée d'activation
-  default:     boolean    // valeur si jamais réglé explicitement
-  killSwitch:  string     // RÉFÉRENCE du chokepoint runtime officiel (id "CK-…"), pas du code
-  description: string     // optionnel — alimente la doc générée
-  replaces:    string     // optionnel — ancien flag remplacé (traçabilité migration)
-  since:       string     // optionnel — version/date d'introduction
+  key:            string  // identifiant stable, snake_case, immuable (clé de migration)
+  label:          string  // libellé affiché (FR)
+  group:          Group   // regroupement UI
+  stage:          Stage   // cycle de vie
+  scope:          Scope   // portée d'activation
+  default:        boolean // valeur si jamais réglé explicitement
+  killSwitch:     string  // RÉFÉRENCE du chokepoint runtime officiel (id "CK-…"), pas du code
+  description:    string  // OBLIGATOIRE — description courte (point de vigilance #9)
+  behaviorWhenOff:string  // OBLIGATOIRE — comportement attendu si OFF (point de vigilance #9)
+  replaces:       string  // optionnel — ancien flag remplacé (traçabilité migration)
+  since:          string  // optionnel — version/date d'introduction
 }
 ```
+
+Champs **obligatoires** (point de vigilance #9) : `key`, `label`, `group`, `stage`, `scope`, `default`, `killSwitch`, `description`, `behaviorWhenOff`.
 
 Règle INV-DASH-008 : aucune valeur de champ n'est une fonction. `killSwitch` est un **identifiant** (`"CK-AIDE"`), résolu ailleurs vers le vrai point runtime — le registre ne contient pas le contrôle lui-même.
 
@@ -59,13 +62,27 @@ Ces 7 entrées correspondent aux flags-modules actuels. Elles sont prêtes à in
 
 | key | label | group | stage | scope (cible) | default | killSwitch | replaces |
 |---|---|---|---|---|---|---|---|
-| `aide` | Demandes d'aide | Assistance | stable | account | true | CK-AIDE | demandes_aide |
+| `aide` | Demandes d'aide | Assistance | stable | account | true | CK-AIDE ⚠️gelé | demandes_aide |
 | `signalement_route` | Signalements route | Signalements | stable | account | true | CK-ROUTE | alertes_route |
 | `signalement_vehicule` | Signalements véhicule | Signalements | stable | account | true | CK-VEHICULE | alertes_vehicule |
 | `zones_accidentogenes` | Zones accidentogènes | Carte | beta | account | false | CK-ZONES | zones_accidentogenes |
 | `auto_status` | Auto-statut conduite | Présence | stable | device | true | CK-AUTOSTATUS | auto_status |
 | `copilote_proactif` | Ange — analyses proactives | IA | beta | account | true | CK-ANGE-PROACTIF | ange_proactive |
 | `copilote_monologue` | Ange — monologue conduite | IA | beta | device | true | CK-ANGE-MONOLOGUE | ange_monologue |
+
+### 2.1 `description` + `behaviorWhenOff` des 7 entrées (champs obligatoires #9)
+
+| key | description courte | comportement attendu si OFF |
+|---|---|---|
+| `aide` | Demander/proposer de l'aide entre conducteurs proches | Aucune demande créée/reçue, pas de marqueur carte, pas de push proximité, feed Aide vide. **Gelé : non câblé tant que « Go » non donné.** |
+| `signalement_route` | Signaler un incident de circulation | Aucun signalement route créé/affiché, pas de notif route |
+| `signalement_vehicule` | Prévenir un conducteur d'un problème sur son véhicule | Aucun envoi/réception de signalement véhicule, pas de notif |
+| `zones_accidentogenes` | Afficher zones à risque + alertes préventives | Couche zones masquée, aucune alerte préventive émise |
+| `auto_status` | Passer en présence « conduite » au-delà de 20 km/h | La présence ne change jamais automatiquement (réglage manuel seul) |
+| `copilote_proactif` | Ange surveille le trajet et intervient spontanément | Aucune analyse proactive déclenchée |
+| `copilote_monologue` | Ange pense à voix haute en conduite | Aucune prise de parole spontanée en conduite |
+
+> ⚠️ **`aide` gelé (point de vigilance #10)** : l'entrée existe pour documentation, mais `CK-AIDE` **n'est pas câblé** dans le runtime Aide pendant la refonte Dashboard. (Factuellement, Lot B Aide est en production ; on ne touche pas son runtime ici.)
 
 Notes de décision (à confirmer au moment de l'implémentation, sans rouvrir l'ADR) :
 - `zones_accidentogenes` : `default:false` (conforme à l'actuel `FEATURE_FLAGS`), donc `stage:beta` (opt-in) plutôt que stable.
@@ -144,6 +161,8 @@ Pour chaque fonctionnalité, **un seul** chokepoint runtime officiel = source de
 (Modules de la §3 — CK-STATION, CK-APPELS, CK-TRUST, CK-MESSAGES — auront leur chokepoint défini au moment de leur intégration.)
 
 > Principe : aujourd'hui le contrôle est éparpillé (masquages UI + `return` anticipés). L'étape 4 consolide chaque module derrière **sa** porte d'activation unique. La présente spec fige **où** se trouve cette porte ; elle n'écrit pas le code.
+
+> ⚠️ **CK-AIDE gelé (point de vigilance #10) :** le chokepoint Aide est **documenté mais non câblé** pendant la refonte Dashboard. Aucune modification du runtime Aide (déjà en production) n'est autorisée ici tant qu'un « Go » explicite n'est pas donné. Câblage de CK-AIDE = hors périmètre de la refonte Dashboard.
 
 ---
 

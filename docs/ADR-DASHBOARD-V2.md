@@ -255,3 +255,18 @@ Objectif :
 - flag OFF = module réellement arrêté ;
 - diagnostics = fiables et actionnables ;
 - architecture extensible à long terme.
+
+## 13. Points de vigilance (contraintes d'implémentation — opposables à toute étape)
+
+Aucune implémentation ne doit enfreindre ces points sans décision ADR explicite.
+
+1. **Ne pas confondre registre et logique métier.** Le registre reste déclaratif (décrit fonctionnalités, état, portée, chokepoint) — jamais de logique métier. (= INV-DASH-008)
+2. **Ne pas faire une grosse refonte d'un coup.** Respecter la migration non destructive : spec registre → réorganisation UI → registre en parallèle → kill-switches plus tard, module par module. (= §11)
+3. **Ne pas casser les Paramètres.** Les Paramètres continuent de fonctionner. On ne retire jamais brutalement une préférence existante : reclassement **progressif**.
+4. **Ne pas croire qu'un flag UI suffit.** Masquer une ligne n'est pas un kill-switch. Un module OFF est bloqué **au runtime** avant : création de données, Realtime, notifications, affichage, traitements. (= INV-DASH-002)
+5. **Ne pas créer plusieurs sources de vérité.** Pas de double activation registre + localStorage + Paramètres. À terme : registre = source unique pour les fonctionnalités métier. (= INV-DASH-001)
+6. **Bien distinguer scope device / account / fleet.** Un réglage local n'est jamais présenté comme une gouvernance globale. (= §7)
+7. **Ne pas supprimer les anciens diagnostics trop tôt.** D'abord créer l'agrégateur Santé, **puis seulement** retirer les anciens panneaux redondants. (= §11 étape 6)
+8. **Éviter les faux statuts rassurants.** Aucun « 100 % optimal » codé en dur ; tout statut provient de vraies sondes. (= INV-DASH-007)
+9. **Documenter chaque feature du registre.** Chaque entrée possède : `key`, `label`, `group`, `stage`, `scope`, `default`, `killSwitch`, **description courte**, et **comportement attendu si OFF**.
+10. **Garder Aide V1 gelé.** La refonte Dashboard **ne modifie pas le runtime d'Aide**. Le Dashboard peut documenter Aide comme feature (entrée `aide`, `CK-AIDE`), mais ne câble aucun contrôle dans son runtime tant qu'un « Go » explicite n'est pas donné. *(Note factuelle : le Lot B Aide est déjà en production ; ce point signifie « ne rien toucher au runtime Aide pendant la refonte Dashboard ».)*
