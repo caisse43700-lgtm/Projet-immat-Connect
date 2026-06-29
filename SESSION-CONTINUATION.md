@@ -7,6 +7,44 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-29 — Revue d'architecture Dashboard Gardien → ADR-DASHBOARD-V2 (figé, 0 code)
+
+### Démarche
+Revue produit multi-rôles (PM/UX/archi/front/back/QA/cohérence) demandée par le PO. Cartographie
+réelle préalable via 4 agents d'exploration (UI Dashboard, Feature Flags bout-en-bout, Paramètres+
+recoupements, 8 moteurs de diagnostic). Aucune supposition : tout fondé sur le code.
+
+### Constats clés (factuels)
+- Dashboard = 6 rôles mélangés (dev/supervision/test/modération/flags/raccourcis), pas d'identité.
+- **Feature Flags = théâtre** : un flag OFF ne fait que `display:none` sur une ligne de Paramètres
+  + `return` anticipé ; le runtime des modules CONTINUE (aide/route/véhicule créés+affichés+reçus).
+  Flags 100 % locaux (`ic_feature_flags`) → n'affectent jamais la flotte.
+- 12 flags confondent 3 natures : modules / préférences (sons,voix,effets) / canaux notif.
+- 8 moteurs diagnostic redondants ; `ORGANISM_COHERENCE 100% OPTIMAL` codé en dur (faux vert).
+
+### Décisions figées → `docs/ADR-DASHBOARD-V2.md` (D22 dans PROJECT_STATE)
+7 invariants : INV-DASH-001 une seule source d'activation (Dashboard→registre→runtime) ;
+INV-DASH-002 kill-switch réel au chokepoint runtime (OFF arrête création/Realtime/notif/UI/traitements) ;
+INV-DASH-003 fonctionnalité≠préférence ; INV-DASH-004 registre = source de vérité unique ;
+INV-DASH-005 dépendance sens unique capacité→préférence ; INV-DASH-006 vérité serveur > cache ;
+INV-DASH-007 pas de faux vert (🟢/🟠/🔴 réels).
++ Dashboard 4 onglets (Santé/Modération/Fonctionnalités/Développeur), 3 niveaux d'accès,
+registre {key,label,group,stage,scope,default,killSwitch}, portée device/account/fleet,
+cycle alpha→beta→stable→deprecated→removed (tombstone), fusion 8 diagnostics → 1 agrégateur Santé
++ 1 banc Dev, reclassement explicite des 12 flags actuels, chokepoints kill-switch par module
+(aide=assist()/subscribeRealtime/syncMapMarkers/notifyNearby, route=roadReport(), etc.).
+
+### Migration non destructive (6 étapes)
+1 ranger en onglets → 2 registre en parallèle → 3 générer Dashboard+Paramètres depuis registre
+(sortir sons/voix/effets) → 4 kill-switches runtime → 5 portées serveur (`feature_config`) →
+6 supprimer diagnostics redondants.
+
+### État
+ADR figé, **implémentation non commencée** (le PO valide la direction avant tout code).
+Prochaine action possible : étape 1 (ranger en onglets) OU spec détaillée du registre (étape 2).
+
+---
+
 ## SESSION 2026-06-28 — Aide V1 #7 : push proximité (SW v348, PR #386)
 
 ### Objectif
