@@ -166,6 +166,7 @@
     { id: 'reliability_status', confidence: 0.85, re: /(fiabilit|données fiables|donn[ée]es sont|gps.*(fiable|fonctionne|à jour|a jour)|signal)/, resolver: 'reliability' },
     { id: 'phase_status', confidence: 0.85, re: /(quelle|quel).*(phase|niveau|mode).*(organisme|syst[èe]me)?|phase.*(actuelle|en cours)|en quelle phase/, resolver: 'phase' },
     { id: 'moderation_self', confidence: 0.9, re: /(suis-je|je suis|mon compte).*(suspendu|banni|bloqu)|(compte suspendu)/, resolver: 'moderation' },
+    { id: 'recommend_action', confidence: 0.82, re: /(que dois-je|qu'est-ce que je dois|quoi faire|que faire|des conseils?|un conseil|recommand|tu me conseilles|je fais quoi|priorit[ée])/, resolver: 'recommend' },
     { id: 'help_capabilities', confidence: 0.7, re: /(que peux-tu|que sais-tu|qu'est-ce que tu sais|tu peux faire quoi|aide-moi|comment[ ]?[çc]a marche|que puis-je.*(demander|poser)|liste.*(question|capacit))/, resolver: 'help' },
     { id: 'system_summary', confidence: 0.8, re: /(r[ée]sum[ée]|bilan|vue d'ensemble|aper[çc]u|point complet|fais le point)/, resolver: 'summary' }
   ];
@@ -267,6 +268,30 @@
       var susp = snap.moderation && snap.moderation.suspended;
       if (susp) return { answer: '⛔ Ce compte est suspendu.', facts: [] };
       return { answer: 'Ce compte est actif (non suspendu).', facts: [] };
+    },
+    recommend: function () {
+      var snap = sense({});
+      var recs = [];
+      // 1) suspension (bloquant)
+      if (snap.moderation && snap.moderation.suspended) recs.push("Ton compte est suspendu — contacte un administrateur.");
+      // 2) urgence terrain
+      var o = snap.orientation || {};
+      if (o.urgency != null && o.urgency >= 7) recs.push('Vigilance élevée' + (o.summary ? ' : ' + o.summary : '') + '.');
+      // 3) recommandations Guardian (Gardien)
+      try { var g = (w.GuardianLoop && w.GuardianLoop.getRuntimeState) ? w.GuardianLoop.getRuntimeState() : null; if (g && g.pendingRecommendations > 0) recs.push(g.pendingRecommendations + ' recommandation(s) de modération à examiner dans le Dashboard.'); } catch (e) {}
+      // 4) fiabilité / GPS
+      var r = snap.reliability || {};
+      if (r.score != null && r.score < 50) recs.push("Fiabilité des données faible — vérifie ta localisation et ta connexion.");
+      // 5) angle mort de l'âme
+      try { var bs = snap.soul && snap.soul.blind_spots; if (bs && bs.length) recs.push('À surveiller : ' + bs[0] + '.'); } catch (e) {}
+      // 6) fonctionnalités critiques coupées
+      try {
+        var dis = (snap.governance && snap.governance.disabled) || [];
+        var crit = dis.filter(function (x) { return ['appels', 'messages', 'gps'].indexOf(x.key) !== -1; });
+        if (crit.length) recs.push('Désactivé par l\'administrateur : ' + crit.map(function (x) { return x.label; }).join(', ') + '.');
+      } catch (e) {}
+      if (!recs.length) return { answer: "Rien d'urgent : tout est nominal. Continue normalement.", facts: [] };
+      return { answer: 'Priorités du moment :', facts: recs.slice(0, 4) };
     },
     help: function () {
       var ex = [
