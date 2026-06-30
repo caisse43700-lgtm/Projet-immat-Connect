@@ -5462,6 +5462,8 @@ const AngeDialog={
   // ── Apprentissage léger (device-only) : mémoire de la dernière cible véhicule (suites naturelles)
   _lastTarget(){try{return localStorage.getItem('ic_ange_last_target')||'';}catch(_){return'';}},
   _rememberTarget(p){try{if(p)localStorage.setItem('ic_ange_last_target',nPlate(p));}catch(_){}},
+  // Cible « le plus proche » = véhicule CONNECTÉ le plus proche (projection S.nearby, pas de nouvel état)
+  _nearestTarget(){try{const n=(window.S&&S.nearby)||[];const c=n.filter(x=>x&&x.plate&&x.dist!=null).sort((a,b)=>a.dist-b.dist);return c.length?nPlate(c[0].plate):'';}catch(_){return'';}},
   _tryForget(msg){
     try{
       var t=String(msg||'').toLowerCase();
@@ -5511,7 +5513,7 @@ const AngeDialog={
       if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false; // question, pas une commande
       if(!/\b(signale|signaler|pr[ée]viens|pr[ée]venir|alerte|alerter|indique|indiquer|dis|envoie)\b/.test(t))return false;
       const _hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
-      if(!/(v[ée]hicule|voiture|devant|plaque|immatricul|conducteur|en face)/.test(t)&&!_hasPlate)return false;
+      if(!/(v[ée]hicule|voiture|devant|plaque|immatricul|conducteur|en face|proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée])/.test(t)&&!_hasPlate)return false;
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('signalement_vehicule'):{enabled:true,by:null};
@@ -5519,7 +5521,11 @@ const AngeDialog={
       let plate=null,how='';
       if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;how='devant';
+        if(!plate)plate=this._nearestTarget();
         if(!plate){r.innerHTML='<div style="line-height:1.6">🚗 Je ne détecte aucun véhicule connecté juste devant toi. Rapproche-toi, ou donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';$('angeMsg').value='';return true;}
+      }else if(/proche|plus proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée]/.test(t)){
+        plate=this._nearestTarget();how='proche';
+        if(!plate){r.innerHTML='<div style="line-height:1.6">🚗 Aucun véhicule connecté à proximité pour le moment. Donne-moi la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';$('angeMsg').value='';return true;}
       }else{
         const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
         if(m){plate=nPlate(m[1]);how='plaque';}
@@ -5567,7 +5573,7 @@ const AngeDialog={
       if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
       if(!/\b(appelle|appeler|appel|t[ée]l[ée]phone|t[ée]l[ée]phoner|joins|joindre|contacte|contacter)\b/.test(t))return false;
       const hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
-      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face)/.test(t)&&!hasPlate)return false;
+      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face|proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée])/.test(t)&&!hasPlate)return false;
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
@@ -5575,7 +5581,11 @@ const AngeDialog={
       let plate=null;
       if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;
+        if(!plate)plate=this._nearestTarget();
         if(!plate){r.innerHTML='<div style="line-height:1.6">📞 Aucun véhicule connecté juste devant toi. Donne-moi la plaque : « appelle AB-123-CD ».</div>';$('angeMsg').value='';return true;}
+      }else if(/proche|plus proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée]/.test(t)){
+        plate=this._nearestTarget();
+        if(!plate){r.innerHTML='<div style="line-height:1.6">📞 Aucun véhicule connecté à proximité pour le moment. Donne-moi la plaque : « appelle AB-123-CD ».</div>';$('angeMsg').value='';return true;}
       }else{
         const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
         if(m)plate=nPlate(m[1]);
@@ -5608,7 +5618,7 @@ const AngeDialog={
       if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
       if(!/\bmessages?\b|(?:^|[\s,;:'\u2019])[ée]cri(?:s|re|t|ve|vez)/.test(t))return false; // doit concerner un message / écrire
       const hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
-      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face|lui|le dernier|le m[êe]me)/.test(t)&&!hasPlate)return false;
+      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face|lui|le dernier|le m[êe]me|proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée])/.test(t)&&!hasPlate)return false;
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('messages'):{enabled:true,by:null};
@@ -5616,7 +5626,11 @@ const AngeDialog={
       let plate=null;
       if(/devant|de devant|d.en face|en face/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;
+        if(!plate)plate=this._nearestTarget();
         if(!plate){r.innerHTML='<div style="line-height:1.6">💬 Aucun véhicule connecté juste devant toi. Donne la plaque : « envoie à AB-123-CD : ralentis ».</div>';$('angeMsg').value='';return true;}
+      }else if(/proche|plus proche|pr[èe]s|[àa] c[ôo]t[ée]|autour|proximit[ée]/.test(t)){
+        plate=this._nearestTarget();
+        if(!plate){r.innerHTML='<div style="line-height:1.6">💬 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « envoie à AB-123-CD : ralentis ».</div>';$('angeMsg').value='';return true;}
       }else{
         const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
         if(m)plate=nPlate(m[1]);
