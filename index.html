@@ -5341,7 +5341,10 @@ const AngeDialog={
     const main=r.juste||r.sources;
     if(main){html+=`<div style="line-height:1.65;margin-bottom:10px">${esc(main)}</div>`;}
     if(r.vigilance?.length){html+=`<div style="color:#f0a500;font-size:12px;margin-bottom:10px">${r.vigilance.map(v=>`⚡ ${esc(v)}`).join('<br>')}</div>`;}
-    if(r.options?.length){html+=`<div style="margin-bottom:10px">${r.options.map((o,i)=>`<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s"><b>${esc(o.label||'')}</b><br><small>✅ ${esc(o.benefices||'')} · ⚠️ ${esc(o.risques||'')}</small></div>`).join('')}</div>`;}
+    if(r.options?.length){
+      const _opts=r.options.map((o,i)=>({o:o||{},i})).filter(({o})=>(String(o.label||'').trim()||String(o.benefices||'').trim()||String(o.risques||'').trim()));
+      if(_opts.length){html+=`<div style="margin-bottom:10px">${_opts.map(({o,i})=>{const lbl=String(o.label||'').trim();const ben=String(o.benefices||'').trim();const ris=String(o.risques||'').trim();const sub=(ben||ris)?`<br><small>${ben?'✅ '+esc(ben):''}${ben&&ris?' · ':''}${ris?'⚠️ '+esc(ris):''}</small>`:'';return `<div data-opt="${i}" style="margin-bottom:6px;padding:8px;background:#0f0f1a;border-radius:8px;cursor:pointer;transition:background .15s">${lbl?`<b>${esc(lbl)}</b>`:''}${sub}</div>`;}).join('')}</div>`;}
+    }
     if(r.question){html+=`<div class="ange-question" style="cursor:pointer" title="Cliquer pour répondre">${esc(r.question)}</div>`;}
     if(r.proposal?.rule){html+=`<div style="margin-top:10px;padding:8px 10px;background:#1e1b4b;border-left:3px solid #f0a500;border-radius:0 6px 6px 0;font-size:12px"><div style="color:#f0a500;font-weight:700;margin-bottom:4px">📋 Proposition · ${esc(r.proposal.id||'')}</div><div style="color:#e2e8f0">${esc(r.proposal.rule)}</div>${r.proposal.obligations?.length?`<div style="color:#a5b4fc;margin-top:4px">✅ ${r.proposal.obligations.map(esc).join(' · ')}</div>`:''}</div>`;}
     // P5 — Question Jamais Posée : angle mort de l'âme non adressé par la question
