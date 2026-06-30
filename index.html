@@ -683,7 +683,13 @@ const FEATURE_REGISTRY=[
   {key:'zones_accidentogenes',label:'Zones accidentogènes',group:'Carte',stage:'beta',scope:'account',default:false,killSwitch:'CK-ZONES',owner:'Produit / Carte',riskLevel:'low',dependsOn:[],replaces:'zones_accidentogenes',description:'Afficher zones à risque + alertes préventives',behaviorWhenOff:'Couche zones masquée, aucune alerte préventive émise'},
   {key:'auto_status',label:'Auto-statut conduite',group:'Présence',stage:'stable',scope:'device',default:true,killSwitch:'CK-AUTOSTATUS',owner:'Produit / Présence',riskLevel:'low',dependsOn:[],replaces:'auto_status',description:'Passer en présence conduite au-delà de 20 km/h',behaviorWhenOff:'La présence ne change jamais automatiquement'},
   {key:'copilote_proactif',label:'Ange — analyses proactives',group:'IA',stage:'beta',scope:'account',default:true,killSwitch:'CK-ANGE-PROACTIF',owner:'Produit / IA',riskLevel:'medium',dependsOn:[],replaces:'ange_proactive',description:'Ange surveille le trajet et intervient spontanément',behaviorWhenOff:'Aucune analyse proactive déclenchée'},
-  {key:'copilote_monologue',label:'Ange — monologue conduite',group:'IA',stage:'beta',scope:'device',default:true,killSwitch:'CK-ANGE-MONOLOGUE',owner:'Produit / IA',riskLevel:'low',dependsOn:['copilote_proactif'],replaces:'ange_monologue',description:'Ange pense à voix haute en conduite',behaviorWhenOff:'Aucune prise de parole spontanée en conduite'}
+  {key:'copilote_monologue',label:'Ange — monologue conduite',group:'IA',stage:'beta',scope:'device',default:true,killSwitch:'CK-ANGE-MONOLOGUE',owner:'Produit / IA',riskLevel:'low',dependsOn:['copilote_proactif'],replaces:'ange_monologue',description:'Ange pense à voix haute en conduite',behaviorWhenOff:'Aucune prise de parole spontanée en conduite'},
+  {key:'signaler',label:'Signaler',group:'Signalements',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-SIGNALER',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],description:'Acces au signalement (route/vehicule/aide/stationne)',behaviorWhenOff:'Onglet Signaler bloque (indisponible)'},
+  {key:'messages',label:'Messagerie',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-MESSAGES',owner:'Produit / Communication',riskLevel:'critical',dependsOn:[],description:'Messagerie entre conducteurs',behaviorWhenOff:'Onglet Messages bloque (indisponible)'},
+  {key:'appels',label:'Appels vocaux',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-APPELS',owner:'Produit / Communication',riskLevel:'critical',dependsOn:[],description:'Appels vocaux entre conducteurs',behaviorWhenOff:'Onglet Appels bloque (indisponible)'},
+  {key:'ange',label:'Ange (assistant IA)',group:'IA',stage:'beta',scope:'fleet',default:true,killSwitch:'CK-ANGE',owner:'Produit / IA',riskLevel:'medium',dependsOn:[],description:'Assistant IA Ange (dialogue)',behaviorWhenOff:'Bouton Ange bloque (indisponible)'},
+  {key:'gps',label:'GPS / Localisation',group:'Carte',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-GPS',owner:'Produit / Carte',riskLevel:'critical',dependsOn:[],description:'Recentrage GPS / navigation',behaviorWhenOff:'Bouton GPS bloque (indisponible)'},
+  {key:'activite',label:'Activité / Alertes',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-ACTIVITE',owner:'Produit / Communication',riskLevel:'medium',dependsOn:[],description:'Centre Activité (alertes, signalements, messages, appels)',behaviorWhenOff:'Onglet Activité bloque (indisponible)'}
 ];
 window.FEATURE_REGISTRY=FEATURE_REGISTRY;
 window.FeatureRegistry={
@@ -1126,7 +1132,7 @@ gdFeaturesBlock(){
   try{
     if(!window.FeatureRegistry)return'';
     const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤'};
+    const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤',signaler:'📣',messages:'💬',appels:'📞',ange:'✦',gps:'📍',activite:'🔔'};
     const stgCol={alpha:'#f87171',beta:'#fb923c',stable:'#4ade80',deprecated:'#94a3b8',removed:'#555'};
     const reg=window.FeatureRegistry.list();
     const rows=reg.map(f=>{
@@ -1223,7 +1229,7 @@ locate(){if(S.invisible)return toast('Mode invisible actif.','bad');this.initMap
 },{enableHighAccuracy:get('ic_battery_save','0')==='1'?false:S.driveMode,timeout:get('ic_battery_save','0')==='1'?30000:15000,maximumAge:get('ic_battery_save','0')==='1'?10000:S.driveMode?4000:12000})},
 async deleteMyLocation(){try{let{data:ud}=await sb.auth.getUser();if(ud?.user)await sb.from('user_locations').delete().eq('id',ud.user.id)}catch(e){}},
 async toggleInvisible(){S.invisible=!S.invisible;set('ic_invisible',S.invisible?'1':'0');if(S.invisible){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;if(S.myMarker&&S.map)S.map.removeLayer(S.myMarker);S.myMarker=null;{const _mcp=$('mapCenterPin');if(_mcp)_mcp.style.display='block';}await this.deleteMyLocation();toast('Invisible : position retirée.','ok')}else this.locate();this.refresh()},
-setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers();this.renderAlerts();const _rs=$('radiusSettingsSlider');if(_rs)_rs.value=S.radiusKm;const _rv=$('radiusSettingsVal');if(_rv)_rv.textContent=S.radiusKm+' km';},recenter(){S.autoFollow=true;if(S.myLat!==null&&S.map){const _rz=S.mapView==='drive'?(S.driveMode?17:16):14;S._gpsMoving=true;S.map.setView([S.myLat,S.myLng],_rz,{animate:true});}else this.locate()},cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer&&S.map)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst')?.classList.remove('show');$('routeMini')?.classList.remove('show');toast('GPS arrêté.','ok')},updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15);this.updateFrontVehicle();if(get('ic_auto_status','0')==='1'){if(S.lastSpeed>20&&S._autoStatusLast!=='conduite'){S._autoStatusLast='conduite';if(S._autoStatusResetTimer){clearTimeout(S._autoStatusResetTimer);S._autoStatusResetTimer=null;}try{window.ImmatMessages?.setPresence?.('conduite');}catch(_){}}else if(S.lastSpeed<5&&S._autoStatusLast==='conduite'&&!S._autoStatusResetTimer){S._autoStatusResetTimer=setTimeout(()=>{S._autoStatusResetTimer=null;if(S.lastSpeed<5&&S._autoStatusLast==='conduite'){S._autoStatusLast=null;try{window.ImmatMessages?.setPresence?.('disponible');}catch(_){}}},30000);}}},
+setRadius(v){S.radiusKm=Number(v)||5;set('ic_radius',String(S.radiusKm));this.loadOthers();this.renderAlerts();const _rs=$('radiusSettingsSlider');if(_rs)_rs.value=S.radiusKm;const _rv=$('radiusSettingsVal');if(_rv)_rv.textContent=S.radiusKm+' km';},recenter(){if(!App.requireFeature('gps','GPS'))return;S.autoFollow=true;if(S.myLat!==null&&S.map){const _rz=S.mapView==='drive'?(S.driveMode?17:16):14;S._gpsMoving=true;S.map.setView([S.myLat,S.myLng],_rz,{animate:true});}else this.locate()},cycleView(){S.mapView=S.mapView==='drive'?'2d':'drive';set('ic_view',S.mapView);this.recenter();this.refresh()},stopGps(){if(S.watchId!==null)navigator.geolocation.clearWatch(S.watchId);S.watchId=null;S.driveMode=false;S.autoFollow=false;if(S.routeLayer&&S.map)S.map.removeLayer(S.routeLayer);S.routeLayer=null;S.routeDest=null;$('inst')?.classList.remove('show');$('routeMini')?.classList.remove('show');toast('GPS arrêté.','ok')},updateDrivingMode(){document.body.classList.toggle('driving',S.driveMode&&S.lastSpeed>15);this.updateFrontVehicle();if(get('ic_auto_status','0')==='1'){if(S.lastSpeed>20&&S._autoStatusLast!=='conduite'){S._autoStatusLast='conduite';if(S._autoStatusResetTimer){clearTimeout(S._autoStatusResetTimer);S._autoStatusResetTimer=null;}try{window.ImmatMessages?.setPresence?.('conduite');}catch(_){}}else if(S.lastSpeed<5&&S._autoStatusLast==='conduite'&&!S._autoStatusResetTimer){S._autoStatusResetTimer=setTimeout(()=>{S._autoStatusResetTimer=null;if(S.lastSpeed<5&&S._autoStatusLast==='conduite'){S._autoStatusLast=null;try{window.ImmatMessages?.setPresence?.('disponible');}catch(_){}}},30000);}}},
 openGps(){this.panel('drive');this.openSheet();setTimeout(()=>$('gpsSearch')?.focus(),120)},async searchGps(){let q=$('gpsSearch').value.trim(),box=$('gpsResults');if(q.length<3)return;if(S._nominatimCtrl){try{S._nominatimCtrl.abort();}catch(e){}}S._nominatimCtrl=new AbortController();box.innerHTML='<div class="empty-msg">Recherche…</div>';try{let p=new URLSearchParams({format:'json',limit:'10',countrycodes:'fr',addressdetails:'1',q:q+' France'});if(S.myLat!==null&&S.myLng!==null){p.set('viewbox',(S.myLng-.35)+','+(S.myLat+.35)+','+(S.myLng+.35)+','+(S.myLat-.35));p.set('bounded','0')}let arr=await(await fetch('https://nominatim.openstreetmap.org/search?'+p,{signal:S._nominatimCtrl.signal})).json();S._nominatimCtrl=null;arr=(arr||[]).map(r=>{let lat=+r.lat,lon=+r.lon,dist=(S.myLat!==null&&S.myLng!==null)?km(S.myLat,S.myLng,lat,lon):999999;return{...r,dist}}).sort((a,b)=>a.dist-b.dist);box.innerHTML=arr.length?arr.map(r=>{let d=r.dist<1?Math.round(r.dist*1000)+' m':r.dist<999999?r.dist.toFixed(1)+' km':'';let n=String(r.display_name||'').split(',');return'<button type="button" data-lat="'+Number(r.lat)+'" data-lon="'+Number(r.lon)+'" data-name="'+esc(r.display_name)+'" onclick="App.pickDest(+this.dataset.lat,+this.dataset.lon,this.dataset.name)"><span>📍</span><span><b>'+esc(n[0]||r.display_name)+'</b><small>'+esc(n.slice(1,3).join(', '))+'</small></span><span>'+esc(d)+'</span></button>'}).join(''):'<div class="empty-msg">Aucun résultat.</div>'}catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="empty-msg">Recherche indisponible.</div>'}},
 poi(q){$('gpsSearch').value=q;this.searchGps()},voiceGps(){
   const btn=$('gpsVoiceBtn');
@@ -1688,6 +1694,7 @@ App._navToggle=function(key,ev){
 };
 // Ange : même logique de bascule (1 tap ouvre / 1 tap referme), avec anti-rebond
 App._angeToggle=function(ev){
+  try{if(!document.body.classList.contains('ange-open')&&!App.requireFeature('ange','Ange'))return;}catch(_){}
   // Détection « Ange ouvert » robuste : classe body.ange-open OU panneau visible OU fond visible.
   var p=document.getElementById('angePanel');
   var o=document.getElementById('angeOverlay');
@@ -1698,7 +1705,12 @@ App._angeToggle=function(ev){
 };
 // NB : toutes les interactions Ange (bouton nav, ✦ flottant, fond) sont gérées par l'UNIQUE
 // listener de secours en bas d'index.html (IIFE, capture) → App._angeToggle. Pas d'autre handler.
+// Statut d'une fonctionnalité : enabled + par qui c'est OFF ('admin' = Dashboard/flotte, 'user' = Réglages).
+App.featureStatus=function(key){try{const fleet=(window.S&&S._fleetFlags)||window._fleetFlagsCache;if(fleet&&(key in fleet)&&!fleet[key])return{enabled:false,by:'admin'};let dev={};try{dev=JSON.parse(localStorage.getItem('ic_feature_flags')||'{}');}catch(_){}if((key in dev)&&!dev[key])return{enabled:false,by:'admin'};const pm={ange_proactive:['ic_ange_proactive','1'],ange_monologue:['ic_ange_monologue','1'],zones_accidentogenes:['ic_zones_accidentogenes','0'],auto_status:['ic_auto_status','0']}[key];if(pm&&get(pm[0],pm[1])!=='1')return{enabled:false,by:'user'};return{enabled:!!window.isFeatureEnabled(key),by:null};}catch(_){return{enabled:true,by:null};}};
+// Garde générique : retourne false + affiche un message si la fonctionnalité est désactivée.
+App.requireFeature=function(key,label){const st=this.featureStatus(key);if(st.enabled)return true;if(st.by==='user')toast('« '+label+' » est désactivée — réactive-la dans Réglages.','bad');else toast('« '+label+' » a été désactivée par l\'administrateur.','bad');return false;};
 App.navMessages=function(){
+  if(!this.requireFeature('messages','Messagerie'))return;
   App._navView='messages';
   try{window.ImmatMessages?.closeThread?.();}catch(e){} // toujours rouvrir sur la LISTE, pas la conversation
   document.body.classList.remove('appels-mode');
@@ -1728,6 +1740,7 @@ App.closeCallJournal=function(){
   const _sh=document.getElementById('sheet');if(_sh){void _sh.offsetHeight;_sh.scrollTop=0;}
 };
 App.navAppels=function(){
+  if(!this.requireFeature('appels','Appels'))return;
   App._navView='appels';
   document.body.classList.add('appels-mode');
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -1757,6 +1770,7 @@ App.navAppels=function(){
   setTimeout(function(){var _m=$('icMsgList'),_c=$('icAppelsPane');if(_c&&_c.style.display==='block'&&_m)_m.style.display='none';},350);
 };
 App.navSignaler=function(){
+  if(!this.requireFeature('signaler','Signaler'))return;
   App._navView='signaler';
   this.closeCallJournal();
   try{window.ImmatMessages?.closeThread?.();}catch(e){}
@@ -1768,6 +1782,7 @@ App.navSignaler=function(){
   this.sigBack();
 };
 App.navActivite=function(){
+  if(!this.requireFeature('activite','Activité'))return;
   App._navView='activite';
   this.closeCallJournal();
   try{window.ImmatMessages?.closeThread?.();}catch(e){}

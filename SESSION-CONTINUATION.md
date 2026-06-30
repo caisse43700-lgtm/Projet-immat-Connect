@@ -7,6 +7,25 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Garde d'indisponibilité générique (message par qui c'est désactivé)
+
+Demande PO : taper une fonctionnalité désactivée doit afficher un message clair indiquant PAR QUI
+(« par l'administrateur » si Dashboard/flotte, « par toi, réactive dans Réglages » si préférence),
+pour TOUTES les fonctionnalités visibles (Signaler, Messages, Appels, Ange, GPS, Activité…).
+- `App.featureStatus(key)` → {enabled, by} : by='admin' si flotte/device flag OFF ; by='user' si
+  capacité ON mais préférence Réglages OFF (ic_ange_proactive/monologue/zones/auto_status) ; sinon enabled.
+- `App.requireFeature(key,label)` → true si actif ; sinon toast (« … désactivée par l'administrateur »
+  ou « … désactivée — réactive-la dans Réglages ») et false.
+- Gardes posées : navSignaler('signaler'), navMessages('messages'), navAppels('appels'),
+  navActivite('activite'), _angeToggle('ange', sauf fermeture), recenter('gps').
+- Registre étendu à 13 entrées : + signaler, messages, appels, ange, gps, activite (scope fleet,
+  gouvernables depuis le Dashboard → désactiver = pour tous les utilisateurs via étape 5). Icônes ajoutées.
+- Sûr par défaut : ces clés ne sont pas dans FEATURE_FLAGS → isFeatureEnabled=true → nav OK tant que
+  le Gardien n'a rien désactivé. Le message n'apparaît que si réellement OFF.
+- Les boutons restent visibles ; le message s'affiche au tap (conforme à la demande). SW v360→v361.
+
+---
+
 ## SESSION 2026-06-29 (suite 12) — Dashboard V2 ÉTAPE 5 : gouvernance flotte + lignes Ange individuelles
 
 Demande PO : « désactiver dans le Dashboard doit disparaître POUR LES UTILISATEURS » (pas seulement
