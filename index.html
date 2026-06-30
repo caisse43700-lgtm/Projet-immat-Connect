@@ -1179,21 +1179,36 @@ async loadModerationUsers(){
   try{
     const{data,error}=await sb.rpc('admin_list_users');
     if(error){const _perm=/gardien/i.test(error.message||'')||error.code==='PGRST301';el.innerHTML='<b style="color:#38bdf8">👥 Utilisateurs</b><div style="margin-top:6px;color:#e57373;font-size:12px">'+(_perm?'Accès réservé au gardien.':'Erreur : '+esc(error.message||error.code||'inconnue'))+'</div>';return;}
-    const rows=data||[];
+    const rows=(data||[]).slice().sort((a,b)=>{
+      // suspendus d'abord, puis gardiens, puis tri plaque
+      const sa=a.suspended?0:(a.is_gardien?2:1),sb2=b.suspended?0:(b.is_gardien?2:1);
+      return sa-sb2||String(a.owner_plate||'').localeCompare(String(b.owner_plate||''));
+    });
+    S._modUsers=rows;
     const _susp=rows.filter(r=>r.suspended).length;
-    const _rowsHtml=rows.map(r=>{
-      const id=js(String(r.user_id||''));
-      const plate=esc(r.owner_plate||'—'),pseudo=esc(r.pseudo||'—');
-      const badge=r.is_gardien?'<span style="background:#1e3a5f;color:#38bdf8;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">🛡 GARDIEN</span>':r.suspended?'<span style="background:#3b0f0f;color:#e57373;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">SUSPENDU</span>':'<span style="background:#14532d;color:#4caf50;border-radius:4px;padding:1px 6px;font-size:10px">actif</span>';
-      const btn=r.is_gardien
-        ?'<span style="flex:0 0 auto;color:#555;font-size:10px;font-style:italic">non suspendable</span>'
-        :r.suspended
-        ?'<button onclick="App.unsuspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#14532d;color:#4caf50;border:1px solid #4caf50;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Réactiver</button>'
-        :'<button onclick="App.suspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#3b0f0f;color:#e57373;border:1px solid #e57373;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Suspendre</button>';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="min-width:0;flex:1 1 auto"><div style="color:#a5b4fc;font-weight:700;font-size:12px">'+plate+' '+badge+'</div><div style="color:#888;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pseudo+'</div></div>'+btn+'</div>';
-    }).join('');
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#38bdf8">👥 Utilisateurs</b><span style="color:#888;font-size:12px">'+rows.length+' compte'+(rows.length!==1?'s':'')+(_susp?' · <b style="color:#e57373">'+_susp+' suspendu'+(_susp!==1?'s':'')+'</b>':'')+'</span></div>'+(rows.length===0?'<div style="color:#555;font-size:12px;padding:4px 0">Aucun utilisateur.</div>':_rowsHtml);
+    const hd='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#38bdf8">👥 Utilisateurs</b><span style="color:#888;font-size:12px">'+rows.length+' compte'+(rows.length!==1?'s':'')+(_susp?' · <b style="color:#e57373">'+_susp+' suspendu'+(_susp!==1?'s':'')+'</b>':'')+'</span></div>';
+    const search='<input type="search" id="modUserSearch" placeholder="Rechercher plaque ou pseudo…" oninput="App._renderModUserRows(this.value)" style="width:100%;box-sizing:border-box;background:#0a0a14;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;font-size:12px;padding:7px 10px;margin-bottom:6px;outline:none">';
+    el.innerHTML=hd+(rows.length?search:'')+'<div id="modUserRows">'+(rows.length===0?'<div style="color:#555;font-size:12px;padding:4px 0">Aucun utilisateur.</div>':'')+'</div>';
+    this._renderModUserRows('');
   }catch(e){el.innerHTML='<b style="color:#38bdf8">👥 Utilisateurs</b><div style="margin-top:6px;color:#e57373;font-size:12px">Erreur : '+esc(e?.message||String(e))+'</div>';}
+},
+_renderModUserRows(q){
+  const box=$('modUserRows');if(!box)return;
+  const rows=S._modUsers||[];
+  const _q=String(q||'').trim().toUpperCase().replace(/[-\s]/g,'');
+  const filt=_q?rows.filter(r=>(String(r.owner_plate||'').toUpperCase().replace(/[-\s]/g,'').includes(_q)||String(r.pseudo||'').toUpperCase().includes(_q))):rows;
+  if(!filt.length){box.innerHTML='<div style="color:#555;font-size:12px;padding:6px 0">Aucun résultat.</div>';return;}
+  box.innerHTML=filt.map(r=>{
+    const id=js(String(r.user_id||''));
+    const plate=esc(r.owner_plate||'—'),pseudo=esc(r.pseudo||'—');
+    const badge=r.is_gardien?'<span style="background:#1e3a5f;color:#38bdf8;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">🛡 GARDIEN</span>':r.suspended?'<span style="background:#3b0f0f;color:#e57373;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">SUSPENDU</span>':'<span style="background:#14532d;color:#4caf50;border-radius:4px;padding:1px 6px;font-size:10px">actif</span>';
+    const btn=r.is_gardien
+      ?'<span style="flex:0 0 auto;color:#555;font-size:10px;font-style:italic">non suspendable</span>'
+      :r.suspended
+      ?'<button onclick="App.unsuspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#14532d;color:#4caf50;border:1px solid #4caf50;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Réactiver</button>'
+      :'<button onclick="App.suspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#3b0f0f;color:#e57373;border:1px solid #e57373;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Suspendre</button>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="min-width:0;flex:1 1 auto"><div style="color:#a5b4fc;font-weight:700;font-size:12px">'+plate+' '+badge+'</div><div style="color:#888;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pseudo+'</div></div>'+btn+'</div>';
+  }).join('');
 },
 async suspendUser(id,plate){
   if(!id)return;
