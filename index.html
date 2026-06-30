@@ -1153,8 +1153,16 @@ gdGovLogBlock(){
       const col=x.enabled?'#4ade80':'#f87171';
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1a1a2e;font-size:11px"><div style="min-width:0"><span style="color:#e2e8f0">'+e2(lbl(x.key))+'</span> <span style="color:'+col+';font-weight:700">'+(x.enabled?'activé':'désactivé')+'</span><div style="color:#555;font-size:10px">'+e2(x.by||'gardien')+'</div></div><span style="color:#555;flex:0 0 auto;font-variant-numeric:tabular-nums">'+e2(dt)+'</span></div>';
     }).join('');
-    return '<div data-gd="moderation" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a78bfa">📜 Journal de gouvernance</b><span style="font-size:10px;color:#555">'+log.length+' · '+(log.length?'<button onclick="if(confirm(\'Vider le journal de gouvernance ?\')){localStorage.removeItem(\'ic_gov_log\');App.openGardienDashboard();}" style="background:none;border:none;color:#555;font-size:10px;cursor:pointer;text-decoration:underline;padding:0">Vider</button>':'')+'</span></div>'+(log.length?rows:'<div style="color:#555;font-size:12px;padding:4px 0">Aucun changement enregistré.</div>')+'</div>';
+    const _actions=log.length?'<button onclick="App.exportGovLog()" style="background:none;border:none;color:#a78bfa;font-size:10px;cursor:pointer;text-decoration:underline;padding:0">Exporter</button> · <button onclick="if(confirm(\'Vider le journal de gouvernance ?\')){localStorage.removeItem(\'ic_gov_log\');App.openGardienDashboard();}" style="background:none;border:none;color:#555;font-size:10px;cursor:pointer;text-decoration:underline;padding:0">Vider</button>':'';
+    return '<div data-gd="moderation" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a78bfa">📜 Journal de gouvernance</b><span style="font-size:10px;color:#555">'+log.length+' · '+_actions+'</span></div>'+(log.length?rows:'<div style="color:#555;font-size:12px;padding:4px 0">Aucun changement enregistré.</div>')+'</div>';
   }catch(_){return'';}
+},
+exportGovLog(){
+  try{
+    const log=localStorage.getItem('ic_gov_log')||'[]';
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(log).then(()=>toast('Journal de gouvernance copié','ok')).catch(()=>toast('Copie impossible sur ce navigateur','bad'));}
+    else toast('Copie indisponible','bad');
+  }catch(e){toast('Erreur export','bad');}
 },
 // ImmatNexus — panneau Développeur (lecture seule) : snapshot unifié + audit de cohérence.
 gdNexusBlock(){
