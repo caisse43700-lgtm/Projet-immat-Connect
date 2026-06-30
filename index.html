@@ -5448,9 +5448,64 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{action:true,key:legacy,enabled:!!on})}catch(e){}
   },
   angeCancelAction(){const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
+  // ── Ange SIGNALE un véhicule (vocal/texte) : « signale au véhicule devant pneu dégonflé »
+  _trySignal(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false; // question, pas une commande
+      if(!/\b(signale|signaler|pr[ée]viens|pr[ée]venir|alerte|alerter|indique|indiquer|dis|envoie)\b/.test(t))return false;
+      const _hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
+      if(!/(v[ée]hicule|voiture|devant|plaque|immatricul|conducteur|en face)/.test(t)&&!_hasPlate)return false;
+      const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
+      try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      const _fs=App.featureStatus?App.featureStatus('signalement_vehicule'):{enabled:true,by:null};
+      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">🚗 Les signalements véhicule sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas envoyer.</div>';$('angeMsg').value='';return true;}
+      let plate=null,how='';
+      if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
+        plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;how='devant';
+        if(!plate){r.innerHTML='<div style="line-height:1.6">🚗 Je ne détecte aucun véhicule connecté juste devant toi. Rapproche-toi, ou donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';$('angeMsg').value='';return true;}
+      }else{
+        const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
+        if(m)plate=nPlate(m[1]);how='plaque';
+      }
+      if(!plate){r.innerHTML='<div style="line-height:1.6">À quel véhicule ? Dis « <b>au véhicule devant</b> » ou la plaque (ex. « signale à AB-123-CD pneu dégonflé »).</div>';$('angeMsg').value='';return true;}
+      if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de te signaler toi-même 🙂</div>';$('angeMsg').value='';return true;}
+      const LBL=[[/pneu|roue|d[ée]gonfl/,'Pneu dégonflé'],[/porte|coffre|hayon/,'Porte ou coffre ouvert'],[/trappe|carburant|essence|r[ée]servoir/,'Trappe carburant ouverte'],[/phare|feu|clignot|lumi[èe]re|veilleuse/,'Feux / phares'],[/fum|incendie|br[uû]l/,'Fumée / départ de feu'],[/objet|toit|galerie|charge/,'Objet sur le toit'],[/fuite|huile|liquide/,'Fuite sous le véhicule']];
+      let label=null;for(let i=0;i<LBL.length;i++){if(LBL[i][0].test(t)){label=LBL[i][1];break;}}
+      const _pl=esc(fPlate(plate)||plate);
+      if(!label){
+        const choices=['Pneu dégonflé','Porte ou coffre ouvert','Feux / phares','Trappe carburant ouverte','Fumée / départ de feu','Objet sur le toit'];
+        r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Quel problème pour <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+choices.map(l=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(plate)+'\',\''+js(l)+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(l)+'</button>').join('')+'</div>';
+        $('angeMsg').value='';return true;
+      }
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Signaler à <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' : « '+esc(label)+' » ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.angeSignalConfirm(\''+js(plate)+'\',\''+js(label)+'\')" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Envoyer</button><button onclick="AngeDialog.angeCancelAction()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div>';
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
+  angeSignalConfirm(plate,label){
+    const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
+    Promise.resolve(this._sendVehicleSignal(plate,label)).then(ok=>{
+      if(!r)return;
+      r.innerHTML=ok?'<div style="line-height:1.6">✅ Signalement envoyé à <b>'+esc(fPlate(plate)||plate)+'</b> : '+esc(label)+'.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer (véhicule peut-être non connecté ou messagerie indisponible).</div>';
+    });
+  },
+  async _sendVehicleSignal(plate,label){
+    try{
+      plate=nPlate(plate||'');if(!plate)return false;
+      const urgent=/pneu|roue|fum|feu|incendie|fuite/i.test(label);
+      const txt=(urgent?'🚨 SIGNALEMENT URGENT : ':'⚠️ SIGNALEMENT : ')+label+'. Pouvez-vous vérifier votre véhicule ?';
+      if(window.S){S.selPlate=plate;S.conv=plate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:plate});}
+      if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;
+      const ok=await window.ImmatMessages.sendToPlate(plate,txt,{context_type:'vehicle_report'});
+      if(ok!==false){try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label:label,to:plate,_src:'Ange'})}catch(e){}return true;}
+      return false;
+    }catch(_){return false;}
+  },
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Ange agit — signalement véhicule vocal/texte (« signale au véhicule devant … »)
+    try{ if(this._trySignal(msg)) return; }catch(_e){}
     // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
     try{ if(this._tryAction(msg)) return; }catch(_e){}
     // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).
