@@ -206,6 +206,21 @@
     if(panel){ panel.style.display='flex'; panel.classList.add('show','active'); }
   }
 
+  // Respecte la gouvernance : si la catégorie est désactivée (Dashboard/flotte ou Réglages),
+  // on affiche le message via requireFeature et on N'OUVRE PAS le step (sinon le hotfix
+  // contournait le garde de App.sigStepX en forçant openSignalStep).
+  function _catBlocked(key,label){
+    try{
+      if(window.App && typeof window.App.featureStatus==='function'){
+        const st=window.App.featureStatus(key);
+        if(st && !st.enabled){
+          try{ if(typeof window.App.requireFeature==='function') window.App.requireFeature(key,label); }catch(_){}
+          return true;
+        }
+      }
+    }catch(_){}
+    return false;
+  }
   function installCriticalButtonHotfix(){
     if(window.__ImmatCriticalButtonHotfixV1) return;
     window.__ImmatCriticalButtonHotfixV1=true;
@@ -213,9 +228,9 @@
       const el=e.target && e.target.closest && e.target.closest('.sig-cat-btn');
       if(!el) return;
       // #angeFab géré par son onclick inline (App._angeToggle) — retiré d'ici (évitait un doublon).
-      if(el.classList.contains('cat-route')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepRoute?.(); }catch(err){} openSignalStep('sigStep2Route'); }
-      else if(el.classList.contains('cat-vehicle')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepVehicle?.(); }catch(err){} openSignalStep('sigStep2Vehicle'); }
-      else if(el.classList.contains('cat-aide')){ e.preventDefault(); e.stopPropagation(); try{ window.App?.sigStepAide?.(); }catch(err){} openSignalStep('sigStep2Aide'); }
+      if(el.classList.contains('cat-route')){ e.preventDefault(); e.stopPropagation(); if(_catBlocked('signalement_route','Signalements route'))return; try{ window.App?.sigStepRoute?.(); }catch(err){} openSignalStep('sigStep2Route'); }
+      else if(el.classList.contains('cat-vehicle')){ e.preventDefault(); e.stopPropagation(); if(_catBlocked('signalement_vehicule','Signalements véhicule'))return; try{ window.App?.sigStepVehicle?.(); }catch(err){} openSignalStep('sigStep2Vehicle'); }
+      else if(el.classList.contains('cat-aide')){ e.preventDefault(); e.stopPropagation(); if(_catBlocked('aide','Demandes d\'aide'))return; try{ window.App?.sigStepAide?.(); }catch(err){} openSignalStep('sigStep2Aide'); }
     },true);
   }
 

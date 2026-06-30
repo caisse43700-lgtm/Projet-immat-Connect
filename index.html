@@ -1197,7 +1197,7 @@ gdFeaturesBlock(){
     const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤',signaler:'📣',messages:'💬',appels:'📞',ange:'✦',gps:'📍',activite:'🔔'};
     const stgCol={alpha:'#f87171',beta:'#fb923c',stable:'#4ade80',deprecated:'#94a3b8',removed:'#555'};
     const reg=window.FeatureRegistry.list();
-    const rows=reg.map(f=>{
+    const rowFor=f=>{
       const on=window.FeatureRegistry.resolve(f.key).value;
       const legacy=f.replaces||f.key;
       const depOff=(f.dependsOn||[]).filter(k=>!window.FeatureRegistry.isEnabled(k));
@@ -1209,8 +1209,18 @@ gdFeaturesBlock(){
         ?'<button type="button" disabled style="background:#1a1a2e;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;min-width:80px;opacity:.7">INDISPO.</button>'
         :'<button type="button" onclick="App.setFeatureFlag(\''+legacy+'\','+(!on)+');App.openGardienDashboard()" style="background:'+bg+';color:'+col+';border:1px solid '+col+';border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:700;min-width:80px">'+(on?'ACTIVÉ ✅':'DÉSACT. 🔴')+'</button>';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a2e;gap:8px"><div style="min-width:0"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px">'+(icons[f.key]||'🔧')+'</span><span style="color:#e2e8f0;font-size:13px">'+e2(f.label)+'</span>'+(f.frozen?'<span style="color:#fbbf24;font-size:10px">· gelé</span>':'')+'</div><div style="color:#475569;font-size:10px;margin-top:2px;margin-left:23px"><span style="color:'+sc+'">'+e2(f.stage)+'</span> · '+e2(f.scope)+' · risk:'+e2(f.riskLevel)+(blocked?' · nécessite '+e2(depOff.join(',')):'')+'</div></div>'+btn+'</div>';
+    };
+    // Organisé par groupe (en-tête + compteur actifs/total), toutes les catégories visibles.
+    const groups={};reg.forEach(f=>{const g=f.group||'Autres';(groups[g]=groups[g]||[]).push(f);});
+    const order=['Signalements','Communication','Carte','IA','Assistance','Présence'];
+    const gNames=Object.keys(groups).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});
+    const sections=gNames.map(g=>{
+      const items=groups[g];
+      const onN=items.filter(f=>window.FeatureRegistry.resolve(f.key).value).length;
+      const hd='<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px;padding-bottom:4px;border-bottom:1px solid #1e293b"><span style="color:#a3e635;font-size:11px;font-weight:700;letter-spacing:.04em">'+e2(g)+'</span><span style="color:#475569;font-size:10px">'+onN+'/'+items.length+' actif'+(onN!==1?'s':'')+'</span></div>';
+      return hd+items.map(rowFor).join('');
     }).join('');
-    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#a3e635">⚙️ Fonctionnalités</b><span style="font-size:10px;color:#555">V2 · registre · '+reg.length+'</span></div><div style="font-size:10px;color:#555;margin-bottom:10px">Généré depuis le registre. Activation via flag (pont legacy) ; effet runtime complet = étape 4. Préférences (sons, voix, effets, notifs) → Paramètres.</div>'+rows;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="color:#a3e635">⚙️ Fonctionnalités</b><span style="font-size:10px;color:#555">V2 · registre · '+reg.length+' · '+gNames.length+' groupes</span></div><div style="font-size:10px;color:#555;margin-bottom:4px">Organisé par catégorie. Activer/Désactiver s\'applique à toute la flotte (kill-switch). Préférences (sons, voix, effets, notifs) → Paramètres.</div>'+sections;
   }catch(_){return'<div style="color:#e57373;font-size:12px">Registre indisponible.</div>';}
 },
 runImmunityCheck(){
@@ -4998,7 +5008,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="ui.js?v=15"></script>
+<script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
 <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:flex-end;justify-content:center" role="dialog" aria-modal="true" aria-label="Bienvenue sur ImmatConnect">
