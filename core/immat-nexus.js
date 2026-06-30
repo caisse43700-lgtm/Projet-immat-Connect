@@ -397,5 +397,58 @@
     return null;
   }
 
-  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor };
+  // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) ─────────────────
+  // Projection PURE : lit l'existant (voisinage, messages reçus, à-traiter, registre)
+  // et laisse apparaître ≤3 gestes UTILES. Renvoie des SUGGESTIONS, jamais d'action.
+  function _nearestRealN() {
+    try {
+      var n = (w.S && w.S.nearby) || [];
+      var c = n.filter(function (x) { return x && x.plate && !/^VEH-/i.test(x.plate); })
+               .sort(function (a, b) { return (a.dist == null ? 1e9 : a.dist) - (b.dist == null ? 1e9 : b.dist); });
+      if (!c.length) return null;
+      return { plate: c[0].plate, dist: (c[0].dist == null ? null : c[0].dist) };
+    } catch (e) { return null; }
+  }
+  function _distLblN(d) { if (d == null) return ''; return d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1) + ' km'; }
+  function nextUsefulAction() {
+    var out = [];
+    try {
+      var fe = function (k) { return _featureStatus(k).enabled; };
+      // 1) Message reçu non traité (signalement) → proposer une réponse
+      var msgs = (w.S && w.S._actMessages) || [];
+      var del = [];
+      try { del = JSON.parse(w.localStorage.getItem('ic_deleted_msgs') || '[]').map(String); } catch (e) {}
+      var rep = msgs.filter(function (m) {
+        return m && m._received && !m.read_at && del.indexOf(String(m.id)) < 0 &&
+               (m.context_type === 'vehicle_report' || m.context_type === 'parked_report');
+      });
+      if (rep.length && fe('messages')) {
+        rep.sort(function (a, b) {
+          return (b.created_at ? +new Date(b.created_at) : b.at || 0) - (a.created_at ? +new Date(a.created_at) : a.at || 0);
+        });
+        var pl = rep[0]._otherPlate || rep[0]._convPlate || rep[0].sender_plate || '';
+        out.push({ kind: 'reply', run: 'reply', label: '💬 Répondre à ' + (pl || 'un conducteur'),
+                   reason: 'Tu as reçu un signalement non traité.' });
+      }
+      // 2) Véhicule connecté à proximité → proposer un signalement
+      var near = _nearestRealN();
+      if (near && fe('signalement_vehicule')) {
+        var d = _distLblN(near.dist);
+        out.push({ kind: 'signal', run: 'sigveh', label: '🚘 Signaler à ' + near.plate + (d ? ' (' + d + ')' : ''),
+                   reason: 'Un véhicule connecté est à proximité.' });
+      }
+      // 3) Activité « à traiter » en attente → proposer d'ouvrir la vue
+      try {
+        var todo = w.App && w.App._computeTodo && w.App._computeTodo();
+        if (todo && todo.total > 0) {
+          var skip = (out.length && out[0].kind === 'reply' && todo.total <= 1);
+          if (!skip) out.push({ kind: 'todo', run: 'todo', label: '⏳ Ouvrir À traiter (' + todo.total + ')',
+                                reason: todo.total + ' action(s) en attente.' });
+        }
+      } catch (e) {}
+    } catch (e) {}
+    return out.slice(0, 3);
+  }
+
+  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor, nextUsefulAction: nextUsefulAction };
 })(typeof window !== 'undefined' ? window : this);
