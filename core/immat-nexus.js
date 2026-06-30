@@ -165,7 +165,7 @@
   }
 
   var INTENTS = [
-    { id: 'why_blocked', confidence: 0.92, re: /(pourquoi).*(marche pas|fonctionne pas|bloqu|ne s'ouvre|indispo|d[ée]sactiv)/, resolver: 'feature' },
+    { id: 'why_blocked', confidence: 0.92, re: /(pourquoi).*(march|fonctionne pas|bloqu|ne s'ouvre|indispo|d[ée]sactiv|marche pas)/, resolver: 'feature' },
     { id: 'feature_status', confidence: 0.9, re: /(statut|[ée]tat|est-ce que).*(appel|message|gps|ange|route|v[ée]hicule|aide|stationn|zone|nouveau|traiter|trait[ée]|tout|localisation|t[ée]l[ée]phone)|(appel|message|gps|ange|route|v[ée]hicule|aide|stationn).*(activ|d[ée]sactiv|marche|bloqu)/, resolver: 'feature' },
     { id: 'disabled_features', confidence: 0.9, re: /(quoi|quelles?|qu.{0,2}est.{0,2}ce|c.{0,2}est quoi).*(d[ée]sactiv|coup[ée]|bloqu|off|indispo)|(liste|montre|affiche).*(d[ée]sactiv|fonctionnalit|coup)|fonctionnalit.{0,6}(d[ée]sactiv|coup|bloqu)|(d[ée]sactiv).{0,8}(quoi|liste|fonctionnalit)/, resolver: 'disabled' },
     { id: 'recent_violations', confidence: 0.88, re: /(violation|enfreint|non.?respect)|(loi|invariant|r[èe]gle).*(viol|cass|enfreint|r[ée]cent|respect[ée])|quelles? (lois|r[èe]gles).*(viol|cass|enfreint)/, resolver: 'violations' },
