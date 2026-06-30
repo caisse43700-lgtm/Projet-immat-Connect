@@ -374,5 +374,28 @@
   // Résolution texte → clé de registre (lecture seule, exposée pour les actions d'Ange — Nexus n'agit pas).
   function featureKeyFromText(t) { return _featureKeyFrom(t); }
 
-  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText };
+  // ── Le « remplacement intelligent » (SPEC-ANGE-NEXT-ACTION §1.3) ──────────────
+  // Quand une action est impossible (feature OFF), proposer le réducteur AUTORISÉ
+  // le plus proche. Donnée déclarative ; pure lecture du registre (featureStatus).
+  // Renvoie une SUGGESTION ({feature,run,label,reason}) ou null — n'agit JAMAIS.
+  var FALLBACK = {
+    appels: [{ feature: 'messages', run: 'msgveh', label: '💬 Envoyer un message à la place' }],
+    messages: [{ feature: 'appels', run: 'callveh', label: '📞 Appeler à la place' }],
+    signalement_vehicule: [{ feature: 'messages', run: 'msgveh', label: '💬 Envoyer un message à la place' }]
+  };
+  function fallbackFor(key) {
+    try {
+      var alts = FALLBACK[key]; if (!alts || !alts.length) return null;
+      for (var i = 0; i < alts.length; i++) {
+        var a = alts[i];
+        if (_featureStatus(a.feature).enabled) {
+          return { feature: a.feature, run: a.run, label: a.label,
+                   reason: '« ' + _govLabelN(key) + ' » est indisponible ; « ' + _govLabelN(a.feature) + ' » reste autorisé.' };
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor };
 })(typeof window !== 'undefined' ? window : this);

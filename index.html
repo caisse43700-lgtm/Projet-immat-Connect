@@ -5140,7 +5140,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="core/immat-nexus.js?v=9"></script>
+<script src="core/immat-nexus.js?v=10"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5525,10 +5525,14 @@ const AngeDialog={
     }catch(_){}
   },
   _done(txt){try{this._log('action',txt);}catch(_){}const r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">✅ '+esc(txt)+'.</div>';}try{setTimeout(()=>{this.close&&this.close();},500);}catch(_){}},
+  // ── Remplacement intelligent (SPEC-ANGE-NEXT-ACTION §1.3) : un kill-switch n'est plus un mur.
+  //    On affiche le message « indisponible » + un bouton vers l'alternative AUTORISÉE (via Nexus, lecture seule).
+  _blockedHTML(key,sentence){let html='<div style="line-height:1.6">'+sentence+'</div>';try{const fb=window.ImmatNexus&&window.ImmatNexus.fallbackFor&&window.ImmatNexus.fallbackFor(key);if(fb&&fb.run){html+='<div style="margin-top:10px"><button onclick="AngeDialog._fallbackRun(\''+js(fb.run)+'\')" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer">'+esc(fb.label)+'</button></div><div style="color:#666;font-size:10px;margin-top:6px">'+esc(fb.reason||'')+'</div>';}}catch(_){}return html;},
+  _fallbackRun(run){try{this._log('action','Alternative proposée : '+run);}catch(_){}if(run==='msgveh')return this._messageNearest();if(run==='callveh')return this._callNearest();if(run==='sigveh')return this._signalNearest();},
   // ── Propose le véhicule CONNECTÉ le plus proche (par distance) comme cible par défaut, puis le problème
   _signalNearest(){const r=$('angeResponse');if(!r)return;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
     const _fs=App.featureStatus?App.featureStatus('signalement_vehicule'):{enabled:true,by:null};
-    if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">🚗 Les signalements véhicule sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.</div>';return;}
+    if(!_fs.enabled){r.innerHTML=this._blockedHTML('signalement_vehicule','🚗 Les signalements véhicule sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');return;}
     const info=this._nearestInfo();
     if(!info){r.innerHTML='<div style="line-height:1.6">🚗 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';return;}
     const _pl=esc(fPlate(info.plate)||info.plate);const _d=this._distLabel(info.dist);
@@ -5536,7 +5540,7 @@ const AngeDialog={
     r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">🚘 Le plus proche : <b>'+_pl+'</b>'+(_d?' ('+esc(_d)+')':'')+'.<br>Que veux-tu lui signaler ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+choices.map(l=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(info.plate)+'\',\''+js(l)+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(l)+'</button>').join('')+'</div>';},
   _callNearest(){const r=$('angeResponse');if(!r)return;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
     const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
-    if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.</div>';return;}
+    if(!_fs.enabled){r.innerHTML=this._blockedHTML('appels','📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');return;}
     const info=this._nearestInfo();
     if(!info){r.innerHTML='<div style="line-height:1.6">📞 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « appelle AB-123-CD ».</div>';return;}
     const _pl=esc(fPlate(info.plate)||info.plate);const _d=this._distLabel(info.dist);
@@ -5544,7 +5548,7 @@ const AngeDialog={
     this._armConfirm(()=>this.angeCallConfirm(info.plate));},
   _messageNearest(){const r=$('angeResponse');if(!r)return;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
     const _fs=App.featureStatus?App.featureStatus('messages'):{enabled:true,by:null};
-    if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">💬 La messagerie est désactivée '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.</div>';return;}
+    if(!_fs.enabled){r.innerHTML=this._blockedHTML('messages','💬 La messagerie est désactivée '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');return;}
     const info=this._nearestInfo();
     if(!info){r.innerHTML='<div style="line-height:1.6">💬 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « envoie à AB-123-CD : ralentis ».</div>';return;}
     const _pl=esc(fPlate(info.plate)||info.plate);const _d=this._distLabel(info.dist);
@@ -5653,7 +5657,7 @@ const AngeDialog={
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('signalement_vehicule'):{enabled:true,by:null};
-      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">🚗 Les signalements véhicule sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas envoyer.</div>';$('angeMsg').value='';return true;}
+      if(!_fs.enabled){r.innerHTML=this._blockedHTML('signalement_vehicule','🚗 Les signalements véhicule sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');$('angeMsg').value='';return true;}
       let plate=null,how='';
       if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;how='devant';
@@ -5714,7 +5718,7 @@ const AngeDialog={
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
-      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas appeler.</div>';$('angeMsg').value='';return true;}
+      if(!_fs.enabled){r.innerHTML=this._blockedHTML('appels','📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');$('angeMsg').value='';return true;}
       let plate=null;
       if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;
@@ -5759,7 +5763,7 @@ const AngeDialog={
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
       try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
       const _fs=App.featureStatus?App.featureStatus('messages'):{enabled:true,by:null};
-      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">💬 La messagerie est désactivée '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas envoyer de message.</div>';$('angeMsg').value='';return true;}
+      if(!_fs.enabled){r.innerHTML=this._blockedHTML('messages','💬 La messagerie est désactivée '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');$('angeMsg').value='';return true;}
       let plate=null;
       if(/devant|de devant|d.en face|en face/.test(t)){
         plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;

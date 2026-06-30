@@ -35,7 +35,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v404 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v9 · immat-copilot.js v4
+SW                     : v405 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v10 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2285,12 +2285,13 @@ Le module Activité est considéré comme stabilisé. Les prochaines décisions 
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
-> ⭐ **EURÊKA EN ATTENTE D'IMPLÉMENTATION — « Le prochain geste utile »**
-> Spec prête : `docs/SPEC-ANGE-NEXT-ACTION.md`. Ange = projection du plus petit geste utile.
-> Implémenter par incréments non destructifs (lecture seule, dans Nexus, zéro nouvel état) :
-> 1) `fallbackFor()` — remplacement autorisé quand une feature est OFF (dérivé du registre) ;
-> 2) `nextUsefulAction()` — catalogue de situations §3, ≤3 gestes, **silence par défaut** ;
-> 3) `currentSituation()` — fil rouge (1 phrase courte) à l'ouverture d'Ange.
+> ⭐ **EURÊKA EN COURS — « Le prochain geste utile »** (`docs/SPEC-ANGE-NEXT-ACTION.md`)
+> Ange = projection du plus petit geste utile. Incréments non destructifs (lecture seule, dans Nexus) :
+> 1) ✅ **FAIT (SW v405)** `fallbackFor()` — quand une feature est OFF, Ange propose l'alternative
+>    AUTORISÉE au lieu d'un mur (appels OFF → message, etc.), dérivé du registre. Câblé dans Ange via
+>    `_blockedHTML` / `_fallbackRun`. Tests anti-intrusion 87/87.
+> 2) ⏳ **PROCHAIN** `nextUsefulAction()` — catalogue de situations §3, ≤3 gestes, **silence par défaut** ;
+> 3) ⏳ `currentSituation()` — fil rouge (1 phrase courte) à l'ouverture d'Ange.
 > Chaque incrément : tests anti-intrusion (SPEC §7) + bump CACHE_NAME + maj continuité.
 > (Ne PAS créer de moteur de décision / DeltaEngine / second registre / second journal.)
 
@@ -2880,6 +2881,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | EURÊKA incrément 1 — **remplacement intelligent** (`fallbackFor`, SPEC-ANGE-NEXT-ACTION §1.3). Un kill-switch n'est plus un mur : quand une action est indisponible (feature OFF), Ange propose l'alternative AUTORISÉE (appels OFF → « 💬 Envoyer un message à la place » ; messages OFF → « 📞 Appeler à la place » ; signalement véhicule OFF → message). Implémenté **lecture seule dans Nexus** : `ImmatNexus.fallbackFor(key)` lit `featureStatus` + table déclarative `FALLBACK`, renvoie une SUGGESTION `{feature,run,label,reason}` ou null (n'agit jamais). Câblé dans AngeDialog : `_blockedHTML(key,phrase)` (message + bouton alternative) + `_fallbackRun(run)` (→ actes du menu existant `_messageNearest/_callNearest/_signalNearest`, aucune nouvelle voie de mutation). Les 6 impasses « désactivé… je ne peux pas » remplacées. Garde-fous : ne réactive jamais la feature coupée, mutations propriétaires, confirmation héritée. Tests ange-v2 **87/87** (+10, dont anti-intrusion §7). immat-nexus.js v9→v10, SW v404→v405. |
 | 2026-06-30 | IA session | EURÊKA d'architecture formalisé → `docs/SPEC-ANGE-NEXT-ACTION.md` (spec, **aucun code**). Idée : Ange ne « sait pas faire plus », il sait toujours **le plus petit geste utile maintenant**. Modèle `situation → écart → geste utile → confirmation si besoin → action → trace`. UNE seule projection de plus (lecture seule, dans Nexus), pas de moteur : `currentSituation()` (fil rouge, 1 phrase), `nextUsefulAction()` (≤3 gestes, silence par défaut), `fallbackFor()` (remplacement autorisé quand feature OFF, dérivé du registre). Sources 100% existantes (S.nearby/_actMessages/featureStatus/_INVARIANTS/sense/ic_ange_log). Garde-fous : lecture seule, kill-switch jamais contourné, mutations via fonctions propriétaires, silence anti-intrusion, confirmation héritée d'Ange V2. Plan d'implémentation par incréments (fallback → nextUsefulAction → currentSituation). PROCHAINE MISSION recommandée. |
 | 2026-06-30 | IA session | Ange — menu d'accueil « Que veux-tu faire ? » + proposition de l'immatriculation la plus proche (demande PO : « quand on crée un signalement qu'il propose l'immat la plus proche par distance » + « qu'il demande qu'est-ce qu'on veut faire : aide pour soi / signaler / appeler / message »). AngeDialog : entrée `_MENU.faire` (aide pour soi → sigStepAide · signaler/appeler/message véhicule · voir activité), `_entryMenuHTML()` affiché à l'ouverture (welcome) ; `_tryMenu()` capte « que faire / que puis-je faire / menu / options / aide-moi » → menu(faire). `_nearestInfo()`+`_distLabel()` (projection S.nearby, pas de nouvel état). `_signalNearest/_callNearest/_messageNearest` proposent le véhicule connecté le plus proche **avec la distance** puis le problème/confirmation. `_trySignal` sans cible explicite propose désormais le plus proche. Tests 77/77 (ange-v2). SW v404. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange GUIDÉ + table d'interactions (demande PO : « qu'il connaisse l'intérieur de chaque fonction et guide par suggestions »). AngeDialog._MENU (arbre déclaratif = donnée) : Signaler→{Route→{accident/bouchon/…}, Véhicule→{pneu/porte/feux/…}, Aide, Stationné} · Activité→{catégories + à traiter/nouveaux/traités}. menu(path)+_menuBtn+_menuAct générique (réutilise roadReport/_sendVehicleSignal/openActivityCat/openTodoView…). _tryGuide : « signaler / faire un signalement [véhicule] / activité / ouvre messages / appels (manqués) » → boutons de suggestion, ouverture directe ; gate feature respecté. _tryReply + _replyChoices + angeReplyConfirm : propose des réponses cohérentes selon le contexte du dernier message reçu → envoi. FIX accent « activité ». Tests 64/64. SW v403. (local/merge-to-main) |
