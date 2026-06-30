@@ -5606,7 +5606,7 @@ const AngeDialog={
     try{
       const t=String(msg||'').toLowerCase();
       if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
-      if(!/\bmessages?\b|(?:^|[\s,;:'’])[ée]cri(?:s|re|t|ve|vez)/.test(t))return false; // doit concerner un message / écrire
+      if(!/\bmessages?\b|(?:^|[\s,;:'\u2019])[ée]cri(?:s|re|t|ve|vez)/.test(t))return false; // doit concerner un message / écrire
       const hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
       if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face|lui|le dernier|le m[êe]me)/.test(t)&&!hasPlate)return false;
       const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
