@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="calls.css?v=3">
   <script src="utils.js?v=3"></script>
   <script src="core/invariants.js?v=45"></script>
-  <script src="core/bus.js?v=50"></script>
+  <script src="core/bus.js?v=51"></script>
   <script src="core/brain.js?v=45"></script>
   <script src="core/governance.js?v=45"></script>
   <script src="core/immatOrganism.js?v=46"></script>
@@ -907,7 +907,7 @@ _startSuspensionWatch(){
   if(!App.__suspVisBound){App.__suspVisBound=true;document.addEventListener('visibilitychange',()=>{if(!document.hidden)App._checkSuspension();});}
   this._checkSuspension();
 },
-openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}try{localStorage.removeItem('ic_pending_profile');var _ple=localStorage.getItem('ic_pending_profile_last_email');if(_ple){localStorage.removeItem('ic_pending_profile__'+_ple);localStorage.removeItem('ic_pending_profile_last_email');}}catch(_){}S.profile=p;this.show('sm');try{if(!App._callJournalCachedHTML)App._callJournalCachedHTML=localStorage.getItem('ic_call_journal_html')||null;}catch(_){}const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';const _vrs=$('voiceRateSlider');if(_vrs)_vrs.value=+(get('ic_voice_rate','.86')||'.86');const _ag=$('approxGeoToggle');if(_ag)_ag.checked=get('ic_approx_geo','0')==='1';try{const _np=JSON.parse(localStorage.getItem('ic_notif_prefs')||'{}');const _nr=$('notifRouteToggle');if(_nr)_nr.checked=_np.route!==false;const _nv=$('notifVehicleToggle');if(_nv)_nv.checked=_np.vehicle!==false;const _nh=$('notifHelpToggle');if(_nh)_nh.checked=_np.help!==false;const _nm=$('notifMessagesToggle');if(_nm)_nm.checked=_np.messages!==false;const _nc=$('notifCallsToggle');if(_nc)_nc.checked=_np.calls!==false;}catch(_){}$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;{const _rs=$('radiusSettingsSlider');if(_rs)_rs.value=S.radiusKm;const _rv=$('radiusSettingsVal');if(_rv)_rv.textContent=S.radiusKm+' km';const _at=$('autoStatusToggle');if(_at)_at.checked=get('ic_auto_status','0')==='1';const _ap=$('angeProactiveToggle');if(_ap)_ap.checked=get('ic_ange_proactive','1')==='1';const _am=$('angeMonologueToggle');if(_am)_am.checked=get('ic_ange_monologue','1')==='1';const _bs=$('batterySaveToggle');if(_bs)_bs.checked=get('ic_battery_save','0')==='1';}this.refreshStats?.();this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);try{this.loadFleetFlags?.();}catch(_){}this.subLocs();this.syncCommunityAlerts();this.subscribeCommunityReports();setTimeout(()=>this.loadBlocksFromDB(),2000);setTimeout(()=>this._startDeviceHeartbeat?.(),3000);setTimeout(()=>this._startSuspensionWatch?.(),3500);const _app=this,_id=p.id,_pl=p.owner_plate||'';(function _mi(n){if(window.CallManager&&!_mi._cm){_mi._cm=1;try{CallManager.init(sb,_id,_pl)}catch(e){}try{if(!CallManager.__featGuard){CallManager.__featGuard=true;['contactByCall','requestCall'].forEach(function(fn){var _o=CallManager[fn];if(typeof _o==='function')CallManager[fn]=function(){if(!App.requireFeature('appels','Appels'))return;return _o.apply(this,arguments);};});}}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v})}catch(e){}}if(window.ImmatMessages&&!_mi._im){_mi._im=1;_app.startMsgs();try{if(!ImmatMessages.__featGuard){ImmatMessages.__featGuard=true;['sendNew','reply'].forEach(function(fn){var _o=ImmatMessages[fn];if(typeof _o==='function')ImmatMessages[fn]=function(){if(!App.requireFeature('messages','Messagerie'))return;return _o.apply(this,arguments);};});}}catch(e){}}if((!_mi._cm||!_mi._im)&&n<15)setTimeout(()=>_mi(n+1),250);})(0);try{if(window.GuardianLoop&&_pl)window.GuardianLoop.observe(_pl)}catch(e){}try{window.AudioManager?.init?.();}catch(e){}try{window.ImmatKernel?.start?.();}catch(e){}try{window.BrainEngine?.start?.();}catch(e){}try{window.Narrator?.start?.();}catch(e){}try{window.SwarmEngine?.start?.(sb);}catch(e){}try{window.ImmatConsciousness?.start?.();}catch(e){}try{window.ImmatSoul?.start?.();}catch(e){}try{window.ImmatCoPilot?.start?.();}catch(e){}try{this.AideV1?.subscribeRealtime?.();}catch(_){}setTimeout(()=>{try{this.AideV1?.refreshBadge?.();}catch(_){}this.updateActBadge?.();},2500);setTimeout(()=>{try{this.renderCallJournal?.();}catch(_){}},5000);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';setTimeout(()=>{try{window.GardienDiagnostic?.start?.();}catch(_){}},10_000);}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');setTimeout(()=>{try{window.GardienDiagnostic?.start?.();}catch(_){}},10_000);}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');try{const _bv=$('buildVerSpan');if(_bv)_bv.textContent=window.APP_BUILD||'—';}catch(e){}try{if(window.ImmatBus)window.ImmatBus.emit('MAP_OPENED',{plate:p.owner_plate||'',_src:'openMap'})}catch(e){}setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o){_o.style.display='flex';const _a2hs=$('onboardingA2HSBlock');if(_a2hs&&/(iPhone|iPad|iPod)/.test(navigator.userAgent)&&!window.navigator.standalone)_a2hs.style.display='block';}}},1400);try{const _ua=new URLSearchParams(location.search).get('action');if(_ua==='signal'){setTimeout(()=>{this.openReport?.();},600);}else if(_ua==='calls'){setTimeout(()=>{this.navAppels?.();},600);}else if(_ua==='map'){setTimeout(()=>{this.panel('altet');},600);}}catch(e){}try{if(window._pendingPushNav){const _pn=window._pendingPushNav;window._pendingPushNav=null;if(_pn.type==='message'){setTimeout(()=>{try{this.navMessages?.();if(_pn.plate)setTimeout(()=>{try{window.ImmatMessages?.openThread?.(_pn.plate)}catch(ex){}},400);}catch(e){}},700);}else if(_pn.type==='call'){setTimeout(()=>{try{this.navAppels?.();}catch(e){}},700);}}}catch(e){}},
+openMap(p,email){try{window.ImmatOrganism?.init?.()}catch(e){}try{localStorage.removeItem('ic_pending_profile');var _ple=localStorage.getItem('ic_pending_profile_last_email');if(_ple){localStorage.removeItem('ic_pending_profile__'+_ple);localStorage.removeItem('ic_pending_profile_last_email');}}catch(_){}S.profile=p;this.show('sm');try{if(!App._callJournalCachedHTML)App._callJournalCachedHTML=localStorage.getItem('ic_call_journal_html')||null;}catch(_){}const _vgb=$('voiceGenderBtn');if(_vgb)_vgb.textContent=get('ic_voice_gender','female')==='male'?'Homme ♂':'Femme ♀';const _vrs=$('voiceRateSlider');if(_vrs)_vrs.value=+(get('ic_voice_rate','.86')||'.86');const _ag=$('approxGeoToggle');if(_ag)_ag.checked=get('ic_approx_geo','0')==='1';try{const _np=JSON.parse(localStorage.getItem('ic_notif_prefs')||'{}');const _nr=$('notifRouteToggle');if(_nr)_nr.checked=_np.route!==false;const _nv=$('notifVehicleToggle');if(_nv)_nv.checked=_np.vehicle!==false;const _nh=$('notifHelpToggle');if(_nh)_nh.checked=_np.help!==false;const _nm=$('notifMessagesToggle');if(_nm)_nm.checked=_np.messages!==false;const _nc=$('notifCallsToggle');if(_nc)_nc.checked=_np.calls!==false;}catch(_){}$('tbPlate').textContent=p.owner_plate||'';$('tbPseudo').textContent=(p.pseudo||email||'Conducteur')+' · '+colorLabel(p.vehicle_color);if($('drawerPlate'))$('drawerPlate').textContent=p.owner_plate||'--';if($('drawerPseudo'))$('drawerPseudo').textContent=p.pseudo||email||'Conducteur';$('radiusSel').value=S.radiusKm;{const _rs=$('radiusSettingsSlider');if(_rs)_rs.value=S.radiusKm;const _rv=$('radiusSettingsVal');if(_rv)_rv.textContent=S.radiusKm+' km';const _at=$('autoStatusToggle');if(_at)_at.checked=get('ic_auto_status','0')==='1';const _ap=$('angeProactiveToggle');if(_ap)_ap.checked=get('ic_ange_proactive','1')==='1';const _am=$('angeMonologueToggle');if(_am)_am.checked=get('ic_ange_monologue','1')==='1';const _bs=$('batterySaveToggle');if(_bs)_bs.checked=get('ic_battery_save','0')==='1';}this.refreshStats?.();this.autoNight();this.renderFavs();this.renderHistory();this.renderMyAlertsBlock();setTimeout(()=>{this.initMap();S.map?.invalidateSize();if(!S.invisible)this.locate();this.requestPermissions();this.loadOthers();this.refresh();this.syncAlertMarkers?.();},180);try{this.loadFleetFlags?.();}catch(_){}this.subLocs();this.syncCommunityAlerts();this.subscribeCommunityReports();setTimeout(()=>this.loadBlocksFromDB(),2000);setTimeout(()=>this._startDeviceHeartbeat?.(),3000);setTimeout(()=>this._startSuspensionWatch?.(),3500);const _app=this,_id=p.id,_pl=p.owner_plate||'';(function _mi(n){if(window.CallManager&&!_mi._cm){_mi._cm=1;try{CallManager.init(sb,_id,_pl)}catch(e){}try{if(!CallManager.__featGuard){CallManager.__featGuard=true;['contactByCall','requestCall'].forEach(function(fn){var _o=CallManager[fn];if(typeof _o==='function')CallManager[fn]=function(){if(!App.requireFeature('appels','Appels'))return;return _o.apply(this,arguments);};});}}catch(e){}try{CallManager.loadCallPreferences().then(v=>{const el=$('allowCallsToggle');if(el)el.checked=!!v})}catch(e){}}if(window.ImmatMessages&&!_mi._im){_mi._im=1;_app.startMsgs();try{if(!ImmatMessages.__featGuard){ImmatMessages.__featGuard=true;['sendNew','reply'].forEach(function(fn){var _o=ImmatMessages[fn];if(typeof _o==='function')ImmatMessages[fn]=function(){if(!App.requireFeature('messages','Messagerie'))return;return _o.apply(this,arguments);};});}}catch(e){}}if((!_mi._cm||!_mi._im)&&n<15)setTimeout(()=>_mi(n+1),250);})(0);try{if(window.GuardianLoop&&_pl)window.GuardianLoop.observe(_pl)}catch(e){}try{window.AudioManager?.init?.();}catch(e){}try{window.ImmatKernel?.start?.();}catch(e){}try{window.BrainEngine?.start?.();}catch(e){}try{window.Narrator?.start?.();}catch(e){}try{window.SwarmEngine?.start?.(sb);}catch(e){}try{window.ImmatConsciousness?.start?.();}catch(e){}try{window.ImmatSoul?.start?.();}catch(e){}try{window.ImmatCoPilot?.start?.();}catch(e){}try{window.ImmatNexus?.init?.();}catch(e){}try{this.AideV1?.subscribeRealtime?.();}catch(_){}setTimeout(()=>{try{this.AideV1?.refreshBadge?.();}catch(_){}this.updateActBadge?.();},2500);setTimeout(()=>{try{this.renderCallJournal?.();}catch(_){}},5000);if(S.isGardien){document.body.classList.add('is-gardien');if($('angeFab'))$('angeFab').style.display='flex';setTimeout(()=>{try{window.GardienDiagnostic?.start?.();}catch(_){}},10_000);}else if(S.isGardien===undefined){sb.rpc('get_my_role').then(({data:r})=>{if(r==='gardien'){S.isGardien=true;document.body.classList.add('is-gardien');setTimeout(()=>{try{window.GardienDiagnostic?.start?.();}catch(_){}},10_000);}else S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';}).catch(()=>{S.isGardien=false;if($('angeFab'))$('angeFab').style.display='flex';});}else{if($('angeFab'))$('angeFab').style.display='flex';}toast('Connecté à ImmatConnect.','ok');try{const _bv=$('buildVerSpan');if(_bv)_bv.textContent=window.APP_BUILD||'—';}catch(e){}try{if(window.ImmatBus)window.ImmatBus.emit('MAP_OPENED',{plate:p.owner_plate||'',_src:'openMap'})}catch(e){}setTimeout(()=>{if(!get('ic_onboarded','0')){const _o=$('onboardingOverlay');if(_o){_o.style.display='flex';const _a2hs=$('onboardingA2HSBlock');if(_a2hs&&/(iPhone|iPad|iPod)/.test(navigator.userAgent)&&!window.navigator.standalone)_a2hs.style.display='block';}}},1400);try{const _ua=new URLSearchParams(location.search).get('action');if(_ua==='signal'){setTimeout(()=>{this.openReport?.();},600);}else if(_ua==='calls'){setTimeout(()=>{this.navAppels?.();},600);}else if(_ua==='map'){setTimeout(()=>{this.panel('altet');},600);}}catch(e){}try{if(window._pendingPushNav){const _pn=window._pendingPushNav;window._pendingPushNav=null;if(_pn.type==='message'){setTimeout(()=>{try{this.navMessages?.();if(_pn.plate)setTimeout(()=>{try{window.ImmatMessages?.openThread?.(_pn.plate)}catch(ex){}},400);}catch(e){}},700);}else if(_pn.type==='call'){setTimeout(()=>{try{this.navAppels?.();}catch(e){}},700);}}}catch(e){}},
 dismissOnboarding(){set('ic_onboarded','1');const _o=$('onboardingOverlay');if(_o)_o.style.display='none';},
 openGardienDashboard(){
   const _isG=S.isGardien===true;
@@ -1024,6 +1024,7 @@ openGardienDashboard(){
         <b style="color:#c4b5fd">Événements bus (5 derniers)</b>
         <div style="margin-top:8px">${eHtml}</div>
       </div>
+      ${App.gdNexusBlock?App.gdNexusBlock():''}
       ${timelineHtml}
       ${callsRuntimeHtml}
       ${runtimeHtml}
@@ -1140,6 +1141,41 @@ openGardienDashboard(){
   }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
 },
 gdTab(name){try{const b=document.getElementById('gardienDashboardBody');if(!b)return;if(window.S)S._gdTab=name;const h=b.querySelector('#gdHost');if(h)h.setAttribute('data-gd-active',name);b.querySelectorAll('.gd-tab').forEach(x=>x.classList.toggle('on',x.getAttribute('data-gd')===name));}catch(_){}},
+// ImmatNexus — panneau Développeur (lecture seule) : snapshot unifié + audit de cohérence.
+gdNexusBlock(){
+  try{
+    if(!window.ImmatNexus)return'<div data-gd="dev" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><b style="color:#a3e635">🧬 ImmatNexus</b><div style="margin-top:6px;color:#555;font-size:12px">Façade non chargée.</div></div>';
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const sn=window.ImmatNexus.sense({fresh:true})||{};
+    const g=sn.governance||{};
+    const h=sn.health||{};
+    const kv=(k,v,col)=>'<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0a0a14;font-size:11px"><span style="color:#888">'+e2(k)+'</span><span style="color:'+(col||'#e2e8f0')+';word-break:break-all">'+e2(v)+'</span></div>';
+    const hCol=h.health==='ok'?'#4ade80':h.health==='violated'?'#e57373':'#f0a500';
+    let rows='';
+    rows+=kv('gouvernance',(g.enabled!=null?g.enabled+'/'+g.total+' actives':'n/a'),'#a3e635');
+    rows+=kv('désactivées',((g.disabled||[]).map(x=>x.label).join(', ')||'aucune'),(g.disabled&&g.disabled.length?'#f87171':'#4ade80'));
+    rows+=kv('santé organisme',(h.health||'inconnu'),hCol);
+    rows+=kv('violations',((h.violations||[]).length),(h.violations&&h.violations.length?'#e57373':'#4ade80'));
+    rows+=kv('urgence (brain)',(sn.orientation&&sn.orientation.urgency!=null?sn.orientation.urgency+'/10':'n/a'));
+    rows+=kv('fiabilité données',(sn.reliability&&sn.reliability.score!=null?sn.reliability.score+'%':'n/a'));
+    rows+=kv('conscience focus',((sn.consciousness&&sn.consciousness.focus)||'n/a'));
+    rows+=kv('âme harmonie',(sn.soul&&sn.soul.harmony&&sn.soul.harmony.score!=null?sn.soul.harmony.score+'/10':'n/a'));
+    rows+=kv('phase',(sn.phase!=null?sn.phase:'n/a'));
+    rows+=kv('lois (invariants)',(sn.invariants!=null?sn.invariants:'n/a'));
+    rows+=kv('events OBD récents',((sn.recentEvents||[]).length));
+    return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">🧬 ImmatNexus — tissu de connexion</b><button onclick="App.runNexusAudit()" style="background:#0c1a2e;color:#a3e635;border:1px solid #3f6212;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer">▶ Audit cohérence</button></div><div style="font-size:10px;color:#555;margin-bottom:8px">Lecture seule : relie registre + santé + synthèse + OBD + lois. Ange répond en local via Nexus.ask().</div>'+rows+'<div id="nexusAuditResult" style="margin-top:8px;font-size:11px;color:#555">Audit non lancé.</div></div>';
+  }catch(_){return'';}
+},
+runNexusAudit(){
+  const el=$('nexusAuditResult');if(!el)return;
+  try{
+    const f=(window.ImmatNexus&&window.ImmatNexus.audit&&window.ImmatNexus.audit())||[];
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    if(!f.length){el.innerHTML='<span style="color:#4ade80">✅ Cohérence OK — aucun problème détecté.</span>';return;}
+    const col=l=>l==='error'?'#e57373':l==='warn'?'#f0a500':'#94a3b8';
+    el.innerHTML='<div style="color:#f0a500;font-weight:700;margin-bottom:4px">'+f.length+' point(s) :</div>'+f.map(x=>'<div style="padding:2px 0;border-bottom:1px solid #0a0a14"><span style="color:'+col(x.level)+';font-weight:700">'+e2(x.code)+'</span> <span style="color:#cbd5e1">'+e2(x.message)+'</span></div>').join('');
+  }catch(e){el.innerHTML='<span style="color:#e57373">Erreur audit : '+(e?.message||e)+'</span>';}
+},
 // Blocage par catégorie — INTERACTIF : chaque ligne est un interrupteur (toggle flotte direct).
 gdGatingReport(){
   try{
@@ -4988,9 +5024,9 @@ function showReputationToast(){
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
 <script src="core/brain-engine.js?v=1"></script>
-<script src="core/narrator.js?v=5"></script>
+<script src="core/narrator.js?v=6"></script>
 <script src="core/swarm-engine.js?v=1"></script>
-<script src="core/immat-consciousness.js?v=1"></script>
+<script src="core/immat-consciousness.js?v=2"></script>
 <script src="core/immat-soul.js?v=1"></script>
 <script src="core/immat-copilot.js?v=3"></script>
 <script src="core/immat-test-engine.js?v=2"></script>
@@ -5065,6 +5101,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
+<script src="core/immat-nexus.js?v=1"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5316,6 +5353,20 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).
+    // 0 réseau, 0 quota. Le LLM ne reste que pour le hors-sujet / rédactionnel.
+    try{
+      if(window.ImmatNexus&&typeof window.ImmatNexus.ask==='function'){
+        const _nx=window.ImmatNexus.ask(msg);
+        if(_nx&&_nx.answered){
+          try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_MESSAGE_SENT',{panel:S.panel||'GENERAL',local:true,intent:_nx.intent})}catch(e){}
+          this.renderResponse({juste:_nx.answer,sources:(_nx.facts||[]).join(' · ')});
+          try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',local:true,intent:_nx.intent,_src:'ImmatNexus'})}catch(e){}
+          $('angeMsg').value='';
+          return;
+        }
+      }
+    }catch(_e){}
     // Throttle : 10 appels max par session (INV-014 — maîtrise des coûts et de l'usage)
     const _aKey='ic_ange_calls';
     const _aData=JSON.parse(sessionStorage.getItem(_aKey)||'{"n":0,"t":0}');

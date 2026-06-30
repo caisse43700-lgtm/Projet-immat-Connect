@@ -47,6 +47,8 @@ const Narrator = (function () {
     'KERNEL_RESURRECTION', 'KERNEL_DEGRADED', 'KERNEL_HEALTHY',
     // Co-pilote autonome
     'COPILOT_SPOKE',
+    // Gouvernance (registre / flotte) — connaissance de premier rang
+    'FEATURE_GOVERNANCE_CHANGED',
   ]);
 
   // Événements déclenchant une bulle proactive
@@ -129,6 +131,8 @@ const Narrator = (function () {
       case 'ANGE_MESSAGE_SENT':    return `Question posée à Ange`;
       case 'ANGE_RESPONSE_RECEIVED': return `Réponse Ange reçue`;
       case 'OBD_FINDING_CREATED':  return `Diagnostic: ${p?.finding||'?'}`;
+      case 'FEATURE_GOVERNANCE_CHANGED':
+        return `Gouvernance: « ${p?.key||'?'} » ${p?.enabled ? 'activé' : 'désactivé'} pour la flotte`;
       // Intelligence collective
       case 'SWARM_HELP_NEARBY':
         return `🆘 Intelligence collective: ${p?.count||1} conducteur(s) proche(s) en difficulté (à ${p?.nearest_km ? (p.nearest_km < 1 ? Math.round(p.nearest_km*1000)+'m' : p.nearest_km.toFixed(1)+'km') : '?'})`;
