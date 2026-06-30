@@ -6,6 +6,24 @@
 
 ---
 
+## 0. POINTS DE RESTAURATION (si on demande « restaure »)
+
+> Pour restaurer : se référer ICI en premier. Pointeurs figés sur GitHub (branches‑instantané)
+> + SHA (le SHA fait foi). Les tags git sont refusés par le proxy → on utilise des branches.
+
+| Point | Branche‑instantané (origin) | SHA | Doc |
+|---|---|---|---|
+| **v2 — Ange V2 + Nexus** (2026‑06‑30, SW v401) | `snapshot-v2-ange-v2-2026-06-30` | `92b8e139b997ccc9edb69f4fad0756daa4bde7fe` | `RESTORE_POINT_2.md` |
+| **v1 — stable** (2026‑05‑29) | `snapshot-v1-stable-2026-05-29` | `e0a923ea9200514a5d7e5f84711663170a4bf5aa` | `RESTORE_POINT.md` |
+
+Restaurer (exemple v2) :
+```bash
+git fetch origin && git checkout -b restauration origin/snapshot-v2-ange-v2-2026-06-30
+# vérif : npm test (177✅) · node tests/ange-v2.test.js (64✅) · CACHE_NAME = immatconnect-pro-v401
+```
+
+---
+
 ## 1. ÉTAT ACTUEL DU PROJET
 
 ```
