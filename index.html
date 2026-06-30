@@ -5417,8 +5417,9 @@ const AngeDialog={
       // Question (pas une commande) → laisser Nexus/LLM répondre
       if(/(pourquoi|comment|est-ce|qu'est|quel|quelle|quels|\?)/.test(t))return false;
       let on=null;
-      if(/\b(d[ée]sactive|coupe|bloque|[ée]teins|enl[èe]ve|retire|stoppe|arr[êe]te)\b/.test(t))on=false;
-      else if(/\b(active|r[ée]active|allume|remets|autorise|r[ée]tablis)\b/.test(t))on=true;
+      // Radicaux (impératif + infinitif) ; OFF testé avant ON car « désactiv… » contient « activ… »
+      if(/(d[ée]sactiv|coupe|coupez|couper|bloqu|[ée]teins|[ée]teindre|enl[èe]v|retir|stopp|arr[êe]t|d[ée]connect)/.test(t))on=false;
+      else if(/(r[ée]activ|activ|rallum|allum|remet|r[ée]tabli|autoris)/.test(t))on=true;
       if(on===null)return false;
       const key=(window.ImmatNexus&&window.ImmatNexus.featureKeyFromText)?window.ImmatNexus.featureKeyFromText(t):null;
       if(!key)return false;
