@@ -5449,19 +5449,36 @@ const AngeDialog={
   },
   angeDoAction(legacy,on,label){
     try{App.setFeatureFlag(legacy,!!on);}catch(_){}
+    this._log('action',(on?'Activé':'Désactivé')+' : '+label);
     const resp=$('angeResponse');
     if(resp)resp.innerHTML='<div style="line-height:1.6">✅ C\'est fait — « '+esc(label)+' » '+(on?'activée':'désactivée')+' pour la flotte.</div>';
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{action:true,key:legacy,enabled:!!on})}catch(e){}
   },
-  angeCancelAction(){this._clearPending();const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
+  angeCancelAction(){this._clearPending();this._log('cancel','Action annulée');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
   // ── Confirmation unifiée : timeout 15 s + validation vocale oui/non (carte ouverte uniquement)
   _clearPending(){try{clearTimeout(this._pendTO);}catch(_){}this._pendTO=null;try{if(this._pendRec)this._pendRec.stop();}catch(_){}this._pendRec=null;this._pending=null;},
+  // ── Audit local (device-only) : trace les DÉCISIONS d'Ange, sans contenu sensible (pas de texte privé)
+  _log(type,summary){try{var a=JSON.parse(localStorage.getItem('ic_ange_log')||'[]');a.push({t:type,s:String(summary||'').slice(0,80),at:Date.now()});localStorage.setItem('ic_ange_log',JSON.stringify(a.slice(-50)));}catch(_){}},
+  _tryHistory(msg){
+    try{
+      var t=String(msg||'').toLowerCase();
+      if(!/(qu.?as-tu fait|qu.?as tu fait|historique|journal|derni[èe]res? actions?|tes actions|ce que tu as fait)/.test(t))return false;
+      var a=[];try{a=JSON.parse(localStorage.getItem('ic_ange_log')||'[]');}catch(_){}
+      var r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
+      try{var _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      if(!a.length){r.innerHTML='<div style="line-height:1.6">Je n\'ai encore rien fait dans cette session.</div>';$('angeMsg').value='';return true;}
+      var ico={action:'✅',cancel:'↩️',refus:'🚫',llm:'💬'};
+      var rows=a.slice(-8).reverse().map(function(e){var hm=new Date(e.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});return '<div style="padding:4px 0;border-bottom:1px solid #1a1a2e;font-size:12px"><span style="color:#555">'+hm+'</span> '+(ico[e.t]||'•')+' '+esc(e.s)+'</div>';}).join('');
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:6px">Voici ce que j\'ai fait récemment :</div>'+rows;
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
   confirmYes(){const p=this._pending;if(!p)return;this._clearPending();try{p.run();}catch(_){}},
   confirmNo(){if(!this._pending)return;this.angeCancelAction();},
   _armConfirm(run){
     this._clearPending();
     this._pending={run:run};
-    this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';}},15000);
+    this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();this._log('cancel','Expiré (15 s sans confirmation)');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';}},15000);
     // Voix : écoute courte oui/non pendant que la carte est ouverte (jamais en continu → anti faux-positif)
     try{
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -5513,6 +5530,7 @@ const AngeDialog={
   angeSignalConfirm(plate,label){
     const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
     Promise.resolve(this._sendVehicleSignal(plate,label)).then(ok=>{
+      this._log(ok?'action':'refus',(ok?'Signalé ':'Échec signalement ')+(fPlate(plate)||plate)+' : '+label);
       if(!r)return;
       r.innerHTML=ok?'<div style="line-height:1.6">✅ Signalement envoyé à <b>'+esc(fPlate(plate)||plate)+'</b> : '+esc(label)+'.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer (véhicule peut-être non connecté ou messagerie indisponible).</div>';
     });
@@ -5562,6 +5580,7 @@ const AngeDialog={
     try{
       if(window.CallManager&&window.CallManager.contactByCall){
         window.CallManager.contactByCall(nPlate(plate),'');
+        this._log('action','Appel lancé : '+(fPlate(plate)||plate));
         if(r)r.innerHTML='<div style="line-height:1.6">📞 Appel lancé vers <b>'+esc(fPlate(plate)||plate)+'</b>.</div>';
         try{this.close&&this.close();}catch(_){}
       }else if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Les appels sont indisponibles pour le moment.</div>';
@@ -5570,6 +5589,8 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Explicabilité — « qu'as-tu fait ? » (journal local d'Ange)
+    try{ if(this._tryHistory(msg)) return; }catch(_e){}
     // Ange agit — appel véhicule (« appelle le véhicule devant »)
     try{ if(this._tryCall(msg)) return; }catch(_e){}
     // Ange agit — signalement véhicule vocal/texte (« signale au véhicule devant … »)
@@ -5623,6 +5644,7 @@ const AngeDialog={
       try{const _ns=window.Narrator?.getSituation?.();const _nj=window.Narrator?.getJournalText?.();if(_ns)snapshot.narrator_situation=_ns;if(_nj)snapshot.narrator_journal=_nj;}catch(e){}try{const _cw=window.ImmatConsciousness?.getWorldState?.();if(_cw){snapshot.consciousness_focus=_cw.focus;snapshot.consciousness_convergence=_cw.convergence?.score;snapshot.consciousness_trend=_cw.trend;if(_cw.convergence?.votes?.length)snapshot.consciousness_votes=_cw.convergence.votes;}}catch(e){}try{const _sl=window.ImmatSoul?.getSoul?.();if(_sl){snapshot.soul_insight=_sl.insight;snapshot.soul_harmony=_sl.harmony?.score;snapshot.soul_trajectory=_sl.trajectory;if(_sl.blind_spots?.length)snapshot.soul_blind_spots=_sl.blind_spots;snapshot.soul_awakening=!!_sl.awakening;}}catch(e){}try{const _kr=window.ImmatKernel?.getReliability?.();if(_kr){snapshot.data_reliability=_kr.score;snapshot.data_level=_kr.level;if(_kr.cold_start)snapshot.data_cold_start=true;if(_kr.resurrection)snapshot.data_resurrection=true;if(_kr.degraded)snapshot.data_degraded=true;}}catch(e){}
       // P3 — Monologue privé : préoccupation de l'Ange injectée comme contexte implicite
       try{const _mc=typeof AngeMonologue!=='undefined'?AngeMonologue.getTopConcern?.():null;if(_mc)snapshot.ange_preoccupation=_mc.concern;}catch(e){}
+      try{this._log('llm','Question envoyée à l\'assistant (hors état système)');}catch(_lg){}
       const {data,error}=await sb.functions.invoke('immat-brain-dialog',{
         body:{
           message:msg,
