@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v369 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v370 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,7 +62,36 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Gating fonctionnalités V2 — blocage Stationné + filtrage Activité (à traiter / nouveaux / traités)**
+**Mission : Modération des comptes — suspension (« compte suspendu ») + anti-recréation (plaque/email/téléphone)**
+**Date :** 2026-06-30
+**Versions :** SW v369 → v370 · migration `20260630140000_account_moderation.sql`
+**Déploiement :** front (GitHub Pages) + migration auto-appliquée par CI (`deploy-edge-functions.yml`).
+
+### Ce qui a été fait
+- **Migration `20260630140000_account_moderation.sql`** :
+  - Table `account_bans` (snapshot identité : `owner_plate`/`email`/`phone`/`pseudo` + `reason`/`created_by`).
+    RLS activée, **aucune policy** → toute écriture passe par RPC SECURITY DEFINER.
+  - `am_i_suspended()` → verrou de **connexion** (le compte courant est-il suspendu ?).
+  - `check_signup_available(plate,email,phone)` → verrou d'**inscription** : refuse les doublons d'un
+    compte actif (plaque/email/téléphone déjà pris) **ET** les bannis (anti-recréation). Accessible `anon`.
+  - `admin_list_users()` / `admin_suspend_user(id,reason)` / `admin_unsuspend_user(id)` — réservées au
+    **gardien** via `get_my_role()` (app_metadata). Anti-lockout : interdit de suspendre soi-même ou un gardien.
+- **Front (`index.html`)** :
+  - Inscription : appelle `check_signup_available` avant `signUp` → messages clairs « Plaque/Email/Téléphone
+    déjà utilisé » ou « informations liées à un compte suspendu ». Fallback `plateAvailable` si RPC indisponible.
+  - `afterAuth` : appelle `am_i_suspended` juste après login → si suspendu, `signOut` + retour écran auth +
+    message « ⛔ Votre compte a été suspendu » (+ motif).
+  - Dashboard → onglet **Modération** : bloc « 👥 Utilisateurs » (liste plaque + pseudo + badge actif/suspendu,
+    compteur), boutons **Suspendre** / **Réactiver** (`App.suspendUser`/`unsuspendUser` avec confirm + motif).
+- **SW** v369 → v370.
+
+⚠️ **Sécurité (fail-open assumé)** : si `am_i_suspended` / `check_signup_available` échouent (RPC absente,
+réseau), on **n'empêche pas** la connexion/inscription — éviter de verrouiller toute la flotte sur une panne.
+La suspension n'est pas une frontière de sécurité dure (les RLS protègent les données) ; c'est de la modération.
+
+---
+
+### Mission précédente : Gating fonctionnalités V2 — blocage Stationné + filtrage Activité
 **Date :** 2026-06-30
 **Versions :** SW v368 → v369
 **Déploiement :** front (GitHub Pages) — `index.html` + `service-worker.js`.
@@ -2798,6 +2827,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Modération comptes (demande PO « compte suspendu immat+pseudo » + « ne peut recréer si immat/mail/téléphone identiques »). Migration 20260630140000_account_moderation.sql : table account_bans + RPC am_i_suspended (verrou login), check_signup_available (verrou inscription : doublons actifs + anti-recréation bannis, accessible anon), admin_list_users/admin_suspend_user/admin_unsuspend_user (gardien via get_my_role, anti-lockout self+gardien). Front : signup pré-vérifie plaque/email/téléphone ; afterAuth bloque les suspendus (signOut + message) ; Dashboard Modération bloc « 👥 Utilisateurs » avec Suspendre/Réactiver. Fail-open si RPC indisponible. SW v370. (local/merge-to-main) |
 | 2026-06-30 | IA session | Gating Stationné + filtrage Activité (retour PO « idem pour stationnement » + « à traiter / traiter / nouveaux pas bloqué »). Registre : entrée signalement_stationne (group Signalements, scope fleet, CK-STATION) → 12 entrées. App.sigStepStation gardé requireFeature('signalement_stationne'). App.openActivityCat(cat) bloque par catégorie (route/vehicle/aide/station) à l'ouverture. _computeTodo/_computeNew/_computeDone masquent les éléments des fonctionnalités OFF (alertes_vehicule/signalement_stationne/demandes_aide) → compteurs & listes à traiter/nouveaux/traités respectent les kill-switches. SW v369. (local/merge-to-main) |
 | 2026-06-30 | IA session | Correctifs cohérence gouvernance (retour PO) : Messages = wrap de sendNew/reply (exportés, appelés par le bouton Envoyer) → l'envoi compose est BIEN bloqué (le wrap sendToPlate était contourné en interne) ; les signalements (sendToPlate+context_type) passent. Signaler & Activité = conteneurs : gardes nav retirées (s'ouvrent), blocage par CATÉGORIE (sigStepRoute→signalement_route, sigStepVehicle→signalement_vehicule, sigStepAide→aide ; openActivityCat route/vehicle/aide). Entrées registre 'signaler'/'activite' retirées (toggles morts). SW v368. (local/merge-to-main) |
 | 2026-06-30 | IA session | Étape 6 (partie honnêteté + reliage OBD) : suppression du faux « 100% OPTIMAL » (Santé organisme = état réel ImmatOrganism.diagnose + nb réel registre) → INV-DASH-007. Gouvernance reliée à l'OBD/organisme : ImmatBus.emit + ImmatOrganism.observe sur FEATURE_GOVERNANCE_CHANGED (toggle), FEATURE_BLOCKED (accès refusé), FLEET_CONFIG_LOADED ; couleur dédiée (lime) dans la Timeline OBD. SW v367. (local/merge-to-main) |
