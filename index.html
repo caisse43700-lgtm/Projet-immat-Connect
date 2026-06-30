@@ -5140,7 +5140,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="core/immat-nexus.js?v=6"></script>
+<script src="core/immat-nexus.js?v=7"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5409,9 +5409,50 @@ const AngeDialog={
       rec.start();
     }catch(e){_reset();toast('Micro indisponible.','bad');}
   },
+  // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
+  // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
+  _tryAction(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      // Question (pas une commande) → laisser Nexus/LLM répondre
+      if(/(pourquoi|comment|est-ce|qu'est|quel|quelle|quels|\?)/.test(t))return false;
+      let on=null;
+      if(/\b(d[ée]sactive|coupe|bloque|[ée]teins|enl[èe]ve|retire|stoppe|arr[êe]te)\b/.test(t))on=false;
+      else if(/\b(active|r[ée]active|allume|remets|autorise|r[ée]tablis)\b/.test(t))on=true;
+      if(on===null)return false;
+      const key=(window.ImmatNexus&&window.ImmatNexus.featureKeyFromText)?window.ImmatNexus.featureKeyFromText(t):null;
+      if(!key)return false;
+      const reg=window.FeatureRegistry&&window.FeatureRegistry.get(key);
+      if(!reg)return false;
+      const legacy=reg.replaces||reg.key,label=reg.label||key;
+      const resp=$('angeResponse');if(!resp)return false;
+      resp.style.display='block';delete resp.dataset.welcome;
+      try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      if(!S.isGardien){
+        resp.innerHTML='<div style="line-height:1.6">🔒 Seul le <b>Gardien</b> peut activer ou désactiver une fonctionnalité pour la flotte. Je ne peux pas le faire depuis ce compte.</div>';
+        $('angeMsg').value='';return true;
+      }
+      const curr=App.featureStatus?App.featureStatus(key).enabled:true;
+      if(curr===on){
+        resp.innerHTML='<div style="line-height:1.6">« '+esc(label)+' » est déjà '+(on?'activée':'désactivée')+'. Rien à changer.</div>';
+        $('angeMsg').value='';return true;
+      }
+      resp.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Tu veux <b>'+(on?'activer':'désactiver')+'</b> « '+esc(label)+' » pour <b>toute la flotte</b> ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.angeDoAction(\''+js(legacy)+'\','+on+',\''+js(label)+'\')" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Confirmer</button><button onclick="AngeDialog.angeCancelAction()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div>';
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
+  angeDoAction(legacy,on,label){
+    try{App.setFeatureFlag(legacy,!!on);}catch(_){}
+    const resp=$('angeResponse');
+    if(resp)resp.innerHTML='<div style="line-height:1.6">✅ C\'est fait — « '+esc(label)+' » '+(on?'activée':'désactivée')+' pour la flotte.</div>';
+    try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{action:true,key:legacy,enabled:!!on})}catch(e){}
+  },
+  angeCancelAction(){const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
+    try{ if(this._tryAction(msg)) return; }catch(_e){}
     // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).
     // 0 réseau, 0 quota. Le LLM ne reste que pour le hors-sujet / rédactionnel.
     try{

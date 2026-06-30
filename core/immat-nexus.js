@@ -395,5 +395,8 @@
     } catch (e) {}
   }
 
-  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit };
+  // Résolution texte → clé de registre (lecture seule, exposée pour les actions d'Ange — Nexus n'agit pas).
+  function featureKeyFromText(t) { return _featureKeyFrom(t); }
+
+  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText };
 })(typeof window !== 'undefined' ? window : this);
