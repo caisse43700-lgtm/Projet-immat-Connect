@@ -5601,6 +5601,46 @@ const AngeDialog={
       }else if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Les appels sont indisponibles pour le moment.</div>';
     }catch(e){if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu lancer l\'appel.</div>';}
   },
+  // ── Ange ENVOIE UN MESSAGE libre à un véhicule : « envoie un message au véhicule devant : ralentis »
+  _tryMessage(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
+      if(!/\bmessages?\b|(?:^|[\s,;:'’])[ée]cri(?:s|re|t|ve|vez)/.test(t))return false; // doit concerner un message / écrire
+      const hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
+      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face|lui|le dernier|le m[êe]me)/.test(t)&&!hasPlate)return false;
+      const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
+      try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      const _fs=App.featureStatus?App.featureStatus('messages'):{enabled:true,by:null};
+      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">💬 La messagerie est désactivée '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas envoyer de message.</div>';$('angeMsg').value='';return true;}
+      let plate=null;
+      if(/devant|de devant|d.en face|en face/.test(t)){
+        plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;
+        if(!plate){r.innerHTML='<div style="line-height:1.6">💬 Aucun véhicule connecté juste devant toi. Donne la plaque : « envoie à AB-123-CD : ralentis ».</div>';$('angeMsg').value='';return true;}
+      }else{
+        const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
+        if(m)plate=nPlate(m[1]);
+        else if(/(le dernier|la derni[èe]re|le m[êe]me|la m[êe]me|rappelle|lui)/.test(t)){const _lt=this._lastTarget();if(_lt)plate=_lt;}
+      }
+      if(!plate){r.innerHTML='<div style="line-height:1.6">À quel véhicule ? « envoie au véhicule devant : ton message » ou la plaque.</div>';$('angeMsg').value='';return true;}
+      if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de t\'écrire à toi-même 🙂</div>';$('angeMsg').value='';return true;}
+      // Texte du message : capturé uniquement après « : » (fiable). Sinon on demande.
+      let text='';const mm=String(msg||'').match(/[:：]\s*(.+)$/);if(mm)text=mm[1].trim();
+      const _pl=esc(fPlate(plate)||plate);
+      if(!text){r.innerHTML='<div style="line-height:1.6">Quel message envoyer à <b>'+_pl+'</b> ? Dis par exemple : « <i>envoie au véhicule devant : ralentis s\'il te plaît</i> ».</div>';$('angeMsg').value='';return true;}
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Envoyer à <b>'+_pl+'</b> : « '+esc(text)+' » ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.confirmYes()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Envoyer</button><button onclick="AngeDialog.confirmNo()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div><div style="color:#555;font-size:10px;margin-top:6px">ou dis « oui » / « non » · expire dans 15 s</div>';
+      this._armConfirm(()=>this.angeMessageConfirm(plate,text));
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
+  angeMessageConfirm(plate,text){
+    const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
+    Promise.resolve((async()=>{try{if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;const ok=await window.ImmatMessages.sendToPlate(nPlate(plate),text);return ok!==false;}catch(_){return false;}})()).then(ok=>{
+      if(ok)this._rememberTarget(plate);
+      this._log(ok?'action':'refus',(ok?'Message à ':'Échec message ')+(fPlate(plate)||plate));
+      if(r)r.innerHTML=ok?'<div style="line-height:1.6">✅ Message envoyé à <b>'+esc(fPlate(plate)||plate)+'</b>.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer (véhicule peut-être non connecté).</div>';
+    });
+  },
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
@@ -5608,6 +5648,8 @@ const AngeDialog={
     try{ if(this._tryForget(msg)) return; }catch(_e){}
     // Explicabilité — « qu'as-tu fait ? » (journal local d'Ange)
     try{ if(this._tryHistory(msg)) return; }catch(_e){}
+    // Ange agit — message libre à un véhicule (« envoie un message au véhicule devant : … »)
+    try{ if(this._tryMessage(msg)) return; }catch(_e){}
     // Ange agit — appel véhicule (« appelle le véhicule devant »)
     try{ if(this._tryCall(msg)) return; }catch(_e){}
     // Ange agit — signalement véhicule vocal/texte (« signale au véhicule devant … »)
