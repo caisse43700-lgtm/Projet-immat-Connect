@@ -7,6 +7,47 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Modération des comptes : suspension + anti-recréation (immat/email/téléphone)
+
+Demande PO : « compte suspendu immat et pseudo ne peut pas recréer un nouveau compte si immat ou mail
+ou téléphone sont identiques ». Deux verrous complémentaires + outil gardien.
+
+**Migration `supabase/migrations/20260630140000_account_moderation.sql`** (idempotente, additive) :
+- Table `account_bans(user_id PK, owner_plate, email, phone, pseudo, reason, created_by, created_at)`.
+  Index `lower(owner_plate)`, `lower(email)`, `phone`. RLS activée, **aucune policy** → écriture/lecture
+  directe impossible, tout passe par RPC SECURITY DEFINER. La table survit à la suppression du profil
+  (snapshot identité) → l'anti-recréation tient même après un delete-account.
+- `am_i_suspended()` (sql STABLE SECDEF) → `{suspended, reason}` pour `auth.uid()`. GRANT authenticated.
+- `check_signup_available(p_plate,p_email,p_phone)` (plpgsql STABLE SECDEF) → `{plate_taken, email_taken,
+  phone_taken, banned}`. Normalise : plaque `lower(trim)`, email `lower(trim)`, téléphone `regexp_replace
+  \D→''` (cohérent avec nPhone côté client qui stocke des chiffres seuls, et fPlate « AB-123-CD »).
+  Vérifie profiles (plaque/téléphone) + auth.users (email) + account_bans (banned). **GRANT anon** +
+  authenticated (l'inscription précède l'auth). Ne renvoie que des booléens (pas d'énumération de données).
+- `admin_list_users()` / `admin_suspend_user(id,reason)` / `admin_unsuspend_user(id)` — réservées au
+  gardien via `get_my_role()` (app_metadata, cf. migration C1). Anti-lockout : `admin_suspend_user` refuse
+  `p_user_id = auth.uid()` et toute cible `raw_app_meta_data->>'role' = 'gardien'`. admin_list_users JOIN
+  auth.users pour `created_at`, lit profiles.email/phone (SECDEF bypasse le column-grant). LIMIT 500.
+
+**Client (`index.html`)** :
+- `signup()` : avant `sb.auth.signUp`, appelle `check_signup_available` → si banned/plate/email/phone pris,
+  `hint(...)` ciblé sur le bon champ et `return`. Fallback `plateAvailable()` si la RPC échoue (try/catch).
+- `afterAuth()` : juste après `S.uid=u.id`, appelle `am_i_suspended` ; si suspendu → `signOut()`, reset
+  S.profile/S.uid, `show('sa')` + `setMode('login')` + `st('authSt','⛔ Votre compte a été suspendu…')` +
+  toast, puis `return` (n'ouvre jamais la carte). Fail-open si la RPC échoue (catch silencieux).
+- Dashboard → onglet Modération : bloc `#gardienUsers` (« 👥 Utilisateurs »). `App.loadModerationUsers()`
+  (appelée au rendu du dashboard) → `admin_list_users` → liste plaque + pseudo + badge actif/suspendu +
+  compteur. `App.suspendUser(id,plate)` (confirm + prompt motif → admin_suspend_user) et
+  `App.unsuspendUser(id,plate)` (confirm → admin_unsuspend_user), recharge la liste après action.
+- Email NON affiché dans l'UI (display plaque + pseudo) — choix conservateur (PO n'a pas tranché la
+  visibilité email) ; la colonne est dispo dans la RPC si besoin futur.
+- SW v369 → v370.
+
+**Décision fail-open** : les deux verrous ne bloquent PAS si la RPC est indisponible (réseau/migration non
+encore appliquée) — éviter de verrouiller toute la flotte sur une panne. La suspension est de la modération,
+pas une frontière de sécurité dure (les RLS restent la barrière de données).
+
+---
+
 ## SESSION 2026-06-30 — Garde d'indisponibilité générique (message par qui c'est désactivé)
 
 Demande PO : taper une fonctionnalité désactivée doit afficher un message clair indiquant PAR QUI
