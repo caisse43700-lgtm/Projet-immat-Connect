@@ -1022,6 +1022,7 @@ openGardienDashboard(){
         <b style="color:#38bdf8">👥 Utilisateurs</b>
         <div style="margin-top:6px;color:#555;font-size:12px">⏳ Chargement…</div>
       </div>
+      ${App.gdGatingReport?App.gdGatingReport():''}
       <div data-gd="dev" style="background:#0f0f1a;border-radius:10px;padding:12px">
         <b style="color:#c4b5fd">Actions gardien</b>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
@@ -1110,6 +1111,29 @@ openGardienDashboard(){
   }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
 },
 gdTab(name){try{const b=document.getElementById('gardienDashboardBody');if(!b)return;if(window.S)S._gdTab=name;const h=b.querySelector('#gdHost');if(h)h.setAttribute('data-gd-active',name);b.querySelectorAll('.gd-tab').forEach(x=>x.classList.toggle('on',x.getAttribute('data-gd')===name));}catch(_){}},
+// Vérification LIVE du blocage par catégorie (lecture seule, sans effet de bord — n'appelle pas requireFeature).
+gdGatingReport(){
+  try{
+    const cats=[
+      ['signalement_route','🚦 Route (Signaler + Activité)'],
+      ['signalement_vehicule','🚘 Véhicule (Signaler + Activité)'],
+      ['aide','🆘 Aide (Signaler + Activité)'],
+      ['signalement_stationne','🅿️ Stationné (Signaler + Activité)'],
+      ['messages','💬 Messages'],
+      ['appels','📞 Appels'],
+      ['ange','✦ Ange'],
+      ['gps','📍 GPS']
+    ];
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const rows=cats.map(([k,lbl])=>{
+      const st=this.featureStatus?this.featureStatus(k):{enabled:true,by:null};
+      const col=st.enabled?'#4ade80':'#f87171';
+      const txt=st.enabled?'ACTIVÉ — accès autorisé':('BLOQUÉ — '+(st.by==='user'?'par l\'utilisateur (Réglages)':'par l\'administrateur'));
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a2e;font-size:12px"><span style="color:#e2e8f0;min-width:0">'+e2(lbl)+'</span><span style="color:'+col+';font-weight:700;font-size:11px;text-align:right;flex:0 0 auto">'+txt+'</span></div>';
+    }).join('');
+    return '<div data-gd="moderation" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">🧪 Blocage par catégorie (état live)</b><span style="font-size:10px;color:#555">temps réel</span></div><div style="font-size:10px;color:#555;margin-bottom:8px">Reflète exactement ce qui arrive quand un conducteur tape la catégorie. « BLOQUÉ » = elle ne s\'ouvre pas et affiche un message. Pour piloter : onglet 🎛 Fonctionnalités.</div>'+rows+'</div>';
+  }catch(_){return'';}
+},
 async loadModerationUsers(){
   const el=$('gardienUsers');if(!el)return;
   if(!sb||!S?.uid){el.innerHTML='<b style="color:#38bdf8">👥 Utilisateurs</b><div style="margin-top:6px;color:#555;font-size:12px">Session non prête.</div>';return;}
