@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v375 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16
+SW                     : v376 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2827,6 +2827,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | « Voir tout » (Activité) gouvernable (demande PO « bloquer voir tout »). Entrée registre activite_tout (group Activité, scope fleet, CK-ACT-ALL) → 16 entrées. openActivityCat('all') gardé via requireFeature('activite_tout'). Ajouté au panneau interactif + Fonctionnalités. NB : bloque aussi le raccourci « Mes signalements » (même vue 'all'). SW v376. (local/merge-to-main) |
 | 2026-06-30 | IA session | Panneau « 🧪 Blocage par catégorie » rendu INTERACTIF (demande PO « pas sélectionnable » + capture IMG_6542) : chaque ligne est maintenant un interrupteur (bouton ACTIVÉ/DÉSACT.) qui appelle setFeatureFlag(legacy,!on) directement → activer/désactiver depuis le panneau Modération, plus seulement l'onglet Fonctionnalités. Les features pilotées par préférence utilisateur (by='user') affichent « Réglages user » sans bouton. SW v375. (local/merge-to-main) |
 | 2026-06-30 | IA session | Gouvernance des vues de suivi Activité (demande PO « manque nouveau / traiter / à traiter »). 3 entrées registre activite_nouveaux / activite_a_traiter / activite_traites (group Activité, scope fleet, kill-switches CK-ACT-NEW/TODO/DONE) → 15 entrées. Gardes requireFeature sur App.openNewView / openTodoView / openDoneView (les vues transversales se bloquent désormais avec message). Ajout au panneau « 🧪 Blocage par catégorie » + au Dashboard Fonctionnalités (groupe Activité, icônes ✉️/⏳/✅). SW v374. (local/merge-to-main) |
 | 2026-06-30 | IA session | BUG RÉEL trouvé (pas le cache) : ui.js installCriticalButtonHotfix interceptait les boutons Signaler .cat-route/.cat-vehicle/.cat-aide, appelait App.sigStepX() (qui respecte le garde et return) PUIS appelait openSignalStep() INCONDITIONNELLEMENT → la catégorie s'ouvrait malgré le blocage (panneau affichait pourtant BLOQUÉ car featureStatus OK). Fix : helper _catBlocked(key,label) dans ui.js → si désactivé, requireFeature (message) + return SANS ouvrir. ui.js v15→v16 (index.html + SW). + Dashboard Fonctionnalités RÉORGANISÉ par groupe (en-tête + compteur actifs/total, toutes catégories visibles) — demande PO « afficher fonctionnalités et catégories dessous, organisé, désactiver ». SW v373. (local/merge-to-main) |
