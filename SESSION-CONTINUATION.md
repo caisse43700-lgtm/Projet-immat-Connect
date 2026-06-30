@@ -7,6 +7,32 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Ange : anti-chevauchement bulle « ✦ » ⇄ monologue parlé
+
+Contexte : question PO sur les fonctions beta (`copilote_proactif` = bulles « ✦ » Narrator ; `copilote_monologue`
+= parole CoPilot). Défaut identifié : un même signal pouvait déclencher LES DEUX canaux simultanément
+(une bulle silencieuse + une phrase parlée sur le même sujet).
+
+**Fix (2 modules core, registre partagé, lecture/écriture légère)** :
+- `window._icSurfaced` = `{ topic: timestamp }` ; fenêtre `SURFACE_WINDOW = 90_000` ms, identique des 2 côtés.
+- `core/narrator.js` v6→v7 : `WHISPER_TOPIC` (SWARM_PARKING_CONFIRMED→`swarm`, GUARDIAN_RECOMMENDATION_CREATED→
+  `guardian`, RISK_ZONE_APPROACHED/BRAIN_PREDICTION→`brain`). Dans le handler `bus.on('*')`, avant `_whisper` :
+  si `_surfacedRecently(topic)` → on saute la bulle ; sinon on whisper puis `_markSurfaced(topic)`.
+- `core/immat-copilot.js` v4→v5 : `THEME_TOPIC` (swarm_help→`swarm`, guardian→`guardian`, brain_urgency/
+  isolation→`brain`). Au début de `_speak(theme,msg)` : si `_surfacedRecently(topic)` → `return` (pas de parole) ;
+  sinon on parle puis `_markSurfaced(topic)`.
+- Bidirectionnel : le premier canal qui surface un sujet bloque l'autre pendant 90 s. Aucune beta activée,
+  aucun changement de défaut. Si l'un est sauté, il pourra reparler au tick suivant (90 s) quand la bulle a disparu.
+
+Tests : `tests/ange-v2.test.js` **122/122** (+8, nouvelle section B2 : registre partagé, fenêtre 90 s,
+mapping topics, garde effective des 2 côtés). `node --check` OK sur les 2 modules. `npm test` 177 + diag 3.
+Versions : narrator.js v6→v7, immat-copilot.js v4→v5 (index.html + SW), **CACHE_NAME v409→v410**.
+
+> Réf : assessment beta — `copilote_proactif`/`copilote_monologue` restent beta (heuristiques en dur, pas de
+> boucle de retour, pas de ML) ; ce fix règle le chevauchement UX, pas la promotion en stable.
+
+---
+
 ## SESSION 2026-06-30 — Ange : fin du faux « 4 désactivées » au démarrage
 
 Demande PO : « quand j'ouvre Ange il y a toujours écrit 4 désactivées ». Diagnostic des 4 : `zones_accidentogenes`
