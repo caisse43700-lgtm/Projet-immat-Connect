@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v388 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v5 · immat-copilot.js v4
+SW                     : v389 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v6 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | ImmatNexus V6 — Ange connaît ses LOIS (vision « ADN/lois/registre/sens »). Intent 'laws' (« quelles sont les lois / règles / invariants / ADN ») → liste depuis window._INVARIANTS (« 15 lois fondamentales dont 12 critiques » + INV-001…). Disambiguation laws vs recent_violations. FIX : sense().invariants lisait window.INVARIANTS (inexistant) → corrigé en window._INVARIANTS (n/a → 15). immat-nexus v5→v6, SW v389. (local/merge-to-main) |
 | 2026-06-30 | IA session | Cohérence pilotage (décision PO) : UN SEUL endroit pilote = onglet Fonctionnalités (registre complet 16, seul à couvrir zones/auto-statut/Ange proactif/monologue). Modération « Blocage par catégorie » passe en LECTURE SEULE (état ACTIVÉ/BLOQUÉ + par qui, vue conducteur) + bouton « Modifier dans Fonctionnalités → » (App.gdTab('features')). Supprime la duplication du contrôle (principe anti-doublon) → divergence impossible. SW v388. (local/merge-to-main) |
 | 2026-06-30 | IA session | Clarification UX (question PO « si on ferme d'un côté et que l'autre reste ouvert ») : les 2 panneaux (Fonctionnalités registre + Modération « Blocage par catégorie ») pilotent le MÊME flag flotte (une seule valeur par fonctionnalité) et le Dashboard se re-rend entièrement à chaque toggle → divergence impossible. Mention « ↔ même réglage, toujours synchronisé » ajoutée dans les deux panneaux. SW v387. (local/merge-to-main) |
 | 2026-06-30 | IA session | Revue adversariale ImmatNexus (agent) → 2 bugs HIGH corrigés : intents trop gourmands. danger_urgency matchait « y a-t-il » seul (groupe final optionnel) → toute question « y a-t-il … ? » détournée du LLM ; reliability_status matchait « signal » nu → « signalement » capté. Regex resserrées (danger = danger/urgence/risque/inquiéter/sécurité ; reliability = fiabilit/données…fiable/gps…/signal gps|réseau|faible|perdu). 9/9 cas testés (faux positifs éliminés, vrais positifs conservés, hors-sujet → LLM). Reste du diff vérifié propre (pas de boucle, local-first OK, dédup OK). immat-nexus v4→v5, SW v386. (local/merge-to-main) |
