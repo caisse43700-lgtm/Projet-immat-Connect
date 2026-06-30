@@ -60,6 +60,15 @@
     try { return (w.FeatureRegistry && w.FeatureRegistry.get(key)) || null; } catch (e) { return null; }
   }
 
+  // Label lisible depuis une clé (registre ou legacy)
+  function _govLabelN(key) {
+    try {
+      var l = (w.FeatureRegistry && w.FeatureRegistry.list()) || w.FEATURE_REGISTRY || [];
+      var e = l.find(function (f) { return (f.replaces || f.key) === key || f.key === key; });
+      return e ? e.label : (key || '?');
+    } catch (e) { return key || '?'; }
+  }
+
   function _regList() {
     try { return (w.FeatureRegistry && w.FeatureRegistry.list()) || (w.FEATURE_REGISTRY || []); } catch (e) { return w.FEATURE_REGISTRY || []; }
   }
@@ -213,10 +222,20 @@
       return { answer: ans, facts: v.slice(0, 5).map(function (x) { return (x.invariant || '?') + ' · ' + (x.severity || ''); }) };
     },
     govchanges: function () {
+      // Journal persistant (survit au rechargement) en priorité, sinon journal de session du bus.
+      var log = [];
+      try { log = JSON.parse(w.localStorage.getItem('ic_gov_log') || '[]'); } catch (e) {}
+      if (log && log.length) {
+        var last = log.slice(-5).reverse();
+        return {
+          answer: log.length + ' changement(s) de gouvernance enregistré(s).',
+          facts: last.map(function (x) { return _govLabelN(x.key) + ' → ' + (x.enabled ? 'activé' : 'désactivé'); })
+        };
+      }
       var j = [];
       try { j = (_bus() ? _bus().getJournal() : []).filter(function (e) { return e.event === 'FEATURE_GOVERNANCE_CHANGED'; }).slice(-5).reverse(); } catch (e) {}
-      if (!j.length) return { answer: "Aucun changement de gouvernance récent n'est enregistré dans cette session.", facts: [] };
-      var facts = j.map(function (e) { var p = e.payload || {}; return (p.key || '?') + ' → ' + (p.enabled ? 'activé' : 'désactivé'); });
+      if (!j.length) return { answer: "Aucun changement de gouvernance récent n'est enregistré.", facts: [] };
+      var facts = j.map(function (e) { var p = e.payload || {}; return _govLabelN(p.key) + ' → ' + (p.enabled ? 'activé' : 'désactivé'); });
       return { answer: j.length + ' changement(s) de gouvernance récent(s).', facts: facts };
     },
     summary: function () {
