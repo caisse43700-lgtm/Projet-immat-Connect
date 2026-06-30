@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v393 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v7 · immat-copilot.js v4
+SW                     : v394 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v7 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | FIX rendu réponse Ange (capture IMG_6551 : 3 cases vides « ✅ · ⚠️ ») : renderResponse affichait chaque option du LLM avec la ligne bénéfices/risques même vide. Désormais : options vides filtrées (label+bénéfices+risques tous vides → ignorée) ; ligne ✅/⚠️ affichée seulement si contenu, séparateur conditionnel. SW v394. (local/merge-to-main) |
 | 2026-06-30 | IA session | FIX Ange action (capture IMG_6551 « réactiver les appels » → LLM) : _tryAction ne reconnaissait que l'impératif (« réactive »), pas l'infinitif (« réactiver/activer/désactiver »). Regex élargies aux RADICAUX (désactiv/coupe/bloqu/… et réactiv/activ/allum/…), OFF testé avant ON (car « désactiv » contient « activ »). 11/11 cas testés. SW v393. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange SIGNALE un véhicule (vocal/texte) — demande PO « signale au véhicule devant pneu dégonflé / portes ouvertes ». AngeDialog._trySignal (en tête de send(), avant gouvernance) : détecte verbe (signale/préviens/alerte/dis/envoie) + cible. Cible = « devant » → S.frontVehicle.plate (véhicule connecté juste devant), sinon plaque détectée dans le texte (regex AB-123-CD). Exclut les questions. Mappe le problème (pneu/portes/feux/trappe/fumée/objet/fuite) → sinon choix de boutons. Confirmation → _sendVehicleSignal → ImmatMessages.sendToPlate(context_type:'vehicle_report') (chaîne véhicule existante ; gardée signalement_vehicule). NB : « OK Ange » always-on impossible en PWA iOS → équivalent = bouton micro d'Ange. 7/7 cas détection testés. SW v392. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange AGIT (demande PO « quand je demande à Ange de modifier, il ne peut pas »). AngeDialog._tryAction (appelé en tête de send()) : détecte les commandes impératives (désactive/active/coupe/bloque/réactive…) + résout la fonctionnalité via ImmatNexus.featureKeyFromText (helper read-only exposé), exclut les questions (pourquoi/?/…). Garde GARDIEN (sinon « réservé au Gardien »), no-op si déjà dans l'état, sinon confirmation (Confirmer/Annuler) → AngeDialog.angeDoAction → App.setFeatureFlag (fonction propriétaire ; Nexus reste lecture seule). 9/9 cas testés (commande vs question vs salut). immat-nexus v6→v7, SW v391. (local/merge-to-main) |
