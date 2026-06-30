@@ -7,6 +7,42 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — EURÊKA incrément 2 : le prochain geste utile (`nextUsefulAction`)
+
+Deuxième brique de SPEC-ANGE-NEXT-ACTION. À l'ouverture d'Ange, **en tête**, ≤3 gestes utiles dérivés
+de l'existant ; **silence** si rien d'utile. Déclenché par la capture IMG_6560 (1 véhicule proche mais
+Ange répondait, via LLM, « je n'ai pas accès à la plaque ») → cause racine : `_nearestInfo` exigeait
+`dist!=null` et n'excluait pas les plaques de secours `VEH-xxxx`.
+
+**Nexus (lecture seule) — `core/immat-nexus.js` v10→v11** :
+- `nextUsefulAction()` : projection PURE, renvoie ≤3 `{kind,run,label,reason}` :
+  1. message reçu non traité (`vehicle_report`/`parked_report`, `_received`, `!read_at`, non supprimé) +
+     `messages` ON → `run:'reply'` ;
+  2. véhicule connecté réel le plus proche (`S.nearby`, hors `VEH-`) + `signalement_vehicule` ON →
+     `run:'sigveh'` (avec distance si connue) ;
+  3. `App._computeTodo().total>0` → `run:'todo'` (sauté si déjà un 'reply' et total≤1, anti-redondance).
+  Gated par `_featureStatus` ; n'agit jamais.
+
+**Ange (index.html / AngeDialog)** :
+- `_nearestInfo` fiabilisé : tri avec distance nulle en dernier (`dist==null?1e9`), exclusion `/^VEH-/i`,
+  distance optionnelle. Corrige signal/appel/message ET nextUsefulAction.
+- `_nextActionsHTML()` : lit `Nexus.nextUsefulAction()`, applique l'**anti-répétition** (`ic_ange_next_prev` :
+  on ne re-propose pas à l'ouverture suivante une suggestion ignorée), rend ≤3 boutons en tête. Silence si vide.
+- `_nextRun(run)` → `_replyLatest` / `_signalNearest` / `_callNearest` / navActivite+openTodoView
+  (réutilise l'existant, **aucune nouvelle voie de mutation**).
+- `_tryReply` refactoré : extrait `_replyLatest()` (réutilisé par `_nextRun('reply')`).
+- `open()` : `resp.innerHTML = _nextActionsHTML() + resp.innerHTML` (non destructif ; si pas de geste, accueil inchangé).
+
+**Garde-fous (SPEC §4/§6/§7)** : suggestion uniquement à l'ouverture, ≤3, silence par défaut, pas
+2 ouvertures de suite, kill-switch jamais contourné, mutations via fonctions propriétaires + confirmations.
+Tests : `tests/ange-v2.test.js` **103/103** (+16 : runtime silence/voisin/VEH-/kill-switch/plafond/reply +
+structurel câblage) ; `npm test` 177 + diag 3.
+
+**Versions** : immat-nexus.js v10→v11 (index.html + service-worker.js) · **CACHE_NAME v405→v406**.
+Prochain (incrément 3) : `currentSituation()` (fil rouge, 1 phrase à l'ouverture).
+
+---
+
 ## SESSION 2026-06-30 — EURÊKA incrément 1 : remplacement intelligent (`fallbackFor`)
 
 Première brique de SPEC-ANGE-NEXT-ACTION (la plus sûre / opportune) : un kill-switch cesse d'être un

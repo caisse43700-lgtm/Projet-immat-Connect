@@ -5140,7 +5140,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="core/immat-nexus.js?v=10"></script>
+<script src="core/immat-nexus.js?v=11"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5299,6 +5299,7 @@ const AngeDialog={
       resp.dataset.welcome='1';
       // P1 — Afficher la prédiction en cache si fraîche (sinon message d'accueil standard)
       try{const _p=JSON.parse(localStorage.getItem('ic_ange_predicted')||'null');if(_p&&Date.now()-_p.at<(_p.validite_minutes||8)*60_000){resp.innerHTML=`<div style="border-left:3px solid #7c6af7;padding:6px 10px;background:#0f0f1a;border-radius:0 6px 6px 0;margin-bottom:8px"><div style="color:#a5b4fc;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">✦ J'ai réfléchi en avance</div><div style="color:#e2e8f0;font-size:13px;line-height:1.6">${esc(_p.anticipation)}</div></div><div style="color:#888;font-size:12px;font-style:italic;padding-top:4px">Tu as une question différente ?</div>`;localStorage.removeItem('ic_ange_predicted');}else{resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>';}resp.innerHTML+=this._entryMenuHTML();}catch(_){resp.innerHTML='<div style="color:#888;font-size:13px;font-style:italic;padding:4px 0">Pose-moi une question sur l\'application, la navigation, ou un problème rencontré.</div>'+this._entryMenuHTML();}
+      try{const _na=this._nextActionsHTML();if(_na)resp.innerHTML=_na+resp.innerHTML;}catch(_){}
       // Démarrer AngePredictor + AngeMonologue au premier open (différé 5s)
       if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){};try{AngeMonologue.start();}catch(_){}},5000);}
     }
@@ -5463,7 +5464,7 @@ const AngeDialog={
   _lastTarget(){try{return localStorage.getItem('ic_ange_last_target')||'';}catch(_){return'';}},
   _rememberTarget(p){try{if(p)localStorage.setItem('ic_ange_last_target',nPlate(p));}catch(_){}},
   // Cible « le plus proche » = véhicule CONNECTÉ le plus proche (projection S.nearby, pas de nouvel état)
-  _nearestInfo(){try{const n=(window.S&&S.nearby)||[];const c=n.filter(x=>x&&x.plate&&x.dist!=null).sort((a,b)=>a.dist-b.dist);if(!c.length)return null;return{plate:nPlate(c[0].plate),dist:c[0].dist};}catch(_){return null;}},
+  _nearestInfo(){try{const n=(window.S&&S.nearby)||[];const c=n.filter(x=>x&&x.plate&&!/^VEH-/i.test(x.plate)).sort((a,b)=>((a.dist==null?1e9:a.dist)-(b.dist==null?1e9:b.dist)));if(!c.length)return null;return{plate:nPlate(c[0].plate),dist:(c[0].dist==null?null:c[0].dist)};}catch(_){return null;}},
   _nearestTarget(){const i=this._nearestInfo();return i?i.plate:'';},
   _distLabel(d){if(d==null)return '';return d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km';},
   // ── TABLE DES INTERACTIONS (donnée déclarative) : ce qu'il y a À L'INTÉRIEUR de chaque fonctionnalité.
@@ -5494,6 +5495,25 @@ const AngeDialog={
   _menuBtn(path,label){return '<button onclick="AngeDialog.menu(\''+path+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(label)+'</button>';},
   // Boutons d'accueil « Que veux-tu faire ? » (réutilise la table d'interactions, aucun nouvel état)
   _entryMenuHTML(){try{const c=this._MENU.faire&&this._MENU.faire.children;if(!c)return'';const ks=Object.keys(c);return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #1a1a2e"><div style="color:#a5b4fc;font-size:11px;font-weight:700;margin-bottom:6px">Que veux-tu faire ?</div><div style="display:flex;flex-wrap:wrap">'+ks.map(k=>this._menuBtn('faire.'+k,c[k].label)).join('')+'</div></div>';}catch(_){return'';}},
+  // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
+  //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).
+  _nextActionsHTML(){try{
+    if(!(window.ImmatNexus&&window.ImmatNexus.nextUsefulAction))return '';
+    const items=(window.ImmatNexus.nextUsefulAction()||[]);
+    if(!items.length)return '';
+    let prev=[];try{prev=JSON.parse(localStorage.getItem('ic_ange_next_prev')||'[]');}catch(_){}
+    const sig=it=>it.run+':'+(it.target||'');
+    const show=items.filter(it=>prev.indexOf(sig(it))<0).slice(0,3);
+    try{localStorage.setItem('ic_ange_next_prev',JSON.stringify(show.map(sig)));}catch(_){}
+    if(!show.length)return '';
+    return '<div style="margin-bottom:10px"><div style="color:#a5b4fc;font-size:11px;font-weight:700;margin-bottom:6px">✦ Voici ce que tu peux faire maintenant</div>'+show.map(it=>'<button onclick="AngeDialog._nextRun(\''+js(it.run)+'\')" style="display:block;width:100%;text-align:left;background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:9px 11px;font-size:13px;cursor:pointer;margin-bottom:6px">'+esc(it.label)+(it.reason?'<div style="color:#777;font-size:10px;margin-top:2px">'+esc(it.reason)+'</div>':'')+'</button>').join('')+'</div>';
+  }catch(_){return '';}},
+  _nextRun(run){try{this._log('action','Geste proposé : '+run);}catch(_){}
+    if(run==='reply')return this._replyLatest();
+    if(run==='sigveh')return this._signalNearest();
+    if(run==='callveh')return this._callNearest();
+    if(run==='todo'){try{App.navActivite&&App.navActivite();}catch(e){}setTimeout(()=>{try{App.openTodoView&&App.openTodoView();}catch(e){}},300);try{this.close&&this.close();}catch(_){}return;}
+  },
   menu(path){
     try{
       const parts=String(path||'').split('.');let node=this._MENU[parts[0]];
@@ -5586,16 +5606,20 @@ const AngeDialog={
     try{
       const t=String(msg||'').toLowerCase();
       if(!/\br[ée]ponds?\b|r[ée]pondre|une r[ée]ponse|propose.*r[ée]ponse|r[ée]ponds.?lui|r[ée]pondre.?lui/.test(t))return false;
-      const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
-      const all=(window.S&&S._actMessages)||[];
-      const recus=all.filter(m=>m&&m._received).sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():b.at||0)-(a.created_at?new Date(a.created_at).getTime():a.at||0));
-      if(!recus.length){r.innerHTML='<div style="line-height:1.6">Tu n\'as pas de message reçu récent auquel répondre.</div>';$('angeMsg').value='';return true;}
-      const m0=recus[0];const plate=nPlate(m0._otherPlate||m0._convPlate||m0.sender_plate||'');
-      if(!plate){r.innerHTML='<div style="line-height:1.6">Je ne retrouve pas l\'expéditeur du dernier message.</div>';$('angeMsg').value='';return true;}
-      const _pl=esc(fPlate(plate)||plate);const choices=this._replyChoices(m0.context_type);
-      r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Répondre à <b>'+_pl+'</b> — propositions :</div><div style="display:flex;flex-wrap:wrap">'+choices.map(c=>'<button onclick="AngeDialog.angeReplyConfirm(\''+js(plate)+'\',\''+js(c[0])+'\',\''+js(c[1])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(c[0])+'</button>').join('')+'</div>';
-      $('angeMsg').value='';return true;
+      return this._replyLatest();
     }catch(_){return false;}
+  },
+  // Rendu des propositions de réponse au DERNIER message reçu (réutilisé par _tryReply et _nextRun)
+  _replyLatest(){
+    const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+    const all=(window.S&&S._actMessages)||[];
+    const recus=all.filter(m=>m&&m._received).sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():b.at||0)-(a.created_at?new Date(a.created_at).getTime():a.at||0));
+    if(!recus.length){r.innerHTML='<div style="line-height:1.6">Tu n\'as pas de message reçu récent auquel répondre.</div>';$('angeMsg').value='';return true;}
+    const m0=recus[0];const plate=nPlate(m0._otherPlate||m0._convPlate||m0.sender_plate||'');
+    if(!plate){r.innerHTML='<div style="line-height:1.6">Je ne retrouve pas l\'expéditeur du dernier message.</div>';$('angeMsg').value='';return true;}
+    const _pl=esc(fPlate(plate)||plate);const choices=this._replyChoices(m0.context_type);
+    r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Répondre à <b>'+_pl+'</b> — propositions :</div><div style="display:flex;flex-wrap:wrap">'+choices.map(c=>'<button onclick="AngeDialog.angeReplyConfirm(\''+js(plate)+'\',\''+js(c[0])+'\',\''+js(c[1])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(c[0])+'</button>').join('')+'</div>';
+    $('angeMsg').value='';return true;
   },
   angeReplyConfirm(plate,text,ctx){
     const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';

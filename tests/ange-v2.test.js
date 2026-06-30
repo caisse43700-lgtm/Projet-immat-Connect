@@ -109,6 +109,33 @@ section('A. ImmatNexus (module réel) — matrice d\'intentions');
   window._fleetFlagsCache = S._fleetFlags = {};
   try { window.ImmatBus.emit('FEATURE_GOVERNANCE_CHANGED', { key: 'appels', enabled: true }); } catch (e) {}
 
+  // nextUsefulAction (SPEC-ANGE-NEXT-ACTION §1.2 / §7) — projection pure, ≤3, silence par défaut.
+  ok('nextUsefulAction exposé', typeof window.ImmatNexus.nextUsefulAction === 'function');
+  // §7-1 silence : aucun voisin, aucun message, aucun à-traiter → tableau vide
+  S.nearby = []; S._actMessages = []; App._computeTodo = function () { return { veh: [], st: [], sos: [], total: 0 }; };
+  ok('silence par défaut (rien d\'utile → [])', window.ImmatNexus.nextUsefulAction().length === 0);
+  // voisin connecté réel → propose un signalement (sigveh)
+  S.nearby = [{ plate: 'AB-123-CD', dist: 0.08 }];
+  const na1 = window.ImmatNexus.nextUsefulAction();
+  ok('voisin proche → geste signaler (sigveh)', na1.some(x => x.run === 'sigveh' && /AB-123-CD/.test(x.label)));
+  // plaque de secours VEH- ignorée (pas une vraie cible)
+  S.nearby = [{ plate: 'VEH-1A2B', dist: 0.05 }];
+  ok('plaque de secours VEH- ignorée', !window.ImmatNexus.nextUsefulAction().some(x => x.run === 'sigveh'));
+  // §7-3 kill-switch : signalement_vehicule OFF → pas de geste signaler
+  // (la résolution registre passe par la clé legacy `replaces` = 'alertes_vehicule')
+  S.nearby = [{ plate: 'AB-123-CD', dist: 0.08 }];
+  window._fleetFlagsCache = S._fleetFlags = { alertes_vehicule: false };
+  ok('signalement OFF → aucun geste signaler', !window.ImmatNexus.nextUsefulAction().some(x => x.run === 'sigveh'));
+  window._fleetFlagsCache = S._fleetFlags = {};
+  // §7-2 plafond : beaucoup de signaux → ≤3 gestes
+  S._actMessages = [{ id: 'm1', _received: true, context_type: 'vehicle_report', _otherPlate: 'CD-456-EF', created_at: '2026-06-30T00:00:00Z' }];
+  App._computeTodo = function () { return { veh: [1, 2], st: [3], sos: [], total: 3 }; };
+  ok('plafond ≤ 3 gestes', window.ImmatNexus.nextUsefulAction().length <= 3);
+  // message reçu non traité → propose répondre
+  ok('message reçu non traité → geste répondre (reply)', window.ImmatNexus.nextUsefulAction().some(x => x.run === 'reply'));
+  // restaure
+  S.nearby = []; S._actMessages = []; delete App._computeTodo;
+
   // audit : registre cohérent → 0 finding
   const findings = window.ImmatNexus.audit();
   ok('audit() retourne un tableau', Array.isArray(findings));
@@ -153,6 +180,14 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_blockedHTML consomme Nexus.fallbackFor', has('ImmatNexus.fallbackFor'));
   ok('_fallbackRun route vers les actes du menu existant', has("run==='msgveh'") && has("run==='callveh'") && has("run==='sigveh'"));
   ok('feature OFF utilise _blockedHTML (signalement/appels/messages)', /featureStatus\('signalement_vehicule'\)[\s\S]{0,300}_blockedHTML\('signalement_vehicule'/.test(HTML) && has("_blockedHTML('appels'") && has("_blockedHTML('messages'"));
+  // Prochain geste utile (SPEC-ANGE-NEXT-ACTION §1.2) — câblage à l'ouverture, silence par défaut
+  ['_nextActionsHTML', '_nextRun', '_replyLatest'].forEach(m => ok('méthode présente : ' + m, has(m + '(') || has(m + ':')));
+  ok('_nextActionsHTML consomme Nexus.nextUsefulAction', has('ImmatNexus.nextUsefulAction'));
+  ok('anti-répétition (ic_ange_next_prev)', has('ic_ange_next_prev'));
+  ok('open() ajoute le prochain geste en tête', /_nextActionsHTML\(\);if\(_na\)resp\.innerHTML=_na\+resp\.innerHTML/.test(HTML));
+  ok('_nextRun route reply/sigveh/callveh/todo', has("run==='reply'") && has("run==='sigveh'") && has("run==='todo'"));
+  ok('_tryReply réutilise _replyLatest', /_tryReply\(msg\)\{[\s\S]{0,260}return this\._replyLatest\(\)/.test(HTML));
+  ok('_nearestInfo tolère dist nulle et exclut VEH-', has('/^VEH-/i') && has('dist==null?1e9'));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
