@@ -7,6 +7,38 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Ange : menu d'accueil « Que veux-tu faire ? » + proposition du plus proche
+
+Demande PO : « quand on demande de créer un signalement, qu'il propose l'immatriculation la plus proche
+par distance » + « qu'il demande qu'est-ce qu'on veut faire — on peut demander de l'aide pour soi,
+signaler un véhicule, l'appeler, lui envoyer un message ».
+
+**Tout dans `index.html` / `AngeDialog`** (aucun nouvel état, aucun moteur — conforme constitution :
+on lit la projection `S.nearby`, on réutilise les fonctions propriétaires) :
+- **`_nearestInfo()`** → `{plate, dist}` du véhicule connecté le plus proche (tri `S.nearby` par dist).
+  `_nearestTarget()` se réduit dessus (DRY). **`_distLabel(d)`** : km<1 → « N m », sinon « N.N km ».
+- **Entrée `_MENU.faire`** (= donnée déclarative, lue par `menu()`) : `aide` (→ `sigStepAide`, aide pour
+  soi), `signaler`/`appeler`/`message` (actes `sigveh`/`callveh`/`msgveh`, gated par feature), `activite`
+  (→ `navActivite`). **`_entryMenuHTML()`** rend ces boutons ; appelé dans `open()` (welcome, branches
+  prédiction + standard).
+- **`_menuAct`** : nouveaux kinds `sigveh`/`callveh`/`msgveh` → `_signalNearest`/`_callNearest`/
+  `_messageNearest`. Chacun re-vérifie la feature, résout `_nearestInfo()`, **affiche la plaque + la
+  distance** puis : signalement → boutons problème (`angeSignalConfirm`) ; appel → carte de confirmation
+  (`_armConfirm`→`angeCallConfirm`) ; message → invite à dicter le texte (« envoie au véhicule proche : … »).
+  Si aucun proche connecté → message clair + repli sur la plaque.
+- **`_tryMenu(msg)`** capte « que faire / que puis-je faire / menu / options / tu peux faire quoi /
+  aide-moi » → `menu('faire')`. Câblé dans `send()` après `_tryAction`, **avant** Nexus/LLM.
+- **`_trySignal`** : si aucune cible explicite (ni « devant », ni « proche », ni plaque, ni mémoire)
+  mais qu'un véhicule connecté est à proximité → propose le plus proche via `_signalNearest()`.
+
+Garde-fous respectés : aucun effet de bord avant confirmation (boutons explicites / carte + `_armConfirm`
+15 s) ; kill-switch jamais contourné (feature checkée dans menu() ET dans chaque `_*Nearest`) ; mutations
+via fonctions propriétaires (`ImmatMessages.sendToPlate`, `CallManager.contactByCall`) ; Nexus/LLM
+inchangés (lecture seule). Tests : `npm test` 177 ✅ + diagnostic 3 ✅ ; `tests/ange-v2.test.js` **77 ✅**
+(13 nouvelles assertions structurelles). **SW v403 → v404.** index.html servi réseau → pas de bump `?v=`.
+
+---
+
 ## SESSION 2026-06-30 — Modération des comptes : suspension + anti-recréation (immat/email/téléphone)
 
 Demande PO : « compte suspendu immat et pseudo ne peut pas recréer un nouveau compte si immat ou mail
