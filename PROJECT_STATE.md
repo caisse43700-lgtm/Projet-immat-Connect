@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v366 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v367 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Étape 6 (partie honnêteté + reliage OBD) : suppression du faux « 100% OPTIMAL » (Santé organisme = état réel ImmatOrganism.diagnose + nb réel registre) → INV-DASH-007. Gouvernance reliée à l'OBD/organisme : ImmatBus.emit + ImmatOrganism.observe sur FEATURE_GOVERNANCE_CHANGED (toggle), FEATURE_BLOCKED (accès refusé), FLEET_CONFIG_LOADED ; couleur dédiée (lime) dans la Timeline OBD. SW v367. (local/merge-to-main) |
 | 2026-06-30 | IA session | Gel Aide LEVÉ (demande PO) — kill-switch minimal : entrée 'aide' du registre déverrouillée (frozen retiré, toggle actif) ; gardes requireFeature('aide') sur sigStepAide (ouverture de l'étape Aide) et assist() (création). Aide OFF → ouverture/création bloquées + message ; Aide ON (défaut) → inchangé. Modèle confirmé par PO : message à l'ENTRÉE de chaque catégorie (Activité/Signaler/Appels/Messages/Ange/Aide), jamais l'app entière. SW v366. (local/merge-to-main) |
 | 2026-06-30 | IA session | Rigueur chokepoint étendue : Messages = wrap unique de ImmatMessages.sendToPlate (bloque les messages LIBRES si 'messages' OFF ; les signalements avec context_type passent) ; Signaler = roadReport gardé 'signalement_route', vehicleAlert+driverInfo gardés 'signalement_vehicule'. Aide reste GELÉE (runtime non touché). SW v365. (local/merge-to-main) |
 | 2026-06-30 | IA session | GPS déplacement bloqué si désactivé : openGps() gardé (le bouton 🧭 passe par openGps, plus de panel('drive') direct) + pickDest/startNav gardés. Donc GPS OFF → ouverture nav + recherche destination + itinéraire bloqués avec message « indisponible par l'administrateur ». (Complète recenter/cycleView/locateBtn déjà gardés.) SW v364. (local/merge-to-main) |
