@@ -5459,6 +5459,18 @@ const AngeDialog={
   _clearPending(){try{clearTimeout(this._pendTO);}catch(_){}this._pendTO=null;try{if(this._pendRec)this._pendRec.stop();}catch(_){}this._pendRec=null;this._pending=null;},
   // ── Audit local (device-only) : trace les DÉCISIONS d'Ange, sans contenu sensible (pas de texte privé)
   _log(type,summary){try{var a=JSON.parse(localStorage.getItem('ic_ange_log')||'[]');a.push({t:type,s:String(summary||'').slice(0,80),at:Date.now()});localStorage.setItem('ic_ange_log',JSON.stringify(a.slice(-50)));}catch(_){}},
+  // ── Apprentissage léger (device-only) : mémoire de la dernière cible véhicule (suites naturelles)
+  _lastTarget(){try{return localStorage.getItem('ic_ange_last_target')||'';}catch(_){return'';}},
+  _rememberTarget(p){try{if(p)localStorage.setItem('ic_ange_last_target',nPlate(p));}catch(_){}},
+  _tryForget(msg){
+    try{
+      var t=String(msg||'').toLowerCase();
+      if(!/(oublie|r[ée]initialise|efface|remets? à z[ée]ro).{0,20}(appris|m[ée]moire|habitude|historique|journal|tout)/.test(t))return false;
+      try{localStorage.removeItem('ic_ange_log');localStorage.removeItem('ic_ange_last_target');localStorage.removeItem('ic_ange_learn');}catch(_){}
+      var r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">🧹 C\'est fait — j\'ai oublié mon journal et le dernier véhicule. Je repars de zéro.</div>';}
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
   _tryHistory(msg){
     try{
       var t=String(msg||'').toLowerCase();
@@ -5510,7 +5522,8 @@ const AngeDialog={
         if(!plate){r.innerHTML='<div style="line-height:1.6">🚗 Je ne détecte aucun véhicule connecté juste devant toi. Rapproche-toi, ou donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';$('angeMsg').value='';return true;}
       }else{
         const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
-        if(m)plate=nPlate(m[1]);how='plaque';
+        if(m){plate=nPlate(m[1]);how='plaque';}
+        else if(/(le dernier|la derni[èe]re|le m[êe]me|la m[êe]me|rappelle|relance|encore lui|m[êe]me v[ée]hicule)/.test(t)){const _lt=this._lastTarget();if(_lt){plate=_lt;how='mémoire';}}
       }
       if(!plate){r.innerHTML='<div style="line-height:1.6">À quel véhicule ? Dis « <b>au véhicule devant</b> » ou la plaque (ex. « signale à AB-123-CD pneu dégonflé »).</div>';$('angeMsg').value='';return true;}
       if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de te signaler toi-même 🙂</div>';$('angeMsg').value='';return true;}
@@ -5543,7 +5556,7 @@ const AngeDialog={
       if(window.S){S.selPlate=plate;S.conv=plate;S.contextVehicle=Object.assign({},S.contextVehicle||{},{plate:plate});}
       if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;
       const ok=await window.ImmatMessages.sendToPlate(plate,txt,{context_type:'vehicle_report'});
-      if(ok!==false){try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label:label,to:plate,_src:'Ange'})}catch(e){}return true;}
+      if(ok!==false){this._rememberTarget(plate);try{window.ImmatOrganism?.observe?.('VEHICLE_MESSAGE_SENT',{label:label,to:plate,_src:'Ange'})}catch(e){}return true;}
       return false;
     }catch(_){return false;}
   },
@@ -5566,6 +5579,7 @@ const AngeDialog={
       }else{
         const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
         if(m)plate=nPlate(m[1]);
+        else if(/(le dernier|la derni[èe]re|le m[êe]me|la m[êe]me|rappelle|relance|encore lui|m[êe]me v[ée]hicule)/.test(t)){const _lt=this._lastTarget();if(_lt)plate=_lt;}
       }
       if(!plate){r.innerHTML='<div style="line-height:1.6">Quel véhicule appeler ? Dis « <b>le véhicule devant</b> » ou la plaque (ex. « appelle AB-123-CD »).</div>';$('angeMsg').value='';return true;}
       if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de t\'appeler toi-même 🙂</div>';$('angeMsg').value='';return true;}
@@ -5580,6 +5594,7 @@ const AngeDialog={
     try{
       if(window.CallManager&&window.CallManager.contactByCall){
         window.CallManager.contactByCall(nPlate(plate),'');
+        this._rememberTarget(plate);
         this._log('action','Appel lancé : '+(fPlate(plate)||plate));
         if(r)r.innerHTML='<div style="line-height:1.6">📞 Appel lancé vers <b>'+esc(fPlate(plate)||plate)+'</b>.</div>';
         try{this.close&&this.close();}catch(_){}
@@ -5589,6 +5604,8 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Apprentissage — « oublie ce que tu as appris » (réinitialisation locale)
+    try{ if(this._tryForget(msg)) return; }catch(_e){}
     // Explicabilité — « qu'as-tu fait ? » (journal local d'Ange)
     try{ if(this._tryHistory(msg)) return; }catch(_e){}
     // Ange agit — appel véhicule (« appelle le véhicule devant »)
