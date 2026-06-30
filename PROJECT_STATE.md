@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v363 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v364 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | GPS déplacement bloqué si désactivé : openGps() gardé (le bouton 🧭 passe par openGps, plus de panel('drive') direct) + pickDest/startNav gardés. Donc GPS OFF → ouverture nav + recherche destination + itinéraire bloqués avec message « indisponible par l'administrateur ». (Complète recenter/cycleView/locateBtn déjà gardés.) SW v364. (local/merge-to-main) |
 | 2026-06-30 | IA session | Kill-switch au POINT D'ACTION (parenthèse PO : OFF doit bloquer partout, pas juste l'onglet). Appels : wrap unique de CallManager.contactByCall/requestCall (installé à openMap, sans toucher calls.js) → tous les boutons d'appel (menu véhicule, liste proches, etc.) bloqués si 'appels' OFF avec message. GPS : App.locateBtn (gardé) sur le bouton 🎯 ; recenter/cycleView déjà gardés. Sûr par défaut (actif tant que non désactivé). SW v363. (local/merge-to-main) |
 | 2026-06-30 | IA session | C1 SÉCURITÉ (correctif isolé, NON fusionné — attend action app_metadata du PO) : migration 20260630120000_secure_roles_app_metadata.sql → get_my_role() lit raw_app_meta_data UNIQUEMENT (plus user_metadata, modifiable client) ; get_abuse_reports_admin() passe par get_my_role ; set_feature_flag_fleet sécurisée via get_my_role. Ferme l'élévation de privilège (un user ne peut plus se promouvoir gardien via auth.updateUser). PRÉREQUIS : mettre role=gardien en app_metadata du compte gardien AVANT de fusionner. |
 | 2026-06-30 | IA session | Revue adversariale (3 agents) → Lot 1 correctifs : M1 setFeatureFlag refuse les features gelées (aide) + M2 rollback si RPC échoue ; M3 pastille Aide (debounce délai max + garde de séquence anti-course) ; M4 logout vide S._aideMapMarkers + ferme canal Realtime ; L1 featureStatus (résolution clé legacy + préf avant 'admin') ; L2 garde typeof object (isFeatureEnabled/resolve) ; L3 _angeToggle détection ouvert robuste ; L4 cycleView gardé GPS ; L5 subscribeRealtime idempotent + reRender sans double sync. RESTE : C1 (sécurité get_my_role, coordonné) + chokepoints réels (appels/GPS bloqués partout, pas juste le nav). SW v362. (local/merge-to-main) |
