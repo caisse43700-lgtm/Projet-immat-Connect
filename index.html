@@ -687,7 +687,10 @@ const FEATURE_REGISTRY=[
   {key:'appels',label:'Appels vocaux',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-APPELS',owner:'Produit / Communication',riskLevel:'critical',dependsOn:[],description:'Appels vocaux entre conducteurs',behaviorWhenOff:'Onglet Appels bloque (indisponible)'},
   {key:'ange',label:'Ange (assistant IA)',group:'IA',stage:'beta',scope:'fleet',default:true,killSwitch:'CK-ANGE',owner:'Produit / IA',riskLevel:'medium',dependsOn:[],description:'Assistant IA Ange (dialogue)',behaviorWhenOff:'Bouton Ange bloque (indisponible)'},
   {key:'gps',label:'GPS / Localisation',group:'Carte',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-GPS',owner:'Produit / Carte',riskLevel:'critical',dependsOn:[],description:'Recentrage GPS / navigation',behaviorWhenOff:'Bouton GPS bloque (indisponible)'},
-  {key:'signalement_stationne',label:'Signalements stationné',group:'Signalements',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-STATION',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],description:'Signalements de vehicule stationne',behaviorWhenOff:'Categorie Stationne bloquee'}
+  {key:'signalement_stationne',label:'Signalements stationné',group:'Signalements',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-STATION',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],description:'Signalements de vehicule stationne',behaviorWhenOff:'Categorie Stationne bloquee'},
+  {key:'activite_nouveaux',label:'Activité — Nouveaux',group:'Activité',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-ACT-NEW',owner:'Produit / Activité',riskLevel:'low',dependsOn:[],description:'Vue transversale des nouveaux signalements',behaviorWhenOff:'Vue Nouveaux bloquee'},
+  {key:'activite_a_traiter',label:'Activité — À traiter',group:'Activité',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-ACT-TODO',owner:'Produit / Activité',riskLevel:'low',dependsOn:[],description:'Vue transversale des signalements a traiter',behaviorWhenOff:'Vue A traiter bloquee'},
+  {key:'activite_traites',label:'Activité — Traités',group:'Activité',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-ACT-DONE',owner:'Produit / Activité',riskLevel:'low',dependsOn:[],description:'Vue transversale des signalements traites',behaviorWhenOff:'Vue Traites bloquee'}
 ];
 window.FEATURE_REGISTRY=FEATURE_REGISTRY;
 window.FeatureRegistry={
@@ -1119,6 +1122,9 @@ gdGatingReport(){
       ['signalement_vehicule','🚘 Véhicule (Signaler + Activité)'],
       ['aide','🆘 Aide (Signaler + Activité)'],
       ['signalement_stationne','🅿️ Stationné (Signaler + Activité)'],
+      ['activite_nouveaux','✉️ Activité — Nouveaux'],
+      ['activite_a_traiter','⏳ Activité — À traiter'],
+      ['activite_traites','✅ Activité — Traités'],
       ['messages','💬 Messages'],
       ['appels','📞 Appels'],
       ['ange','✦ Ange'],
@@ -1194,7 +1200,7 @@ gdFeaturesBlock(){
   try{
     if(!window.FeatureRegistry)return'';
     const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤',signaler:'📣',messages:'💬',appels:'📞',ange:'✦',gps:'📍',activite:'🔔'};
+    const icons={aide:'🆘',signalement_route:'🛣',signalement_vehicule:'🚗',zones_accidentogenes:'⚠️',auto_status:'🚦',copilote_proactif:'🧠',copilote_monologue:'🎤',signaler:'📣',messages:'💬',appels:'📞',ange:'✦',gps:'📍',activite:'🔔',signalement_stationne:'🅿️',activite_nouveaux:'✉️',activite_a_traiter:'⏳',activite_traites:'✅'};
     const stgCol={alpha:'#f87171',beta:'#fb923c',stable:'#4ade80',deprecated:'#94a3b8',removed:'#555'};
     const reg=window.FeatureRegistry.list();
     const rowFor=f=>{
@@ -1212,7 +1218,7 @@ gdFeaturesBlock(){
     };
     // Organisé par groupe (en-tête + compteur actifs/total), toutes les catégories visibles.
     const groups={};reg.forEach(f=>{const g=f.group||'Autres';(groups[g]=groups[g]||[]).push(f);});
-    const order=['Signalements','Communication','Carte','IA','Assistance','Présence'];
+    const order=['Signalements','Activité','Communication','Carte','IA','Assistance','Présence'];
     const gNames=Object.keys(groups).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});
     const sections=gNames.map(g=>{
       const items=groups[g];
@@ -2358,6 +2364,7 @@ App._computeTodo=function(){
   return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openTodoView=function(){
+  if(!App.requireFeature('activite_a_traiter','À traiter'))return;
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
   document.body.classList.add('act-todo-open');
   this.closeCallJournal?.();
@@ -2498,6 +2505,7 @@ App._computeDone=function(){
   return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openDoneView=function(){
+  if(!App.requireFeature('activite_traites','Traités'))return;
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-new-open');
   document.body.classList.add('act-done-open');
   this.closeCallJournal?.();
@@ -2541,6 +2549,7 @@ App._computeNew=function(){
   return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openNewView=function(){
+  if(!App.requireFeature('activite_nouveaux','Nouveaux'))return;
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');
   document.body.classList.add('act-new-open');
   this.closeCallJournal?.();
