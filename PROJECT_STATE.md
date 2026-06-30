@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v385 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v4 · immat-copilot.js v4
+SW                     : v386 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v5 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Revue adversariale ImmatNexus (agent) → 2 bugs HIGH corrigés : intents trop gourmands. danger_urgency matchait « y a-t-il » seul (groupe final optionnel) → toute question « y a-t-il … ? » détournée du LLM ; reliability_status matchait « signal » nu → « signalement » capté. Regex resserrées (danger = danger/urgence/risque/inquiéter/sécurité ; reliability = fiabilit/données…fiable/gps…/signal gps|réseau|faible|perdu). 9/9 cas testés (faux positifs éliminés, vrais positifs conservés, hors-sujet → LLM). Reste du diff vérifié propre (pas de boucle, local-first OK, dédup OK). immat-nexus v4→v5, SW v386. (local/merge-to-main) |
 | 2026-06-30 | IA session | Journal de gouvernance CÔTÉ SERVEUR (partagé multi-appareils). Migration 20260630160000_feature_config_audit.sql : table feature_config_audit + set_feature_flag_fleet journalise chaque écriture + get_feature_audit(p_limit) (gardien, JOIN profiles pour la plaque). Front : gdGovLogBlock rend le local immédiatement (id govLogRows + indicateur govLogSrc), App.loadGovAudit() upgrade vers la vue serveur si dispo (sinon garde local). GitHub MCP reconnecté → retour au déploiement par PR. SW v385. (local/merge-to-main) |
 | 2026-06-30 | IA session | Export du journal de gouvernance (App.exportGovLog → copie JSON presse-papier) + bouton « Exporter » dans le panneau. Front-only. SW v384. NB : connecteur GitHub MCP déconnecté en cours de session → déploiement vers main par push git direct (à défaut de PR). (local/merge-to-main) |
 | 2026-06-30 | IA session | Journal de gouvernance horodaté persistant : setFeatureFlag écrit ic_gov_log (localStorage, ring 100, {key,enabled,at,by}). Panneau Dashboard Modération « 📜 Journal de gouvernance » (App.gdGovLogBlock, 30 derniers + Vider). Nexus.governance_changes lit ic_gov_log en priorité (survit au rechargement) + helper _govLabelN. immat-nexus v3→v4, SW v383. (local/merge-to-main) |
