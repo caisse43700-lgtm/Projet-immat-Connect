@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v394 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v7 · immat-copilot.js v4
+SW                     : v395 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v8 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Réponses Ange/Nexus SIMPLIFIÉES (demande PO « pas trop technique, simple, mais relié à tout »). Confirmation : Nexus reste connecté à registre+santé+lois+OBD+sens. Wording rendu humain : plus de codes INV-xxx (→ phrases de règles), plus de %/« /10 »/« phase 1 »/« invariants »/« kill-switch ». Ex : « ✅ Tout fonctionne bien », « ✅ Mes informations sont fiables », « L'application surveille et t'informe », lois → phrases en clair. immat-nexus v7→v8, SW v395. (local/merge-to-main) |
 | 2026-06-30 | IA session | FIX rendu réponse Ange (capture IMG_6551 : 3 cases vides « ✅ · ⚠️ ») : renderResponse affichait chaque option du LLM avec la ligne bénéfices/risques même vide. Désormais : options vides filtrées (label+bénéfices+risques tous vides → ignorée) ; ligne ✅/⚠️ affichée seulement si contenu, séparateur conditionnel. SW v394. (local/merge-to-main) |
 | 2026-06-30 | IA session | FIX Ange action (capture IMG_6551 « réactiver les appels » → LLM) : _tryAction ne reconnaissait que l'impératif (« réactive »), pas l'infinitif (« réactiver/activer/désactiver »). Regex élargies aux RADICAUX (désactiv/coupe/bloqu/… et réactiv/activ/allum/…), OFF testé avant ON (car « désactiv » contient « activ »). 11/11 cas testés. SW v393. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange SIGNALE un véhicule (vocal/texte) — demande PO « signale au véhicule devant pneu dégonflé / portes ouvertes ». AngeDialog._trySignal (en tête de send(), avant gouvernance) : détecte verbe (signale/préviens/alerte/dis/envoie) + cible. Cible = « devant » → S.frontVehicle.plate (véhicule connecté juste devant), sinon plaque détectée dans le texte (regex AB-123-CD). Exclut les questions. Mappe le problème (pneu/portes/feux/trappe/fumée/objet/fuite) → sinon choix de boutons. Confirmation → _sendVehicleSignal → ImmatMessages.sendToPlate(context_type:'vehicle_report') (chaîne véhicule existante ; gardée signalement_vehicule). NB : « OK Ange » always-on impossible en PWA iOS → équivalent = bouton micro d'Ange. 7/7 cas détection testés. SW v392. (local/merge-to-main) |

@@ -97,8 +97,8 @@
     var legacy = (e && (e.replaces || e.key)) || featureKey;
     var lc = _lastGovChange(legacy);
     var reason = st.enabled ? null
-      : (st.by === 'user' ? "désactivée par l'utilisateur (Réglages)"
-        : "désactivée par l'administrateur (kill-switch flotte)");
+      : (st.by === 'user' ? "tu l'as désactivée dans les Réglages"
+        : "désactivée par l'administrateur");
     return {
       key: featureKey,
       label: (e && e.label) || featureKey,
@@ -187,40 +187,28 @@
       if (!key) return null;
       var ex = explain(key);
       var ans = ex.enabled
-        ? '« ' + ex.label + ' » est actuellement ACTIVÉE — accès autorisé.'
-        : '« ' + ex.label + ' » est DÉSACTIVÉE : ' + (ex.reason || 'indisponible') + '.';
-      var facts = [
-        'clé: ' + ex.key,
-        'état: ' + (ex.enabled ? 'activé' : 'désactivé'),
-        ex.by ? ('par: ' + (ex.by === 'user' ? 'utilisateur' : 'administrateur')) : 'par: défaut',
-        ex.scope ? ('portée: ' + ex.scope) : null,
-        ex.killSwitch ? ('kill-switch: ' + ex.killSwitch) : null
-      ].filter(Boolean);
-      return { answer: ans, facts: facts };
+        ? '« ' + ex.label + ' » est disponible ✅.'
+        : '« ' + ex.label + ' » est indisponible — ' + (ex.reason || 'désactivée') + '.';
+      return { answer: ans, facts: [] };
     },
     disabled: function () {
       var d = _disabledList();
-      if (!d.length) return { answer: 'Aucune fonctionnalité désactivée : tout est actif.', facts: [] };
-      var ans = d.length + ' fonctionnalité(s) désactivée(s) : ' + d.map(function (g) { return g.label; }).join(', ') + '.';
-      return { answer: ans, facts: d.map(function (g) { return g.label + ' — par ' + (g.by === 'user' ? 'utilisateur' : 'administrateur'); }) };
+      if (!d.length) return { answer: '✅ Tout est actif, rien n\'est désactivé.', facts: [] };
+      var ans = d.length + ' chose(s) désactivée(s) : ' + d.map(function (g) { return g.label; }).slice(0, 6).join(', ') + (d.length > 6 ? '…' : '') + '.';
+      return { answer: ans, facts: [] };
     },
     health: function () {
-      var snap = sense({});
-      var h = snap.health || {};
-      var lbl = h.health === 'ok' ? 'sain' : h.health === 'violated' ? 'violation critique' : h.health === 'degraded' ? 'dégradé' : 'inconnu';
-      var ans = "État de l'organisme : " + lbl + '. ' + (h.summary || '');
-      var facts = [];
-      if (snap.reliability && snap.reliability.score != null) facts.push('fiabilité données: ' + snap.reliability.score + '%');
-      if (snap.orientation && snap.orientation.urgency != null) facts.push('urgence: ' + snap.orientation.urgency + '/10');
-      if (h.violations) facts.push('violations: ' + h.violations.length);
-      return { answer: ans.trim(), facts: facts };
+      var h = sense({}).health || {};
+      var ans = h.health === 'ok' ? '✅ Tout fonctionne bien.'
+        : h.health === 'violated' ? '⚠️ Il y a un souci important à surveiller.'
+        : h.health === 'degraded' ? "⚠️ L'application est un peu ralentie, mais elle marche."
+        : "Je n'ai pas encore assez d'infos sur l'état général.";
+      return { answer: ans, facts: [] };
     },
     violations: function () {
-      var snap = sense({});
-      var v = (snap.health && snap.health.violations) || [];
-      if (!v.length) return { answer: 'Aucune violation de loi (invariant) récente. Les règles sont respectées.', facts: [] };
-      var ans = v.length + ' violation(s) récente(s) : ' + v.slice(0, 5).map(function (x) { return (x.invariant || '?') + (x.label ? ' (' + x.label + ')' : ''); }).join(', ') + '.';
-      return { answer: ans, facts: v.slice(0, 5).map(function (x) { return (x.invariant || '?') + ' · ' + (x.severity || ''); }) };
+      var v = (sense({}).health || {}).violations || [];
+      if (!v.length) return { answer: '✅ Tout est en règle, rien à signaler.', facts: [] };
+      return { answer: "⚠️ J'ai repéré " + v.length + ' point(s) à vérifier.', facts: v.slice(0, 4).map(function (x) { return x.label || x.invariant || 'point'; }) };
     },
     govchanges: function () {
       // Journal persistant (survit au rechargement) en priorité, sinon journal de session du bus.
@@ -241,47 +229,36 @@
     },
     summary: function () {
       var snap = sense({});
-      var parts = [];
-      if (snap.health) parts.push('santé: ' + (snap.health.health || '?'));
-      if (snap.governance) parts.push(snap.governance.enabled + '/' + snap.governance.total + ' fonctionnalités actives');
-      if (snap.orientation && snap.orientation.urgency != null) parts.push('urgence ' + snap.orientation.urgency + '/10');
-      if (snap.reliability && snap.reliability.score != null) parts.push('fiabilité ' + snap.reliability.score + '%');
+      var h = snap.health || {};
+      var head = h.health === 'ok' ? '✅ Tout va bien.' : (h.health ? '⚠️ Quelques points à surveiller.' : '');
       var d = (snap.governance && snap.governance.disabled) || [];
-      var facts = d.length ? ['désactivé: ' + d.map(function (g) { return g.label; }).join(', ')] : ['rien de désactivé'];
-      return { answer: 'Point système — ' + parts.join(' · ') + '.', facts: facts };
+      var gov = d.length ? (d.length + ' chose(s) désactivée(s) : ' + d.map(function (g) { return g.label; }).slice(0, 4).join(', ') + (d.length > 4 ? '…' : '') + '.') : 'Toutes les fonctionnalités sont actives.';
+      var u = (snap.orientation && snap.orientation.urgency) || 0;
+      var vig = u >= 7 ? ' Sois vigilant sur la route.' : u >= 4 ? ' Reste attentif.' : '';
+      return { answer: (head ? head + ' ' : '') + gov + vig, facts: [] };
     },
     danger: function () {
-      var snap = sense({});
-      var o = snap.orientation || {};
+      var o = sense({}).orientation || {};
       var u = (o.urgency != null) ? o.urgency : null;
-      var ans, facts = [];
-      if (u == null) { ans = "Je n'ai pas encore d'évaluation d'urgence (cerveau en cours d'initialisation)."; }
-      else if (u >= 7) { ans = '⚠️ Vigilance élevée (urgence ' + u + '/10). ' + (o.summary || ''); }
-      else if (u >= 4) { ans = 'Vigilance modérée (urgence ' + u + '/10). ' + (o.summary || ''); }
-      else { ans = 'Pas de danger particulier détecté (urgence ' + u + '/10).'; }
-      if (o.signals && o.signals.length) facts = o.signals.slice(0, 4).map(function (s) { return typeof s === 'string' ? s : (s.type || JSON.stringify(s)); });
-      var sw = (snap.consciousness && snap.consciousness.focus) ? ('focus: ' + snap.consciousness.focus) : null;
-      if (sw) facts.push(sw);
-      return { answer: ans.trim(), facts: facts };
+      var ans;
+      if (u == null) ans = "Pas d'alerte particulière pour le moment.";
+      else if (u >= 7) ans = '⚠️ Sois vigilant' + (o.summary ? ' : ' + o.summary : '') + '.';
+      else if (u >= 4) ans = 'Reste attentif' + (o.summary ? ' : ' + o.summary : '') + '.';
+      else ans = '✅ Pas de danger particulier.';
+      return { answer: ans, facts: [] };
     },
     reliability: function () {
-      var snap = sense({});
-      var r = snap.reliability || {};
-      if (r.score == null) return { answer: "La fiabilité des données n'est pas encore mesurée.", facts: [] };
-      var lbl = r.level === 'high' ? 'bonne' : r.level === 'low' ? 'faible' : 'moyenne';
-      var ans = 'Fiabilité des données : ' + lbl + ' (' + r.score + '%).';
-      var facts = [];
-      if (r.cold_start) facts.push('démarrage à froid');
-      if (r.resurrection) facts.push('reprise après veille');
-      if (r.degraded) facts.push('mode dégradé');
-      return { answer: ans, facts: facts };
+      var r = sense({}).reliability || {};
+      if (r.score == null) return { answer: 'Tout est normal de mon côté.', facts: [] };
+      var ans = (r.level === 'low' || r.degraded)
+        ? "⚠️ Mes informations sont un peu incertaines en ce moment — vérifie le GPS et la connexion."
+        : '✅ Mes informations sont fiables.';
+      return { answer: ans, facts: [] };
     },
     phase: function () {
-      var snap = sense({});
-      var p = snap.phase;
-      var names = { 1: 'Observateur', 2: 'Conseiller', 3: 'Gardien', 4: 'Coordinateur', 5: 'Intelligence' };
-      if (p == null) return { answer: "La phase de l'organisme n'est pas disponible.", facts: [] };
-      return { answer: "Phase de l'organisme : " + p + (names[p] ? ' (' + names[p] + ')' : '') + '.', facts: [] };
+      var p = sense({}).phase;
+      var desc = { 1: "L'application surveille et t'informe.", 2: "L'application t'observe et te conseille.", 3: "L'application surveille et protège activement.", 4: "L'application coordonne tout le système.", 5: "L'application fonctionne en pleine autonomie." }[p];
+      return { answer: desc || "L'application surveille et t'informe.", facts: [] };
     },
     moderation: function () {
       var snap = sense({});
@@ -301,7 +278,7 @@
       try { var g = (w.GuardianLoop && w.GuardianLoop.getRuntimeState) ? w.GuardianLoop.getRuntimeState() : null; if (g && g.pendingRecommendations > 0) recs.push(g.pendingRecommendations + ' recommandation(s) de modération à examiner dans le Dashboard.'); } catch (e) {}
       // 4) fiabilité / GPS
       var r = snap.reliability || {};
-      if (r.score != null && r.score < 50) recs.push("Fiabilité des données faible — vérifie ta localisation et ta connexion.");
+      if (r.score != null && r.score < 50) recs.push("Mes infos sont incertaines — vérifie ta localisation et ta connexion.");
       // 5) angle mort de l'âme
       try { var bs = snap.soul && snap.soul.blind_spots; if (bs && bs.length) recs.push('À surveiller : ' + bs[0] + '.'); } catch (e) {}
       // 6) fonctionnalités critiques coupées
@@ -316,10 +293,9 @@
     laws: function () {
       var inv = w._INVARIANTS || w.INVARIANTS || {};
       var keys = Object.keys(inv);
-      if (!keys.length) return { answer: "Je n'ai pas accès à la liste des lois pour le moment.", facts: [] };
-      var crit = keys.filter(function (k) { return inv[k] && inv[k].severity === 'critical'; }).length;
-      var facts = keys.slice(0, 6).map(function (k) { var x = inv[k] || {}; return (x.id || k) + ' — ' + (x.name || x.rule || ''); });
-      return { answer: "L'application suit " + keys.length + ' lois fondamentales (invariants)' + (crit ? (' dont ' + crit + ' critiques') : '') + ' :', facts: facts };
+      var base = "ImmatConnect suit des règles strictes pour ta sécurité et le respect de ta vie privée.";
+      if (!keys.length) return { answer: base, facts: [] };
+      return { answer: base + ' Par exemple :', facts: keys.slice(0, 4).map(function (k) { var x = inv[k] || {}; return x.rule || x.name || ''; }).filter(Boolean) };
     },
     help: function () {
       var ex = [
