@@ -162,6 +162,11 @@
     { id: 'recent_violations', confidence: 0.88, re: /(violation|loi|invariant|r[èe]gle).*(viol|cass|enfreint|r[ée]cent)|quelles? lois/, resolver: 'violations' },
     { id: 'governance_changes', confidence: 0.85, re: /(changement|modif|derni[èe]r).*(gouvernance|fonctionnalit|flotte|dashboard)|qu'a fait l'admin/, resolver: 'govchanges' },
     { id: 'organism_health', confidence: 0.88, re: /(sant[ée]|[ée]tat).*(organisme|syst[èe]me|app)|tout va bien|comment.*(va|tourne)/, resolver: 'health' },
+    { id: 'danger_urgency', confidence: 0.85, re: /(danger|urgence|risque|alerte|dois-je m'inqui[ée]ter|y a-t-il|y a t il).*(danger|risque|urgence)?|suis-je en s[ée]curit/, resolver: 'danger' },
+    { id: 'reliability_status', confidence: 0.85, re: /(fiabilit|données fiables|donn[ée]es sont|gps.*(fiable|fonctionne|à jour|a jour)|signal)/, resolver: 'reliability' },
+    { id: 'phase_status', confidence: 0.85, re: /(quelle|quel).*(phase|niveau|mode).*(organisme|syst[èe]me)?|phase.*(actuelle|en cours)|en quelle phase/, resolver: 'phase' },
+    { id: 'moderation_self', confidence: 0.9, re: /(suis-je|je suis|mon compte).*(suspendu|banni|bloqu)|(compte suspendu)/, resolver: 'moderation' },
+    { id: 'help_capabilities', confidence: 0.7, re: /(que peux-tu|que sais-tu|qu'est-ce que tu sais|tu peux faire quoi|aide-moi|comment[ ]?[çc]a marche|que puis-je.*(demander|poser)|liste.*(question|capacit))/, resolver: 'help' },
     { id: 'system_summary', confidence: 0.8, re: /(r[ée]sum[ée]|bilan|vue d'ensemble|aper[çc]u|point complet|fais le point)/, resolver: 'summary' }
   ];
 
@@ -223,6 +228,57 @@
       var d = (snap.governance && snap.governance.disabled) || [];
       var facts = d.length ? ['désactivé: ' + d.map(function (g) { return g.label; }).join(', ')] : ['rien de désactivé'];
       return { answer: 'Point système — ' + parts.join(' · ') + '.', facts: facts };
+    },
+    danger: function () {
+      var snap = sense({});
+      var o = snap.orientation || {};
+      var u = (o.urgency != null) ? o.urgency : null;
+      var ans, facts = [];
+      if (u == null) { ans = "Je n'ai pas encore d'évaluation d'urgence (cerveau en cours d'initialisation)."; }
+      else if (u >= 7) { ans = '⚠️ Vigilance élevée (urgence ' + u + '/10). ' + (o.summary || ''); }
+      else if (u >= 4) { ans = 'Vigilance modérée (urgence ' + u + '/10). ' + (o.summary || ''); }
+      else { ans = 'Pas de danger particulier détecté (urgence ' + u + '/10).'; }
+      if (o.signals && o.signals.length) facts = o.signals.slice(0, 4).map(function (s) { return typeof s === 'string' ? s : (s.type || JSON.stringify(s)); });
+      var sw = (snap.consciousness && snap.consciousness.focus) ? ('focus: ' + snap.consciousness.focus) : null;
+      if (sw) facts.push(sw);
+      return { answer: ans.trim(), facts: facts };
+    },
+    reliability: function () {
+      var snap = sense({});
+      var r = snap.reliability || {};
+      if (r.score == null) return { answer: "La fiabilité des données n'est pas encore mesurée.", facts: [] };
+      var lbl = r.level === 'high' ? 'bonne' : r.level === 'low' ? 'faible' : 'moyenne';
+      var ans = 'Fiabilité des données : ' + lbl + ' (' + r.score + '%).';
+      var facts = [];
+      if (r.cold_start) facts.push('démarrage à froid');
+      if (r.resurrection) facts.push('reprise après veille');
+      if (r.degraded) facts.push('mode dégradé');
+      return { answer: ans, facts: facts };
+    },
+    phase: function () {
+      var snap = sense({});
+      var p = snap.phase;
+      var names = { 1: 'Observateur', 2: 'Conseiller', 3: 'Gardien', 4: 'Coordinateur', 5: 'Intelligence' };
+      if (p == null) return { answer: "La phase de l'organisme n'est pas disponible.", facts: [] };
+      return { answer: "Phase de l'organisme : " + p + (names[p] ? ' (' + names[p] + ')' : '') + '.', facts: [] };
+    },
+    moderation: function () {
+      var snap = sense({});
+      var susp = snap.moderation && snap.moderation.suspended;
+      if (susp) return { answer: '⛔ Ce compte est suspendu.', facts: [] };
+      return { answer: 'Ce compte est actif (non suspendu).', facts: [] };
+    },
+    help: function () {
+      var ex = [
+        '« pourquoi les appels ne marchent pas ? »',
+        '« qu\'est-ce qui est désactivé ? »',
+        '« santé de l\'organisme »',
+        '« y a-t-il un danger ? »',
+        '« les données sont-elles fiables ? »',
+        '« quelles lois sont violées ? »',
+        '« résumé du système »'
+      ];
+      return { answer: "Je connais l'état d'ImmatConnect en local (sans réseau). Tu peux me demander, par exemple :", facts: ex };
     }
   };
 

@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v379 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v1
+SW                     : v380 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v2
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | ImmatNexus V2 — enrichissement des intents locaux d'Ange (sans IA) : +danger_urgency, +reliability_status, +phase_status, +moderation_self, +help_capabilities (que peux-tu me dire). Ange comprend maintenant « y a-t-il un danger ? », « les données sont fiables ? », « en quelle phase ? », « suis-je suspendu ? ». Vérifié harnais Node. immat-nexus v1→v2, SW v380. (local/merge-to-main) |
 | 2026-06-30 | IA session | ImmatNexus (tissu de connexion, intelligence locale sans IA). core/immat-nexus.js (window.ImmatNexus) façade lecture seule init/sense/ask/explain/audit — relie registre+santé+synthèse+OBD+lois, ne duplique rien. Ange local-first (send() → Nexus.ask() avant LLM). Events gouvernance figés dans ImmatBus.EVENTS (+FEATURE_AUDIT_FINDING). Narrator verbalise FEATURE_GOVERNANCE_CHANGED ; Consciousness lit gouvernance. Panneau Dashboard Dev « 🧬 ImmatNexus » (snapshot + audit). Spec docs/SPEC-IMMAT-NEXUS.md. SW v379, bus v51, narrator v6, consciousness v2, nexus v1. (local/merge-to-main) |
 | 2026-06-30 | IA session | Vérif cohérence gating (harnais Node, 16 clés) → système sain (auto_status OFF par défaut = préférence user, normal). Polish panneau Utilisateurs (modération) : tri suspendus → gardiens → actifs, recherche plaque/pseudo (App._renderModUserRows). SW v378. (local/merge-to-main) |
 | 2026-06-30 | IA session | Suspension LIVE (demande PO « si utilisateur bloqué mais toujours en ligne → déconnecter ; sinon message à la connexion »). App._startSuspensionWatch (lancé dans openMap) : poll am_i_suspended toutes les 45 s + au retour au premier plan (visibilitychange). Si suspendu → App._enforceSuspension : stopGps, deleteMyLocation, fermeture des canaux Realtime (chMsg/chLoc/chReports/chCommunityReports), ferme le Dashboard, signOut, retour écran auth + « ⛔ Votre compte a été suspendu ». Garde S._suspEnforced (1 seule fois), réinitialisée à chaque session autorisée. Le verrou login (afterAuth am_i_suspended) restait déjà. SW v377. (local/merge-to-main) |
