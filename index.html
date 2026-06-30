@@ -1114,7 +1114,7 @@ openGardienDashboard(){
   }catch(e){body.innerHTML='<div style="color:#e57373">Erreur chargement dashboard : '+(e?.message||e)+'</div>';}
 },
 gdTab(name){try{const b=document.getElementById('gardienDashboardBody');if(!b)return;if(window.S)S._gdTab=name;const h=b.querySelector('#gdHost');if(h)h.setAttribute('data-gd-active',name);b.querySelectorAll('.gd-tab').forEach(x=>x.classList.toggle('on',x.getAttribute('data-gd')===name));}catch(_){}},
-// Vérification LIVE du blocage par catégorie (lecture seule, sans effet de bord — n'appelle pas requireFeature).
+// Blocage par catégorie — INTERACTIF : chaque ligne est un interrupteur (toggle flotte direct).
 gdGatingReport(){
   try{
     const cats=[
@@ -1133,11 +1133,17 @@ gdGatingReport(){
     const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const rows=cats.map(([k,lbl])=>{
       const st=this.featureStatus?this.featureStatus(k):{enabled:true,by:null};
-      const col=st.enabled?'#4ade80':'#f87171';
-      const txt=st.enabled?'ACTIVÉ — accès autorisé':('BLOQUÉ — '+(st.by==='user'?'par l\'utilisateur (Réglages)':'par l\'administrateur'));
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a2e;font-size:12px"><span style="color:#e2e8f0;min-width:0">'+e2(lbl)+'</span><span style="color:'+col+';font-weight:700;font-size:11px;text-align:right;flex:0 0 auto">'+txt+'</span></div>';
+      const reg=window.FeatureRegistry?window.FeatureRegistry.get(k):null;
+      const legacy=(reg&&(reg.replaces||reg.key))||k;
+      const on=st.enabled;
+      const col=on?'#4ade80':'#f87171',bg=on?'#14532d':'#3b0f0f';
+      const sub=on?'accès autorisé':('bloqué — '+(st.by==='user'?'par l\'utilisateur':'par l\'administrateur'));
+      const ctrl=st.by==='user'
+        ?'<span style="flex:0 0 auto;color:#fbbf24;font-size:10px;min-width:84px;text-align:right">Réglages user</span>'
+        :'<button type="button" onclick="App.setFeatureFlag(\''+legacy+'\','+(!on)+');App.openGardienDashboard()" style="flex:0 0 auto;background:'+bg+';color:'+col+';border:1px solid '+col+';border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;min-width:84px">'+(on?'ACTIVÉ ✅':'DÉSACT. 🔴')+'</button>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="min-width:0;flex:1 1 auto"><div style="color:#e2e8f0;font-size:12px">'+e2(lbl)+'</div><div style="color:'+col+';font-size:10px;margin-top:1px">'+sub+'</div></div>'+ctrl+'</div>';
     }).join('');
-    return '<div data-gd="moderation" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">🧪 Blocage par catégorie (état live)</b><span style="font-size:10px;color:#555">temps réel</span></div><div style="font-size:10px;color:#555;margin-bottom:8px">Reflète exactement ce qui arrive quand un conducteur tape la catégorie. « BLOQUÉ » = elle ne s\'ouvre pas et affiche un message. Pour piloter : onglet 🎛 Fonctionnalités.</div>'+rows+'</div>';
+    return '<div data-gd="moderation" style="background:#0f0f1a;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">🧪 Blocage par catégorie</b><span style="font-size:10px;color:#555">appuie pour activer/désactiver</span></div><div style="font-size:10px;color:#555;margin-bottom:8px">Interrupteur direct (s\'applique à toute la flotte). « DÉSACT. » = la catégorie ne s\'ouvre pas et affiche un message au conducteur.</div>'+rows+'</div>';
   }catch(_){return'';}
 },
 async loadModerationUsers(){
