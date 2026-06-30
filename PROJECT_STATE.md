@@ -35,7 +35,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v406 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v11 · immat-copilot.js v4
+SW                     : v407 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v12 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2285,7 +2285,7 @@ Le module Activité est considéré comme stabilisé. Les prochaines décisions 
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
-> ⭐ **EURÊKA EN COURS — « Le prochain geste utile »** (`docs/SPEC-ANGE-NEXT-ACTION.md`)
+> ✅ **EURÊKA COMPLET (3/3) — « Le prochain geste utile »** (`docs/SPEC-ANGE-NEXT-ACTION.md`)
 > Ange = projection du plus petit geste utile. Incréments non destructifs (lecture seule, dans Nexus) :
 > 1) ✅ **FAIT (SW v405)** `fallbackFor()` — quand une feature est OFF, Ange propose l'alternative
 >    AUTORISÉE au lieu d'un mur (appels OFF → message, etc.), dérivé du registre. `_blockedHTML`/`_fallbackRun`.
@@ -2295,8 +2295,12 @@ Le module Activité est considéré comme stabilisé. Les prochaines décisions 
 >    `App._computeTodo` + registre. Câblé : `_nextActionsHTML`/`_nextRun` en tête de `open()`.
 >    BONUS : `_nearestInfo` fiabilisé (tolère distance nulle, exclut plaques de secours `VEH-`) →
 >    corrige le cas « Ange ne voit pas le véhicule proche » (capture IMG_6560). Tests 103/103.
-> 3) ⏳ **PROCHAIN** `currentSituation()` — fil rouge (1 phrase courte) à l'ouverture d'Ange.
-> Chaque incrément : tests anti-intrusion (SPEC §7) + bump CACHE_NAME + maj continuité.
+> 3) ✅ **FAIT (SW v407)** `currentSituation()` — fil rouge : 1 phrase « Voici où on en est » tout en
+>    haut à l'ouverture (signalement reçu non traité → voisin connecté proche → à-traiter → vigilance),
+>    **silence sinon**. `_situationHTML` en tête de `open()`. Tests 110/110.
+> ➡️ Les 3 projections sont en prod. Le modèle `situation → écart → geste → confirmation → action → trace`
+>    est vivant. Suite possible (OBSERVER d'abord) : OBD/capteurs comme source de situation, ciblage
+>    directionnel « sens de la circulation », projection des interactions au Dashboard.
 > (Ne PAS créer de moteur de décision / DeltaEngine / second registre / second journal.)
 
 
@@ -2885,6 +2889,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | EURÊKA incrément 3 (COMPLET 3/3) — **le fil rouge** (`currentSituation`, SPEC-ANGE-NEXT-ACTION §1.1). À l'ouverture d'Ange, tout en haut, UNE phrase « ✦ Voici où on en est » dérivée de l'existant : signalement reçu non traité → voisin connecté proche → actions à traiter → vigilance ; **silence si rien d'utile**. Projection PURE dans Nexus (`ImmatNexus.currentSituation`), lecture seule. Câblé `AngeDialog._situationHTML` en tête de `open()` (au-dessus des gestes). Le modèle complet `situation → écart → geste utile → confirmation → action → trace` est désormais en prod (les 3 projections : currentSituation + nextUsefulAction + fallbackFor). Tests ange-v2 **110/110** (+7). immat-nexus.js v11→v12, SW v406→v407. |
 | 2026-06-30 | IA session | EURÊKA incrément 2 — **le prochain geste utile** (`nextUsefulAction`, SPEC-ANGE-NEXT-ACTION §1.2). À l'ouverture d'Ange, en tête : ≤3 gestes UTILES dérivés de l'existant — 💬 répondre à un signalement reçu non traité (`S._actMessages`) · 🚘 signaler au véhicule connecté le plus proche (`S.nearby`) · ⏳ ouvrir À traiter (`App._computeTodo`). **Silence par défaut** (rien d'utile → tableau vide → accueil normal) ; **anti-répétition** (jamais 2 ouvertures de suite la même suggestion ignorée, via `ic_ange_next_prev`). Projection PURE dans Nexus (`ImmatNexus.nextUsefulAction`), gated par registre. Câblé : `AngeDialog._nextActionsHTML`/`_nextRun` (réutilise `_replyLatest`/`_signalNearest`/openTodoView — aucune nouvelle voie de mutation). **Fix capture IMG_6560** : `_nearestInfo` tolère une distance nulle et exclut les plaques de secours `VEH-` (profil masqué RLS) → Ange « voit » enfin le véhicule proche au lieu d'une réponse LLM défaitiste. Tests ange-v2 **103/103** (+16, dont anti-intrusion §7 : silence/plafond/kill-switch). immat-nexus.js v10→v11, SW v405→v406. |
 | 2026-06-30 | IA session | EURÊKA incrément 1 — **remplacement intelligent** (`fallbackFor`, SPEC-ANGE-NEXT-ACTION §1.3). Un kill-switch n'est plus un mur : quand une action est indisponible (feature OFF), Ange propose l'alternative AUTORISÉE (appels OFF → « 💬 Envoyer un message à la place » ; messages OFF → « 📞 Appeler à la place » ; signalement véhicule OFF → message). Implémenté **lecture seule dans Nexus** : `ImmatNexus.fallbackFor(key)` lit `featureStatus` + table déclarative `FALLBACK`, renvoie une SUGGESTION `{feature,run,label,reason}` ou null (n'agit jamais). Câblé dans AngeDialog : `_blockedHTML(key,phrase)` (message + bouton alternative) + `_fallbackRun(run)` (→ actes du menu existant `_messageNearest/_callNearest/_signalNearest`, aucune nouvelle voie de mutation). Les 6 impasses « désactivé… je ne peux pas » remplacées. Garde-fous : ne réactive jamais la feature coupée, mutations propriétaires, confirmation héritée. Tests ange-v2 **87/87** (+10, dont anti-intrusion §7). immat-nexus.js v9→v10, SW v404→v405. |
 | 2026-06-30 | IA session | EURÊKA d'architecture formalisé → `docs/SPEC-ANGE-NEXT-ACTION.md` (spec, **aucun code**). Idée : Ange ne « sait pas faire plus », il sait toujours **le plus petit geste utile maintenant**. Modèle `situation → écart → geste utile → confirmation si besoin → action → trace`. UNE seule projection de plus (lecture seule, dans Nexus), pas de moteur : `currentSituation()` (fil rouge, 1 phrase), `nextUsefulAction()` (≤3 gestes, silence par défaut), `fallbackFor()` (remplacement autorisé quand feature OFF, dérivé du registre). Sources 100% existantes (S.nearby/_actMessages/featureStatus/_INVARIANTS/sense/ic_ange_log). Garde-fous : lecture seule, kill-switch jamais contourné, mutations via fonctions propriétaires, silence anti-intrusion, confirmation héritée d'Ange V2. Plan d'implémentation par incréments (fallback → nextUsefulAction → currentSituation). PROCHAINE MISSION recommandée. |
