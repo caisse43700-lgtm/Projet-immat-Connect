@@ -44,6 +44,13 @@ const ImmatCoPilot = (function () {
     blind_spot:    15 * 60_000,  // 15 min
   };
 
+  // Anti-chevauchement monologue parlé ⇄ bulle « ✦ » (Narrator) : un même SUJET ne doit pas
+  // être annoncé deux fois dans la même fenêtre. Registre partagé window._icSurfaced.
+  const SURFACE_WINDOW = 90_000;
+  const THEME_TOPIC = { swarm_help: 'swarm', guardian: 'guardian', brain_urgency: 'brain', isolation: 'brain' };
+  function _surfacedRecently(topic) { try { const t = (window._icSurfaced || {})[topic]; return !!t && (Date.now() - t) < SURFACE_WINDOW; } catch (_) { return false; } }
+  function _markSurfaced(topic) { try { (window._icSurfaced = window._icSurfaced || {})[topic] = Date.now(); } catch (_) {} }
+
   let _timer   = null;
   let _running = false;
 
@@ -216,11 +223,16 @@ const ImmatCoPilot = (function () {
   // ── Prise de parole ─────────────────────────────────────────────────────
 
   function _speak(theme, msg) {
+    // Si une bulle « ✦ » vient de couvrir ce sujet, on ne le redit pas à voix haute.
+    const _topic = THEME_TOPIC[theme];
+    if (_topic && _surfacedRecently(_topic)) return;
+
     _remember(theme, msg);
 
     if (window.S) {
       window.S._copilot = { last_message: msg, last_theme: theme, spoken_at: Date.now() };
     }
+    if (_topic) _markSurfaced(_topic);
 
     // Voix (si activée)
     try {

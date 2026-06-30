@@ -58,6 +58,18 @@ const Narrator = (function () {
     'SWARM_PARKING_CONFIRMED',
   ]);
 
+  // Anti-chevauchement bulle « ✦ » ⇄ monologue parlé (CoPilot) : un même SUJET ne doit pas
+  // être annoncé deux fois (silencieux + parlé) dans la même fenêtre. Registre partagé window._icSurfaced.
+  const SURFACE_WINDOW = 90_000;
+  const WHISPER_TOPIC = {
+    SWARM_PARKING_CONFIRMED: 'swarm',
+    GUARDIAN_RECOMMENDATION_CREATED: 'guardian',
+    RISK_ZONE_APPROACHED: 'brain',
+    BRAIN_PREDICTION: 'brain',
+  };
+  function _surfacedRecently(topic) { try { const t = (window._icSurfaced || {})[topic]; return !!t && (Date.now() - t) < SURFACE_WINDOW; } catch (_) { return false; } }
+  function _markSurfaced(topic) { try { (window._icSurfaced = window._icSurfaced || {})[topic] = Date.now(); } catch (_) {} }
+
   let _lastWhisperAt = 0;
 
   // ── Journal localStorage ───────────────────────────────────────────────────
@@ -322,8 +334,11 @@ const Narrator = (function () {
       _add(ev, p);
 
       if (WHISPER_EVENTS.has(ev)) {
+        const topic = WHISPER_TOPIC[ev];
+        // Si le monologue parlé vient de couvrir ce sujet, on ne double pas avec une bulle.
+        if (topic && _surfacedRecently(topic)) return;
         const msg = _whisperMessage(ev, p);
-        if (msg) _whisper(msg);
+        if (msg) { _whisper(msg); if (topic) _markSurfaced(topic); }
       }
     });
   }

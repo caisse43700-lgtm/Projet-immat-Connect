@@ -225,6 +225,27 @@ section('B. Câblage Ange V2 (index.html)');
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
+// B2. Anti-chevauchement bulle « ✦ » (Narrator) ⇄ monologue parlé (CoPilot)
+// ─────────────────────────────────────────────────────────────────────────────
+section('B2. Anti-chevauchement Narrator ⇄ CoPilot');
+(function () {
+  const NAR = fs.readFileSync(path.join(ROOT, 'core/narrator.js'), 'utf8');
+  const COP = fs.readFileSync(path.join(ROOT, 'core/immat-copilot.js'), 'utf8');
+  // registre partagé
+  ok('Narrator utilise le registre partagé window._icSurfaced', NAR.includes('window._icSurfaced'));
+  ok('CoPilot utilise le registre partagé window._icSurfaced', COP.includes('window._icSurfaced'));
+  // même fenêtre des deux côtés
+  ok('Narrator fenêtre 90 s', NAR.includes('SURFACE_WINDOW = 90_000'));
+  ok('CoPilot fenêtre 90 s', COP.includes('SURFACE_WINDOW = 90_000'));
+  // mapping topics cohérent (swarm / guardian / brain)
+  ok('Narrator mappe les sujets (swarm/guardian/brain)', /WHISPER_TOPIC[\s\S]{0,200}swarm[\s\S]{0,200}guardian[\s\S]{0,200}brain/.test(NAR));
+  ok('CoPilot mappe les thèmes (swarm/guardian/brain)', /THEME_TOPIC[\s\S]{0,200}swarm_help[\s\S]{0,120}guardian[\s\S]{0,120}brain/.test(COP));
+  // garde effective : Narrator saute si sujet déjà surfacé ; CoPilot saute si bulle déjà montrée
+  ok('Narrator saute la bulle si déjà surfacé', /_surfacedRecently\(topic\)\)\s*return/.test(NAR));
+  ok('CoPilot saute la parole si déjà surfacé', /_surfacedRecently\(_topic\)\)\s*return/.test(COP));
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
 // C. Routage des intentions d'action (corpus)
 //    NB : ces regex MIROIR doivent rester alignées avec index.html (vérif structurelle en B).
 // ─────────────────────────────────────────────────────────────────────────────
