@@ -7,6 +7,32 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — EURÊKA : « Le prochain geste utile » (spec, sans code)
+
+Déclic d'architecture (PO + ChatGPT) : le risque était d'empiler des « capacités d'Ange » une à une
+→ Ange = collection de commandes. Le vrai saut : **Ange sait toujours quel est le plus petit geste
+utile maintenant.** L'intelligence émerge d'**une seule projection** (pas de LLM, pas de moteur) :
+`contexte + voisinage + registre + lois + trace → geste utile probable`. Modèle :
+`situation → écart → geste utile → confirmation si besoin → action → trace`.
+
+**Livrable : `docs/SPEC-ANGE-NEXT-ACTION.md`** (spec uniquement, aucune implémentation). Définit :
+- 3 projections **lecture seule** (dans Nexus, zéro nouvel état) : `currentSituation()` (fil rouge,
+  1 phrase), `nextUsefulAction()` (≤3 gestes, silence par défaut), `fallbackFor(action)` (remplacement
+  autorisé quand feature OFF, dérivé du `FEATURE_REGISTRY`) ;
+- sources 100% existantes (S.frontVehicle, `_nearestInfo`/S.nearby, S._actMessages, activité, journal
+  appels, `App.featureStatus`, `ic_ange_log`/`ic_ange_last_target`, `ImmatNexus.sense`, `_INVARIANTS`) ;
+- catalogue déclaratif de situations (§3, comme `_MENU`) ; règles de **silence** anti-intrusion (§4) ;
+  confirmation héritée d'Ange V2 (§5) ; garde-fous de clôture (§6) ; tests anti-intrusion (§7) ;
+  forme d'API + mapping `run` → actes du menu existant `_menuAct` (§8).
+- Interdits rappelés : moteur de décision central, DeltaEngine, second registre, second journal,
+  IA interne opaque, proactivité permanente.
+
+Plan d'implémentation (futur, incréments non destructifs) : `fallbackFor` → `nextUsefulAction` →
+`currentSituation`. Aucun changement runtime cette session (docs only) → pas de bump SW. Tests inchangés
+(177 + diagnostic 3 + ange-v2 77). PROCHAINE MISSION = implémenter l'incrément 1.
+
+---
+
 ## SESSION 2026-06-30 — Ange : menu d'accueil « Que veux-tu faire ? » + proposition du plus proche
 
 Demande PO : « quand on demande de créer un signalement, qu'il propose l'immatriculation la plus proche
