@@ -139,8 +139,8 @@
     try { snap.orientation = (w.S && w.S._brainOrientation) || null; } catch (e) {}
     // OBD récents (lecture du journal du bus, limité)
     try { var j = _bus() ? _bus().getJournal() : []; snap.recentEvents = j.slice(-25); } catch (e) { snap.recentEvents = []; }
-    // lois
-    try { snap.invariants = (w.INVARIANTS ? Object.keys(w.INVARIANTS).length : null); } catch (e) { snap.invariants = null; }
+    // lois (invariants exposés sur window._INVARIANTS par core/invariants.js)
+    try { var _inv = w._INVARIANTS || w.INVARIANTS; snap.invariants = _inv ? Object.keys(_inv).length : null; } catch (e) { snap.invariants = null; }
     // modération (état local courant)
     try { snap.moderation = { suspended: !!(w.S && w.S._suspEnforced) }; } catch (e) {}
     // phase
@@ -168,7 +168,8 @@
     { id: 'why_blocked', confidence: 0.92, re: /(pourquoi).*(marche pas|fonctionne pas|bloqu|ne s'ouvre|indispo|d[ée]sactiv)/, resolver: 'feature' },
     { id: 'feature_status', confidence: 0.9, re: /(statut|[ée]tat|est-ce que).*(appel|message|gps|ange|route|v[ée]hicule|aide|stationn|zone|nouveau|traiter|trait[ée]|tout|localisation|t[ée]l[ée]phone)|(appel|message|gps|ange|route|v[ée]hicule|aide|stationn).*(activ|d[ée]sactiv|marche|bloqu)/, resolver: 'feature' },
     { id: 'disabled_features', confidence: 0.9, re: /(quoi|quelles?|qu.{0,2}est.{0,2}ce|c.{0,2}est quoi).*(d[ée]sactiv|coup[ée]|bloqu|off|indispo)|(liste|montre|affiche).*(d[ée]sactiv|fonctionnalit|coup)|fonctionnalit.{0,6}(d[ée]sactiv|coup|bloqu)|(d[ée]sactiv).{0,8}(quoi|liste|fonctionnalit)/, resolver: 'disabled' },
-    { id: 'recent_violations', confidence: 0.88, re: /(violation|loi|invariant|r[èe]gle).*(viol|cass|enfreint|r[ée]cent)|quelles? lois/, resolver: 'violations' },
+    { id: 'recent_violations', confidence: 0.88, re: /(violation|enfreint|non.?respect)|(loi|invariant|r[èe]gle).*(viol|cass|enfreint|r[ée]cent|respect[ée])|quelles? (lois|r[èe]gles).*(viol|cass|enfreint)/, resolver: 'violations' },
+    { id: 'laws', confidence: 0.8, re: /(quelles?|liste|montre|c.est quoi).{0,20}(lois|r[èe]gles|invariants|adn)|(lois|r[èe]gles|invariants|adn).{0,15}(application|syst[èe]me|organisme|fondament)/, resolver: 'laws' },
     { id: 'governance_changes', confidence: 0.85, re: /(changement|modif|derni[èe]r).*(gouvernance|fonctionnalit|flotte|dashboard)|qu'a fait l'admin/, resolver: 'govchanges' },
     { id: 'organism_health', confidence: 0.88, re: /(sant[ée]|[ée]tat).*(organisme|syst[èe]me|app)|tout va bien|comment.*(va|tourne)/, resolver: 'health' },
     { id: 'danger_urgency', confidence: 0.85, re: /(danger|urgence|risque|dois-je m'inqui[ée]ter|suis-je en s[ée]curit)/, resolver: 'danger' },
@@ -311,6 +312,14 @@
       } catch (e) {}
       if (!recs.length) return { answer: "Rien d'urgent : tout est nominal. Continue normalement.", facts: [] };
       return { answer: 'Priorités du moment :', facts: recs.slice(0, 4) };
+    },
+    laws: function () {
+      var inv = w._INVARIANTS || w.INVARIANTS || {};
+      var keys = Object.keys(inv);
+      if (!keys.length) return { answer: "Je n'ai pas accès à la liste des lois pour le moment.", facts: [] };
+      var crit = keys.filter(function (k) { return inv[k] && inv[k].severity === 'critical'; }).length;
+      var facts = keys.slice(0, 6).map(function (k) { var x = inv[k] || {}; return (x.id || k) + ' — ' + (x.name || x.rule || ''); });
+      return { answer: "L'application suit " + keys.length + ' lois fondamentales (invariants)' + (crit ? (' dont ' + crit + ' critiques') : '') + ' :', facts: facts };
     },
     help: function () {
       var ex = [
