@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v381 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v3
+SW                     : v382 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v3 · immat-copilot.js v4
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2852,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | CoPilot annonce proactive de gouvernance (événementiel) : abonnement ImmatBus FEATURE_GOVERNANCE_CHANGED dans start() → _onGovChange parle immédiatement « Le Gardien vient de désactiver/réactiver X pour la flotte » (label via FeatureRegistry, dédup 5 min par clé+état, ignore source:'nexus'). Thème 'governance' (icône ⚙️). immat-copilot v3→v4, SW v382. (local/merge-to-main) |
 | 2026-06-30 | IA session | ImmatNexus V3 — intent recommend_action (« que dois-je faire ? »). Recommandations déterministes priorisées : suspension > urgence terrain (brain) > recommandations Guardian > fiabilité faible > angle mort âme > fonctionnalités critiques coupées (appels/messages/gps) ; sinon « rien d'urgent ». Lecture seule. Vérifié harnais Node. immat-nexus v2→v3, SW v381. (local/merge-to-main) |
 | 2026-06-30 | IA session | ImmatNexus V2 — enrichissement des intents locaux d'Ange (sans IA) : +danger_urgency, +reliability_status, +phase_status, +moderation_self, +help_capabilities (que peux-tu me dire). Ange comprend maintenant « y a-t-il un danger ? », « les données sont fiables ? », « en quelle phase ? », « suis-je suspendu ? ». Vérifié harnais Node. immat-nexus v1→v2, SW v380. (local/merge-to-main) |
 | 2026-06-30 | IA session | ImmatNexus (tissu de connexion, intelligence locale sans IA). core/immat-nexus.js (window.ImmatNexus) façade lecture seule init/sense/ask/explain/audit — relie registre+santé+synthèse+OBD+lois, ne duplique rien. Ange local-first (send() → Nexus.ask() avant LLM). Events gouvernance figés dans ImmatBus.EVENTS (+FEATURE_AUDIT_FINDING). Narrator verbalise FEATURE_GOVERNANCE_CHANGED ; Consciousness lit gouvernance. Panneau Dashboard Dev « 🧬 ImmatNexus » (snapshot + audit). Spec docs/SPEC-IMMAT-NEXUS.md. SW v379, bus v51, narrator v6, consciousness v2, nexus v1. (local/merge-to-main) |

@@ -188,6 +188,31 @@ const ImmatCoPilot = (function () {
     return null; // Rien à dire — le silence est aussi une décision
   }
 
+  // ── Gouvernance : annonce proactive événementielle (le Gardien change un flag) ──
+  function _govLabel(key) {
+    try {
+      const list = (window.FeatureRegistry && window.FeatureRegistry.list()) || window.FEATURE_REGISTRY || [];
+      const e = list.find(f => (f.replaces || f.key) === key || f.key === key);
+      return e ? e.label : key;
+    } catch (_) { return key; }
+  }
+  const _govSeen = {};
+  function _onGovChange(entry) {
+    try {
+      const p = (entry && entry.payload) || {};
+      if (p.source === 'nexus') return;            // anti-boucle (ignore les findings)
+      const key = p.key; if (!key) return;
+      const sig = key + ':' + (p.enabled ? 1 : 0);
+      if (_govSeen[sig] && Date.now() - _govSeen[sig] < 5 * 60_000) return; // dédup 5 min par (clé,état)
+      _govSeen[sig] = Date.now();
+      const label = _govLabel(key);
+      const msg = p.enabled
+        ? 'Le Gardien vient de réactiver « ' + label + ' » pour la flotte.'
+        : 'Le Gardien vient de désactiver « ' + label + ' » pour la flotte — cette fonctionnalité est maintenant indisponible.';
+      _speak('governance', msg);
+    } catch (_) {}
+  }
+
   // ── Prise de parole ─────────────────────────────────────────────────────
 
   function _speak(theme, msg) {
@@ -250,6 +275,7 @@ const ImmatCoPilot = (function () {
         guardian:      '🛡️',
         isolation:     '🌙',
         silence_ok:    '✅',
+        governance:    '⚙️',
       }[theme] || '💬';
 
       const actionBtn = theme === 'guardian'
@@ -283,6 +309,11 @@ const ImmatCoPilot = (function () {
   function start() {
     if (_running) return;
     _running = true;
+    // Annonce proactive des changements de gouvernance (événementiel, immédiat)
+    if (!start._govBound) {
+      start._govBound = true;
+      try { window.ImmatBus?.on?.('FEATURE_GOVERNANCE_CHANGED', _onGovChange); } catch (_) {}
+    }
     // Premier tick différé : laisser les autres modules s'initialiser
     setTimeout(_tick, 90_000);
     _timer = setInterval(_tick, TICK_MS);
