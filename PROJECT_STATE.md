@@ -2285,6 +2285,16 @@ Le module Activité est considéré comme stabilisé. Les prochaines décisions 
 
 ## 4. PROCHAINE MISSION RECOMMANDÉE
 
+> ⭐ **EURÊKA EN ATTENTE D'IMPLÉMENTATION — « Le prochain geste utile »**
+> Spec prête : `docs/SPEC-ANGE-NEXT-ACTION.md`. Ange = projection du plus petit geste utile.
+> Implémenter par incréments non destructifs (lecture seule, dans Nexus, zéro nouvel état) :
+> 1) `fallbackFor()` — remplacement autorisé quand une feature est OFF (dérivé du registre) ;
+> 2) `nextUsefulAction()` — catalogue de situations §3, ≤3 gestes, **silence par défaut** ;
+> 3) `currentSituation()` — fil rouge (1 phrase courte) à l'ouverture d'Ange.
+> Chaque incrément : tests anti-intrusion (SPEC §7) + bump CACHE_NAME + maj continuité.
+> (Ne PAS créer de moteur de décision / DeltaEngine / second registre / second journal.)
+
+
 ```
 PHASE TERRAIN — OBSERVATION (priorité absolue)
 ════════════════════════════════════════════════════
@@ -2870,6 +2880,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | EURÊKA d'architecture formalisé → `docs/SPEC-ANGE-NEXT-ACTION.md` (spec, **aucun code**). Idée : Ange ne « sait pas faire plus », il sait toujours **le plus petit geste utile maintenant**. Modèle `situation → écart → geste utile → confirmation si besoin → action → trace`. UNE seule projection de plus (lecture seule, dans Nexus), pas de moteur : `currentSituation()` (fil rouge, 1 phrase), `nextUsefulAction()` (≤3 gestes, silence par défaut), `fallbackFor()` (remplacement autorisé quand feature OFF, dérivé du registre). Sources 100% existantes (S.nearby/_actMessages/featureStatus/_INVARIANTS/sense/ic_ange_log). Garde-fous : lecture seule, kill-switch jamais contourné, mutations via fonctions propriétaires, silence anti-intrusion, confirmation héritée d'Ange V2. Plan d'implémentation par incréments (fallback → nextUsefulAction → currentSituation). PROCHAINE MISSION recommandée. |
 | 2026-06-30 | IA session | Ange — menu d'accueil « Que veux-tu faire ? » + proposition de l'immatriculation la plus proche (demande PO : « quand on crée un signalement qu'il propose l'immat la plus proche par distance » + « qu'il demande qu'est-ce qu'on veut faire : aide pour soi / signaler / appeler / message »). AngeDialog : entrée `_MENU.faire` (aide pour soi → sigStepAide · signaler/appeler/message véhicule · voir activité), `_entryMenuHTML()` affiché à l'ouverture (welcome) ; `_tryMenu()` capte « que faire / que puis-je faire / menu / options / aide-moi » → menu(faire). `_nearestInfo()`+`_distLabel()` (projection S.nearby, pas de nouvel état). `_signalNearest/_callNearest/_messageNearest` proposent le véhicule connecté le plus proche **avec la distance** puis le problème/confirmation. `_trySignal` sans cible explicite propose désormais le plus proche. Tests 77/77 (ange-v2). SW v404. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange GUIDÉ + table d'interactions (demande PO : « qu'il connaisse l'intérieur de chaque fonction et guide par suggestions »). AngeDialog._MENU (arbre déclaratif = donnée) : Signaler→{Route→{accident/bouchon/…}, Véhicule→{pneu/porte/feux/…}, Aide, Stationné} · Activité→{catégories + à traiter/nouveaux/traités}. menu(path)+_menuBtn+_menuAct générique (réutilise roadReport/_sendVehicleSignal/openActivityCat/openTodoView…). _tryGuide : « signaler / faire un signalement [véhicule] / activité / ouvre messages / appels (manqués) » → boutons de suggestion, ouverture directe ; gate feature respecté. _tryReply + _replyChoices + angeReplyConfirm : propose des réponses cohérentes selon le contexte du dernier message reçu → envoi. FIX accent « activité ». Tests 64/64. SW v403. (local/merge-to-main) |
 | 2026-06-30 | IA session | Ange — cible « le plus proche connecté » (capture IMG_6558 : « message au véhicule proche » partait au LLM). Helper AngeDialog._nearestTarget() = véhicule connecté le plus proche (projection S.nearby, pas de nouvel état → conforme constitution). Ajouté à _trySignal/_tryCall/_tryMessage : détection « proche/plus proche/près/à côté/autour/proximité » + « devant » retombe sur le plus proche si pas de frontVehicle. Tests 64/64. SW v402. (local/merge-to-main) |
