@@ -93,6 +93,22 @@ section('A. ImmatNexus (module réel) — matrice d\'intentions');
   const r2 = window.ImmatNexus.ask('pourquoi le téléphone ne marche pas');
   ok('appels OFF → why_blocked dit DÉSACTIVÉE', r2.answered && /indisponible|désactiv/i.test(r2.answer));
 
+  // fallbackFor (SPEC-ANGE-NEXT-ACTION §1.3) — remplacement intelligent, lecture seule.
+  // Ici appels=OFF (cf. ci-dessus), messages=ON → l'alternative autorisée est le message.
+  ok('fallbackFor exposé', typeof window.ImmatNexus.fallbackFor === 'function');
+  const fbA = window.ImmatNexus.fallbackFor('appels');
+  ok('appels OFF → fallback = message (msgveh)', !!fbA && fbA.feature === 'messages' && fbA.run === 'msgveh' && !!fbA.label && !!fbA.reason);
+  // §7-3 conformité : le fallback ne réactive JAMAIS la feature coupée
+  ok('fallback ne propose pas l\'action coupée', !fbA || fbA.feature !== 'appels');
+  // signalement_vehicule (ON) n'a pas de raison de fallback tant qu'il est autorisé → on coupe pour vérifier le repli
+  window._fleetFlagsCache = S._fleetFlags = { appels: false, messages: false };
+  ok('appels ET messages OFF → pas de fallback (null)', window.ImmatNexus.fallbackFor('appels') === null);
+  const fbSig = window.ImmatNexus.fallbackFor('signalement_vehicule');
+  ok('signalement OFF + messages OFF → pas de fallback message', !fbSig || fbSig.feature !== 'messages');
+  // restaure l'état pour la suite
+  window._fleetFlagsCache = S._fleetFlags = {};
+  try { window.ImmatBus.emit('FEATURE_GOVERNANCE_CHANGED', { key: 'appels', enabled: true }); } catch (e) {}
+
   // audit : registre cohérent → 0 finding
   const findings = window.ImmatNexus.audit();
   ok('audit() retourne un tableau', Array.isArray(findings));
@@ -132,6 +148,11 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_menuAct route sigveh/callveh/msgveh', has("k==='sigveh'") && has("k==='callveh'") && has("k==='msgveh'"));
   ok('signalement sans cible propose le plus proche', /if\(!plate\)\{if\(this\._nearestInfo\(\)\)\{this\._signalNearest\(\)/.test(HTML));
   ok('accueil affiche le menu (open() append _entryMenuHTML)', /open\(\)[\s\S]{0,3000}_entryMenuHTML\(\)/.test(HTML));
+  // Remplacement intelligent (SPEC-ANGE-NEXT-ACTION §1.3) : kill-switch → alternative, pas un mur
+  ['_blockedHTML', '_fallbackRun'].forEach(m => ok('méthode présente : ' + m, has(m + '(') || has(m + ':')));
+  ok('_blockedHTML consomme Nexus.fallbackFor', has('ImmatNexus.fallbackFor'));
+  ok('_fallbackRun route vers les actes du menu existant', has("run==='msgveh'") && has("run==='callveh'") && has("run==='sigveh'"));
+  ok('feature OFF utilise _blockedHTML (signalement/appels/messages)', /featureStatus\('signalement_vehicule'\)[\s\S]{0,300}_blockedHTML\('signalement_vehicule'/.test(HTML) && has("_blockedHTML('appels'") && has("_blockedHTML('messages'"));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

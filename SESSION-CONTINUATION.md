@@ -7,6 +7,38 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — EURÊKA incrément 1 : remplacement intelligent (`fallbackFor`)
+
+Première brique de SPEC-ANGE-NEXT-ACTION (la plus sûre / opportune) : un kill-switch cesse d'être un
+mur. Quand une action est indisponible (feature OFF), Ange propose **le réducteur autorisé le plus
+proche** au lieu de « je ne peux pas ».
+
+**Nexus (lecture seule) — `core/immat-nexus.js` v9→v10** :
+- Table déclarative `FALLBACK` : `appels→messages(msgveh)`, `messages→appels(callveh)`,
+  `signalement_vehicule→messages(msgveh)`.
+- `fallbackFor(key)` : parcourt `FALLBACK[key]`, renvoie la **première** alternative dont
+  `featureStatus(.feature).enabled===true` sous forme `{feature,run,label,reason}` ; sinon `null`.
+  Pure lecture (`featureStatus`), **n'agit jamais**, ne réactive jamais la feature coupée.
+- Exposé : `w.ImmatNexus = { …, fallbackFor }`.
+
+**Ange (index.html / AngeDialog)** :
+- `_blockedHTML(key,phrase)` : message « indisponible » + (si `Nexus.fallbackFor` renvoie qqch) un
+  bouton vers l'alternative + la raison. `_fallbackRun(run)` mappe `msgveh/callveh/sigveh` vers les
+  actes du menu existant (`_messageNearest/_callNearest/_signalNearest`) → **aucune nouvelle voie de
+  mutation**, tout repasse par les fonctions propriétaires et leurs confirmations.
+- Les **6 impasses** « désactivé… je ne peux pas » (`_trySignal`, `_tryCall`, `_tryMessage`,
+  `_signalNearest`, `_callNearest`, `_messageNearest`) utilisent désormais `_blockedHTML`.
+
+**Garde-fous (SPEC §6/§7)** : feature coupée jamais contournée ; alternative toujours une feature
+ON ; raison explicable ; confirmation inchangée (les `_*Nearest` re-checkent la feature et arment la
+confirmation). Tests : `tests/ange-v2.test.js` **87/87** (+10 : runtime `fallbackFor` appels OFF→msg,
+both OFF→null, non-réactivation ; structurel `_blockedHTML/_fallbackRun`/wiring). `npm test` 177 + diag 3.
+
+**Versions** : immat-nexus.js v9→v10 (index.html + service-worker.js) · **CACHE_NAME v404→v405**.
+Prochain incrément : `nextUsefulAction()` (≤3 gestes, silence par défaut).
+
+---
+
 ## SESSION 2026-06-30 — EURÊKA : « Le prochain geste utile » (spec, sans code)
 
 Déclic d'architecture (PO + ChatGPT) : le risque était d'empiler des « capacités d'Ange » une à une
