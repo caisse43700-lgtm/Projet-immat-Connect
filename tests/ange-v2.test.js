@@ -136,6 +136,20 @@ section('A. ImmatNexus (module réel) — matrice d\'intentions');
   // restaure
   S.nearby = []; S._actMessages = []; delete App._computeTodo;
 
+  // currentSituation (SPEC-ANGE-NEXT-ACTION §1.1) — le fil rouge, 1 phrase, silence par défaut.
+  ok('currentSituation exposé', typeof window.ImmatNexus.currentSituation === 'function');
+  S.nearby = []; S._actMessages = []; S._brainOrientation = { urgency: 0 };
+  App._computeTodo = function () { return { veh: [], st: [], sos: [], total: 0 }; };
+  ok('fil rouge : silence si rien (null)', window.ImmatNexus.currentSituation() === null);
+  S.nearby = [{ plate: 'AB-123-CD', dist: 0.08 }];
+  const cs1 = window.ImmatNexus.currentSituation();
+  ok('fil rouge : voisin connecté → phrase', !!cs1 && /proche d'.{0,3}un véhicule connecté/.test(cs1.phrase));
+  S.nearby = [];
+  S._actMessages = [{ id: 'm1', _received: true, context_type: 'vehicle_report' }];
+  const cs2 = window.ImmatNexus.currentSituation();
+  ok('fil rouge : signalement reçu → phrase prioritaire', !!cs2 && /signalement reçu non traité/.test(cs2.phrase));
+  S._actMessages = []; delete App._computeTodo; delete S._brainOrientation;
+
   // audit : registre cohérent → 0 finding
   const findings = window.ImmatNexus.audit();
   ok('audit() retourne un tableau', Array.isArray(findings));
@@ -188,6 +202,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_nextRun route reply/sigveh/callveh/todo', has("run==='reply'") && has("run==='sigveh'") && has("run==='todo'"));
   ok('_tryReply réutilise _replyLatest', /_tryReply\(msg\)\{[\s\S]{0,260}return this\._replyLatest\(\)/.test(HTML));
   ok('_nearestInfo tolère dist nulle et exclut VEH-', has('/^VEH-/i') && has('dist==null?1e9'));
+  // Fil rouge (SPEC-ANGE-NEXT-ACTION §1.1) — câblage à l'ouverture, en tête
+  ok('méthode présente : _situationHTML', has('_situationHTML('));
+  ok('_situationHTML consomme Nexus.currentSituation', has('ImmatNexus.currentSituation'));
+  ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

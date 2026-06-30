@@ -7,6 +7,39 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — EURÊKA incrément 3 (COMPLET) : le fil rouge (`currentSituation`)
+
+Dernière brique de SPEC-ANGE-NEXT-ACTION. À l'ouverture d'Ange, **tout en haut**, UNE phrase « ✦ Voici
+où on en est » qui crée la continuité entre Activité / Messages / Carte sans les fusionner. Silence si
+rien d'utile.
+
+**Nexus (lecture seule) — `core/immat-nexus.js` v11→v12** :
+- `currentSituation()` : projection PURE, renvoie `{phrase}` ou `null`. Priorité :
+  1. signalement reçu non traité (`vehicle_report`/`parked_report`) → « Tu as un signalement reçu non
+     traité ; le conducteur attend peut-être une réponse. » ;
+  2. véhicule connecté réel proche (`_nearestRealN`) → « Tu es proche d'un véhicule connecté (… m),
+     aucun échange en cours. » ;
+  3. `App._computeTodo().total>0` → « Tu as N action(s) en attente dans Activité. » ;
+  4. vigilance `sense().orientation.urgency>=4` → « Vigilance N/10 : reste attentif à la route. » ;
+  5. sinon `null` (silence).
+
+**Ange (index.html / AngeDialog)** :
+- `_situationHTML()` : lit `Nexus.currentSituation()`, rend un encart « Voici où on en est » (réutilise
+  le style de l'encart prédiction). Silence si null.
+- `open()` : `resp.innerHTML = _situationHTML() + resp.innerHTML` APRÈS le prepend des gestes →
+  ordre final : **fil rouge → gestes → accueil → menu**. Non destructif.
+
+**Le modèle complet est en prod** : `situation → écart → geste utile → confirmation si besoin → action
+→ trace`, porté par 3 projections lecture seule (currentSituation + nextUsefulAction + fallbackFor),
+zéro moteur, zéro nouvel état, mutations via fonctions propriétaires. Tests : `tests/ange-v2.test.js`
+**110/110** (+7 : runtime silence/voisin/signalement + structurel câblage) ; `npm test` 177 + diag 3.
+
+**Versions** : immat-nexus.js v11→v12 (index.html + service-worker.js) · **CACHE_NAME v406→v407**.
+Suite possible (OBSERVER d'abord) : OBD/capteurs comme source de situation, ciblage directionnel
+(sens de circulation par cap GPS), projection des interactions au Dashboard.
+
+---
+
 ## SESSION 2026-06-30 — EURÊKA incrément 2 : le prochain geste utile (`nextUsefulAction`)
 
 Deuxième brique de SPEC-ANGE-NEXT-ACTION. À l'ouverture d'Ange, **en tête**, ≤3 gestes utiles dérivés

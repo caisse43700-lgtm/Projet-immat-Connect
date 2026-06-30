@@ -450,5 +450,39 @@
     return out.slice(0, 3);
   }
 
-  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor, nextUsefulAction: nextUsefulAction };
+  // ── Le « fil rouge » (SPEC-ANGE-NEXT-ACTION §1.1) ────────────────────────────
+  // Résume l'instant en UNE phrase vivante, dérivée des projections existantes.
+  // Crée une continuité entre Activité/Messages/Carte SANS les fusionner. Silence si rien d'utile.
+  function currentSituation() {
+    try {
+      var msgs = (w.S && w.S._actMessages) || [];
+      var del = [];
+      try { del = JSON.parse(w.localStorage.getItem('ic_deleted_msgs') || '[]').map(String); } catch (e) {}
+      var reports = msgs.filter(function (m) {
+        return m && m._received && !m.read_at && del.indexOf(String(m.id)) < 0 &&
+               (m.context_type === 'vehicle_report' || m.context_type === 'parked_report');
+      });
+      if (reports.length) {
+        return { phrase: 'Tu as ' + (reports.length > 1 ? (reports.length + ' signalements reçus non traités') : 'un signalement reçu non traité') + ' ; le conducteur attend peut-être une réponse.' };
+      }
+      var near = _nearestRealN();
+      if (near) {
+        var d = _distLblN(near.dist);
+        return { phrase: 'Tu es proche d\'un véhicule connecté' + (d ? ' (' + d + ')' : '') + ', aucun échange en cours.' };
+      }
+      var todo = null;
+      try { todo = w.App && w.App._computeTodo && w.App._computeTodo(); } catch (e) {}
+      if (todo && todo.total > 0) {
+        return { phrase: 'Tu as ' + todo.total + ' action' + (todo.total > 1 ? 's' : '') + ' en attente dans Activité.' };
+      }
+      var urg = 0;
+      try { var sn = sense({}); urg = (sn && sn.orientation && sn.orientation.urgency) || 0; } catch (e) {}
+      if (urg >= 4) {
+        return { phrase: 'Vigilance ' + urg + '/10 : reste attentif à la route.' };
+      }
+      return null;
+    } catch (e) { return null; }
+  }
+
+  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor, nextUsefulAction: nextUsefulAction, currentSituation: currentSituation };
 })(typeof window !== 'undefined' ? window : this);
