@@ -7,6 +7,43 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Zones accidentogènes : accidents uniquement + seuil
+
+Demande PO : « les zones rouges se créent pour tout (porte, pneu, bouchon…) alors qu'il faudrait que
+ce soit SEULEMENT des accidents, et à partir de ~3 accidents ». Plus confusion « zones désactivées ».
+
+**Clarification confusion** : le bandeau Nexus « 4 désactivés : Zones accidentogènes, … » liste les
+*fonctionnalités* coupées (kill-switch), PAS des zones carte. `zones_accidentogenes` était simplement OFF.
+
+**Cause racine (investiguée)** : deux chemins écrivent dans la table `reports` :
+- `roadReport(type)` → `reason='[ROUTE] '+label` pour accident **ET** bouchon/travaux/contrôle/obstacle/danger ;
+- `driverInfo(label)` → `reason='[CONDUCTEURS] '+label` (pneu, porte… en info aux conducteurs proches).
+Le trigger `update_road_risk_on_report` (migration 20260619160000) créait/incrémentait une zone pour
+**chaque** ligne `reports`, **sans filtrer le type**, et `get_risk_zones` renvoyait dès 1 incident
+(score ≥ 15). D'où des zones rouges sur tout.
+(NB : les signalements véhicule ciblés pneu/porte via `vehicleAlert` passent par `ImmatMessages`/messages,
+PAS reports — mais `driverInfo` « information conducteurs » écrit bien dans reports.)
+
+**Correctif — migration `20260630170000_road_risk_accidents_only.sql`** (additive, idempotente) :
+1. Trigger redéfini : `IF NEW.reason IS NULL OR NEW.reason NOT ILIKE '%accident%' THEN RETURN NEW;`
+   → seuls les accidents alimentent les zones. Discriminant fiable : `roadReport('accident')` écrit
+   `[ROUTE] Accident` ; aucun autre signalement ne contient « accident ».
+2. Anti double-comptage : `incident_count` n'augmente qu'à `TG_OP='INSERT'` ; sur `UPDATE OF status`
+   on ajuste seulement `confirmed_count` (plafonné à `incident_count`).
+3. `get_risk_zones` : nouveau paramètre `p_min_incidents` (défaut **3**) + `WHERE incident_count >= p_min_incidents`
+   → aucune zone sous 3 accidents dans la cellule (~111 m). Ancienne signature 4-args DROP puis recréée en 5-args
+   (défaut p_min_score=0 pour que le seuil COMPTE domine ; le score ne sert plus qu'à la couleur).
+4. Reconstruction : `TRUNCATE road_risk_segments` + repopulate depuis `reports WHERE reason ILIKE '%accident%'`
+   (table dérivée → reconstructible sans perte).
+
+**Front (index.html)** : `_checkRiskZones` appelle `get_risk_zones({…, p_min_score:0, p_min_incidents:3})` ;
+l'alerte de proximité (toast/voix) est gated `z.incident_count>=3` (au lieu de `risk_score>30`).
+SW v407→v408 (index.html servi réseau ; pas d'autre .js modifié). Migration déployée via CI
+deploy-edge-functions.yml au push sur main. Tests : npm 177 + diag 3 ; ange-v2 110 (inchangés).
+Seuil 3 facile à durcir (passer `p_min_incidents` à 4-5 côté front + défaut RPC).
+
+---
+
 ## SESSION 2026-06-30 — EURÊKA incrément 3 (COMPLET) : le fil rouge (`currentSituation`)
 
 Dernière brique de SPEC-ANGE-NEXT-ACTION. À l'ouverture d'Ange, **tout en haut**, UNE phrase « ✦ Voici
