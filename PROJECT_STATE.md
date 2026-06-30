@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v368 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v369 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,7 +62,26 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Aide V1 #7 — push proximité (notifier les conducteurs proches à la création)**
+**Mission : Gating fonctionnalités V2 — blocage Stationné + filtrage Activité (à traiter / nouveaux / traités)**
+**Date :** 2026-06-30
+**Versions :** SW v368 → v369
+**Déploiement :** front (GitHub Pages) — `index.html` + `service-worker.js`.
+
+### Ce qui a été fait (suite de la refonte Dashboard V2 / feature gating)
+- **Catégorie Stationné gouvernable** : ajout de l'entrée registre `signalement_stationne`
+  (group Signalements, scope fleet, killSwitch CK-STATION). `App.sigStepStation()` bloque à
+  l'entrée via `requireFeature('signalement_stationne')` (message source-aware admin/utilisateur).
+- **Activité bloque par catégorie** : `App.openActivityCat(cat)` vérifie le flag de la catégorie
+  (route/vehicle/aide/station) avant d'ouvrir — plus de blocage sur la page d'accueil, blocage à
+  l'intérieur dès le tap sur une catégorie.
+- **À traiter / Nouveaux / Traités filtrés par fonctionnalité** : `_computeTodo`, `_computeNew`,
+  `_computeDone` masquent les éléments dont la fonctionnalité est désactivée (alertes_vehicule,
+  signalement_stationne, demandes_aide) → les compteurs et listes respectent les kill-switches.
+- Registre passé à **12 entrées** ; syntaxe vérifiée (8 scripts inline, 0 erreur).
+
+---
+
+### Mission précédente : Aide V1 #7 — push proximité (notifier les conducteurs proches à la création)
 **Date :** 2026-06-28
 **Commit :** `c3c238f` (PR #386 fusionnée) · **Versions :** SW v347 → v348
 **Déploiement :** Edge Function `notify-help-request` déployée via `deploy-edge-functions.yml` (push `main`).
@@ -2779,6 +2798,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Gating Stationné + filtrage Activité (retour PO « idem pour stationnement » + « à traiter / traiter / nouveaux pas bloqué »). Registre : entrée signalement_stationne (group Signalements, scope fleet, CK-STATION) → 12 entrées. App.sigStepStation gardé requireFeature('signalement_stationne'). App.openActivityCat(cat) bloque par catégorie (route/vehicle/aide/station) à l'ouverture. _computeTodo/_computeNew/_computeDone masquent les éléments des fonctionnalités OFF (alertes_vehicule/signalement_stationne/demandes_aide) → compteurs & listes à traiter/nouveaux/traités respectent les kill-switches. SW v369. (local/merge-to-main) |
 | 2026-06-30 | IA session | Correctifs cohérence gouvernance (retour PO) : Messages = wrap de sendNew/reply (exportés, appelés par le bouton Envoyer) → l'envoi compose est BIEN bloqué (le wrap sendToPlate était contourné en interne) ; les signalements (sendToPlate+context_type) passent. Signaler & Activité = conteneurs : gardes nav retirées (s'ouvrent), blocage par CATÉGORIE (sigStepRoute→signalement_route, sigStepVehicle→signalement_vehicule, sigStepAide→aide ; openActivityCat route/vehicle/aide). Entrées registre 'signaler'/'activite' retirées (toggles morts). SW v368. (local/merge-to-main) |
 | 2026-06-30 | IA session | Étape 6 (partie honnêteté + reliage OBD) : suppression du faux « 100% OPTIMAL » (Santé organisme = état réel ImmatOrganism.diagnose + nb réel registre) → INV-DASH-007. Gouvernance reliée à l'OBD/organisme : ImmatBus.emit + ImmatOrganism.observe sur FEATURE_GOVERNANCE_CHANGED (toggle), FEATURE_BLOCKED (accès refusé), FLEET_CONFIG_LOADED ; couleur dédiée (lime) dans la Timeline OBD. SW v367. (local/merge-to-main) |
 | 2026-06-30 | IA session | Gel Aide LEVÉ (demande PO) — kill-switch minimal : entrée 'aide' du registre déverrouillée (frozen retiré, toggle actif) ; gardes requireFeature('aide') sur sigStepAide (ouverture de l'étape Aide) et assist() (création). Aide OFF → ouverture/création bloquées + message ; Aide ON (défaut) → inchangé. Modèle confirmé par PO : message à l'ENTRÉE de chaque catégorie (Activité/Signaler/Appels/Messages/Ange/Aide), jamais l'app entière. SW v366. (local/merge-to-main) |

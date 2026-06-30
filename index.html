@@ -686,7 +686,8 @@ const FEATURE_REGISTRY=[
   {key:'copilote_monologue',label:'Ange — monologue conduite',group:'IA',stage:'beta',scope:'device',default:true,killSwitch:'CK-ANGE-MONOLOGUE',owner:'Produit / IA',riskLevel:'low',dependsOn:['copilote_proactif'],replaces:'ange_monologue',description:'Ange pense à voix haute en conduite',behaviorWhenOff:'Aucune prise de parole spontanée en conduite'},  {key:'messages',label:'Messagerie',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-MESSAGES',owner:'Produit / Communication',riskLevel:'critical',dependsOn:[],description:'Messagerie entre conducteurs',behaviorWhenOff:'Onglet Messages bloque (indisponible)'},
   {key:'appels',label:'Appels vocaux',group:'Communication',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-APPELS',owner:'Produit / Communication',riskLevel:'critical',dependsOn:[],description:'Appels vocaux entre conducteurs',behaviorWhenOff:'Onglet Appels bloque (indisponible)'},
   {key:'ange',label:'Ange (assistant IA)',group:'IA',stage:'beta',scope:'fleet',default:true,killSwitch:'CK-ANGE',owner:'Produit / IA',riskLevel:'medium',dependsOn:[],description:'Assistant IA Ange (dialogue)',behaviorWhenOff:'Bouton Ange bloque (indisponible)'},
-  {key:'gps',label:'GPS / Localisation',group:'Carte',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-GPS',owner:'Produit / Carte',riskLevel:'critical',dependsOn:[],description:'Recentrage GPS / navigation',behaviorWhenOff:'Bouton GPS bloque (indisponible)'}
+  {key:'gps',label:'GPS / Localisation',group:'Carte',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-GPS',owner:'Produit / Carte',riskLevel:'critical',dependsOn:[],description:'Recentrage GPS / navigation',behaviorWhenOff:'Bouton GPS bloque (indisponible)'},
+  {key:'signalement_stationne',label:'Signalements stationné',group:'Signalements',stage:'stable',scope:'fleet',default:true,killSwitch:'CK-STATION',owner:'Produit / Signalements',riskLevel:'medium',dependsOn:[],description:'Signalements de vehicule stationne',behaviorWhenOff:'Categorie Stationne bloquee'}
 ];
 window.FEATURE_REGISTRY=FEATURE_REGISTRY;
 window.FeatureRegistry={
@@ -1860,6 +1861,7 @@ App._sigReset=function(){
   this._stationPhotoReset?.();
 };
 App.sigStepStation=function(){
+  if(!App.requireFeature('signalement_stationne','Signalements stationné'))return;
   this.openSheet();
   $('sigStep1')?.classList.remove('active');
   $('sigStep2Station')?.classList.add('active');
@@ -2212,7 +2214,7 @@ if(_umBadge){_umBadge.textContent=_ucN>99?'99+':String(_ucN);_umBadge.style.disp
 if(_umSub)_umSub.textContent=_ucN>0?_ucN+' message'+(_ucN>1?'s':'')+(_ucC>0?' de '+_ucC+' contact'+(_ucC>1?'s':''):'')+' non lu'+(_ucN>1?'s':''):'Aucun message non lu';
 };
 App.openActivityCat=function(cat){
-  try{const _fk={route:['signalement_route','Signalements route'],vehicle:['signalement_vehicule','Signalements véhicule'],aide:['aide','Demandes d\'aide']}[cat];if(_fk&&!this.requireFeature(_fk[0],_fk[1]))return;}catch(_){}
+  try{const _fk={route:['signalement_route','Signalements route'],vehicle:['signalement_vehicule','Signalements véhicule'],aide:['aide','Demandes d\'aide'],station:['signalement_stationne','Signalements stationné']}[cat];if(_fk&&!this.requireFeature(_fk[0],_fk[1]))return;}catch(_){}
   document.body.classList.add('act-cat-open');
   this.closeCallJournal?.();
   S._actCat=cat;S._actCatTab='recus';S._actTypeFilter='all';S._actStatusFilter='all';this._actStatusFilter='all';S._actGroupOpen=false;
@@ -2278,7 +2280,8 @@ App._computeTodo=function(){
     if(typeof isNearby==='function'&&!isNearby(a))return false;
     return !hpReplied.has(String(a.id));
   });
-  return {veh,st,sos,total:veh.length+st.length+sos.length};
+  const _fe=window.isFeatureEnabled||function(){return true;};const _veh=_fe('alertes_vehicule')?veh:[],_st=_fe('signalement_stationne')?st:[],_sos=_fe('demandes_aide')?sos:[];
+  return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openTodoView=function(){
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-done-open');document.body.classList.remove('act-new-open');
@@ -2417,7 +2420,8 @@ App._computeDone=function(){
   const st=msgs.filter(m=>m.context_type==='parked_report'&&m._received===true&&!deleted.includes(String(m.id))&&stReplied.has(String(m.id)));
   let hpReplied=new Set();try{hpReplied=new Set(JSON.parse(localStorage.getItem('ic_help_replied')||'[]').map(String));}catch(e){}
   const sos=(S2.alerts||[]).filter(a=>(!a._mine&&!a._own&&a.group==='assist'&&hpReplied.has(String(a.id))));
-  return {veh,st,sos,total:veh.length+st.length+sos.length};
+  const _fe=window.isFeatureEnabled||function(){return true;};const _veh=_fe('alertes_vehicule')?veh:[],_st=_fe('signalement_stationne')?st:[],_sos=_fe('demandes_aide')?sos:[];
+  return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openDoneView=function(){
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-new-open');
@@ -2459,7 +2463,8 @@ App._computeNew=function(){
     if(typeof isNearby==='function'&&!isNearby(a))return false;
     return !hpReplied.has(String(a.id));
   });
-  return {veh,st,sos,total:veh.length+st.length+sos.length};
+  const _fe=window.isFeatureEnabled||function(){return true;};const _veh=_fe('alertes_vehicule')?veh:[],_st=_fe('signalement_stationne')?st:[],_sos=_fe('demandes_aide')?sos:[];
+  return {veh:_veh,st:_st,sos:_sos,total:_veh.length+_st.length+_sos.length};
 };
 App.openNewView=function(){
   document.body.classList.remove('act-cat-open');document.body.classList.remove('act-todo-open');document.body.classList.remove('act-done-open');
