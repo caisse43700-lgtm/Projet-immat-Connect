@@ -5464,6 +5464,97 @@ const AngeDialog={
   _rememberTarget(p){try{if(p)localStorage.setItem('ic_ange_last_target',nPlate(p));}catch(_){}},
   // Cible « le plus proche » = véhicule CONNECTÉ le plus proche (projection S.nearby, pas de nouvel état)
   _nearestTarget(){try{const n=(window.S&&S.nearby)||[];const c=n.filter(x=>x&&x.plate&&x.dist!=null).sort((a,b)=>a.dist-b.dist);return c.length?nPlate(c[0].plate):'';}catch(_){return'';}},
+  // ── TABLE DES INTERACTIONS (donnée déclarative) : ce qu'il y a À L'INTÉRIEUR de chaque fonctionnalité.
+  //    Arbre lu par menu() ; les feuilles réutilisent les fonctions propriétaires. Aucun moteur.
+  _MENU:{
+    signaler:{label:'Signaler',children:{
+      route:{label:'🚦 Route',feature:'signalement_route',children:{
+        accident:{label:'💥 Accident',act:['road','accident']},bouchon:{label:'🚦 Bouchon',act:['road','bouchon']},
+        obstacle:{label:'⚠️ Obstacle',act:['road','obstacle']},travaux:{label:'🚧 Travaux',act:['road','travaux']},
+        controle:{label:'👮 Contrôle',act:['road','controle']},danger:{label:'❗ Danger',act:['road','danger']}}},
+      vehicule:{label:'🚘 Véhicule',feature:'signalement_vehicule',children:{
+        pneu:{label:'Pneu dégonflé',act:['veh','Pneu dégonflé']},porte:{label:'Porte/coffre ouvert',act:['veh','Porte ou coffre ouvert']},
+        feux:{label:'Feux/phares',act:['veh','Feux / phares']},trappe:{label:'Trappe carburant',act:['veh','Trappe carburant ouverte']},
+        fumee:{label:'Fumée/feu',act:['veh','Fumée / départ de feu']},objet:{label:'Objet sur le toit',act:['veh','Objet sur le toit']}}},
+      aide:{label:'🆘 Aide',feature:'aide',act:['open','sigStepAide']},
+      stationne:{label:'🅿️ Stationné',feature:'signalement_stationne',act:['open','sigStepStation']}}},
+    activite:{label:'Activité',children:{
+      route:{label:'🚦 Route',act:['actcat','route']},vehicule:{label:'🚘 Véhicule',act:['actcat','vehicle']},
+      aide:{label:'🆘 Aide',act:['actcat','aide']},stationne:{label:'🅿️ Stationné',act:['actcat','station']},
+      atraiter:{label:'⏳ À traiter',act:['todo']},nouveaux:{label:'✉️ Nouveaux',act:['new']},traites:{label:'✅ Traités',act:['done']}}}
+  },
+  _menuBtn(path,label){return '<button onclick="AngeDialog.menu(\''+path+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(label)+'</button>';},
+  menu(path){
+    try{
+      const parts=String(path||'').split('.');let node=this._MENU[parts[0]];
+      for(let i=1;i<parts.length&&node;i++){node=node.children&&node.children[parts[i]];}
+      const r=$('angeResponse');if(!r||!node)return;
+      r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      if(node.feature&&App.featureStatus&&!App.featureStatus(node.feature).enabled){const by=App.featureStatus(node.feature).by;r.innerHTML='<div style="line-height:1.6">« '+esc(node.label)+' » est indisponible — '+(by==='user'?'désactivé dans les Réglages':'désactivé par l\'administrateur')+'.</div>';return;}
+      if(node.children){const ks=Object.keys(node.children);r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">'+esc(node.label)+' — choisis :</div><div style="display:flex;flex-wrap:wrap">'+ks.map(k=>this._menuBtn(path+'.'+k,node.children[k].label)).join('')+'</div>';return;}
+      if(node.act)this._menuAct(node.act,node.label);
+    }catch(_){}
+  },
+  _menuAct(a,label){
+    const r=$('angeResponse');const k=a[0];
+    try{
+      if(k==='road'){try{App.roadReport?.(a[1]);}catch(e){}this._log('action','Signalement route : '+a[1]);if(r)r.innerHTML='<div style="line-height:1.6">✅ Signalement route envoyé : '+esc(label||a[1])+'.</div>';return;}
+      if(k==='veh'){const lbl=a[1];let plate=this._nearestTarget()||((window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):'');
+        if(!plate){if(r)r.innerHTML='<div style="line-height:1.6">À quel véhicule ? Dis « signale à AB-123-CD '+esc(lbl)+' » ou rapproche-toi.</div>';return;}
+        const _pl=esc(fPlate(plate)||plate);
+        if(r)r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Signaler à <b>'+_pl+'</b> : « '+esc(lbl)+' » ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.confirmYes()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Envoyer</button><button onclick="AngeDialog.confirmNo()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div><div style="color:#555;font-size:10px;margin-top:6px">ou dis « oui » / « non » · expire dans 15 s</div>';
+        this._armConfirm(()=>this.angeSignalConfirm(plate,lbl));return;}
+      if(k==='open'){try{App[a[1]]?.();}catch(e){}this._log('action','Ouvert : '+(label||a[1]));try{this.close&&this.close();}catch(_){}return;}
+      if(k==='actcat'){try{App.navActivite?.();}catch(e){}setTimeout(()=>{try{App.openActivityCat?.(a[1]);}catch(e){}},300);this._log('action','Activité : '+(label||a[1]));try{this.close&&this.close();}catch(_){}return;}
+      if(k==='todo'){try{App.navActivite?.();}catch(e){}setTimeout(()=>{try{App.openTodoView?.();}catch(e){}},300);try{this.close&&this.close();}catch(_){}return;}
+      if(k==='new'){try{App.navActivite?.();}catch(e){}setTimeout(()=>{try{App.openNewView?.();}catch(e){}},300);try{this.close&&this.close();}catch(_){}return;}
+      if(k==='done'){try{App.navActivite?.();}catch(e){}setTimeout(()=>{try{App.openDoneView?.();}catch(e){}},300);try{this.close&&this.close();}catch(_){}return;}
+    }catch(_){}
+  },
+  _done(txt){try{this._log('action',txt);}catch(_){}const r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">✅ '+esc(txt)+'.</div>';}try{setTimeout(()=>{this.close&&this.close();},500);}catch(_){}},
+  // Guide à suggestions : « signaler / faire un signalement / activité / ouvre les messages / appels »
+  _tryGuide(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(/\b(signaler|signalement|d[ée]clarer)\b/.test(t)||/faire un signal/.test(t)){
+        let c=null;if(/route|circulation|accident|bouchon|travaux|contr[ôo]le|obstacle/.test(t))c='route';else if(/v[ée]hicule|voiture/.test(t))c='vehicule';else if(/aide|assistance|sos/.test(t))c='aide';else if(/stationn|parking/.test(t))c='stationne';
+        this.menu(c?('signaler.'+c):'signaler');$('angeMsg').value='';return true;}
+      if(/\bactivit[ée]/.test(t)||/signalements? re[çc]us/.test(t)){
+        let c=null;if(/\broute\b/.test(t))c='route';else if(/v[ée]hicule|voiture/.test(t))c='vehicule';else if(/\baide\b/.test(t))c='aide';else if(/stationn|parking/.test(t))c='stationne';else if(/[àa] traiter/.test(t))c='atraiter';else if(/nouveau/.test(t))c='nouveaux';else if(/trait[ée]/.test(t))c='traites';
+        this.menu(c?('activite.'+c):'activite');$('angeMsg').value='';return true;}
+      if(/\bmessages?\b/.test(t)&&/\b(ouvre|ouvrir|montre|affiche|va|aller|voir|consulte|mes|nouveaux|non lus)\b/.test(t)){try{App.navMessages?.();}catch(e){}this._done('Messages ouverts');return true;}
+      if((/\bappels?\b/.test(t)||/qui m.a (appel|contact)|\brappels?\b|manqu/.test(t))&&/\b(ouvre|ouvrir|montre|affiche|va|aller|voir|consulte|mes|rappel|qui)\b/.test(t)){try{App.navAppels?.();}catch(e){}if(/manqu|rappel/.test(t))setTimeout(()=>{try{App.setCallJournalFilter?.('missed');}catch(e){}},350);this._done('Appels ouverts');return true;}
+      return false;
+    }catch(_){return false;}
+  },
+  // Proposition de réponse cohérente selon le DERNIER message reçu (réponses canon par contexte)
+  _replyChoices(ctx){
+    if(ctx==='vehicle_report')return[['🚗 Je vérifie','vehicle_response'],['✅ C\'est réglé','vehicle_response'],['Pas mon véhicule','vehicle_response']];
+    if(ctx==='parked_report')return[['🚗 Je vérifie','parked_response'],['✅ Réglé, merci','parked_response'],['🚗 J\'arrive','parked_response']];
+    return[['Bien reçu 👍',''],['🚗 J\'arrive',''],['Merci',''] ];
+  },
+  _tryReply(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(!/\br[ée]ponds?\b|r[ée]pondre|une r[ée]ponse|propose.*r[ée]ponse|r[ée]ponds.?lui|r[ée]pondre.?lui/.test(t))return false;
+      const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      const all=(window.S&&S._actMessages)||[];
+      const recus=all.filter(m=>m&&m._received).sort((a,b)=>(b.created_at?new Date(b.created_at).getTime():b.at||0)-(a.created_at?new Date(a.created_at).getTime():a.at||0));
+      if(!recus.length){r.innerHTML='<div style="line-height:1.6">Tu n\'as pas de message reçu récent auquel répondre.</div>';$('angeMsg').value='';return true;}
+      const m0=recus[0];const plate=nPlate(m0._otherPlate||m0._convPlate||m0.sender_plate||'');
+      if(!plate){r.innerHTML='<div style="line-height:1.6">Je ne retrouve pas l\'expéditeur du dernier message.</div>';$('angeMsg').value='';return true;}
+      const _pl=esc(fPlate(plate)||plate);const choices=this._replyChoices(m0.context_type);
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Répondre à <b>'+_pl+'</b> — propositions :</div><div style="display:flex;flex-wrap:wrap">'+choices.map(c=>'<button onclick="AngeDialog.angeReplyConfirm(\''+js(plate)+'\',\''+js(c[0])+'\',\''+js(c[1])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(c[0])+'</button>').join('')+'</div>';
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
+  angeReplyConfirm(plate,text,ctx){
+    const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
+    Promise.resolve((async()=>{try{if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;const opts=ctx?{context_type:ctx}:{};const ok=await window.ImmatMessages.sendToPlate(nPlate(plate),text,opts);return ok!==false;}catch(_){return false;}})()).then(ok=>{
+      if(ok)this._rememberTarget(plate);this._log(ok?'action':'refus',(ok?'Réponse à ':'Échec réponse ')+(fPlate(plate)||plate));
+      if(r)r.innerHTML=ok?'<div style="line-height:1.6">✅ Réponse envoyée à <b>'+esc(fPlate(plate)||plate)+'</b>.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer la réponse.</div>';
+    });
+  },
   _tryForget(msg){
     try{
       var t=String(msg||'').toLowerCase();
@@ -5662,6 +5753,10 @@ const AngeDialog={
     try{ if(this._tryForget(msg)) return; }catch(_e){}
     // Explicabilité — « qu'as-tu fait ? » (journal local d'Ange)
     try{ if(this._tryHistory(msg)) return; }catch(_e){}
+    // Proposition de réponse cohérente au dernier message reçu
+    try{ if(this._tryReply(msg)) return; }catch(_e){}
+    // Guide à suggestions (signaler/activité/ouvrir messages/appels) — connaît l'intérieur de chaque fonction
+    try{ if(this._tryGuide(msg)) return; }catch(_e){}
     // Ange agit — message libre à un véhicule (« envoie un message au véhicule devant : … »)
     try{ if(this._tryMessage(msg)) return; }catch(_e){}
     // Ange agit — appel véhicule (« appelle le véhicule devant »)
