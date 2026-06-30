@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v364 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v365 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Rigueur chokepoint étendue : Messages = wrap unique de ImmatMessages.sendToPlate (bloque les messages LIBRES si 'messages' OFF ; les signalements avec context_type passent) ; Signaler = roadReport gardé 'signalement_route', vehicleAlert+driverInfo gardés 'signalement_vehicule'. Aide reste GELÉE (runtime non touché). SW v365. (local/merge-to-main) |
 | 2026-06-30 | IA session | GPS déplacement bloqué si désactivé : openGps() gardé (le bouton 🧭 passe par openGps, plus de panel('drive') direct) + pickDest/startNav gardés. Donc GPS OFF → ouverture nav + recherche destination + itinéraire bloqués avec message « indisponible par l'administrateur ». (Complète recenter/cycleView/locateBtn déjà gardés.) SW v364. (local/merge-to-main) |
 | 2026-06-30 | IA session | Kill-switch au POINT D'ACTION (parenthèse PO : OFF doit bloquer partout, pas juste l'onglet). Appels : wrap unique de CallManager.contactByCall/requestCall (installé à openMap, sans toucher calls.js) → tous les boutons d'appel (menu véhicule, liste proches, etc.) bloqués si 'appels' OFF avec message. GPS : App.locateBtn (gardé) sur le bouton 🎯 ; recenter/cycleView déjà gardés. Sûr par défaut (actif tant que non désactivé). SW v363. (local/merge-to-main) |
 | 2026-06-30 | IA session | C1 SÉCURITÉ (correctif isolé, NON fusionné — attend action app_metadata du PO) : migration 20260630120000_secure_roles_app_metadata.sql → get_my_role() lit raw_app_meta_data UNIQUEMENT (plus user_metadata, modifiable client) ; get_abuse_reports_admin() passe par get_my_role ; set_feature_flag_fleet sécurisée via get_my_role. Ferme l'élévation de privilège (un user ne peut plus se promouvoir gardien via auth.updateUser). PRÉREQUIS : mettre role=gardien en app_metadata du compte gardien AVANT de fusionner. |
