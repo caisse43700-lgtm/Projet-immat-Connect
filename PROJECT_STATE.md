@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v365 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
+SW                     : v366 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v15
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2779,6 +2779,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Gel Aide LEVÉ (demande PO) — kill-switch minimal : entrée 'aide' du registre déverrouillée (frozen retiré, toggle actif) ; gardes requireFeature('aide') sur sigStepAide (ouverture de l'étape Aide) et assist() (création). Aide OFF → ouverture/création bloquées + message ; Aide ON (défaut) → inchangé. Modèle confirmé par PO : message à l'ENTRÉE de chaque catégorie (Activité/Signaler/Appels/Messages/Ange/Aide), jamais l'app entière. SW v366. (local/merge-to-main) |
 | 2026-06-30 | IA session | Rigueur chokepoint étendue : Messages = wrap unique de ImmatMessages.sendToPlate (bloque les messages LIBRES si 'messages' OFF ; les signalements avec context_type passent) ; Signaler = roadReport gardé 'signalement_route', vehicleAlert+driverInfo gardés 'signalement_vehicule'. Aide reste GELÉE (runtime non touché). SW v365. (local/merge-to-main) |
 | 2026-06-30 | IA session | GPS déplacement bloqué si désactivé : openGps() gardé (le bouton 🧭 passe par openGps, plus de panel('drive') direct) + pickDest/startNav gardés. Donc GPS OFF → ouverture nav + recherche destination + itinéraire bloqués avec message « indisponible par l'administrateur ». (Complète recenter/cycleView/locateBtn déjà gardés.) SW v364. (local/merge-to-main) |
 | 2026-06-30 | IA session | Kill-switch au POINT D'ACTION (parenthèse PO : OFF doit bloquer partout, pas juste l'onglet). Appels : wrap unique de CallManager.contactByCall/requestCall (installé à openMap, sans toucher calls.js) → tous les boutons d'appel (menu véhicule, liste proches, etc.) bloqués si 'appels' OFF avec message. GPS : App.locateBtn (gardé) sur le bouton 🎯 ; recenter/cycleView déjà gardés. Sûr par défaut (actif tant que non désactivé). SW v363. (local/merge-to-main) |
