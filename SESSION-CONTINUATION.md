@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Ange : fin du faux « 4 désactivées » au démarrage
+
+Demande PO : « quand j'ouvre Ange il y a toujours écrit 4 désactivées ». Diagnostic des 4 : `zones_accidentogenes`
+(beta, default:false), `copilote_proactif` (« Ange — analyses proactives », beta, default:true mais OFF —
+proactivité reportée), `copilote_monologue` (« Ange — monologue conduite », beta), `auto_status`
+(« Auto-statut conduite », stable, default:true). 3/4 sont des fonctions **beta/expérimentales** dont l'état
+OFF est NORMAL → les signaler comme avertissement à chaque ouverture est du bruit.
+
+**Fix (lecture seule)** : `core/immat-nexus.js` v12→v13. `_build()` enrichit chaque feature gouvernance avec
+`stage` et `def`, et expose `snap.governance.disabledNotable` = `!enabled && stage==='stable' && def===true`
+(une capacité normalement active, délibérément coupée). `governance.disabled` (toutes les off) reste inchangé
+pour l'intent `disabled_features` (« qu'est-ce qui est désactivé ? » → vérité complète).
+
+**Front** : le bandeau d'état d'Ange (`#angeStatus`, dans `open()`) lit désormais
+`governance.disabledNotable || governance.disabled` au lieu de `disabled`. Résultat : plus de « 4 désactivées »
+parasites ; seul un éventuel coupage d'une fonction STABLE (ex. Auto-statut s'il est réellement off) est signalé.
+
+Tests : `tests/ange-v2.test.js` **114/114** (+4 : disabledNotable existe ; beta zones absent ; stable coupée
+présente ; disabledNotable ⊆ disabled). `npm test` 177 + diag 3. immat-nexus.js v12→v13, **SW v408→v409**.
+
+---
+
 ## SESSION 2026-06-30 — Zones accidentogènes : accidents uniquement + seuil
 
 Demande PO : « les zones rouges se créent pour tout (porte, pneu, bouchon…) alors qu'il faudrait que

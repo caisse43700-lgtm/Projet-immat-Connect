@@ -121,13 +121,17 @@
       var list = _regList();
       var gov = list.map(function (f) {
         var st = _featureStatus(f.key);
-        return { key: f.key, label: f.label, group: f.group, enabled: !!st.enabled, by: st.by || null, scope: f.scope };
+        return { key: f.key, label: f.label, group: f.group, enabled: !!st.enabled, by: st.by || null, scope: f.scope, stage: f.stage || null, def: !!f.default };
       });
       snap.governance = {
         features: gov,
         total: gov.length,
         enabled: gov.filter(function (g) { return g.enabled; }).length,
-        disabled: gov.filter(function (g) { return !g.enabled; })
+        // disabled = TOUTES les fonctions off (vérité complète, pour « qu'est-ce qui est désactivé ? »)
+        disabled: gov.filter(function (g) { return !g.enabled; }),
+        // disabledNotable = à SIGNALER seulement : une fonction STABLE normalement active qui est coupée.
+        // Les beta/expérimentales (zones, analyses proactives, monologue…) off par nature ne sont PAS un avertissement.
+        disabledNotable: gov.filter(function (g) { return !g.enabled && g.stage === 'stable' && g.def === true; })
       };
     } catch (e) { snap.governance = null; }
     // santé organisme

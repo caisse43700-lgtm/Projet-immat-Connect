@@ -5140,7 +5140,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="core/immat-nexus.js?v=12"></script>
+<script src="core/immat-nexus.js?v=13"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5311,7 +5311,8 @@ const AngeDialog={
       const _st=$('angeStatus');
       if(_st&&window.ImmatNexus){
         const sn=window.ImmatNexus.sense({})||{};
-        const dis=((sn.governance&&sn.governance.disabled)||[]);
+        // On ne signale que les fonctions STABLES délibérément coupées (pas les beta off par nature).
+        const dis=((sn.governance&&(sn.governance.disabledNotable||sn.governance.disabled))||[]);
         const urg=(sn.orientation&&sn.orientation.urgency)||0;
         if(dis.length||urg>=4){
           const parts=[];
