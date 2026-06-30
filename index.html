@@ -1121,8 +1121,10 @@ async loadModerationUsers(){
     const _rowsHtml=rows.map(r=>{
       const id=js(String(r.user_id||''));
       const plate=esc(r.owner_plate||'—'),pseudo=esc(r.pseudo||'—');
-      const badge=r.suspended?'<span style="background:#3b0f0f;color:#e57373;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">SUSPENDU</span>':'<span style="background:#14532d;color:#4caf50;border-radius:4px;padding:1px 6px;font-size:10px">actif</span>';
-      const btn=r.suspended
+      const badge=r.is_gardien?'<span style="background:#1e3a5f;color:#38bdf8;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">🛡 GARDIEN</span>':r.suspended?'<span style="background:#3b0f0f;color:#e57373;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">SUSPENDU</span>':'<span style="background:#14532d;color:#4caf50;border-radius:4px;padding:1px 6px;font-size:10px">actif</span>';
+      const btn=r.is_gardien
+        ?'<span style="flex:0 0 auto;color:#555;font-size:10px;font-style:italic">non suspendable</span>'
+        :r.suspended
         ?'<button onclick="App.unsuspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#14532d;color:#4caf50;border:1px solid #4caf50;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Réactiver</button>'
         :'<button onclick="App.suspendUser(\''+id+'\',\''+js(r.owner_plate||'')+'\')" style="flex:0 0 auto;background:#3b0f0f;color:#e57373;border:1px solid #e57373;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">Suspendre</button>';
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2e"><div style="min-width:0;flex:1 1 auto"><div style="color:#a5b4fc;font-weight:700;font-size:12px">'+plate+' '+badge+'</div><div style="color:#888;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pseudo+'</div></div>'+btn+'</div>';
@@ -1134,7 +1136,7 @@ async suspendUser(id,plate){
   if(!id)return;
   if(!confirm('Suspendre le compte '+(plate||'')+' ?\n\nL\'utilisateur ne pourra plus se connecter, et ne pourra pas recréer de compte avec la même plaque, le même email ou le même téléphone.'))return;
   const reason=(prompt('Motif (facultatif, affiché à l\'utilisateur) :','')||'').trim();
-  try{const{error}=await sb.rpc('admin_suspend_user',{p_user_id:id,p_reason:reason});if(error){toast(/gardien/i.test(error.message||'')?'Réservé au gardien':(/soi-même|gardien/i.test(error.message||'')?error.message:(error.message||'Erreur')),'bad');return;}toast('Compte suspendu','ok');this.loadModerationUsers();}catch(e){toast(e?.message||'Erreur','bad');}
+  try{const{error}=await sb.rpc('admin_suspend_user',{p_user_id:id,p_reason:reason});if(error){const _m=error.message||'';toast(/suspendre un gardien/i.test(_m)?'Impossible de suspendre un gardien':/soi-même/i.test(_m)?'Impossible de se suspendre soi-même':/réservé au rôle gardien/i.test(_m)?'Action réservée au gardien':( _m||'Erreur'),'bad');return;}toast('Compte suspendu','ok');this.loadModerationUsers();}catch(e){toast(e?.message||'Erreur','bad');}
 },
 async unsuspendUser(id,plate){
   if(!id)return;
