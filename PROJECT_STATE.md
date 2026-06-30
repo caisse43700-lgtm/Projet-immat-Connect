@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v377 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16
+SW                     : v378 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -2827,6 +2827,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | Vérif cohérence gating (harnais Node, 16 clés) → système sain (auto_status OFF par défaut = préférence user, normal). Polish panneau Utilisateurs (modération) : tri suspendus → gardiens → actifs, recherche plaque/pseudo (App._renderModUserRows). SW v378. (local/merge-to-main) |
 | 2026-06-30 | IA session | Suspension LIVE (demande PO « si utilisateur bloqué mais toujours en ligne → déconnecter ; sinon message à la connexion »). App._startSuspensionWatch (lancé dans openMap) : poll am_i_suspended toutes les 45 s + au retour au premier plan (visibilitychange). Si suspendu → App._enforceSuspension : stopGps, deleteMyLocation, fermeture des canaux Realtime (chMsg/chLoc/chReports/chCommunityReports), ferme le Dashboard, signOut, retour écran auth + « ⛔ Votre compte a été suspendu ». Garde S._suspEnforced (1 seule fois), réinitialisée à chaque session autorisée. Le verrou login (afterAuth am_i_suspended) restait déjà. SW v377. (local/merge-to-main) |
 | 2026-06-30 | IA session | « Voir tout » (Activité) gouvernable (demande PO « bloquer voir tout »). Entrée registre activite_tout (group Activité, scope fleet, CK-ACT-ALL) → 16 entrées. openActivityCat('all') gardé via requireFeature('activite_tout'). Ajouté au panneau interactif + Fonctionnalités. NB : bloque aussi le raccourci « Mes signalements » (même vue 'all'). SW v376. (local/merge-to-main) |
 | 2026-06-30 | IA session | Panneau « 🧪 Blocage par catégorie » rendu INTERACTIF (demande PO « pas sélectionnable » + capture IMG_6542) : chaque ligne est maintenant un interrupteur (bouton ACTIVÉ/DÉSACT.) qui appelle setFeatureFlag(legacy,!on) directement → activer/désactiver depuis le panneau Modération, plus seulement l'onglet Fonctionnalités. Les features pilotées par préférence utilisateur (by='user') affichent « Réglages user » sans bouton. SW v375. (local/merge-to-main) |
