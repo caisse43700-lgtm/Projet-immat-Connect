@@ -5264,6 +5264,7 @@ const ImmatestUI = {
     <span>✦ L'Ange</span>
     <button onclick="AngeDialog.close()">✕</button>
   </div>
+  <div id="angeStatus" style="display:none;font-size:12px;border-radius:8px;padding:8px 10px"></div>
   <div id="angeResponse"></div>
   <div id="angePreview" style="display:none"></div>
   <div id="angeSpin"><div class="ange-ring"></div>L'Ange observe…</div>
@@ -5302,6 +5303,24 @@ const AngeDialog={
       if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){};try{AngeMonologue.start();}catch(_){}},5000);}
     }
     this._refreshQuota();
+    // Ligne d'état système live (ImmatNexus, local) — l'organisme se montre dès l'ouverture
+    try{
+      const _st=$('angeStatus');
+      if(_st&&window.ImmatNexus){
+        const sn=window.ImmatNexus.sense({})||{};
+        const dis=((sn.governance&&sn.governance.disabled)||[]);
+        const urg=(sn.orientation&&sn.orientation.urgency)||0;
+        if(dis.length||urg>=4){
+          const parts=[];
+          if(urg>=4)parts.push('vigilance '+urg+'/10');
+          if(dis.length){const names=dis.slice(0,3).map(d=>d.label).join(', ')+(dis.length>3?'…':'');parts.push(dis.length+' désactivé'+(dis.length>1?'s':'')+' : '+names);}
+          _st.textContent='⚠️ '+parts.join(' · ');_st.style.background='rgba(240,165,0,.12)';_st.style.color='#f0a500';
+        }else{
+          _st.textContent='✅ Tout est nominal';_st.style.background='rgba(74,222,128,.10)';_st.style.color='#4ade80';
+        }
+        _st.style.display='block';
+      }
+    }catch(_){}
     if(!this._escHandler){this._escHandler=e=>{if(e.key==='Escape')this.close();};document.addEventListener('keydown',this._escHandler);}
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
@@ -5309,6 +5328,7 @@ const AngeDialog={
     document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
+    const _st=$('angeStatus');if(_st)_st.style.display='none';
     if(this._escHandler){document.removeEventListener('keydown',this._escHandler);this._escHandler=null;}
     const resp=$('angeResponse');
     if(resp){resp.style.display='none';resp.innerHTML='';delete resp.dataset.welcome;}
