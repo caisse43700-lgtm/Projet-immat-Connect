@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-06-30 — Zones accidentogènes promues en stable + activées par défaut
+
+Suite logique du correctif zones (accidents uniquement + seuil 3, migration 20260630170000) : la fonction
+étant assainie, on la promeut.
+- `index.html` registre `zones_accidentogenes` : `stage:'beta'→'stable'`, `default:false→true`,
+  description mise à jour (« accidents uniquement, dès 3 »).
+- `FEATURE_FLAGS.zones_accidentogenes:false→true` (cohérence du fallback legacy).
+- Le toggle device `ic_zones_accidentogenes` reste (défaut '1') ; rendu réel via `_checkRiskZones`
+  (déjà `p_min_incidents:3, p_min_score:0`). Réversible (Réglages ou Dashboard gardien).
+- Impact : une zone ne s'affiche qu'à partir de **3 accidents** dans la cellule (~111 m) → activation
+  par défaut sûre (quasi invisible tant qu'il n'y a pas de vrai cluster d'accidents).
+
+Conséquence sur `disabledNotable` : zones devient stable+default:true → si un gardien la coupe, elle
+apparaîtra (légitimement) comme « désactivée notable ». Test `ange-v2` mis à jour : l'exemple « beta coupée
+absente de disabledNotable » utilise désormais `copilote_proactif` (via legacy `ange_proactive`) au lieu de
+zones (qui n'est plus beta).
+
+Tests : `npm test` 177 + diag 3 ; `tests/ange-v2.test.js` **122/122**. SW v410→v411 (registre dans index.html,
+servi réseau ; aucun .js externe modifié).
+
+---
+
 ## SESSION 2026-06-30 — Ange : anti-chevauchement bulle « ✦ » ⇄ monologue parlé
 
 Contexte : question PO sur les fonctions beta (`copilote_proactif` = bulles « ✦ » Narrator ; `copilote_monologue`
