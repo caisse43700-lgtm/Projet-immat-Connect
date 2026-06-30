@@ -5325,6 +5325,7 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
+    try{this._clearPending&&this._clearPending();}catch(_){}
     document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
     $('angeOverlay').style.display='none';
@@ -5441,7 +5442,8 @@ const AngeDialog={
         resp.innerHTML='<div style="line-height:1.6">« '+esc(label)+' » est déjà '+(on?'activée':'désactivée')+'. Rien à changer.</div>';
         $('angeMsg').value='';return true;
       }
-      resp.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Tu veux <b>'+(on?'activer':'désactiver')+'</b> « '+esc(label)+' » pour <b>toute la flotte</b> ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.angeDoAction(\''+js(legacy)+'\','+on+',\''+js(label)+'\')" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Confirmer</button><button onclick="AngeDialog.angeCancelAction()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div>';
+      resp.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Tu veux <b>'+(on?'activer':'désactiver')+'</b> « '+esc(label)+' » pour <b>toute la flotte</b> ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.confirmYes()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Confirmer</button><button onclick="AngeDialog.confirmNo()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div><div style="color:#555;font-size:10px;margin-top:6px">ou dis « oui » / « non » · expire dans 15 s</div>';
+      this._armConfirm(()=>this.angeDoAction(legacy,on,label));
       $('angeMsg').value='';return true;
     }catch(_){return false;}
   },
@@ -5451,7 +5453,28 @@ const AngeDialog={
     if(resp)resp.innerHTML='<div style="line-height:1.6">✅ C\'est fait — « '+esc(label)+' » '+(on?'activée':'désactivée')+' pour la flotte.</div>';
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{action:true,key:legacy,enabled:!!on})}catch(e){}
   },
-  angeCancelAction(){const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
+  angeCancelAction(){this._clearPending();const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
+  // ── Confirmation unifiée : timeout 15 s + validation vocale oui/non (carte ouverte uniquement)
+  _clearPending(){try{clearTimeout(this._pendTO);}catch(_){}this._pendTO=null;try{if(this._pendRec)this._pendRec.stop();}catch(_){}this._pendRec=null;this._pending=null;},
+  confirmYes(){const p=this._pending;if(!p)return;this._clearPending();try{p.run();}catch(_){}},
+  confirmNo(){if(!this._pending)return;this.angeCancelAction();},
+  _armConfirm(run){
+    this._clearPending();
+    this._pending={run:run};
+    this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';}},15000);
+    // Voix : écoute courte oui/non pendant que la carte est ouverte (jamais en continu → anti faux-positif)
+    try{
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      if(SR && window.S && window.S.voice!==false){
+        const rec=new SR();this._pendRec=rec;rec.lang='fr-FR';rec.interimResults=false;rec.maxAlternatives=3;rec.continuous=false;
+        rec.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=' '+e.results[i][0].transcript;txt=txt.toLowerCase();
+          if(/\b(oui|confirme|confirmer|envoie|envoyer|vas-y|ok|d.accord|appelle|appeler)\b/.test(txt))this.confirmYes();
+          else if(/\b(non|annule|annuler|stop|attends|laisse|laisser)\b/.test(txt))this.confirmNo();};
+        rec.onerror=()=>{};rec.onend=()=>{};
+        try{rec.start();}catch(_){}
+      }
+    }catch(_){}
+  },
   // ── Ange SIGNALE un véhicule (vocal/texte) : « signale au véhicule devant pneu dégonflé »
   _trySignal(msg){
     try{
@@ -5482,7 +5505,8 @@ const AngeDialog={
         r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Quel problème pour <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+choices.map(l=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(plate)+'\',\''+js(l)+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(l)+'</button>').join('')+'</div>';
         $('angeMsg').value='';return true;
       }
-      r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Signaler à <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' : « '+esc(label)+' » ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.angeSignalConfirm(\''+js(plate)+'\',\''+js(label)+'\')" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Envoyer</button><button onclick="AngeDialog.angeCancelAction()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div>';
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Signaler à <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' : « '+esc(label)+' » ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.confirmYes()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Envoyer</button><button onclick="AngeDialog.confirmNo()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div><div style="color:#555;font-size:10px;margin-top:6px">ou dis « oui » / « non » · expire dans 15 s</div>';
+      this._armConfirm(()=>this.angeSignalConfirm(plate,label));
       $('angeMsg').value='';return true;
     }catch(_){return false;}
   },
@@ -5505,9 +5529,49 @@ const AngeDialog={
       return false;
     }catch(_){return false;}
   },
+  // ── Ange APPELLE un véhicule (étape 6) : « appelle le véhicule devant » / « appelle AB-123-CD »
+  _tryCall(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
+      if(!/\b(appelle|appeler|appel|t[ée]l[ée]phone|t[ée]l[ée]phoner|joins|joindre|contacte|contacter)\b/.test(t))return false;
+      const hasPlate=/\b[A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}\b/.test(String(msg||'').toUpperCase());
+      if(!/(v[ée]hicule|voiture|devant|plaque|conducteur|en face)/.test(t)&&!hasPlate)return false;
+      const r=$('angeResponse');if(!r)return false;r.style.display='block';delete r.dataset.welcome;
+      try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
+      const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
+      if(!_fs.enabled){r.innerHTML='<div style="line-height:1.6">📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'. Je ne peux pas appeler.</div>';$('angeMsg').value='';return true;}
+      let plate=null;
+      if(/devant|de devant|d.en face|en face|qui est devant/.test(t)){
+        plate=(window.S&&S.frontVehicle&&S.frontVehicle.plate)?nPlate(S.frontVehicle.plate):null;
+        if(!plate){r.innerHTML='<div style="line-height:1.6">📞 Aucun véhicule connecté juste devant toi. Donne-moi la plaque : « appelle AB-123-CD ».</div>';$('angeMsg').value='';return true;}
+      }else{
+        const m=String(msg||'').toUpperCase().match(/\b([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2})\b/);
+        if(m)plate=nPlate(m[1]);
+      }
+      if(!plate){r.innerHTML='<div style="line-height:1.6">Quel véhicule appeler ? Dis « <b>le véhicule devant</b> » ou la plaque (ex. « appelle AB-123-CD »).</div>';$('angeMsg').value='';return true;}
+      if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de t\'appeler toi-même 🙂</div>';$('angeMsg').value='';return true;}
+      const _pl=esc(fPlate(plate)||plate);
+      r.innerHTML='<div style="line-height:1.6;margin-bottom:10px">Appeler <b>'+_pl+'</b> ?</div><div style="display:flex;gap:8px"><button onclick="AngeDialog.confirmYes()" style="flex:1;background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">📞 Appeler</button><button onclick="AngeDialog.confirmNo()" style="flex:0 0 auto;background:#1a1a2e;color:#aaa;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer">Annuler</button></div><div style="color:#555;font-size:10px;margin-top:6px">ou dis « oui » / « non » · expire dans 15 s</div>';
+      this._armConfirm(()=>this.angeCallConfirm(plate));
+      $('angeMsg').value='';return true;
+    }catch(_){return false;}
+  },
+  angeCallConfirm(plate){
+    const r=$('angeResponse');
+    try{
+      if(window.CallManager&&window.CallManager.contactByCall){
+        window.CallManager.contactByCall(nPlate(plate),'');
+        if(r)r.innerHTML='<div style="line-height:1.6">📞 Appel lancé vers <b>'+esc(fPlate(plate)||plate)+'</b>.</div>';
+        try{this.close&&this.close();}catch(_){}
+      }else if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Les appels sont indisponibles pour le moment.</div>';
+    }catch(e){if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu lancer l\'appel.</div>';}
+  },
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Ange agit — appel véhicule (« appelle le véhicule devant »)
+    try{ if(this._tryCall(msg)) return; }catch(_e){}
     // Ange agit — signalement véhicule vocal/texte (« signale au véhicule devant … »)
     try{ if(this._trySignal(msg)) return; }catch(_e){}
     // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
