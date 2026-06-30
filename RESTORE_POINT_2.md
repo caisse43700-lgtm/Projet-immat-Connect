@@ -9,8 +9,11 @@
 Le point d'ancrage fiable est le **commit SHA** (présent sur `origin/main`) :
 
 ```bash
-# Restaurer sans perdre l'historique (nouvelle branche) :
+# Le plus simple — branche-instantané présente sur GitHub :
 git fetch origin
+git checkout -b restauration-v2 origin/snapshot-v2-ange-v2-2026-06-30
+
+# Ou par SHA (équivalent) :
 git checkout -b restauration-v2 92b8e139b997ccc9edb69f4fad0756daa4bde7fe
 
 # Ou repartir de la prod (équivalent à ce point) :
@@ -24,9 +27,9 @@ node tests/ange-v2.test.js   # attendu : 64 ok, 0 ko
 grep CACHE_NAME service-worker.js   # attendu : immatconnect-pro-v401
 ```
 
-> Tag local créé : `snapshot/v2-ange-v2-2026-06-30` (le push du tag a échoué côté
-> proxy ; le **SHA ci-dessous fait foi**). Pour re-pousser le tag plus tard :
-> `git push origin refs/tags/snapshot/v2-ange-v2-2026-06-30`
+> Pointeur de restauration sur GitHub : **branche `snapshot-v2-ange-v2-2026-06-30`**
+> (les tags git sont refusés par le proxy de l'environnement → on utilise une branche
+> figée, équivalente et visible sur GitHub). Le **SHA fait foi** dans tous les cas.
 
 ---
 
@@ -40,7 +43,7 @@ grep CACHE_NAME service-worker.js   # attendu : immatconnect-pro-v401
 | **Branche production** | `main` (GitHub Pages) |
 | **Prod URL** | https://caisse43700-lgtm.github.io/Projet-immat-Connect/ |
 | **Dépôt** | caisse43700-lgtm/Projet-immat-Connect |
-| **Tag local** | `snapshot/v2-ange-v2-2026-06-30` (non poussé) |
+| **Branche-instantané (GitHub)** | `snapshot-v2-ange-v2-2026-06-30` → `92b8e139…` |
 | **Tests** | `npm test` 177 ✅ · diagnostic 3 ✅ · `tests/ange-v2.test.js` 64 ✅ |
 
 ---
