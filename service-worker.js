@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v378';
+const CACHE_NAME  = 'immatconnect-pro-v379';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -15,7 +15,7 @@ const STATIC_CACHE = [
   './badge.js?v=1',
   './ui.js?v=16',
   './core/invariants.js?v=45',
-  './core/bus.js?v=50',
+  './core/bus.js?v=51',
   './core/brain.js?v=45',
   './core/governance.js?v=45',
   './core/immatOrganism.js?v=46',
@@ -35,14 +35,15 @@ const STATIC_CACHE = [
   './core/guardian-summary-engine.js?v=1',
   './core/guardian-dashboard-summary.js?v=6',
   './core/brain-engine.js?v=1',
-  './core/narrator.js?v=5',
+  './core/narrator.js?v=6',
   './core/swarm-engine.js?v=1',
-  './core/immat-consciousness.js?v=1',
+  './core/immat-consciousness.js?v=2',
   './core/immat-soul.js?v=1',
   './core/immat-kernel.js?v=1',
   './core/immat-copilot.js?v=3',
   './core/immat-test-engine.js?v=2',
   './core/gardien-diagnostic.js?v=3',
+  './core/immat-nexus.js?v=1',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant

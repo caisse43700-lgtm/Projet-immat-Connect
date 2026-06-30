@@ -48,6 +48,11 @@ const EVENTS = Object.freeze({
   VEHICLE_REPORT_RATED:              'VEHICLE_REPORT_RATED',
   MESSAGE_SENT:                      'MESSAGE_SENT',
   MESSAGE_RECEIVED:                  'MESSAGE_RECEIVED',
+  // Gouvernance (registre / Dashboard / flotte) — connaissance de premier rang (ImmatNexus)
+  FEATURE_GOVERNANCE_CHANGED:        'FEATURE_GOVERNANCE_CHANGED',
+  FEATURE_BLOCKED:                   'FEATURE_BLOCKED',
+  FLEET_CONFIG_LOADED:               'FLEET_CONFIG_LOADED',
+  FEATURE_AUDIT_FINDING:             'FEATURE_AUDIT_FINDING',
 });
 
 const ImmatBus = (function () {

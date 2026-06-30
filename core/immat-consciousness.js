@@ -221,6 +221,17 @@ const ImmatConsciousness = (function () {
       const reliabilityPenalty = (rel && rel.score < 75 && !rel.cold_start) ? 1 : 0;
       const adaptiveThreshold = overwhelmed ? 3 : elevated ? 2 + reliabilityPenalty : CONV_THRESHOLD + reliabilityPenalty;
 
+      // Gouvernance — connaissance de premier rang (lecture seule du registre)
+      let governance = null;
+      try {
+        const _reg = window.FEATURE_REGISTRY || [];
+        const _fs = (window.App && typeof window.App.featureStatus === 'function') ? window.App.featureStatus.bind(window.App) : null;
+        if (_fs && _reg.length) {
+          const _dis = _reg.filter(f => !_fs(f.key).enabled);
+          governance = { total: _reg.length, disabled: _dis.length, disabled_keys: _dis.map(f => f.key).slice(0, 12) };
+        }
+      } catch (e) {}
+
       const worldState = {
         at:          Date.now(),
         brain,
@@ -228,6 +239,7 @@ const ImmatConsciousness = (function () {
         swarm,
         narrator,
         organism,
+        governance,
         pulse,
         convergence: conv,
         trend,

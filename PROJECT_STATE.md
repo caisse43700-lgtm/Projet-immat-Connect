@@ -17,7 +17,7 @@ Branche de travail     : local/merge-to-main (synchro origin/main après chaque 
 Dépôt                  : caisse43700-lgtm/Projet-immat-Connect
 Tests de validation    : deux iPhones, BZ-652-LL (kassem69@live.fr) ↔ BE-521-MM
 Phase produit          : V1.1 MESSAGES/ACTIVITÉ — itérations UX en cours
-SW                     : v378 · app.css v61 · narrator.js v5 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16
+SW                     : v379 · app.css v61 · narrator.js v6 · messages.js v40 · messages.css v7 · calls.js v22 · audio-manager.js v9 · ui.js v16 · bus.js v51 · immat-consciousness.js v2 · immat-nexus.js v1
 
 ⚠️ LEÇON CACHE iOS (critique) : l'appareil de test est resté bloqué très longtemps sur une
 vieille version en cache — AUCUN fix ne s'appliquait. index.html est servi réseau (toujours frais)
@@ -62,7 +62,32 @@ le CACHE_NAME avant de conclure qu'un bug persiste.
 
 ## 2. DERNIÈRE MISSION TERMINÉE
 
-**Mission : Modération des comptes — suspension (« compte suspendu ») + anti-recréation (plaque/email/téléphone)**
+**Mission : ImmatNexus — tissu de connexion (intelligence d'organisme locale, sans IA externe)**
+**Date :** 2026-06-30
+**Versions :** SW v378 → v379 · bus.js v50→v51 · narrator.js v5→v6 · immat-consciousness.js v1→v2 · immat-nexus.js v1 (nouveau)
+**Déploiement :** front (GitHub Pages).
+
+### Ce qui a été fait (plan validé PO + ChatGPT, voir docs/SPEC-IMMAT-NEXUS.md)
+- **Façade `core/immat-nexus.js`** (window.ImmatNexus) — LECTURE SEULE, sans état métier, ne duplique
+  rien : `init/sense/ask/explain/audit`. Relie registre + santé (ImmatOrganism) + synthèse
+  (S._consciousness/_soul/_reliability/_brainOrientation) + OBD (ImmatBus.getJournal) + lois (INVARIANTS).
+- **Ange local-first** : `AngeDialog.send()` appelle `ImmatNexus.ask()` AVANT le LLM → réponse
+  déterministe sans IA (0 réseau, 0 quota) sur l'état système ; le LLM edge reste fallback hors-sujet.
+  Intents V1 : feature_status, why_blocked, disabled_features, organism_health, recent_violations,
+  governance_changes, system_summary.
+- **Events gouvernance figés** dans `ImmatBus.EVENTS` : FEATURE_GOVERNANCE_CHANGED, FEATURE_BLOCKED,
+  FLEET_CONFIG_LOADED, FEATURE_AUDIT_FINDING.
+- **Narrator** verbalise FEATURE_GOVERNANCE_CHANGED ; **Consciousness** lit la gouvernance
+  (worldState.governance : total/disabled/disabled_keys).
+- **Dashboard Développeur** : panneau « 🧬 ImmatNexus » (snapshot live + bouton Audit cohérence →
+  émet FEATURE_AUDIT_FINDING, jamais d'auto-correction).
+- Garde-fous : Nexus n'émet QUE des findings d'audit (source:'nexus'), ignore ses propres events,
+  cache 3 s, pas de tick lourd, pas de journal propre. Aide V1 reste gelée (Nexus lit, ne pilote pas).
+- Vérifié par harnais Node : ask/explain/audit fonctionnels, 0 erreur de syntaxe.
+
+---
+
+### Mission précédente : Modération des comptes — suspension (« compte suspendu ») + anti-recréation (plaque/email/téléphone)**
 **Date :** 2026-06-30
 **Versions :** SW v369 → v370 · migration `20260630140000_account_moderation.sql`
 **Déploiement :** front (GitHub Pages) + migration auto-appliquée par CI (`deploy-edge-functions.yml`).
@@ -2827,6 +2852,7 @@ git diff origin/main HEAD --name-only   # Fichiers modifiés vs production
 
 | Date | Auteur | Résumé |
 |---|---|---|
+| 2026-06-30 | IA session | ImmatNexus (tissu de connexion, intelligence locale sans IA). core/immat-nexus.js (window.ImmatNexus) façade lecture seule init/sense/ask/explain/audit — relie registre+santé+synthèse+OBD+lois, ne duplique rien. Ange local-first (send() → Nexus.ask() avant LLM). Events gouvernance figés dans ImmatBus.EVENTS (+FEATURE_AUDIT_FINDING). Narrator verbalise FEATURE_GOVERNANCE_CHANGED ; Consciousness lit gouvernance. Panneau Dashboard Dev « 🧬 ImmatNexus » (snapshot + audit). Spec docs/SPEC-IMMAT-NEXUS.md. SW v379, bus v51, narrator v6, consciousness v2, nexus v1. (local/merge-to-main) |
 | 2026-06-30 | IA session | Vérif cohérence gating (harnais Node, 16 clés) → système sain (auto_status OFF par défaut = préférence user, normal). Polish panneau Utilisateurs (modération) : tri suspendus → gardiens → actifs, recherche plaque/pseudo (App._renderModUserRows). SW v378. (local/merge-to-main) |
 | 2026-06-30 | IA session | Suspension LIVE (demande PO « si utilisateur bloqué mais toujours en ligne → déconnecter ; sinon message à la connexion »). App._startSuspensionWatch (lancé dans openMap) : poll am_i_suspended toutes les 45 s + au retour au premier plan (visibilitychange). Si suspendu → App._enforceSuspension : stopGps, deleteMyLocation, fermeture des canaux Realtime (chMsg/chLoc/chReports/chCommunityReports), ferme le Dashboard, signOut, retour écran auth + « ⛔ Votre compte a été suspendu ». Garde S._suspEnforced (1 seule fois), réinitialisée à chaque session autorisée. Le verrou login (afterAuth am_i_suspended) restait déjà. SW v377. (local/merge-to-main) |
 | 2026-06-30 | IA session | « Voir tout » (Activité) gouvernable (demande PO « bloquer voir tout »). Entrée registre activite_tout (group Activité, scope fleet, CK-ACT-ALL) → 16 entrées. openActivityCat('all') gardé via requireFeature('activite_tout'). Ajouté au panneau interactif + Fonctionnalités. NB : bloque aussi le raccourci « Mes signalements » (même vue 'all'). SW v376. (local/merge-to-main) |
