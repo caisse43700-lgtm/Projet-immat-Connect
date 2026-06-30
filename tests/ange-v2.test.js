@@ -156,11 +156,11 @@ section('A. ImmatNexus (module réel) — matrice d\'intentions');
   try { window.ImmatBus.emit('FEATURE_GOVERNANCE_CHANGED', {}); } catch (e) {}
   const snG0 = window.ImmatNexus.sense({});
   ok('disabledNotable existe', !!(snG0.governance && Array.isArray(snG0.governance.disabledNotable)));
-  ok('beta off-par-défaut (zones) absent de disabledNotable', !(snG0.governance.disabledNotable || []).some(g => g.key === 'zones_accidentogenes'));
-  // coupe une fonction stable normalement active (signalement_vehicule via legacy alertes_vehicule)
-  window._fleetFlagsCache = S._fleetFlags = { alertes_vehicule: false };
-  try { window.ImmatBus.emit('FEATURE_GOVERNANCE_CHANGED', { key: 'alertes_vehicule', enabled: false }); } catch (e) {}
+  // coupe une fonction BETA (analyses proactives via legacy ange_proactive) ET une STABLE (signalement_vehicule via alertes_vehicule)
+  window._fleetFlagsCache = S._fleetFlags = { ange_proactive: false, alertes_vehicule: false };
+  try { window.ImmatBus.emit('FEATURE_GOVERNANCE_CHANGED', { key: 'ange_proactive', enabled: false }); } catch (e) {}
   const snG1 = window.ImmatNexus.sense({});
+  ok('beta coupée (analyses proactives) absente de disabledNotable', !(snG1.governance.disabledNotable || []).some(g => g.key === 'copilote_proactif'));
   ok('stable coupée présente dans disabledNotable', (snG1.governance.disabledNotable || []).some(g => g.key === 'signalement_vehicule'));
   ok('disabledNotable ⊆ disabled', (snG1.governance.disabledNotable || []).length <= (snG1.governance.disabled || []).length);
   window._fleetFlagsCache = S._fleetFlags = {};
