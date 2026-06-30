@@ -124,6 +124,14 @@ section('B. Câblage Ange V2 (index.html)');
   ok('gouvernance via fonction propriétaire setFeatureFlag', has('App.setFeatureFlag('));
   ok('close() nettoie la confirmation en attente', /close\(\)\{[\s\S]{0,120}_clearPending/.test(HTML));
   ok('aucun effet de bord avant confirmation (run dans _armConfirm)', has('this._armConfirm(()=>this.angeDoAction') && has('this._armConfirm(()=>this.angeSignalConfirm') && has('this._armConfirm(()=>this.angeCallConfirm'));
+  // Menu d'accueil « Que veux-tu faire ? » + proposition du plus proche
+  ['_tryMenu', '_entryMenuHTML', '_signalNearest', '_callNearest', '_messageNearest', '_nearestInfo', '_distLabel'].forEach(m => ok('méthode présente : ' + m, has(m + '(') || has(m + ':')));
+  ok('send() appelle _tryMenu', has('this._tryMenu(msg)'));
+  ok('_MENU contient l\'entrée faire (Que veux-tu faire ?)', has('faire:{label:\'Que veux-tu faire ?\''));
+  ok('menu faire branche les 4 intentions', has("act:['sigveh']") && has("act:['callveh']") && has("act:['msgveh']") && has("'sigStepAide'"));
+  ok('_menuAct route sigveh/callveh/msgveh', has("k==='sigveh'") && has("k==='callveh'") && has("k==='msgveh'"));
+  ok('signalement sans cible propose le plus proche', /if\(!plate\)\{if\(this\._nearestInfo\(\)\)\{this\._signalNearest\(\)/.test(HTML));
+  ok('accueil affiche le menu (open() append _entryMenuHTML)', /open\(\)[\s\S]{0,3000}_entryMenuHTML\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
