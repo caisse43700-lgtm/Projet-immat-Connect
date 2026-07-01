@@ -5497,10 +5497,30 @@ const AngeDialog={
   },
   _convoStop(){this._convo=false;this._convoSilence=0;try{if(this._rec)this._rec.stop();}catch(_){}},
   _afterConfirm(){if(this._convo)this._convoResume();},
-  // Réponse À VOIX HAUTE (voix → voix) : nettoie les emojis/puces avant de lire.
-  _speakAnswer(txt){try{if(typeof speak!=='function')return;const t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();if(t)speak(t,true);}catch(_){}},
-  // Commande vocale GLOBALE : ouvre Ange (si besoin) puis écoute — utilisable depuis n'importe où.
-  voiceCommand(){try{this.open&&this.open();}catch(_){}setTimeout(()=>{try{this.startVoice();}catch(_){}},250);},
+  // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t)speak(t,true);}catch(_){}},
+  // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
+  _voiceGreetQuestion(){
+    try{
+      const a=(window.ImmatNexus&&window.ImmatNexus.nextUsefulAction)?(window.ImmatNexus.nextUsefulAction()||[])[0]:null;
+      if(a){
+        if(a.run==='reply')return 'Tu as un message. Que veux-tu faire ?';
+        if(a.run==='sigveh'){const info=this._nearestInfo&&this._nearestInfo();const pl=info?(fPlate(info.plate)||info.plate):'';return pl?('Un véhicule est proche. Que veux-tu faire ?'):'Que veux-tu faire ?';}
+        if(a.run==='todo')return 'Tu as des actions en attente. Que veux-tu faire ?';
+      }
+    }catch(_){}
+    return 'Je t\'écoute. Que veux-tu faire ?';
+  },
+  // Commande vocale GLOBALE : ouvre Ange, POSE une question courte, puis écoute (après la voix, anti-écho).
+  voiceCommand(){
+    try{this.open&&this.open();}catch(_){}
+    const q=this._voiceGreetQuestion();
+    try{const r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">'+esc(q)+'</div>';}}catch(_){}
+    try{if(typeof speak==='function'&&window.S&&window.S.voice!==false)speak(q,true);}catch(_){}
+    this._convo=true;
+    const go=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(go,250);try{this.startVoice();}catch(_){}};
+    setTimeout(go,350);
+  },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
   _tryAction(msg){
