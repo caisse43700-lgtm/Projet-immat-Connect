@@ -308,6 +308,14 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_wakeHintHTML masqué si déjà armé', /_wakeHintHTML\(\)\{try\{\s*if\(this\._wakeEnabled&&this\._wakeEnabled\(\)\)return ''/.test(HTML));
   ok('accueil propose l\'armement (open append _wakeHintHTML)', /_wakeHintHTML\(\);if\(_wh\)resp\.innerHTML\+=_wh/.test(HTML));
   ok('Mode Volant ré-arme le wake word', /_driveAutoSet[\s\S]{0,320}AngeDialog\._wakeStart\(\)/.test(HTML));
+  // Lanceur vocal : ouvrir les fonctions/catégories à la voix
+  ok('méthode _tryOpen présente', HTML.includes('_tryOpen(msg)'));
+  ok('table _OPEN présente', HTML.includes('_OPEN:['));
+  ok('send() appelle _tryOpen', HTML.includes('this._tryOpen(msg)'));
+  ok('_OPEN couvre gps/messages/appels/activite/signaler/reglages/dashboard', /key:'gps'/.test(HTML) && /key:'messages'/.test(HTML) && /key:'appels'/.test(HTML) && /key:'activite'/.test(HTML) && /key:'signaler'/.test(HTML) && /key:'reglages'/.test(HTML) && /key:'dashboard'/.test(HTML));
+  ok('_tryOpen exige un verbe d\'ouverture si commande longue', /if\(!hasVerb&&words>3\)return false/.test(HTML));
+  ok('_tryOpen respecte le kill-switch (featureStatus + _blockedHTML)', /_tryOpen[\s\S]{0,1200}featureStatus\(hit\.feat\)[\s\S]{0,220}_blockedHTML\(hit\.feat/.test(HTML));
+  ok('_tryOpen ouvre via fonctions propriétaires (navMessages/navAppels/panel)', /App\.navMessages/.test(HTML) && /App\.panel&&App\.panel\('drive'\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

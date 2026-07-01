@@ -7,6 +7,36 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : lanceur vocal (ouvrir les fonctions/catégories à la voix)
+
+Demande PO : ouvrir les applications/fonctions directement avec Ange (« ouvre le GPS », « les messages »…),
+micro actif fiche Ange fermée (déjà le cas via le wake word).
+
+**`AngeDialog` (index.html)** :
+- `_OPEN` : table déclarative `{ key, re(mots-clés), feat(clé kill-switch|null), label, gardien?, open() }`.
+  Cibles : gps→`panel('drive')`+locate · messages→`navMessages` · appels→`navAppels`(+filtre manqués) ·
+  activite→`navActivite`(+ vue à traiter/nouveaux/traités) · signaler→`openReport` · reglages→`panel('settings')` ·
+  dashboard→`openGardienDashboard` (gardien only).
+- `_tryOpen(msg)` : accepte si un VERBE d'ouverture est présent (ouvre/va/montre/affiche/lance/mets/passe/
+  accède/emmène…) OU si la commande est courte (~ juste le nom). Respecte le **kill-switch** : si `feat` est
+  OFF → `_blockedHTML(feat, …)` (message + alternative fallback) + earcon error, sans ouvrir. Sinon `open()`
+  + earcon ok + ferme Ange.
+- Câblé dans `send()` après `_tryAction`, avant `_tryMenu` (donc après les actions signale/appelle/message
+  qui ont priorité, et après `_tryGuide` qui gère déjà le menu « signaler »).
+
+Flux : « Ange » → « Que veux-tu faire ? » → « ouvre le GPS » (ou « les messages », « les appels »,
+« l'activité à traiter », « réglages »…) → ouvre directement. Une fois la fonction ouverte, les catégories
+du Dashboard + le rail prennent le relais (aucune duplication).
+
+Note : ouverture = navigation réversible → pas de confirmation (les actions partagées gardent la confirmation
+par mot-action). La capture « Ange + commande en une phrase » (sans étape « que veux-tu faire ») n'est pas
+faite (risque avec interimResults) — le flux en 2 temps est robuste ; à envisager plus tard.
+
+Tests : `tests/ange-v2.test.js` **224/224** (+7 : _tryOpen, table _OPEN, câblage send, couverture des clés,
+verbe d'ouverture, kill-switch, fonctions propriétaires). `npm test` 177 + diag 3. **CACHE_NAME v424→v425**.
+
+---
+
 ## SESSION 2026-07-01 — Ange : armement vocal en 1 geste + ré-armement Mode Volant
 
 Question PO : « on voulait aucun geste, comment activer Ange à la voix ? »
