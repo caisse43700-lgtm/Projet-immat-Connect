@@ -296,7 +296,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode _earcon présente', HTML.includes('_earcon(type)'));
   ok('_earcon respecte le réglage Sons', /_earcon\(type\)\{try\{\s*if\(!\(window\.S&&window\.S\.sounds!==false\)\)return/.test(HTML));
   ok('_earcon types listen/ok/sent/error/confirm', /listen:\[[\s\S]{0,80}ok:\[[\s\S]{0,40}sent:\[[\s\S]{0,80}error:\[[\s\S]{0,40}confirm:\[/.test(HTML));
-  ok('earcon « listen » à l\'ouverture du micro', /this\._convo=true;[\s\S]{0,80}this\._earcon\('listen'\)/.test(HTML));
+  ok('earcon « listen » à l\'ouverture du micro', /this\._convo=true;[\s\S]{0,700}this\._earcon\('listen'\)/.test(HTML));
   ok('earcon « confirm » à l\'armement', /_armConfirm\(run,word\)\{[\s\S]{0,120}this\._earcon\('confirm'\)/.test(HTML));
   ok('earcon « ok » sur choix reconnu', /_earcon\('ok'\)[\s\S]{0,80}c\.run\(\)/.test(HTML));
   ok('earcon sent/error sur signalement', /_earcon\(ok\?'sent':'error'\)/.test(HTML));
@@ -320,7 +320,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode _setOrb (orbe d\'état)', HTML.includes('_setOrb(state)'));
   ok('orbe : états listen/hear/think/speak', /#angeOrb\.listen[\s\S]{0,200}#angeOrb\.hear[\s\S]{0,200}#angeOrb\.think[\s\S]{0,200}#angeOrb\.speak/.test(HTML));
   ok('helpers _showSheet/_softHide', HTML.includes('_showSheet()') && HTML.includes('_softHide()'));
-  ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,120}this\._setOrb\('listen'\)/.test(HTML));
+  ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,700}this\._setOrb\('listen'\)/.test(HTML));
   ok('onresult → orbe hear', /interimT\|\|_last\)\{try\{this\._setOrb\('hear'\)/.test(HTML));
   ok('_voiceTurn → orbe think avant envoi', /this\._setOrb\('think'\);[\s\S]{0,40}await this\.send\(\)/.test(HTML));
   ok('_speakAnswer → orbe speak', /this\._setOrb\('speak'\)[\s\S]{0,20}speak\(t,true\)/.test(HTML));
@@ -331,9 +331,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_tryOpen garde la session (soft-hide + resume)', /if\(this\._convo\)\{try\{this\._softHide\(\)[\s\S]{0,120}this\._convoResume\(\)/.test(HTML));
   ok('send() ré-affiche la fiche', /async send\(\)\{[\s\S]{0,120}this\._showSheet\(\)/.test(HTML));
   // Fix « quand je dis Ange rien ne se passe » : armement dans le geste + relance au 1er contact (iOS)
-  ok('_wakeInit relance le micro au 1er contact (iOS)', /_wakeInit[\s\S]{0,800}addEventListener\('pointerdown',h[\s\S]{0,80}addEventListener\('touchend',h/.test(HTML));
+  ok('_wakeInit : relance discrète à chaque contact (iOS keepalive)', /_wakeKeep=\(\)=>[\s\S]{0,80}_wakeStart\(\)[\s\S]{0,80}addEventListener\('pointerdown',this\._wakeKeep/.test(HTML));
   ok('bouton d\'activation ferme PUIS arme (même geste)', /AngeDialog\.close\(\)\}catch\(_\)\{\};App\.toggleAngeWake\(true\)/.test(HTML));
-  ok('close() relance le mot d\'activation', /close\(\)\{[\s\S]{0,800}_wakeEnabled\(\)[\s\S]{0,60}_wakeStart\(\)/.test(HTML));
+  ok('close() relance le mot d\'activation dans le geste', /close\(\)\{[\s\S]{0,800}_wakeEnabled\(\)\)this\._wakeStart\(\)/.test(HTML));
+  ok('taper le micro arme le mot « Ange »', /if\(!this\._wakeEnabled\(\)\)\{localStorage\.setItem\('ic_ange_wake','1'\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

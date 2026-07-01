@@ -5372,23 +5372,20 @@ const AngeDialog={
     if(this._escHandler){document.removeEventListener('keydown',this._escHandler);this._escHandler=null;}
     const resp=$('angeResponse');
     if(resp){resp.style.display='none';resp.innerHTML='';delete resp.dataset.welcome;}
-    try{if(this._wakeEnabled&&this._wakeEnabled())setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,600);}catch(_){} // reprise du mot d'activation
+    try{if(this._wakeEnabled&&this._wakeEnabled())this._wakeStart();}catch(_){} // reprise du mot d'activation DANS le geste (iOS)
   },
   // ── Mot d'activation « Ange » (opt-in) : écoute continue au premier plan uniquement.
   //    Pause auto quand le micro sert à la dictée/confirmation, ou quand Ange est ouvert, ou en arrière-plan.
   _wakeEnabled(){try{return localStorage.getItem('ic_ange_wake')==='1';}catch(_){return false;}},
   _wakeInit(){
-    if(!this._wakeBound){this._wakeBound=true;try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this._wakeStart();else this._wakeStop();});}catch(_){}}
+    if(!this._wakeBound){
+      this._wakeBound=true;
+      try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this._wakeStart();else this._wakeStop();});}catch(_){}
+      // iOS : démarrer le micro exige un geste → on (re)lance l'écoute discrètement à CHAQUE contact utilisateur
+      // (les gardes de _wakeStart évitent tout doublon ; no-op si déjà en écoute / en session / fiche ouverte).
+      try{this._wakeKeep=()=>{try{if(this._wakeEnabled())this._wakeStart();}catch(_){}};document.addEventListener('pointerdown',this._wakeKeep,{passive:true});}catch(_){}
+    }
     this._wakeStart();
-    // iOS : démarrer le micro exige un geste. Si l'écoute n'a pas pu démarrer, on la (re)lance au 1er contact.
-    try{
-      if(!this._wakeRec&&!this._wakeGestureBound){
-        this._wakeGestureBound=true;
-        const h=()=>{try{if(this._wakeEnabled())this._wakeStart();}catch(_){}if(this._wakeRec){document.removeEventListener('pointerdown',h);document.removeEventListener('touchend',h);this._wakeGestureBound=false;}};
-        document.addEventListener('pointerdown',h,{passive:true});
-        document.addEventListener('touchend',h,{passive:true});
-      }
-    }catch(_){}
   },
   _wakeStart(){
     try{
@@ -5465,6 +5462,8 @@ const AngeDialog={
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
     this._convo=true; // le micro reste ouvert tant qu'on parle avec Ange
+    // Utiliser le micro (geste) ARME aussi le mot « Ange » → après fermeture, on peut le rappeler à la voix.
+    try{if(!this._wakeEnabled()){localStorage.setItem('ic_ange_wake','1');const _wt=$('angeWakeToggle');if(_wt)_wt.checked=true;this._wakeInit&&this._wakeInit();try{toast('Astuce : dis « Ange » pour rouvrir sans toucher.','ok');}catch(_){}}}catch(_){}
     try{this._earcon('listen');}catch(_){}try{this._setOrb('listen');}catch(_){}
     try{
       const rec=new SR();
