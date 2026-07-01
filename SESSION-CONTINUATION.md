@@ -7,6 +7,27 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Dashboard : bilan des retours Ange (👍/👎) par sujet
+
+Suite de la boucle de retour : rendre le signal visible pour décider quand promouvoir les betas.
+
+**`index.html`** :
+- `App.gdAngeFeedbackBlock()` (nouveau, rendu après `gdNexusBlock` dans le tableau de bord gardien/dev) :
+  lit `localStorage.ic_ange_feedback`, mappe chaque topic vers un libellé humain (swarm→Entraide proche,
+  guardian→Recommandations gardien, brain→Prédictions / zones à risque, reliability, soul_insight, etc.),
+  liste par sujet « 👍 N · 👎 M » trié par volume décroissant, badge « en sourdine » si `down>=3 && down>up`.
+  État vide géré. **Lecture seule** (projection), conforme constitution.
+- `App.resetAngeFeedback()` : efface `ic_ange_feedback` (donnée device de l'utilisateur, pas une gouvernance
+  partagée) + toast + re-render du dashboard.
+
+Tests : `tests/ange-v2.test.js` **134/134** (+4 : bloc présent, lit la clé, rendu dans le dashboard, reset).
+`npm test` 177 + diag 3. **CACHE_NAME v412→v413** (bloc dans index.html, servi réseau ; aucun .js externe modifié).
+
+> Reste pour clore la maturation : observer ces compteurs sur le terrain, puis (si bon signal) promouvoir
+> `copilote_proactif`/`copilote_monologue` en stable (comme fait pour les Zones).
+
+---
+
 ## SESSION 2026-07-01 — Ange : boucle de retour 👍/👎 (maturation des betas)
 
 La brique explicitement identifiée comme « manquante » pour promouvoir `copilote_proactif` /
