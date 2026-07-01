@@ -224,7 +224,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
   // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
   ok('startVoice onend délègue à _voiceTurn', HTML.includes("rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn"));
-  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1000}this\._voiceMode=true;[\s\S]{0,40}await this\.send\(\)/.test(HTML));
+  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1800}this\._voiceMode=true;[\s\S]{0,40}await this\.send\(\)/.test(HTML));
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
@@ -256,6 +256,14 @@ section('B. Câblage Ange V2 (index.html)');
   ok('voiceCommand pose la question à voix haute', /voiceCommand\(\)\{[\s\S]{0,320}_voiceGreetQuestion\(\)[\s\S]{0,500}speak\(q,true\)/.test(HTML));
   ok('voiceCommand attend la fin de la voix avant d\'écouter', /voiceCommand\(\)\{[\s\S]{0,600}speechSynthesis\.speaking\)return setTimeout\(go,250\)[\s\S]{0,40}this\.startVoice\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
+  // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
+  ok('matcher fermé _pickChoice présent', HTML.includes('_pickChoice(text,choices)'));
+  ok('_voiceTurn matche les choix avant l\'envoi libre', /this\._choices&&this\._choices\.length\)\{[\s\S]{0,220}this\._pickChoice\(v,this\._choices\)/.test(HTML));
+  ok('signalement : problèmes deviennent des choix vocaux', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],run:\(\)=>this\.angeSignalConfirm/.test(HTML));
+  ok('réponses proposées deviennent des choix vocaux', /this\._choices=choices\.map\(c=>\(\{words:[\s\S]{0,120}angeReplyConfirm/.test(HTML));
+  ok('« annule/autre » quitte les choix', /annule\|annuler\|retour\|autre[\s\S]{0,60}this\._choices=null/.test(HTML));
+  ok('renderResponse efface les choix fermés', /renderResponse\(r\)\{\s*this\._choices=null/.test(HTML));
+  ok('close() efface les choix fermés', /close\(\)\{[\s\S]{0,90}this\._choices=null/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
