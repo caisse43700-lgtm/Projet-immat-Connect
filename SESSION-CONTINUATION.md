@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : earcons (incrément 4, feedback sonore non ambigu)
+
+Objectif : remplacer des phrases par des sons courts → moins bavard, moins distrayant au volant.
+
+**`AngeDialog._earcon(type)`** (index.html) : Web Audio (OscillatorNode + GainNode, aucun fichier),
+AudioContext lazy `this._actx` (resume si suspended). Respecte `S.sounds` (réglage Sons). Types :
+- `listen` (660→880, montant) : ouverture du micro ;
+- `ok` (760) : choix reconnu par le rail ;
+- `sent` (880→1320, ding) : action envoyée ;
+- `error` (210, square, grave) : échec ;
+- `confirm` (520→660) : carte de confirmation armée.
+Branchements : `startVoice`→listen ; `_armConfirm`→confirm ; `_voiceTurn` (choix matché)→ok ;
+`angeSignalConfirm`/`angeMessageConfirm`/`angeReplyConfirm`→sent|error ; `angeCallConfirm`→sent|error.
+
+Tests : `tests/ange-v2.test.js` **209/209** (+7 : méthode, gate Sons, types, listen/confirm/ok/sent-error branchés).
+`npm test` 177 + diag 3. **CACHE_NAME v421→v422**.
+
+> Reste de l'archi vocale : la projection mère `angeTurn()` (unification/refactor) — à faire quand on
+> voudra consolider ; les 4 incréments visibles (narration, mot-action, Mode Volant, earcons) sont livrés.
+
+---
+
 ## SESSION 2026-07-01 — Mode Volant automatique (incrément 3 : écran maintenu, micro vivant)
 
 Objectif : au volant, l'écran ne doit pas s'éteindre (sinon micro coupé) et l'app doit savoir qu'on conduit.

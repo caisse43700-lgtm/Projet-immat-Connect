@@ -5454,6 +5454,7 @@ const AngeDialog={
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
     this._convo=true; // le micro reste ouvert tant qu'on parle avec Ange
+    try{this._earcon('listen');}catch(_){}
     try{
       const rec=new SR();
       this._rec=rec;
@@ -5495,7 +5496,7 @@ const AngeDialog={
       const low=v.toLowerCase();
       if(/\b(annule|annuler|retour|autre|autre chose|rien|laisse)\b/.test(low)){this._choices=null;return this._convoResume();}
       const c=this._pickChoice(v,this._choices);
-      if(c){this._choices=null;try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
+      if(c){this._choices=null;try{this._earcon('ok');}catch(_){}try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
       this._choices=null; // pas de correspondance → on retombe sur une commande libre
     }
     const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
@@ -5532,6 +5533,15 @@ const AngeDialog={
     const t=' '+String(text||'').toLowerCase().replace(/[^0-9a-zà-ÿ\s]/gi,' ').replace(/\s+/g,' ')+' ';
     for(const c of (choices||[])){for(const w of (c.words||[])){if(w&&t.indexOf(w)>=0)return c;}}
   }catch(_){}return null;},
+  // Earcons : sons courts non ambigus (Web Audio, aucun fichier). Respecte le réglage Sons.
+  _earcon(type){try{
+    if(!(window.S&&window.S.sounds!==false))return;
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    const ctx=this._actx||(this._actx=new AC());if(ctx.state==='suspended'){try{ctx.resume();}catch(_){}}
+    const seq={listen:[[660,0,0.06],[880,0.07,0.08]],ok:[[760,0,0.07]],sent:[[880,0,0.07],[1320,0.08,0.13]],error:[[210,0,0.20]],confirm:[[520,0,0.07],[660,0.09,0.10]]}[type]||[[600,0,0.08]];
+    const t0=ctx.currentTime;
+    seq.forEach(function(s){const f=s[0],at=s[1],dur=s[2];const o=ctx.createOscillator(),g=ctx.createGain();o.type=(type==='error'?'square':'sine');o.frequency.value=f;g.gain.setValueAtTime(0.0001,t0+at);g.gain.exponentialRampToValueAtTime(0.14,t0+at+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+at+dur);o.connect(g);g.connect(ctx.destination);o.start(t0+at);o.stop(t0+at+dur+0.02);});
+  }catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
   _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t)speak(t,true);}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
@@ -5780,7 +5790,7 @@ const AngeDialog={
   angeReplyConfirm(plate,text,ctx){
     const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
     Promise.resolve((async()=>{try{if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;const opts=ctx?{context_type:ctx}:{};const ok=await window.ImmatMessages.sendToPlate(nPlate(plate),text,opts);return ok!==false;}catch(_){return false;}})()).then(ok=>{
-      if(ok)this._rememberTarget(plate);this._log(ok?'action':'refus',(ok?'Réponse à ':'Échec réponse ')+(fPlate(plate)||plate));
+      if(ok)this._rememberTarget(plate);this._log(ok?'action':'refus',(ok?'Réponse à ':'Échec réponse ')+(fPlate(plate)||plate));try{this._earcon(ok?'sent':'error');}catch(_){}
       if(r)r.innerHTML=ok?'<div style="line-height:1.6">✅ Réponse envoyée à <b>'+esc(fPlate(plate)||plate)+'</b>.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer la réponse.</div>';
     });
   },
@@ -5814,6 +5824,7 @@ const AngeDialog={
   _armConfirm(run,word){
     this._clearPending();
     this._pending={run:run,word:word||null};
+    try{this._earcon('confirm');}catch(_){}
     this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();this._log('cancel','Expiré (15 s sans confirmation)');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';try{this._afterConfirm();}catch(_){}}},15000);
     // Voix : écoute courte pendant que la carte est ouverte (jamais en continu → anti faux-positif)
     try{
@@ -5874,7 +5885,7 @@ const AngeDialog={
   angeSignalConfirm(plate,label){
     const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
     Promise.resolve(this._sendVehicleSignal(plate,label)).then(ok=>{
-      this._log(ok?'action':'refus',(ok?'Signalé ':'Échec signalement ')+(fPlate(plate)||plate)+' : '+label);
+      this._log(ok?'action':'refus',(ok?'Signalé ':'Échec signalement ')+(fPlate(plate)||plate)+' : '+label);try{this._earcon(ok?'sent':'error');}catch(_){}
       if(!r)return;
       r.innerHTML=ok?'<div style="line-height:1.6">✅ Signalement envoyé à <b>'+esc(fPlate(plate)||plate)+'</b> : '+esc(label)+'.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer (véhicule peut-être non connecté ou messagerie indisponible).</div>';
     });
@@ -5930,11 +5941,11 @@ const AngeDialog={
       if(window.CallManager&&window.CallManager.contactByCall){
         window.CallManager.contactByCall(nPlate(plate),'');
         this._rememberTarget(plate);
-        this._log('action','Appel lancé : '+(fPlate(plate)||plate));
+        this._log('action','Appel lancé : '+(fPlate(plate)||plate));try{this._earcon('sent');}catch(_){}
         if(r)r.innerHTML='<div style="line-height:1.6">📞 Appel lancé vers <b>'+esc(fPlate(plate)||plate)+'</b>.</div>';
         try{this.close&&this.close();}catch(_){}
-      }else if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Les appels sont indisponibles pour le moment.</div>';
-    }catch(e){if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu lancer l\'appel.</div>';}
+      }else{try{this._earcon('error');}catch(_){}if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Les appels sont indisponibles pour le moment.</div>';}
+    }catch(e){try{this._earcon('error');}catch(_){}if(r)r.innerHTML='<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu lancer l\'appel.</div>';}
   },
   // ── Ange ENVOIE UN MESSAGE libre à un véhicule : « envoie un message au véhicule devant : ralentis »
   _tryMessage(msg){
@@ -5976,7 +5987,7 @@ const AngeDialog={
     const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#7c6af7">Envoi en cours…</div>';
     Promise.resolve((async()=>{try{if(!(window.ImmatMessages&&window.ImmatMessages.sendToPlate))return false;const ok=await window.ImmatMessages.sendToPlate(nPlate(plate),text);return ok!==false;}catch(_){return false;}})()).then(ok=>{
       if(ok)this._rememberTarget(plate);
-      this._log(ok?'action':'refus',(ok?'Message à ':'Échec message ')+(fPlate(plate)||plate));
+      this._log(ok?'action':'refus',(ok?'Message à ':'Échec message ')+(fPlate(plate)||plate));try{this._earcon(ok?'sent':'error');}catch(_){}
       if(r)r.innerHTML=ok?'<div style="line-height:1.6">✅ Message envoyé à <b>'+esc(fPlate(plate)||plate)+'</b>.</div>':'<div style="color:#f0a500;line-height:1.6">Je n\'ai pas pu envoyer (véhicule peut-être non connecté).</div>';
     });
   },
