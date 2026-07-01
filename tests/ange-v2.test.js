@@ -243,6 +243,16 @@ section('B2. Anti-chevauchement Narrator ⇄ CoPilot');
   // garde effective : Narrator saute si sujet déjà surfacé ; CoPilot saute si bulle déjà montrée
   ok('Narrator saute la bulle si déjà surfacé', /_surfacedRecently\(topic\)\)\s*return/.test(NAR));
   ok('CoPilot saute la parole si déjà surfacé', /_surfacedRecently\(_topic\)\)\s*return/.test(COP));
+  // Boucle de retour 👍/👎 (device-only) : même clé partagée, mise en sourdine des deux côtés
+  ok('Narrator utilise la clé de retour ic_ange_feedback', NAR.includes("'ic_ange_feedback'"));
+  ok('CoPilot utilise la clé de retour ic_ange_feedback', COP.includes("'ic_ange_feedback'"));
+  ok('Narrator : _fbRecord + _topicMuted', NAR.includes('_fbRecord(') && NAR.includes('_topicMuted('));
+  ok('CoPilot : _fbRecord + _topicMuted', COP.includes('_fbRecord(') && COP.includes('_topicMuted('));
+  ok('Narrator : bulle masquée si sujet en sourdine', /topic && _topicMuted\(topic\)\)\s*return/.test(NAR));
+  ok('CoPilot : silence si sujet en sourdine', /_topicMuted\(_topic \|\| theme\)\)\s*return/.test(COP));
+  ok('Seuil de sourdine cohérent (FB_MUTE_MIN = 3)', NAR.includes('FB_MUTE_MIN = 3') && COP.includes('FB_MUTE_MIN = 3'));
+  // « oublie ce que tu as appris » réinitialise aussi le retour
+  ok('_tryForget réinitialise ic_ange_feedback', HTML.includes("removeItem('ic_ange_feedback')"));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

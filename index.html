@@ -5063,11 +5063,11 @@ function showReputationToast(){
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
 <script src="core/brain-engine.js?v=1"></script>
-<script src="core/narrator.js?v=7"></script>
+<script src="core/narrator.js?v=8"></script>
 <script src="core/swarm-engine.js?v=1"></script>
 <script src="core/immat-consciousness.js?v=2"></script>
 <script src="core/immat-soul.js?v=1"></script>
-<script src="core/immat-copilot.js?v=5"></script>
+<script src="core/immat-copilot.js?v=6"></script>
 <script src="core/immat-test-engine.js?v=2"></script>
 <script>
 const ImmatestUI = {
@@ -5642,7 +5642,7 @@ const AngeDialog={
     try{
       var t=String(msg||'').toLowerCase();
       if(!/(oublie|r[ée]initialise|efface|remets? à z[ée]ro).{0,20}(appris|m[ée]moire|habitude|historique|journal|tout)/.test(t))return false;
-      try{localStorage.removeItem('ic_ange_log');localStorage.removeItem('ic_ange_last_target');localStorage.removeItem('ic_ange_learn');}catch(_){}
+      try{localStorage.removeItem('ic_ange_log');localStorage.removeItem('ic_ange_last_target');localStorage.removeItem('ic_ange_learn');localStorage.removeItem('ic_ange_feedback');localStorage.removeItem('ic_ange_next_prev');}catch(_){}
       var r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">🧹 C\'est fait — j\'ai oublié mon journal et le dernier véhicule. Je repars de zéro.</div>';}
       $('angeMsg').value='';return true;
     }catch(_){return false;}

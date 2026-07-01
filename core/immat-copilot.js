@@ -51,6 +51,14 @@ const ImmatCoPilot = (function () {
   function _surfacedRecently(topic) { try { const t = (window._icSurfaced || {})[topic]; return !!t && (Date.now() - t) < SURFACE_WINDOW; } catch (_) { return false; } }
   function _markSurfaced(topic) { try { (window._icSurfaced = window._icSurfaced || {})[topic] = Date.now(); } catch (_) {} }
 
+  // Boucle de retour (device-only, partagée avec Narrator via la même clé) : 👍/👎.
+  // Un sujet trop souvent rejeté est mis en sourdine. Trace = compteurs ; projection = _topicMuted.
+  const FB_KEY = 'ic_ange_feedback';
+  const FB_MUTE_MIN = 3;
+  function _fbLoad() { try { return JSON.parse(localStorage.getItem(FB_KEY) || '{}'); } catch (_) { return {}; } }
+  function _fbRecord(topic, up) { try { if (!topic) return; const f = _fbLoad(); const t = f[topic] || { up: 0, down: 0 }; if (up) t.up++; else t.down++; f[topic] = t; localStorage.setItem(FB_KEY, JSON.stringify(f)); } catch (_) {} }
+  function _topicMuted(topic) { try { const t = _fbLoad()[topic]; return !!t && t.down >= FB_MUTE_MIN && t.down > t.up; } catch (_) { return false; } }
+
   let _timer   = null;
   let _running = false;
 
@@ -226,6 +234,8 @@ const ImmatCoPilot = (function () {
     // Si une bulle « ✦ » vient de couvrir ce sujet, on ne le redit pas à voix haute.
     const _topic = THEME_TOPIC[theme];
     if (_topic && _surfacedRecently(_topic)) return;
+    // Sujet mis en sourdine par l'utilisateur (trop de 👎) → on se tait.
+    if (_topicMuted(_topic || theme)) return;
 
     _remember(theme, msg);
 
@@ -294,6 +304,22 @@ const ImmatCoPilot = (function () {
         ? `<button onclick="event.stopPropagation();try{window.App.openGardienDashboard();}catch(e){} var p=document.getElementById('copilotPanel');if(p){p.style.opacity='0';setTimeout(()=>p.remove(),400);}" style="display:inline-block;margin-top:10px;padding:6px 14px;background:#7c6af7;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Voir le tableau de bord →</button>`
         : '';
       el.innerHTML = `<span style="opacity:.55;font-size:11px;display:block;margin-bottom:4px">Ange · co-pilote</span>${icon} ${msg}${actionBtn}`;
+      // Boucle de retour : 👍/👎 (device-only). Plusieurs 👎 sur un sujet → Ange se tait sur ce sujet.
+      try {
+        const fbTopic = THEME_TOPIC[theme] || theme;
+        const fb = document.createElement('div');
+        fb.style.cssText = 'margin-top:10px;display:flex;gap:8px;justify-content:flex-end';
+        const mk = (label, up) => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.textContent = label;
+          b.style.cssText = 'background:#0f0f1a;border:1px solid #7c83fd;border-radius:8px;color:#c4b5fd;padding:4px 10px;font-size:12px;cursor:pointer';
+          b.addEventListener('click', (e) => { e.stopPropagation(); _fbRecord(fbTopic, up); el.style.opacity = '0'; setTimeout(() => el.remove(), 400); });
+          return b;
+        };
+        fb.appendChild(mk('👍 utile', true));
+        fb.appendChild(mk('👎', false));
+        el.appendChild(fb);
+      } catch (_) {}
       el.style.opacity = '1';
 
       // Auto-effacement après 12 s (sauf urgence)
