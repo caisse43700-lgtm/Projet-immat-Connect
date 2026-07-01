@@ -7,6 +7,32 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : auto-narration des choix (incrément 1 « zéro regard »)
+
+Suite du rail : le rail savait ÉCOUTER les choix, mais Ange ne les DISAIT pas → il fallait regarder
+l'écran. Correctif : Ange énonce les choix à voix haute en conversation vocale.
+
+**`AngeDialog` (index.html)** :
+- `_narrateChoices(intro)` : si `this._convo` (interaction vocale) ET voix активée, dit
+  « [intro] opt1, opt2, opt3 (, ou autre) ? » — ≤ 3 options, emojis retirés, via `speak(…,true)`.
+- Chaque choix porte désormais un champ `say` (mot dit par Ange) :
+  `_signalNearest` PROBS = [label, mots, say] → say : pneu / porte / feux / trappe / fumée / objet ;
+  `_replyLatest` : say = libellé de la réponse. Après avoir posé `this._choices`, on appelle `_narrateChoices`.
+- Gaté sur `_convo` → pas de narration quand l'utilisateur tape à l'arrêt.
+
+Flux mains-libres complet : « Ange » → « Que veux-tu faire ? » → « signale un véhicule » → Ange DIT
+« Pneu, porte, ou feux ? » → l'utilisateur dit « pneu » (matché par le rail fermé) → `angeSignalConfirm`
+envoie. La reprise du micro (`_convoResume`) attend la fin de la narration (anti auto-écoute, déjà en place).
+
+Réutilise 100 % l'existant (rail + fonctions propriétaires). Aucun moteur. Prochains incréments de l'archi :
+confirmations par mot-action ; Mode Volant auto (vitesse + Screen Wake Lock) ; earcons ; puis la projection
+mère `angeTurn()` comme unification (refactor structurel, différé pour rester sûr).
+
+Tests : `tests/ange-v2.test.js` **183/183** (+5 : _narrateChoices présent/gated/parle, say+narration signal & réponse).
+`npm test` 177 + diag 3. **CACHE_NAME v418→v419**.
+
+---
+
 ## SESSION 2026-07-01 — Ange : RAIL VOCAL (matcher à vocabulaire fermé) — cœur de l'eurêka
 
 Idée validée (défi vocal / ChatGPT) : en voiture, reconnaître une phrase LIBRE est fragile ; reconnaître

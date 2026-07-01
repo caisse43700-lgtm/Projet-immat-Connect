@@ -5506,6 +5506,15 @@ const AngeDialog={
   },
   _convoStop(){this._convo=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}},
   _afterConfirm(){if(this._convo)this._convoResume();},
+  // Auto-narration : en conversation vocale, Ange DIT les choix (≤3) pour un usage au volant sans écran.
+  _narrateChoices(intro){try{
+    if(!this._convo)return; // uniquement en interaction vocale (pas quand on tape à l'arrêt)
+    if(typeof speak!=='function'||!(window.S&&window.S.voice!==false))return;
+    const opts=(this._choices||[]).map(c=>String(c.say||'').replace(/[^0-9a-zà-ÿ\s'/-]/gi,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+    if(!opts.length)return;
+    let phrase=(intro?intro+' ':'')+opts.slice(0,3).join(', ')+(opts.length>3?', ou autre':'')+' ?';
+    speak(phrase,true);
+  }catch(_){}},
   // Matcher à vocabulaire FERMÉ : la parole doit correspondre à l'un des choix affichés (sinon null).
   _pickChoice(text,choices){try{
     const t=' '+String(text||'').toLowerCase().replace(/[^0-9a-zà-ÿ\s]/gi,' ').replace(/\s+/g,' ')+' ';
@@ -5685,10 +5694,11 @@ const AngeDialog={
     if(!info){r.innerHTML='<div style="line-height:1.6">🚗 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';return;}
     const _pl=esc(fPlate(info.plate)||info.plate);const _d=this._distLabel(info.dist);
     // [libellé, mots d'écoute] — rail vocal : on n'écoute que ces mots-clés
-    const PROBS=[['Pneu dégonflé',['pneu','roue','dégonfl','degonfl']],['Porte ou coffre ouvert',['porte','coffre','hayon']],['Feux / phares',['feu','phare','clignot','lumi','veilleu']],['Trappe carburant ouverte',['trappe','carburant','essence','réservoir','reservoir','gasoil','gazole']],['Fumée / départ de feu',['fum','incendie','brûl','brul','flamme']],['Objet sur le toit',['objet','toit','galerie','charge']]];
+    const PROBS=[['Pneu dégonflé',['pneu','roue','dégonfl','degonfl'],'pneu'],['Porte ou coffre ouvert',['porte','coffre','hayon'],'porte'],['Feux / phares',['feu','phare','clignot','lumi','veilleu'],'feux'],['Trappe carburant ouverte',['trappe','carburant','essence','réservoir','reservoir','gasoil','gazole'],'trappe'],['Fumée / départ de feu',['fum','incendie','brûl','brul','flamme'],'fumée'],['Objet sur le toit',['objet','toit','galerie','charge'],'objet']];
     r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">🚘 Le plus proche : <b>'+_pl+'</b>'+(_d?' ('+esc(_d)+')':'')+'.<br>Que veux-tu lui signaler ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+PROBS.map(p=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(info.plate)+'\',\''+js(p[0])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(p[0])+'</button>').join('')+'</div>';
-    // Rail : la parole (« pneu », « porte »…) sélectionne le bon problème
-    this._choices=PROBS.map(p=>({words:p[1],run:()=>this.angeSignalConfirm(info.plate,p[0])}));},
+    // Rail : la parole (« pneu », « porte »…) sélectionne le bon problème ; say = mot dit par Ange
+    this._choices=PROBS.map(p=>({words:p[1],say:p[2],run:()=>this.angeSignalConfirm(info.plate,p[0])}));
+    this._narrateChoices('');},
   _callNearest(){const r=$('angeResponse');if(!r)return;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
     const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
     if(!_fs.enabled){r.innerHTML=this._blockedHTML('appels','📞 Les appels sont désactivés '+(_fs.by==='user'?'(Réglages)':'par l\'administrateur')+'.');return;}
@@ -5750,8 +5760,9 @@ const AngeDialog={
     if(!plate){r.innerHTML='<div style="line-height:1.6">Je ne retrouve pas l\'expéditeur du dernier message.</div>';$('angeMsg').value='';return true;}
     const _pl=esc(fPlate(plate)||plate);const choices=this._replyChoices(m0.context_type);
     r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Répondre à <b>'+_pl+'</b> — propositions :</div><div style="display:flex;flex-wrap:wrap">'+choices.map(c=>'<button onclick="AngeDialog.angeReplyConfirm(\''+js(plate)+'\',\''+js(c[0])+'\',\''+js(c[1])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(c[0])+'</button>').join('')+'</div>';
-    // Rail : la parole matche une réponse proposée (mots-clés = tokens du libellé, >2 lettres)
-    this._choices=choices.map(c=>({words:String(c[0]).toLowerCase().replace(/[^0-9a-zà-ÿ\s]/gi,' ').split(/\s+/).filter(w=>w.length>2),run:()=>this.angeReplyConfirm(plate,c[0],c[1])}));
+    // Rail : la parole matche une réponse proposée (mots-clés = tokens du libellé, >2 lettres) ; say = le libellé
+    this._choices=choices.map(c=>({words:String(c[0]).toLowerCase().replace(/[^0-9a-zà-ÿ\s]/gi,' ').split(/\s+/).filter(w=>w.length>2),say:c[0],run:()=>this.angeReplyConfirm(plate,c[0],c[1])}));
+    this._narrateChoices('Réponds :');
     $('angeMsg').value='';return true;
   },
   angeReplyConfirm(plate,text,ctx){
