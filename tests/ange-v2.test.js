@@ -229,6 +229,15 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
   ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(){'));
   ok('bouton micro global fabVoice', HTML.includes('id="fabVoice"') && HTML.includes('AngeDialog.voiceCommand'));
+  // Mot d'activation « Ange » (opt-in, écoute continue au premier plan)
+  ['_wakeEnabled', '_wakeInit', '_wakeStart', '_wakeStop'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
+  ok('réglage toggle angeWakeToggle', HTML.includes('id="angeWakeToggle"') && HTML.includes('App.toggleAngeWake'));
+  ok('toggleAngeWake pilote le listener', /toggleAngeWake\(on\)\{[\s\S]{0,200}_wakeInit[\s\S]{0,60}_wakeStop/.test(HTML));
+  ok('mot d\'activation = « ange »', /\/\\b\(ok \|h\[eé\] \|hey \|dis \)\?ange\\b\//.test(HTML));
+  ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)return/.test(HTML));
+  ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,700}ange-open'\)\)return/.test(HTML));
+  ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{\s*try\{this\._wakeStop/.test(HTML));
+  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
