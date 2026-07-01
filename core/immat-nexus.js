@@ -488,5 +488,15 @@
     } catch (e) { return null; }
   }
 
-  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor, nextUsefulAction: nextUsefulAction, currentSituation: currentSituation };
+  // ── PROJECTION MÈRE (SPEC-ANGE-NEXT-ACTION) : un TOUR complet, lecture seule ────
+  // Unifie les trois projections : où on en est (situation), quoi proposer (actions ≤3),
+  // et s'il y a un écart utile (hasUseful). N'agit jamais ; ne duplique aucun état.
+  function angeTurn() {
+    try {
+      var acts = nextUsefulAction() || [];
+      return { situation: currentSituation(), actions: acts, hasUseful: acts.length > 0 };
+    } catch (e) { return { situation: null, actions: [], hasUseful: false }; }
+  }
+
+  w.ImmatNexus = { init: init, sense: sense, ask: ask, explain: explain, audit: audit, featureKeyFromText: featureKeyFromText, fallbackFor: fallbackFor, nextUsefulAction: nextUsefulAction, currentSituation: currentSituation, angeTurn: angeTurn };
 })(typeof window !== 'undefined' ? window : this);

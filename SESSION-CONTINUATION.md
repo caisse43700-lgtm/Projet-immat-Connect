@@ -7,6 +7,28 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : projection mère angeTurn() (incrément 5, unification)
+
+Dernier item de l'architecture vocale : une projection unique qui décrit un TOUR complet.
+
+**`core/immat-nexus.js` v13→v14** : `angeTurn()` (lecture seule) compose les trois projections existantes —
+`{ situation: currentSituation(), actions: nextUsefulAction() (≤3, calculé une fois), hasUseful }`. N'agit
+jamais, ne duplique aucun état. Exposée dans `w.ImmatNexus`.
+
+**`index.html`** : `_voiceGreetQuestion` consomme désormais `ImmatNexus.angeTurn()` (un seul appel décrit le
+tour ; repli sur `nextUsefulAction()` si absent). Aucun flux existant retiré — `_situationHTML`/`_nextActionsHTML`
+et le rail continuent d'utiliser directement les sous-projections ; `angeTurn()` est la façade unifiante
+disponible pour la suite (consolidation, pas de refactor destructif).
+
+Tests : `tests/ange-v2.test.js` **213/213** (+4 : angeTurn exposé + shape {situation,actions[],hasUseful} ;
+Nexus.angeTurn référencé ; _voiceGreetQuestion le consomme). `npm test` 177 + diag 3. **CACHE_NAME v422→v423**.
+
+**Bilan : architecture vocale « zéro regard, zéro clic » COMPLÈTE (5/5)** — auto-narration · mot-action ·
+Mode Volant · earcons · projection mère. Prochaine étape = **observation terrain** (tester en conduite),
+pas d'ajout de code spéculatif.
+
+---
+
 ## SESSION 2026-07-01 — Ange : earcons (incrément 4, feedback sonore non ambigu)
 
 Objectif : remplacer des phrases par des sons courts → moins bavard, moins distrayant au volant.

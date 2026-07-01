@@ -150,6 +150,11 @@ section('A. ImmatNexus (module réel) — matrice d\'intentions');
   ok('fil rouge : signalement reçu → phrase prioritaire', !!cs2 && /signalement reçu non traité/.test(cs2.phrase));
   S._actMessages = []; delete App._computeTodo; delete S._brainOrientation;
 
+  // angeTurn() : projection mère (situation + actions + hasUseful)
+  ok('angeTurn exposé', typeof window.ImmatNexus.angeTurn === 'function');
+  const _tn = window.ImmatNexus.angeTurn();
+  ok('angeTurn renvoie {situation, actions[], hasUseful}', !!_tn && Array.isArray(_tn.actions) && typeof _tn.hasUseful === 'boolean' && ('situation' in _tn));
+
   // governance.disabledNotable : ne signale que les fonctions STABLES normalement actives, coupées
   // (les beta off-par-défaut comme zones_accidentogenes ne sont PAS un avertissement).
   window._fleetFlagsCache = S._fleetFlags = {};
@@ -295,6 +300,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('earcon « confirm » à l\'armement', /_armConfirm\(run,word\)\{[\s\S]{0,120}this\._earcon\('confirm'\)/.test(HTML));
   ok('earcon « ok » sur choix reconnu', /this\._earcon\('ok'\);\}catch\(_\)\{\}try\{c\.run/.test(HTML));
   ok('earcon sent/error sur signalement', /_earcon\(ok\?'sent':'error'\)/.test(HTML));
+  // Projection mère angeTurn() — unification lecture seule
+  ok('Nexus expose angeTurn', HTML.includes('ImmatNexus.angeTurn'));
+  ok('_voiceGreetQuestion consomme angeTurn', /window\.ImmatNexus\.angeTurn\(\)[\s\S]{0,120}tn\.actions/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
