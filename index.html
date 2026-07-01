@@ -5173,6 +5173,7 @@ const ImmatestUI = {
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
 <script src="core/immat-nexus.js?v=14"></script>
+<script src="core/immat-facts.js?v=1"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5661,10 +5662,7 @@ const AngeDialog={
         accident:{label:'💥 Accident',act:['road','accident']},bouchon:{label:'🚦 Bouchon',act:['road','bouchon']},
         obstacle:{label:'⚠️ Obstacle',act:['road','obstacle']},travaux:{label:'🚧 Travaux',act:['road','travaux']},
         controle:{label:'👮 Contrôle',act:['road','controle']},danger:{label:'❗ Danger',act:['road','danger']}}},
-      vehicule:{label:'🚘 Véhicule',feature:'signalement_vehicule',children:{
-        pneu:{label:'Pneu dégonflé',act:['veh','Pneu dégonflé']},porte:{label:'Porte/coffre ouvert',act:['veh','Porte ou coffre ouvert']},
-        feux:{label:'Feux/phares',act:['veh','Feux / phares']},trappe:{label:'Trappe carburant',act:['veh','Trappe carburant ouverte']},
-        fumee:{label:'Fumée/feu',act:['veh','Fumée / départ de feu']},objet:{label:'Objet sur le toit',act:['veh','Objet sur le toit']}}},
+      vehicule:{label:'🚘 Véhicule',feature:'signalement_vehicule',children:(function(){try{const o={};window.FactCatalog.offered(window.FactCatalog.get('SIGNAL_VEHICULE')).forEach(p=>{o[p.key]={label:p.short,act:['veh',p.label]};});return o;}catch(_){return{};}})()},
       aide:{label:'🆘 Aide',feature:'aide',act:['open','sigStepAide']},
       stationne:{label:'🅿️ Stationné',feature:'signalement_stationne',act:['open','sigStepStation']}}},
     activite:{label:'Activité',children:{
@@ -5749,11 +5747,11 @@ const AngeDialog={
     const info=this._nearestInfo();
     if(!info){r.innerHTML='<div style="line-height:1.6">🚗 Aucun véhicule connecté à proximité pour le moment. Donne la plaque : « signale à AB-123-CD pneu dégonflé ».</div>';return;}
     const _pl=esc(fPlate(info.plate)||info.plate);const _d=this._distLabel(info.dist);
-    // [libellé, mots d'écoute] — rail vocal : on n'écoute que ces mots-clés
-    const PROBS=[['Pneu dégonflé',['pneu','roue','dégonfl','degonfl'],'pneu'],['Porte ou coffre ouvert',['porte','coffre','hayon'],'porte'],['Feux / phares',['feu','phare','clignot','lumi','veilleu'],'feux'],['Trappe carburant ouverte',['trappe','carburant','essence','réservoir','reservoir','gasoil','gazole'],'trappe'],['Fumée / départ de feu',['fum','incendie','brûl','brul','flamme'],'fumée'],['Objet sur le toit',['objet','toit','galerie','charge'],'objet']];
-    r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">🚘 Le plus proche : <b>'+_pl+'</b>'+(_d?' ('+esc(_d)+')':'')+'.<br>Que veux-tu lui signaler ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+PROBS.map(p=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(info.plate)+'\',\''+js(p[0])+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(p[0])+'</button>').join('')+'</div>';
+    // Problèmes véhicule : SOURCE UNIQUE = FactCatalog (rail vocal + boutons dérivés d'une seule déclaration)
+    const PROBS=window.FactCatalog.offered(window.FactCatalog.get('SIGNAL_VEHICULE'));
+    r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">🚘 Le plus proche : <b>'+_pl+'</b>'+(_d?' ('+esc(_d)+')':'')+'.<br>Que veux-tu lui signaler ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+PROBS.map(p=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(info.plate)+'\',\''+js(p.label)+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(p.label)+'</button>').join('')+'</div>';
     // Rail : la parole (« pneu », « porte »…) sélectionne le bon problème ; say = mot dit par Ange
-    this._choices=PROBS.map(p=>({words:p[1],say:p[2],run:()=>this.angeSignalConfirm(info.plate,p[0])}));
+    this._choices=PROBS.map(p=>({words:p.words,say:p.say,run:()=>this.angeSignalConfirm(info.plate,p.label)}));
     this._narrateChoices('');},
   _callNearest(){const r=$('angeResponse');if(!r)return;r.style.display='block';delete r.dataset.welcome;try{const _s=$('angeStatus');if(_s)_s.style.display='none';}catch(_){}
     const _fs=App.featureStatus?App.featureStatus('appels'):{enabled:true,by:null};
@@ -5937,11 +5935,12 @@ const AngeDialog={
       // Aucune cible explicite : on PROPOSE l'immatriculation connectée la plus proche (par distance).
       if(!plate){if(this._nearestInfo()){this._signalNearest();$('angeMsg').value='';return true;}r.innerHTML='<div style="line-height:1.6">À quel véhicule ? Dis « <b>au véhicule devant</b> » ou la plaque (ex. « signale à AB-123-CD pneu dégonflé »).</div>';$('angeMsg').value='';return true;}
       if(plate===(App.ownPlate?App.ownPlate():'')){r.innerHTML='<div style="line-height:1.6">Impossible de te signaler toi-même 🙂</div>';$('angeMsg').value='';return true;}
-      const LBL=[[/pneu|roue|d[ée]gonfl/,'Pneu dégonflé'],[/porte|coffre|hayon/,'Porte ou coffre ouvert'],[/trappe|carburant|essence|r[ée]servoir/,'Trappe carburant ouverte'],[/phare|feu|clignot|lumi[èe]re|veilleuse/,'Feux / phares'],[/fum|incendie|br[uû]l/,'Fumée / départ de feu'],[/objet|toit|galerie|charge/,'Objet sur le toit'],[/fuite|huile|liquide/,'Fuite sous le véhicule']];
-      let label=null;for(let i=0;i<LBL.length;i++){if(LBL[i][0].test(t)){label=LBL[i][1];break;}}
+      // Problèmes véhicule : SOURCE UNIQUE = FactCatalog (parse dictée libre + boutons)
+      const _F=window.FactCatalog.get('SIGNAL_VEHICULE');
+      const _mp=window.FactCatalog.matchOption(_F,t);let label=_mp?_mp.label:null;
       const _pl=esc(fPlate(plate)||plate);
       if(!label){
-        const choices=['Pneu dégonflé','Porte ou coffre ouvert','Feux / phares','Trappe carburant ouverte','Fumée / départ de feu','Objet sur le toit'];
+        const choices=window.FactCatalog.offered(_F).map(p=>p.label);
         r.innerHTML='<div style="line-height:1.6;margin-bottom:8px">Quel problème pour <b>'+_pl+'</b>'+(how==='devant'?' (véhicule devant)':'')+' ?</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+choices.map(l=>'<button onclick="AngeDialog.angeSignalConfirm(\''+js(plate)+'\',\''+js(l)+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">'+esc(l)+'</button>').join('')+'</div>';
         $('angeMsg').value='';return true;
       }

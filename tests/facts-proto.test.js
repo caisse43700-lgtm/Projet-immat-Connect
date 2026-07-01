@@ -76,6 +76,17 @@ ok('parole inconnue → aucune proposition', FactCatalog.propose('quelle heure e
 // 7) Explication GÉNÉRÉE (Nexus)
 ok('SIGNAL → explication non vide', FactCatalog.explain(FactCatalog.get('SIGNAL_VEHICULE')).length > 10);
 
+// 8) SOURCE UNIQUE des problèmes (E2) — rail, boutons, parse et menu dérivent d'une seule déclaration
+const SIG = FactCatalog.get('SIGNAL_VEHICULE');
+ok('SIGNAL → 7 problèmes déclarés (1 non offert)', SIG.problems.length === 7);
+ok('offered() → 6 problèmes proposés (fuite exclue)', FactCatalog.offered(SIG).length === 6);
+ok('offered() exclut fuite (offer:false)', !FactCatalog.offered(SIG).some(p => p.key === 'fuite'));
+ok('matchOption(« pneu dégonflé ») → Pneu dégonflé', FactCatalog.matchOption(SIG, 'signale un pneu dégonflé').label === 'Pneu dégonflé');
+ok('matchOption(« fuite d\'huile ») → Fuite (reconnu même si non offert)', FactCatalog.matchOption(SIG, 'il y a une fuite d\'huile').label === 'Fuite sous le véhicule');
+ok('matchOption(inconnu) → null', FactCatalog.matchOption(SIG, 'bonjour ça va') === null);
+ok('boutons dérivés = 6 libellés complets', FactCatalog.offered(SIG).map(p => p.label).join('|') === 'Pneu dégonflé|Porte ou coffre ouvert|Feux / phares|Trappe carburant ouverte|Fumée / départ de feu|Objet sur le toit');
+ok('menu dérivé (short) = Porte/coffre ouvert', FactCatalog.offered(SIG).find(p => p.key === 'porte').short === 'Porte/coffre ouvert');
+
 console.log('\n────────────────────────────');
 if (fail === 0) console.log('✅ PROTOTYPE VALIDÉ — ' + pass + ' ok, 0 ko');
 else console.log('❌ ÉCHECS — ' + pass + ' ok, ' + fail + ' ko');

@@ -25,7 +25,18 @@
       shared: true,                        // affecte autrui → consentement requis
       reversible: false,
       residual: 'choix',                   // ce que l'humain doit fournir
-      options: ['pneu', 'porte', 'feux', 'trappe', 'fumée', 'objet'],
+      // SOURCE UNIQUE des problèmes véhicule — consommée par le rail vocal, les boutons,
+      // le parseur de dictée libre et le menu. `offer:false` = reconnu à la voix mais non proposé en bouton.
+      // key=clé menu · label=libellé complet (envoyé) · short=libellé bouton menu · say=mot dit par Ange · words=mots écoutés
+      problems: [
+        { key: 'pneu',   label: 'Pneu dégonflé',            short: 'Pneu dégonflé',       say: 'pneu',   words: ['pneu', 'roue', 'dégonfl', 'degonfl'] },
+        { key: 'porte',  label: 'Porte ou coffre ouvert',   short: 'Porte/coffre ouvert', say: 'porte',  words: ['porte', 'coffre', 'hayon'] },
+        { key: 'feux',   label: 'Feux / phares',            short: 'Feux/phares',         say: 'feux',   words: ['feu', 'phare', 'clignot', 'lumi', 'veilleu'] },
+        { key: 'trappe', label: 'Trappe carburant ouverte', short: 'Trappe carburant',    say: 'trappe', words: ['trappe', 'carburant', 'essence', 'réservoir', 'reservoir', 'gasoil', 'gazole'] },
+        { key: 'fumee',  label: 'Fumée / départ de feu',    short: 'Fumée/feu',           say: 'fumée',  words: ['fum', 'incendie', 'brûl', 'brul', 'flamme'] },
+        { key: 'objet',  label: 'Objet sur le toit',        short: 'Objet sur le toit',   say: 'objet',  words: ['objet', 'toit', 'galerie', 'charge'] },
+        { key: 'fuite',  label: 'Fuite sous le véhicule',   short: 'Fuite',               say: 'fuite',  words: ['fuite', 'huile', 'liquide'], offer: false }
+      ],
       voice: [/\bsignal|pr[ée]viens|alerte\b/, /\bpneu|porte|feux|trappe|fum|objet\b/],
       explain: "Prévenir un conducteur d'un problème sur son véhicule.",
       project: { panel: 'Activité' },
@@ -80,7 +91,24 @@
     },
 
     // GÉNÉRÉ — ce qu'Ange DIT/écoute pour le résidu (auto-narration)
-    voiceHints: function (f) { return (f && f.options ? f.options.slice(0, 3) : []); },
+    // Un fait porte soit `problems` (options riches), soit `options` (mots simples) : même dérivation.
+    voiceHints: function (f) {
+      if (f && f.problems) return this.offered(f).map(function (p) { return p.say; }).slice(0, 3);
+      return (f && f.options ? f.options.slice(0, 3) : []);
+    },
+
+    // GÉNÉRÉ — options réellement proposées (bouton/rail) ; `offer:false` = reconnu mais non offert
+    offered: function (f) { return ((f && f.problems) || []).filter(function (p) { return p.offer !== false; }); },
+
+    // GÉNÉRÉ — retrouve l'option correspondant à la parole (vocabulaire fermé, premier match)
+    matchOption: function (f, text) {
+      var t = String(text || '').toLowerCase();
+      var list = (f && f.problems) || [];
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].words || []).some(function (w) { return t.indexOf(w) >= 0; })) return list[i];
+      }
+      return null;
+    },
 
     // GÉNÉRÉ — explication (Nexus)
     explain: function (f) { return (f && f.explain) || ''; },
@@ -107,7 +135,8 @@
         var f = facts[i];
         var hit = (f.voice || []).some(function (re) { return re.test(t); });
         if (hit) {
-          var choix = (f.options || []).find(function (o) { return t.indexOf(o) >= 0; }) || null;
+          var mp = this.matchOption(f, t);
+          var choix = mp ? mp.say : ((f.options || []).find(function (o) { return t.indexOf(o) >= 0; }) || null);
           return { fact: f, residual: f.residual, choix: choix, needsConfirm: this.needsConfirm(f), confirmWord: this.confirmWord(f) };
         }
       }
