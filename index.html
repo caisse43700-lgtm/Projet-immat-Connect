@@ -5172,7 +5172,7 @@ const ImmatestUI = {
 };
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
-<script src="core/immat-nexus.js?v=13"></script>
+<script src="core/immat-nexus.js?v=14"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5547,7 +5547,9 @@ const AngeDialog={
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
   _voiceGreetQuestion(){
     try{
-      const a=(window.ImmatNexus&&window.ImmatNexus.nextUsefulAction)?(window.ImmatNexus.nextUsefulAction()||[])[0]:null;
+      // Projection mère : un seul appel décrit le tour (situation + actions).
+      const tn=(window.ImmatNexus&&window.ImmatNexus.angeTurn)?window.ImmatNexus.angeTurn():null;
+      const a=tn?((tn.actions||[])[0]):((window.ImmatNexus&&window.ImmatNexus.nextUsefulAction)?(window.ImmatNexus.nextUsefulAction()||[])[0]:null);
       if(a){
         if(a.run==='reply')return 'Tu as un message. Que veux-tu faire ?';
         if(a.run==='sigveh'){const info=this._nearestInfo&&this._nearestInfo();const pl=info?(fPlate(info.plate)||info.plate):'';return pl?('Un véhicule est proche. Que veux-tu faire ?'):'Que veux-tu faire ?';}
