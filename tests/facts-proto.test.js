@@ -20,7 +20,7 @@ console.log('\n=== PROTOTYPE « tout est un fait autorisé » — dérivations g
 
 // Le moteur générique s'applique aux 3 faits SANS code spécifique
 const facts = FactCatalog.list();
-ok('3 faits déclarés', facts.length === 3);
+ok('4 faits déclarés', facts.length === 4);
 
 // Tableau de démonstration : tout est CALCULÉ, rien n'est codé par-feature
 facts.forEach(f => {
@@ -62,7 +62,7 @@ ok('FEATURE_TOGGLE autorisé si gardien', FactCatalog.authorized(FactCatalog.get
 
 // 5) Projection Dashboard GÉNÉRÉE
 const rows = facts.map(f => FactCatalog.dashboardRow(f));
-ok('Dashboard = projection des faits (3 lignes)', rows.length === 3 && rows.every(r => r.label && r.panel));
+ok('Dashboard = projection des faits (4 lignes)', rows.length === 4 && rows.every(r => r.label && r.panel));
 
 // 6) Proposition vocale GÉNÉRÉE (parole → fait + résidu pré-rempli)
 const p1 = FactCatalog.propose('signale un pneu au véhicule devant');
@@ -86,6 +86,14 @@ ok('matchOption(« fuite d\'huile ») → Fuite (reconnu même si non offert)', 
 ok('matchOption(inconnu) → null', FactCatalog.matchOption(SIG, 'bonjour ça va') === null);
 ok('boutons dérivés = 6 libellés complets', FactCatalog.offered(SIG).map(p => p.label).join('|') === 'Pneu dégonflé|Porte ou coffre ouvert|Feux / phares|Trappe carburant ouverte|Fumée / départ de feu|Objet sur le toit');
 ok('menu dérivé (short) = Porte/coffre ouvert', FactCatalog.offered(SIG).find(p => p.key === 'porte').short === 'Porte/coffre ouvert');
+
+// 9) E3 — SIGNAL_ROUTE réutilise LE MÊME moteur offered() (amortissement, 0 nouvelle ligne moteur)
+const RTE = FactCatalog.get('SIGNAL_ROUTE');
+ok('SIGNAL_ROUTE déclaré', RTE && RTE.id === 'SIGNAL_ROUTE');
+ok('offered(ROUTE) → 6 incidents (même moteur que véhicule)', FactCatalog.offered(RTE).length === 6);
+ok('ROUTE porte icon + sev (grille HTML dérivable)', FactCatalog.offered(RTE).every(p => p.icon && p.sev && p.key));
+ok('ROUTE keys = accident..danger', FactCatalog.offered(RTE).map(p => p.key).join(',') === 'accident,bouchon,obstacle,travaux,controle,danger');
+ok('propose(« il y a un accident ») → SIGNAL_ROUTE', (FactCatalog.propose('il y a un accident devant') || {}).fact?.id === 'SIGNAL_ROUTE');
 
 console.log('\n────────────────────────────');
 if (fail === 0) console.log('✅ PROTOTYPE VALIDÉ — ' + pass + ' ok, 0 ko');

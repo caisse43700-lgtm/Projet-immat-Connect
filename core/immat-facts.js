@@ -42,6 +42,29 @@
       project: { panel: 'Activité' },
       effect: function (p) { try { return root.App && root.App.vehicleAlert && root.App.vehicleAlert(p.label || p.choix); } catch (e) { return false; } }
     },
+    SIGNAL_ROUTE: {
+      id: 'SIGNAL_ROUTE',
+      label: 'Signaler un incident route',
+      authority: 'driver',
+      feature: 'signalement_route',
+      shared: true,
+      reversible: false,
+      residual: 'choix',
+      // SOURCE UNIQUE des incidents route — consommée par le menu Ange ET la grille HTML sigStep2Route.
+      // key=type roadReport · label/short=libellé · icon=emoji · sev=classe .alert-card · say/words=vocal
+      problems: [
+        { key: 'accident', label: 'Accident', short: 'Accident', icon: '💥', sev: 'urgent', say: 'accident', words: ['accident'] },
+        { key: 'bouchon',  label: 'Bouchon',  short: 'Bouchon',  icon: '🚦', sev: 'medium', say: 'bouchon',  words: ['bouchon', 'embouteillage', 'ralentiss'] },
+        { key: 'obstacle', label: 'Obstacle', short: 'Obstacle', icon: '⚠️', sev: 'urgent', say: 'obstacle', words: ['obstacle'] },
+        { key: 'travaux',  label: 'Travaux',  short: 'Travaux',  icon: '🚧', sev: 'info',   say: 'travaux',  words: ['travaux', 'chantier'] },
+        { key: 'controle', label: 'Contrôle', short: 'Contrôle', icon: '👮', sev: 'info',   say: 'contrôle', words: ['contrôle', 'controle', 'police', 'gendarm', 'radar'] },
+        { key: 'danger',   label: 'Danger',   short: 'Danger',   icon: '❗', sev: 'urgent', say: 'danger',   words: ['danger'] }
+      ],
+      voice: [/\b(accident|bouchon|embouteillage|obstacle|travaux|chantier|contr[ôo]le|radar|danger)\b/],
+      explain: "Signaler un incident de circulation à la communauté.",
+      project: { panel: 'Activité' },
+      effect: function (p) { try { return root.App && root.App.roadReport && root.App.roadReport(p.key || p.choix); } catch (e) { return false; } }
+    },
     APPEL: {
       id: 'APPEL',
       label: 'Appeler un véhicule',

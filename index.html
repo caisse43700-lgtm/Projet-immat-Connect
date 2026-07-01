@@ -210,14 +210,8 @@
     <div class="act-cat-hd"><button type="button" class="act-cat-back" onclick="App.sigBack()">‹</button><div class="act-cat-hd-mid"><span class="act-cat-hd-icon">🚦</span><div><div class="act-cat-hd-title">Incident route</div><div class="act-cat-hd-sub">Type d'incident à signaler</div></div></div><button type="button" class="ph-close" onclick="App.closeSheet()">✕</button></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted,#888)"><span style="width:18px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);display:inline-block"></span><span style="width:18px;height:4px;border-radius:2px;background:#2979ff;display:inline-block"></span><span>Étape 2 / 2</span></div>
     <div class="sig-step-title">Type d'incident route</div>
-    <div class="alert-grid">
-      <button class="alert-card urgent" onclick="App.roadReport('accident');App.sigDone()"><span class="icon">💥</span><span>Accident</span></button>
-      <button class="alert-card medium" onclick="App.roadReport('bouchon');App.sigDone()"><span class="icon">🚦</span><span>Bouchon</span></button>
-      <button class="alert-card urgent" onclick="App.roadReport('obstacle');App.sigDone()"><span class="icon">⚠️</span><span>Obstacle</span></button>
-      <button class="alert-card info" onclick="App.roadReport('travaux');App.sigDone()"><span class="icon">🚧</span><span>Travaux</span></button>
-      <button class="alert-card info" onclick="App.roadReport('controle');App.sigDone()"><span class="icon">👮</span><span>Contrôle</span></button>
-      <button class="alert-card urgent" onclick="App.roadReport('danger');App.sigDone()"><span class="icon">❗</span><span>Danger</span></button>
-    </div>
+    <!-- Grille rendue depuis la SOURCE UNIQUE FactCatalog(SIGNAL_ROUTE) via App.sigStepRoute() -->
+    <div class="alert-grid" id="roadAlertGrid"></div>
   </div>
 
   <!-- Étape 2 : sous-types Véhicule -->
@@ -2073,6 +2067,8 @@ App.navMap=function(){
 // ── Signaler 2 étapes
 App.sigStepRoute=function(){
   if(!App.requireFeature('signalement_route','Signalements route'))return;
+  // Grille des incidents : SOURCE UNIQUE = FactCatalog(SIGNAL_ROUTE) (même déclaration que le menu Ange)
+  try{const g=$('roadAlertGrid');if(g&&window.FactCatalog){g.innerHTML=window.FactCatalog.offered(window.FactCatalog.get('SIGNAL_ROUTE')).map(p=>'<button class="alert-card '+p.sev+'" onclick="App.roadReport(\''+p.key+'\');App.sigDone()"><span class="icon">'+p.icon+'</span><span>'+esc(p.short)+'</span></button>').join('');}}catch(_){}
   $('sigStep1')?.classList.remove('active');
   $('sigStep2Route')?.classList.add('active');
 };
@@ -5173,7 +5169,7 @@ const ImmatestUI = {
 </script>
 <script src="core/gardien-diagnostic.js?v=3"></script>
 <script src="core/immat-nexus.js?v=14"></script>
-<script src="core/immat-facts.js?v=1"></script>
+<script src="core/immat-facts.js?v=2"></script>
 <script src="ui.js?v=16"></script>
 
 <!-- ── Onboarding premier arrivant ──────────────────────────────────── -->
@@ -5658,10 +5654,7 @@ const AngeDialog={
       message:{label:'💬 Envoyer un message',feature:'messages',act:['msgveh']},
       activite:{label:'📋 Voir mon activité',act:['open','navActivite']}}},
     signaler:{label:'Signaler',children:{
-      route:{label:'🚦 Route',feature:'signalement_route',children:{
-        accident:{label:'💥 Accident',act:['road','accident']},bouchon:{label:'🚦 Bouchon',act:['road','bouchon']},
-        obstacle:{label:'⚠️ Obstacle',act:['road','obstacle']},travaux:{label:'🚧 Travaux',act:['road','travaux']},
-        controle:{label:'👮 Contrôle',act:['road','controle']},danger:{label:'❗ Danger',act:['road','danger']}}},
+      route:{label:'🚦 Route',feature:'signalement_route',children:(function(){try{const o={};window.FactCatalog.offered(window.FactCatalog.get('SIGNAL_ROUTE')).forEach(p=>{o[p.key]={label:p.icon+' '+p.short,act:['road',p.key]};});return o;}catch(_){return{};}})()},
       vehicule:{label:'🚘 Véhicule',feature:'signalement_vehicule',children:(function(){try{const o={};window.FactCatalog.offered(window.FactCatalog.get('SIGNAL_VEHICULE')).forEach(p=>{o[p.key]={label:p.short,act:['veh',p.label]};});return o;}catch(_){return{};}})()},
       aide:{label:'🆘 Aide',feature:'aide',act:['open','sigStepAide']},
       stationne:{label:'🅿️ Stationné',feature:'signalement_stationne',act:['open','sigStepStation']}}},
