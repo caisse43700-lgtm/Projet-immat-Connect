@@ -7,6 +7,39 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : orbe façon Siri + session vocale persistante
+
+Demande PO : après « ouvre le GPS », Ange se fermait → la conversation s'arrêtait, sans indiquer qu'on
+pouvait continuer. Deux corrections : (a) garder la session vivante après une ouverture, (b) un orbe visuel.
+
+**Orbe (`AngeDialog._setOrb(state)`, index.html)** : `#angeOrb` (CSS/SVG pur, style injecté une fois),
+états : `listen` (respire), `hear` (pulse — dès qu'on parle, via onresult interim), `think` (tourne, pendant
+l'envoi), `speak` (pendant le TTS), `idle` (masqué). Tap sur l'orbe → `_convoStop`. Câblé : startVoice→listen,
+onresult→hear, _voiceTurn→think avant send, _speakAnswer/_narrateChoices→speak, close/_convoStop→idle.
+
+**Session vocale persistante (le vrai correctif)** :
+- La session = `_convo` (et non plus « fiche Ange ouverte »). `_voiceTurn` : `if(!this._convo)return`.
+  `_convoResume` : ne dépend plus de `ange-open` (garde _rec/_pendRec + visibilité + fin de TTS).
+- `_tryOpen` : au lieu de `close()`, appelle `_softHide()` (masque la fiche pour voir la fonction ouverte)
+  MAIS garde `_convo`, remet l'orbe en `listen` et `_convoResume()` → **on peut continuer à parler** après
+  « ouvre le GPS » (ex. enchaîner « les messages », « signale un véhicule »…).
+- `send()` : `_showSheet()` en tête → si la fiche était masquée (après navigation), elle réapparaît pour
+  afficher la carte du tour suivant (nav = pas de flash car soft-hide dans le même tick).
+- `_wakeStart` : `if(this._convo)return` → pas de double écoute (wake vs session).
+- `_softHide()`/`_showSheet()` : masquent/ré-affichent `#angePanel`+`#angeOverlay` + classe `ange-open`.
+- `close()` (X / mot d'arrêt) : termine la session (`_convo=false`, stop rec, orbe idle, fiche masquée).
+
+Flux : « Ange » → « ouvre le GPS » → la carte GPS s'affiche, la fiche se masque, l'**orbe reste** (respire)
+→ tu enchaînes « les messages » / « signale un véhicule » → « pneu » → « envoie », sans rien toucher.
+
+Limite inchangée : app au premier plan requise (micro) ; écran éteint = natif.
+
+Tests : `tests/ange-v2.test.js` **236/236** (+12 : _setOrb, états orbe, _showSheet/_softHide, câblage
+listen/hear/think/speak, session par _convo, _convoResume sans ange-open, _wakeStart anti-double, _tryOpen
+soft-hide+resume, send _showSheet). `npm test` 177 + diag 3. **CACHE_NAME v425→v426**.
+
+---
+
 ## SESSION 2026-07-01 — Ange : lanceur vocal (ouvrir les fonctions/catégories à la voix)
 
 Demande PO : ouvrir les applications/fonctions directement avec Ange (« ouvre le GPS », « les messages »…),
