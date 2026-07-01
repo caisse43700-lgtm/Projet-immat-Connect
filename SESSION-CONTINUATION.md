@@ -7,6 +7,34 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Mot d'activation « Ange » (wake word, opt-in)
+
+Demande PO : « je voudrais pouvoir ouvrir Ange avec un mot ».
+
+**Opt-in** (garde le micro actif + batterie) : réglage `#angeWakeToggle` dans la section « 🧠 Ange IA »
+→ `App.toggleAngeWake(on)` (pref `localStorage.ic_ange_wake`, défaut '0'). `applyFeatureFlags` reflète l'état
+et relance `_wakeInit()` si activé.
+
+**`AngeDialog` (index.html)** :
+- `_wakeEnabled()` : lit la pref.
+- `_wakeInit()` : ajoute une fois le listener `visibilitychange` (pause/reprise) puis `_wakeStart()`.
+- `_wakeStart()` : SpeechRecognition `continuous=true`, `lang=fr-FR`, pattern `/(ok |h[eé] |hey |dis )?ange/`.
+  Gardes anti-conflit micro : ne démarre pas si `_wakeRec` déjà actif, si `_rec`/`_pendRec` (dictée/confirmation)
+  actif, si `document.hidden`, ou si Ange est ouvert (`body.ange-open`). Sur détection → `_wakeStop()` +
+  `voiceCommand()` (ouvre Ange + dictée qui s'auto-envoie). `onend` relance après 700 ms si conditions OK
+  (boucle de survie car SR s'arrête périodiquement). `onerror` `not-allowed`/`service-not-allowed` →
+  auto-désactive la pref + décoche le toggle + toast.
+- `_wakeStop()` : coupe proprement (retire onend/onresult puis stop).
+- `open()` appelle `_wakeStop()` (libère le micro pour la dictée) ; `close()` relance `_wakeStart()` (600 ms).
+
+**Limite navigateur assumée** : pas d'écoute en arrière-plan ni écran verrouillé (surtout iOS Safari) ;
+démarrage fiable après un geste utilisateur (le toggle). Fonctionne app ouverte au premier plan.
+
+Tests : `tests/ange-v2.test.js` **152/152** (+11 : méthodes, toggle, pattern, gardes de pause, open() coupe,
+détection→voiceCommand). `npm test` 177 + diag 3. **CACHE_NAME v414→v415** (tout dans index.html).
+
+---
+
 ## SESSION 2026-07-01 — Tout en reconnaissance vocale (v1) + fix collision de clé
 
 Demande PO : « je voudrais que tout soit en reconnaissance vocale ».
