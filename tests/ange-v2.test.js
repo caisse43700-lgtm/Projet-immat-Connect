@@ -270,6 +270,16 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_narrateChoices parle (≤3 + « ou autre »)', /_narrateChoices[\s\S]{0,400}slice\(0,3\)[\s\S]{0,40}ou autre[\s\S]{0,40}speak\(phrase,true\)/.test(HTML));
   ok('signalement : say + narration', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],say:p\[2\][\s\S]{0,80}this\._narrateChoices/.test(HTML));
   ok('réponses : say + narration', /say:c\[0\][\s\S]{0,120}this\._narrateChoices\('Réponds/.test(HTML));
+  // Confirmation par mot-action (anti faux « oui » radio/passager)
+  ok('_armConfirm accepte un mot-action', HTML.includes('_armConfirm(run,word)'));
+  ok('_pending mémorise le mot-action', /this\._pending=\{run:run,word:word\|\|null\}/.test(HTML));
+  ok('mots-action envoie/appelle/reponds/confirme mappés', /M=\{envoie:[\s\S]{0,200}appelle:[\s\S]{0,120}reponds:[\s\S]{0,120}confirme:/.test(HTML));
+  ok('action partagée exige le mot-action (pas oui seul)', /const YES=word\?\(M\[word\]\|\|\/\\b\(oui\|ok\)/.test(HTML));
+  ok('annule/stop priment sur oui', /if\(\/\\b\(non\|annule[\s\S]{0,80}confirmNo\(\);[\s\S]{0,40}else if\(YES\.test/.test(HTML));
+  ok('signal/message confirmés par « envoie »', /angeSignalConfirm\(plate,label\),'envoie'/.test(HTML) && /angeMessageConfirm\(plate,text\),'envoie'/.test(HTML));
+  ok('appel confirmé par « appelle »', /angeCallConfirm\(plate\),'appelle'/.test(HTML));
+  ok('gouvernance confirmée par « confirme »', /angeDoAction\(legacy,on,label\),'confirme'/.test(HTML));
+  ok('cartes : hint mot-action (plus « oui »/« non »)', !HTML.includes('ou dis « oui » / « non »') && HTML.includes('ou dis « envoie » / « annule »'));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
