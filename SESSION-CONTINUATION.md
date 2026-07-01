@@ -7,6 +7,38 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : RAIL VOCAL (matcher à vocabulaire fermé) — cœur de l'eurêka
+
+Idée validée (défi vocal / ChatGPT) : en voiture, reconnaître une phrase LIBRE est fragile ; reconnaître
+parmi ≤ N mots AFFICHÉS est robuste. Donc quand Ange montre des choix, on n'écoute QUE ces choix.
+
+**`AngeDialog` (index.html)** :
+- `_pickChoice(text,choices)` : matcher à vocabulaire fermé — normalise le texte, cherche par substring
+  les `words` (mots-clés/synonymes) de chaque choix ; renvoie le choix ou null. Aucun moteur, aucune IA.
+- `this._choices = [{words:[...], run:fn}]` : posé quand un jeu de choix s'affiche —
+   • `_signalNearest` : `PROBS` = [libellé, [mots]] (pneu/roue/dégonfl, porte/coffre/hayon, feu/phare/clignot,
+     trappe/carburant/essence, fumée/incendie/brûl, objet/toit/galerie) → run = `angeSignalConfirm(plate,libellé)` ;
+   • `_replyLatest` : words = tokens (>2 lettres) du libellé de réponse → run = `angeReplyConfirm(plate,txt,ctx)`.
+- `_voiceTurn` : APRÈS les mots d'arrêt, AVANT l'envoi libre → si `_choices` : « annule/autre/retour » quitte ;
+  sinon `_pickChoice(v,_choices)` → si match, exécute `run()` + reprend ; si pas de match, on efface `_choices`
+  et on retombe sur une commande libre (`send`).
+- Nettoyage : `_choices=null` dans `renderResponse` (réponse libre), `close()`, `_convoStop()`.
+
+Flux complet mains-libres : « Ange » → « Que veux-tu faire ? » → « signale un véhicule » → Ange montre les
+problèmes ET arme le rail → « pneu » (matché fermé) → `angeSignalConfirm` envoie. Robuste au bruit car à
+chaque étape le vocabulaire attendu est minuscule et connu. Réutilise 100% des fonctions propriétaires.
+
+Garde-fous : le rail ne fait qu'appeler des fonctions propriétaires existantes (avec leurs confirmations) ;
+pas d'état caché durable (`_choices` dérivé de l'affichage, effacé à chaque réponse) ; kill-switch inchangé.
+
+Tests : `tests/ange-v2.test.js` **178/178** (+7 : _pickChoice, matching avant envoi, choix signal/réponse,
+« annule », effacement renderResponse/close). `npm test` 177 + diag 3. **CACHE_NAME v417→v418**.
+
+> Prochaine étape rail possible : rendre le menu « faire » et le choix de cible fermés aussi ; annonces
+> vocales des choix (« Pneu, porte, ou feux ? ») pour du 100% audio.
+
+---
+
 ## SESSION 2026-07-01 — Ange : pose une question à l'appel vocal + réponses courtes
 
 Demande PO : « Ange pose une question quand on l'appelle et réponse courte ».
