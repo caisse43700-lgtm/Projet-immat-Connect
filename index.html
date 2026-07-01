@@ -5363,7 +5363,7 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
-    try{this._convo=false;this._convoSilence=0;this._choices=null;if(this._rec)this._rec.stop();}catch(_){} // fin de la conversation vocale
+    try{this._convo=false;this._convoSilence=0;this._choices=null;if(this._rec)this._rec.stop();this._setOrb('idle');}catch(_){} // fin de la conversation vocale
     try{this._clearPending&&this._clearPending();}catch(_){}
     document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
@@ -5386,6 +5386,7 @@ const AngeDialog={
       if(!this._wakeEnabled())return;
       if(this._wakeRec)return;                                   // déjà en écoute
       if(this._rec||this._pendRec)return;                        // micro occupé (dictée/confirmation)
+      if(this._convo)return;                                     // session vocale active → pas de double écoute
       if(document.visibilityState!=='visible')return;            // pas en arrière-plan
       if(document.body.classList.contains('ange-open'))return;   // Ange déjà ouvert
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
@@ -5455,7 +5456,7 @@ const AngeDialog={
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
     this._convo=true; // le micro reste ouvert tant qu'on parle avec Ange
-    try{this._earcon('listen');}catch(_){}
+    try{this._earcon('listen');}catch(_){}try{this._setOrb('listen');}catch(_){}
     try{
       const rec=new SR();
       this._rec=rec;
@@ -5474,6 +5475,7 @@ const AngeDialog={
           } else interimT+=e.results[i][0].transcript;
         }
         const ta=$('angeMsg');if(ta)ta.value=_last+interimT;
+        if(interimT||_last){try{this._setOrb('hear');}catch(_){}}
       };
       rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
       rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn((_last||'').trim());};
@@ -5483,7 +5485,7 @@ const AngeDialog={
   },
   // Un tour de conversation vocale : traite la commande dictée puis (si pas de confirmation en attente) rouvre le micro.
   async _voiceTurn(v){
-    if(!document.body.classList.contains('ange-open'))return; // Ange fermé entre-temps → on ignore
+    if(!this._convo)return; // session vocale terminée entre-temps → on ignore
     v=(v||'').trim();
     if(!v){ // silence : on tolère 1 blanc, on met en pause après 2 pour ne pas écouter dans le vide
       this._convoSilence=(this._convoSilence||0)+1;
@@ -5497,10 +5499,11 @@ const AngeDialog={
       const low=v.toLowerCase();
       if(/\b(annule|annuler|retour|autre|autre chose|rien|laisse)\b/.test(low)){this._choices=null;return this._convoResume();}
       const c=this._pickChoice(v,this._choices);
-      if(c){this._choices=null;try{this._earcon('ok');}catch(_){}try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
+      if(c){this._choices=null;try{this._earcon('ok');}catch(_){}try{this._showSheet();}catch(_){}try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
       this._choices=null; // pas de correspondance → on retombe sur une commande libre
     }
     const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
+    try{this._setOrb('think');}catch(_){}
     try{ await this.send(); }catch(_){}
     // Si une confirmation « oui/non » est en attente, son écoute prend le relais (voir _afterConfirm).
     if(this._pending)return;
@@ -5508,17 +5511,17 @@ const AngeDialog={
   },
   // Rouvre le micro pour le tour suivant — SEULEMENT quand Ange a fini de parler (anti auto-écoute).
   _convoResume(){
-    if(!this._convo)return;
-    if(!document.body.classList.contains('ange-open'))return;
+    if(!this._convo)return;                 // session vocale = _convo (survit à la navigation)
     if(this._rec||this._pendRec)return;
     const go=()=>{
-      if(!this._convo||this._rec||this._pendRec||!document.body.classList.contains('ange-open'))return;
+      if(!this._convo||this._rec||this._pendRec)return;
+      if(document.visibilityState!=='visible')return; // pas en arrière-plan
       if(window.speechSynthesis&&window.speechSynthesis.speaking){return setTimeout(go,300);} // attendre la fin de la voix d'Ange
       try{this.startVoice();}catch(_){}
     };
     setTimeout(go,450);
   },
-  _convoStop(){this._convo=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}},
+  _convoStop(){this._convo=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}try{this._setOrb('idle');}catch(_){}},
   _afterConfirm(){if(this._convo)this._convoResume();},
   // Auto-narration : en conversation vocale, Ange DIT les choix (≤3) pour un usage au volant sans écran.
   _narrateChoices(intro){try{
@@ -5527,8 +5530,22 @@ const AngeDialog={
     const opts=(this._choices||[]).map(c=>String(c.say||'').replace(/[^0-9a-zà-ÿ\s'/-]/gi,'').replace(/\s+/g,' ').trim()).filter(Boolean);
     if(!opts.length)return;
     let phrase=(intro?intro+' ':'')+opts.slice(0,3).join(', ')+(opts.length>3?', ou autre':'')+' ?';
-    speak(phrase,true);
+    try{this._setOrb('speak');}catch(_){}speak(phrase,true);
   }catch(_){}},
+  // ── Orbe façon Siri : montre l'état vocal (écoute / t'entend / réfléchit / parle). CSS/SVG pur.
+  _setOrb(state){try{
+    let o=document.getElementById('angeOrb');
+    if(state==='idle'||!state){if(o)o.style.display='none';return;}
+    if(!o){
+      if(!document.getElementById('angeOrbCss')){var st=document.createElement('style');st.id='angeOrbCss';st.textContent="#angeOrb{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom,0px) + 78px);z-index:3400;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(circle at 50% 38%,#a5b4fc,#6d5efc 60%,#4f46e5)}#angeOrb .core{width:20px;height:20px;border-radius:50%;background:#fff;opacity:.92}#angeOrb .lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#c4b5fd;text-shadow:0 1px 2px #000}#angeOrb.listen{animation:angeBreathe 2.2s ease-in-out infinite}#angeOrb.hear{animation:angePulse .55s ease-in-out infinite}#angeOrb.think{animation:angeSpin 1s linear infinite;background:conic-gradient(#4f46e5,#a5b4fc,#4f46e5)}#angeOrb.speak{animation:angeBreathe 1s ease-in-out infinite}#angeOrb.error{background:radial-gradient(circle,#f87171,#b91c1c)}@keyframes angeBreathe{0%,100%{box-shadow:0 0 0 4px rgba(124,106,247,.28)}50%{box-shadow:0 0 0 18px rgba(124,106,247,0)}}@keyframes angePulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.14)}}@keyframes angeSpin{to{transform:translateX(-50%) rotate(360deg)}}";document.head.appendChild(st);}
+      o=document.createElement('div');o.id='angeOrb';o.title='Ange écoute — touche pour arrêter';o.innerHTML='<span class="core"></span><span class="lbl"></span>';o.onclick=()=>{try{this._convoStop();}catch(_){}this._setOrb('idle');};document.body.appendChild(o);
+    }
+    const L={listen:'écoute…',hear:'je t\'entends',think:'…',speak:'',error:''}[state]||'';
+    o.style.display='flex';o.className=state;const _l=o.querySelector('.lbl');if(_l)_l.textContent=L;
+  }catch(_){}},
+  // Affichage souple de la fiche Ange (permet de garder la session vocale même quand la fiche est masquée).
+  _showSheet(){try{document.body.classList.add('ange-open');$('angePanel').style.display='flex';$('angeOverlay').style.display='block';}catch(_){}},
+  _softHide(){try{document.body.classList.remove('ange-open');$('angePanel').style.display='none';$('angeOverlay').style.display='none';}catch(_){}},
   // Matcher à vocabulaire FERMÉ : la parole doit correspondre à l'un des choix affichés (sinon null).
   _pickChoice(text,choices){try{
     const t=' '+String(text||'').toLowerCase().replace(/[^0-9a-zà-ÿ\s]/gi,' ').replace(/\s+/g,' ')+' ';
@@ -5544,7 +5561,7 @@ const AngeDialog={
     seq.forEach(function(s){const f=s[0],at=s[1],dur=s[2];const o=ctx.createOscillator(),g=ctx.createGain();o.type=(type==='error'?'square':'sine');o.frequency.value=f;g.gain.setValueAtTime(0.0001,t0+at);g.gain.exponentialRampToValueAtTime(0.14,t0+at+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+at+dur);o.connect(g);g.connect(ctx.destination);o.start(t0+at);o.stop(t0+at+dur+0.02);});
   }catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
-  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t)speak(t,true);}catch(_){}},
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}speak(t,true);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
   _voiceGreetQuestion(){
     try{
@@ -5780,7 +5797,10 @@ const AngeDialog={
       try{hit.open(t);}catch(_){}
       try{this._earcon('ok');}catch(_){}
       try{this._log('action','Ouvert : '+hit.label);}catch(_){}
-      $('angeMsg').value='';try{this.close&&this.close();}catch(_){}
+      $('angeMsg').value='';
+      // On MASQUE la fiche (pour voir la fonction ouverte) mais on GARDE la session vocale : on peut continuer à parler.
+      if(this._convo){try{this._softHide();}catch(_){}try{this._setOrb('listen');}catch(_){}try{this._convoResume();}catch(_){}}
+      else{try{this.close&&this.close();}catch(_){}}
       return true;
     }catch(_){return false;}
   },
@@ -6034,6 +6054,7 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    try{this._showSheet();}catch(_){} // si la fiche était masquée (après une navigation), on la ré-affiche pour la carte
     // Commande dictée : on retient qu'on doit répondre À VOIX HAUTE (voix → voix).
     const _voice=this._voiceMode===true;this._voiceMode=false;this._lastVoice=_voice;
     // Apprentissage — « oublie ce que tu as appris » (réinitialisation locale)

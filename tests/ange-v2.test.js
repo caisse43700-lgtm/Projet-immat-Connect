@@ -229,7 +229,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
   // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
   ok('startVoice onend délègue à _voiceTurn', HTML.includes("rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn"));
-  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1800}this\._voiceMode=true;[\s\S]{0,40}await this\.send\(\)/.test(HTML));
+  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1800}this\._voiceMode=true;[\s\S]{0,120}await this\.send\(\)/.test(HTML));
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
@@ -272,7 +272,7 @@ section('B. Câblage Ange V2 (index.html)');
   // Auto-narration : Ange DIT les choix en conversation vocale (usage sans écran)
   ok('méthode _narrateChoices présente', HTML.includes('_narrateChoices(intro)'));
   ok('_narrateChoices gated sur la conversation vocale', /_narrateChoices\(intro\)\{[\s\S]{0,80}if\(!this\._convo\)return/.test(HTML));
-  ok('_narrateChoices parle (≤3 + « ou autre »)', /_narrateChoices[\s\S]{0,400}slice\(0,3\)[\s\S]{0,40}ou autre[\s\S]{0,40}speak\(phrase,true\)/.test(HTML));
+  ok('_narrateChoices parle (≤3 + « ou autre »)', /_narrateChoices[\s\S]{0,400}slice\(0,3\)[\s\S]{0,40}ou autre[\s\S]{0,120}speak\(phrase,true\)/.test(HTML));
   ok('signalement : say + narration', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],say:p\[2\][\s\S]{0,80}this\._narrateChoices/.test(HTML));
   ok('réponses : say + narration', /say:c\[0\][\s\S]{0,120}this\._narrateChoices\('Réponds/.test(HTML));
   // Confirmation par mot-action (anti faux « oui » radio/passager)
@@ -298,7 +298,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_earcon types listen/ok/sent/error/confirm', /listen:\[[\s\S]{0,80}ok:\[[\s\S]{0,40}sent:\[[\s\S]{0,80}error:\[[\s\S]{0,40}confirm:\[/.test(HTML));
   ok('earcon « listen » à l\'ouverture du micro', /this\._convo=true;[\s\S]{0,80}this\._earcon\('listen'\)/.test(HTML));
   ok('earcon « confirm » à l\'armement', /_armConfirm\(run,word\)\{[\s\S]{0,120}this\._earcon\('confirm'\)/.test(HTML));
-  ok('earcon « ok » sur choix reconnu', /this\._earcon\('ok'\);\}catch\(_\)\{\}try\{c\.run/.test(HTML));
+  ok('earcon « ok » sur choix reconnu', /_earcon\('ok'\)[\s\S]{0,80}c\.run\(\)/.test(HTML));
   ok('earcon sent/error sur signalement', /_earcon\(ok\?'sent':'error'\)/.test(HTML));
   // Projection mère angeTurn() — unification lecture seule
   ok('Nexus expose angeTurn', HTML.includes('ImmatNexus.angeTurn'));
@@ -316,6 +316,20 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_tryOpen exige un verbe d\'ouverture si commande longue', /if\(!hasVerb&&words>3\)return false/.test(HTML));
   ok('_tryOpen respecte le kill-switch (featureStatus + _blockedHTML)', /_tryOpen[\s\S]{0,1200}featureStatus\(hit\.feat\)[\s\S]{0,220}_blockedHTML\(hit\.feat/.test(HTML));
   ok('_tryOpen ouvre via fonctions propriétaires (navMessages/navAppels/panel)', /App\.navMessages/.test(HTML) && /App\.panel&&App\.panel\('drive'\)/.test(HTML));
+  // Orbe façon Siri + session vocale qui survit à la navigation
+  ok('méthode _setOrb (orbe d\'état)', HTML.includes('_setOrb(state)'));
+  ok('orbe : états listen/hear/think/speak', /#angeOrb\.listen[\s\S]{0,200}#angeOrb\.hear[\s\S]{0,200}#angeOrb\.think[\s\S]{0,200}#angeOrb\.speak/.test(HTML));
+  ok('helpers _showSheet/_softHide', HTML.includes('_showSheet()') && HTML.includes('_softHide()'));
+  ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,120}this\._setOrb\('listen'\)/.test(HTML));
+  ok('onresult → orbe hear', /interimT\|\|_last\)\{try\{this\._setOrb\('hear'\)/.test(HTML));
+  ok('_voiceTurn → orbe think avant envoi', /this\._setOrb\('think'\);[\s\S]{0,40}await this\.send\(\)/.test(HTML));
+  ok('_speakAnswer → orbe speak', /this\._setOrb\('speak'\)[\s\S]{0,20}speak\(t,true\)/.test(HTML));
+  // Session survit à la navigation (plus de dépendance à ange-open)
+  ok('_voiceTurn gardé par la session (_convo)', /_voiceTurn\(v\)\{\s*if\(!this\._convo\)return/.test(HTML));
+  ok('_convoResume ne dépend plus de ange-open', /_convoResume\(\)\{/.test(HTML) && !/_convoResume\(\)\{[\s\S]{0,400}ange-open/.test(HTML));
+  ok('_wakeStart évite la double écoute pendant une session', /if\(this\._convo\)return;\s*\/\/ session vocale active/.test(HTML));
+  ok('_tryOpen garde la session (soft-hide + resume)', /if\(this\._convo\)\{try\{this\._softHide\(\)[\s\S]{0,120}this\._convoResume\(\)/.test(HTML));
+  ok('send() ré-affiche la fiche', /async send\(\)\{[\s\S]{0,120}this\._showSheet\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
