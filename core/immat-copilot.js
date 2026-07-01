@@ -53,7 +53,7 @@ const ImmatCoPilot = (function () {
 
   // Boucle de retour (device-only, partagée avec Narrator via la même clé) : 👍/👎.
   // Un sujet trop souvent rejeté est mis en sourdine. Trace = compteurs ; projection = _topicMuted.
-  const FB_KEY = 'ic_ange_feedback';
+  const FB_KEY = 'ic_ange_topic_feedback';
   const FB_MUTE_MIN = 3;
   function _fbLoad() { try { return JSON.parse(localStorage.getItem(FB_KEY) || '{}'); } catch (_) { return {}; } }
   function _fbRecord(topic, up) { try { if (!topic) return; const f = _fbLoad(); const t = f[topic] || { up: 0, down: 0 }; if (up) t.up++; else t.down++; f[topic] = t; localStorage.setItem(FB_KEY, JSON.stringify(f)); } catch (_) {} }

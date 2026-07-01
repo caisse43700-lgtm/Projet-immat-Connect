@@ -45,6 +45,7 @@
 <div id="map"></div>
 <div id="mapCenterPin"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="11" stroke="#2f7bff" stroke-width="2.5" fill="rgba(47,123,255,0.15)"/><circle cx="22" cy="22" r="3" fill="#2f7bff"/><line x1="22" y1="2" x2="22" y2="13" stroke="#2f7bff" stroke-width="1.5" stroke-linecap="round" opacity=".55"/><line x1="22" y1="31" x2="22" y2="42" stroke="#2f7bff" stroke-width="1.5" stroke-linecap="round" opacity=".55"/><line x1="2" y1="22" x2="13" y2="22" stroke="#2f7bff" stroke-width="1.5" stroke-linecap="round" opacity=".55"/><line x1="31" y1="22" x2="42" y2="22" stroke="#2f7bff" stroke-width="1.5" stroke-linecap="round" opacity=".55"/></svg></div>
 <div id="fabSignalHere" style="display:none;position:fixed;z-index:800;background:rgba(255,59,92,.95);color:#fff;border-radius:24px;padding:9px 16px;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap;pointer-events:all" onclick="App.openSignalHere()">📍 Signaler ici</div>
+<button id="fabVoice" type="button" onclick="try{window.AngeDialog&&AngeDialog.voiceCommand&&AngeDialog.voiceCommand()}catch(e){}" title="Commande vocale — parlez à Ange" aria-label="Commande vocale" style="position:fixed;z-index:820;right:14px;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 18px);width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c6af7,#4f46e5);color:#fff;border:none;box-shadow:0 4px 16px rgba(79,70,229,.5);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center">🎙️</button>
 <div class="map-shade"></div>
 
 <div class="top-bar">
@@ -1210,7 +1211,7 @@ gdNexusBlock(){
 gdAngeFeedbackBlock(){
   try{
     const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    let fb={};try{fb=JSON.parse(localStorage.getItem('ic_ange_feedback')||'{}');}catch(_){}
+    let fb={};try{fb=JSON.parse(localStorage.getItem('ic_ange_topic_feedback')||'{}');}catch(_){}
     const LBL={swarm:'Entraide proche',guardian:'Recommandations gardien',brain:'Prédictions / zones à risque',reliability:'Fiabilité des données',soul_insight:'Prise de conscience',harmony_low:'Contradictions',convergence:'Convergence modules',trajectory:'Dégradation trajectoire',isolation:'Conduite isolée',resurrection:'Réveil système',blind_spot:'Angles morts',silence_ok:'Tout va bien',brain_urgency:'Urgence (cerveau)'};
     const keys=Object.keys(fb);
     let rows='';
@@ -1224,7 +1225,7 @@ gdAngeFeedbackBlock(){
     return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">💬 Ange — retour proactif (👍/👎)</b>'+(keys.length?'<button onclick="App.resetAngeFeedback()" style="background:#0c1a2e;color:#a3e635;border:1px solid #3f6212;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer">Réinitialiser</button>':'')+'</div><div style="font-size:10px;color:#555;margin-bottom:8px">Lecture seule (appareil). Un sujet avec ≥ 3 👎 (et plus de 👎 que de 👍) est mis en sourdine — Ange se tait dessus.</div>'+rows+'</div>';
   }catch(_){return'';}
 },
-resetAngeFeedback(){try{localStorage.removeItem('ic_ange_feedback');}catch(_){}try{toast('Retours Ange réinitialisés.','ok');}catch(_){}try{this.openGardienDashboard?.();}catch(_){}},
+resetAngeFeedback(){try{localStorage.removeItem('ic_ange_topic_feedback');}catch(_){}try{toast('Retours Ange réinitialisés.','ok');}catch(_){}try{this.openGardienDashboard?.();}catch(_){}},
 runNexusAudit(){
   const el=$('nexusAuditResult');if(!el)return;
   try{
@@ -5082,11 +5083,11 @@ function showReputationToast(){
 <script src="core/guardian-dashboard-summary.js?v=5"></script>
 <script src="core/immat-kernel.js?v=1"></script>
 <script src="core/brain-engine.js?v=1"></script>
-<script src="core/narrator.js?v=8"></script>
+<script src="core/narrator.js?v=9"></script>
 <script src="core/swarm-engine.js?v=1"></script>
 <script src="core/immat-consciousness.js?v=2"></script>
 <script src="core/immat-soul.js?v=1"></script>
-<script src="core/immat-copilot.js?v=6"></script>
+<script src="core/immat-copilot.js?v=7"></script>
 <script src="core/immat-test-engine.js?v=2"></script>
 <script>
 const ImmatestUI = {
@@ -5431,11 +5432,15 @@ const AngeDialog={
         const ta=$('angeMsg');if(ta)ta.value=_last+interimT;
       };
       rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
-      rec.onend=()=>{clearTimeout(_at);_reset();if(_last){const ta=$('angeMsg');if(ta){ta.value=_last;ta.focus();}}};
+      rec.onend=()=>{clearTimeout(_at);_reset();const v=(_last||'').trim();if(v){const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;try{this.send();}catch(_){}}};
       $('angeMsg').blur();
       rec.start();
     }catch(e){_reset();toast('Micro indisponible.','bad');}
   },
+  // Réponse À VOIX HAUTE (voix → voix) : nettoie les emojis/puces avant de lire.
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;const t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();if(t)speak(t,true);}catch(_){}},
+  // Commande vocale GLOBALE : ouvre Ange (si besoin) puis écoute — utilisable depuis n'importe où.
+  voiceCommand(){try{this.open&&this.open();}catch(_){}setTimeout(()=>{try{this.startVoice();}catch(_){}},250);},
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
   _tryAction(msg){
@@ -5661,7 +5666,7 @@ const AngeDialog={
     try{
       var t=String(msg||'').toLowerCase();
       if(!/(oublie|r[ée]initialise|efface|remets? à z[ée]ro).{0,20}(appris|m[ée]moire|habitude|historique|journal|tout)/.test(t))return false;
-      try{localStorage.removeItem('ic_ange_log');localStorage.removeItem('ic_ange_last_target');localStorage.removeItem('ic_ange_learn');localStorage.removeItem('ic_ange_feedback');localStorage.removeItem('ic_ange_next_prev');}catch(_){}
+      try{localStorage.removeItem('ic_ange_log');localStorage.removeItem('ic_ange_last_target');localStorage.removeItem('ic_ange_learn');localStorage.removeItem('ic_ange_topic_feedback');localStorage.removeItem('ic_ange_next_prev');}catch(_){}
       var r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">🧹 C\'est fait — j\'ai oublié mon journal et le dernier véhicule. Je repars de zéro.</div>';}
       $('angeMsg').value='';return true;
     }catch(_){return false;}
@@ -5852,6 +5857,8 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
+    // Commande dictée : on retient qu'on doit répondre À VOIX HAUTE (voix → voix).
+    const _voice=this._voiceMode===true;this._voiceMode=false;this._lastVoice=_voice;
     // Apprentissage — « oublie ce que tu as appris » (réinitialisation locale)
     try{ if(this._tryForget(msg)) return; }catch(_e){}
     // Explicabilité — « qu'as-tu fait ? » (journal local d'Ange)
@@ -5878,6 +5885,7 @@ const AngeDialog={
         if(_nx&&_nx.answered){
           try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_MESSAGE_SENT',{panel:S.panel||'GENERAL',local:true,intent:_nx.intent})}catch(e){}
           this.renderResponse({juste:_nx.answer,sources:(_nx.facts||[]).join(' · ')});
+          if(_voice)this._speakAnswer(_nx.answer);
           try{window.ImmatOrganism?.observe?.('ANGE_QUERIED',{panel:S.panel||'GENERAL',local:true,intent:_nx.intent,_src:'ImmatNexus'})}catch(e){}
           $('angeMsg').value='';
           return;
