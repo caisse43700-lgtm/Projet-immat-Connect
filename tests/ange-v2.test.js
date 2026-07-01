@@ -303,6 +303,11 @@ section('B. Câblage Ange V2 (index.html)');
   // Projection mère angeTurn() — unification lecture seule
   ok('Nexus expose angeTurn', HTML.includes('ImmatNexus.angeTurn'));
   ok('_voiceGreetQuestion consomme angeTurn', /window\.ImmatNexus\.angeTurn\(\)[\s\S]{0,120}tn\.actions/.test(HTML));
+  // Armement vocal en 1 geste + ré-armement en Mode Volant
+  ok('bouton d\'armement vocal (_wakeHintHTML)', HTML.includes('_wakeHintHTML()') && HTML.includes('App.toggleAngeWake(true)'));
+  ok('_wakeHintHTML masqué si déjà armé', /_wakeHintHTML\(\)\{try\{\s*if\(this\._wakeEnabled&&this\._wakeEnabled\(\)\)return ''/.test(HTML));
+  ok('accueil propose l\'armement (open append _wakeHintHTML)', /_wakeHintHTML\(\);if\(_wh\)resp\.innerHTML\+=_wh/.test(HTML));
+  ok('Mode Volant ré-arme le wake word', /_driveAutoSet[\s\S]{0,320}AngeDialog\._wakeStart\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

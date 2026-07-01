@@ -1492,7 +1492,7 @@ _driveAutoTick(){const sp=S.lastSpeed||0;const on=S._driveAuto===true;
   else{if(sp>=8){if(S._driveStopT){clearTimeout(S._driveStopT);S._driveStopT=null;}}
     else if(!S._driveStopT){S._driveStopT=setTimeout(()=>{S._driveStopT=null;if((S.lastSpeed||0)<8)this._driveAutoSet(false);},25000);}}},
 _driveAutoSet(on){if(S._driveAuto===on)return;S._driveAuto=on;document.body.classList.toggle('drive-auto',on);
-  if(on){this._acquireWakeLock();if(!S._driveAnnounced){S._driveAnnounced=true;try{toast('🚗 Mode Volant : écran maintenu, Ange à la voix.','ok');}catch(_){}}}
+  if(on){this._acquireWakeLock();try{if(window.AngeDialog&&AngeDialog._wakeEnabled&&AngeDialog._wakeEnabled())AngeDialog._wakeStart();}catch(_){}if(!S._driveAnnounced){S._driveAnnounced=true;try{toast('🚗 Mode Volant : écran maintenu, Ange à la voix.','ok');}catch(_){}}}
   else{this._releaseWakeLock();if(S._driveStopT){clearTimeout(S._driveStopT);S._driveStopT=null;}}
   try{if(window.ImmatBus)window.ImmatBus.emit(on?'DRIVE_MODE_ON':'DRIVE_MODE_OFF',{_src:'App/driveAuto'});}catch(_){}},
 async _acquireWakeLock(){try{if(!('wakeLock'in navigator))return;if(S._wakeLock)return;S._wakeLock=await navigator.wakeLock.request('screen');if(S._wakeLock&&S._wakeLock.addEventListener)S._wakeLock.addEventListener('release',()=>{S._wakeLock=null;});}catch(_){S._wakeLock=null;}},
@@ -5335,6 +5335,7 @@ const AngeDialog={
       try{const _na=this._nextActionsHTML();if(_na)resp.innerHTML=_na+resp.innerHTML;}catch(_){}
       // « Le fil rouge » : une phrase « voici où on en est » tout en haut (silence sinon).
       try{const _si=this._situationHTML();if(_si)resp.innerHTML=_si+resp.innerHTML;}catch(_){}
+      try{const _wh=this._wakeHintHTML();if(_wh)resp.innerHTML+=_wh;}catch(_){}
       // Démarrer AngePredictor + AngeMonologue au premier open (différé 5s)
       if(!this._predictorStarted){this._predictorStarted=true;setTimeout(()=>{try{AngePredictor.start();}catch(_){};try{AngeMonologue.start();}catch(_){}},5000);}
     }
@@ -5649,6 +5650,12 @@ const AngeDialog={
   _menuBtn(path,label){return '<button onclick="AngeDialog.menu(\''+path+'\')" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;margin:0 6px 6px 0">'+esc(label)+'</button>';},
   // Boutons d'accueil « Que veux-tu faire ? » (réutilise la table d'interactions, aucun nouvel état)
   _entryMenuHTML(){try{const c=this._MENU.faire&&this._MENU.faire.children;if(!c)return'';const ks=Object.keys(c);return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #1a1a2e"><div style="color:#a5b4fc;font-size:11px;font-weight:700;margin-bottom:6px">Que veux-tu faire ?</div><div style="display:flex;flex-wrap:wrap">'+ks.map(k=>this._menuBtn('faire.'+k,c[k].label)).join('')+'</div></div>';}catch(_){return'';}},
+  // Bouton unique pour ARMER l'ouverture vocale « Ange » (le seul geste requis, à faire à l'arrêt).
+  _wakeHintHTML(){try{
+    if(this._wakeEnabled&&this._wakeEnabled())return '';
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return '';
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="App.toggleAngeWake(true);try{AngeDialog.close()}catch(_){}" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">🎙️ Activer l\'ouverture vocale « Ange »</button><div style="color:#666;font-size:10px;margin-top:4px">Une fois (à l\'arrêt). Ensuite, dis « Ange » — sans toucher l\'écran, tant que l\'app est ouverte.</div></div>';
+  }catch(_){return '';}},
   // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
   //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).
   _nextActionsHTML(){try{
