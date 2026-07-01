@@ -5753,6 +5753,37 @@ const AngeDialog={
       this.menu('faire');$('angeMsg').value='';return true;
     }catch(_){return false;}
   },
+  // ── LANCEUR VOCAL : « ouvre le GPS / les messages / les appels / l'activité / réglages … »
+  //    Table dérivée des fonctions du Dashboard ; ouvre via les fonctions propriétaires ; kill-switch respecté.
+  _OPEN:[
+    {key:'gps',re:/\b(gps|navigation|naviguer|navigue|itin[ée]raire|maps?|waze|carte)\b/,feat:'gps',label:'le GPS',open:function(){try{App.panel&&App.panel('drive');}catch(_){}try{App.locateBtn&&App.locateBtn();}catch(_){}}},
+    {key:'messages',re:/\bmessages?\b|messagerie/,feat:'messages',label:'les messages',open:function(){try{App.navMessages&&App.navMessages();}catch(_){}}},
+    {key:'appels',re:/\bappels?\b|t[ée]l[ée]phone|rappels?|appels? manqu|qui m.a appel/,feat:'appels',label:'les appels',open:function(t){try{App.navAppels&&App.navAppels();}catch(_){}if(/manqu|rappel/.test(t))setTimeout(function(){try{App.setCallJournalFilter&&App.setCallJournalFilter('missed');}catch(_){}},350);}},
+    {key:'activite',re:/\bactivit[ée]|signalements? re[çc]us|[àa] traiter|nouveau|trait[ée]s?/,feat:null,label:"l'activité",open:function(t){try{App.navActivite&&App.navActivite();}catch(_){}if(/[àa] traiter/.test(t))setTimeout(function(){try{App.openTodoView&&App.openTodoView();}catch(_){}},300);else if(/nouveau/.test(t))setTimeout(function(){try{App.openNewView&&App.openNewView();}catch(_){}},300);else if(/trait[ée]/.test(t))setTimeout(function(){try{App.openDoneView&&App.openDoneView();}catch(_){}},300);}},
+    {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:'signaler',label:'Signaler',open:function(){try{App.openReport&&App.openReport();}catch(_){}}},
+    {key:'reglages',re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}}},
+    {key:'dashboard',re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(_){}}}
+  ],
+  _tryOpen(msg){
+    try{
+      const t=String(msg||'').toLowerCase();
+      if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
+      const hasVerb=/\b(ouvre|ouvrir|ouvres|va|vas|aller|montre|montrer|affiche|afficher|lance|lancer|mets|met|passe|acc[èe]de|acc[ée]der|amene|am[èe]ne|emm[èe]ne|emmener|va dans)\b/.test(t);
+      let hit=null;for(const d of this._OPEN){if(d.re.test(t)){hit=d;break;}}
+      if(!hit)return false;
+      const words=t.split(/\s+/).filter(Boolean).length;
+      if(!hasVerb&&words>3)return false; // sans verbe d'ouverture, on n'accepte qu'une commande courte (~le nom)
+      if(hit.gardien&&!(window.S&&S.isGardien))return false;
+      const r=$('angeResponse');
+      if(hit.feat){const fs=App.featureStatus?App.featureStatus(hit.feat):{enabled:true,by:null};
+        if(!fs.enabled){if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML=this._blockedHTML(hit.feat,'« '+esc(hit.label)+' » est indisponible '+(fs.by==='user'?'(Réglages)':'(désactivé par l\'administrateur)')+'.');}try{this._earcon('error');}catch(_){}$('angeMsg').value='';return true;}}
+      try{hit.open(t);}catch(_){}
+      try{this._earcon('ok');}catch(_){}
+      try{this._log('action','Ouvert : '+hit.label);}catch(_){}
+      $('angeMsg').value='';try{this.close&&this.close();}catch(_){}
+      return true;
+    }catch(_){return false;}
+  },
   // Guide à suggestions : « signaler / faire un signalement / activité / ouvre les messages / appels »
   _tryGuide(msg){
     try{
@@ -6021,6 +6052,8 @@ const AngeDialog={
     try{ if(this._trySignal(msg)) return; }catch(_e){}
     // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
     try{ if(this._tryAction(msg)) return; }catch(_e){}
+    // Lanceur vocal : « ouvre le GPS / les messages / les appels / l'activité / réglages … »
+    try{ if(this._tryOpen(msg)) return; }catch(_e){}
     // Menu d'accueil « Que veux-tu faire ? » pour une demande générique (avant le fallback système/LLM)
     try{ if(this._tryMenu(msg)) return; }catch(_e){}
     // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).
