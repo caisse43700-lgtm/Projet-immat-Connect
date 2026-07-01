@@ -253,6 +253,11 @@ section('B2. Anti-chevauchement Narrator ⇄ CoPilot');
   ok('Seuil de sourdine cohérent (FB_MUTE_MIN = 3)', NAR.includes('FB_MUTE_MIN = 3') && COP.includes('FB_MUTE_MIN = 3'));
   // « oublie ce que tu as appris » réinitialise aussi le retour
   ok('_tryForget réinitialise ic_ange_feedback', HTML.includes("removeItem('ic_ange_feedback')"));
+  // Projection Dashboard (lecture seule) du bilan des retours
+  ok('Dashboard : bloc gdAngeFeedbackBlock présent', HTML.includes('gdAngeFeedbackBlock'));
+  ok('gdAngeFeedbackBlock lit ic_ange_feedback', /gdAngeFeedbackBlock\(\)\{[\s\S]{0,500}ic_ange_feedback/.test(HTML));
+  ok('gdAngeFeedbackBlock rendu dans le Dashboard', HTML.includes('App.gdAngeFeedbackBlock?App.gdAngeFeedbackBlock()'));
+  ok('resetAngeFeedback efface ic_ange_feedback (device)', /resetAngeFeedback\(\)\{[\s\S]{0,140}removeItem\('ic_ange_feedback'\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

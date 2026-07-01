@@ -1025,6 +1025,7 @@ openGardienDashboard(){
         <div style="margin-top:8px">${eHtml}</div>
       </div>
       ${App.gdNexusBlock?App.gdNexusBlock():''}
+      ${App.gdAngeFeedbackBlock?App.gdAngeFeedbackBlock():''}
       ${timelineHtml}
       ${callsRuntimeHtml}
       ${runtimeHtml}
@@ -1206,6 +1207,24 @@ gdNexusBlock(){
     return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">🧬 ImmatNexus — tissu de connexion</b><button onclick="App.runNexusAudit()" style="background:#0c1a2e;color:#a3e635;border:1px solid #3f6212;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer">▶ Audit cohérence</button></div><div style="font-size:10px;color:#555;margin-bottom:8px">Lecture seule : relie registre + santé + synthèse + OBD + lois. Ange répond en local via Nexus.ask().</div>'+rows+'<div id="nexusAuditResult" style="margin-top:8px;font-size:11px;color:#555">Audit non lancé.</div></div>';
   }catch(_){return'';}
 },
+gdAngeFeedbackBlock(){
+  try{
+    const e2=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let fb={};try{fb=JSON.parse(localStorage.getItem('ic_ange_feedback')||'{}');}catch(_){}
+    const LBL={swarm:'Entraide proche',guardian:'Recommandations gardien',brain:'Prédictions / zones à risque',reliability:'Fiabilité des données',soul_insight:'Prise de conscience',harmony_low:'Contradictions',convergence:'Convergence modules',trajectory:'Dégradation trajectoire',isolation:'Conduite isolée',resurrection:'Réveil système',blind_spot:'Angles morts',silence_ok:'Tout va bien',brain_urgency:'Urgence (cerveau)'};
+    const keys=Object.keys(fb);
+    let rows='';
+    if(!keys.length){rows='<div style="color:#555;font-size:12px">Aucun retour pour le moment. Les 👍 / 👎 sur les interventions d\'Ange apparaîtront ici.</div>';}
+    else{
+      rows=keys.sort((a,b)=>(((fb[b].up||0)+(fb[b].down||0))-((fb[a].up||0)+(fb[a].down||0)))).map(k=>{
+        const t=fb[k]||{up:0,down:0};const muted=(t.down||0)>=3&&(t.down||0)>(t.up||0);
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #0a0a14;font-size:12px"><span style="color:#cbd5e1">'+e2(LBL[k]||k)+(muted?' <span style="color:#f87171;font-size:10px">· en sourdine</span>':'')+'</span><span style="color:#888">👍 '+(t.up||0)+' · 👎 '+(t.down||0)+'</span></div>';
+      }).join('');
+    }
+    return '<div data-gd="dev" style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#a3e635">💬 Ange — retour proactif (👍/👎)</b>'+(keys.length?'<button onclick="App.resetAngeFeedback()" style="background:#0c1a2e;color:#a3e635;border:1px solid #3f6212;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer">Réinitialiser</button>':'')+'</div><div style="font-size:10px;color:#555;margin-bottom:8px">Lecture seule (appareil). Un sujet avec ≥ 3 👎 (et plus de 👎 que de 👍) est mis en sourdine — Ange se tait dessus.</div>'+rows+'</div>';
+  }catch(_){return'';}
+},
+resetAngeFeedback(){try{localStorage.removeItem('ic_ange_feedback');}catch(_){}try{toast('Retours Ange réinitialisés.','ok');}catch(_){}try{this.openGardienDashboard?.();}catch(_){}},
 runNexusAudit(){
   const el=$('nexusAuditResult');if(!el)return;
   try{
