@@ -201,21 +201,34 @@ visait pas explicitement, le catalogue gagne réellement : **locality**, **anti-
 Ce qui reste **acquis et vrai** (à ne pas jeter) : change-locality 6→2, duplication supprimée,
 dérives éliminées, tests verts, moteur générique sans branche par-fait.
 
+**Verdict double (formulation exacte, cf. revue §10)** — ne pas dire « le catalogue échoue ».
+Dire : **« le catalogue échoue comme *réducteur général de code* (H1 réfutée), mais réussit comme
+*outil anti-dérive ciblé* (Hx confirmée) ».** Les deux jugements coexistent et ne s'annulent pas.
+
 ---
 
 ## 8. Règle d'emploi future (adoptée)
 
-> **Employer un catalogue de faits UNIQUEMENT si les 4 conditions sont réunies :**
-> 1. **plusieurs consommateurs réels** du même fait ;
-> 2. **forte duplication** existante ;
-> 3. **risque de dérive prouvé** (incohérences déjà observées) ;
-> 4. **gain de locality > coût d'indirection**.
+> **Employer un catalogue UNIQUEMENT si les 4 conditions sont réunies :**
+> 1. le même fait nourrit **au moins 3 consommateurs réels** ;
+> 2. il existe **déjà une duplication ou une dérive prouvée** ;
+> 3. le **vocabulaire / la confirmation / l'explication doivent rester strictement cohérents** ;
+> 4. le **gain de locality > coût d'indirection**.
+>
+> **Règle de refus — NE PAS utiliser le catalogue si :**
+> - le fait n'a qu'**un ou deux consommateurs** ;
+> - la **déclaration devient plus longue que le code direct** ;
+> - le **moteur nécessite un cas spécial** (branche par-fait) ;
+> - l'**équipe met plus de temps à comprendre où l'action se décide**.
 >
 > **Sinon : garder le code direct** (plus simple, moins de LOC, moins de hops).
 
 Le point de bascule qui rendrait le catalogue gagnant en LOC n'est **pas** « plus de faits » mais
 « **des faits à très nombreux consommateurs verbeux chacun** » (p. ex. un fait nourrissant 8–10
 écrans / rails / exports). Réévaluer D23 seulement si cette densité apparaît.
+
+**Reformulation du principe** — la bonne règle n'est **pas** « tout est un fait ». La bonne règle
+pragmatique est : **« centraliser seulement ce qui dérive réellement ».**
 
 ---
 
@@ -239,7 +252,55 @@ Commits de référence : **E2 `a13617c`**, **E3 `1a3cd96`** (sur `local/merge-to
 
 ---
 
-## 10. Portée & enseignement méta
+## 10. Revue critique externe & raffinements (2026-07-01)
+
+Le protocole et le verdict ont été soumis à une revue critique externe (ChatGPT), dans le but de
+**casser** la conclusion. La revue **valide** D23 et apporte les raffinements suivants, intégrés
+ci-dessus (§7 verdict double, §8 conditions + règle de refus + reformulation).
+
+### 10.1 Le protocole est jugé honnête
+Non biaisé en faveur du catalogue *précisément* parce qu'il (a) inclut le coût du moteur dans le
+solde, (b) refuse de changer le critère après coup, (c) mesure **en parallèle** trois choses
+distinctes — réduction de LOC / de locality / de dérive — ce qui **évite une fausse victoire**.
+
+### 10.2 « LOC moteur inclus » est le bon juge de H1, pas de toute la valeur
+Le jugement correct est **double** :
+- **H1 (réduction de code)** : *réfutée*.
+- **Hx (réduction de dérive / locality)** : *confirmée*.
+
+### 10.3 Variantes qui pourraient rendre H1 vraie (en changeant la FORME du catalogue)
+- **A — Schéma minimal.** Réduire la déclaration au strict nécessaire et dériver le reste par
+  convention (ne pas répéter `key/label/short/say/words` si une seule source peut les générer).
+- **B — Génération de code (build-time).** Le catalogue reste source unique mais **génère** les
+  listes / rails / tests à la compilation → garde la locality **sans** coût runtime ni indirection.
+- **C — Catalogue de vocabulaire seulement.** Ne pas modéliser le fait entier ; **centraliser
+  uniquement les taxonomies qui dérivent** (problèmes véhicule, incidents route, labels, synonymes).
+  Capture le bénéfice réel observé **sans sur-abstraction**.
+- **D — Seuil de densité.** N'activer le catalogue complet que pour les faits à **5+ consommateurs**
+  ou à dérive historique avérée.
+
+### 10.4 Recommandation retenue pour ImmatConnect
+> **Ne pas garder un « catalogue de faits général ». Garder, là où il y a dérive, un
+> « catalogue de taxonomies / vocabulaire partagé » (variante C) — plus simple.**
+
+C'est la traduction concrète de « centraliser seulement ce qui dérive réellement ». Si un besoin de
+centralisation de vocabulaire réapparaît (nouvelle dérive prouvée, ≥3 consommateurs), on repartira
+de **C**, pas du catalogue de faits complet.
+
+### 10.5 Actions confirmées par la revue
+- ne pas fusionner E2/E3 ;
+- garder le papier D23 ;
+- garder le prototype comme preuve ;
+- conserver les apprentissages sous forme de **taxonomies partagées simples** si besoin ;
+- ne pas re-litiguer la théorie tant qu'un nouveau cas n'atteint pas une densité de consommateurs
+  suffisante.
+
+> Conclusion de la revue : **D23 est une bonne décision d'ingénierie — elle prouve qu'on sait
+> abandonner une belle théorie quand les mesures ne la soutiennent pas.**
+
+---
+
+## 11. Portée & enseignement méta
 
 Ce document vaut au-delà de son sujet : il fixe une **méthode** pour trancher un choix
 d'architecture chez ImmatConnect — *hypothèse explicite → protocole mesurable → chiffres bruts →
