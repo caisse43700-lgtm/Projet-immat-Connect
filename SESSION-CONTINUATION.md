@@ -7,6 +7,37 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : conversation vocale continue (mic reste ouvert)
+
+Demande PO : « le micro doit rester ouvert tant que je parle avec Ange » pour enchaîner
+signalement / réponse à un message / appel sans re-toucher l'écran.
+
+**Boucle de conversation (index.html / AngeDialog)** — coordination stricte du micro (une seule
+reconnaissance à la fois) :
+- `startVoice()` : `_convo=true` au démarrage ; `onend` → `_voiceTurn((_last||'').trim())`. Tap micro
+  pendant l'écoute → stop + `_convo=false`.
+- `_voiceTurn(v)` (async) : ignore si Ange fermé ; mots d'arrêt (`stop|merci|c'est bon|ferme|au revoir|
+  termine|arrête|silence|laisse tomber`) → `_convoStop()` + `close()` ; sinon `_voiceMode=true` +
+  `await this.send()`. **Si `this._pending`** (une confirmation vient d'être armée) → on NE reprend PAS
+  (le listener oui/non `_pendRec` a le micro) ; sinon `_convoResume()`.
+- `_convoResume()` : rouvre le micro pour le tour suivant, mais SEULEMENT quand `speechSynthesis.speaking`
+  est faux (anti auto-écoute : ne pas transcrire la voix d'Ange), et jamais si `_rec`/`_pendRec` actif
+  ou Ange fermé. Délai 450 ms + poll 300 ms sur la parole.
+- `_afterConfirm()` : appelé par `confirmYes` (après `p.run()`), `angeCancelAction`/`confirmNo`, et le
+  timeout 15 s → relance `_convoResume()` pour continuer après une confirmation.
+- `_convoStop()` : `_convo=false` + stop `_rec`. `close()` : `_convo=false`, `_convoSilence=0`, stop `_rec`.
+- Anti-boucle-dans-le-vide : `_convoSilence` — 1 blanc toléré, pause après 2 (toast « Micro en pause »).
+
+Handoff micro dans un tour d'action : dictée (`_rec`) se termine → `_voiceTurn` → `send()` arme la
+confirmation (`_pendRec` oui/non) → à la résolution `_afterConfirm` → `_convoResume` rouvre `_rec`. Jamais
+deux recognizers simultanés. Compatible avec le wake word (pausé quand Ange ouvert).
+
+Tests : `tests/ange-v2.test.js` **167/167** (+15 : méthodes, _convo=true, onend→_voiceTurn, pas de reprise
+si pending, attente TTS, pas si micro occupé, mots d'arrêt, confirmYes/timeout relancent, close() stoppe,
+pause 2 silences). `npm test` 177 + diag 3. **CACHE_NAME v415→v416** (tout dans index.html).
+
+---
+
 ## SESSION 2026-07-01 — Mot d'activation « Ange » (wake word, opt-in)
 
 Demande PO : « je voudrais pouvoir ouvrir Ange avec un mot ».

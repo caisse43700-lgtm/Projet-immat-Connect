@@ -195,7 +195,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('signalement gardé par feature signalement_vehicule', has("featureStatus('signalement_vehicule')"));
   ok('appel gardé par feature appels', has("featureStatus('appels')"));
   ok('gouvernance via fonction propriétaire setFeatureFlag', has('App.setFeatureFlag('));
-  ok('close() nettoie la confirmation en attente', /close\(\)\{[\s\S]{0,120}_clearPending/.test(HTML));
+  ok('close() nettoie la confirmation en attente', /close\(\)\{[\s\S]{0,300}_clearPending/.test(HTML));
   ok('aucun effet de bord avant confirmation (run dans _armConfirm)', has('this._armConfirm(()=>this.angeDoAction') && has('this._armConfirm(()=>this.angeSignalConfirm') && has('this._armConfirm(()=>this.angeCallConfirm'));
   // Menu d'accueil « Que veux-tu faire ? » + proposition du plus proche
   ['_tryMenu', '_entryMenuHTML', '_signalNearest', '_callNearest', '_messageNearest', '_nearestInfo', '_distLabel'].forEach(m => ok('méthode présente : ' + m, has(m + '(') || has(m + ':')));
@@ -223,7 +223,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_situationHTML consomme Nexus.currentSituation', has('ImmatNexus.currentSituation'));
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
   // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
-  ok('startVoice auto-envoie la dictée', /onend=\(\)=>\{[\s\S]{0,220}this\._voiceMode=true;[\s\S]{0,40}this\.send\(\)/.test(HTML));
+  ok('startVoice onend délègue à _voiceTurn', HTML.includes("rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn"));
+  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1000}this\._voiceMode=true;[\s\S]{0,40}await this\.send\(\)/.test(HTML));
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
@@ -238,6 +239,18 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,700}ange-open'\)\)return/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{\s*try\{this\._wakeStop/.test(HTML));
   ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
+  // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
+  ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
+  ok('startVoice ouvre la conversation (_convo=true)', /this\._convo=true;.{0,80}le micro reste ouvert/.test(HTML));
+  ok('startVoice onend → _voiceTurn', HTML.includes('this._voiceTurn((_last||\'\').trim())'));
+  ok('_voiceTurn ne reprend pas si confirmation en attente', /if\(this\._pending\)return;[\s\S]{0,40}this\._convoResume\(\)/.test(HTML));
+  ok('_convoResume attend la fin de la voix (anti auto-écoute)', /speechSynthesis\.speaking\)\{return setTimeout\(go,300\)/.test(HTML));
+  ok('_convoResume ne rouvre pas si micro occupé', /_convoResume\(\)\{[\s\S]{0,220}this\._rec\|\|this\._pendRec\)return/.test(HTML));
+  ok('mots d\'arrêt stoppent la conversation', /stop\|st\[oe\]p\|merci[\s\S]{0,200}this\._convoStop\(\);try\{this\.close/.test(HTML));
+  ok('confirmYes relance la conversation', /confirmYes\(\)\{[\s\S]{0,120}this\._afterConfirm\(\)/.test(HTML));
+  ok('confirmation par timeout relance la conversation', /Expiré \(15 s[\s\S]{0,160}this\._afterConfirm\(\)/.test(HTML));
+  ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,80}this\._convo=false;this\._convoSilence=0/.test(HTML));
+  ok('pause micro après 2 silences', /this\._convoSilence>=2\)\{this\._convoStop\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
