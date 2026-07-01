@@ -5350,6 +5350,7 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
+    try{this._convo=false;this._convoSilence=0;if(this._rec)this._rec.stop();}catch(_){} // fin de la conversation vocale
     try{this._clearPending&&this._clearPending();}catch(_){}
     document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
@@ -5436,9 +5437,10 @@ const AngeDialog={
   startVoice(){
     const btn=$('angeMic');
     const _reset=()=>{this._rec=null;if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
-    if(this._rec){try{this._rec.stop();}catch(e){}  _reset();return;}
+    if(this._rec){try{this._rec.stop();}catch(e){}  _reset();this._convo=false;return;} // tap = stop conversation
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){toast('Micro non disponible sur cet appareil.','bad');return;}
+    this._convo=true; // le micro reste ouvert tant qu'on parle avec Ange
     try{
       const rec=new SR();
       this._rec=rec;
@@ -5459,11 +5461,42 @@ const AngeDialog={
         const ta=$('angeMsg');if(ta)ta.value=_last+interimT;
       };
       rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
-      rec.onend=()=>{clearTimeout(_at);_reset();const v=(_last||'').trim();if(v){const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;try{this.send();}catch(_){}}};
+      rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn((_last||'').trim());};
       $('angeMsg').blur();
       rec.start();
     }catch(e){_reset();toast('Micro indisponible.','bad');}
   },
+  // Un tour de conversation vocale : traite la commande dictée puis (si pas de confirmation en attente) rouvre le micro.
+  async _voiceTurn(v){
+    if(!document.body.classList.contains('ange-open'))return; // Ange fermé entre-temps → on ignore
+    v=(v||'').trim();
+    if(!v){ // silence : on tolère 1 blanc, on met en pause après 2 pour ne pas écouter dans le vide
+      this._convoSilence=(this._convoSilence||0)+1;
+      if(this._convoSilence>=2){this._convoStop();try{toast('Micro en pause — touche 🎙️ ou dis « Ange ».','ok');}catch(_){}return;}
+      return this._convoResume();
+    }
+    this._convoSilence=0;
+    if(/^(stop|st[oe]p|merci|c'est bon|c est bon|ferme|au revoir|termin[ée]?|arr[êe]te|silence|laisse tomber)\b/.test(v.toLowerCase())){this._convoStop();try{this.close();}catch(_){}return;}
+    const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
+    try{ await this.send(); }catch(_){}
+    // Si une confirmation « oui/non » est en attente, son écoute prend le relais (voir _afterConfirm).
+    if(this._pending)return;
+    this._convoResume();
+  },
+  // Rouvre le micro pour le tour suivant — SEULEMENT quand Ange a fini de parler (anti auto-écoute).
+  _convoResume(){
+    if(!this._convo)return;
+    if(!document.body.classList.contains('ange-open'))return;
+    if(this._rec||this._pendRec)return;
+    const go=()=>{
+      if(!this._convo||this._rec||this._pendRec||!document.body.classList.contains('ange-open'))return;
+      if(window.speechSynthesis&&window.speechSynthesis.speaking){return setTimeout(go,300);} // attendre la fin de la voix d'Ange
+      try{this.startVoice();}catch(_){}
+    };
+    setTimeout(go,450);
+  },
+  _convoStop(){this._convo=false;this._convoSilence=0;try{if(this._rec)this._rec.stop();}catch(_){}},
+  _afterConfirm(){if(this._convo)this._convoResume();},
   // Réponse À VOIX HAUTE (voix → voix) : nettoie les emojis/puces avant de lire.
   _speakAnswer(txt){try{if(typeof speak!=='function')return;const t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();if(t)speak(t,true);}catch(_){}},
   // Commande vocale GLOBALE : ouvre Ange (si besoin) puis écoute — utilisable depuis n'importe où.
@@ -5509,7 +5542,7 @@ const AngeDialog={
     if(resp)resp.innerHTML='<div style="line-height:1.6">✅ C\'est fait — « '+esc(label)+' » '+(on?'activée':'désactivée')+' pour la flotte.</div>';
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_RESPONSE_RECEIVED',{action:true,key:legacy,enabled:!!on})}catch(e){}
   },
-  angeCancelAction(){this._clearPending();this._log('cancel','Action annulée');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';},
+  angeCancelAction(){this._clearPending();this._log('cancel','Action annulée');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">Action annulée.</div>';try{this._afterConfirm();}catch(_){}},
   // ── Confirmation unifiée : timeout 15 s + validation vocale oui/non (carte ouverte uniquement)
   _clearPending(){try{clearTimeout(this._pendTO);}catch(_){}this._pendTO=null;try{if(this._pendRec)this._pendRec.stop();}catch(_){}this._pendRec=null;this._pending=null;},
   // ── Audit local (device-only) : trace les DÉCISIONS d'Ange, sans contenu sensible (pas de texte privé)
@@ -5712,12 +5745,12 @@ const AngeDialog={
       $('angeMsg').value='';return true;
     }catch(_){return false;}
   },
-  confirmYes(){const p=this._pending;if(!p)return;this._clearPending();try{p.run();}catch(_){}},
+  confirmYes(){const p=this._pending;if(!p)return;this._clearPending();try{p.run();}catch(_){}try{this._afterConfirm();}catch(_){}},
   confirmNo(){if(!this._pending)return;this.angeCancelAction();},
   _armConfirm(run){
     this._clearPending();
     this._pending={run:run};
-    this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();this._log('cancel','Expiré (15 s sans confirmation)');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';}},15000);
+    this._pendTO=setTimeout(()=>{if(this._pending){this._clearPending();this._log('cancel','Expiré (15 s sans confirmation)');const r=$('angeResponse');if(r)r.innerHTML='<div style="color:#888;font-style:italic">⏳ J\'annule — tu n\'as rien confirmé.</div>';try{this._afterConfirm();}catch(_){}}},15000);
     // Voix : écoute courte oui/non pendant que la carte est ouverte (jamais en continu → anti faux-positif)
     try{
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
