@@ -7,6 +7,53 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — EXPÉRIENCE E2+E3 « catalogue de faits autorisés » → VERDICT NO-GO
+
+Contexte : protocole scientifique pour tester si la théorie « tout est un fait autorisé »
+(`core/immat-facts.js`, prototype mergé sur main via PR #473) **réduit le code** en production.
+Cadre strict PO : branche uniquement, aucune fusion sur main sans GO explicite, suppression réelle
+du code spécifique, mesures avant/après obligatoires, **moteur inclus dans le solde LOC**, aucun
+contournement si le solde est mauvais.
+
+### E2 — migration mesurée de `SIGNAL_VEHICULE` (commit `a13617c`, branche `local/merge-to-main`)
+- **Avant** : liste des problèmes véhicule codée en dur en **4 sites** — `PROBS` (`_signalNearest`),
+  `LBL` + `choices` (`_trySignal`), `_MENU.signaler.vehicule.children`. Dérive : `LBL` portait un 7ᵉ
+  problème (« Fuite ») absent des 3 autres copies.
+- **Après** : source unique `FACTS.SIGNAL_VEHICULE.problems` (key/label/short/say/words, + `offer:false`
+  pour « Fuite » = reconnu mais non proposé). Consommée via 2 helpers **génériques** `offered()` /
+  `matchOption()` (opèrent sur `f.problems` — aucune branche par-fait). `voiceHints`/`propose` rendus
+  problems-aware. Chargé dans index.html (`immat-facts.js?v=1`) + SW (`v428→v429`).
+- **Chiffres** : index.html net −1 · immat-facts.js +29 (dont ~20 MOTEUR fixe, ~10 DONNÉE) · SW +1
+  → **solde net +29 LOC**. Change-locality **4→1**. Duplication 4→1 + dérive supprimée. +1 hop.
+- Tests : npm 177+3 · proto 18→26 · ange-v2 240→242.
+
+### E3 — 2ᵉ fait `SIGNAL_ROUTE` : le moteur s'amortit-il ? (commit `1a3cd96`)
+- 2ᵉ fait à liste d'options → **réutilise le MÊME moteur `offered()` (0 nouvelle ligne moteur)**.
+- Avant : incidents route codés en dur en **2 sites** (`_MENU.signaler.route.children` + grille HTML
+  statique `#sigStep2Route`). Après : `FACTS.SIGNAL_ROUTE.problems` (+ icon/sev pour la grille HTML,
+  rendue par `App.sigStepRoute()`). Taxonomie manuelle `App.vehicleSelectType` **laissée intacte**
+  (vocabulaire différent — l'unifier changerait l'UX, hors périmètre). `immat-facts.js?v=2`, SW `v430`.
+- **Chiffres E3 seul** : index.html −7 · immat-facts.js +23 (100 % DONNÉE, moteur inchangé) → +16.
+- **CUMULÉ E2+E3, moteur inclus** : **+45 LOC** (E2 était +29 → le solde MONTE). Change-locality
+  cumulée **6→2** (6 consommateurs, 2 déclarations). Tests : npm 177+3 · proto 31 · ange-v2 242.
+
+### Enseignement (réfutation propre)
+Hypothèse « ajouter des faits amortit le moteur et fait basculer le LOC ≤ 0 » → **RÉFUTÉE**. Le moteur
+(~20 lignes) s'amortit bien (fixe, partagé par 2 faits), MAIS chaque **déclaration** de fait
+(métadonnées riches) coûte plus de lignes que le code impératif terse qu'elle remplace. Ce n'est pas
+le moteur qui plombe le solde, c'est la verbosité déclarative. **Le catalogue centralise et rend
+cohérent — il ne réduit pas le LOC à cette échelle.**
+
+### Décision PO : NO-GO généralisation (→ PROJECT_STATE.md D23)
+- On **ne fusionne pas** E2/E3 sur main. Branche `local/merge-to-main` conservée comme preuve
+  (poussée sur origin). Prototype `immat-facts.js` reste sur main (version 3-faits d'origine).
+- **Règle future** : catalogue de faits uniquement si (1) plusieurs consommateurs réels du même fait,
+  (2) forte duplication existante, (3) risque de dérive prouvé, (4) gain de locality > coût
+  d'indirection. Sinon → code direct.
+- **Cette décision (D23) ne doit pas être re-litiguée** sans une nouvelle densité de consommateurs.
+
+---
+
 ## SESSION 2026-07-01 — FIX wake word « rien ne se passe quand je dis Ange » (iOS geste)
 
 Symptôme PO : dire « Ange » ne faisait rien. Cause : iOS exige un GESTE utilisateur pour `SpeechRecognition.start()`.
