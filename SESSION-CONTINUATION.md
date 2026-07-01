@@ -7,6 +7,29 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : pose une question à l'appel vocal + réponses courtes
+
+Demande PO : « Ange pose une question quand on l'appelle et réponse courte ».
+
+**`voiceCommand()`** (appel vocal : mot d'activation / bouton 🎙️ / global) :
+1. ouvre Ange ; 2. `_voiceGreetQuestion()` → question COURTE et OUVERTE (on attend une commande, pas
+   un oui/non) : « Je t'écoute. Que veux-tu faire ? », contextualisée si `nextUsefulAction()` a un
+   top (véhicule proche / message reçu / à-traiter) ; 3. affiche la question dans la carte + la DIT
+   (`speak(q,true)`) ; 4. attend la fin du TTS (`speechSynthesis.speaking`) avant `startVoice()`
+   (anti auto-écoute). `_convo=true` (enchaîne la conversation continue).
+
+**`_speakAnswer(txt)`** — réponses parlées COURTES : retire les emojis puis ne lit que la **1re phrase**
+(`/^[^.?!]{0,140}[.?!]/`) ou tronque à ~138 car. + « … ». Les cartes visuelles restent complètes ;
+seule la VOIX est abrégée.
+
+Tests : `tests/ange-v2.test.js` **171/171** (+4 : _voiceGreetQuestion, question à voix haute, attente TTS,
+réponse courte). `npm test` 177 + diag 3. **CACHE_NAME v416→v417** (tout dans index.html).
+
+> Cohérent avec l'eurêka « rail vocal » discuté : à l'appel, Ange guide par une question courte plutôt
+> que d'attendre une phrase libre dans le vide.
+
+---
+
 ## SESSION 2026-07-01 — Ange : conversation vocale continue (mic reste ouvert)
 
 Demande PO : « le micro doit rester ouvert tant que je parle avec Ange » pour enchaîner

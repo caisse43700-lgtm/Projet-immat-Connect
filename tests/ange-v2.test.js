@@ -251,6 +251,11 @@ section('B. Câblage Ange V2 (index.html)');
   ok('confirmation par timeout relance la conversation', /Expiré \(15 s[\s\S]{0,160}this\._afterConfirm\(\)/.test(HTML));
   ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,80}this\._convo=false;this\._convoSilence=0/.test(HTML));
   ok('pause micro après 2 silences', /this\._convoSilence>=2\)\{this\._convoStop\(\)/.test(HTML));
+  // Ange pose une question courte à l'appel vocal + réponses parlées courtes
+  ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
+  ok('voiceCommand pose la question à voix haute', /voiceCommand\(\)\{[\s\S]{0,320}_voiceGreetQuestion\(\)[\s\S]{0,500}speak\(q,true\)/.test(HTML));
+  ok('voiceCommand attend la fin de la voix avant d\'écouter', /voiceCommand\(\)\{[\s\S]{0,600}speechSynthesis\.speaking\)return setTimeout\(go,250\)[\s\S]{0,40}this\.startVoice\(\)/.test(HTML));
+  ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
