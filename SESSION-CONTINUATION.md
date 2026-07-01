@@ -7,6 +7,33 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : confirmation par mot-action (incrément 2, anti faux « oui »)
+
+Problème de sécurité : au volant, « oui » est ambigu (radio, passager, conversation) → risque de
+confirmer une action partagée par erreur.
+
+**`_armConfirm(run, word)`** (index.html) :
+- `word` = mot-action attendu pour une action PARTAGÉE : `envoie` / `appelle` / `reponds` / `confirme`.
+  Si présent → le « oui » seul NE confirme PAS ; il faut le mot-action (avec synonymes, map `M`). Si absent
+  → confirmation triviale (oui OK, ex. rien de partagé aujourd'hui).
+- `this._pending = {run, word}`.
+- Ordre voix : « non/annule/stop/attends » → `confirmNo()` **d'abord** (priorité annulation) ; sinon `YES.test`
+  → `confirmYes()`. YES = `M[word]` si word, sinon la famille oui/ok/envoie/appelle legacy.
+- Le clic sur le bouton (Envoyer/Appeler/Confirmer) reste une confirmation explicite valide (inchangé).
+
+**Call-sites (6) passent le mot** : `_trySignal`→envoie · `_tryMessage`→envoie · menuAct veh→envoie ·
+`_tryCall`→appelle · `_callNearest`→appelle · governance `angeDoAction`→confirme.
+**Cartes (6)** : le hint « ou dis « oui » / « non » » devient « ou dis « envoie/appelle/confirme » / « annule » ».
+
+Réponses (`angeReplyConfirm`) : pas de `_armConfirm` (choisir la réponse EST l'action) → inchangé.
+
+Tests : `tests/ange-v2.test.js` **192/192** (+9 : signature, _pending.word, map M, YES exige le mot,
+priorité annule, call-sites, cartes sans oui/non). `npm test` 177 + diag 3. **CACHE_NAME v419→v420**.
+
+> Prochain : incrément 3 Mode Volant auto (vitesse + Screen Wake Lock) ; puis earcons ; puis angeTurn().
+
+---
+
 ## SESSION 2026-07-01 — Ange : auto-narration des choix (incrément 1 « zéro regard »)
 
 Suite du rail : le rail savait ÉCOUTER les choix, mais Ange ne les DISAIT pas → il fallait regarder
