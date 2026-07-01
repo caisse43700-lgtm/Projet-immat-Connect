@@ -259,11 +259,17 @@ section('B. Câblage Ange V2 (index.html)');
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
   ok('matcher fermé _pickChoice présent', HTML.includes('_pickChoice(text,choices)'));
   ok('_voiceTurn matche les choix avant l\'envoi libre', /this\._choices&&this\._choices\.length\)\{[\s\S]{0,220}this\._pickChoice\(v,this\._choices\)/.test(HTML));
-  ok('signalement : problèmes deviennent des choix vocaux', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],run:\(\)=>this\.angeSignalConfirm/.test(HTML));
+  ok('signalement : problèmes deviennent des choix vocaux', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],say:p\[2\],run:\(\)=>this\.angeSignalConfirm/.test(HTML));
   ok('réponses proposées deviennent des choix vocaux', /this\._choices=choices\.map\(c=>\(\{words:[\s\S]{0,120}angeReplyConfirm/.test(HTML));
   ok('« annule/autre » quitte les choix', /annule\|annuler\|retour\|autre[\s\S]{0,60}this\._choices=null/.test(HTML));
   ok('renderResponse efface les choix fermés', /renderResponse\(r\)\{\s*this\._choices=null/.test(HTML));
   ok('close() efface les choix fermés', /close\(\)\{[\s\S]{0,90}this\._choices=null/.test(HTML));
+  // Auto-narration : Ange DIT les choix en conversation vocale (usage sans écran)
+  ok('méthode _narrateChoices présente', HTML.includes('_narrateChoices(intro)'));
+  ok('_narrateChoices gated sur la conversation vocale', /_narrateChoices\(intro\)\{[\s\S]{0,80}if\(!this\._convo\)return/.test(HTML));
+  ok('_narrateChoices parle (≤3 + « ou autre »)', /_narrateChoices[\s\S]{0,400}slice\(0,3\)[\s\S]{0,40}ou autre[\s\S]{0,40}speak\(phrase,true\)/.test(HTML));
+  ok('signalement : say + narration', /this\._choices=PROBS\.map\(p=>\(\{words:p\[1\],say:p\[2\][\s\S]{0,80}this\._narrateChoices/.test(HTML));
+  ok('réponses : say + narration', /say:c\[0\][\s\S]{0,120}this\._narrateChoices\('Réponds/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
