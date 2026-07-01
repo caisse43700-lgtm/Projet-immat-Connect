@@ -7,6 +7,43 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : boucle de retour 👍/👎 (maturation des betas)
+
+La brique explicitement identifiée comme « manquante » pour promouvoir `copilote_proactif` /
+`copilote_monologue` en stable : un retour utilisateur qui rend Ange moins bavard.
+
+**Principe (constitution)** : trace + projection, aucun moteur, aucun ML, device-only.
+- Trace : `localStorage.ic_ange_feedback = { topic: {up, down} }`.
+- Projection : `_topicMuted(topic)` = `down >= FB_MUTE_MIN(3) && down > up`.
+- Effet : si un sujet est en sourdine → ni bulle « ✦ », ni prise de parole sur ce sujet.
+
+**Narrator (`core/narrator.js` v7→v8)** :
+- Helpers `_fbLoad/_fbRecord/_topicMuted` (clé partagée `ic_ange_feedback`).
+- `_whisper(msg, topic)` : rend deux boutons 👍/👎 (DOM + addEventListener, pas d'onclick string →
+  pas d'injection) qui appellent `_fbRecord(topic, up)` puis masquent la bulle. Skip si `_topicMuted(topic)`.
+- Handler bus : passe `topic` à `_whisper` et saute si sujet en sourdine.
+
+**CoPilot (`core/immat-copilot.js` v5→v6)** :
+- Mêmes helpers (même clé → retour partagé entre les 2 canaux).
+- `_speak` : ajoute la garde `if (_topicMuted(_topic || theme)) return;` (après la garde anti-chevauchement).
+- `_display` : ajoute une ligne 👍 utile / 👎 (DOM) qui enregistre sur `THEME_TOPIC[theme] || theme` puis ferme le panneau.
+
+**index.html** : `_tryForget` (« oublie ce que tu as appris ») supprime aussi `ic_ange_feedback` et
+`ic_ange_next_prev` → réinitialisation complète de l'apprentissage device.
+
+Mapping topics : swarm / guardian / brain communs aux 2 canaux (un 👎 sur une bulle « brain » calme aussi
+le monologue brain_urgency/isolation) ; les thèmes CoPilot sans topic (reliability, soul_insight, harmony_low…)
+se mutent sous leur propre nom.
+
+Tests : `tests/ange-v2.test.js` **130/130** (+8, section B2 étendue : clés partagées, `_fbRecord`/`_topicMuted`
+des 2 côtés, gardes de sourdine, seuil 3, reset via `_tryForget`). `node --check` OK. `npm test` 177 + diag 3.
+Versions : narrator.js v7→v8, immat-copilot.js v5→v6 (index.html + SW), **CACHE_NAME v411→v412**.
+
+> Prochaine étape possible pour finir la maturation : exposer les compteurs de retour (Dashboard) et,
+> si le signal est bon sur le terrain, promouvoir proactif/monologue en stable.
+
+---
+
 ## SESSION 2026-06-30 — Zones accidentogènes promues en stable + activées par défaut
 
 Suite logique du correctif zones (accidents uniquement + seuil 3, migration 20260630170000) : la fonction

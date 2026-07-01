@@ -70,6 +70,14 @@ const Narrator = (function () {
   function _surfacedRecently(topic) { try { const t = (window._icSurfaced || {})[topic]; return !!t && (Date.now() - t) < SURFACE_WINDOW; } catch (_) { return false; } }
   function _markSurfaced(topic) { try { (window._icSurfaced = window._icSurfaced || {})[topic] = Date.now(); } catch (_) {} }
 
+  // Boucle de retour (device-only) : 👍/👎 sur les interventions. Un sujet trop souvent rejeté est mis en sourdine.
+  // Trace = compteurs ; projection = _topicMuted (filtre l'affichage). Aucun moteur.
+  const FB_KEY = 'ic_ange_feedback';
+  const FB_MUTE_MIN = 3;
+  function _fbLoad() { try { return JSON.parse(localStorage.getItem(FB_KEY) || '{}'); } catch (_) { return {}; } }
+  function _fbRecord(topic, up) { try { if (!topic) return; const f = _fbLoad(); const t = f[topic] || { up: 0, down: 0 }; if (up) t.up++; else t.down++; f[topic] = t; localStorage.setItem(FB_KEY, JSON.stringify(f)); } catch (_) {} }
+  function _topicMuted(topic) { try { const t = _fbLoad()[topic]; return !!t && t.down >= FB_MUTE_MIN && t.down > t.up; } catch (_) { return false; } }
+
   let _lastWhisperAt = 0;
 
   // ── Journal localStorage ───────────────────────────────────────────────────
@@ -281,13 +289,15 @@ const Narrator = (function () {
     return null;
   }
 
-  function _whisper(msg) {
+  function _whisper(msg, topic) {
     // CK-ANGE-PROACTIF (Dashboard V2) : capacité (flag, Dashboard) ET préférence (Réglages).
     // OFF (l'un OU l'autre) → aucune bulle proactive « ✦ ».
     try {
       if (window.isFeatureEnabled && !window.isFeatureEnabled('ange_proactive')) return;
       if (localStorage.getItem('ic_ange_proactive') === '0') return;
     } catch (_) {}
+    // Sujet mis en sourdine par l'utilisateur (trop de 👎) → on n'affiche plus.
+    if (topic && _topicMuted(topic)) return;
     const now = Date.now();
     if (now - _lastWhisperAt < WHISPER_COOL) return;
     _lastWhisperAt = now;
@@ -306,17 +316,33 @@ const Narrator = (function () {
           'cursor:pointer', 'opacity:0', 'transition:opacity .35s',
           'pointer-events:none', 'line-height:1.45',
         ].join(';');
-        w.onclick = () => { w.style.opacity = '0'; w.style.pointerEvents = 'none'; };
         document.body.appendChild(w);
       }
-      w.textContent = '✦ ' + msg;
+      const _hide = () => { w.style.opacity = '0'; w.style.pointerEvents = 'none'; };
+      w.innerHTML = '';
+      const txt = document.createElement('div');
+      txt.textContent = '✦ ' + msg;
+      w.appendChild(txt);
+      // Boucle de retour : 👍/👎 (uniquement si le message porte un sujet identifiable)
+      if (topic) {
+        const fb = document.createElement('div');
+        fb.style.cssText = 'margin-top:8px;display:flex;gap:8px;justify-content:flex-end';
+        const mk = (label, up) => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.textContent = label;
+          b.style.cssText = 'background:#0f0f1a;border:1px solid #4f46e5;border-radius:8px;color:#c4b5fd;padding:3px 8px;font-size:12px;cursor:pointer';
+          b.addEventListener('click', (e) => { e.stopPropagation(); _fbRecord(topic, up); _hide(); });
+          return b;
+        };
+        fb.appendChild(mk('👍', true));
+        fb.appendChild(mk('👎', false));
+        w.appendChild(fb);
+      }
+      w.onclick = _hide;
       w.style.opacity = '1';
       w.style.pointerEvents = 'auto';
       clearTimeout(w._t);
-      w._t = setTimeout(() => {
-        w.style.opacity = '0';
-        w.style.pointerEvents = 'none';
-      }, WHISPER_MS);
+      w._t = setTimeout(_hide, WHISPER_MS);
     } catch (_) {}
   }
 
@@ -337,8 +363,10 @@ const Narrator = (function () {
         const topic = WHISPER_TOPIC[ev];
         // Si le monologue parlé vient de couvrir ce sujet, on ne double pas avec une bulle.
         if (topic && _surfacedRecently(topic)) return;
+        // Sujet mis en sourdine par l'utilisateur → on ne l'affiche plus.
+        if (topic && _topicMuted(topic)) return;
         const msg = _whisperMessage(ev, p);
-        if (msg) { _whisper(msg); if (topic) _markSurfaced(topic); }
+        if (msg) { _whisper(msg, topic); if (topic) _markSurfaced(topic); }
       }
     });
   }
