@@ -330,6 +330,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_wakeStart évite la double écoute pendant une session', /if\(this\._convo\)return;\s*\/\/ session vocale active/.test(HTML));
   ok('_tryOpen garde la session (soft-hide + resume)', /if\(this\._convo\)\{try\{this\._softHide\(\)[\s\S]{0,120}this\._convoResume\(\)/.test(HTML));
   ok('send() ré-affiche la fiche', /async send\(\)\{[\s\S]{0,120}this\._showSheet\(\)/.test(HTML));
+  // Fix « quand je dis Ange rien ne se passe » : armement dans le geste + relance au 1er contact (iOS)
+  ok('_wakeInit relance le micro au 1er contact (iOS)', /_wakeInit[\s\S]{0,800}addEventListener\('pointerdown',h[\s\S]{0,80}addEventListener\('touchend',h/.test(HTML));
+  ok('bouton d\'activation ferme PUIS arme (même geste)', /AngeDialog\.close\(\)\}catch\(_\)\{\};App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('close() relance le mot d\'activation', /close\(\)\{[\s\S]{0,800}_wakeEnabled\(\)[\s\S]{0,60}_wakeStart\(\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

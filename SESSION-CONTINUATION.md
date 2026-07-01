@@ -7,6 +7,30 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — FIX wake word « rien ne se passe quand je dis Ange » (iOS geste)
+
+Symptôme PO : dire « Ange » ne faisait rien. Cause : iOS exige un GESTE utilisateur pour `SpeechRecognition.start()`.
+- Le bouton d'activation faisait `toggleAngeWake(true)` (→ `_wakeStart`) ALORS QUE la fiche Ange était ouverte
+  → `_wakeStart` bloqué par le guard `ange-open` ; puis `close()` relançait en `setTimeout(600)` → HORS geste
+  → bloqué par iOS. Donc l'écoute ne démarrait jamais.
+
+Fix (index.html) :
+1. Bouton `_wakeHintHTML` : onclick réordonné → `AngeDialog.close()` PUIS `App.toggleAngeWake(true)`. close()
+   retire `ange-open` synchro, puis toggleAngeWake→_wakeInit→_wakeStart s'exécute DANS le geste du tap
+   (prompt micro + démarrage autorisés).
+2. `_wakeInit` : si `!this._wakeRec` après tentative, on lie un handler one-shot `pointerdown`/`touchend`
+   qui relance `_wakeStart` au 1er contact → couvre le cas « app relancée sans geste » (applyFeatureFlags
+   appelle _wakeInit au lancement, mais iOS bloque sans geste).
+
+Limite fondamentale rappelée (demande PO « comme OK Google / Siri ») : une PWA ne peut PAS écouter en
+continu **app fermée / écran éteint / arrière-plan** (surtout iOS). Le wake word fonctionne **app au premier
+plan, écran allumé** (Mode Volant garde l'écran allumé). Le vrai Siri/OK-Google = **app native** requise.
+
+Tests : `tests/ange-v2.test.js` **239/239** (+3 : 1er-contact iOS, bouton close-puis-arme, close relance).
+`npm test` 177 + diag 3. **CACHE_NAME v426→v427**.
+
+---
+
 ## SESSION 2026-07-01 — Ange : orbe façon Siri + session vocale persistante
 
 Demande PO : après « ouvre le GPS », Ange se fermait → la conversation s'arrêtait, sans indiquer qu'on
