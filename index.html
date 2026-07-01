@@ -5380,6 +5380,15 @@ const AngeDialog={
   _wakeInit(){
     if(!this._wakeBound){this._wakeBound=true;try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this._wakeStart();else this._wakeStop();});}catch(_){}}
     this._wakeStart();
+    // iOS : démarrer le micro exige un geste. Si l'écoute n'a pas pu démarrer, on la (re)lance au 1er contact.
+    try{
+      if(!this._wakeRec&&!this._wakeGestureBound){
+        this._wakeGestureBound=true;
+        const h=()=>{try{if(this._wakeEnabled())this._wakeStart();}catch(_){}if(this._wakeRec){document.removeEventListener('pointerdown',h);document.removeEventListener('touchend',h);this._wakeGestureBound=false;}};
+        document.addEventListener('pointerdown',h,{passive:true});
+        document.addEventListener('touchend',h,{passive:true});
+      }
+    }catch(_){}
   },
   _wakeStart(){
     try{
@@ -5671,7 +5680,7 @@ const AngeDialog={
   _wakeHintHTML(){try{
     if(this._wakeEnabled&&this._wakeEnabled())return '';
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return '';
-    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="App.toggleAngeWake(true);try{AngeDialog.close()}catch(_){}" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">🎙️ Activer l\'ouverture vocale « Ange »</button><div style="color:#666;font-size:10px;margin-top:4px">Une fois (à l\'arrêt). Ensuite, dis « Ange » — sans toucher l\'écran, tant que l\'app est ouverte.</div></div>';
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#1e1b4b;color:#c4b5fd;border:1px solid #7c6af7;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">🎙️ Activer l\'ouverture vocale « Ange »</button><div style="color:#666;font-size:10px;margin-top:4px">Une fois (à l\'arrêt). Ensuite, dis « Ange » — sans toucher l\'écran, tant que l\'app est ouverte.</div></div>';
   }catch(_){return '';}},
   // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
   //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).
