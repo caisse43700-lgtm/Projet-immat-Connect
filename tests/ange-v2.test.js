@@ -287,6 +287,14 @@ section('B. Câblage Ange V2 (index.html)');
   ok('Mode Volant : sortie temporisée sous 8 km/h', /sp>=8[\s\S]{0,260}_driveAutoSet\(false\)/.test(HTML));
   ok('Screen Wake Lock demandé', HTML.includes("navigator.wakeLock.request('screen')"));
   ok('Wake Lock ré-acquis au retour au premier plan', /visibilitychange[\s\S]{0,320}App\.isDriving[\s\S]{0,40}_acquireWakeLock/.test(HTML));
+  // Earcons : sons courts, Web Audio, respectent le réglage Sons
+  ok('méthode _earcon présente', HTML.includes('_earcon(type)'));
+  ok('_earcon respecte le réglage Sons', /_earcon\(type\)\{try\{\s*if\(!\(window\.S&&window\.S\.sounds!==false\)\)return/.test(HTML));
+  ok('_earcon types listen/ok/sent/error/confirm', /listen:\[[\s\S]{0,80}ok:\[[\s\S]{0,40}sent:\[[\s\S]{0,80}error:\[[\s\S]{0,40}confirm:\[/.test(HTML));
+  ok('earcon « listen » à l\'ouverture du micro', /this\._convo=true;[\s\S]{0,80}this\._earcon\('listen'\)/.test(HTML));
+  ok('earcon « confirm » à l\'armement', /_armConfirm\(run,word\)\{[\s\S]{0,120}this\._earcon\('confirm'\)/.test(HTML));
+  ok('earcon « ok » sur choix reconnu', /this\._earcon\('ok'\);\}catch\(_\)\{\}try\{c\.run/.test(HTML));
+  ok('earcon sent/error sur signalement', /_earcon\(ok\?'sent':'error'\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
