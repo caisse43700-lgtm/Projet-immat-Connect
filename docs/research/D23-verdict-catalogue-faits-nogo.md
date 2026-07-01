@@ -1,7 +1,8 @@
 # D23 — Le « catalogue de faits autorisés » réduit-il le code ? — VERDICT NO-GO
 
 > **Papier de recherche interne · ImmatConnect Pro**
-> Statut : **clos — NO-GO sur la généralisation** · Décision `PROJECT_STATE.md` D23
+> Statut : **CLOS — DÉFINITIF · NO-GO sur la généralisation** · Décision `PROJECT_STATE.md` D23
+> Réouverture possible uniquement via un **dossier séparé « taxonomie partagée »** (cf. §10.6), jamais la théorie.
 > Date : 2026-07-01 · Auteur : session IA (protocole validé avec le PO)
 > Nature : expérience d'architecture mesurée, réfutation propre d'une hypothèse.
 
@@ -297,6 +298,25 @@ de **C**, pas du catalogue de faits complet.
 
 > Conclusion de la revue : **D23 est une bonne décision d'ingénierie — elle prouve qu'on sait
 > abandonner une belle théorie quand les mesures ne la soutiennent pas.**
+
+### 10.6 Suite : YAGNI + condition de réouverture (2e passe de revue, définitif)
+
+**Ne PAS écrire de mini-spec de la variante C maintenant.** Recommandation : **YAGNI**. La meilleure
+leçon de D23 est justement de **ne pas formaliser trop tôt** : une mini-spec sans cas réel
+recréerait une abstraction avant d'avoir une dérive concrète à résoudre.
+
+> **On ne spécifie un catalogue de vocabulaire/taxonomies QUE lorsqu'un cas réel réunit les
+> conditions D23** (≥3 consommateurs, dérive prouvée, vocabulaire partagé, locality > indirection).
+> **Avant ça : rien.**
+
+**Seul angle pouvant légitimement rouvrir un dossier (séparé)** — une même **taxonomie** qui nourrit
+**beaucoup** de consommateurs, typiquement : *vocal · boutons · dashboard · notifications · tests ·
+aide contextuelle · traduction · export · documentation*. **À partir de ~5–8 consommateurs réels**,
+on peut réexaminer une **variante C limitée** — **jamais** le catalogue de faits complet.
+
+> **D23 est définitivement tranché pour l'architecture générale — à ne pas re-litiguer.** Seule une
+> **dérive réelle, dense et mesurée** peut ouvrir un **dossier séparé « taxonomie partagée »** ; cela
+> ne rouvre **pas** la théorie « tout est un fait ».
 
 ---
 
