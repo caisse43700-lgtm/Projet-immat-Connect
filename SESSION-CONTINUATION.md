@@ -7,6 +7,31 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Mode Volant automatique (incrément 3 : écran maintenu, micro vivant)
+
+Objectif : au volant, l'écran ne doit pas s'éteindre (sinon micro coupé) et l'app doit savoir qu'on conduit.
+
+**`App` (index.html)** — greffé sur `updateDrivingMode()` (déjà appelé à chaque fix GPS) :
+- `_driveAutoTick()` : hystérésis sur `S.lastSpeed` — entrée Mode Volant à **≥ 20 km/h**, sortie si **< 8 km/h
+  pendant 25 s** (timer `S._driveStopT`).
+- `_driveAutoSet(on)` : bascule `S._driveAuto`, classe `body.drive-auto`, acquiert/relâche le wake lock,
+  émet `DRIVE_MODE_ON/OFF`, toast une seule fois (`S._driveAnnounced`).
+- `_acquireWakeLock()` : `navigator.wakeLock.request('screen')` (si dispo) → écran maintenu allumé =
+  reconnaissance vocale/wake word restent vivants. `_releaseWakeLock()` à la sortie.
+- `isDriving()` exposé. Le navigateur relâche le wake lock quand la page passe en fond → **ré-acquisition**
+  dans le handler `visibilitychange` si `App.isDriving()`.
+
+Dégradation propre : si `wakeLock` absent (iOS Safari selon versions), tout le reste fonctionne (le Mode
+Volant reste un état + les comportements vocaux courts déjà en place). Aucun blocage.
+
+Tests : `tests/ange-v2.test.js` **202/202** (+10 : méthodes, updateDrivingMode→_driveAutoTick, entrée ≥20,
+sortie <8, wakeLock.request('screen'), ré-acquisition visibilitychange). `npm test` 177 + diag 3.
+**CACHE_NAME v420→v421**.
+
+> Prochain : earcons (bips écoute/compris/envoyé/erreur) ; puis la projection mère `angeTurn()` (refactor).
+
+---
+
 ## SESSION 2026-07-01 — Ange : confirmation par mot-action (incrément 2, anti faux « oui »)
 
 Problème de sécurité : au volant, « oui » est ambigu (radio, passager, conversation) → risque de

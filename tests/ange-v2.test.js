@@ -280,6 +280,13 @@ section('B. Câblage Ange V2 (index.html)');
   ok('appel confirmé par « appelle »', /angeCallConfirm\(plate\),'appelle'/.test(HTML));
   ok('gouvernance confirmée par « confirme »', /angeDoAction\(legacy,on,label\),'confirme'/.test(HTML));
   ok('cartes : hint mot-action (plus « oui »/« non »)', !HTML.includes('ou dis « oui » / « non »') && HTML.includes('ou dis « envoie » / « annule »'));
+  // Mode Volant auto : détection vitesse + Screen Wake Lock
+  ['_driveAutoTick', '_driveAutoSet', '_acquireWakeLock', '_releaseWakeLock', 'isDriving'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
+  ok('updateDrivingMode déclenche le Mode Volant auto', /updateDrivingMode\(\)\{try\{this\._driveAutoTick\(\)/.test(HTML));
+  ok('Mode Volant : entrée à >= 20 km/h', /if\(!on\)\{if\(sp>=20\)this\._driveAutoSet\(true\)/.test(HTML));
+  ok('Mode Volant : sortie temporisée sous 8 km/h', /sp>=8[\s\S]{0,260}_driveAutoSet\(false\)/.test(HTML));
+  ok('Screen Wake Lock demandé', HTML.includes("navigator.wakeLock.request('screen')"));
+  ok('Wake Lock ré-acquis au retour au premier plan', /visibilitychange[\s\S]{0,320}App\.isDriving[\s\S]{0,40}_acquireWakeLock/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
