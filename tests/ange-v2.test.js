@@ -222,6 +222,13 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode présente : _situationHTML', has('_situationHTML('));
   ok('_situationHTML consomme Nexus.currentSituation', has('ImmatNexus.currentSituation'));
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
+  // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
+  ok('startVoice auto-envoie la dictée', /onend=\(\)=>\{[\s\S]{0,220}this\._voiceMode=true;[\s\S]{0,40}this\.send\(\)/.test(HTML));
+  ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
+  ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
+  ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
+  ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(){'));
+  ok('bouton micro global fabVoice', HTML.includes('id="fabVoice"') && HTML.includes('AngeDialog.voiceCommand'));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,20 +251,22 @@ section('B2. Anti-chevauchement Narrator ⇄ CoPilot');
   ok('Narrator saute la bulle si déjà surfacé', /_surfacedRecently\(topic\)\)\s*return/.test(NAR));
   ok('CoPilot saute la parole si déjà surfacé', /_surfacedRecently\(_topic\)\)\s*return/.test(COP));
   // Boucle de retour 👍/👎 (device-only) : même clé partagée, mise en sourdine des deux côtés
-  ok('Narrator utilise la clé de retour ic_ange_feedback', NAR.includes("'ic_ange_feedback'"));
-  ok('CoPilot utilise la clé de retour ic_ange_feedback', COP.includes("'ic_ange_feedback'"));
+  ok('Narrator utilise la clé de retour ic_ange_topic_feedback', NAR.includes("'ic_ange_topic_feedback'"));
+  ok('CoPilot utilise la clé de retour ic_ange_topic_feedback', COP.includes("'ic_ange_topic_feedback'"));
+  // pas de collision avec la clé LLM ic_ange_feedback (tableau {v,t})
+  ok('pas de collision : narrator n\'utilise pas ic_ange_feedback (clé LLM)', !/'ic_ange_feedback'/.test(NAR));
   ok('Narrator : _fbRecord + _topicMuted', NAR.includes('_fbRecord(') && NAR.includes('_topicMuted('));
   ok('CoPilot : _fbRecord + _topicMuted', COP.includes('_fbRecord(') && COP.includes('_topicMuted('));
   ok('Narrator : bulle masquée si sujet en sourdine', /topic && _topicMuted\(topic\)\)\s*return/.test(NAR));
   ok('CoPilot : silence si sujet en sourdine', /_topicMuted\(_topic \|\| theme\)\)\s*return/.test(COP));
   ok('Seuil de sourdine cohérent (FB_MUTE_MIN = 3)', NAR.includes('FB_MUTE_MIN = 3') && COP.includes('FB_MUTE_MIN = 3'));
   // « oublie ce que tu as appris » réinitialise aussi le retour
-  ok('_tryForget réinitialise ic_ange_feedback', HTML.includes("removeItem('ic_ange_feedback')"));
+  ok('_tryForget réinitialise ic_ange_topic_feedback', HTML.includes("removeItem('ic_ange_topic_feedback')"));
   // Projection Dashboard (lecture seule) du bilan des retours
   ok('Dashboard : bloc gdAngeFeedbackBlock présent', HTML.includes('gdAngeFeedbackBlock'));
-  ok('gdAngeFeedbackBlock lit ic_ange_feedback', /gdAngeFeedbackBlock\(\)\{[\s\S]{0,500}ic_ange_feedback/.test(HTML));
+  ok('gdAngeFeedbackBlock lit ic_ange_topic_feedback', /gdAngeFeedbackBlock\(\)\{[\s\S]{0,500}ic_ange_topic_feedback/.test(HTML));
   ok('gdAngeFeedbackBlock rendu dans le Dashboard', HTML.includes('App.gdAngeFeedbackBlock?App.gdAngeFeedbackBlock()'));
-  ok('resetAngeFeedback efface ic_ange_feedback (device)', /resetAngeFeedback\(\)\{[\s\S]{0,140}removeItem\('ic_ange_feedback'\)/.test(HTML));
+  ok('resetAngeFeedback efface ic_ange_topic_feedback (device)', /resetAngeFeedback\(\)\{[\s\S]{0,160}removeItem\('ic_ange_topic_feedback'\)/.test(HTML));
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────

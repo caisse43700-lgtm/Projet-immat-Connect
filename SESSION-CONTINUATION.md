@@ -7,6 +7,42 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Tout en reconnaissance vocale (v1) + fix collision de clé
+
+Demande PO : « je voudrais que tout soit en reconnaissance vocale ».
+
+**BUG corrigé au passage (important)** : la clé `ic_ange_feedback` était utilisée par DEUX features
+incompatibles — les 👍/👎 des réponses LLM (tableau `[{v,t}]`, index.html l.931 & l.5406) ET ma nouvelle
+boucle de retour par sujet (objet `{topic:{up,down}}`). Collision → `arr.push` sur objet / `Object.keys`
+sur tableau. Renommé la NOUVELLE clé en **`ic_ange_topic_feedback`** dans : `core/narrator.js` (FB_KEY,
+v8→v9), `core/immat-copilot.js` (FB_KEY, v6→v7), `index.html` (gdAngeFeedbackBlock, resetAngeFeedback,
+_tryForget), et les tests. La clé LLM `ic_ange_feedback` reste inchangée.
+
+**Vocal (v1) — architecture : tout passe par l'intent-engine d'Ange (aucun nouveau moteur)** :
+- `AngeDialog.startVoice()` : `onend` **auto-envoie** désormais la dictée finale → `this._voiceMode=true; this.send()`.
+  (Avant : remplissait juste le textarea.)
+- `AngeDialog.send()` : `const _voice=this._voiceMode===true; this._voiceMode=false;` en tête. Quand la
+  réponse vient de Nexus (texte), `if(_voice) this._speakAnswer(_nx.answer)` → **voix → voix**.
+- `_speakAnswer(txt)` : retire emojis/puces puis `speak(txt,true)` (TTS global existant l.747).
+- `voiceCommand()` : ouvre Ange puis `startVoice` après 250 ms → **commande vocale depuis n'importe où**.
+- `#fabVoice` : bouton micro flottant (bas-droite, au-dessus de la nav) dans `#appScreen` → gated par
+  `.active` comme `#fabSignalHere` (pas visible avant login). onclick → `AngeDialog.voiceCommand()`.
+- Boucle complète mains-libres après 1 tap : parler une commande (« signale au véhicule devant pneu
+  dégonflé », « appelle AB-123-CD », « ouvre activité »…) → Ange route via `_trySignal/_tryCall/_tryMessage/
+  _tryGuide/_tryMenu/_tryAction/Nexus` → carte de confirmation qui accepte déjà **« oui/non » vocal**
+  (`_armConfirm` SpeechRecognition).
+
+**Limite technique assumée** : pas de vrai wake-word « OK Ange » en écoute continue (SpeechRecognition
+non fiable en arrière-plan PWA, restrictions iOS Safari, batterie) → **tap-to-talk** (bouton) retenu.
+Piste v2 possible : mode « conversation continue » (relancer l'écoute après chaque réponse) tant que l'app
+est au premier plan.
+
+Tests : `tests/ange-v2.test.js` **141/141** (+7 : auto-send, capture _voice, speak-back, _speakAnswer,
+voiceCommand, fabVoice, + non-collision narrator). `node --check` OK. `npm test` 177 + diag 3.
+Versions : narrator v8→v9, immat-copilot v6→v7 (index.html + SW), **CACHE_NAME v413→v414**.
+
+---
+
 ## SESSION 2026-07-01 — Dashboard : bilan des retours Ange (👍/👎) par sujet
 
 Suite de la boucle de retour : rendre le signal visible pour décider quand promouvoir les betas.
