@@ -7,6 +7,29 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-01 — Ange : armement vocal en 1 geste + ré-armement Mode Volant
+
+Question PO : « on voulait aucun geste, comment activer Ange à la voix ? »
+
+**Réponse / contrainte** : un navigateur (PWA, surtout iOS) EXIGE un geste utilisateur pour autoriser le
+micro la 1re fois → « zéro geste absolu » est impossible en PWA. Le « OK Ange » écran éteint / app fermée
+exige une app native. Donc : UN appui initial (à l'arrêt) arme le vocal ; ensuite mains-libres tant que
+l'app est ouverte.
+
+**Réductions de friction (index.html)** :
+- `AngeDialog._wakeHintHTML()` : bouton unique « 🎙️ Activer l'ouverture vocale « Ange » » affiché dans
+  l'accueil d'Ange quand `_wakeEnabled()` est faux (et SR dispo). Un tap → `App.toggleAngeWake(true)`
+  (geste = autorise le micro + arme) puis ferme Ange. Plus besoin d'aller dans Réglages. Masqué si déjà armé.
+  Appendé dans `open()` après la situation/menu.
+- `App._driveAutoSet(true)` : ré-arme `AngeDialog._wakeStart()` si le wake est activé → l'écoute repart
+  automatiquement dès l'entrée en Mode Volant (après un arrêt).
+- Auto-armement au lancement : déjà en place (`applyFeatureFlags` appelle `_wakeInit()` si pref on).
+
+Tests : `tests/ange-v2.test.js` **217/217** (+4 : bouton d'armement, masqué si armé, append open(), ré-armement Mode Volant).
+`npm test` 177 + diag 3. **CACHE_NAME v423→v424**.
+
+---
+
 ## SESSION 2026-07-01 — Ange : projection mère angeTurn() (incrément 5, unification)
 
 Dernier item de l'architecture vocale : une projection unique qui décrit un TOUR complet.
