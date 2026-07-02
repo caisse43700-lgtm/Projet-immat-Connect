@@ -243,7 +243,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)return/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,700}ange-open'\)\)return/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
+  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeFired=true;this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
   // Arrêt TOTAL du micro à la fermeture / mise en arrière-plan (bug « le micro reste allumé »)
@@ -259,14 +259,17 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mots d\'arrêt stoppent la conversation', /stop\|st\[oe\]p\|merci[\s\S]{0,200}this\._convoStop\(\);try\{this\.close/.test(HTML));
   ok('confirmYes relance la conversation', /confirmYes\(\)\{[\s\S]{0,120}this\._afterConfirm\(\)/.test(HTML));
   ok('confirmation par timeout relance la conversation', /Expiré \(15 s[\s\S]{0,160}this\._afterConfirm\(\)/.test(HTML));
-  ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,80}this\._convo=false;[\s\S]{0,40}this\._convoSilence=0/.test(HTML));
+  ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,120}this\._convo=false;[\s\S]{0,80}this\._convoSilence=0/.test(HTML));
   ok('pause micro après 2 silences', /this\._convoSilence>=2\)\{this\._convoStop\(\)/.test(HTML));
   // Ange pose une question courte à l'appel vocal + réponses parlées courtes
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
   // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
-  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,400}this\._orbMode=true/.test(HTML));
+  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
   ok('voiceCommand coupe la parole proactive en cours', HTML.includes('window.speechSynthesis.cancel()'));
-  ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true)"));
+  ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true,true)"));
+  ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
+  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeStop\(\)/.test(HTML));
+  ok('orbe parle même si voix GPS coupée (ignoreMute)', /function speak\(txt,force=false,ignoreMute=false\)\{if\(\(!S\.voice&&!ignoreMute\)/.test(HTML));
   ok('voiceCommand n\'ouvre pas le panneau (pas de this.open)', !/voiceCommand\(\)\{[\s\S]{0,300}this\.open\(\)/.test(HTML));
   ok('send() ne force pas la fiche en mode orbe', /if\(!this\._orbMode\)this\._showSheet\(\)/.test(HTML));
   ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
@@ -278,7 +281,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
   ok('_voiceTurn dit la réponse à voix haute', /await this\.send\(\);[\s\S]{0,40}this\._speakVoiceResult\(\)/.test(HTML));
   ok('_speakVoiceResult ne double pas si déjà en train de parler', /_speakVoiceResult\(\)\{[\s\S]{0,200}speechSynthesis\.speaking\)return/.test(HTML));
-  ok('confirmation vocale : Ange DIT la question puis écoute (anti-écho)', /this\._orbMode\|\|this\._lastVoice\)\{[\s\S]{0,220}speak\(q,true\)[\s\S]{0,200}_startPend\(\)/.test(HTML));
+  ok('confirmation vocale : Ange DIT la question puis écoute (anti-écho)', /this\._orbMode\|\|this\._lastVoice\)\{[\s\S]{0,220}speak\(q,true,true\)[\s\S]{0,200}_startPend\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
   ok('matcher fermé _pickChoice présent', HTML.includes('_pickChoice(text,choices)'));
@@ -287,7 +290,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('réponses proposées deviennent des choix vocaux', /this\._choices=choices\.map\(c=>\(\{words:[\s\S]{0,120}angeReplyConfirm/.test(HTML));
   ok('« annule/autre » quitte les choix', /annule\|annuler\|retour\|autre[\s\S]{0,60}this\._choices=null/.test(HTML));
   ok('renderResponse efface les choix fermés', /renderResponse\(r\)\{\s*this\._choices=null/.test(HTML));
-  ok('close() efface les choix fermés', /close\(\)\{[\s\S]{0,90}this\._choices=null/.test(HTML));
+  ok('close() efface les choix fermés', /close\(\)\{[\s\S]{0,140}this\._choices=null/.test(HTML));
   // Auto-narration : Ange DIT les choix en conversation vocale (usage sans écran)
   ok('méthode _narrateChoices présente', HTML.includes('_narrateChoices(intro)'));
   ok('_narrateChoices gated sur la conversation vocale', /_narrateChoices\(intro\)\{[\s\S]{0,80}if\(!this\._convo\)return/.test(HTML));
@@ -342,7 +345,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,700}this\._setOrb\('listen'\)/.test(HTML));
   ok('onresult → orbe hear', /interimT\|\|_last\)\{try\{this\._setOrb\('hear'\)/.test(HTML));
   ok('_voiceTurn → orbe think avant envoi', /this\._setOrb\('think'\);[\s\S]{0,40}await this\.send\(\)/.test(HTML));
-  ok('_speakAnswer → orbe speak', /this\._setOrb\('speak'\)[\s\S]{0,20}speak\(t,true\)/.test(HTML));
+  ok('_speakAnswer → orbe speak', /this\._setOrb\('speak'\)[\s\S]{0,20}speak\(t,true,true\)/.test(HTML));
   // Session survit à la navigation (plus de dépendance à ange-open)
   ok('_voiceTurn gardé par la session (_convo)', /_voiceTurn\(v\)\{\s*if\(!this\._convo\)return/.test(HTML));
   ok('_convoResume ne dépend plus de ange-open', /_convoResume\(\)\{/.test(HTML) && !/_convoResume\(\)\{[\s\S]{0,400}ange-open/.test(HTML));
