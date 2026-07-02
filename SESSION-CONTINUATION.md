@@ -7,6 +7,50 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-02 — ANGE VOCAL v454 : certitude auditive, cohérence d'états, mesure (GO revue ultime)
+
+Processus : dossier de revue intégral → revue ChatGPT → contre-revue n°2 (D1-D6 mise en œuvre,
+N1-N12 angles morts) → « revue ultime » (17 sections) → réponse Claude (certitude auditive,
+mode dégradé N0-N4, charte vocale, probabilités d'échec) → VALIDATION + GO (15 décisions).
+
+### Implémenté (commit 47672e9, SW v454)
+1. Banque audio = CHARTE VOCALE, générée par `tools/make-voices.sh` (versionné, SVOX Pico) :
+   ange-ecoute (« J'écoute » — greet raccourci, décision), -oui, -fait, -envoye, -annule,
+   -repete (« Répète autrement »), -message, -arret (« Disponible à l'arrêt »),
+   -instable (« Micro instable, utilise le bouton »), -horsligne. Les 7 « J'ouvre… » retirés.
+2. Earcon `sleep` (2 notes descendantes) = son officiel de retour en veille.
+3. LLM COUPÉ en session wake (`_voiceNoTTS`) → « Répète autrement » + retour veille
+   (« Hors ligne… » si `navigator.onLine===false`). Fini le quota brûlé en silence.
+4. Dictée vide ou <3 caractères → veille IMMÉDIATE + `sleep` (plus de 2e chance héritée).
+5. Anti-écho : transcriptions ≈ nos propres phrases ignorées ; détection du wake GELÉE
+   pendant toute voix de l'app (`_ttsBusy()` dans onresult) → le micro ne capte plus le GPS.
+6. Wake Lock acquis quand la veille démarre (pref `ic_wake_lock` défaut '1', toggle Réglages
+   « Écran allumé pendant la veille » + `App.toggleWakeLockPref`).
+7. FSM-OMBRE : `_vState`/`_vGo(state,why)` — VEILLE→DETECTE→GREET→DICTEE→ROUTAGE→
+   CONFIRMATION→FEEDBACK→VEILLE/OFF, chaque transition loggée HUD (gardes existantes conservées).
+8. Assertions « états impossibles » (`_assertInit`, ticker 2 s, debug) : dictée+veille actives,
+   dictée+confirmation, micro pendant la voix, micro en arrière-plan, débounce orphelin,
+   session zombie >60 s (auto-corrigée → veille).
+9. Politique audio : appel Agora détecté (CallScreen.mode≠idle) → veille SUSPENDUE (hardStop),
+   fin d'appel → relance + bip ; `speak()` non forcé ignoré pendant une session Ange (GPS différé).
+10. Stats de recette `_stats` (det/rep/incompris/watchdog/capture/ok) affichées en pied de HUD ;
+    mode dégradé N1 : (watchdog+capture)≥3 → « Micro instable, utilise le bouton » (1 fois).
+11. `drivable:false` sur réglages + dashboard dans `_OPEN` → en conduite : « Disponible à l'arrêt ».
+12. MESSAGE LIBRE INTERDIT en Mode Volant (« impossible de relire sans TTS dynamique → on
+    n'envoie jamais un texte invérifiable ») ; hors Volant : « Message ? » (WAV) + UNE écoute
+    de suivi (`_followUp`). « Envoyé »/« Annulé » dits en voix. Watchdog 25→18 s. Double signal
+    supprimé (startVoice(true) après le greet). Wake officielle : « Hé Ange » (coaching).
+
+### Reporté (décisions revue) : TTS serveur, wake WASM, cloud STT, message audio, écran noir
+Volant, multilingue, télémétrie serveur, natif/CarPlay.
+### Règle de bascule native (figée) : T1<8/10 en voiture OU médiane>4 s OU ≥1 blocage-toucher/
+30 min OU Bluetooth inutilisable OU besoin écran verrouillé/CarPlay confirmé.
+### Tests : ange-v2 323 · npm 177+3 · proto 18. CACHE v453→v454.
+### ⚠️ Déploiement : GitHub Pages en incident (files annulées ×3) — le push v454 partira dès
+rétablissement ; dernier déployé = v452 (43afe93). Vérifier CACHE_NAME avant tout test terrain.
+
+---
+
 ## SESSION 2026-07-02 — Ange « orbe seul » façon Siri + correctif micro (SW v429, déployé main)
 
 Demande PO : « dès que je dis Ange, qu'il réponde à ce moment-là — pas de tableau qui s'ouvre à
