@@ -275,8 +275,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(cmd\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
   ok('pas de double cancel() dans voiceCommand (bug iOS)', !/voiceCommand\(\)\{[\s\S]{0,400}window\.speechSynthesis\.cancel\(\)/.test(HTML));
   ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
-  ok('voiceCommand accuse réception vocal « Je t\'écoute » (avec réessai)', HTML.includes("this._speakRetry('Je t\\'écoute')"));
-  ok('_speakRetry réessaie si la voix est avalée (3x puis bip)', /_speakRetry\(txt,attempt\)\{[\s\S]{0,600}attempt<3/.test(HTML) && /voix indisponible \(3 essais\)/.test(HTML));
+  ok('voiceCommand accuse réception vocal « Je t\'écoute » (avec réessai)', HTML.includes("this._speakRetry('Je t\\'écoute',1,2)"));
+  ok('_speakRetry réessaie si la voix est avalée (3x puis bip)', /_speakRetry\(txt,attempt,max\)\{[\s\S]{0,700}attempt<max/.test(HTML) && /voix indisponible \('\+max\+' essais\)/.test(HTML));
+  ok('réessai avec blip de bascule audio avant de reparler', /this\._earcon\('ok'\);\}catch\(_\)\{\}\s*this\._wakeDbg\('voix avalée/.test(HTML));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
@@ -292,11 +293,11 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /this\._ttsBusy\(\)&&_w<9000/.test(HTML) && HTML.includes('this.startVoice()'));
-  ok('SÉRIALISÉ : greet lancé PUIS boucle micro (dans le même timeout)', /this\._speakRetry\('Je t\\'écoute'\)[\s\S]{0,500}setTimeout\(start,150\)/.test(HTML));
+  ok('SÉRIALISÉ : greet lancé PUIS boucle micro (dans le même timeout)', /this\._speakRetry\('Je t\\'écoute',1,2\)[\s\S]{0,500}setTimeout\(start,150\)/.test(HTML));
   ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,900}this\._setOrb\('(speak|listen|think)'\)/.test(HTML));
   ok('commande directe → exécution sans « Je t\'écoute » (_voiceTurn)', /if\(_cmd\)\{this\._orbStarting=false;[\s\S]{0,160}this\._voiceTurn\(_cmd\)/.test(HTML));
   ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
-  ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{\s*try\{this\._speakRetry\('Je t\\'écoute'\)/.test(HTML));
+  ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{\s*try\{this\._speakRetry\('Je t\\'écoute',1,2\)/.test(HTML));
   // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
   ok('méthode _primeTTS présente', HTML.includes('_primeTTS()'));
   ok('_primeTTS débloqué au 1er contact (keepalive)', /this\._wakeKeep=\(\)=>\{try\{this\._primeTTS\(\)/.test(HTML));

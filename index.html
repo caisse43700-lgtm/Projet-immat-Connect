@@ -5454,15 +5454,19 @@ const AngeDialog={
   // Parle avec RÉESSAI : après une écoute micro, la session audio iOS bascule enregistrement→lecture et
   // le 1er speak() peut être AVALÉ silencieusement (onstart jamais émis — prouvé par HUD terrain).
   // On vérifie 1,1 s plus tard que la voix est bien partie ; sinon on réessaie (3×), puis bip de repli.
-  _speakRetry(txt,attempt){
-    attempt=attempt||1;
+  _speakRetry(txt,attempt,max){
+    attempt=attempt||1;max=max||3;
     try{if(typeof speak!=='function')return;speak(txt,true,true);}catch(_){return;}
     setTimeout(()=>{try{
       const st=window._icTts;
       if(st==='speaking'||st==='done')return; // la voix est bien partie
-      if(attempt<3){try{window.speechSynthesis.cancel();window.speechSynthesis.resume();}catch(_){}
-        this._wakeDbg('voix avalée → réessai '+(attempt+1));this._speakRetry(txt,attempt+1);}
-      else{this._wakeDbg('voix indisponible (3 essais) → bip');try{this._earcon('listen');}catch(_){}}
+      if(attempt<max){try{window.speechSynthesis.cancel();window.speechSynthesis.resume();}catch(_){}
+        // Astuce bascule audio : un mini-son Web Audio (qui, LUI, passe toujours) force la sortie
+        // en mode lecture juste avant de reparler — dernière chance que la synthèse passe.
+        try{this._earcon('ok');}catch(_){}
+        this._wakeDbg('voix avalée → réessai '+(attempt+1)+' (blip d\'abord)');
+        setTimeout(()=>{try{this._speakRetry(txt,attempt+1,max);}catch(_){}},250);}
+      else{this._wakeDbg('voix indisponible ('+max+' essais) → bip');try{this._earcon('listen');}catch(_){}}
     }catch(_){}},1100);
   },
   // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
@@ -5709,7 +5713,7 @@ const AngeDialog={
     // tentatives de voix avalées par le micro ouvert) : le greet part D'ABORD, la boucle d'ouverture du
     // micro ne démarre QU'ENSUITE, et n'ouvre qu'après la fin réelle de la voix (_ttsBusy). Plafond ≤9 s.
     setTimeout(()=>{
-      try{this._speakRetry('Je t\'écoute');this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}
+      try{this._speakRetry('Je t\'écoute',1,2);this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}
       let _w=0;
       const start=()=>{
         if(this._ttsBusy()&&_w<9000){_w+=150;return setTimeout(start,150);}
