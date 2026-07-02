@@ -231,6 +231,8 @@ const ImmatCoPilot = (function () {
   // ── Prise de parole ─────────────────────────────────────────────────────
 
   function _speak(theme, msg) {
+    // Ne JAMAIS parler par-dessus une session vocale Ange (l'utilisateur attend une réponse ciblée).
+    try { if (window.AngeDialog && window.AngeDialog._convo) return; } catch (_) {}
     // Si une bulle « ✦ » vient de couvrir ce sujet, on ne le redit pas à voix haute.
     const _topic = THEME_TOPIC[theme];
     if (_topic && _surfacedRecently(_topic)) return;

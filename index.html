@@ -5099,7 +5099,7 @@ function showReputationToast(){
 <script src="core/swarm-engine.js?v=1"></script>
 <script src="core/immat-consciousness.js?v=2"></script>
 <script src="core/immat-soul.js?v=1"></script>
-<script src="core/immat-copilot.js?v=7"></script>
+<script src="core/immat-copilot.js?v=8"></script>
 <script src="core/immat-test-engine.js?v=2"></script>
 <script>
 const ImmatestUI = {
@@ -5607,10 +5607,12 @@ const AngeDialog={
     // On N'OUVRE PAS le panneau ni le tableau d'accueil — juste l'orbe (posé sur le bouton Ange),
     // qui pulse, écoute, puis réfléchit (tourne) et parle. Le panneau reste réservé au clic.
     this._orbMode=true;this._convo=true;this._convoSilence=0;
+    try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(_){} // coupe tout message proactif en cours (sinon il bloque l'écoute)
     try{this._earcon('listen');}catch(_){}
-    try{this._setOrb('listen');}catch(_){}
-    const go=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(go,250);try{this.startVoice();}catch(_){}};
-    setTimeout(go,200);
+    // Accusé de réception immédiat : Ange dit « Je t'écoute », PUIS on ouvre le micro (après sa voix, anti-écho).
+    try{if(typeof speak==='function'&&window.S&&window.S.voice!==false){this._setOrb('speak');speak('Je t\'écoute',true);}else{this._setOrb('listen');}}catch(_){this._setOrb('listen');}
+    const go=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(go,150);try{this._setOrb('listen');}catch(_){}try{this.startVoice();}catch(_){}};
+    setTimeout(go,250);
   },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.

@@ -264,13 +264,16 @@ section('B. Câblage Ange V2 (index.html)');
   // Ange pose une question courte à l'appel vocal + réponses parlées courtes
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
   // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
-  ok('voiceCommand = mode orbe seul (_orbMode + orbe écoute, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,400}this\._orbMode=true[\s\S]{0,200}this\._setOrb\('listen'\)/.test(HTML));
+  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,400}this\._orbMode=true/.test(HTML));
+  ok('voiceCommand coupe la parole proactive en cours', HTML.includes('window.speechSynthesis.cancel()'));
+  ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true)"));
   ok('voiceCommand n\'ouvre pas le panneau (pas de this.open)', !/voiceCommand\(\)\{[\s\S]{0,300}this\.open\(\)/.test(HTML));
   ok('send() ne force pas la fiche en mode orbe', /if\(!this\._orbMode\)this\._showSheet\(\)/.test(HTML));
   ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
-  ok('voiceCommand attend la fin de la voix avant d\'écouter', /voiceCommand\(\)\{[\s\S]{0,600}speechSynthesis\.speaking\)return setTimeout\(go,250\)[\s\S]{0,40}this\.startVoice\(\)/.test(HTML));
+  ok('voiceCommand attend la fin de la voix avant d\'écouter', HTML.includes('setTimeout(go,150)') && HTML.includes('this.startVoice()'));
+  ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
   ok('matcher fermé _pickChoice présent', HTML.includes('_pickChoice(text,choices)'));
