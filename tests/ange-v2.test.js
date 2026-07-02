@@ -258,6 +258,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('startVoice ouvre la conversation (_convo=true)', /this\._convo=true;.{0,80}le micro reste ouvert/.test(HTML));
   ok('startVoice onend → _voiceTurn', HTML.includes('this._voiceTurn((_last||\'\').trim())'));
   ok('_voiceTurn ne reprend pas si confirmation en attente', /if\(this\._pending\)return;[\s\S]{0,40}this\._convoResume\(\)/.test(HTML));
+  ok('« Ange » redit en conversation → ré-accueil (jamais LLM)', /anges\?\|l'ange\|lange\|angel\|angie\)\[\\s,.!\?\]\*\$\//.test(HTML) && HTML.includes("speak('Oui, je t\\'écoute',true,true)"));
   ok('_convoResume attend la fin RÉELLE de la voix (anti auto-écoute)', /this\._ttsBusy\(\)\)\{return setTimeout\(go,300\)/.test(HTML));
   ok('_ttsBusy couvre le démarrage iOS (état starting <2,5s)', /st==='starting'&&\(Date\.now\(\)-\(window\._icTtsAt\|\|0\)\)<2500/.test(HTML));
   ok('speak() trace l\'état réel de la voix (starting/speaking/done)', /window\._icTts='starting'/.test(HTML) && /u\.onstart=function\(\)\{window\._icTts='speaking';\}/.test(HTML));

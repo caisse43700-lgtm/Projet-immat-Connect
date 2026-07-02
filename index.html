@@ -5564,6 +5564,12 @@ const AngeDialog={
     }
     this._convoSilence=0;
     if(/^(stop|st[oe]p|merci|c'est bon|c est bon|ferme|au revoir|termin[ée]?|arr[êe]te|silence|laisse tomber)\b/.test(v.toLowerCase())){this._convoStop();try{this.close();}catch(_){}return;}
+    // « Ange » redit en pleine conversation (réflexe) → simple ré-accueil, JAMAIS envoyé aux commandes/LLM.
+    if(/^(?:ok |h[eé] |hey |dis |et )?(anges?|l'ange|lange|angel|angie)[\s,.!?]*$/.test(v.toLowerCase())){
+      try{this._setOrb('speak');}catch(_){}
+      try{if(typeof speak==='function')speak('Oui, je t\'écoute',true,true);}catch(_){}
+      return this._convoResume();
+    }
     // RAIL VOCAL : si des choix fermés sont affichés, on matche la parole dessus (robuste au bruit).
     if(this._choices&&this._choices.length){
       const low=v.toLowerCase();
