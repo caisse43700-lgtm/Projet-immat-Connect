@@ -5436,7 +5436,7 @@ const AngeDialog={
           const mm=String(this._wakeLastT||'').match(WAKE);const after=((mm&&mm[2])||'').replace(/^[\s,.!?]+/,'').trim();
           this._wakeDbg('🟢 ANGE détecté'+(after?' + cmd: '+after.slice(0,24):''));
           this._wakeStop();
-          try{this.voiceCommand(after.length>=3?after:null);}catch(_){}
+          try{this.voiceCommand(after.length>=3?after:null,true);}catch(_){}
         },900);};
       rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;
         if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}return;}
@@ -5466,7 +5466,8 @@ const AngeDialog={
         try{this._earcon('ok');}catch(_){}
         this._wakeDbg('voix avalée → réessai '+(attempt+1)+' (blip d\'abord)');
         setTimeout(()=>{try{this._speakRetry(txt,attempt+1,max);}catch(_){}},250);}
-      else{this._wakeDbg('voix indisponible ('+max+' essais) → bip');try{this._earcon('listen');}catch(_){}}
+      else{this._wakeDbg('voix indisponible ('+max+' essais) → bip');try{this._earcon('listen');}catch(_){}
+        window._icTts='done';} // libère l'état → le micro peut rouvrir sans attendre le plafond
     }catch(_){}},1100);
   },
   // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
@@ -5630,7 +5631,7 @@ const AngeDialog={
     };
     setTimeout(go,450);
   },
-  _convoStop(){this._convo=false;this._orbMode=false;this._orbStarting=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}try{this._setOrb('idle');}catch(_){}
+  _convoStop(){this._convo=false;this._orbMode=false;this._orbStarting=false;this._voiceNoTTS=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}try{this._setOrb('idle');}catch(_){}
     // Fin de session vocale → on réarme « Ange » pour la prochaine demande (best-effort ; iOS peut exiger un contact).
     try{if(this._wakeEnabled&&this._wakeEnabled())this._wakeStart();}catch(_){}},
   _afterConfirm(){if(this._convo)this._convoResume();},
@@ -5676,7 +5677,7 @@ const AngeDialog={
     seq.forEach(function(s){const f=s[0],at=s[1],dur=s[2];const o=ctx.createOscillator(),g=ctx.createGain();o.type=(type==='error'?'square':'sine');o.frequency.value=f;g.gain.setValueAtTime(0.0001,t0+at);g.gain.exponentialRampToValueAtTime(0.14,t0+at+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+at+dur);o.connect(g);g.connect(ctx.destination);o.start(t0+at);o.stop(t0+at+dur+0.02);});
   }catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
-  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t);}}catch(_){}},
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t,1,this._voiceNoTTS?1:3);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
   _voiceGreetQuestion(){
     try{
@@ -5692,26 +5693,33 @@ const AngeDialog={
     return 'Je t\'écoute. Que veux-tu faire ?';
   },
   // Commande vocale GLOBALE : ouvre Ange, POSE une question courte, puis écoute (après la voix, anti-écho).
-  voiceCommand(cmd){
+  voiceCommand(cmd,fromWake){
     // Mode « orbe seul » façon Siri : appelé par la voix (« Ange ») ou le micro flottant.
     // On N'OUVRE PAS le panneau ni le tableau d'accueil — juste l'orbe (posé sur le bouton Ange).
     // ANTI double-déclenchement : le wake « Ange » fire plusieurs fois (résultats intermédiaires) →
     // sans ce garde, on lançait « Parlez maintenant » plusieurs fois et la voix se chevauchait.
     if(this._orbStarting)return;
     this._orbStarting=true;
-    try{this._wakeDbg('voiceCommand → orbe'+(cmd?' + exécution directe':' + « Je t\'écoute »'));}catch(_){}
+    // VERDICT iOS (prouvé HUD IMG_6595-6602) : WebKit exige une activation utilisateur (toucher récent)
+    // pour la synthèse vocale → dans une chaîne 100 % VOCALE, toute phrase est avalée (au TAP ça marche).
+    // Donc en chaîne vocale : pas de greet parlé condamné (perdait 3-4 s) → BIP immédiat + micro rapide.
+    this._voiceNoTTS=!!fromWake;
+    try{this._wakeDbg('voiceCommand → orbe'+(cmd?' + exécution directe':(fromWake?' + bip (TTS iOS bloqué en vocal)':' + « Je t\'écoute »')));}catch(_){}
     this._orbMode=true;this._convo=true;this._convoSilence=0;
     try{this._wakeStop&&this._wakeStop();}catch(_){} // LIBÈRE le micro du wake AVANT de parler (iOS ne fait pas écoute+voix en même temps)
     // Commande dite dans le même souffle (« Ange, ouvre l'activité ») → exécution DIRECTE, sans « Je t'écoute ».
     const _cmd=cmd?String(cmd):null;
     if(_cmd){this._orbStarting=false;try{this._earcon('ok');}catch(_){}try{this._setOrb('think');}catch(_){}try{this._voiceTurn(_cmd);}catch(_){}return;}
     try{this._earcon('listen');}catch(_){}
+    if(fromWake){
+      // Chaîne 100 % vocale : l'accusé de réception = le BIP (déjà joué) + l'orbe. Micro ouvert vite.
+      try{this._setOrb('listen');}catch(_){}
+      setTimeout(()=>{this._orbStarting=false;try{this.startVoice();}catch(_){}},400);
+      return;
+    }
     try{this._setOrb('speak');}catch(_){} // orbe visible tout de suite
-    // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
-    // avale la voix. ignoreMute=true → parle même si la voix GPS est coupée. Pas de cancel() (speak le fait).
-    // SÉRIALISÉ (bug terrain v447 : le micro s'ouvrait à 600 ms, AVANT le greet à 800 ms → toutes les
-    // tentatives de voix avalées par le micro ouvert) : le greet part D'ABORD, la boucle d'ouverture du
-    // micro ne démarre QU'ENSUITE, et n'ouvre qu'après la fin réelle de la voix (_ttsBusy). Plafond ≤9 s.
+    // SÉRIALISÉ (bug terrain v447) : le greet parlé (autorisé au tap) part D'ABORD, la boucle d'ouverture
+    // du micro ne démarre QU'ENSUITE, et n'ouvre qu'après la fin réelle de la voix (_ttsBusy). Plafond ≤9 s.
     setTimeout(()=>{
       try{this._speakRetry('Je t\'écoute',1,2);this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}
       let _w=0;

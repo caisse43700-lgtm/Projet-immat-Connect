@@ -233,7 +233,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
-  ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(cmd){'));
+  ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(cmd,fromWake){'));
   ok('bouton micro global fabVoice', HTML.includes('id="fabVoice"') && HTML.includes('AngeDialog.voiceCommand'));
   // Mot d'activation « Ange » (opt-in, écoute continue au premier plan)
   ['_wakeEnabled', '_wakeInit', '_wakeStart', '_wakeStop'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
@@ -243,7 +243,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)\{/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,900}ange-open'\)\)\{/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=3\?after:null\)/.test(HTML));
+  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=3\?after:null,true\)/.test(HTML));
   ok('débounce RÉARMÉ à chaque mot (vraie fin de phrase)', /clearTimeout\(this\._wakePend\);\}catch\(_\)\{\}\s*this\._wakePend=setTimeout/.test(HTML));
   ok('feedback immédiat à la 1re détection (earcon + orbe hear)', /if\(!this\._wakeHeard\)\{this\._wakeHeard=true;try\{this\._earcon\('ok'\)/.test(HTML));
   ok('audio-capture → réessai auto 1,2s', /err==='audio-capture'\)\{setTimeout\(\(\)=>\{try\{this\._wakeStart\(\)/.test(HTML));
@@ -272,13 +272,13 @@ section('B. Câblage Ange V2 (index.html)');
   // Ange pose une question courte à l'appel vocal + réponses parlées courtes
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
   // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
-  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(cmd\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
+  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(cmd,fromWake\)\{[\s\S]{0,1400}this\._orbMode=true/.test(HTML));
   ok('pas de double cancel() dans voiceCommand (bug iOS)', !/voiceCommand\(\)\{[\s\S]{0,400}window\.speechSynthesis\.cancel\(\)/.test(HTML));
   ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
   ok('voiceCommand accuse réception vocal « Je t\'écoute » (avec réessai)', HTML.includes("this._speakRetry('Je t\\'écoute',1,2)"));
   ok('_speakRetry réessaie si la voix est avalée (3x puis bip)', /_speakRetry\(txt,attempt,max\)\{[\s\S]{0,700}attempt<max/.test(HTML) && /voix indisponible \('\+max\+' essais\)/.test(HTML));
   ok('réessai avec blip de bascule audio avant de reparler', /this\._earcon\('ok'\);\}catch\(_\)\{\}\s*this\._wakeDbg\('voix avalée/.test(HTML));
-  ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
+  ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd,fromWake\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
   ok('handlers wake vérifient l\'instance active (anti-fantôme)', /rec\.onend=\(\)=>\{if\(this\._wakeRec!==rec\)/.test(HTML) && /const mine=\(this\._wakeRec===rec\)/.test(HTML));
@@ -294,9 +294,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /this\._ttsBusy\(\)&&_w<9000/.test(HTML) && HTML.includes('this.startVoice()'));
   ok('SÉRIALISÉ : greet lancé PUIS boucle micro (dans le même timeout)', /this\._speakRetry\('Je t\\'écoute',1,2\)[\s\S]{0,500}setTimeout\(start,150\)/.test(HTML));
-  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,900}this\._setOrb\('(speak|listen|think)'\)/.test(HTML));
+  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,1400}this\._setOrb\('(speak|listen|think)'\)/.test(HTML));
   ok('commande directe → exécution sans « Je t\'écoute » (_voiceTurn)', /if\(_cmd\)\{this\._orbStarting=false;[\s\S]{0,160}this\._voiceTurn\(_cmd\)/.test(HTML));
-  ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
+  ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,800}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
   ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{\s*try\{this\._speakRetry\('Je t\\'écoute',1,2\)/.test(HTML));
   // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
   ok('méthode _primeTTS présente', HTML.includes('_primeTTS()'));
@@ -381,7 +381,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,700}this\._setOrb\('listen'\)/.test(HTML));
   ok('onresult → orbe hear', /interimT\|\|_last\)\{try\{this\._setOrb\('hear'\)/.test(HTML));
   ok('_voiceTurn → orbe think avant envoi', /this\._setOrb\('think'\);[\s\S]{0,40}await this\.send\(\)/.test(HTML));
-  ok('_speakAnswer → orbe speak (avec réessai)', /this\._setOrb\('speak'\)[\s\S]{0,30}this\._speakRetry\(t\)/.test(HTML));
+  ok('_speakAnswer → orbe speak (avec réessai)', /this\._setOrb\('speak'\)[\s\S]{0,30}this\._speakRetry\(t,1,/.test(HTML));
   // Session survit à la navigation (plus de dépendance à ange-open)
   ok('_voiceTurn gardé par la session (_convo)', /_voiceTurn\(v\)\{\s*if\(!this\._convo\)return/.test(HTML));
   ok('_convoResume ne dépend plus de ange-open', /_convoResume\(\)\{/.test(HTML) && !/_convoResume\(\)\{[\s\S]{0,400}ange-open/.test(HTML));
