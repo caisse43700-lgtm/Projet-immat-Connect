@@ -228,7 +228,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_situationHTML consomme Nexus.currentSituation', has('ImmatNexus.currentSituation'));
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
   // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
-  ok('startVoice onend délègue à _voiceTurn', HTML.includes("rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn"));
+  ok('startVoice onend délègue à _voiceTurn', /rec\.onend=\(\)=>\{clearTimeout\(_at\);_reset\(\);[\s\S]{0,140}this\._voiceTurn/.test(HTML));
   ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1800}this\._voiceMode=true;[\s\S]{0,120}await this\.send\(\)/.test(HTML));
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
@@ -269,7 +269,13 @@ section('B. Câblage Ange V2 (index.html)');
   ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
   ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true,true)"));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
-  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeDbg/.test(HTML));
+  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeDbg/.test(HTML));
+  // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
+  ok('handlers wake vérifient l\'instance active (anti-fantôme)', /rec\.onend=\(\)=>\{if\(this\._wakeRec!==rec\)/.test(HTML) && /const mine=\(this\._wakeRec===rec\)/.test(HTML));
+  ok('_wakeStop avorte et nettoie tous les handlers', /_wakeStop\(\)\{[\s\S]{0,200}r\.onerror=null;r\.onstart=null;try\{r\.abort\(\)/.test(HTML));
+  ok('registre _recTrack présent (wake+dictée+confirmation)', HTML.includes('_recTrack(r)') && HTML.split('this._recTrack(rec)').length>=4);
+  ok('_hardStopMic avorte TOUTES les instances (fix micro qui reste allumé)', /_hardStopMic\(\)\{[\s\S]{0,900}this\._recAll\|\|\[\]\)\.forEach\(r=>\{[\s\S]{0,80}r\.abort\(\)/.test(HTML));
+  ok('prime TTS reporté si micro actif (anti-conflit STT/TTS)', /_primeTTS\(\)\{if\(this\._ttsPrimed\)return;if\(this\._wakeRec\|\|this\._rec\|\|this\._pendRec\)/.test(HTML));
   ok('orbe parle même si voix GPS coupée (ignoreMute)', /function speak\(txt,force=false,ignoreMute=false\)\{if\(\(!S\.voice&&!ignoreMute\)/.test(HTML));
   ok('voiceCommand n\'ouvre pas le panneau (pas de this.open)', !/voiceCommand\(\)\{[\s\S]{0,300}this\.open\(\)/.test(HTML));
   ok('send() ne force pas la fiche en mode orbe', /if\(!this\._orbMode\)this\._showSheet\(\)/.test(HTML));

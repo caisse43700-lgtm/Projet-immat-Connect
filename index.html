@@ -5403,30 +5403,40 @@ const AngeDialog={
       if(document.body.classList.contains('ange-open')){this._wakeDbg('start SKIP: Ange ouvert');return;}
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){this._wakeDbg('start SKIP: pas de SpeechRecognition');return;}
       this._wakeFired=false;
-      const rec=new SR();this._wakeRec=rec;
+      const rec=new SR();this._wakeRec=rec;this._recTrack(rec);
       rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=true;
-      rec.onstart=()=>{this._wakeDbg('🎙️ ÉCOUTE « Ange »…');};
-      rec.onresult=e=>{if(this._wakeFired)return;let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=' '+e.results[i][0].transcript;t=t.toLowerCase();
+      // HYGIÈNE D'INSTANCE (bug prouvé par HUD terrain) : chaque handler vérifie qu'il appartient à
+      // l'instance ACTIVE. Sinon, le onerror d'une vieille instance avortée écrasait _wakeRec=null
+      // → instance fantôme qui recevait les « Ange » dans le vide + micro jamais libéré.
+      rec.onstart=()=>{if(this._wakeRec!==rec)return;this._wakeDbg('🎙️ ÉCOUTE « Ange »…');};
+      rec.onaudiostart=()=>{if(this._wakeRec!==rec)return;this._wakeDbg('audio ON (micro capte)');};
+      rec.onresult=e=>{if(this._wakeRec!==rec||this._wakeFired)return;let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=' '+e.results[i][0].transcript;t=t.toLowerCase();
         this._wakeDbg('entendu: '+(t.trim().slice(0,28)||'(vide)'));
         if(/\b(ok |h[eé] |hey |dis )?ange\b/.test(t)){this._wakeFired=true;this._wakeDbg('🟢 ANGE détecté');this._wakeStop();try{this.voiceCommand();}catch(_){}}};
-      rec.onerror=ev=>{const err=ev&&ev.error;this._wakeRec=null;this._wakeDbg('❌ erreur: '+err);if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
-      rec.onend=()=>{this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
+      rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
+      rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
       rec.start();
       this._wakeDbg('start() appelé (attente onstart)');
     }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
   },
-  _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.stop();}}catch(_){}},
+  _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;try{r.abort();}catch(_){try{r.stop();}catch(__){}}}}catch(_){}},
+  // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
+  // pour pouvoir les avorter TOUTES à la fermeture (fix « le micro reste allumé » : instance orpheline).
+  _recTrack(r){try{this._recAll=(this._recAll||[]);this._recAll.push(r);if(this._recAll.length>8)this._recAll.splice(0,this._recAll.length-8);}catch(_){}},
   // iOS bloque la synthèse vocale tant qu'elle n'a pas été lancée DANS un geste utilisateur.
-  // On la « débloque » au 1er contact (utterance silencieuse) → ensuite « Je t'écoute » et les
-  // réponses déclenchées par le mot « Ange » (hors geste) peuvent être prononcées.
-  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){try{speechSynthesis.resume();}catch(_){}const u=new SpeechSynthesisUtterance('.');u.volume=0.05;u.rate=2;speechSynthesis.speak(u);}}catch(_){}},
-  // Arrêt TOTAL du micro (wake + dictée + confirmation) sans réarmement — pour la mise en arrière-plan / fermeture.
+  // On la « débloque » au 1er contact (utterance quasi silencieuse). REPORTÉE si le micro est actif :
+  // prouvé par HUD terrain, parler pendant que le micro démarre AVORTE l'écoute (conflit STT/TTS iOS).
+  _primeTTS(){if(this._ttsPrimed)return;if(this._wakeRec||this._rec||this._pendRec){this._wakeDbg('prime TTS reporté (micro actif)');return;}this._ttsPrimed=true;try{if('speechSynthesis'in window){try{speechSynthesis.resume();}catch(_){}const u=new SpeechSynthesisUtterance('.');u.volume=0.05;u.rate=2;speechSynthesis.speak(u);this._wakeDbg('voix débloquée (prime TTS)');}}catch(_){}},
+  // Arrêt TOTAL du micro (wake + dictée + confirmation + orphelines) sans réarmement — arrière-plan / fermeture.
   _hardStopMic(){
     this._convo=false;this._orbMode=false;this._orbStarting=false;this._convoSilence=0;this._choices=null;
     try{if(this._rec){this._rec.onend=null;this._rec.onresult=null;this._rec.stop();this._rec=null;}}catch(_){}
     try{if(this._pendRec){this._pendRec.onend=null;this._pendRec.onresult=null;this._pendRec.stop();this._pendRec=null;}}catch(_){}
     try{this._wakeStop();}catch(_){}
+    // Avorte TOUTES les instances jamais créées (y compris fantômes) → le micro est VRAIMENT libéré.
+    try{(this._recAll||[]).forEach(r=>{try{r.onend=null;r.onresult=null;r.onerror=null;r.abort();}catch(_){}});this._recAll=[];}catch(_){}
     try{this._setOrb('idle');}catch(_){}
+    this._wakeDbg('micro coupé (hardStop)');
   },
   renderResponse(r){
     this._choices=null; // réponse libre → plus de choix fermés en cours
@@ -5490,7 +5500,8 @@ const AngeDialog={
     try{this._setOrb('listen');}catch(_){}
     try{
       const rec=new SR();
-      this._rec=rec;
+      this._rec=rec;this._recTrack(rec);
+      this._wakeDbg('dictée : démarrage');
       rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;
       if(btn){btn.style.color='#f0a500';btn.textContent='⏹';}
       if(!this._orbMode)toast('🎤 Parlez maintenant…','ok');
@@ -5508,8 +5519,8 @@ const AngeDialog={
         const ta=$('angeMsg');if(ta)ta.value=_last+interimT;
         if(interimT||_last){try{this._setOrb('hear');}catch(_){}}
       };
-      rec.onerror=e=>{clearTimeout(_at);_reset();if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
-      rec.onend=()=>{clearTimeout(_at);_reset();this._voiceTurn((_last||'').trim());};
+      rec.onerror=e=>{clearTimeout(_at);_reset();this._wakeDbg('dictée erreur: '+(e.error||'?'));if(e.error!=='aborted'&&e.error!=='no-speech')toast('Micro : '+(e.error||'erreur'),'bad');};
+      rec.onend=()=>{clearTimeout(_at);_reset();this._wakeDbg('dictée finie: "'+String(_last||'').trim().slice(0,24)+'"');this._voiceTurn((_last||'').trim());};
       $('angeMsg').blur();
       rec.start();
     }catch(e){_reset();toast('Micro indisponible.','bad');}
@@ -5991,7 +6002,7 @@ const AngeDialog={
       if(SR && window.S && window.S.voice!==false){
         const M={envoie:/\b(envoie|envoi|envoyer|envoy[ée]e?|vas.?y|c'est parti|parti)\b/,appelle:/\b(appelle|appeler|appel|t[ée]l[ée]phone|t[ée]l[ée]phoner)\b/,reponds:/\b(r[ée]ponds?|r[ée]pondre|envoie|envoyer)\b/,confirme:/\b(confirme|confirmer|valide|valider)\b/};
         const YES=word?(M[word]||/\b(oui|ok)\b/):/\b(oui|confirme|confirmer|envoie|envoyer|vas-y|ok|d.accord|appelle|appeler)\b/;
-        const rec=new SR();this._pendRec=rec;rec.lang='fr-FR';rec.interimResults=false;rec.maxAlternatives=3;rec.continuous=false;
+        const rec=new SR();this._pendRec=rec;this._recTrack(rec);rec.lang='fr-FR';rec.interimResults=false;rec.maxAlternatives=3;rec.continuous=false;
         rec.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=' '+e.results[i][0].transcript;txt=txt.toLowerCase();
           if(/\b(non|annule|annuler|stop|attends|attend|laisse|laisser)\b/.test(txt))this.confirmNo();
           else if(YES.test(txt))this.confirmYes();};
