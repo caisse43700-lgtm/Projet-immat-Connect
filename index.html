@@ -5413,7 +5413,7 @@ const AngeDialog={
   // iOS bloque la synthèse vocale tant qu'elle n'a pas été lancée DANS un geste utilisateur.
   // On la « débloque » au 1er contact (utterance silencieuse) → ensuite « Je t'écoute » et les
   // réponses déclenchées par le mot « Ange » (hors geste) peuvent être prononcées.
-  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){try{speechSynthesis.resume();}catch(_){}const u=new SpeechSynthesisUtterance('');u.volume=0.01;speechSynthesis.speak(u);}}catch(_){}},
+  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){try{speechSynthesis.resume();}catch(_){}const u=new SpeechSynthesisUtterance('.');u.volume=0.05;u.rate=2;speechSynthesis.speak(u);}}catch(_){}},
   // Arrêt TOTAL du micro (wake + dictée + confirmation) sans réarmement — pour la mise en arrière-plan / fermeture.
   _hardStopMic(){
     this._convo=false;this._orbMode=false;this._orbStarting=false;this._convoSilence=0;this._choices=null;
@@ -5725,11 +5725,11 @@ const AngeDialog={
   _entryMenuHTML(){try{const c=this._MENU.faire&&this._MENU.faire.children;if(!c)return'';const ks=Object.keys(c);return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #1a1a2e"><div style="color:#a5b4fc;font-size:11px;font-weight:700;margin-bottom:6px">Que veux-tu faire ?</div><div style="display:flex;flex-wrap:wrap">'+ks.map(k=>this._menuBtn('faire.'+k,c[k].label)).join('')+'</div></div>';}catch(_){return'';}},
   // Bouton unique pour ARMER l'ouverture vocale « Ange » (le seul geste requis, à faire à l'arrêt).
   _wakeHintHTML(){try{
-    if(this._wakeEnabled&&this._wakeEnabled())return '';
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return '';
-    // Le bouton DÉMARRE la conversation vocale DANS le geste (tap) — seul moyen fiable sur iOS
-    // (Safari interdit la voix déclenchée par le mot « Ange » sans contact). onclick synchrone = la voix passe.
-    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog._softHide()}catch(_){};try{AngeDialog.voiceCommand()}catch(_){}" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Parler à Ange</button><div style="color:#666;font-size:10px;margin-top:4px">Touche pour parler. Ange répond à voix haute et reste à l\'écoute pour enchaîner.</div></div>';
+    // Bouton « AUTORISER » = le geste UNIQUE : (1) débloque la voix (iOS l'exige une fois via _primeTTS),
+    // (2) arme + démarre l'écoute du mot « Ange » (start() exige un geste, ici on est DANS le tap).
+    // Toujours visible : si Ange devient muet (iOS coupe le micro après inactivité), re-toucher réarme.
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog._primeTTS()}catch(_){};try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Autoriser « Ange » à la voix</button><div style="color:#666;font-size:10px;margin-top:4px">Touche une fois. Ensuite dis « Ange » (app ouverte, écran allumé). Si Ange devient muet, re-touche.</div></div>';
   }catch(_){return '';}},
   // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
   //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).

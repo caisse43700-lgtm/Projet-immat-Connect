@@ -343,8 +343,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('Nexus expose angeTurn', HTML.includes('ImmatNexus.angeTurn'));
   ok('_voiceGreetQuestion consomme angeTurn', /window\.ImmatNexus\.angeTurn\(\)[\s\S]{0,120}tn\.actions/.test(HTML));
   // Armement vocal en 1 geste + ré-armement en Mode Volant
-  ok('bouton « Parler à Ange » démarre la conversation (_wakeHintHTML)', HTML.includes('_wakeHintHTML()') && /_wakeHintHTML\(\)\{[\s\S]{0,700}AngeDialog\.voiceCommand\(\)/.test(HTML));
-  ok('_wakeHintHTML masqué si déjà armé', /_wakeHintHTML\(\)\{try\{\s*if\(this\._wakeEnabled&&this\._wakeEnabled\(\)\)return ''/.test(HTML));
+  ok('bouton « Autoriser » arme le wake + débloque la voix dans le geste (_wakeHintHTML)', HTML.includes('_wakeHintHTML()') && /_wakeHintHTML\(\)\{[\s\S]{0,700}AngeDialog\._primeTTS\(\)[\s\S]{0,120}App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('_wakeHintHTML toujours visible (re-toucher réarme si muet)', !/_wakeHintHTML\(\)\{try\{\s*if\(this\._wakeEnabled&&this\._wakeEnabled\(\)\)return ''/.test(HTML));
   ok('accueil propose l\'armement (open append _wakeHintHTML)', /_wakeHintHTML\(\);if\(_wh\)resp\.innerHTML\+=_wh/.test(HTML));
   ok('Mode Volant ré-arme le wake word', /_driveAutoSet[\s\S]{0,320}AngeDialog\._wakeStart\(\)/.test(HTML));
   // Lanceur vocal : ouvrir les fonctions/catégories à la voix
@@ -371,7 +371,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('send() ré-affiche la fiche', /async send\(\)\{[\s\S]{0,120}this\._showSheet\(\)/.test(HTML));
   // Fix « quand je dis Ange rien ne se passe » : armement dans le geste + relance au 1er contact (iOS)
   ok('_wakeInit : relance discrète à chaque contact (iOS keepalive)', /_wakeKeep=\(\)=>[\s\S]{0,80}_wakeStart\(\)[\s\S]{0,80}addEventListener\('pointerdown',this\._wakeKeep/.test(HTML));
-  ok('bouton « Parler à Ange » lance la voix DANS le geste (iOS)', /AngeDialog\._softHide\(\)\}catch\(_\)\{\};try\{AngeDialog\.voiceCommand\(\)/.test(HTML));
+  ok('bouton « Autoriser » : primeTTS + toggleAngeWake dans le geste (iOS)', /AngeDialog\._primeTTS\(\)\}catch\(_\)\{\};try\{AngeDialog\.close\(\)\}catch\(_\)\{\};App\.toggleAngeWake\(true\)/.test(HTML));
   ok('close() relance le mot d\'activation dans le geste', /close\(\)\{[\s\S]{0,800}_wakeEnabled\(\)\)this\._wakeStart\(\)/.test(HTML));
   ok('taper le micro arme le mot « Ange »', /if\(!this\._wakeEnabled\(\)\)\{localStorage\.setItem\('ic_ange_wake','1'\)/.test(HTML));
 })();
