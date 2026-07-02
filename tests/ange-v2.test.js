@@ -229,7 +229,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('open() ajoute le fil rouge en tête', /_situationHTML\(\);if\(_si\)resp\.innerHTML=_si\+resp\.innerHTML/.test(HTML));
   // Tout en vocal : dictée qui s'auto-envoie + réponse à voix haute + bouton micro global
   ok('startVoice onend délègue à _voiceTurn', /rec\.onend=\(\)=>\{clearTimeout\(_at\);_reset\(\);[\s\S]{0,140}this\._voiceTurn/.test(HTML));
-  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,1800}this\._voiceMode=true;[\s\S]{0,120}await this\.send\(\)/.test(HTML));
+  ok('_voiceTurn auto-envoie la dictée', /_voiceTurn\(v\)\{[\s\S]{0,2600}this\._voiceMode=true;[\s\S]{0,160}await this\.send\(\)/.test(HTML));
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
@@ -243,10 +243,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)\{/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,900}ange-open'\)\)\{/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=3\?after:null,true\)/.test(HTML));
+  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,700}this\.voiceCommand\(after\.length>=3\?after:null,true\)/.test(HTML));
   ok('débounce RÉARMÉ à chaque mot (vraie fin de phrase)', /clearTimeout\(this\._wakePend\);\}catch\(_\)\{\}\s*this\._wakePend=setTimeout/.test(HTML));
   ok('feedback immédiat à la 1re détection (earcon + orbe hear)', /if\(!this\._wakeHeard\)\{this\._wakeHeard=true;try\{this\._earcon\('ok'\)/.test(HTML));
-  ok('audio-capture → réessai auto 1,2s', /err==='audio-capture'\)\{setTimeout\(\(\)=>\{try\{this\._wakeStart\(\)/.test(HTML));
+  ok('audio-capture → réessai auto 1,2s', /err==='audio-capture'\)\{try\{this\._stat\('cap'\);\}catch\(_\)\{\}setTimeout\(\(\)=>\{try\{this\._wakeStart\(\)/.test(HTML));
   ok('commande dans le même souffle captée (groupe (.*)$)', HTML.includes('(.*)$/'));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
@@ -279,18 +279,38 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_speakRetry réessaie si la voix est avalée (3x puis bip)', /_speakRetry\(txt,attempt,max\)\{[\s\S]{0,700}attempt<max/.test(HTML) && /voix indisponible \('\+max\+' essais\)/.test(HTML));
   ok('réessai avec blip de bascule audio avant de reparler', /this\._earcon\('ok'\);\}catch\(_\)\{\}\s*this\._wakeDbg\('voix avalée/.test(HTML));
   // Voix pré-enregistrée via Web Audio (contourne le blocage TTS iOS en chaîne vocale)
-  ok('_playVoice présent (voix audio via Web Audio)', HTML.includes('_playVoice(name,done)') && HTML.includes("fetch('audio/'+name+'.wav?v=2')"));
+  ok('_playVoice présent (voix audio via Web Audio)', HTML.includes('_playVoice(name,done)') && HTML.includes("fetch('audio/'+name+'.wav?v=3')"));
   ok('wake → « Je t\'écoute » = voix audio (ange-ecoute)', /if\(fromWake\)\{[\s\S]{0,400}this\._playVoice\('ange-ecoute'/.test(HTML));
   ok('« Ange » redit en chaîne vocale → voix audio (ange-oui)', /this\._voiceNoTTS\)\{this\._playVoice\('ange-oui'/.test(HTML));
   ok('préchargement des voix à l\'autorisation', HTML.includes('_voicePrefetch()'));
   ok('fichiers audio présents', require('fs').existsSync(require('path').join(ROOT,'audio/ange-ecoute.wav')) && require('fs').existsSync(require('path').join(ROOT,'audio/ange-oui.wav')));
-  ok('SW cache les voix audio', require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').includes('./audio/ange-ecoute.wav?v=2'));
+  ok('SW cache les voix audio', require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').includes('./audio/ange-ecoute.wav?v=3'));
   // Session « Ange » ONE-SHOT (modèle cible PO) : requête traitée → retour en veille du mot « Ange »
-  ok('one-shot : requête traitée → retour en veille (convoStop)', /if\(this\._voiceNoTTS\)\{this\._wakeDbg\('requête traitée[\s\S]{0,60}this\._convoStop\(\)/.test(HTML));
+  ok('one-shot : requête traitée → retour en veille (convoStop)', /if\(this\._voiceNoTTS\)\{this\._wakeDbg\('requête traitée[\s\S]{0,140}this\._convoStop\(\)/.test(HTML));
   ok('one-shot : rail à choix garde l\'écoute', /if\(this\._choices&&this\._choices\.length\)return this\._convoResume\(\)/.test(HTML));
   ok('« C\'est fait » (audio) sur ouverture en session Ange', /if\(this\._voiceNoTTS\)this\._playVoice\('ange-fait'\)/.test(HTML) && require('fs').existsSync(require('path').join(ROOT,'audio/ange-fait.wav')));
   ok('« Ange » seul → détection rapide 0,5 s (bare)', /_bare\?500:900/.test(HTML));
-  ok('chien de garde : écoute sourde 25 s → redémarrage', /rec\._wd=setInterval[\s\S]{0,300}>25000/.test(HTML));
+  ok('chien de garde : écoute sourde 18 s → redémarrage', /rec\._wd=setInterval[\s\S]{0,300}>18000/.test(HTML));
+  // v454 — décisions revue ultime
+  ok('FSM-ombre : transitions nommées (_vGo)', HTML.includes("_vGo(state,why)") && /this\._vGo\('VEILLE'\)/.test(HTML) && /this\._vGo\('DETECTE'\)/.test(HTML) && /this\._vGo\('GREET'\)/.test(HTML) && /this\._vGo\('DICTEE'\)/.test(HTML) && /this\._vGo\('ROUTAGE'\)/.test(HTML) && /this\._vGo\('CONFIRMATION'\)/.test(HTML));
+  ok('assertions états impossibles (_assertInit)', HTML.includes('_assertInit()') && HTML.includes('ASSERT: dictée + veille actives') && HTML.includes('ASSERT: micro pendant la voix'));
+  ok('appel Agora → veille suspendue puis relancée', HTML.includes('appel → veille suspendue') && HTML.includes("fin d\\'appel → veille relancée"));
+  ok('détection gelée pendant la voix (anti-écho GPS/Ange)', /rec\._lastRes=Date\.now\(\);[\s\S]{0,300}if\(this\._ttsBusy\(\)\)return;/.test(HTML));
+  ok('LLM coupé en session wake → « Répète autrement » + veille', /if\(this\._voiceNoTTS\)\{\s*this\._vGo\('FEEDBACK','incompris'\)[\s\S]{0,300}ange-repete/.test(HTML));
+  ok('dictée vide → veille immédiate + son sleep', /if\(this\._voiceNoTTS\)\{try\{this\._earcon\('sleep'\)[\s\S]{0,80}this\._convoStop\(\)/.test(HTML));
+  ok('son dédié retour veille (sleep, notes descendantes)', /sleep:\[\[520,0,0\.09\],\[360,0\.11,0\.14\]\]/.test(HTML));
+  ok('anti-écho : nos phrases captées → ignorées', HTML.includes('écho ignoré'));
+  ok('drivable minimal : réglages+dashboard refusés en conduite', /key:'reglages',drivable:false/.test(HTML) && /key:'dashboard',drivable:false/.test(HTML) && HTML.includes("_playVoice('ange-arret'"));
+  ok('message libre interdit en Mode Volant', HTML.includes('Message libre indisponible en conduite'));
+  ok('suivi « Message ? » hors Volant (_followUp)', HTML.includes('this._followUp=true') && /if\(this\._followUp\)\{this\._followUp=false;return this\._convoResume\(\)/.test(HTML));
+  ok('greet = startVoice(true) — double signal supprimé', /_playVoice\('ange-ecoute',\(\)=>\{[\s\S]{0,180}this\.startVoice\(true\)/.test(HTML));
+  ok('Wake Lock armé avec la veille (opt-out ic_wake_lock)', /ic_wake_lock'\)\|\|'1'\)==='1'&&window\.App&&App\._acquireWakeLock/.test(HTML) && HTML.includes('wakeLockToggle'));
+  ok('mode dégradé N1 : « Micro instable » après 3 incidents', /wd\+this\._stats\.cap\)>=3[\s\S]{0,120}ange-instable/.test(HTML));
+  ok('« Envoyé » vocal en session Ange', HTML.includes("this._playVoice('ange-envoye')"));
+  ok('« Annulé » vocal en session Ange', HTML.includes("this._playVoice('ange-annule')"));
+  ok('politique audio : GPS non forcé coupé pendant session Ange', /if\(!force&&window\.AngeDialog&&window\.AngeDialog\._convo\)return;/.test(HTML));
+  ok('script make-voices versionné', require('fs').existsSync(require('path').join(ROOT,'tools/make-voices.sh')));
+  ok('banque charte complète (10 WAV)', ['ecoute','oui','fait','envoye','annule','repete','message','arret','instable','horsligne'].every(n=>require('fs').existsSync(require('path').join(ROOT,'audio/ange-'+n+'.wav'))));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd,fromWake\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
