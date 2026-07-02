@@ -5524,9 +5524,21 @@ const AngeDialog={
     const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
     try{this._setOrb('think');}catch(_){}
     try{ await this.send(); }catch(_){}
+    try{ this._speakVoiceResult(); }catch(_){} // filet : toute réponse est DITE (LLM/menu/question)
     // Si une confirmation « oui/non » est en attente, son écoute prend le relais (voir _afterConfirm).
     if(this._pending)return;
     this._convoResume();
+  },
+  // En session vocale (orbe), on DIT la réponse affichée si rien ne parle déjà (Nexus/choix parlent seuls,
+  // les confirmations parlent via _armConfirm). Garantit qu'Ange répond toujours à voix haute, jamais par écrit seul.
+  _speakVoiceResult(){
+    if(!this._orbMode||this._pending)return;
+    setTimeout(()=>{try{
+      if(window.speechSynthesis&&window.speechSynthesis.speaking)return; // qqch parle déjà → pas de doublon
+      const r=$('angeResponse');if(!r)return;
+      const txt=(r.textContent||'').replace(/\s+/g,' ').trim();
+      if(txt){this._setOrb('speak');this._speakAnswer(txt);}
+    }catch(_){}},220);
   },
   // Rouvre le micro pour le tour suivant — SEULEMENT quand Ange a fini de parler (anti auto-écoute).
   _convoResume(){
@@ -5925,7 +5937,14 @@ const AngeDialog={
           if(/\b(non|annule|annuler|stop|attends|attend|laisse|laisser)\b/.test(txt))this.confirmNo();
           else if(YES.test(txt))this.confirmYes();};
         rec.onerror=()=>{};rec.onend=()=>{};
-        try{rec.start();}catch(_){}
+        // En mode vocal : Ange DIT d'abord la question (texte de la carte), PUIS écoute (anti-écho : sinon
+        // il entendrait ses propres « envoie / annule »). Sinon (au doigt), on écoute tout de suite.
+        const _startPend=()=>{try{rec.start();}catch(_){}};
+        if(this._orbMode||this._lastVoice){
+          try{const q=(($('angeResponse')||{}).textContent||'').replace(/\s+/g,' ').trim();if(q&&typeof speak==='function'){this._setOrb('speak');speak(q,true);}}catch(_){}
+          const _wait=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(_wait,150);try{this._setOrb('listen');}catch(_){}_startPend();};
+          setTimeout(_wait,220);
+        }else{_startPend();}
       }
     }catch(_){}
   },

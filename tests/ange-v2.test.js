@@ -274,6 +274,11 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand attend la fin de la voix avant d\'écouter', HTML.includes('setTimeout(go,150)') && HTML.includes('this.startVoice()'));
   ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
+  // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
+  ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
+  ok('_voiceTurn dit la réponse à voix haute', /await this\.send\(\);[\s\S]{0,40}this\._speakVoiceResult\(\)/.test(HTML));
+  ok('_speakVoiceResult ne double pas si déjà en train de parler', /_speakVoiceResult\(\)\{[\s\S]{0,200}speechSynthesis\.speaking\)return/.test(HTML));
+  ok('confirmation vocale : Ange DIT la question puis écoute (anti-écho)', /this\._orbMode\|\|this\._lastVoice\)\{[\s\S]{0,220}speak\(q,true\)[\s\S]{0,200}_startPend\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
   ok('matcher fermé _pickChoice présent', HTML.includes('_pickChoice(text,choices)'));
