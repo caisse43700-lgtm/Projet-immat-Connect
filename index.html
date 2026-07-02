@@ -5386,7 +5386,7 @@ const AngeDialog={
       try{window.addEventListener('pagehide',()=>{try{this._hardStopMic();}catch(_){}});}catch(_){}
       // iOS : démarrer le micro exige un geste → on (re)lance l'écoute discrètement à CHAQUE contact utilisateur
       // (les gardes de _wakeStart évitent tout doublon ; no-op si déjà en écoute / en session / fiche ouverte).
-      try{this._wakeKeep=()=>{try{if(this._wakeEnabled())this._wakeStart();}catch(_){}};document.addEventListener('pointerdown',this._wakeKeep,{passive:true});}catch(_){}
+      try{this._wakeKeep=()=>{try{this._primeTTS();}catch(_){}try{if(this._wakeEnabled())this._wakeStart();}catch(_){}};document.addEventListener('pointerdown',this._wakeKeep,{passive:true});}catch(_){}
     }
     this._wakeStart();
   },
@@ -5410,6 +5410,10 @@ const AngeDialog={
     }catch(_){this._wakeRec=null;}
   },
   _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.stop();}}catch(_){}},
+  // iOS bloque la synthèse vocale tant qu'elle n'a pas été lancée DANS un geste utilisateur.
+  // On la « débloque » au 1er contact (utterance silencieuse) → ensuite « Je t'écoute » et les
+  // réponses déclenchées par le mot « Ange » (hors geste) peuvent être prononcées.
+  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(_){}},
   // Arrêt TOTAL du micro (wake + dictée + confirmation) sans réarmement — pour la mise en arrière-plan / fermeture.
   _hardStopMic(){
     this._convo=false;this._orbMode=false;this._orbStarting=false;this._convoSilence=0;this._choices=null;
@@ -5467,7 +5471,7 @@ const AngeDialog={
     // Sauvegarde en localStorage pour survie inter-sessions
     try{const k='ic_ange_feedback';const arr=JSON.parse(localStorage.getItem(k)||'[]');arr.push({v,t:Date.now()});localStorage.setItem(k,JSON.stringify(arr.slice(-20)));}catch(e){}
   },
-  startVoice(){
+  startVoice(resume){
     const btn=$('angeMic');
     const _reset=()=>{this._rec=null;if(btn){btn.style.color='#c4b5fd';btn.textContent='🎙️';}};
     if(this._rec){try{this._rec.stop();}catch(e){}  _reset();this._convo=false;return;} // tap = stop conversation
@@ -5476,7 +5480,8 @@ const AngeDialog={
     this._convo=true; // le micro reste ouvert tant qu'on parle avec Ange
     // Utiliser le micro (geste) ARME aussi le mot « Ange » → après fermeture, on peut le rappeler à la voix.
     try{if(!this._wakeEnabled()){localStorage.setItem('ic_ange_wake','1');const _wt=$('angeWakeToggle');if(_wt)_wt.checked=true;this._wakeInit&&this._wakeInit();try{toast('Astuce : dis « Ange » pour rouvrir sans toucher.','ok');}catch(_){}}}catch(_){}
-    try{this._earcon('listen');}catch(_){}try{this._setOrb('listen');}catch(_){}
+    if(!resume){try{this._earcon('listen');}catch(_){}} // earcon 1× par session (pas à chaque réouverture → plus de bip toutes les 5-10 s)
+    try{this._setOrb('listen');}catch(_){}
     try{
       const rec=new SR();
       this._rec=rec;
@@ -5549,7 +5554,7 @@ const AngeDialog={
       if(!this._convo||this._rec||this._pendRec)return;
       if(document.visibilityState!=='visible')return; // pas en arrière-plan
       if(window.speechSynthesis&&window.speechSynthesis.speaking){return setTimeout(go,300);} // attendre la fin de la voix d'Ange
-      try{this.startVoice();}catch(_){}
+      try{this.startVoice(true);}catch(_){} // resume=true → pas de nouvel earcon
     };
     setTimeout(go,450);
   },
@@ -6121,6 +6126,9 @@ const AngeDialog={
     try{ if(this._tryHistory(msg)) return; }catch(_e){}
     // Proposition de réponse cohérente au dernier message reçu
     try{ if(this._tryReply(msg)) return; }catch(_e){}
+    // Lanceur vocal PRIORITAIRE : « ouvre le GPS / l'activité / les messages … » → navigue directement
+    // (avant le guide, sinon « ouvre l'activité » n'affichait qu'un sous-menu dans la fiche masquée).
+    try{ if(this._tryOpen(msg)) return; }catch(_e){}
     // Guide à suggestions (signaler/activité/ouvrir messages/appels) — connaît l'intérieur de chaque fonction
     try{ if(this._tryGuide(msg)) return; }catch(_e){}
     // Ange agit — message libre à un véhicule (« envoie un message au véhicule devant : … »)
@@ -6131,8 +6139,6 @@ const AngeDialog={
     try{ if(this._trySignal(msg)) return; }catch(_e){}
     // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
     try{ if(this._tryAction(msg)) return; }catch(_e){}
-    // Lanceur vocal : « ouvre le GPS / les messages / les appels / l'activité / réglages … »
-    try{ if(this._tryOpen(msg)) return; }catch(_e){}
     // Menu d'accueil « Que veux-tu faire ? » pour une demande générique (avant le fallback système/LLM)
     try{ if(this._tryMenu(msg)) return; }catch(_e){}
     // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).

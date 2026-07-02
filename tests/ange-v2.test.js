@@ -277,6 +277,12 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1400/.test(HTML) && HTML.includes('this.startVoice()'));
   ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,320}this\._setOrb\('listen'\)/.test(HTML));
+  // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
+  ok('méthode _primeTTS présente', HTML.includes('_primeTTS()'));
+  ok('_primeTTS débloqué au 1er contact (keepalive)', /this\._wakeKeep=\(\)=>\{try\{this\._primeTTS\(\)/.test(HTML));
+  ok('earcon listen seulement à la 1re écoute (pas au resume)', /if\(!resume\)\{try\{this\._earcon\('listen'\)/.test(HTML));
+  ok('_convoResume rouvre sans earcon (startVoice(true))', /try\{this\.startVoice\(true\)/.test(HTML));
+  ok('lanceur _tryOpen passe avant _tryGuide', HTML.indexOf('this._tryOpen(msg)') < HTML.indexOf('this._tryGuide(msg)'));
   ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
   // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
