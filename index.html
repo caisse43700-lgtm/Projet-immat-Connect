@@ -5839,6 +5839,40 @@ const AngeDialog={
     {key:'reglages',re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}}},
     {key:'dashboard',re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(_){}}}
   ],
+  // Catégorie CONTEXTUELLE : « route / véhicule / aide / stationné » ouvre cette catégorie DANS la
+  // fonctionnalité en cours (App._navView). Activité → catégorie d'activité ; Signaler → étape de signalement.
+  _tryCategory(msg){try{
+    const t=String(msg||'').toLowerCase();
+    if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
+    // Pas une action explicite (signale/appelle/envoie/active…) → on laisse les handlers d'action agir.
+    if(/\b(signal|pr[ée]viens|alerte|appel|t[ée]l[ée]phon|joins|joindre|contacte|envoi|message|activ|d[ée]sactiv|coupe|r[ée]tabli)/.test(t))return false;
+    let cat=null;
+    if(/\broute\b|circulation/.test(t))cat='route';
+    else if(/v[ée]hicule|voiture/.test(t))cat='vehicule';
+    else if(/\baide\b|assistance|\bsos\b|secours/.test(t))cat='aide';
+    else if(/stationn|parking/.test(t))cat='stationne';
+    if(!cat)return false;
+    // Intention d'ouverture : un verbe OU une commande courte (le mot ~seul).
+    const hasVerb=/\b(ouvre|ouvrir|va|vas|montre|montrer|affiche|afficher|voir|consulte|passe|cat[ée]gorie|section)\b/.test(t);
+    const words=t.split(/\s+/).filter(Boolean).length;
+    if(!hasVerb&&words>3)return false;
+    const view=(window.App&&App._navView)||'';
+    const LBL={route:'route',vehicule:'véhicule',aide:'aide',stationne:'stationné'}[cat];
+    const done=(logMsg,say)=>{try{this._earcon('ok');}catch(_){}try{this._log('action',logMsg);}catch(_){}
+      if((this._orbMode||this._lastVoice)&&say){try{this._setOrb('speak');speak(say,true,true);}catch(_){}}
+      if(this._convo){try{this._softHide();}catch(_){}try{this._convoResume();}catch(_){}}else{try{this.close&&this.close();}catch(_){}}
+      $('angeMsg').value='';return true;};
+    if(view==='signaler'){
+      const f={route:'sigStepRoute',vehicule:'sigStepVehicle',aide:'sigStepAide',stationne:'sigStepStation'}[cat];
+      try{App[f]&&App[f]();}catch(_){}
+      return done('Signaler → '+cat,'Je prépare le signalement '+LBL+'.');
+    }
+    // Par défaut (Activité ou ailleurs) → la catégorie d'activité correspondante.
+    const ac={route:'route',vehicule:'vehicle',aide:'aide',stationne:'station'}[cat];
+    try{App.navActivite&&App.navActivite();}catch(_){}
+    setTimeout(()=>{try{App.openActivityCat&&App.openActivityCat(ac);}catch(_){}},300);
+    return done('Activité → '+cat,'J\'ouvre l\'activité '+LBL+'.');
+  }catch(_){return false;}},
   _tryOpen(msg){
     try{
       const t=String(msg||'').toLowerCase();
@@ -6128,19 +6162,23 @@ const AngeDialog={
     try{ if(this._tryHistory(msg)) return; }catch(_e){}
     // Proposition de réponse cohérente au dernier message reçu
     try{ if(this._tryReply(msg)) return; }catch(_e){}
-    // Lanceur vocal PRIORITAIRE : « ouvre le GPS / l'activité / les messages … » → navigue directement
-    // (avant le guide, sinon « ouvre l'activité » n'affichait qu'un sous-menu dans la fiche masquée).
-    try{ if(this._tryOpen(msg)) return; }catch(_e){}
-    // Guide à suggestions (signaler/activité/ouvrir messages/appels) — connaît l'intérieur de chaque fonction
-    try{ if(this._tryGuide(msg)) return; }catch(_e){}
+    // ── ACTIONS EXPLICITES (verbe d'action) d'abord — priment sur la navigation ──
     // Ange agit — message libre à un véhicule (« envoie un message au véhicule devant : … »)
     try{ if(this._tryMessage(msg)) return; }catch(_e){}
     // Ange agit — appel véhicule (« appelle le véhicule devant »)
     try{ if(this._tryCall(msg)) return; }catch(_e){}
     // Ange agit — signalement véhicule vocal/texte (« signale au véhicule devant … »)
     try{ if(this._trySignal(msg)) return; }catch(_e){}
-    // Ange agit (commandes gouvernance) — avant tout : si c'est une commande, on exécute (avec confirmation).
+    // Ange agit (commandes gouvernance) — active/désactive une fonction (avec confirmation).
     try{ if(this._tryAction(msg)) return; }catch(_e){}
+    // ── NAVIGATION ──
+    // Catégorie CONTEXTUELLE : « route / véhicule / aide / stationné » → ouvre cette catégorie DANS
+    // la fonctionnalité en cours (Activité → activité route ; Signaler → étape route ; etc.).
+    try{ if(this._tryCategory(msg)) return; }catch(_e){}
+    // Lanceur vocal : « ouvre le GPS / l'activité / les messages … » → navigue directement.
+    try{ if(this._tryOpen(msg)) return; }catch(_e){}
+    // Guide à suggestions (signaler/activité/ouvrir messages/appels) — connaît l'intérieur de chaque fonction
+    try{ if(this._tryGuide(msg)) return; }catch(_e){}
     // Menu d'accueil « Que veux-tu faire ? » pour une demande générique (avant le fallback système/LLM)
     try{ if(this._tryMenu(msg)) return; }catch(_e){}
     // Local-first (ImmatNexus) : réponse déterministe SANS IA quand Nexus sait (état système).

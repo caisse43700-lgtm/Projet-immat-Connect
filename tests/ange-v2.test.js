@@ -286,6 +286,13 @@ section('B. Câblage Ange V2 (index.html)');
   ok('earcon listen seulement à la 1re écoute (pas au resume)', /if\(!resume\)\{try\{this\._earcon\('listen'\)/.test(HTML));
   ok('_convoResume rouvre sans earcon (startVoice(true))', /try\{this\.startVoice\(true\)/.test(HTML));
   ok('lanceur _tryOpen passe avant _tryGuide', HTML.indexOf('this._tryOpen(msg)') < HTML.indexOf('this._tryGuide(msg)'));
+  // Catégorie contextuelle (route/véhicule/aide/stationné selon App._navView)
+  ok('méthode _tryCategory présente', HTML.includes('_tryCategory(msg)'));
+  ok('_tryCategory lit le contexte App._navView', /_tryCategory\(msg\)\{[\s\S]{0,1200}App\._navView/.test(HTML));
+  ok('_tryCategory → Signaler = étape (sigStepRoute…)', /view==='signaler'[\s\S]{0,160}sigStepRoute/.test(HTML));
+  ok('_tryCategory → défaut = catégorie d\'activité (openActivityCat)', HTML.includes('App.openActivityCat(ac)'));
+  ok('_tryCategory ignore les actions explicites (signale/appelle…)', /_tryCategory\(msg\)\{[\s\S]{0,400}signal\|pr\[ée\]viens\|alerte\|appel/.test(HTML));
+  ok('actions passent avant la navigation catégorie', HTML.indexOf('this._trySignal(msg)') < HTML.indexOf('this._tryCategory(msg)'));
   ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
   // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
