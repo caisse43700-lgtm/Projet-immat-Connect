@@ -347,7 +347,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
   // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
-  ok('_voiceTurn dit la réponse à voix haute', /await this\.send\(\);[\s\S]{0,40}this\._speakVoiceResult\(\)/.test(HTML));
+  ok('_voiceTurn dit la réponse à voix haute (TAP)', /await this\.send\(\);[\s\S]{0,180}this\._speakVoiceResult\(\)/.test(HTML));
   ok('_speakVoiceResult ne double pas si déjà en train de parler', /_speakVoiceResult\(\)\{[\s\S]{0,220}this\._ttsBusy\(\)\)return/.test(HTML));
   ok('confirmation vocale : Ange DIT la question puis écoute (anti-écho)', /this\._orbMode\|\|this\._lastVoice\)\{[\s\S]{0,220}speak\(q,true,true\)[\s\S]{0,200}_startPend\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
@@ -414,7 +414,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('startVoice → orbe listen', /this\._convo=true;[\s\S]{0,700}this\._setOrb\('listen'\)/.test(HTML));
   ok('onresult → orbe hear', /interimT\|\|_last\)\{try\{this\._setOrb\('hear'\)/.test(HTML));
   ok('_voiceTurn → orbe think avant envoi', /this\._setOrb\('think'\);[\s\S]{0,40}await this\.send\(\)/.test(HTML));
-  ok('_speakAnswer → orbe speak (avec réessai)', /this\._setOrb\('speak'\)[\s\S]{0,30}this\._speakRetry\(t,1,/.test(HTML));
+  ok('_speakAnswer → orbe speak (avec réessai, TAP)', /this\._setOrb\('speak'\)[\s\S]{0,30}this\._speakRetry\(t,1,3\)/.test(HTML));
+  ok('PURGE : aucune speechSynthesis en session « Ange » (_speakAnswer)', /_speakAnswer\(txt\)\{[\s\S]{0,320}if\(this\._voiceNoTTS\)\{try\{this\._earcon\('ok'\)[\s\S]{0,30}return;\}/.test(HTML));
+  ok('PURGE : filet _speakVoiceResult réservé aux sessions TAP', /if\(!this\._voiceNoTTS\)\{try\{ this\._speakVoiceResult\(\); \}catch/.test(HTML));
   // Session survit à la navigation (plus de dépendance à ange-open)
   ok('_voiceTurn gardé par la session (_convo)', /_voiceTurn\(v\)\{\s*if\(!this\._convo\)return/.test(HTML));
   ok('_convoResume ne dépend plus de ange-open', /_convoResume\(\)\{/.test(HTML) && !/_convoResume\(\)\{[\s\S]{0,400}ange-open/.test(HTML));

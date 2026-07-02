@@ -5650,7 +5650,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
     try{this._setOrb('think');}catch(_){}
     try{ await this.send(); }catch(_){}
-    try{ this._speakVoiceResult(); }catch(_){} // filet : toute réponse est DITE (LLM/menu/question)
+    if(!this._voiceNoTTS){try{ this._speakVoiceResult(); }catch(_){}} // filet TAP uniquement (en session « Ange », la synthèse est condamnée → le son vient de la banque WAV, jamais de speechSynthesis)
     // Si une confirmation « oui/non » est en attente, son écoute prend le relais (voir _afterConfirm).
     if(this._pending)return;
     // Question à choix (rail) en cours → on écoute la réponse.
@@ -5746,7 +5746,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
   // Précharge les voix (au moment de l'autorisation) pour un « Je t'écoute » instantané.
   _voicePrefetch(){try{['ange-ecoute','ange-oui','ange-fait','ange-envoye','ange-annule','ange-repete','ange-message','ange-arret','ange-instable','ange-horsligne'].forEach(n=>{if(this._vBufs&&this._vBufs[n])return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=this._actx||(this._actx=new AC());fetch('audio/'+n+'.wav?v=3').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(b=>{this._vBufs=this._vBufs||{};this._vBufs[n]=b;}).catch(()=>{});});}catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
-  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t,1,this._voiceNoTTS?1:3);}}catch(_){}},
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){if(this._voiceNoTTS){try{this._earcon('ok');}catch(_){}return;}try{this._setOrb('speak');}catch(_){}this._speakRetry(t,1,3);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
   _voiceGreetQuestion(){
     try{
