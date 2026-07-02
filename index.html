@@ -5625,12 +5625,17 @@ const AngeDialog={
     this._orbMode=true;this._convo=true;this._convoSilence=0;
     try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(_){} // coupe un message proactif en cours
     try{this._earcon('listen');}catch(_){}
-    try{this._setOrb('speak');}catch(_){}
-    // « Je t'écoute » différé : (1) laisse le micro du wake se libérer (iOS ne fait pas STT+TTS ensemble),
-    // (2) l'écart évite le bug cancel→speak. ignoreMute=true → Ange parle même si la voix GPS est coupée.
-    setTimeout(()=>{try{if(typeof speak==='function')speak('Je t\'écoute',true,true);}catch(_){}},200);
-    const go=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(go,150);this._orbStarting=false;try{this._setOrb('listen');}catch(_){}try{this.startVoice();}catch(_){}};
-    setTimeout(go,450);
+    try{this._setOrb('listen');}catch(_){} // ORBE VISIBLE IMMÉDIATEMENT (ne dépend d'aucune voix)
+    // « Je t'écoute » : ignoreMute=true → parle même si la voix GPS est coupée.
+    try{if(typeof speak==='function')speak('Je t\'écoute',true,true);}catch(_){}
+    // Ouverture du micro après la voix, avec PLAFOND (≤1.4 s) : si speechSynthesis.speaking reste
+    // coincé (bug iOS), on ouvre quand même et _orbStarting est TOUJOURS relâché (jamais bloqué).
+    let _w=0;
+    const start=()=>{
+      if(window.speechSynthesis&&window.speechSynthesis.speaking&&_w<1400){_w+=150;return setTimeout(start,150);}
+      this._orbStarting=false;try{this.startVoice();}catch(_){}
+    };
+    setTimeout(start,350);
   },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.

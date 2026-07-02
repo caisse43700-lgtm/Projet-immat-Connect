@@ -275,7 +275,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
-  ok('voiceCommand attend la fin de la voix avant d\'écouter', HTML.includes('setTimeout(go,150)') && HTML.includes('this.startVoice()'));
+  ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1400/.test(HTML) && HTML.includes('this.startVoice()'));
+  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,320}this\._setOrb\('listen'\)/.test(HTML));
   ok('copilot ne parle pas pendant une session vocale', require('fs').readFileSync(require('path').join(ROOT,'core/immat-copilot.js'),'utf8').includes('window.AngeDialog._convo) return'));
   // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
