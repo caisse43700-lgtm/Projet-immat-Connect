@@ -5443,7 +5443,7 @@ const AngeDialog={
         if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}return;}
         // audio-capture = collision de micros pendant une transition → on réessaie après 1,2 s.
         if(err==='audio-capture'){setTimeout(()=>{try{this._wakeStart();}catch(_){}},1200);}};
-      rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
+      rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,35s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,350);};
       rec.start();
       this._wakeDbg('start() appelé (attente onstart)');
     }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
@@ -5688,11 +5688,11 @@ const AngeDialog={
       this._vBufs=this._vBufs||{};
       const play=buf=>{try{const src=ctx.createBufferSource();const g=ctx.createGain();g.gain.value=1.25;src.buffer=buf;src.connect(g);g.connect(ctx.destination);src.onended=fin;src.start();this._wakeDbg('🔊 voix audio « '+name+' »');}catch(_){fin();}};
       if(this._vBufs[name])return play(this._vBufs[name]);
-      fetch('audio/'+name+'.wav?v=1').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(buf=>{this._vBufs[name]=buf;play(buf);}).catch(()=>{this._wakeDbg('voix audio KO → bip');try{this._earcon('listen');}catch(_){}fin();});
+      fetch('audio/'+name+'.wav?v=2').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(buf=>{this._vBufs[name]=buf;play(buf);}).catch(()=>{this._wakeDbg('voix audio KO → bip');try{this._earcon('listen');}catch(_){}fin();});
     }catch(_){fin();}
   },
   // Précharge les voix (au moment de l'autorisation) pour un « Je t'écoute » instantané.
-  _voicePrefetch(){try{['ange-ecoute','ange-oui'].forEach(n=>{if(this._vBufs&&this._vBufs[n])return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=this._actx||(this._actx=new AC());fetch('audio/'+n+'.wav?v=1').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(b=>{this._vBufs=this._vBufs||{};this._vBufs[n]=b;}).catch(()=>{});});}catch(_){}},
+  _voicePrefetch(){try{['ange-ecoute','ange-oui'].forEach(n=>{if(this._vBufs&&this._vBufs[n])return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=this._actx||(this._actx=new AC());fetch('audio/'+n+'.wav?v=2').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(b=>{this._vBufs=this._vBufs||{};this._vBufs[n]=b;}).catch(()=>{});});}catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
   _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t,1,this._voiceNoTTS?1:3);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).

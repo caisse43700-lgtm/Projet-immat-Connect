@@ -279,12 +279,12 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_speakRetry réessaie si la voix est avalée (3x puis bip)', /_speakRetry\(txt,attempt,max\)\{[\s\S]{0,700}attempt<max/.test(HTML) && /voix indisponible \('\+max\+' essais\)/.test(HTML));
   ok('réessai avec blip de bascule audio avant de reparler', /this\._earcon\('ok'\);\}catch\(_\)\{\}\s*this\._wakeDbg\('voix avalée/.test(HTML));
   // Voix pré-enregistrée via Web Audio (contourne le blocage TTS iOS en chaîne vocale)
-  ok('_playVoice présent (voix audio via Web Audio)', HTML.includes('_playVoice(name,done)') && HTML.includes("fetch('audio/'+name+'.wav?v=1')"));
+  ok('_playVoice présent (voix audio via Web Audio)', HTML.includes('_playVoice(name,done)') && HTML.includes("fetch('audio/'+name+'.wav?v=2')"));
   ok('wake → « Je t\'écoute » = voix audio (ange-ecoute)', /if\(fromWake\)\{[\s\S]{0,400}this\._playVoice\('ange-ecoute'/.test(HTML));
   ok('« Ange » redit en chaîne vocale → voix audio (ange-oui)', /this\._voiceNoTTS\)\{this\._playVoice\('ange-oui'/.test(HTML));
   ok('préchargement des voix à l\'autorisation', HTML.includes('_voicePrefetch()'));
   ok('fichiers audio présents', require('fs').existsSync(require('path').join(ROOT,'audio/ange-ecoute.wav')) && require('fs').existsSync(require('path').join(ROOT,'audio/ange-oui.wav')));
-  ok('SW cache les voix audio', require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').includes('./audio/ange-ecoute.wav?v=1'));
+  ok('SW cache les voix audio', require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').includes('./audio/ange-ecoute.wav?v=2'));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd,fromWake\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
