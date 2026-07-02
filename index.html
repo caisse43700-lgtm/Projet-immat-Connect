@@ -6002,6 +6002,26 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}}},
     {key:'dashboard',drivable:false,re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(_){}}}
   ],
+  // CHOIX CONTEXTUELS (v456) : dans le contexte Signaler, dire directement le TYPE envoie le
+  // signalement COMPLET (roadReport/assist sont des actions autonomes : GPS + envoi + confirmation).
+  // Source des mots = le registre existant (_MENU.signaler.*). Fin de boucle : « Envoyé » + veille.
+  _tryChoice(msg){try{
+    if(!(window.App&&App._navView==='signaler'))return false;
+    const t=String(msg||'').toLowerCase();
+    if(/(pourquoi|comment|est-ce|qu'est|\?)/.test(t))return false;
+    const ROAD={accident:/\baccident/,bouchon:/\bbouchon|embouteillage|ralentiss/,obstacle:/\bobstacle/,travaux:/\btravaux|chantier/,controle:/contr[ôo]le|police|gendarm|radar/,danger:/\bdanger\b/};
+    const AIDE={panne:/\bpanne\b/,carburant:/carburant|essence|gasoil|gazole/,batterie:/batterie/,moteur:/moteur/,incendie:/incendie|feu\b|fum[ée]e/,perdu:/perdu|[ée]gar[ée]/};
+    const words=t.split(/\s+/).filter(Boolean).length;if(words>4)return false; // choix = mot court, pas une phrase
+    for(const k in ROAD){if(ROAD[k].test(t)){try{App.roadReport(k);}catch(_){}try{App.sigDone&&App.sigDone();}catch(_){}
+      this._log('action','Signalement route (vocal) : '+k);
+      if(this._voiceNoTTS){this._playVoice('ange-envoye',()=>{try{this._convoStop();}catch(_){}});}else{try{this._earcon('sent');}catch(_){}}
+      $('angeMsg').value='';return true;}}
+    for(const k in AIDE){if(AIDE[k].test(t)){try{App.assist(k);}catch(_){}try{App.sigDone&&App.sigDone();}catch(_){}
+      this._log('action','Demande d\'aide (vocal) : '+k);
+      if(this._voiceNoTTS){this._playVoice('ange-envoye',()=>{try{this._convoStop();}catch(_){}});}else{try{this._earcon('sent');}catch(_){}}
+      $('angeMsg').value='';return true;}}
+    return false;
+  }catch(_){return false;}},
   // Catégorie CONTEXTUELLE : « route / véhicule / aide / stationné » ouvre cette catégorie DANS la
   // fonctionnalité en cours (App._navView). Activité → catégorie d'activité ; Signaler → étape de signalement.
   _tryCategory(msg){try{
@@ -6028,6 +6048,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
       $('angeMsg').value='';return true;};
     if(view==='signaler'){
       const f={route:'sigStepRoute',vehicule:'sigStepVehicle',aide:'sigStepAide',stationne:'sigStepStation'}[cat];
+      try{App.openReport&&App.openReport();}catch(_){} // garantit la feuille visible (sinon l'étape s'ouvre derrière)
       try{App[f]&&App[f]();}catch(_){}
       return done('Signaler → '+cat,'Je prépare le signalement '+LBL+'.');
     }
@@ -6353,6 +6374,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     // ── NAVIGATION ──
     // Catégorie CONTEXTUELLE : « route / véhicule / aide / stationné » → ouvre cette catégorie DANS
     // la fonctionnalité en cours (Activité → activité route ; Signaler → étape route ; etc.).
+    try{ if(this._tryChoice(msg)) return; }catch(_e){}
     try{ if(this._tryCategory(msg)) return; }catch(_e){}
     // Lanceur vocal : « ouvre le GPS / l'activité / les messages … » → navigue directement.
     try{ if(this._tryOpen(msg)) return; }catch(_e){}

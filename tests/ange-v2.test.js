@@ -338,6 +338,13 @@ section('B. Câblage Ange V2 (index.html)');
   ok('_convoResume rouvre sans earcon (startVoice(true))', /try\{this\.startVoice\(true\)/.test(HTML));
   ok('lanceur _tryOpen passe avant _tryGuide', HTML.indexOf('this._tryOpen(msg)') < HTML.indexOf('this._tryGuide(msg)'));
   // Catégorie contextuelle (route/véhicule/aide/stationné selon App._navView)
+  // v456 — choix vocaux dans le contexte Signaler (signalement complet 100 % vocal)
+  ok('méthode _tryChoice présente (choix contextuels)', HTML.includes('_tryChoice(msg)'));
+  ok('_tryChoice : route → roadReport complet + « Envoyé » + veille', /ROAD\[k\]\.test\(t\)[\s\S]{0,120}App\.roadReport\(k\)[\s\S]{0,220}ange-envoye/.test(HTML));
+  ok('_tryChoice : aide → assist complet', /AIDE\[k\]\.test\(t\)[\s\S]{0,120}App\.assist\(k\)/.test(HTML));
+  ok('_tryChoice limité au contexte signaler + mots courts', /App\._navView==='signaler'\)\)return false/.test(HTML) && /words>4\)return false/.test(HTML));
+  ok('_tryChoice AVANT _tryCategory dans send()', HTML.indexOf('this._tryChoice(msg)') < HTML.indexOf('this._tryCategory(msg)') && HTML.indexOf('this._tryChoice(msg)')>0);
+  ok('catégorie signaler : feuille garantie visible (openReport d\'abord)', /view==='signaler'[\s\S]{0,260}App\.openReport&&App\.openReport\(\)/.test(HTML));
   ok('méthode _tryCategory présente', HTML.includes('_tryCategory(msg)'));
   ok('_tryCategory lit le contexte App._navView', /_tryCategory\(msg\)\{[\s\S]{0,1200}App\._navView/.test(HTML));
   ok('_tryCategory → Signaler = étape (sigStepRoute…)', /view==='signaler'[\s\S]{0,160}sigStepRoute/.test(HTML));
