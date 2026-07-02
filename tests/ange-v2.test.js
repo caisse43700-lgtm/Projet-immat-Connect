@@ -276,8 +276,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
-  ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1400/.test(HTML) && HTML.includes('this.startVoice()'));
-  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,320}this\._setOrb\('listen'\)/.test(HTML));
+  ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1600/.test(HTML) && HTML.includes('this.startVoice()'));
+  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,320}this\._setOrb\('(speak|listen)'\)/.test(HTML));
+  ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
+  ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{try\{if\(typeof speak==='function'\)speak\('Je t\\'écoute',true,true\)/.test(HTML));
   // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
   ok('méthode _primeTTS présente', HTML.includes('_primeTTS()'));
   ok('_primeTTS débloqué au 1er contact (keepalive)', /this\._wakeKeep=\(\)=>\{try\{this\._primeTTS\(\)/.test(HTML));
