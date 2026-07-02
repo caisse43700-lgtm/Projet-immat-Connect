@@ -5628,10 +5628,10 @@ const AngeDialog={
     if(this._orbStarting)return;
     this._orbStarting=true;
     this._orbMode=true;this._convo=true;this._convoSilence=0;
-    try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(_){} // coupe un message proactif en cours
     try{this._earcon('listen');}catch(_){}
     try{this._setOrb('listen');}catch(_){} // ORBE VISIBLE IMMÉDIATEMENT (ne dépend d'aucune voix)
-    // « Je t'écoute » : ignoreMute=true → parle même si la voix GPS est coupée.
+    // « Je t'écoute » : ignoreMute=true → parle même si la voix GPS est coupée. PAS de cancel() ici :
+    // speak() en fait déjà un en interne ; un double cancel collé au speak fait « sauter » la voix sur iOS.
     try{if(typeof speak==='function')speak('Je t\'écoute',true,true);}catch(_){}
     // Ouverture du micro après la voix, avec PLAFOND (≤1.4 s) : si speechSynthesis.speaking reste
     // coincé (bug iOS), on ouvre quand même et _orbStarting est TOUJOURS relâché (jamais bloqué).

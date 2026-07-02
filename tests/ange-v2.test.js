@@ -265,7 +265,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
   // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
   ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
-  ok('voiceCommand coupe la parole proactive en cours', HTML.includes('window.speechSynthesis.cancel()'));
+  ok('pas de double cancel() dans voiceCommand (bug iOS)', !/voiceCommand\(\)\{[\s\S]{0,400}window\.speechSynthesis\.cancel\(\)/.test(HTML));
+  ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
   ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true,true)"));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeStop\(\)/.test(HTML));
