@@ -5381,7 +5381,9 @@ const AngeDialog={
   _wakeInit(){
     if(!this._wakeBound){
       this._wakeBound=true;
-      try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this._wakeStart();else this._wakeStop();});}catch(_){}
+      try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this._wakeStart();else this._hardStopMic();});}catch(_){}
+      // App fermée / mise en arrière-plan (iOS) → couper TOUT le micro (wake + dictée + confirmation), sinon l'indicateur reste allumé.
+      try{window.addEventListener('pagehide',()=>{try{this._hardStopMic();}catch(_){}});}catch(_){}
       // iOS : démarrer le micro exige un geste → on (re)lance l'écoute discrètement à CHAQUE contact utilisateur
       // (les gardes de _wakeStart évitent tout doublon ; no-op si déjà en écoute / en session / fiche ouverte).
       try{this._wakeKeep=()=>{try{if(this._wakeEnabled())this._wakeStart();}catch(_){}};document.addEventListener('pointerdown',this._wakeKeep,{passive:true});}catch(_){}
@@ -5407,6 +5409,14 @@ const AngeDialog={
     }catch(_){this._wakeRec=null;}
   },
   _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.stop();}}catch(_){}},
+  // Arrêt TOTAL du micro (wake + dictée + confirmation) sans réarmement — pour la mise en arrière-plan / fermeture.
+  _hardStopMic(){
+    this._convo=false;this._orbMode=false;this._convoSilence=0;this._choices=null;
+    try{if(this._rec){this._rec.onend=null;this._rec.onresult=null;this._rec.stop();this._rec=null;}}catch(_){}
+    try{if(this._pendRec){this._pendRec.onend=null;this._pendRec.onresult=null;this._pendRec.stop();this._pendRec=null;}}catch(_){}
+    try{this._wakeStop();}catch(_){}
+    try{this._setOrb('idle');}catch(_){}
+  },
   renderResponse(r){
     this._choices=null; // réponse libre → plus de choix fermés en cours
     const el=$('angeResponse');

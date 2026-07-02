@@ -246,6 +246,11 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
+  // Arrêt TOTAL du micro à la fermeture / mise en arrière-plan (bug « le micro reste allumé »)
+  ok('méthode _hardStopMic présente', HTML.includes('_hardStopMic()'));
+  ok('_hardStopMic coupe dictée + confirmation + wake', /_hardStopMic\(\)\{[\s\S]{0,400}this\._rec\.stop\(\)[\s\S]{0,200}this\._pendRec\.stop\(\)[\s\S]{0,120}this\._wakeStop\(\)/.test(HTML));
+  ok('arrière-plan → _hardStopMic (pas juste wakeStop)', /visibilityState==='visible'\)this\._wakeStart\(\);else this\._hardStopMic\(\)/.test(HTML));
+  ok('pagehide → _hardStopMic (app fermée)', /pagehide',\(\)=>\{[\s\S]{0,40}this\._hardStopMic\(\)/.test(HTML));
   ok('startVoice ouvre la conversation (_convo=true)', /this\._convo=true;.{0,80}le micro reste ouvert/.test(HTML));
   ok('startVoice onend → _voiceTurn', HTML.includes('this._voiceTurn((_last||\'\').trim())'));
   ok('_voiceTurn ne reprend pas si confirmation en attente', /if\(this\._pending\)return;[\s\S]{0,40}this\._convoResume\(\)/.test(HTML));
