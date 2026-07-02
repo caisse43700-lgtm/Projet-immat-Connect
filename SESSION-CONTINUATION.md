@@ -7,6 +7,45 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-02 — v462 : clé feature fantôme `'signaler'` (bug compte GARDIEN) + blocage feature jamais muet
+
+(Les versions v455→v461 — purge speechSynthesis, `_tryChoice`, forçages panneaux, NAVIGATION V2,
+e2e navigateur réel — sont détaillées dans PROJECT_STATE.md → « MISE À JOUR — Historique ».)
+
+### Symptôme (rapport PO)
+« Ouvre signaler » à la voix : OK sur le compte utilisateur classique, KO sur le compte GARDIEN
+(même iPhone de test, v461 confirmée au HUD). Capture HUD : routage « requête traitée → ok »
+mais AUCUN `🔊 ange-fait`, aucune ligne ✅/🚨 → le chemin succès de `_tryOpen` n'est pas pris.
+
+### Diagnostic (mesuré, pas deviné)
+1. L'entrée `_OPEN` signaler portait `feat:'signaler'`. `grep` sur tout le code : **1 seule
+   occurrence** de cette clé = cette entrée. Elle n'existe PAS dans FEATURE_REGISTRY.
+2. Le chemin CLIC (`navSignaler`) ne fait **aucun** `requireFeature` → le clic marchait toujours.
+3. Sur l'appareil gardien, des flags locaux `ic_feature_flags` / flotte `feature_config`
+   (hérités des tests Dashboard) font répondre `featureStatus('signaler')` `{enabled:false,by:'admin'}`
+   → la VOIX seule était bloquée, et bloquée EN SILENCE (la branche feature-OFF ne loggait rien).
+   (Vérification Supabase REST impossible depuis l'environnement : proxy CONNECT 403.)
+
+### Fix v462 (index.html + service-worker.js)
+- `_OPEN` signaler : `feat:null` → parité STRICTE clic/voix (même absence de garde).
+- Branche feature-OFF de `_tryOpen` : logge désormais
+  `⛔ <clé> bloqué : feature « <feat> » OFF (<by>)` au HUD → plus jamais de blocage muet ;
+  tout futur blocage se nomme et désigne le flag à nettoyer.
+- `IC_BUILD:'v462'` ; `CACHE_NAME='immatconnect-pro-v462'`.
+
+### Preuves locales
+- `tests/ange-v2.test.js` : **347** assertions (+2 : `feat:null` sur signaler ; trace ⛔ présente).
+- `npm test` : 177+3 OK. E2E `nav-invariant.spec.js` : **4/4** en Chromium réel (serveur local).
+
+### À vérifier PO (prochaine session)
+1. MAJ jusqu'à `ANGE DEBUG v462` au HUD (Dashboard → 🔄 MAJ, sinon réinstaller la PWA).
+2. Compte gardien → « Hé Ange… ouvre signaler ». Attendu : `🔊 ange-fait` + `✅ panelAltet visible`.
+3. Si encore bloqué : la ligne ⛔ du HUD nommera la feature/le flag exact → nettoyer
+   `ic_feature_flags` (local) ou la ligne `feature_config` (flotte) correspondante.
+4. Recette T11 (20 min de conduite, compteurs det/rep/incompris/wd/ok) reste la porte d'acceptation.
+
+---
+
 ## SESSION 2026-07-02 — ANGE VOCAL v454 : certitude auditive, cohérence d'états, mesure (GO revue ultime)
 
 Processus : dossier de revue intégral → revue ChatGPT → contre-revue n°2 (D1-D6 mise en œuvre,

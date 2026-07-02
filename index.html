@@ -5426,7 +5426,7 @@ const AngeDialog={
   },
   // ── FSM-OMBRE (v454) : états nommés + transitions loggées. Source de vérité PROGRESSIVE :
   // les gardes existantes restent, mais chaque étape déclare son état → HUD + assertions + stats.
-  IC_BUILD:'v461', // ← tenir en phase avec CACHE_NAME à chaque release
+  IC_BUILD:'v462', // ← tenir en phase avec CACHE_NAME à chaque release
   _vState:'OFF',_vStateAt:0,
   _vGo(state,why){try{if(this._vState===state)return;this._vState=state;this._vStateAt=Date.now();this._wakeDbg('⟶ '+state+(why?' ('+why+')':''));}catch(_){}},
   // Compteurs de vérité terrain (mode recette) — affichés en pied de HUD.
@@ -6036,7 +6036,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     {key:'messages',re:/\bmessages?\b|messagerie/,feat:'messages',label:'les messages',open:function(){try{App.navigate('messages',{source:'voice'});}catch(_){}}},
     {key:'appels',re:/\bappels?\b|t[ée]l[ée]phone|rappels?|appels? manqu|qui m.a appel/,feat:'appels',label:'les appels',open:function(t){try{App.navigate('appels',{source:'voice',filter:(/manqu|rappel/.test(t)?'missed':null)});}catch(_){}}},
     {key:'activite',re:/\bactivit[ée]|signalements? re[çc]us|[àa] traiter|nouveau|trait[ée]s?/,feat:null,label:"l'activité",open:function(t){var v=/[àa] traiter/.test(t)?'openTodoView':(/nouveau/.test(t)?'openNewView':(/trait[ée]/.test(t)?'openDoneView':null));try{App.navigate('activite',{source:'voice',view:v});}catch(_){}}},
-    {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:'signaler',label:'Signaler',open:function(){try{App.navigate('signaler',{source:'voice'});}catch(_){}}},
+    {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:null,label:'Signaler',open:function(){try{App.navigate('signaler',{source:'voice'});}catch(_){}}},
     {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.navigate('reglages',{source:'voice'});}catch(_){}}},
     {key:'dashboard',drivable:false,re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.navigate('dashboard',{source:'voice'});}catch(_){}}}
   ],
@@ -6112,7 +6112,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
       }
       const r=$('angeResponse');
       if(hit.feat){const fs=App.featureStatus?App.featureStatus(hit.feat):{enabled:true,by:null};
-        if(!fs.enabled){if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML=this._blockedHTML(hit.feat,'« '+esc(hit.label)+' » est indisponible '+(fs.by==='user'?'(Réglages)':'(désactivé par l\'administrateur)')+'.');}try{this._earcon('error');}catch(_){}$('angeMsg').value='';return true;}}
+        if(!fs.enabled){this._wakeDbg('⛔ '+hit.key+' bloqué : feature « '+hit.feat+' » OFF ('+(fs.by||'admin')+')');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML=this._blockedHTML(hit.feat,'« '+esc(hit.label)+' » est indisponible '+(fs.by==='user'?'(Réglages)':'(désactivé par l\'administrateur)')+'.');}try{this._earcon('error');}catch(_){}$('angeMsg').value='';return true;}}
       try{hit.open(t);}catch(_){}
       // PREUVE DE VISIBILITÉ (v458) : 0,7 s après, on VÉRIFIE que le panneau cible est réellement
       // à l'écran ; sinon HUD « ouverture invisible » + forçage manuel complet (remède navActivite).

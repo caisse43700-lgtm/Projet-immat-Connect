@@ -347,6 +347,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('openReport force le panneau complet (_forcePanel)', /openReport\(\)\{this\.panel\('altet'\);App\._forcePanel\?\.\('panelAltet'\);App\.sigBack/.test(HTML));
   // v460 — invariant « un seul panneau visible » universel (voix comme clic)
   // NAVIGATION V2 : propriétaire unique navigate() (clic + voix), invariant en un point
+  // v462 — parité clic/voix des gardes de features + blocage jamais silencieux
+  ok('Signaler vocal sans clé fantôme (feat:null, comme le clic)', /key:'signaler',re:[^}]{0,60}feat:null/.test(HTML));
+  ok('blocage feature tracé au HUD (jamais silencieux)', HTML.includes("bloqué : feature « '+hit.feat+' » OFF"));
   ok('App.navigate présent (propriétaire unique)', /App\.navigate=function\(dest,opts\)\{/.test(HTML) && /App\._lastNavIntent=\{dest:dest,pid:d\.pid/.test(HTML) && /if\(d\.pid\)try\{App\._forcePanel\(d\.pid\)/.test(HTML));
   ok('table App._NAV : 7 destinations', /App\._NAV=\{/.test(HTML) && ['gps:','messages:','appels:','activite:','signaler:','reglages:','dashboard:'].every(k=>HTML.indexOf(k)>0));
   ok('le CLIC passe par navigate (_navToggle)', /App\._NAV&&App\._NAV\[key\]\)\{App\.navigate\(key,\{source:'click'\}\)/.test(HTML));
