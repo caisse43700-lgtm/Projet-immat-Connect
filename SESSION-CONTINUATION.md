@@ -7,6 +7,42 @@ Lire ce fichier en entier avant toute action.
 
 ---
 
+## SESSION 2026-07-02 — Ange « orbe seul » façon Siri + correctif micro (SW v429, déployé main)
+
+Demande PO : « dès que je dis Ange, qu'il réponde à ce moment-là — pas de tableau qui s'ouvre à
+chaque fois. L'orbe apparaît seulement quand je l'appelle, posé à l'emplacement du bouton Ange,
+il clignote/tourne quand il réfléchit, et il reste armé pour une nouvelle demande. » + bug : « le
+micro reste allumé quand je ferme l'app, il faut qu'il se coupe ».
+
+### Mode « orbe seul » (`_orbMode`)
+- `voiceCommand()` (appelé par le wake word « Ange » et le micro flottant `#fabVoice`) : **ne fait
+  plus `open()`** ni la question d'accueil. Il pose `_orbMode=true`, `_convo=true`, joue l'earcon
+  `listen`, affiche l'orbe (`_setOrb('listen')`) et démarre l'écoute. Zéro panneau, zéro tableau.
+- `_setOrb` : l'orbe (déjà `position:fixed`, ajouté au body) est **ancré sur `#navAnge`** (calcul
+  du rect au moment de l'affichage) et **pulse** à l'apparition (classe `.appear` / keyframe
+  `angeAppear`, retirée après 650 ms). États existants réutilisés : listen/hear/**think (tourne)**/speak.
+- `send()` et le rail vocal ne forcent plus la fiche en mode orbe : `if(!this._orbMode)this._showSheet()`.
+  Tout passe par la voix (réponses parlées via `_voiceMode`, narration des choix via `_narrateChoices`,
+  confirmation par mot-action « envoie/appelle/annule »).
+- Réinitialisation : `open()` (clic bouton) remet `_orbMode=false` → panneau complet normal ;
+  `close()` et `_convoStop()` aussi. `_convoStop()` réarme le wake pour la demande suivante.
+
+### Correctif micro (bug « reste allumé à la fermeture »)
+- Cause : `visibilitychange` ne coupait que `_wakeStop()` — pas la dictée `_rec`, ni la confirmation
+  `_pendRec`, ni la session `_convo`. Une session vocale active gardait donc le micro (indicateur iOS).
+- Fix : `_hardStopMic()` = arrêt TOTAL (wake + `_rec` + `_pendRec` + `_convo`/`_orbMode`) **sans**
+  réarmement. Branché sur `visibilitychange(hidden)` **et** `pagehide` (fermeture réelle iOS).
+
+### Limite iOS (rappel)
+Reconnaissance vocale continue en PWA sur iPhone = bridée par Safari. « Dis Ange » mains-libres marche
+**app au premier plan, écran allumé** (Mode Volant le maintient). Chemin le plus fiable = **taper l'orbe**.
+Le vrai wake écran éteint = app native requise.
+
+Branche `feat/ange-orb-voice` (df88b36 orbe, bf2ef35 correctif micro) → **fast-forward sur `main`**.
+Tests : ange-v2 242→249, npm 177 + diag 3. **CACHE_NAME v428→v429**.
+
+---
+
 ## SESSION 2026-07-01 — FIX wake word « rien ne se passe quand je dis Ange » (iOS geste)
 
 Symptôme PO : dire « Ange » ne faisait rien. Cause : iOS exige un GESTE utilisateur pour `SpeechRecognition.start()`.
