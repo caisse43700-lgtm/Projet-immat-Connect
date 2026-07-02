@@ -339,6 +339,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('lanceur _tryOpen passe avant _tryGuide', HTML.indexOf('this._tryOpen(msg)') < HTML.indexOf('this._tryGuide(msg)'));
   // Catégorie contextuelle (route/véhicule/aide/stationné selon App._navView)
   // v456 — choix vocaux dans le contexte Signaler (signalement complet 100 % vocal)
+  // v457 — ouverture vocale : la feuille est FORCÉE visible (panel() peut être swallowé par ui.js)
+  ok('openReport force openSheet (signaler visible à la voix)', /openReport\(\)\{this\.panel\('altet'\);try\{this\.openSheet\?\.\(\);\}catch\(e\)\{\}App\.sigBack/.test(HTML));
+  ok('navMessages force openSheet', /App\.navMessages=function\(\)\{[\s\S]{0,900}panel\('messages'\);try\{this\.openSheet\?\.\(\);\}catch/.test(HTML));
+  ok('navAppels force openSheet', /App\.navAppels=function\(\)\{[\s\S]{0,1200}panel\('messages'\);try\{this\.openSheet\?\.\(\);\}catch/.test(HTML));
   ok('méthode _tryChoice présente (choix contextuels)', HTML.includes('_tryChoice(msg)'));
   ok('_tryChoice : route → roadReport complet + « Envoyé » + veille', /ROAD\[k\]\.test\(t\)[\s\S]{0,120}App\.roadReport\(k\)[\s\S]{0,220}ange-envoye/.test(HTML));
   ok('_tryChoice : aide → assist complet', /AIDE\[k\]\.test\(t\)[\s\S]{0,120}App\.assist\(k\)/.test(HTML));
