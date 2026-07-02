@@ -340,6 +340,10 @@ section('B. Câblage Ange V2 (index.html)');
   // Catégorie contextuelle (route/véhicule/aide/stationné selon App._navView)
   // v456 — choix vocaux dans le contexte Signaler (signalement complet 100 % vocal)
   // v457 — ouverture vocale : la feuille est FORCÉE visible (panel() peut être swallowé par ui.js)
+  // v458 — preuve de visibilité + version dans le HUD
+  ok('version affichée dans le HUD (IC_BUILD)', /IC_BUILD:'v\d+'/.test(HTML) && HTML.includes("'ANGE DEBUG '+(this.IC_BUILD||'')"));
+  ok('vérification de visibilité après ouverture vocale + forçage', HTML.includes('ouverture invisible') && /rct\.height>40/.test(HTML) && /panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'/.test(HTML));
+  ok('IC_BUILD en phase avec CACHE_NAME', (()=>{const m=HTML.match(/IC_BUILD:'(v\d+)'/);const sw=require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').match(/immatconnect-pro-(v\d+)/);return m&&sw&&m[1]===sw[1];})());
   ok('openReport force openSheet (signaler visible à la voix)', /openReport\(\)\{this\.panel\('altet'\);try\{this\.openSheet\?\.\(\);\}catch\(e\)\{\}App\.sigBack/.test(HTML));
   ok('navMessages force openSheet', /App\.navMessages=function\(\)\{[\s\S]{0,900}panel\('messages'\);try\{this\.openSheet\?\.\(\);\}catch/.test(HTML));
   ok('navAppels force openSheet', /App\.navAppels=function\(\)\{[\s\S]{0,1200}panel\('messages'\);try\{this\.openSheet\?\.\(\);\}catch/.test(HTML));

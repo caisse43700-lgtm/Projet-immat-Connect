@@ -5401,6 +5401,7 @@ const AngeDialog={
   },
   // ── FSM-OMBRE (v454) : états nommés + transitions loggées. Source de vérité PROGRESSIVE :
   // les gardes existantes restent, mais chaque étape déclare son état → HUD + assertions + stats.
+  IC_BUILD:'v458', // ← tenir en phase avec CACHE_NAME à chaque release
   _vState:'OFF',_vStateAt:0,
   _vGo(state,why){try{if(this._vState===state)return;this._vState=state;this._vStateAt=Date.now();this._wakeDbg('⟶ '+state+(why?' ('+why+')':''));}catch(_){}},
   // Compteurs de vérité terrain (mode recette) — affichés en pied de HUD.
@@ -5424,7 +5425,7 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
   }catch(_){}},2000);},
   // Afficheur de diagnostic vocal (visible) — pour voir en direct ce que fait le micro « Ange ».
   _dbgOn:true,
-  _wakeDbg(m){try{if(!this._dbgOn)return;let el=document.getElementById('wakeDbg');if(!el){el=document.createElement('div');el.id='wakeDbg';el.style.cssText='position:fixed;left:6px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:99999;background:rgba(0,0,0,.85);color:#5f5;font:11px/1.45 monospace;padding:6px 8px;border-radius:6px;max-width:82vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(el);}this._dbgLines=(this._dbgLines||[]);let ts='';try{ts=new Date().toTimeString().slice(0,8);}catch(_){}this._dbgLines.push(ts+' '+m);if(this._dbgLines.length>9)this._dbgLines.shift();el.textContent='ANGE DEBUG\n'+this._dbgLines.join('\n');}catch(_){}},
+  _wakeDbg(m){try{if(!this._dbgOn)return;let el=document.getElementById('wakeDbg');if(!el){el=document.createElement('div');el.id='wakeDbg';el.style.cssText='position:fixed;left:6px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:99999;background:rgba(0,0,0,.85);color:#5f5;font:11px/1.45 monospace;padding:6px 8px;border-radius:6px;max-width:82vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(el);}this._dbgLines=(this._dbgLines||[]);let ts='';try{ts=new Date().toTimeString().slice(0,8);}catch(_){}this._dbgLines.push(ts+' '+m);if(this._dbgLines.length>9)this._dbgLines.shift();el.textContent='ANGE DEBUG '+(this.IC_BUILD||'')+'\n'+this._dbgLines.join('\n');}catch(_){}},
   _wakeStart(){
     try{
       if(!this._wakeEnabled()){this._wakeDbg('start SKIP: wake OFF');return;}
@@ -6078,6 +6079,21 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
       if(hit.feat){const fs=App.featureStatus?App.featureStatus(hit.feat):{enabled:true,by:null};
         if(!fs.enabled){if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML=this._blockedHTML(hit.feat,'« '+esc(hit.label)+' » est indisponible '+(fs.by==='user'?'(Réglages)':'(désactivé par l\'administrateur)')+'.');}try{this._earcon('error');}catch(_){}$('angeMsg').value='';return true;}}
       try{hit.open(t);}catch(_){}
+      // PREUVE DE VISIBILITÉ (v458) : 0,7 s après, on VÉRIFIE que le panneau cible est réellement
+      // à l'écran ; sinon HUD « ouverture invisible » + forçage manuel complet (remède navActivite).
+      try{const _PID={gps:'panelDrive',messages:'panelMessages',appels:'panelMessages',activite:'panelActivite',signaler:'panelAltet',reglages:'panelSettings'}[hit.key];
+        if(_PID){setTimeout(()=>{try{
+          const el=document.getElementById(_PID);const rct=el&&el.getBoundingClientRect();
+          const cs=el?getComputedStyle(el):null;
+          const shown=!!(el&&rct&&rct.height>40&&cs&&cs.display!=='none'&&cs.visibility!=='hidden');
+          if(shown){this._wakeDbg('✅ '+_PID+' visible');}
+          else{this._wakeDbg('🚨 ouverture invisible ('+_PID+') → forçage');
+            try{['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const e2=document.getElementById(id);if(e2&&id!==_PID){e2.classList.remove('on');e2.style.display='none';}});}catch(_){}
+            try{const e3=document.getElementById(_PID);if(e3){e3.style.display='';e3.classList.add('on');}}catch(_){}
+            try{App.openSheet&&App.openSheet();}catch(_){}
+          }
+        }catch(_){}},700);}
+      }catch(_){}
       try{if(this._voiceNoTTS)this._playVoice('ange-fait');else this._earcon('ok');}catch(_){}
       try{this._log('action','Ouvert : '+hit.label);}catch(_){}
       $('angeMsg').value='';
