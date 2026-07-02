@@ -5321,6 +5321,7 @@ const AngeDialog={
     else{el.textContent='';el.style.color='#555';}
   },
   open(){
+    this._orbMode=false; // ouverture au clic = panneau complet (le mode orbe est réservé à la voix)
     try{this._wakeStop&&this._wakeStop();}catch(_){} // libère le micro pour la dictée/confirmation
     try{if(window.App?.closeSheet)window.App.closeSheet();['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});}catch(_){}
     document.body.classList.add('ange-open');
@@ -5363,7 +5364,7 @@ const AngeDialog={
     try{if(window.ImmatBus)window.ImmatBus.emit('ANGE_OPENED',{_src:'AngeDialog'})}catch(e){}
   },
   close(){
-    try{this._convo=false;this._convoSilence=0;this._choices=null;if(this._rec)this._rec.stop();this._setOrb('idle');}catch(_){} // fin de la conversation vocale
+    try{this._convo=false;this._orbMode=false;this._convoSilence=0;this._choices=null;if(this._rec)this._rec.stop();this._setOrb('idle');}catch(_){} // fin de la conversation vocale
     try{this._clearPending&&this._clearPending();}catch(_){}
     document.body.classList.remove('ange-open');
     $('angePanel').style.display='none';
@@ -5507,7 +5508,7 @@ const AngeDialog={
       const low=v.toLowerCase();
       if(/\b(annule|annuler|retour|autre|autre chose|rien|laisse)\b/.test(low)){this._choices=null;return this._convoResume();}
       const c=this._pickChoice(v,this._choices);
-      if(c){this._choices=null;try{this._earcon('ok');}catch(_){}try{this._showSheet();}catch(_){}try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
+      if(c){this._choices=null;try{this._earcon('ok');}catch(_){}try{if(!this._orbMode)this._showSheet();}catch(_){}try{c.run();}catch(_){}if(this._pending)return;return this._convoResume();}
       this._choices=null; // pas de correspondance → on retombe sur une commande libre
     }
     const ta=$('angeMsg');if(ta)ta.value=v;this._voiceMode=true;
@@ -5529,7 +5530,9 @@ const AngeDialog={
     };
     setTimeout(go,450);
   },
-  _convoStop(){this._convo=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}try{this._setOrb('idle');}catch(_){}},
+  _convoStop(){this._convo=false;this._orbMode=false;this._convoSilence=0;this._choices=null;try{if(this._rec)this._rec.stop();}catch(_){}try{this._setOrb('idle');}catch(_){}
+    // Fin de session vocale → on réarme « Ange » pour la prochaine demande (best-effort ; iOS peut exiger un contact).
+    try{if(this._wakeEnabled&&this._wakeEnabled())this._wakeStart();}catch(_){}},
   _afterConfirm(){if(this._convo)this._convoResume();},
   // Auto-narration : en conversation vocale, Ange DIT les choix (≤3) pour un usage au volant sans écran.
   _narrateChoices(intro){try{
@@ -5545,11 +5548,15 @@ const AngeDialog={
     let o=document.getElementById('angeOrb');
     if(state==='idle'||!state){if(o)o.style.display='none';return;}
     if(!o){
-      if(!document.getElementById('angeOrbCss')){var st=document.createElement('style');st.id='angeOrbCss';st.textContent="#angeOrb{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom,0px) + 78px);z-index:3400;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(circle at 50% 38%,#a5b4fc,#6d5efc 60%,#4f46e5)}#angeOrb .core{width:20px;height:20px;border-radius:50%;background:#fff;opacity:.92}#angeOrb .lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#c4b5fd;text-shadow:0 1px 2px #000}#angeOrb.listen{animation:angeBreathe 2.2s ease-in-out infinite}#angeOrb.hear{animation:angePulse .55s ease-in-out infinite}#angeOrb.think{animation:angeSpin 1s linear infinite;background:conic-gradient(#4f46e5,#a5b4fc,#4f46e5)}#angeOrb.speak{animation:angeBreathe 1s ease-in-out infinite}#angeOrb.error{background:radial-gradient(circle,#f87171,#b91c1c)}@keyframes angeBreathe{0%,100%{box-shadow:0 0 0 4px rgba(124,106,247,.28)}50%{box-shadow:0 0 0 18px rgba(124,106,247,0)}}@keyframes angePulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.14)}}@keyframes angeSpin{to{transform:translateX(-50%) rotate(360deg)}}";document.head.appendChild(st);}
+      if(!document.getElementById('angeOrbCss')){var st=document.createElement('style');st.id='angeOrbCss';st.textContent="#angeOrb{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom,0px) + 78px);z-index:3400;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(circle at 50% 38%,#a5b4fc,#6d5efc 60%,#4f46e5)}#angeOrb .core{width:20px;height:20px;border-radius:50%;background:#fff;opacity:.92}#angeOrb .lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#c4b5fd;text-shadow:0 1px 2px #000}#angeOrb.listen{animation:angeBreathe 2.2s ease-in-out infinite}#angeOrb.hear{animation:angePulse .55s ease-in-out infinite}#angeOrb.think{animation:angeSpin 1s linear infinite;background:conic-gradient(#4f46e5,#a5b4fc,#4f46e5)}#angeOrb.speak{animation:angeBreathe 1s ease-in-out infinite}#angeOrb.error{background:radial-gradient(circle,#f87171,#b91c1c)}@keyframes angeBreathe{0%,100%{box-shadow:0 0 0 4px rgba(124,106,247,.28)}50%{box-shadow:0 0 0 18px rgba(124,106,247,0)}}@keyframes angePulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.14)}}@keyframes angeSpin{to{transform:translateX(-50%) rotate(360deg)}}#angeOrb.appear{animation:angeAppear .55s ease-out!important}@keyframes angeAppear{0%{opacity:0;transform:translateX(-50%) scale(.35)}55%{opacity:1;transform:translateX(-50%) scale(1.2)}100%{opacity:1;transform:translateX(-50%) scale(1)}}";document.head.appendChild(st);}
       o=document.createElement('div');o.id='angeOrb';o.title='Ange écoute — touche pour arrêter';o.innerHTML='<span class="core"></span><span class="lbl"></span>';o.onclick=()=>{try{this._convoStop();}catch(_){}this._setOrb('idle');};document.body.appendChild(o);
     }
     const L={listen:'écoute…',hear:'je t\'entends',think:'…',speak:'',error:''}[state]||'';
-    o.style.display='flex';o.className=state;const _l=o.querySelector('.lbl');if(_l)_l.textContent=L;
+    const _wasHidden=(o.style.display==='none'||!o.style.display);
+    // Ancre l'orbe sur le bouton Ange (#navAnge) : il apparaît « à sa place » quand on l'appelle à la voix.
+    try{const b=document.getElementById('navAnge');if(b){const r=b.getBoundingClientRect();if(r&&r.width){o.style.left=(r.left+r.width/2)+'px';o.style.bottom=(window.innerHeight-r.top+10)+'px';}}}catch(_){}
+    o.style.display='flex';o.className=state+(_wasHidden?' appear':'');const _l=o.querySelector('.lbl');if(_l)_l.textContent=L;
+    if(_wasHidden){setTimeout(()=>{try{o.classList.remove('appear');}catch(_){}},650);}
   }catch(_){}},
   // Affichage souple de la fiche Ange (permet de garder la session vocale même quand la fiche est masquée).
   _showSheet(){try{document.body.classList.add('ange-open');$('angePanel').style.display='flex';$('angeOverlay').style.display='block';}catch(_){}},
@@ -5586,13 +5593,14 @@ const AngeDialog={
   },
   // Commande vocale GLOBALE : ouvre Ange, POSE une question courte, puis écoute (après la voix, anti-écho).
   voiceCommand(){
-    try{this.open&&this.open();}catch(_){}
-    const q=this._voiceGreetQuestion();
-    try{const r=$('angeResponse');if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML='<div style="line-height:1.6">'+esc(q)+'</div>';}}catch(_){}
-    try{if(typeof speak==='function'&&window.S&&window.S.voice!==false)speak(q,true);}catch(_){}
-    this._convo=true;
+    // Mode « orbe seul » façon Siri : appelé par la voix (« Ange ») ou le micro flottant.
+    // On N'OUVRE PAS le panneau ni le tableau d'accueil — juste l'orbe (posé sur le bouton Ange),
+    // qui pulse, écoute, puis réfléchit (tourne) et parle. Le panneau reste réservé au clic.
+    this._orbMode=true;this._convo=true;this._convoSilence=0;
+    try{this._earcon('listen');}catch(_){}
+    try{this._setOrb('listen');}catch(_){}
     const go=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(go,250);try{this.startVoice();}catch(_){}};
-    setTimeout(go,350);
+    setTimeout(go,200);
   },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
@@ -6062,7 +6070,7 @@ const AngeDialog={
   async send(){
     const msg=$('angeMsg').value.trim();
     if(!msg)return;
-    try{this._showSheet();}catch(_){} // si la fiche était masquée (après une navigation), on la ré-affiche pour la carte
+    try{if(!this._orbMode)this._showSheet();}catch(_){} // mode orbe (voix) = fiche masquée, tout à la voix ; sinon on la ré-affiche pour la carte
     // Commande dictée : on retient qu'on doit répondre À VOIX HAUTE (voix → voix).
     const _voice=this._voiceMode===true;this._voiceMode=false;this._lastVoice=_voice;
     // Apprentissage — « oublie ce que tu as appris » (réinitialisation locale)

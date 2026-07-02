@@ -242,7 +242,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mot d\'activation = « ange »', /\/\\b\(ok \|h\[eé\] \|hey \|dis \)\?ange\\b\//.test(HTML));
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)return/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,700}ange-open'\)\)return/.test(HTML));
-  ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{\s*try\{this\._wakeStop/.test(HTML));
+  ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
   ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
@@ -254,11 +254,17 @@ section('B. Câblage Ange V2 (index.html)');
   ok('mots d\'arrêt stoppent la conversation', /stop\|st\[oe\]p\|merci[\s\S]{0,200}this\._convoStop\(\);try\{this\.close/.test(HTML));
   ok('confirmYes relance la conversation', /confirmYes\(\)\{[\s\S]{0,120}this\._afterConfirm\(\)/.test(HTML));
   ok('confirmation par timeout relance la conversation', /Expiré \(15 s[\s\S]{0,160}this\._afterConfirm\(\)/.test(HTML));
-  ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,80}this\._convo=false;this\._convoSilence=0/.test(HTML));
+  ok('close() stoppe la conversation', /close\(\)\{[\s\S]{0,80}this\._convo=false;[\s\S]{0,40}this\._convoSilence=0/.test(HTML));
   ok('pause micro après 2 silences', /this\._convoSilence>=2\)\{this\._convoStop\(\)/.test(HTML));
   // Ange pose une question courte à l'appel vocal + réponses parlées courtes
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
-  ok('voiceCommand pose la question à voix haute', /voiceCommand\(\)\{[\s\S]{0,320}_voiceGreetQuestion\(\)[\s\S]{0,500}speak\(q,true\)/.test(HTML));
+  // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
+  ok('voiceCommand = mode orbe seul (_orbMode + orbe écoute, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,400}this\._orbMode=true[\s\S]{0,200}this\._setOrb\('listen'\)/.test(HTML));
+  ok('voiceCommand n\'ouvre pas le panneau (pas de this.open)', !/voiceCommand\(\)\{[\s\S]{0,300}this\.open\(\)/.test(HTML));
+  ok('send() ne force pas la fiche en mode orbe', /if\(!this\._orbMode\)this\._showSheet\(\)/.test(HTML));
+  ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
+  ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
+  ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand attend la fin de la voix avant d\'écouter', /voiceCommand\(\)\{[\s\S]{0,600}speechSynthesis\.speaking\)return setTimeout\(go,250\)[\s\S]{0,40}this\.startVoice\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
