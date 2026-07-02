@@ -748,8 +748,11 @@ function _bestFrVoice(){const g=get('ic_voice_gender','female');const maleK=['th
 function speak(txt,force=false,ignoreMute=false){if((!S.voice&&!ignoreMute)||!('speechSynthesis'in window))return;if(!force&&txt===lastSpoken)return;lastSpoken=txt;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(txt||''));u.lang='fr-FR';u.rate=+(get('ic_voice_rate','.86')||'.86');u.pitch=.98;if(!_fvCache.length)_fvCache=speechSynthesis.getVoices().filter(v=>(v.lang||'').toLowerCase().startsWith('fr'));const v=_bestFrVoice();if(v)u.voice=v;
 // État réel de la voix (starting→speaking→done) : iOS met ~1s à VRAIMENT démarrer ; sans cet état,
 // ouvrir le micro trop tôt TUE la phrase naissante (conflit STT/TTS — prouvé par HUD terrain).
-window._icTts='starting';window._icTtsAt=Date.now();
-u.onstart=function(){window._icTts='speaking';};u.onend=function(){window._icTts='done';};u.onerror=function(){window._icTts='done';};
+window._icTts='starting';window._icTtsAt=Date.now();window._icTtsU=u;
+// Garde d'instance : le onerror TARDIF d'une vieille phrase annulée ne doit pas écraser l'état de la nouvelle.
+u.onstart=function(){if(window._icTtsU===u)window._icTts='speaking';};
+u.onend=function(){if(window._icTtsU===u)window._icTts='done';};
+u.onerror=function(){if(window._icTtsU===u)window._icTts='done';};
 speechSynthesis.speak(u)}catch(e){window._icTts='done';}}
 function instr(step){if(!step)return'Continuez tout droit.';let m=step.maneuver||{},mod=m.modifier||'',type=m.type||'',road=step.name?' sur '+step.name:'';if(type==='arrive')return'Vous êtes arrivé.';if(type==='roundabout')return'Au rond-point, prenez la sortie indiquée'+road+'.';if(mod.includes('left'))return'Tournez à gauche'+road+'.';if(mod.includes('right'))return'Tournez à droite'+road+'.';return'Continuez tout droit'+road+'.'}
 async function profilesByIds(ids){ids=[...new Set((ids||[]).filter(Boolean))];if(!sb||!ids.length)return{};const _try=async()=>sb.rpc('get_public_profiles_by_ids',{p_ids:ids});try{let{data,error}=await _try();if(error){await new Promise(r=>setTimeout(r,500));({data,error}=await _try());}if(error)return{};const out={};(data||[]).forEach(p=>out[p.user_id]=p);return out}catch(e){return{}}}
@@ -5702,15 +5705,18 @@ const AngeDialog={
     try{this._setOrb('speak');}catch(_){} // orbe visible tout de suite
     // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
     // avale la voix. ignoreMute=true → parle même si la voix GPS est coupée. Pas de cancel() (speak le fait).
-    setTimeout(()=>{try{this._speakRetry('Je t\'écoute');this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}},800);
-    // Ouverture du micro APRÈS la FIN RÉELLE de « Je t'écoute » (_ttsBusy couvre le ~1s de démarrage
-    // iOS où speaking est encore false — sinon le micro tuait la phrase naissante). Plafond ≤7 s.
-    let _w=0;
-    const start=()=>{
-      if(this._ttsBusy()&&_w<7000){_w+=150;return setTimeout(start,150);}
-      this._orbStarting=false;try{this._setOrb('listen');}catch(_){}try{this.startVoice();}catch(_){}
-    };
-    setTimeout(start,600);
+    // SÉRIALISÉ (bug terrain v447 : le micro s'ouvrait à 600 ms, AVANT le greet à 800 ms → toutes les
+    // tentatives de voix avalées par le micro ouvert) : le greet part D'ABORD, la boucle d'ouverture du
+    // micro ne démarre QU'ENSUITE, et n'ouvre qu'après la fin réelle de la voix (_ttsBusy). Plafond ≤9 s.
+    setTimeout(()=>{
+      try{this._speakRetry('Je t\'écoute');this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}
+      let _w=0;
+      const start=()=>{
+        if(this._ttsBusy()&&_w<9000){_w+=150;return setTimeout(start,150);}
+        this._orbStarting=false;try{this._setOrb('listen');}catch(_){}try{this.startVoice();}catch(_){}
+      };
+      setTimeout(start,150);
+    },800);
   },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
