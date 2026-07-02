@@ -5412,14 +5412,27 @@ const AngeDialog={
       rec.onaudiostart=()=>{if(this._wakeRec!==rec)return;this._wakeDbg('audio ON (micro capte)');};
       rec.onresult=e=>{if(this._wakeRec!==rec||this._wakeFired)return;let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=' '+e.results[i][0].transcript;t=t.toLowerCase();
         this._wakeDbg('entendu: '+(t.trim().slice(0,28)||'(vide)'));
-        if(/\b(ok |h[eé] |hey |dis )?ange\b/.test(t)){this._wakeFired=true;this._wakeDbg('🟢 ANGE détecté');this._wakeStop();try{this.voiceCommand();}catch(_){}}};
+        // « Ange » seul est MAL transcrit par iOS (« non », « en »…) — prouvé par HUD terrain.
+        // On accepte les variantes proches, et on capte la COMMANDE dite dans le même souffle
+        // (« Ange, ouvre l'activité ») : 0,9 s de délai pour laisser la phrase se terminer.
+        const WAKE=/\b(?:ok |h[eé] |hey |dis |et )?(anges?|l'ange|lange|angel|angie|handj?e|anj)\b(.*)$/;
+        const m=t.match(WAKE);if(!m)return;
+        this._wakeLastT=t;
+        if(this._wakePend)return; // déjà en attente de fin de phrase
+        this._wakePend=setTimeout(()=>{this._wakePend=null;if(this._wakeRec!==rec||this._wakeFired)return;
+          this._wakeFired=true;
+          const mm=String(this._wakeLastT||'').match(WAKE);const after=((mm&&mm[2])||'').replace(/^[\s,.!?]+/,'').trim();
+          this._wakeDbg('🟢 ANGE détecté'+(after?' + cmd: '+after.slice(0,20):''));
+          this._wakeStop();
+          try{this.voiceCommand(after.length>=4?after:null);}catch(_){}
+        },900);};
       rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
       rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
       rec.start();
       this._wakeDbg('start() appelé (attente onstart)');
     }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
   },
-  _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;try{r.abort();}catch(_){try{r.stop();}catch(__){}}}}catch(_){}},
+  _wakeStop(){try{clearTimeout(this._wakePend);}catch(_){}this._wakePend=null;try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;try{r.abort();}catch(_){try{r.stop();}catch(__){}}}}catch(_){}},
   // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
   // pour pouvoir les avorter TOUTES à la fermeture (fix « le micro reste allumé » : instance orpheline).
   _recTrack(r){try{this._recAll=(this._recAll||[]);this._recAll.push(r);if(this._recAll.length>8)this._recAll.splice(0,this._recAll.length-8);}catch(_){}},
@@ -5637,16 +5650,19 @@ const AngeDialog={
     return 'Je t\'écoute. Que veux-tu faire ?';
   },
   // Commande vocale GLOBALE : ouvre Ange, POSE une question courte, puis écoute (après la voix, anti-écho).
-  voiceCommand(){
+  voiceCommand(cmd){
     // Mode « orbe seul » façon Siri : appelé par la voix (« Ange ») ou le micro flottant.
     // On N'OUVRE PAS le panneau ni le tableau d'accueil — juste l'orbe (posé sur le bouton Ange).
     // ANTI double-déclenchement : le wake « Ange » fire plusieurs fois (résultats intermédiaires) →
     // sans ce garde, on lançait « Parlez maintenant » plusieurs fois et la voix se chevauchait.
     if(this._orbStarting)return;
     this._orbStarting=true;
-    try{this._wakeDbg('voiceCommand → orbe + « Je t\'écoute »');}catch(_){}
+    try{this._wakeDbg('voiceCommand → orbe'+(cmd?' + exécution directe':' + « Je t\'écoute »'));}catch(_){}
     this._orbMode=true;this._convo=true;this._convoSilence=0;
     try{this._wakeStop&&this._wakeStop();}catch(_){} // LIBÈRE le micro du wake AVANT de parler (iOS ne fait pas écoute+voix en même temps)
+    // Commande dite dans le même souffle (« Ange, ouvre l'activité ») → exécution DIRECTE, sans « Je t'écoute ».
+    const _cmd=cmd?String(cmd):null;
+    if(_cmd){this._orbStarting=false;try{this._earcon('ok');}catch(_){}try{this._setOrb('think');}catch(_){}try{this._voiceTurn(_cmd);}catch(_){}return;}
     try{this._earcon('listen');}catch(_){}
     try{this._setOrb('speak');}catch(_){} // orbe visible tout de suite
     // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
@@ -5747,7 +5763,7 @@ const AngeDialog={
     // Bouton « AUTORISER » = le geste UNIQUE : (1) débloque la voix (iOS l'exige une fois via _primeTTS),
     // (2) arme + démarre l'écoute du mot « Ange » (start() exige un geste, ici on est DANS le tap).
     // Toujours visible : si Ange devient muet (iOS coupe le micro après inactivité), re-toucher réarme.
-    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Autoriser « Ange » à la voix</button><div style="color:#666;font-size:10px;margin-top:4px">Touche une fois. Ensuite dis « Ange » (app ouverte, écran allumé). Si Ange devient muet, re-touche.</div></div>';
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Autoriser « Ange » à la voix</button><div style="color:#666;font-size:10px;margin-top:4px">Touche une fois. Ensuite dis « <b>Hé Ange</b> » — ou directement « <b>Ange, ouvre l\'activité</b> » (mieux reconnu qu\'« Ange » seul). App ouverte, écran allumé. Si muet, re-touche.</div></div>';
   }catch(_){return '';}},
   // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
   //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).

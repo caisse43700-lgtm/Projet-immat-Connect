@@ -233,17 +233,18 @@ section('B. Câblage Ange V2 (index.html)');
   ok('send() capte le mode vocal', /const _voice=this\._voiceMode===true;this\._voiceMode=false/.test(HTML));
   ok('réponse Nexus lue à voix haute si vocal', HTML.includes('if(_voice)this._speakAnswer'));
   ok('méthode _speakAnswer présente', HTML.includes('_speakAnswer(txt)'));
-  ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(){'));
+  ok('commande vocale globale voiceCommand', HTML.includes('voiceCommand(cmd){'));
   ok('bouton micro global fabVoice', HTML.includes('id="fabVoice"') && HTML.includes('AngeDialog.voiceCommand'));
   // Mot d'activation « Ange » (opt-in, écoute continue au premier plan)
   ['_wakeEnabled', '_wakeInit', '_wakeStart', '_wakeStop'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
   ok('réglage toggle angeWakeToggle', HTML.includes('id="angeWakeToggle"') && HTML.includes('App.toggleAngeWake'));
   ok('toggleAngeWake pilote le listener', /toggleAngeWake\(on\)\{[\s\S]{0,200}_wakeInit[\s\S]{0,60}_wakeStop/.test(HTML));
-  ok('mot d\'activation = « ange »', /\/\\b\(ok \|h\[eé\] \|hey \|dis \)\?ange\\b\//.test(HTML));
+  ok('mot d\'activation = « ange » + variantes (mal transcrit sinon)', /anges\?\|l'ange\|lange\|angel\|angie/.test(HTML));
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)\{/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,900}ange-open'\)\)\{/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeFired=true;this\._wakeDbg[\s\S]{0,60}this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
+  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=4\?after:null\)/.test(HTML));
+  ok('commande dans le même souffle captée (groupe (.*)$)', HTML.includes('(.*)$/'));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
   // Arrêt TOTAL du micro à la fermeture / mise en arrière-plan (bug « le micro reste allumé »)
@@ -264,12 +265,12 @@ section('B. Câblage Ange V2 (index.html)');
   // Ange pose une question courte à l'appel vocal + réponses parlées courtes
   ok('méthode _voiceGreetQuestion présente', HTML.includes('_voiceGreetQuestion(') && HTML.includes('Que veux-tu faire ?'));
   // Mode « orbe seul » façon Siri : la voix n'ouvre plus le panneau/tableau — juste l'orbe.
-  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
+  ok('voiceCommand = mode orbe seul (_orbMode, sans panneau)', /voiceCommand\(cmd\)\{[\s\S]{0,700}this\._orbMode=true/.test(HTML));
   ok('pas de double cancel() dans voiceCommand (bug iOS)', !/voiceCommand\(\)\{[\s\S]{0,400}window\.speechSynthesis\.cancel\(\)/.test(HTML));
   ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
   ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true,true)"));
-  ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
-  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeDbg/.test(HTML));
+  ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
+  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)
   ok('handlers wake vérifient l\'instance active (anti-fantôme)', /rec\.onend=\(\)=>\{if\(this\._wakeRec!==rec\)/.test(HTML) && /const mine=\(this\._wakeRec===rec\)/.test(HTML));
   ok('_wakeStop avorte et nettoie tous les handlers', /_wakeStop\(\)\{[\s\S]{0,200}r\.onerror=null;r\.onstart=null;try\{r\.abort\(\)/.test(HTML));
@@ -283,7 +284,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1600/.test(HTML) && HTML.includes('this.startVoice()'));
-  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,600}this\._setOrb\('(speak|listen)'\)/.test(HTML));
+  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,900}this\._setOrb\('(speak|listen|think)'\)/.test(HTML));
+  ok('commande directe → exécution sans « Je t\'écoute » (_voiceTurn)', /if\(_cmd\)\{this\._orbStarting=false;[\s\S]{0,160}this\._voiceTurn\(_cmd\)/.test(HTML));
   ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
   ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{try\{if\(typeof speak==='function'\)\{speak\('Je t\\'écoute',true,true\)/.test(HTML));
   // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
