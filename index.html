@@ -5413,7 +5413,7 @@ const AngeDialog={
   // iOS bloque la synthèse vocale tant qu'elle n'a pas été lancée DANS un geste utilisateur.
   // On la « débloque » au 1er contact (utterance silencieuse) → ensuite « Je t'écoute » et les
   // réponses déclenchées par le mot « Ange » (hors geste) peuvent être prononcées.
-  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(_){}},
+  _primeTTS(){if(this._ttsPrimed)return;this._ttsPrimed=true;try{if('speechSynthesis'in window){try{speechSynthesis.resume();}catch(_){}const u=new SpeechSynthesisUtterance('');u.volume=0.01;speechSynthesis.speak(u);}}catch(_){}},
   // Arrêt TOTAL du micro (wake + dictée + confirmation) sans réarmement — pour la mise en arrière-plan / fermeture.
   _hardStopMic(){
     this._convo=false;this._orbMode=false;this._orbStarting=false;this._convoSilence=0;this._choices=null;
