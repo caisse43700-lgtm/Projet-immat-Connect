@@ -745,7 +745,12 @@ function hint(id,t,m){let e=$(id);if(e){e.className='hint '+(t||'');e.textConten
 function st(id,m,t){let e=$(id);if(e){e.textContent=m||'';e.className='status-msg '+(t||'')+(m?' visible':'')}}
 let _fvCache=[];if('speechSynthesis'in window){const _lv=()=>{_fvCache=speechSynthesis.getVoices().filter(v=>(v.lang||'').toLowerCase().startsWith('fr'));};_lv();try{speechSynthesis.addEventListener('voiceschanged',_lv)}catch(e){}}
 function _bestFrVoice(){const g=get('ic_voice_gender','female');const maleK=['thomas','nicolas','fr-fr-x-fra','fr_fr_m','google français m','male'];const femaleK=['marie','amélie','amelie','audrey','virginie','fr-fr-x-frc','fr_fr_f','google français','google french','female'];const keys=g==='male'?maleK:femaleK;for(const k of keys){const v=_fvCache.find(x=>x.name.toLowerCase().includes(k));if(v)return v;}const loc=_fvCache.find(x=>x.localService);return loc||_fvCache[0]||null;}
-function speak(txt,force=false,ignoreMute=false){if((!S.voice&&!ignoreMute)||!('speechSynthesis'in window))return;if(!force&&txt===lastSpoken)return;lastSpoken=txt;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(txt||''));u.lang='fr-FR';u.rate=+(get('ic_voice_rate','.86')||'.86');u.pitch=.98;if(!_fvCache.length)_fvCache=speechSynthesis.getVoices().filter(v=>(v.lang||'').toLowerCase().startsWith('fr'));const v=_bestFrVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
+function speak(txt,force=false,ignoreMute=false){if((!S.voice&&!ignoreMute)||!('speechSynthesis'in window))return;if(!force&&txt===lastSpoken)return;lastSpoken=txt;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(txt||''));u.lang='fr-FR';u.rate=+(get('ic_voice_rate','.86')||'.86');u.pitch=.98;if(!_fvCache.length)_fvCache=speechSynthesis.getVoices().filter(v=>(v.lang||'').toLowerCase().startsWith('fr'));const v=_bestFrVoice();if(v)u.voice=v;
+// État réel de la voix (starting→speaking→done) : iOS met ~1s à VRAIMENT démarrer ; sans cet état,
+// ouvrir le micro trop tôt TUE la phrase naissante (conflit STT/TTS — prouvé par HUD terrain).
+window._icTts='starting';window._icTtsAt=Date.now();
+u.onstart=function(){window._icTts='speaking';};u.onend=function(){window._icTts='done';};u.onerror=function(){window._icTts='done';};
+speechSynthesis.speak(u)}catch(e){window._icTts='done';}}
 function instr(step){if(!step)return'Continuez tout droit.';let m=step.maneuver||{},mod=m.modifier||'',type=m.type||'',road=step.name?' sur '+step.name:'';if(type==='arrive')return'Vous êtes arrivé.';if(type==='roundabout')return'Au rond-point, prenez la sortie indiquée'+road+'.';if(mod.includes('left'))return'Tournez à gauche'+road+'.';if(mod.includes('right'))return'Tournez à droite'+road+'.';return'Continuez tout droit'+road+'.'}
 async function profilesByIds(ids){ids=[...new Set((ids||[]).filter(Boolean))];if(!sb||!ids.length)return{};const _try=async()=>sb.rpc('get_public_profiles_by_ids',{p_ids:ids});try{let{data,error}=await _try();if(error){await new Promise(r=>setTimeout(r,500));({data,error}=await _try());}if(error)return{};const out={};(data||[]).forEach(p=>out[p.user_id]=p);return out}catch(e){return{}}}
 const CATS={accident:{label:'Accident',icon:'💥',level:'urgent',ttl:45*60*1000,group:'route'},bouchon:{label:'Bouchon',icon:'🚦',level:'important',ttl:30*60*1000,group:'route'},obstacle:{label:'Obstacle',icon:'⚠️',level:'urgent',ttl:45*60*1000,group:'route'},travaux:{label:'Travaux',icon:'🚧',level:'info',ttl:2*60*60*1000,group:'route'},controle:{label:'Contrôle',icon:'👮',level:'info',ttl:60*60*1000,group:'route'},danger:{label:'Danger',icon:'❗',level:'urgent',ttl:45*60*1000,group:'route'},panne:{label:'Panne',icon:'🚗',level:'urgent',ttl:45*60*1000,group:'assist'},carburant:{label:'Carburant',icon:'⛽',level:'important',ttl:45*60*1000,group:'assist'},batterie:{label:'Batterie',icon:'🔋',level:'important',ttl:45*60*1000,group:'assist'},moteur:{label:'Moteur',icon:'⚙️',level:'urgent',ttl:45*60*1000,group:'assist'},incendie:{label:'Incendie',icon:'🔥',level:'urgent',ttl:30*60*1000,group:'assist'},perdu:{label:'Perdu',icon:'🧭',level:'info',ttl:45*60*1000,group:'assist'},vehicule:{label:'Véhicule',icon:'🚘',level:'important',ttl:60*60*1000,group:'vehicle'},info:{label:'Info',icon:'ℹ️',level:'info',ttl:60*60*1000,group:'misc'}};
@@ -5440,6 +5445,9 @@ const AngeDialog={
     }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
   },
   _wakeStop(){try{clearTimeout(this._wakePend);}catch(_){}this._wakePend=null;try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;try{r.abort();}catch(_){try{r.stop();}catch(__){}}}}catch(_){}},
+  // La voix est-elle OCCUPÉE ? Couvre le démarrage iOS (~1s où speechSynthesis.speaking est ENCORE false).
+  // Sans ça, on ouvrait le micro pendant que la phrase naissait → iOS la tuait (« Je t'écoute » jamais entendu).
+  _ttsBusy(){try{const st=window._icTts;if(st==='speaking')return true;if(st==='starting'&&(Date.now()-(window._icTtsAt||0))<2500)return true;return !!(window.speechSynthesis&&window.speechSynthesis.speaking);}catch(_){return false;}},
   // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
   // pour pouvoir les avorter TOUTES à la fermeture (fix « le micro reste allumé » : instance orpheline).
   _recTrack(r){try{this._recAll=(this._recAll||[]);this._recAll.push(r);if(this._recAll.length>8)this._recAll.splice(0,this._recAll.length-8);}catch(_){}},
@@ -5577,7 +5585,7 @@ const AngeDialog={
   _speakVoiceResult(){
     if(!this._orbMode||this._pending)return;
     setTimeout(()=>{try{
-      if(window.speechSynthesis&&window.speechSynthesis.speaking)return; // qqch parle déjà → pas de doublon
+      if(this._ttsBusy())return; // qqch parle déjà (ou démarre) → pas de doublon
       const r=$('angeResponse');if(!r)return;
       const txt=(r.textContent||'').replace(/\s+/g,' ').trim();
       if(txt){this._setOrb('speak');this._speakAnswer(txt);}
@@ -5590,7 +5598,7 @@ const AngeDialog={
     const go=()=>{
       if(!this._convo||this._rec||this._pendRec)return;
       if(document.visibilityState!=='visible')return; // pas en arrière-plan
-      if(window.speechSynthesis&&window.speechSynthesis.speaking){return setTimeout(go,300);} // attendre la fin de la voix d'Ange
+      if(this._ttsBusy()){return setTimeout(go,300);} // attendre la FIN RÉELLE de la voix d'Ange (couvre le démarrage iOS)
       try{this.startVoice(true);}catch(_){} // resume=true → pas de nouvel earcon
     };
     setTimeout(go,450);
@@ -5675,13 +5683,14 @@ const AngeDialog={
     // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
     // avale la voix. ignoreMute=true → parle même si la voix GPS est coupée. Pas de cancel() (speak le fait).
     setTimeout(()=>{try{if(typeof speak==='function'){speak('Je t\'écoute',true,true);this._wakeDbg('speak() appelé (voix débloquée='+(this._ttsPrimed?'oui':'?')+')');}}catch(e){this._wakeDbg('speak throw');}},450);
-    // Ouverture du micro APRÈS la voix, plafonnée (≤1,6 s) : jamais bloqué, _orbStarting toujours relâché.
+    // Ouverture du micro APRÈS la FIN RÉELLE de « Je t'écoute » (_ttsBusy couvre le ~1s de démarrage
+    // iOS où speaking est encore false — sinon le micro tuait la phrase naissante). Plafond ≤7 s.
     let _w=0;
     const start=()=>{
-      if(window.speechSynthesis&&window.speechSynthesis.speaking&&_w<1600){_w+=150;return setTimeout(start,150);}
+      if(this._ttsBusy()&&_w<7000){_w+=150;return setTimeout(start,150);}
       this._orbStarting=false;try{this._setOrb('listen');}catch(_){}try{this.startVoice();}catch(_){}
     };
-    setTimeout(start,750);
+    setTimeout(start,600);
   },
   // ── Ange AGIT : commandes de gouvernance (gardien) via les fonctions propriétaires.
   // Ne passe PAS par Nexus (lecture seule). Détection impérative + garde gardien + confirmation.
@@ -6035,7 +6044,7 @@ const AngeDialog={
         const _startPend=()=>{try{rec.start();}catch(_){}};
         if(this._orbMode||this._lastVoice){
           try{const q=(($('angeResponse')||{}).textContent||'').replace(/\s+/g,' ').trim();if(q&&typeof speak==='function'){this._setOrb('speak');speak(q,true,true);}}catch(_){}
-          const _wait=()=>{if(window.speechSynthesis&&window.speechSynthesis.speaking)return setTimeout(_wait,150);try{this._setOrb('listen');}catch(_){}_startPend();};
+          const _wait=()=>{if(this._ttsBusy())return setTimeout(_wait,150);try{this._setOrb('listen');}catch(_){}_startPend();};
           setTimeout(_wait,220);
         }else{_startPend();}
       }

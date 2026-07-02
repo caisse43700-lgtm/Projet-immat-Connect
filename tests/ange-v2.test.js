@@ -258,7 +258,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('startVoice ouvre la conversation (_convo=true)', /this\._convo=true;.{0,80}le micro reste ouvert/.test(HTML));
   ok('startVoice onend → _voiceTurn', HTML.includes('this._voiceTurn((_last||\'\').trim())'));
   ok('_voiceTurn ne reprend pas si confirmation en attente', /if\(this\._pending\)return;[\s\S]{0,40}this\._convoResume\(\)/.test(HTML));
-  ok('_convoResume attend la fin de la voix (anti auto-écoute)', /speechSynthesis\.speaking\)\{return setTimeout\(go,300\)/.test(HTML));
+  ok('_convoResume attend la fin RÉELLE de la voix (anti auto-écoute)', /this\._ttsBusy\(\)\)\{return setTimeout\(go,300\)/.test(HTML));
+  ok('_ttsBusy couvre le démarrage iOS (état starting <2,5s)', /st==='starting'&&\(Date\.now\(\)-\(window\._icTtsAt\|\|0\)\)<2500/.test(HTML));
+  ok('speak() trace l\'état réel de la voix (starting/speaking/done)', /window\._icTts='starting'/.test(HTML) && /u\.onstart=function\(\)\{window\._icTts='speaking';\}/.test(HTML));
   ok('_convoResume ne rouvre pas si micro occupé', /_convoResume\(\)\{[\s\S]{0,220}this\._rec\|\|this\._pendRec\)return/.test(HTML));
   ok('mots d\'arrêt stoppent la conversation', /stop\|st\[oe\]p\|merci[\s\S]{0,200}this\._convoStop\(\);try\{this\.close/.test(HTML));
   ok('confirmYes relance la conversation', /confirmYes\(\)\{[\s\S]{0,120}this\._afterConfirm\(\)/.test(HTML));
@@ -286,7 +288,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe ancré sur le bouton Ange (#navAnge)', /getElementById\('navAnge'\)[\s\S]{0,160}o\.style\.left=/.test(HTML));
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
-  ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1600/.test(HTML) && HTML.includes('this.startVoice()'));
+  ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /this\._ttsBusy\(\)&&_w<7000/.test(HTML) && HTML.includes('this.startVoice()'));
   ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,900}this\._setOrb\('(speak|listen|think)'\)/.test(HTML));
   ok('commande directe → exécution sans « Je t\'écoute » (_voiceTurn)', /if\(_cmd\)\{this\._orbStarting=false;[\s\S]{0,160}this\._voiceTurn\(_cmd\)/.test(HTML));
   ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
@@ -308,7 +310,7 @@ section('B. Câblage Ange V2 (index.html)');
   // Réponse TOUJOURS à voix haute en mode orbe (LLM/menu/question muets auparavant)
   ok('méthode _speakVoiceResult présente', HTML.includes('_speakVoiceResult()'));
   ok('_voiceTurn dit la réponse à voix haute', /await this\.send\(\);[\s\S]{0,40}this\._speakVoiceResult\(\)/.test(HTML));
-  ok('_speakVoiceResult ne double pas si déjà en train de parler', /_speakVoiceResult\(\)\{[\s\S]{0,200}speechSynthesis\.speaking\)return/.test(HTML));
+  ok('_speakVoiceResult ne double pas si déjà en train de parler', /_speakVoiceResult\(\)\{[\s\S]{0,220}this\._ttsBusy\(\)\)return/.test(HTML));
   ok('confirmation vocale : Ange DIT la question puis écoute (anti-écho)', /this\._orbMode\|\|this\._lastVoice\)\{[\s\S]{0,220}speak\(q,true,true\)[\s\S]{0,200}_startPend\(\)/.test(HTML));
   ok('_speakAnswer réponse courte (1re phrase / cap)', /_speakAnswer\(txt\)\{[\s\S]{0,260}\^\[\^\.\?!\]\{0,140\}\[\.\?!\]/.test(HTML));
   // Rail vocal : matcher à vocabulaire fermé sur les choix affichés
