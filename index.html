@@ -5448,6 +5448,20 @@ const AngeDialog={
   // La voix est-elle OCCUPÉE ? Couvre le démarrage iOS (~1s où speechSynthesis.speaking est ENCORE false).
   // Sans ça, on ouvrait le micro pendant que la phrase naissait → iOS la tuait (« Je t'écoute » jamais entendu).
   _ttsBusy(){try{const st=window._icTts;if(st==='speaking')return true;if(st==='starting'&&(Date.now()-(window._icTtsAt||0))<2500)return true;return !!(window.speechSynthesis&&window.speechSynthesis.speaking);}catch(_){return false;}},
+  // Parle avec RÉESSAI : après une écoute micro, la session audio iOS bascule enregistrement→lecture et
+  // le 1er speak() peut être AVALÉ silencieusement (onstart jamais émis — prouvé par HUD terrain).
+  // On vérifie 1,1 s plus tard que la voix est bien partie ; sinon on réessaie (3×), puis bip de repli.
+  _speakRetry(txt,attempt){
+    attempt=attempt||1;
+    try{if(typeof speak!=='function')return;speak(txt,true,true);}catch(_){return;}
+    setTimeout(()=>{try{
+      const st=window._icTts;
+      if(st==='speaking'||st==='done')return; // la voix est bien partie
+      if(attempt<3){try{window.speechSynthesis.cancel();window.speechSynthesis.resume();}catch(_){}
+        this._wakeDbg('voix avalée → réessai '+(attempt+1));this._speakRetry(txt,attempt+1);}
+      else{this._wakeDbg('voix indisponible (3 essais) → bip');try{this._earcon('listen');}catch(_){}}
+    }catch(_){}},1100);
+  },
   // Registre de TOUTES les instances SpeechRecognition créées (wake + dictée + confirmation) —
   // pour pouvoir les avorter TOUTES à la fermeture (fix « le micro reste allumé » : instance orpheline).
   _recTrack(r){try{this._recAll=(this._recAll||[]);this._recAll.push(r);if(this._recAll.length>8)this._recAll.splice(0,this._recAll.length-8);}catch(_){}},
@@ -5567,7 +5581,7 @@ const AngeDialog={
     // « Ange » redit en pleine conversation (réflexe) → simple ré-accueil, JAMAIS envoyé aux commandes/LLM.
     if(/^(?:ok |h[eé] |hey |dis |et )?(anges?|l'ange|lange|angel|angie)[\s,.!?]*$/.test(v.toLowerCase())){
       try{this._setOrb('speak');}catch(_){}
-      try{if(typeof speak==='function')speak('Oui, je t\'écoute',true,true);}catch(_){}
+      try{this._speakRetry('Oui, je t\'écoute');}catch(_){}
       return this._convoResume();
     }
     // RAIL VOCAL : si des choix fermés sont affichés, on matche la parole dessus (robuste au bruit).
@@ -5655,7 +5669,7 @@ const AngeDialog={
     seq.forEach(function(s){const f=s[0],at=s[1],dur=s[2];const o=ctx.createOscillator(),g=ctx.createGain();o.type=(type==='error'?'square':'sine');o.frequency.value=f;g.gain.setValueAtTime(0.0001,t0+at);g.gain.exponentialRampToValueAtTime(0.14,t0+at+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+at+dur);o.connect(g);g.connect(ctx.destination);o.start(t0+at);o.stop(t0+at+dur+0.02);});
   }catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
-  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}speak(t,true,true);}}catch(_){}},
+  _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
   _voiceGreetQuestion(){
     try{
@@ -5688,7 +5702,7 @@ const AngeDialog={
     try{this._setOrb('speak');}catch(_){} // orbe visible tout de suite
     // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
     // avale la voix. ignoreMute=true → parle même si la voix GPS est coupée. Pas de cancel() (speak le fait).
-    setTimeout(()=>{try{if(typeof speak==='function'){speak('Je t\'écoute',true,true);this._wakeDbg('speak() appelé (voix débloquée='+(this._ttsPrimed?'oui':'?')+')');}}catch(e){this._wakeDbg('speak throw');}},450);
+    setTimeout(()=>{try{this._speakRetry('Je t\'écoute');this._wakeDbg('greet lancé (essai 1)');}catch(e){this._wakeDbg('speak throw');}},800);
     // Ouverture du micro APRÈS la FIN RÉELLE de « Je t'écoute » (_ttsBusy couvre le ~1s de démarrage
     // iOS où speaking est encore false — sinon le micro tuait la phrase naissante). Plafond ≤7 s.
     let _w=0;
