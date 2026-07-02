@@ -1928,7 +1928,9 @@ App._navToggle=function(key,ev){
   var open=!!(sheet && !sheet.classList.contains('mini'));
   var cur=open?App._navView:null;
   if(cur===key){ this.closeSheet(); return; } // re-clic sur la vue ouverte → on referme
-  if(key==='signaler') this.navSignaler();
+  // NAVIGATION V2 : le clic passe par le propriétaire unique (invariant + intention mémorisée).
+  if(App._NAV&&App._NAV[key]){App.navigate(key,{source:'click'});}
+  else if(key==='signaler') this.navSignaler();
   else if(key==='messages') this.navMessages();
   else if(key==='appels') this.navAppels();
   else if(key==='activite') this.navActivite();
@@ -1953,6 +1955,26 @@ App.requireFeature=function(key,label){const st=this.featureStatus(key);if(st.en
 // Affiche UN panneau de la feuille et masque EXPLICITEMENT les frères — panel() peut être swallowé
 // par les patches ui.js, et un panneau précédemment forcé (ex. navActivite) resterait AU-DESSUS.
 App._forcePanel=function(pid){try{['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].forEach(id=>{const e=document.getElementById(id);if(!e)return;if(id===pid){e.style.display='';e.classList.add('on');}else{e.classList.remove('on');e.style.display='none';}});}catch(e){}try{this.openSheet?.();}catch(e){}};
+// ═══ NAVIGATION V2 ═══ Propriétaire UNIQUE de la navigation (clic + voix + suggestions).
+// Doctrine : tout état perçu par l'utilisateur a un propriétaire unique, un invariant nommé,
+// une preuve observable. navigate() : (1) mémorise l'INTENTION (le correcteur d'invariant corrige
+// vers elle, pas vers un heuristique) ; (2) délègue la logique métier aux fonctions propriétaires
+// existantes ; (3) impose l'invariant « un seul panneau visible » en UN point (_forcePanel).
+App._NAV={
+  gps:{pid:'panelDrive',run:function(o){App.panel('drive');try{App.locateBtn&&App.locateBtn();}catch(e){}}},
+  messages:{pid:'panelMessages',run:function(o){App.navMessages();}},
+  appels:{pid:'panelMessages',run:function(o){App.navAppels();if(o&&o.filter==='missed')setTimeout(function(){try{App.setCallJournalFilter&&App.setCallJournalFilter('missed');}catch(e){}},350);}},
+  activite:{pid:'panelActivite',run:function(o){App.navActivite();if(o&&o.category)setTimeout(function(){try{App.openActivityCat&&App.openActivityCat(o.category);}catch(e){}},300);if(o&&o.view)setTimeout(function(){try{App[o.view]&&App[o.view]();}catch(e){}},300);}},
+  signaler:{pid:'panelAltet',run:function(o){App.navSignaler();if(o&&o.step)try{App[o.step]&&App[o.step]();}catch(e){}}},
+  reglages:{pid:'panelSettings',run:function(o){App.panel('settings');}},
+  dashboard:{pid:null,run:function(o){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(e){}}}
+};
+App.navigate=function(dest,opts){var d=App._NAV[dest];if(!d)return false;
+  App._lastNavIntent={dest:dest,pid:d.pid,at:Date.now(),source:(opts&&opts.source)||''};
+  try{d.run(opts||{});}catch(e){}
+  if(d.pid)try{App._forcePanel(d.pid);}catch(e){}
+  return true;
+};
 App.navMessages=function(){
   if(!this.requireFeature('messages','Messagerie'))return;
   App._navView='messages';
@@ -5404,7 +5426,7 @@ const AngeDialog={
   },
   // ── FSM-OMBRE (v454) : états nommés + transitions loggées. Source de vérité PROGRESSIVE :
   // les gardes existantes restent, mais chaque étape déclare son état → HUD + assertions + stats.
-  IC_BUILD:'v460', // ← tenir en phase avec CACHE_NAME à chaque release
+  IC_BUILD:'v461', // ← tenir en phase avec CACHE_NAME à chaque release
   _vState:'OFF',_vStateAt:0,
   _vGo(state,why){try{if(this._vState===state)return;this._vState=state;this._vStateAt=Date.now();this._wakeDbg('⟶ '+state+(why?' ('+why+')':''));}catch(_){}},
   // Compteurs de vérité terrain (mode recette) — affichés en pied de HUD.
@@ -5418,15 +5440,24 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     // Appel en cours → la veille et toute écoute se SUSPENDENT ; à la fin → reprise + bip.
     if(call){if(this._wakeRec||this._rec||this._pendRec){this._wakeDbg('📞 appel → veille suspendue');this._callHold=true;this._hardStopMic();}return;}
     if(this._callHold){this._callHold=false;this._wakeDbg('📞 fin d\'appel → veille relancée');try{this._earcon('ok');}catch(_){}try{this._wakeStart();}catch(_){}}
+    // INVARIANT « un seul panneau visible » — actif EN PROD (les logs restent gated debug).
+    // Tolérance 2 ticks (transitions animées) ; correction vers l'INTENTION mémorisée par navigate().
+    try{const vis=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].filter(id=>{const e=document.getElementById(id);if(!e)return false;const c=getComputedStyle(e);return c.display!=='none'&&c.visibility!=='hidden'&&e.getBoundingClientRect().height>40;});
+      if(vis.length>1){
+        if(this._visViol){this._visViol=false;this._stats.nav=(this._stats.nav||0)+1;
+          const want=(window.App&&App._lastNavIntent&&App._lastNavIntent.pid&&vis.indexOf(App._lastNavIntent.pid)>=0)?App._lastNavIntent.pid:vis[vis.length-1];
+          this._wakeDbg('🚨 ASSERT: '+vis.length+' panneaux visibles → correction vers '+want);
+          try{window.App&&App._forcePanel&&App._forcePanel(want);}catch(_){}}
+        else this._visViol=true; // 1er tick : transition en cours, on tolère
+      } else this._visViol=false;
+    }catch(_){}
     if(!this._dbgOn)return;
     if(this._rec&&this._wakeRec)this._wakeDbg('🚨 ASSERT: dictée + veille actives');
     if(this._rec&&this._pendRec)this._wakeDbg('🚨 ASSERT: dictée + confirmation actives');
     if(this._ttsBusy()&&(this._rec||this._pendRec))this._wakeDbg('🚨 ASSERT: micro pendant la voix');
     if(document.visibilityState!=='visible'&&(this._rec||this._pendRec||this._wakeRec))this._wakeDbg('🚨 ASSERT: micro en arrière-plan');
     if(this._wakePend&&!this._wakeRec)this._wakeDbg('🚨 ASSERT: débounce sans écoute');
-    // INVARIANT (règle « un panneau ouvre, l'autre ferme », voix comme clic) : jamais 2 panneaux visibles.
-    try{const vis=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].filter(id=>{const e=document.getElementById(id);if(!e)return false;const c=getComputedStyle(e);return c.display!=='none'&&c.visibility!=='hidden'&&e.getBoundingClientRect().height>40;});
-      if(vis.length>1){this._wakeDbg('🚨 ASSERT: '+vis.length+' panneaux visibles ('+vis.join('+')+') → garde le dernier');try{App._forcePanel&&App._forcePanel(vis[vis.length-1]);}catch(_){}}}catch(_){}
+
     if(this._convo&&this._vStateAt&&Date.now()-this._vStateAt>60000)this._wakeDbg('🚨 ASSERT: session zombie >60s → veille'),this._convoStop();
   }catch(_){}},2000);},
   // Afficheur de diagnostic vocal (visible) — pour voir en direct ce que fait le micro « Ange ».
@@ -6001,13 +6032,13 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
   // ── LANCEUR VOCAL : « ouvre le GPS / les messages / les appels / l'activité / réglages … »
   //    Table dérivée des fonctions du Dashboard ; ouvre via les fonctions propriétaires ; kill-switch respecté.
   _OPEN:[
-    {key:'gps',re:/\b(gps|navigation|naviguer|navigue|itin[ée]raire|maps?|waze|carte)\b/,feat:'gps',label:'le GPS',open:function(){try{App.panel&&App.panel('drive');}catch(_){}try{App._forcePanel&&App._forcePanel('panelDrive');}catch(_){}try{App.locateBtn&&App.locateBtn();}catch(_){}}},
-    {key:'messages',re:/\bmessages?\b|messagerie/,feat:'messages',label:'les messages',open:function(){try{App.navMessages&&App.navMessages();}catch(_){}}},
-    {key:'appels',re:/\bappels?\b|t[ée]l[ée]phone|rappels?|appels? manqu|qui m.a appel/,feat:'appels',label:'les appels',open:function(t){try{App.navAppels&&App.navAppels();}catch(_){}if(/manqu|rappel/.test(t))setTimeout(function(){try{App.setCallJournalFilter&&App.setCallJournalFilter('missed');}catch(_){}},350);}},
-    {key:'activite',re:/\bactivit[ée]|signalements? re[çc]us|[àa] traiter|nouveau|trait[ée]s?/,feat:null,label:"l'activité",open:function(t){try{App.navActivite&&App.navActivite();}catch(_){}if(/[àa] traiter/.test(t))setTimeout(function(){try{App.openTodoView&&App.openTodoView();}catch(_){}},300);else if(/nouveau/.test(t))setTimeout(function(){try{App.openNewView&&App.openNewView();}catch(_){}},300);else if(/trait[ée]/.test(t))setTimeout(function(){try{App.openDoneView&&App.openDoneView();}catch(_){}},300);}},
-    {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:'signaler',label:'Signaler',open:function(){try{App.openReport&&App.openReport();}catch(_){}}},
-    {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}try{App._forcePanel&&App._forcePanel('panelSettings');}catch(_){}}},
-    {key:'dashboard',drivable:false,re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(_){}}}
+    {key:'gps',re:/\b(gps|navigation|naviguer|navigue|itin[ée]raire|maps?|waze|carte)\b/,feat:'gps',label:'le GPS',open:function(){try{App.navigate('gps',{source:'voice'});}catch(_){}}},
+    {key:'messages',re:/\bmessages?\b|messagerie/,feat:'messages',label:'les messages',open:function(){try{App.navigate('messages',{source:'voice'});}catch(_){}}},
+    {key:'appels',re:/\bappels?\b|t[ée]l[ée]phone|rappels?|appels? manqu|qui m.a appel/,feat:'appels',label:'les appels',open:function(t){try{App.navigate('appels',{source:'voice',filter:(/manqu|rappel/.test(t)?'missed':null)});}catch(_){}}},
+    {key:'activite',re:/\bactivit[ée]|signalements? re[çc]us|[àa] traiter|nouveau|trait[ée]s?/,feat:null,label:"l'activité",open:function(t){var v=/[àa] traiter/.test(t)?'openTodoView':(/nouveau/.test(t)?'openNewView':(/trait[ée]/.test(t)?'openDoneView':null));try{App.navigate('activite',{source:'voice',view:v});}catch(_){}}},
+    {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:'signaler',label:'Signaler',open:function(){try{App.navigate('signaler',{source:'voice'});}catch(_){}}},
+    {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.navigate('reglages',{source:'voice'});}catch(_){}}},
+    {key:'dashboard',drivable:false,re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.navigate('dashboard',{source:'voice'});}catch(_){}}}
   ],
   // CHOIX CONTEXTUELS (v456) : dans le contexte Signaler, dire directement le TYPE envoie le
   // signalement COMPLET (roadReport/assist sont des actions autonomes : GPS + envoi + confirmation).
@@ -6055,14 +6086,12 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
       $('angeMsg').value='';return true;};
     if(view==='signaler'){
       const f={route:'sigStepRoute',vehicule:'sigStepVehicle',aide:'sigStepAide',stationne:'sigStepStation'}[cat];
-      try{App.openReport&&App.openReport();}catch(_){} // garantit la feuille visible (sinon l'étape s'ouvre derrière)
-      try{App[f]&&App[f]();}catch(_){}
+      try{App.navigate('signaler',{source:'voice',step:f});}catch(_){}
       return done('Signaler → '+cat,'Je prépare le signalement '+LBL+'.');
     }
     // Par défaut (Activité ou ailleurs) → la catégorie d'activité correspondante.
     const ac={route:'route',vehicule:'vehicle',aide:'aide',stationne:'station'}[cat];
-    try{App.navActivite&&App.navActivite();}catch(_){}
-    setTimeout(()=>{try{App.openActivityCat&&App.openActivityCat(ac);}catch(_){}},300);
+    try{App.navigate('activite',{source:'voice',category:ac});}catch(_){}
     return done('Activité → '+cat,'J\'ouvre l\'activité '+LBL+'.');
   }catch(_){return false;}},
   _tryOpen(msg){
