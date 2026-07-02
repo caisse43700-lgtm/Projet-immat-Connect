@@ -345,6 +345,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('vérification de visibilité après ouverture vocale + forçage', HTML.includes('ouverture invisible') && /rct\.height>40/.test(HTML) && /panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'/.test(HTML));
   ok('IC_BUILD en phase avec CACHE_NAME', (()=>{const m=HTML.match(/IC_BUILD:'(v\d+)'/);const sw=require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').match(/immatconnect-pro-(v\d+)/);return m&&sw&&m[1]===sw[1];})());
   ok('openReport force le panneau complet (_forcePanel)', /openReport\(\)\{this\.panel\('altet'\);App\._forcePanel\?\.\('panelAltet'\);App\.sigBack/.test(HTML));
+  // v460 — invariant « un seul panneau visible » universel (voix comme clic)
+  ok('GPS vocal applique la règle (_forcePanel panelDrive)', /key:'gps'[\s\S]{0,300}_forcePanel&&App\._forcePanel\('panelDrive'\)/.test(HTML));
+  ok('Réglages vocal applique la règle (_forcePanel panelSettings)', /key:'reglages'[\s\S]{0,300}_forcePanel&&App\._forcePanel\('panelSettings'\)/.test(HTML));
+  ok('assertion invariant : jamais 2 panneaux visibles (auto-corrigé)', HTML.includes('panneaux visibles') && /vis\.length>1/.test(HTML) && /_forcePanel&&App\._forcePanel\(vis\[vis\.length-1\]\)/.test(HTML));
   ok('helper App._forcePanel : masque les frères + openSheet', /App\._forcePanel=function\(pid\)\{[\s\S]{0,400}openSheet/.test(HTML));
   ok('vérification : un frère visible au-dessus = échec détecté', /Un panneau FRÈRE encore affiché masque la cible/.test(HTML));
   ok('navMessages force openSheet', /App\.navMessages=function\(\)\{[\s\S]{0,900}panel\('messages'\);App\._forcePanel\?\.\('panelMessages'\)/.test(HTML));

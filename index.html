@@ -5404,7 +5404,7 @@ const AngeDialog={
   },
   // ── FSM-OMBRE (v454) : états nommés + transitions loggées. Source de vérité PROGRESSIVE :
   // les gardes existantes restent, mais chaque étape déclare son état → HUD + assertions + stats.
-  IC_BUILD:'v459', // ← tenir en phase avec CACHE_NAME à chaque release
+  IC_BUILD:'v460', // ← tenir en phase avec CACHE_NAME à chaque release
   _vState:'OFF',_vStateAt:0,
   _vGo(state,why){try{if(this._vState===state)return;this._vState=state;this._vStateAt=Date.now();this._wakeDbg('⟶ '+state+(why?' ('+why+')':''));}catch(_){}},
   // Compteurs de vérité terrain (mode recette) — affichés en pied de HUD.
@@ -5424,6 +5424,9 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
     if(this._ttsBusy()&&(this._rec||this._pendRec))this._wakeDbg('🚨 ASSERT: micro pendant la voix');
     if(document.visibilityState!=='visible'&&(this._rec||this._pendRec||this._wakeRec))this._wakeDbg('🚨 ASSERT: micro en arrière-plan');
     if(this._wakePend&&!this._wakeRec)this._wakeDbg('🚨 ASSERT: débounce sans écoute');
+    // INVARIANT (règle « un panneau ouvre, l'autre ferme », voix comme clic) : jamais 2 panneaux visibles.
+    try{const vis=['panelAltet','panelDrive','panelMessages','panelSettings','panelActivite'].filter(id=>{const e=document.getElementById(id);if(!e)return false;const c=getComputedStyle(e);return c.display!=='none'&&c.visibility!=='hidden'&&e.getBoundingClientRect().height>40;});
+      if(vis.length>1){this._wakeDbg('🚨 ASSERT: '+vis.length+' panneaux visibles ('+vis.join('+')+') → garde le dernier');try{App._forcePanel&&App._forcePanel(vis[vis.length-1]);}catch(_){}}}catch(_){}
     if(this._convo&&this._vStateAt&&Date.now()-this._vStateAt>60000)this._wakeDbg('🚨 ASSERT: session zombie >60s → veille'),this._convoStop();
   }catch(_){}},2000);},
   // Afficheur de diagnostic vocal (visible) — pour voir en direct ce que fait le micro « Ange ».
@@ -5998,12 +6001,12 @@ this._wakeDbg('📊 det='+this._stats.det+' rep='+this._stats.rep+' incompris='+
   // ── LANCEUR VOCAL : « ouvre le GPS / les messages / les appels / l'activité / réglages … »
   //    Table dérivée des fonctions du Dashboard ; ouvre via les fonctions propriétaires ; kill-switch respecté.
   _OPEN:[
-    {key:'gps',re:/\b(gps|navigation|naviguer|navigue|itin[ée]raire|maps?|waze|carte)\b/,feat:'gps',label:'le GPS',open:function(){try{App.panel&&App.panel('drive');}catch(_){}try{App.locateBtn&&App.locateBtn();}catch(_){}}},
+    {key:'gps',re:/\b(gps|navigation|naviguer|navigue|itin[ée]raire|maps?|waze|carte)\b/,feat:'gps',label:'le GPS',open:function(){try{App.panel&&App.panel('drive');}catch(_){}try{App._forcePanel&&App._forcePanel('panelDrive');}catch(_){}try{App.locateBtn&&App.locateBtn();}catch(_){}}},
     {key:'messages',re:/\bmessages?\b|messagerie/,feat:'messages',label:'les messages',open:function(){try{App.navMessages&&App.navMessages();}catch(_){}}},
     {key:'appels',re:/\bappels?\b|t[ée]l[ée]phone|rappels?|appels? manqu|qui m.a appel/,feat:'appels',label:'les appels',open:function(t){try{App.navAppels&&App.navAppels();}catch(_){}if(/manqu|rappel/.test(t))setTimeout(function(){try{App.setCallJournalFilter&&App.setCallJournalFilter('missed');}catch(_){}},350);}},
     {key:'activite',re:/\bactivit[ée]|signalements? re[çc]us|[àa] traiter|nouveau|trait[ée]s?/,feat:null,label:"l'activité",open:function(t){try{App.navActivite&&App.navActivite();}catch(_){}if(/[àa] traiter/.test(t))setTimeout(function(){try{App.openTodoView&&App.openTodoView();}catch(_){}},300);else if(/nouveau/.test(t))setTimeout(function(){try{App.openNewView&&App.openNewView();}catch(_){}},300);else if(/trait[ée]/.test(t))setTimeout(function(){try{App.openDoneView&&App.openDoneView();}catch(_){}},300);}},
     {key:'signaler',re:/\bsignal|alerte|d[ée]clar/,feat:'signaler',label:'Signaler',open:function(){try{App.openReport&&App.openReport();}catch(_){}}},
-    {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}}},
+    {key:'reglages',drivable:false,re:/\br[ée]glages?|param[èe]tres?|options?|r[ée]glage\b/,feat:null,label:'les réglages',open:function(){try{App.panel&&App.panel('settings');}catch(_){}try{App._forcePanel&&App._forcePanel('panelSettings');}catch(_){}}},
     {key:'dashboard',drivable:false,re:/\bdashboard|tableau de bord/,feat:null,gardien:true,label:'le Dashboard',open:function(){try{App.openGardienDashboard&&App.openGardienDashboard();}catch(_){}}}
   ],
   // CHOIX CONTEXTUELS (v456) : dans le contexte Signaler, dire directement le TYPE envoie le
