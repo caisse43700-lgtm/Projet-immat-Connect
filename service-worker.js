@@ -1,7 +1,7 @@
 /* service-worker.js — ImmatConnect — SESSION OBD-003d §21 */
 'use strict';
 
-const CACHE_NAME  = 'immatconnect-pro-v452';
+const CACHE_NAME  = 'immatconnect-pro-v453';
 const OFFLINE_URL = './offline.html';
 
 // Fichiers critiques — allSettled individuel : une panne réseau n'annule pas l'install
@@ -46,6 +46,7 @@ const STATIC_CACHE = [
   './core/immat-nexus.js?v=14',
   './audio/ange-ecoute.wav?v=2',
   './audio/ange-oui.wav?v=2',
+  './audio/ange-fait.wav?v=2',
 ];
 
 // Scripts CDN tiers — cache optionnel, non bloquant

@@ -285,6 +285,12 @@ section('B. Câblage Ange V2 (index.html)');
   ok('préchargement des voix à l\'autorisation', HTML.includes('_voicePrefetch()'));
   ok('fichiers audio présents', require('fs').existsSync(require('path').join(ROOT,'audio/ange-ecoute.wav')) && require('fs').existsSync(require('path').join(ROOT,'audio/ange-oui.wav')));
   ok('SW cache les voix audio', require('fs').readFileSync(require('path').join(ROOT,'service-worker.js'),'utf8').includes('./audio/ange-ecoute.wav?v=2'));
+  // Session « Ange » ONE-SHOT (modèle cible PO) : requête traitée → retour en veille du mot « Ange »
+  ok('one-shot : requête traitée → retour en veille (convoStop)', /if\(this\._voiceNoTTS\)\{this\._wakeDbg\('requête traitée[\s\S]{0,60}this\._convoStop\(\)/.test(HTML));
+  ok('one-shot : rail à choix garde l\'écoute', /if\(this\._choices&&this\._choices\.length\)return this\._convoResume\(\)/.test(HTML));
+  ok('« C\'est fait » (audio) sur ouverture en session Ange', /if\(this\._voiceNoTTS\)this\._playVoice\('ange-fait'\)/.test(HTML) && require('fs').existsSync(require('path').join(ROOT,'audio/ange-fait.wav')));
+  ok('« Ange » seul → détection rapide 0,5 s (bare)', /_bare\?500:900/.test(HTML));
+  ok('chien de garde : écoute sourde 25 s → redémarrage', /rec\._wd=setInterval[\s\S]{0,300}>25000/.test(HTML));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(cmd,fromWake\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
   ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeRec!==rec\|\|this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;\s*const mm=/.test(HTML));
   // Hygiène d'instances (bug terrain : instances fantômes → micro jamais libéré, résultats perdus)

@@ -5424,13 +5424,15 @@ const AngeDialog={
         // « Ange » seul est MAL transcrit par iOS (« non », « en »…) — prouvé par HUD terrain.
         // On accepte les variantes proches, et on capte la COMMANDE dite dans le même souffle
         // (« Ange, ouvre l'activité ») : 0,9 s de délai pour laisser la phrase se terminer.
+        rec._lastRes=Date.now(); // chien de garde : trace du dernier résultat reçu
         const WAKE=/\b(?:ok |h[eé] |hey |dis |et )?(anges?|l'ange|lange|angel|angie|handj?e|anj)\b(.*)$/;
         const m=t.match(WAKE);if(!m)return;
         this._wakeLastT=t;
         // Feedback IMMÉDIAT (bip) dès la 1re détection : « je t'ai entendu, finis ta phrase ».
         if(!this._wakeHeard){this._wakeHeard=true;try{this._earcon('ok');}catch(_){}try{this._setOrb('hear');}catch(_){}}
-        // Minuteur RÉARMÉ à chaque nouveau mot (vrai débounce de silence) : on agit 0,9 s après la FIN
-        // de la phrase — pas 0,9 s après le 1er mot (bug terrain : « ouvre l'activité » coupé à « ou »).
+        // Minuteur RÉARMÉ à chaque nouveau mot (vrai débounce de silence) : on agit après la FIN de la
+        // phrase. « Ange » SEUL (rien derrière) → 0,5 s (réactif) ; phrase en cours → 0,9 s (ne pas couper).
+        const _bare=!String((m[2]||'')).trim();
         try{clearTimeout(this._wakePend);}catch(_){}
         this._wakePend=setTimeout(()=>{this._wakePend=null;if(this._wakeRec!==rec||this._wakeFired)return;
           this._wakeFired=true;
@@ -5438,13 +5440,20 @@ const AngeDialog={
           this._wakeDbg('🟢 ANGE détecté'+(after?' + cmd: '+after.slice(0,24):''));
           this._wakeStop();
           try{this.voiceCommand(after.length>=3?after:null,true);}catch(_){}
-        },900);};
+        },_bare?500:900);};
       rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;
         if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}return;}
         // audio-capture = collision de micros pendant une transition → on réessaie après 1,2 s.
         if(err==='audio-capture'){setTimeout(()=>{try{this._wakeStart();}catch(_){}},1200);}};
       rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,35s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,350);};
       rec.start();
+      rec._t0=Date.now();
+      // CHIEN DE GARDE : iOS laisse parfois l'écoute « vivante » mais SOURDE (aucun résultat, aucun onend)
+      // → cause majeure des « je répète Ange et rien ne se passe ». Aucun résultat depuis 25 s → redémarrage.
+      rec._wd=setInterval(()=>{try{
+        if(this._wakeRec!==rec){clearInterval(rec._wd);return;}
+        if(Date.now()-(rec._lastRes||rec._t0)>25000){clearInterval(rec._wd);this._wakeDbg('🐶 watchdog : écoute sourde 25 s → redémarrage');this._wakeStop();setTimeout(()=>{try{this._wakeStart();}catch(_){}},300);}
+      }catch(_){}},5000);
       this._wakeDbg('start() appelé (attente onstart)');
     }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
   },
@@ -5608,6 +5617,11 @@ const AngeDialog={
     try{ this._speakVoiceResult(); }catch(_){} // filet : toute réponse est DITE (LLM/menu/question)
     // Si une confirmation « oui/non » est en attente, son écoute prend le relais (voir _afterConfirm).
     if(this._pending)return;
+    // Question à choix (rail) en cours → on écoute la réponse.
+    if(this._choices&&this._choices.length)return this._convoResume();
+    // SESSION « ANGE » ONE-SHOT (modèle cible PO) : requête traitée → Ange S'ARRÊTE et retourne en
+    // VEILLE du mot « Ange ». Le prochain « Ange » → « Je t'écoute » → nouvelle requête. Simple, prévisible.
+    if(this._voiceNoTTS){this._wakeDbg('requête traitée → retour en veille « Ange »');return this._convoStop();}
     this._convoResume();
   },
   // En session vocale (orbe), on DIT la réponse affichée si rien ne parle déjà (Nexus/choix parlent seuls,
@@ -5692,7 +5706,7 @@ const AngeDialog={
     }catch(_){fin();}
   },
   // Précharge les voix (au moment de l'autorisation) pour un « Je t'écoute » instantané.
-  _voicePrefetch(){try{['ange-ecoute','ange-oui'].forEach(n=>{if(this._vBufs&&this._vBufs[n])return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=this._actx||(this._actx=new AC());fetch('audio/'+n+'.wav?v=2').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(b=>{this._vBufs=this._vBufs||{};this._vBufs[n]=b;}).catch(()=>{});});}catch(_){}},
+  _voicePrefetch(){try{['ange-ecoute','ange-oui','ange-fait'].forEach(n=>{if(this._vBufs&&this._vBufs[n])return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=this._actx||(this._actx=new AC());fetch('audio/'+n+'.wav?v=2').then(r=>r.arrayBuffer()).then(ab=>new Promise((res,rej)=>{try{ctx.decodeAudioData(ab,res,rej);}catch(e){rej(e);}})).then(b=>{this._vBufs=this._vBufs||{};this._vBufs[n]=b;}).catch(()=>{});});}catch(_){}},
   // Réponse À VOIX HAUTE (voix → voix), COURTE : emojis retirés + 1re phrase (max ~140 car.).
   _speakAnswer(txt){try{if(typeof speak!=='function')return;let t=String(txt||'').replace(/[✅⚠️⛔🚗🚘📞💬🅿️🆘🚦❗✦•·]/g,' ').replace(/\s+/g,' ').trim();const m=t.match(/^[^.?!]{0,140}[.?!]/);if(m)t=m[0];else if(t.length>140)t=t.slice(0,138).trim()+'…';if(t){try{this._setOrb('speak');}catch(_){}this._speakRetry(t,1,this._voiceNoTTS?1:3);}}catch(_){}},
   // Question COURTE posée quand on appelle Ange à la voix (ouverte : on attend une commande).
@@ -5965,9 +5979,10 @@ const AngeDialog={
     if(!hasVerb&&words>3)return false;
     const view=(window.App&&App._navView)||'';
     const LBL={route:'route',vehicule:'véhicule',aide:'aide',stationne:'stationné'}[cat];
-    const done=(logMsg,say)=>{try{this._earcon('ok');}catch(_){}try{this._log('action',logMsg);}catch(_){}
-      if((this._orbMode||this._lastVoice)&&say){try{this._setOrb('speak');speak(say,true,true);}catch(_){}}
-      if(this._convo){try{this._softHide();}catch(_){}try{this._convoResume();}catch(_){}}else{try{this.close&&this.close();}catch(_){}}
+    const done=(logMsg,say)=>{try{this._log('action',logMsg);}catch(_){}
+      if(this._voiceNoTTS){try{this._playVoice('ange-fait');}catch(_){}} // session « Ange » : « C'est fait » (audio)
+      else{try{this._earcon('ok');}catch(_){}if((this._orbMode||this._lastVoice)&&say){try{this._setOrb('speak');speak(say,true,true);}catch(_){}}}
+      if(this._convo){try{this._softHide();}catch(_){}if(!this._voiceNoTTS){try{this._convoResume();}catch(_){}}}else{try{this.close&&this.close();}catch(_){}}
       $('angeMsg').value='';return true;};
     if(view==='signaler'){
       const f={route:'sigStepRoute',vehicule:'sigStepVehicle',aide:'sigStepAide',stationne:'sigStepStation'}[cat];
@@ -5994,11 +6009,12 @@ const AngeDialog={
       if(hit.feat){const fs=App.featureStatus?App.featureStatus(hit.feat):{enabled:true,by:null};
         if(!fs.enabled){if(r){r.style.display='block';delete r.dataset.welcome;r.innerHTML=this._blockedHTML(hit.feat,'« '+esc(hit.label)+' » est indisponible '+(fs.by==='user'?'(Réglages)':'(désactivé par l\'administrateur)')+'.');}try{this._earcon('error');}catch(_){}$('angeMsg').value='';return true;}}
       try{hit.open(t);}catch(_){}
-      try{this._earcon('ok');}catch(_){}
+      try{if(this._voiceNoTTS)this._playVoice('ange-fait');else this._earcon('ok');}catch(_){}
       try{this._log('action','Ouvert : '+hit.label);}catch(_){}
       $('angeMsg').value='';
-      // On MASQUE la fiche (pour voir la fonction ouverte) mais on GARDE la session vocale : on peut continuer à parler.
-      if(this._convo){try{this._softHide();}catch(_){}try{this._setOrb('listen');}catch(_){}try{this._convoResume();}catch(_){}}
+      // On MASQUE la fiche (pour voir la fonction ouverte). En session « Ange » one-shot, la fin de tour
+      // (_voiceTurn) s'occupe du retour en veille — pas d'auto-reprise ici.
+      if(this._convo){try{this._softHide();}catch(_){}try{this._setOrb('listen');}catch(_){}if(!this._voiceNoTTS){try{this._convoResume();}catch(_){}}}
       else{try{this.close&&this.close();}catch(_){}}
       return true;
     }catch(_){return false;}
