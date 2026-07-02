@@ -5390,24 +5390,30 @@ const AngeDialog={
     }
     this._wakeStart();
   },
+  // Afficheur de diagnostic vocal (visible) — pour voir en direct ce que fait le micro « Ange ».
+  _dbgOn:true,
+  _wakeDbg(m){try{if(!this._dbgOn)return;let el=document.getElementById('wakeDbg');if(!el){el=document.createElement('div');el.id='wakeDbg';el.style.cssText='position:fixed;left:6px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:99999;background:rgba(0,0,0,.85);color:#5f5;font:11px/1.45 monospace;padding:6px 8px;border-radius:6px;max-width:82vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(el);}this._dbgLines=(this._dbgLines||[]);let ts='';try{ts=new Date().toTimeString().slice(0,8);}catch(_){}this._dbgLines.push(ts+' '+m);if(this._dbgLines.length>9)this._dbgLines.shift();el.textContent='ANGE DEBUG\n'+this._dbgLines.join('\n');}catch(_){}},
   _wakeStart(){
     try{
-      if(!this._wakeEnabled())return;
-      if(this._wakeRec)return;                                   // déjà en écoute
-      if(this._rec||this._pendRec)return;                        // micro occupé (dictée/confirmation)
-      if(this._convo)return;                                     // session vocale active → pas de double écoute
-      if(document.visibilityState!=='visible')return;            // pas en arrière-plan
-      if(document.body.classList.contains('ange-open'))return;   // Ange déjà ouvert
-      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+      if(!this._wakeEnabled()){this._wakeDbg('start SKIP: wake OFF');return;}
+      if(this._wakeRec){this._wakeDbg('start SKIP: déjà en écoute');return;}
+      if(this._rec||this._pendRec){this._wakeDbg('start SKIP: micro occupé');return;}
+      if(this._convo){this._wakeDbg('start SKIP: en conversation');return;}
+      if(document.visibilityState!=='visible'){this._wakeDbg('start SKIP: arrière-plan');return;}
+      if(document.body.classList.contains('ange-open')){this._wakeDbg('start SKIP: Ange ouvert');return;}
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){this._wakeDbg('start SKIP: pas de SpeechRecognition');return;}
       this._wakeFired=false;
       const rec=new SR();this._wakeRec=rec;
       rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=true;
+      rec.onstart=()=>{this._wakeDbg('🎙️ ÉCOUTE « Ange »…');};
       rec.onresult=e=>{if(this._wakeFired)return;let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=' '+e.results[i][0].transcript;t=t.toLowerCase();
-        if(/\b(ok |h[eé] |hey |dis )?ange\b/.test(t)){this._wakeFired=true;this._wakeStop();try{this.voiceCommand();}catch(_){}}};
-      rec.onerror=ev=>{const err=ev&&ev.error;this._wakeRec=null;if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
-      rec.onend=()=>{this._wakeRec=null;if(this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open'))setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
+        this._wakeDbg('entendu: '+(t.trim().slice(0,28)||'(vide)'));
+        if(/\b(ok |h[eé] |hey |dis )?ange\b/.test(t)){this._wakeFired=true;this._wakeDbg('🟢 ANGE détecté');this._wakeStop();try{this.voiceCommand();}catch(_){}}};
+      rec.onerror=ev=>{const err=ev&&ev.error;this._wakeRec=null;this._wakeDbg('❌ erreur: '+err);if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
+      rec.onend=()=>{this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
       rec.start();
-    }catch(_){this._wakeRec=null;}
+      this._wakeDbg('start() appelé (attente onstart)');
+    }catch(e){this._wakeRec=null;this._wakeDbg('❌ start() throw: '+((e&&e.message)||e));}
   },
   _wakeStop(){try{const r=this._wakeRec;this._wakeRec=null;if(r){r.onend=null;r.onresult=null;r.stop();}}catch(_){}},
   // iOS bloque la synthèse vocale tant qu'elle n'a pas été lancée DANS un geste utilisateur.
@@ -5627,13 +5633,14 @@ const AngeDialog={
     // sans ce garde, on lançait « Parlez maintenant » plusieurs fois et la voix se chevauchait.
     if(this._orbStarting)return;
     this._orbStarting=true;
+    try{this._wakeDbg('voiceCommand → orbe + « Je t\'écoute »');}catch(_){}
     this._orbMode=true;this._convo=true;this._convoSilence=0;
     try{this._wakeStop&&this._wakeStop();}catch(_){} // LIBÈRE le micro du wake AVANT de parler (iOS ne fait pas écoute+voix en même temps)
     try{this._earcon('listen');}catch(_){}
     try{this._setOrb('speak');}catch(_){} // orbe visible tout de suite
     // « Je t'écoute » DIFFÉRÉ (~450 ms) : le temps que le micro du wake se libère vraiment, sinon iOS
     // avale la voix. ignoreMute=true → parle même si la voix GPS est coupée. Pas de cancel() (speak le fait).
-    setTimeout(()=>{try{if(typeof speak==='function')speak('Je t\'écoute',true,true);}catch(_){}},450);
+    setTimeout(()=>{try{if(typeof speak==='function'){speak('Je t\'écoute',true,true);this._wakeDbg('speak() appelé (voix débloquée='+(this._ttsPrimed?'oui':'?')+')');}}catch(e){this._wakeDbg('speak throw');}},450);
     // Ouverture du micro APRÈS la voix, plafonnée (≤1,6 s) : jamais bloqué, _orbStarting toujours relâché.
     let _w=0;
     const start=()=>{
@@ -5729,7 +5736,7 @@ const AngeDialog={
     // Bouton « AUTORISER » = le geste UNIQUE : (1) débloque la voix (iOS l'exige une fois via _primeTTS),
     // (2) arme + démarre l'écoute du mot « Ange » (start() exige un geste, ici on est DANS le tap).
     // Toujours visible : si Ange devient muet (iOS coupe le micro après inactivité), re-toucher réarme.
-    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog._primeTTS()}catch(_){};try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Autoriser « Ange » à la voix</button><div style="color:#666;font-size:10px;margin-top:4px">Touche une fois. Ensuite dis « Ange » (app ouverte, écran allumé). Si Ange devient muet, re-touche.</div></div>';
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #1a1a2e"><button onclick="try{AngeDialog.close()}catch(_){};App.toggleAngeWake(true)" style="background:#7c6af7;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;cursor:pointer;width:100%">🎙️ Autoriser « Ange » à la voix</button><div style="color:#666;font-size:10px;margin-top:4px">Touche une fois. Ensuite dis « Ange » (app ouverte, écran allumé). Si Ange devient muet, re-touche.</div></div>';
   }catch(_){return '';}},
   // ── « Le prochain geste utile » (SPEC-ANGE-NEXT-ACTION §1.2) : ≤3 gestes, SILENCE par défaut,
   //    jamais deux ouvertures de suite la même suggestion ignorée. Lecture via ImmatNexus (read-only).
@@ -6267,6 +6274,9 @@ const AngeDialog={
 // AngeDialog est un `const` (pas attaché à window). _angeToggle l'appelle via window.AngeDialog
 // → il faut l'exposer, sinon open()/close() sont des no-op (cause du bug "ne s'ouvre/ferme pas").
 try{ window.AngeDialog = AngeDialog; }catch(_){}
+// Déblocage de la synthèse vocale iOS au TOUT PREMIER contact tactile de l'app (indépendant du wake,
+// pour ne PAS entrer en conflit avec le démarrage du micro « Ange »). No-op après la 1re fois.
+try{ document.addEventListener('pointerdown', function(){ try{ window.AngeDialog && AngeDialog._primeTTS && AngeDialog._primeTTS(); }catch(_){} }, {passive:true}); }catch(_){}
 
 // ── AngePredictor — P1 : Ange pré-calcule pendant les moments calmes ─────────
 // Toutes les 2 min, si focus NOMINAL + conducteur inactif 90s + pas de cache :

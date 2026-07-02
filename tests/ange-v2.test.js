@@ -240,10 +240,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('réglage toggle angeWakeToggle', HTML.includes('id="angeWakeToggle"') && HTML.includes('App.toggleAngeWake'));
   ok('toggleAngeWake pilote le listener', /toggleAngeWake\(on\)\{[\s\S]{0,200}_wakeInit[\s\S]{0,60}_wakeStop/.test(HTML));
   ok('mot d\'activation = « ange »', /\/\\b\(ok \|h\[eé\] \|hey \|dis \)\?ange\\b\//.test(HTML));
-  ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)return/.test(HTML));
-  ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,700}ange-open'\)\)return/.test(HTML));
+  ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)\{/.test(HTML));
+  ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,900}ange-open'\)\)\{/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeFired=true;this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
+  ok('wake détecté → voiceCommand', /ange\\b\/\.test\(t\)\)\{this\._wakeFired=true;this\._wakeDbg[\s\S]{0,60}this\._wakeStop\(\);try\{this\.voiceCommand\(\)/.test(HTML));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));
   // Arrêt TOTAL du micro à la fermeture / mise en arrière-plan (bug « le micro reste allumé »)
@@ -269,7 +269,7 @@ section('B. Câblage Ange V2 (index.html)');
   ok('la voix coupe la parole en cours via speak() interne', HTML.includes('speechSynthesis.cancel()'));
   ok('voiceCommand accuse réception vocal « Je t\'écoute »', HTML.includes("speak('Je t\\'écoute',true,true)"));
   ok('anti double-déclenchement voiceCommand (_orbStarting)', /voiceCommand\(\)\{[\s\S]{0,600}if\(this\._orbStarting\)return/.test(HTML));
-  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeStop\(\)/.test(HTML));
+  ok('wake ne déclenche qu\'une fois (_wakeFired)', /onresult=e=>\{if\(this\._wakeFired\)return/.test(HTML) && /this\._wakeFired=true;this\._wakeDbg/.test(HTML));
   ok('orbe parle même si voix GPS coupée (ignoreMute)', /function speak\(txt,force=false,ignoreMute=false\)\{if\(\(!S\.voice&&!ignoreMute\)/.test(HTML));
   ok('voiceCommand n\'ouvre pas le panneau (pas de this.open)', !/voiceCommand\(\)\{[\s\S]{0,300}this\.open\(\)/.test(HTML));
   ok('send() ne force pas la fiche en mode orbe', /if\(!this\._orbMode\)this\._showSheet\(\)/.test(HTML));
@@ -277,9 +277,9 @@ section('B. Câblage Ange V2 (index.html)');
   ok('orbe pulse à l\'apparition (classe appear)', HTML.includes("angeAppear") && /_wasHidden\?' appear'/.test(HTML));
   ok('mode orbe réinitialisé à l\'ouverture au clic', /open\(\)\{\s*this\._orbMode=false/.test(HTML));
   ok('voiceCommand ouvre le micro avec plafond (jamais bloqué)', HTML.includes('setTimeout(start,150)') && /_w<1600/.test(HTML) && HTML.includes('this.startVoice()'));
-  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,320}this\._setOrb\('(speak|listen)'\)/.test(HTML));
+  ok('orbe visible immédiatement au réveil vocal', /this\._orbStarting=true;[\s\S]{0,600}this\._setOrb\('(speak|listen)'\)/.test(HTML));
   ok('voiceCommand libère le micro du wake avant de parler', /this\._orbStarting=true;[\s\S]{0,200}this\._wakeStop&&this\._wakeStop\(\)/.test(HTML));
-  ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{try\{if\(typeof speak==='function'\)speak\('Je t\\'écoute',true,true\)/.test(HTML));
+  ok('« Je t\'écoute » différé (mic libéré)', /setTimeout\(\(\)=>\{try\{if\(typeof speak==='function'\)\{speak\('Je t\\'écoute',true,true\)/.test(HTML));
   // Déblocage TTS iOS (voix muette tant qu'aucun geste) + earcon 1×/session + « ouvre X » prioritaire
   ok('méthode _primeTTS présente', HTML.includes('_primeTTS()'));
   ok('_primeTTS débloqué au 1er contact (keepalive)', /this\._wakeKeep=\(\)=>\{try\{this\._primeTTS\(\)/.test(HTML));
@@ -343,7 +343,8 @@ section('B. Câblage Ange V2 (index.html)');
   ok('Nexus expose angeTurn', HTML.includes('ImmatNexus.angeTurn'));
   ok('_voiceGreetQuestion consomme angeTurn', /window\.ImmatNexus\.angeTurn\(\)[\s\S]{0,120}tn\.actions/.test(HTML));
   // Armement vocal en 1 geste + ré-armement en Mode Volant
-  ok('bouton « Autoriser » arme le wake + débloque la voix dans le geste (_wakeHintHTML)', HTML.includes('_wakeHintHTML()') && /_wakeHintHTML\(\)\{[\s\S]{0,700}AngeDialog\._primeTTS\(\)[\s\S]{0,120}App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('bouton « Autoriser » arme le wake (_wakeHintHTML)', HTML.includes('_wakeHintHTML()') && /_wakeHintHTML\(\)\{[\s\S]{0,900}App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('déblocage voix (prime TTS) au 1er contact tactile global', /addEventListener\('pointerdown', function\(\)\{[\s\S]{0,120}AngeDialog\._primeTTS/.test(HTML));
   ok('_wakeHintHTML toujours visible (re-toucher réarme si muet)', !/_wakeHintHTML\(\)\{try\{\s*if\(this\._wakeEnabled&&this\._wakeEnabled\(\)\)return ''/.test(HTML));
   ok('accueil propose l\'armement (open append _wakeHintHTML)', /_wakeHintHTML\(\);if\(_wh\)resp\.innerHTML\+=_wh/.test(HTML));
   ok('Mode Volant ré-arme le wake word', /_driveAutoSet[\s\S]{0,320}AngeDialog\._wakeStart\(\)/.test(HTML));
@@ -366,12 +367,13 @@ section('B. Câblage Ange V2 (index.html)');
   // Session survit à la navigation (plus de dépendance à ange-open)
   ok('_voiceTurn gardé par la session (_convo)', /_voiceTurn\(v\)\{\s*if\(!this\._convo\)return/.test(HTML));
   ok('_convoResume ne dépend plus de ange-open', /_convoResume\(\)\{/.test(HTML) && !/_convoResume\(\)\{[\s\S]{0,400}ange-open/.test(HTML));
-  ok('_wakeStart évite la double écoute pendant une session', /if\(this\._convo\)return;\s*\/\/ session vocale active/.test(HTML));
+  ok('_wakeStart évite la double écoute pendant une session', /if\(this\._convo\)\{this\._wakeDbg\('start SKIP: en conversation'\);return;\}/.test(HTML));
   ok('_tryOpen garde la session (soft-hide + resume)', /if\(this\._convo\)\{try\{this\._softHide\(\)[\s\S]{0,120}this\._convoResume\(\)/.test(HTML));
   ok('send() ré-affiche la fiche', /async send\(\)\{[\s\S]{0,120}this\._showSheet\(\)/.test(HTML));
   // Fix « quand je dis Ange rien ne se passe » : armement dans le geste + relance au 1er contact (iOS)
   ok('_wakeInit : relance discrète à chaque contact (iOS keepalive)', /_wakeKeep=\(\)=>[\s\S]{0,80}_wakeStart\(\)[\s\S]{0,80}addEventListener\('pointerdown',this\._wakeKeep/.test(HTML));
-  ok('bouton « Autoriser » : primeTTS + toggleAngeWake dans le geste (iOS)', /AngeDialog\._primeTTS\(\)\}catch\(_\)\{\};try\{AngeDialog\.close\(\)\}catch\(_\)\{\};App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('bouton « Autoriser » : close + toggleAngeWake dans le geste (iOS)', /AngeDialog\.close\(\)\}catch\(_\)\{\};App\.toggleAngeWake\(true\)/.test(HTML));
+  ok('afficheur diagnostic vocal présent (_wakeDbg)', HTML.includes('_wakeDbg(m)') && HTML.includes("id='wakeDbg'"));
   ok('close() relance le mot d\'activation dans le geste', /close\(\)\{[\s\S]{0,800}_wakeEnabled\(\)\)this\._wakeStart\(\)/.test(HTML));
   ok('taper le micro arme le mot « Ange »', /if\(!this\._wakeEnabled\(\)\)\{localStorage\.setItem\('ic_ange_wake','1'\)/.test(HTML));
 })();
