@@ -243,7 +243,10 @@ section('B. Câblage Ange V2 (index.html)');
   ok('wake pause si micro occupé (dictée/confirmation)', /_wakeStart\(\)\{[\s\S]{0,260}this\._rec\|\|this\._pendRec\)\{/.test(HTML));
   ok('wake pause si Ange ouvert', /_wakeStart\(\)\{[\s\S]{0,900}ange-open'\)\)\{/.test(HTML));
   ok('open() coupe le wake (anti-conflit micro)', /open\(\)\{[\s\S]{0,160}try\{this\._wakeStop/.test(HTML));
-  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=4\?after:null\)/.test(HTML));
+  ok('wake détecté → voiceCommand (après fin de phrase 0,9s)', /this\._wakePend=setTimeout\([\s\S]{0,420}this\.voiceCommand\(after\.length>=3\?after:null\)/.test(HTML));
+  ok('débounce RÉARMÉ à chaque mot (vraie fin de phrase)', /clearTimeout\(this\._wakePend\);\}catch\(_\)\{\}\s*this\._wakePend=setTimeout/.test(HTML));
+  ok('feedback immédiat à la 1re détection (earcon + orbe hear)', /if\(!this\._wakeHeard\)\{this\._wakeHeard=true;try\{this\._earcon\('ok'\)/.test(HTML));
+  ok('audio-capture → réessai auto 1,2s', /err==='audio-capture'\)\{setTimeout\(\(\)=>\{try\{this\._wakeStart\(\)/.test(HTML));
   ok('commande dans le même souffle captée (groupe (.*)$)', HTML.includes('(.*)$/'));
   // Conversation continue : le micro se rouvre après chaque tour tant qu'on parle avec Ange
   ['_voiceTurn', '_convoResume', '_convoStop', '_afterConfirm'].forEach(m => ok('méthode présente : ' + m, HTML.includes(m + '(')));

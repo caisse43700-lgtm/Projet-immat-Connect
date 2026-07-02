@@ -5402,7 +5402,7 @@ const AngeDialog={
       if(document.visibilityState!=='visible'){this._wakeDbg('start SKIP: arrière-plan');return;}
       if(document.body.classList.contains('ange-open')){this._wakeDbg('start SKIP: Ange ouvert');return;}
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){this._wakeDbg('start SKIP: pas de SpeechRecognition');return;}
-      this._wakeFired=false;
+      this._wakeFired=false;this._wakeHeard=false;this._wakeLastT='';
       const rec=new SR();this._wakeRec=rec;this._recTrack(rec);
       rec.lang='fr-FR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=true;
       // HYGIÈNE D'INSTANCE (bug prouvé par HUD terrain) : chaque handler vérifie qu'il appartient à
@@ -5418,15 +5418,22 @@ const AngeDialog={
         const WAKE=/\b(?:ok |h[eé] |hey |dis |et )?(anges?|l'ange|lange|angel|angie|handj?e|anj)\b(.*)$/;
         const m=t.match(WAKE);if(!m)return;
         this._wakeLastT=t;
-        if(this._wakePend)return; // déjà en attente de fin de phrase
+        // Feedback IMMÉDIAT (bip) dès la 1re détection : « je t'ai entendu, finis ta phrase ».
+        if(!this._wakeHeard){this._wakeHeard=true;try{this._earcon('ok');}catch(_){}try{this._setOrb('hear');}catch(_){}}
+        // Minuteur RÉARMÉ à chaque nouveau mot (vrai débounce de silence) : on agit 0,9 s après la FIN
+        // de la phrase — pas 0,9 s après le 1er mot (bug terrain : « ouvre l'activité » coupé à « ou »).
+        try{clearTimeout(this._wakePend);}catch(_){}
         this._wakePend=setTimeout(()=>{this._wakePend=null;if(this._wakeRec!==rec||this._wakeFired)return;
           this._wakeFired=true;
           const mm=String(this._wakeLastT||'').match(WAKE);const after=((mm&&mm[2])||'').replace(/^[\s,.!?]+/,'').trim();
-          this._wakeDbg('🟢 ANGE détecté'+(after?' + cmd: '+after.slice(0,20):''));
+          this._wakeDbg('🟢 ANGE détecté'+(after?' + cmd: '+after.slice(0,24):''));
           this._wakeStop();
-          try{this.voiceCommand(after.length>=4?after:null);}catch(_){}
+          try{this.voiceCommand(after.length>=3?after:null);}catch(_){}
         },900);};
-      rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}}};
+      rec.onerror=ev=>{const err=ev&&ev.error;const mine=(this._wakeRec===rec);this._wakeDbg('❌ erreur: '+err+(mine?'':' (vieille instance)'));if(!mine)return;this._wakeRec=null;
+        if(err==='not-allowed'||err==='service-not-allowed'){try{localStorage.setItem('ic_ange_wake','0');}catch(_){}try{const _t=$('angeWakeToggle');if(_t)_t.checked=false;}catch(_){}try{toast('Micro refusé — mot d\'activation désactivé.','bad');}catch(_){}return;}
+        // audio-capture = collision de micros pendant une transition → on réessaie après 1,2 s.
+        if(err==='audio-capture'){setTimeout(()=>{try{this._wakeStart();}catch(_){}},1200);}};
       rec.onend=()=>{if(this._wakeRec!==rec){this._wakeDbg('fin (vieille instance)');return;}this._wakeRec=null;const _relance=this._wakeEnabled()&&!this._rec&&!this._pendRec&&document.visibilityState==='visible'&&!document.body.classList.contains('ange-open');this._wakeDbg('fin d\'écoute'+(_relance?' → relance dans 0,7s':' (pas de relance)'));if(_relance)setTimeout(()=>{try{this._wakeStart();}catch(_){}} ,700);};
       rec.start();
       this._wakeDbg('start() appelé (attente onstart)');
